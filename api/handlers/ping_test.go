@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/odpf/guardian/handlers"
+	"github.com/odpf/guardian/api/handlers"
 	"github.com/stretchr/testify/assert"
 )
 

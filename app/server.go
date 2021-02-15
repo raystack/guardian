@@ -5,17 +5,14 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/odpf/guardian/config"
-	"github.com/odpf/guardian/database"
-	"github.com/odpf/guardian/models"
-	"github.com/odpf/guardian/repositories"
-	"github.com/odpf/guardian/router"
-	"github.com/odpf/guardian/usecases"
+	"github.com/odpf/guardian/api"
+	"github.com/odpf/guardian/provider"
+	"github.com/odpf/guardian/store"
 )
 
 // RunServer runs the application server
-func RunServer(c *config.Config) error {
-	db, err := database.New(&database.Config{
+func RunServer(c *Config) error {
+	db, err := store.New(&store.Config{
 		Host:     c.DBHost,
 		User:     c.DBUser,
 		Password: c.DBPassword,
@@ -28,14 +25,11 @@ func RunServer(c *config.Config) error {
 	}
 
 	models := []interface{}{
-		&models.Provider{},
+		&provider.Model{},
 	}
-	database.Migrate(db, models...)
+	store.Migrate(db, models...)
 
-	allRepositories := repositories.New(db)
-	allUsecases := usecases.New(allRepositories)
-
-	r := router.New(allUsecases)
+	r := api.New()
 
 	log.Printf("running server on port %d\n", c.Port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", c.Port), r)

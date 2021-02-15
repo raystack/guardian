@@ -1,4 +1,4 @@
-package config
+package app
 
 import (
 	"fmt"
@@ -35,8 +35,8 @@ type Config struct {
 	DBSslMode  string
 }
 
-// Load returns application configuration
-func Load() *Config {
+// LoadConfig returns application configuration
+func LoadConfig() *Config {
 	viper.SetConfigName("config")
 	viper.AddConfigPath("./")
 	viper.AddConfigPath("../")

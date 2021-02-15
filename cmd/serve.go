@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/odpf/guardian/app"
-	"github.com/odpf/guardian/config"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +14,6 @@ func init() {
 }
 
 func serve(cmd *cobra.Command, args []string) error {
-	c := config.Load()
+	c := app.LoadConfig()
 	return app.RunServer(c)
 }

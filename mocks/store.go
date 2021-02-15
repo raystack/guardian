@@ -6,8 +6,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// New returns mock database instance
-func New() (*gorm.DB, sqlmock.Sqlmock, error) {
+// NewStore returns store mock
+func NewStore() (*gorm.DB, sqlmock.Sqlmock, error) {
 	sqldb, mock, err := sqlmock.New()
 	if err != nil {
 		return nil, nil, err
