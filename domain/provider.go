@@ -19,7 +19,7 @@ type ProviderRepository interface {
 	Delete(uint) error
 }
 
-// ProviderUsecase interface
-type ProviderUsecase interface {
+// ProviderService interface
+type ProviderService interface {
 	Create(Provider) error
 }

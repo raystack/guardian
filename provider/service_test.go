@@ -11,18 +11,18 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type UsecaseTestSuite struct {
+type ServiceTestSuite struct {
 	suite.Suite
 	mockProviderRepository *mocks.ProviderRepository
-	usecase                *provider.Usecase
+	service                *provider.Service
 }
 
-func (s *UsecaseTestSuite) SetupTest() {
+func (s *ServiceTestSuite) SetupTest() {
 	s.mockProviderRepository = new(mocks.ProviderRepository)
-	s.usecase = provider.NewUsecase(s.mockProviderRepository)
+	s.service = provider.NewService(s.mockProviderRepository)
 }
 
-func (s *UsecaseTestSuite) TestCreate() {
+func (s *ServiceTestSuite) TestCreate() {
 	config := "config string"
 	provider := &domain.Provider{
 		Config: config,
@@ -32,7 +32,7 @@ func (s *UsecaseTestSuite) TestCreate() {
 		expectedError := errors.New("error from repository")
 		s.mockProviderRepository.On("Create", mock.Anything).Return(expectedError).Once()
 
-		actualError := s.usecase.Create(&domain.Provider{})
+		actualError := s.service.Create(&domain.Provider{})
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -40,13 +40,13 @@ func (s *UsecaseTestSuite) TestCreate() {
 	s.Run("should pass the model from the param", func() {
 		s.mockProviderRepository.On("Create", provider).Return(nil).Once()
 
-		actualError := s.usecase.Create(provider)
+		actualError := s.service.Create(provider)
 
 		s.Nil(actualError)
 		s.mockProviderRepository.AssertExpectations(s.T())
 	})
 }
 
-func TestUsecase(t *testing.T) {
-	suite.Run(t, new(UsecaseTestSuite))
+func TestService(t *testing.T) {
+	suite.Run(t, new(ServiceTestSuite))
 }
