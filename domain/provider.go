@@ -28,7 +28,7 @@ type ResourceConfig struct {
 
 // ProviderConfig is the configuration for a data provider
 type ProviderConfig struct {
-	Type      string            `json:"type" yaml:"type" validate:"required"`
+	Type      string            `json:"type" yaml:"type" validate:"required,eq=google_bigquery"`
 	URN       string            `json:"urn" yaml:"urn" validate:"required"`
 	Labels    map[string]string `json:"labels" yaml:"labels"`
 	Auth      interface{}       `json:"auth" yaml:"auth" validate:"required"`
