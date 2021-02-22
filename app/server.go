@@ -13,7 +13,16 @@ import (
 
 // RunServer runs the application server
 func RunServer(c *Config) error {
+	db, err := getDB(c)
+	if err != nil {
+		return err
+	}
+
+	providerRepository := provider.NewRepository(db)
+	providerService := provider.NewService(providerRepository)
+
 	r := api.New()
+	provider.SetupHandler(r, providerService)
 
 	log.Printf("running server on port %d\n", c.Port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", c.Port), r)

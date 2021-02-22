@@ -23,7 +23,7 @@ func (s *ServiceTestSuite) SetupTest() {
 }
 
 func (s *ServiceTestSuite) TestCreate() {
-	config := "config string"
+	config := &domain.ProviderConfig{}
 	provider := &domain.Provider{
 		Config: config,
 	}

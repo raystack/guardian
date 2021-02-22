@@ -18,14 +18,24 @@ func NewRepository(db *gorm.DB) *Repository {
 // Create new record to database
 func (r *Repository) Create(p *domain.Provider) error {
 	m := new(Model)
-	m.fromDomain(p)
-	if result := r.db.Create(m); result.Error != nil {
-		return result.Error
+	if err := m.fromDomain(p); err != nil {
+		return err
 	}
 
-	p.ID = m.ID
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if result := tx.Create(m); result.Error != nil {
+			return result.Error
+		}
 
-	return nil
+		newProvider, err := m.toDomain()
+		if err != nil {
+			return err
+		}
+
+		*p = *newProvider
+
+		return nil
+	})
 }
 
 // Update record by ID

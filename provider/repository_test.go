@@ -31,10 +31,10 @@ func (s *RepositoryTestSuite) TearDownTest() {
 }
 
 func (s *RepositoryTestSuite) TestCreate() {
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "providers" ("config","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4) RETURNING "id"`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "providers" ("type","urn","config","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"`)
 
 	s.Run("should update model's ID with the returned ID", func() {
-		config := "config string"
+		config := &domain.ProviderConfig{}
 		provider := &domain.Provider{
 			Config: config,
 		}
@@ -42,7 +42,9 @@ func (s *RepositoryTestSuite) TestCreate() {
 		expectedID := uint(1)
 		expectedRows := sqlmock.NewRows([]string{"id"}).
 			AddRow(expectedID)
+		s.dbmock.ExpectBegin()
 		s.dbmock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
+		s.dbmock.ExpectCommit()
 
 		err := s.repository.Create(provider)
 
