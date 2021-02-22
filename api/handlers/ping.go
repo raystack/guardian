@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"net/http"
+
+	"github.com/odpf/guardian/utils"
 )
 
 // Ping handler
 func Ping() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		returnJSON(w, "pong")
+		utils.ReturnJSON(w, "pong")
 		return
 	}
 }
