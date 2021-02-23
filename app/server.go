@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/odpf/guardian/api"
-	"github.com/odpf/guardian/providers"
+	"github.com/odpf/guardian/provider"
 	"github.com/odpf/guardian/store"
 	"gorm.io/gorm"
 )
@@ -27,7 +27,7 @@ func Migrate(c *Config) error {
 	}
 
 	models := []interface{}{
-		&providers.Model{},
+		&provider.Model{},
 	}
 	return store.Migrate(db, models...)
 }

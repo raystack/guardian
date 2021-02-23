@@ -1,4 +1,4 @@
-package providers_test
+package provider_test
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/providers"
+	"github.com/odpf/guardian/provider"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -14,12 +14,12 @@ import (
 type ServiceTestSuite struct {
 	suite.Suite
 	mockProviderRepository *mocks.ProviderRepository
-	service                *providers.Service
+	service                *provider.Service
 }
 
 func (s *ServiceTestSuite) SetupTest() {
 	s.mockProviderRepository = new(mocks.ProviderRepository)
-	s.service = providers.NewService(s.mockProviderRepository)
+	s.service = provider.NewService(s.mockProviderRepository)
 }
 
 func (s *ServiceTestSuite) TestCreate() {

@@ -1,4 +1,4 @@
-package providers_test
+package provider_test
 
 import (
 	"database/sql"
@@ -8,7 +8,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/providers"
+	"github.com/odpf/guardian/provider"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -16,14 +16,14 @@ type RepositoryTestSuite struct {
 	suite.Suite
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
-	repository *providers.Repository
+	repository *provider.Repository
 }
 
 func (s *RepositoryTestSuite) SetupTest() {
 	db, mock, _ := mocks.NewStore()
 	s.sqldb, _ = db.DB()
 	s.dbmock = mock
-	s.repository = providers.NewRepository(db)
+	s.repository = provider.NewRepository(db)
 }
 
 func (s *RepositoryTestSuite) TearDownTest() {
