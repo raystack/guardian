@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/utils"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // Handler for http service

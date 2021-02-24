@@ -70,6 +70,8 @@ urn: provider_name
 type: google_bigquery
 urn: gcp-project-id
 auth: service-account-key.json
+appeal:
+  allow_active_access_extension_in: 7d
 resources:
   - type: dataset
     policy:
@@ -108,6 +110,9 @@ resources:
 			Type: "google_bigquery",
 			URN:  "gcp-project-id",
 			Auth: "service-account-key.json",
+			Appeal: &domain.AppealConfig{
+				AllowActiveAccessExtensionIn: "7d",
+			},
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: "dataset",
@@ -119,16 +124,16 @@ resources:
 						{
 							ID:   "viewer",
 							Name: "Viewer",
-							Permissions: []*map[string]interface{}{
-								{"name": "roles/bigQuery.dataViewer"},
-								{"name": "roles/customRole", "target": "other-gcp-project-id"},
+							Permissions: []interface{}{
+								map[string]interface{}{"name": "roles/bigQuery.dataViewer"},
+								map[string]interface{}{"name": "roles/customRole", "target": "other-gcp-project-id"},
 							},
 						},
 						{
 							ID:   "editor",
 							Name: "Editor",
-							Permissions: []*map[string]interface{}{
-								{"name": "roles/bigQuery.dataEditor"},
+							Permissions: []interface{}{
+								map[string]interface{}{"name": "roles/bigQuery.dataEditor"},
 							},
 						},
 					},
@@ -143,11 +148,14 @@ resources:
 		expectedStatusCode := http.StatusOK
 		expectedID := uint(1)
 		expectedResponseBody := &domain.Provider{
-			ID: expectedID,
+			ID:     expectedID,
+			Type:   provider.Type,
+			URN:    provider.URN,
+			Config: provider.Config,
 		}
-		*expectedResponseBody = *provider
 		s.mockProviderService.On("Create", provider).Return(nil).Run(func(args mock.Arguments) {
-			provider.ID = expectedID
+			p := args.Get(0).(*domain.Provider)
+			p.ID = expectedID
 		})
 
 		s.handler.Create(s.res, req)

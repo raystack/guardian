@@ -7,10 +7,10 @@ import (
 
 // RoleConfig is the configuration to define a role and mapping the permissions in the provider
 type RoleConfig struct {
-	ID          string                    `json:"id" yaml:"id" validate:"required"`
-	Name        string                    `json:"name" yaml:"name" validate:"required"`
-	Description string                    `json:"description,omitempty" yaml:"description"`
-	Permissions []*map[string]interface{} `json:"permissions" yaml:"permissions" validate:"required"`
+	ID          string        `json:"id" yaml:"id" validate:"required"`
+	Name        string        `json:"name" yaml:"name" validate:"required"`
+	Description string        `json:"description,omitempty" yaml:"description"`
+	Permissions []interface{} `json:"permissions" yaml:"permissions" validate:"required"`
 }
 
 // PolicyConfig is the configuration that defines which policy is being used in the provider
@@ -26,14 +26,20 @@ type ResourceConfig struct {
 	Roles  []*RoleConfig `json:"roles" yaml:"roles" validate:"required"`
 }
 
+// AppealConfig is the policy configuration of the appeal
+type AppealConfig struct {
+	AllowPermanentAccess         bool   `json:"allow_permanent_access" yaml:"allow_permanent_access"`
+	AllowActiveAccessExtensionIn string `json:"allow_active_access_extension_in" yaml:"allow_active_access_extension_in" validate:"required"`
+}
+
 // ProviderConfig is the configuration for a data provider
 type ProviderConfig struct {
-	Type      string            `json:"type" yaml:"type" validate:"required,eq=google_bigquery"`
-	URN       string            `json:"urn" yaml:"urn" validate:"required"`
-	Labels    map[string]string `json:"labels" yaml:"labels"`
-	Auth      interface{}       `json:"auth" yaml:"auth" validate:"required"`
-	Appeal    map[string]string `json:"appeal" yaml:"appeal"`
-	Resources []*ResourceConfig `json:"resources" yaml:"resources" validate:"required"`
+	Type      string                 `json:"type" yaml:"type" validate:"required,eq=google_bigquery"`
+	URN       string                 `json:"urn" yaml:"urn" validate:"required"`
+	Labels    map[string]interface{} `json:"labels" yaml:"labels"`
+	Auth      interface{}            `json:"auth" yaml:"auth" validate:"required"`
+	Appeal    *AppealConfig          `json:"appeal" yaml:"appeal" validate:"required"`
+	Resources []*ResourceConfig      `json:"resources" yaml:"resources" validate:"required"`
 }
 
 // Provider domain structure
