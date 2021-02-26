@@ -7,6 +7,7 @@ import (
 
 	"github.com/odpf/guardian/api"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/provider"
 	"github.com/odpf/guardian/provider/bigquery"
 	"github.com/odpf/guardian/store"
@@ -20,15 +21,19 @@ func RunServer(c *Config) error {
 		return err
 	}
 
+	providerRepository := provider.NewRepository(db)
+	policyRepository := policy.NewRepository(db)
+
 	providers := []domain.ProviderInterface{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery),
 	}
 
-	providerRepository := provider.NewRepository(db)
 	providerService := provider.NewService(providerRepository, providers)
+	policyService := policy.NewService(policyRepository)
 
 	r := api.New()
 	provider.SetupHandler(r, providerService)
+	policy.SetupHandler(r, policyService)
 
 	log.Printf("running server on port %d\n", c.Port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", c.Port), r)
@@ -43,6 +48,7 @@ func Migrate(c *Config) error {
 
 	models := []interface{}{
 		&provider.Model{},
+		&policy.Model{},
 	}
 	return store.Migrate(db, models...)
 }
