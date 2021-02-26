@@ -6,7 +6,9 @@ import (
 	"net/http"
 
 	"github.com/odpf/guardian/api"
+	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/provider"
+	"github.com/odpf/guardian/provider/bigquery"
 	"github.com/odpf/guardian/store"
 	"gorm.io/gorm"
 )
@@ -18,8 +20,12 @@ func RunServer(c *Config) error {
 		return err
 	}
 
+	providers := []domain.ProviderInterface{
+		bigquery.NewProvider(domain.ProviderTypeBigQuery),
+	}
+
 	providerRepository := provider.NewRepository(db)
-	providerService := provider.NewService(providerRepository)
+	providerService := provider.NewService(providerRepository, providers)
 
 	r := api.New()
 	provider.SetupHandler(r, providerService)

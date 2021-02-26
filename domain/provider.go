@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+const (
+	// ProviderTypeBigQuery is the type name for BigQuery provider
+	ProviderTypeBigQuery = "google_bigquery"
+)
+
 // RoleConfig is the configuration to define a role and mapping the permissions in the provider
 type RoleConfig struct {
 	ID          string        `json:"id" yaml:"id" validate:"required"`
@@ -69,4 +74,10 @@ type ProviderService interface {
 // ProviderHandler interface
 type ProviderHandler interface {
 	Create(http.ResponseWriter, *http.Request)
+}
+
+// ProviderInterface abstracts guardian communicates with external data providers
+type ProviderInterface interface {
+	GetType() string
+	ValidateConfig(*ProviderConfig) error
 }
