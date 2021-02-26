@@ -51,19 +51,46 @@ func (s *HandlerTestSuite) TestCreate() {
 	})
 
 	s.Run("should return bad request if payload validation returns error", func() {
-		s.Setup()
-		invalidPayload := `
+		testCases := []struct {
+			name           string
+			invalidPayload string
+		}{
+			{
+				name: "incomplete config",
+				invalidPayload: `
 id: provider_type_test
 version: 1
-`
-		req, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(invalidPayload))
+`,
+			},
+			{
+				name: "a step contains both approvers and conditions",
+				invalidPayload: `
+id: bq_dataset
+version: 1
+steps:
+  - name: step_name
+    conditions:
+    - field: field_name
+      match:
+        eq: true
+		approvers: approver_names
+`,
+			},
+		}
 
-		expectedStatusCode := http.StatusBadRequest
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				s.Setup()
+				req, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(tc.invalidPayload))
 
-		s.handler.Create(s.res, req)
-		actualStatusCode := s.res.Result().StatusCode
+				expectedStatusCode := http.StatusBadRequest
 
-		s.Equal(expectedStatusCode, actualStatusCode)
+				s.handler.Create(s.res, req)
+				actualStatusCode := s.res.Result().StatusCode
+
+				s.Equal(expectedStatusCode, actualStatusCode)
+			})
+		}
 	})
 
 	validPayload := `

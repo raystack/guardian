@@ -20,11 +20,11 @@ type Condition struct {
 type Step struct {
 	Name        string       `json:"name" yaml:"name"`
 	Description string       `json:"description" yaml:"description"`
-	Conditions  []*Condition `json:"conditions" yaml:"conditions" validate:"omitempty,required"`
+	Conditions  []*Condition `json:"conditions" yaml:"conditions" validate:"required_without=Approvers,required"`
 	AllowFailed bool         `json:"allow_failed" yaml:"allow_failed"`
 
 	Dependencies []string `json:"dependencies" yaml:"dependencies"`
-	Approvers    string   `json:"approvers" yaml:"approvers"`
+	Approvers    string   `json:"approvers" yaml:"approvers" validate:"required_without=Conditions"`
 }
 
 // Policy is the approval policy configuration
