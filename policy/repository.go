@@ -1,8 +1,6 @@
 package policy
 
 import (
-	"fmt"
-
 	"github.com/odpf/guardian/domain"
 	"gorm.io/gorm"
 )
@@ -50,7 +48,6 @@ func (r *Repository) Find() ([]*domain.Policy, error) {
 		}
 		for _, m := range models {
 			p, err := m.toDomain()
-			fmt.Printf("===== %#v --- %#v\n", p, err)
 			if err != nil {
 				return err
 			}
