@@ -21,3 +21,8 @@ func (s *Service) Create(p *domain.Policy) error {
 func (s *Service) Find() ([]*domain.Policy, error) {
 	return s.policyRepository.Find()
 }
+
+// GetOne record
+func (s *Service) GetOne(id string, version int) (*domain.Policy, error) {
+	return s.policyRepository.GetOne(id, version)
+}

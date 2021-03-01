@@ -66,3 +66,37 @@ func (r *Repository) Find() ([]*domain.Policy, error) {
 
 	return policies, nil
 }
+
+// GetOne returns a policy record based on the id and version params.
+// If version is 0, the latest version will be returned
+func (r *Repository) GetOne(id string, version int) (*domain.Policy, error) {
+	policy := &domain.Policy{}
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		m := &Model{}
+		condition := "id = ?"
+		args := []interface{}{id}
+		if version != 0 {
+			condition = "id = ? AND version = ?"
+			args = append(args, version)
+		}
+
+		conds := append([]interface{}{condition}, args...)
+		if err := tx.Last(m, conds...).Error; err != nil {
+			return err
+		}
+
+		p, err := m.toDomain()
+		if err != nil {
+			return err
+		}
+
+		policy = p
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return policy, nil
+}

@@ -48,3 +48,26 @@ func (_m *PolicyService) Find() ([]*domain.Policy, error) {
 
 	return r0, r1
 }
+
+// GetOne provides a mock function with given fields: id, version
+func (_m *PolicyService) GetOne(id string, version int) (*domain.Policy, error) {
+	ret := _m.Called(id, version)
+
+	var r0 *domain.Policy
+	if rf, ok := ret.Get(0).(func(string, int) *domain.Policy); ok {
+		r0 = rf(id, version)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.Policy)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, int) error); ok {
+		r1 = rf(id, version)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}

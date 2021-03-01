@@ -22,6 +22,8 @@ type RepositoryTestSuite struct {
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
 	repository *policy.Repository
+
+	rows []string
 }
 
 func (s *RepositoryTestSuite) SetupTest() {
@@ -29,6 +31,16 @@ func (s *RepositoryTestSuite) SetupTest() {
 	s.sqldb, _ = db.DB()
 	s.dbmock = mock
 	s.repository = policy.NewRepository(db)
+
+	s.rows = []string{
+		"id",
+		"version",
+		"description",
+		"steps",
+		"labels",
+		"created_at",
+		"updated_at",
+	}
 }
 
 func (s *RepositoryTestSuite) TearDownTest() {
@@ -119,15 +131,7 @@ func (s *RepositoryTestSuite) TestFind() {
 				UpdatedAt:   now,
 			},
 		}
-		expectedRows := sqlmock.NewRows([]string{
-			"id",
-			"version",
-			"description",
-			"steps",
-			"labels",
-			"created_at",
-			"updated_at",
-		}).
+		expectedRows := sqlmock.NewRows(s.rows).
 			AddRow(
 				"",
 				1,
@@ -146,6 +150,73 @@ func (s *RepositoryTestSuite) TestFind() {
 
 		s.Equal(expectedPolicies, actualPolicies)
 		s.Nil(actualError)
+	})
+}
+
+func (s *RepositoryTestSuite) TestGetOne() {
+	// expectedQuery := regexp.QuoteMeta(`SELECT * FROM "policies" WHERE "policies"."deleted_at" IS NULL ORDER BY "policies"."id" DESC LIMIT 1`)
+
+	s.Run("should return error if got error from db transaction", func() {
+		expectedError := errors.New("unexpected error")
+		s.dbmock.ExpectBegin()
+		s.dbmock.ExpectQuery(".*").
+			WillReturnError(expectedError)
+		s.dbmock.ExpectRollback()
+
+		actualResult, actualError := s.repository.GetOne("", 0)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should pass args based on the version param", func() {
+		testCases := []struct {
+			name            string
+			expectedID      string
+			expectedVersion int
+			expectedQuery   string
+			expectedArgs    []driver.Value
+		}{
+			{
+				name:            "should not apply version condition if version param given is 0",
+				expectedID:      "test-id",
+				expectedVersion: 0,
+				expectedQuery:   regexp.QuoteMeta(`SELECT * FROM "policies" WHERE id = $1 AND "policies"."deleted_at" IS NULL ORDER BY "policies"."id" DESC LIMIT 1`),
+				expectedArgs:    []driver.Value{"test-id"},
+			},
+			{
+				name:            "should apply version condition if version param is exists",
+				expectedID:      "test-id",
+				expectedVersion: 1,
+				expectedQuery:   regexp.QuoteMeta(`SELECT * FROM "policies" WHERE (id = $1 AND version = $2) AND "policies"."deleted_at" IS NULL ORDER BY "policies"."id" DESC LIMIT 1`),
+				expectedArgs:    []driver.Value{"test-id", 1},
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				now := time.Now()
+				expectedRowValues := []driver.Value{
+					tc.expectedID,
+					tc.expectedVersion,
+					"",
+					"null",
+					"null",
+					now,
+					now,
+				}
+				s.dbmock.ExpectBegin()
+				s.dbmock.ExpectQuery(tc.expectedQuery).
+					WithArgs(tc.expectedArgs...).
+					WillReturnRows(sqlmock.NewRows(s.rows).AddRow(expectedRowValues...))
+				s.dbmock.ExpectCommit()
+
+				_, actualError := s.repository.GetOne(tc.expectedID, tc.expectedVersion)
+
+				s.Nil(actualError)
+				s.dbmock.ExpectationsWereMet()
+			})
+		}
 	})
 }
 
