@@ -168,6 +168,40 @@ steps:
 	})
 }
 
+func (s *HandlerTestSuite) TestFind() {
+	s.Run("should return internal server error if policy service returns error", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+		expectedStatusCode := http.StatusInternalServerError
+		expectedError := errors.New("service error")
+		s.mockPolicyService.On("Find").Return(nil, expectedError)
+
+		s.handler.Find(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+
+	s.Run("should return ok and the policy records on success", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+		expectedStatusCode := http.StatusOK
+		expectedResponseBody := []*domain.Policy{}
+		s.mockPolicyService.On("Find").Return(expectedResponseBody, nil)
+
+		s.handler.Find(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+		actualResponseBody := []*domain.Policy{}
+		err := json.NewDecoder(s.res.Body).Decode(&actualResponseBody)
+		s.NoError(err)
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+		s.Equal(expectedResponseBody, actualResponseBody)
+	})
+}
+
 func TestHandler(t *testing.T) {
 	suite.Run(t, new(HandlerTestSuite))
 }

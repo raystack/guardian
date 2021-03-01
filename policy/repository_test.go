@@ -6,6 +6,7 @@ import (
 	"errors"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/odpf/guardian/domain"
@@ -87,6 +88,64 @@ func (s *RepositoryTestSuite) TestCreate() {
 		err := s.repository.Create(p)
 
 		s.Nil(err)
+	})
+}
+
+func (s *RepositoryTestSuite) TestFind() {
+	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "policies" WHERE "policies"."deleted_at" IS NULL`)
+
+	s.Run("should return error if transaction returns error", func() {
+		expectedError := errors.New("unexpected error")
+
+		s.dbmock.ExpectBegin()
+		s.dbmock.ExpectQuery(expectedQuery).
+			WillReturnError(expectedError)
+		s.dbmock.ExpectRollback()
+
+		actualPolicies, actualError := s.repository.Find()
+
+		s.EqualError(actualError, expectedError.Error())
+		s.Nil(actualPolicies)
+	})
+
+	s.Run("should return list of policies on success", func() {
+		now := time.Now()
+		expectedPolicies := []*domain.Policy{
+			{
+				ID:          "",
+				Version:     1,
+				Description: "",
+				CreatedAt:   now,
+				UpdatedAt:   now,
+			},
+		}
+		expectedRows := sqlmock.NewRows([]string{
+			"id",
+			"version",
+			"description",
+			"steps",
+			"labels",
+			"created_at",
+			"updated_at",
+		}).
+			AddRow(
+				"",
+				1,
+				"",
+				"null",
+				"null",
+				now,
+				now,
+			)
+
+		s.dbmock.ExpectBegin()
+		s.dbmock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
+		s.dbmock.ExpectCommit()
+
+		actualPolicies, actualError := s.repository.Find()
+
+		s.Equal(expectedPolicies, actualPolicies)
+		s.Nil(actualError)
 	})
 }
 

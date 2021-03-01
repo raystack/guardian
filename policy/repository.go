@@ -1,6 +1,8 @@
 package policy
 
 import (
+	"fmt"
+
 	"github.com/odpf/guardian/domain"
 	"gorm.io/gorm"
 )
@@ -36,4 +38,31 @@ func (r *Repository) Create(p *domain.Policy) error {
 
 		return nil
 	})
+}
+
+// Find records based on filters
+func (r *Repository) Find() ([]*domain.Policy, error) {
+	policies := []*domain.Policy{}
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		var models []*Model
+		if err := tx.Find(&models).Error; err != nil {
+			return err
+		}
+		for _, m := range models {
+			p, err := m.toDomain()
+			fmt.Printf("===== %#v --- %#v\n", p, err)
+			if err != nil {
+				return err
+			}
+
+			policies = append(policies, p)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return policies, nil
 }

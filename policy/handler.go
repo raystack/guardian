@@ -17,6 +17,7 @@ type Handler struct {
 // SetupHandler registers api handlers to the endpoints
 func SetupHandler(r *mux.Router, ps domain.PolicyService) {
 	h := &Handler{ps}
+	r.Methods(http.MethodGet).Path("/policies").HandlerFunc(h.Find)
 	r.Methods(http.MethodPost).Path("/policies").HandlerFunc(h.Create)
 }
 
@@ -40,5 +41,17 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, &policy)
+	return
+}
+
+// Find handles http request for list of policy records
+func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
+	policies, err := h.PolicyService.Find()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.ReturnJSON(w, policies)
 	return
 }

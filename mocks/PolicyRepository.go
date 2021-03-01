@@ -25,3 +25,26 @@ func (_m *PolicyRepository) Create(_a0 *domain.Policy) error {
 
 	return r0
 }
+
+// Find provides a mock function with given fields:
+func (_m *PolicyRepository) Find() ([]*domain.Policy, error) {
+	ret := _m.Called()
+
+	var r0 []*domain.Policy
+	if rf, ok := ret.Get(0).(func() []*domain.Policy); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.Policy)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}

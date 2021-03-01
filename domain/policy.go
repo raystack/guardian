@@ -41,11 +41,13 @@ type Policy struct {
 // PolicyRepository interface
 type PolicyRepository interface {
 	Create(*Policy) error
+	Find() ([]*Policy, error)
 }
 
 // PolicyService interface
 type PolicyService interface {
 	Create(*Policy) error
+	Find() ([]*Policy, error)
 }
 
 // PolicyHandler interface

@@ -16,3 +16,8 @@ func NewService(pr domain.PolicyRepository) *Service {
 func (s *Service) Create(p *domain.Policy) error {
 	return s.policyRepository.Create(p)
 }
+
+// Find records
+func (s *Service) Find() ([]*domain.Policy, error) {
+	return s.policyRepository.Find()
+}
