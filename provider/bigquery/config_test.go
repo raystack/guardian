@@ -23,7 +23,7 @@ func TestNewConfig(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	validAuthConfig := base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
+	validCredentials := base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
 	validPermissionConfig := map[string]interface{}{
 		"name": "roleName",
 	}
@@ -31,22 +31,22 @@ func TestValidate(t *testing.T) {
 	t.Run("error validations", func(t *testing.T) {
 		testCases := []struct {
 			name             string
-			authConfig       interface{}
+			credentials      interface{}
 			permissionConfig interface{}
 		}{
 			{
-				name:             "should return error if auth is not a base64 string",
-				authConfig:       "non-base64-value",
+				name:             "should return error if credentials is not a base64 string",
+				credentials:      "non-base64-value",
 				permissionConfig: validPermissionConfig,
 			},
 			{
 				name:             "should return error if permission type is invalid",
-				authConfig:       validAuthConfig,
+				credentials:      validCredentials,
 				permissionConfig: 0,
 			},
 			{
-				name:       "should return error if permission config does not contain name field",
-				authConfig: validAuthConfig,
+				name:        "should return error if permission config does not contain name field",
+				credentials: validCredentials,
 				permissionConfig: map[string]interface{}{
 					"target": "target_value",
 				},
@@ -56,7 +56,7 @@ func TestValidate(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				pc := &domain.ProviderConfig{
-					Auth: tc.authConfig,
+					Credentials: tc.credentials,
 					Resources: []*domain.ResourceConfig{
 						{
 							Roles: []*domain.RoleConfig{
@@ -74,9 +74,9 @@ func TestValidate(t *testing.T) {
 		}
 	})
 
-	t.Run("should update auth and permission config values into castable bigquery config", func(t *testing.T) {
+	t.Run("should update credentials and permission config values into castable bigquery config", func(t *testing.T) {
 		pc := &domain.ProviderConfig{
-			Auth: validAuthConfig,
+			Credentials: validCredentials,
 			Resources: []*domain.ResourceConfig{
 				{
 					Roles: []*domain.RoleConfig{
@@ -89,11 +89,11 @@ func TestValidate(t *testing.T) {
 		}
 
 		err := bigquery.NewConfig(pc).Validate()
-		_, authConfigOk := pc.Auth.(*bigquery.AuthConfig)
+		_, credentialsOk := pc.Credentials.(*bigquery.Credentials)
 		_, permissionConfigOk := pc.Resources[0].Roles[0].Permissions[0].(*bigquery.PermissionConfig)
 
 		assert.Nil(t, err)
-		assert.True(t, authConfigOk)
+		assert.True(t, credentialsOk)
 		assert.True(t, permissionConfigOk)
 	})
 }

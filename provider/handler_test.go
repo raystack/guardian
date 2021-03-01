@@ -69,7 +69,7 @@ urn: provider_name
 	validPayload := `
 type: google_bigquery
 urn: gcp-project-id
-auth: service-account-key.json
+credentials: service-account-key.json
 appeal:
   allow_active_access_extension_in: 7d
 resources:
@@ -107,9 +107,9 @@ resources:
 		Type: "google_bigquery",
 		URN:  "gcp-project-id",
 		Config: &domain.ProviderConfig{
-			Type: "google_bigquery",
-			URN:  "gcp-project-id",
-			Auth: "service-account-key.json",
+			Type:        "google_bigquery",
+			URN:         "gcp-project-id",
+			Credentials: "service-account-key.json",
 			Appeal: &domain.AppealConfig{
 				AllowActiveAccessExtensionIn: "7d",
 			},

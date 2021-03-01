@@ -11,14 +11,14 @@ import (
 )
 
 var (
-	// ErrInvalidAuthConfig is the error value for invalid auth config
-	ErrInvalidAuthConfig = errors.New("invalid auth config type")
+	// ErrInvalidCredentials is the error value for invalid credentials
+	ErrInvalidCredentials = errors.New("invalid credentials type")
 	// ErrInvalidPermissionConfig is the error value for invalid permission config
 	ErrInvalidPermissionConfig = errors.New("invalid permission config type")
 )
 
-// AuthConfig is authentication configuration used by the bigquery client
-type AuthConfig string
+// Credentials is the authentication configuration used by the bigquery client
+type Credentials string
 
 // PermissionConfig is for mapping role into bigquery permissions
 type PermissionConfig struct {
@@ -45,10 +45,10 @@ func NewConfig(pc *domain.ProviderConfig) *Config {
 func (c *Config) Validate() error {
 	validationErrors := []error{}
 
-	if auth, err := c.validateAuth(c.ProviderConfig.Auth); err != nil {
+	if credentials, err := c.validateCredentials(c.ProviderConfig.Credentials); err != nil {
 		validationErrors = append(validationErrors, err)
 	} else {
-		c.ProviderConfig.Auth = auth
+		c.ProviderConfig.Credentials = credentials
 	}
 
 	for _, resource := range c.ProviderConfig.Resources {
@@ -74,13 +74,13 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) validateAuth(value interface{}) (*AuthConfig, error) {
-	auth, ok := value.(string)
+func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
+	credentials, ok := value.(string)
 	if !ok {
-		return nil, ErrInvalidAuthConfig
+		return nil, ErrInvalidCredentials
 	}
 
-	configValue := AuthConfig(auth)
+	configValue := Credentials(credentials)
 	return &configValue, c.validate.Var(configValue, "required,base64")
 }
 
