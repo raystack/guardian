@@ -14,6 +14,7 @@ func NewService(pr domain.PolicyRepository) *Service {
 
 // Create record
 func (s *Service) Create(p *domain.Policy) error {
+	p.Version = 1
 	return s.policyRepository.Create(p)
 }
 

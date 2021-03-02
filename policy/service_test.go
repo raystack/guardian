@@ -37,6 +37,24 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
+	s.Run("should set version to 1", func() {
+		p := &domain.Policy{
+			ID: "test",
+		}
+
+		expectedPolicy := &domain.Policy{
+			ID:      p.ID,
+			Version: 1,
+		}
+		s.mockPolicyRepository.On("Create", p).Return(nil).Once()
+
+		actualError := s.service.Create(p)
+
+		s.Nil(actualError)
+		s.Equal(expectedPolicy, p)
+		s.mockPolicyRepository.AssertExpectations(s.T())
+	})
+
 	s.Run("should pass the model from the param", func() {
 		s.mockPolicyRepository.On("Create", p).Return(nil).Once()
 
