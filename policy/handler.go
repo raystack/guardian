@@ -23,24 +23,25 @@ func SetupHandler(r *mux.Router, ps domain.PolicyService) {
 
 // Create parses http request body to policy domain and passes it to the policy service
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	var policy domain.Policy
+	var payload createPayload
 
-	if err := yaml.NewDecoder(r.Body).Decode(&policy); err != nil {
+	if err := yaml.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := utils.ValidateStruct(policy); err != nil {
+	if err := utils.ValidateStruct(payload); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := h.PolicyService.Create(&policy); err != nil {
+	p := payload.toDomain()
+	if err := h.PolicyService.Create(p); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	utils.ReturnJSON(w, &policy)
+	utils.ReturnJSON(w, p)
 	return
 }
 

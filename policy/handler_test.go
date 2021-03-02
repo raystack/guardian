@@ -59,14 +59,12 @@ func (s *HandlerTestSuite) TestCreate() {
 				name: "incomplete config",
 				invalidPayload: `
 id: provider_type_test
-version: 1
 `,
 			},
 			{
 				name: "a step contains both approvers and conditions",
 				invalidPayload: `
 id: bq_dataset
-version: 1
 steps:
   - name: step_name
     conditions:
@@ -95,7 +93,6 @@ steps:
 
 	validPayload := `
 id: bq_dataset
-version: 1
 steps:
   - name: check_if_dataset_is_pii
     description: pii dataset needs additional approval from the team lead
@@ -124,8 +121,7 @@ steps:
 	})
 
 	policy := &domain.Policy{
-		ID:      "bq_dataset",
-		Version: 1,
+		ID: "bq_dataset",
 		Steps: []*domain.Step{
 			{
 				Name:        "check_if_dataset_is_pii",
@@ -154,8 +150,13 @@ steps:
 		req, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(validPayload))
 
 		expectedStatusCode := http.StatusOK
-		expectedResponseBody := policy
-		s.mockPolicyService.On("Create", policy).Return(nil)
+		expectedResponseBody := &domain.Policy{}
+		*expectedResponseBody = *policy
+		expectedResponseBody.Version = 1
+		s.mockPolicyService.On("Create", policy).Return(nil).Run(func(args mock.Arguments) {
+			p := args.Get(0).(*domain.Policy)
+			p.Version = 1
+		})
 
 		s.handler.Create(s.res, req)
 		actualStatusCode := s.res.Result().StatusCode
