@@ -173,14 +173,14 @@ func (s *RepositoryTestSuite) TestGetOne() {
 				name:            "should not apply version condition if version param given is 0",
 				expectedID:      "test-id",
 				expectedVersion: 0,
-				expectedQuery:   regexp.QuoteMeta(`SELECT * FROM "policies" WHERE id = $1 AND "policies"."deleted_at" IS NULL ORDER BY "policies"."id" DESC LIMIT 1`),
+				expectedQuery:   regexp.QuoteMeta(`SELECT * FROM "policies" WHERE id = $1 AND "policies"."deleted_at" IS NULL ORDER BY version desc,"policies"."id" LIMIT 1`),
 				expectedArgs:    []driver.Value{"test-id"},
 			},
 			{
 				name:            "should apply version condition if version param is exists",
 				expectedID:      "test-id",
 				expectedVersion: 1,
-				expectedQuery:   regexp.QuoteMeta(`SELECT * FROM "policies" WHERE (id = $1 AND version = $2) AND "policies"."deleted_at" IS NULL ORDER BY "policies"."id" DESC LIMIT 1`),
+				expectedQuery:   regexp.QuoteMeta(`SELECT * FROM "policies" WHERE (id = $1 AND version = $2) AND "policies"."deleted_at" IS NULL ORDER BY version desc,"policies"."id" LIMIT 1`),
 				expectedArgs:    []driver.Value{"test-id", 1},
 			},
 		}

@@ -72,7 +72,7 @@ func (r *Repository) GetOne(id string, version uint) (*domain.Policy, error) {
 	}
 
 	conds := append([]interface{}{condition}, args...)
-	if err := r.db.Last(m, conds...).Error; err != nil {
+	if err := r.db.Order("version desc").First(m, conds...).Error; err != nil {
 		return nil, err
 	}
 
