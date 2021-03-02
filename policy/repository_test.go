@@ -106,13 +106,11 @@ func (s *RepositoryTestSuite) TestCreate() {
 func (s *RepositoryTestSuite) TestFind() {
 	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "policies" WHERE "policies"."deleted_at" IS NULL`)
 
-	s.Run("should return error if transaction returns error", func() {
+	s.Run("should return error if db returns error", func() {
 		expectedError := errors.New("unexpected error")
 
-		s.dbmock.ExpectBegin()
 		s.dbmock.ExpectQuery(expectedQuery).
 			WillReturnError(expectedError)
-		s.dbmock.ExpectRollback()
 
 		actualPolicies, actualError := s.repository.Find()
 
@@ -142,9 +140,7 @@ func (s *RepositoryTestSuite) TestFind() {
 				now,
 			)
 
-		s.dbmock.ExpectBegin()
 		s.dbmock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
-		s.dbmock.ExpectCommit()
 
 		actualPolicies, actualError := s.repository.Find()
 
@@ -154,14 +150,10 @@ func (s *RepositoryTestSuite) TestFind() {
 }
 
 func (s *RepositoryTestSuite) TestGetOne() {
-	// expectedQuery := regexp.QuoteMeta(`SELECT * FROM "policies" WHERE "policies"."deleted_at" IS NULL ORDER BY "policies"."id" DESC LIMIT 1`)
-
-	s.Run("should return error if got error from db transaction", func() {
+	s.Run("should return error if got error from db", func() {
 		expectedError := errors.New("unexpected error")
-		s.dbmock.ExpectBegin()
 		s.dbmock.ExpectQuery(".*").
 			WillReturnError(expectedError)
-		s.dbmock.ExpectRollback()
 
 		actualResult, actualError := s.repository.GetOne("", 0)
 
@@ -205,11 +197,9 @@ func (s *RepositoryTestSuite) TestGetOne() {
 					now,
 					now,
 				}
-				s.dbmock.ExpectBegin()
 				s.dbmock.ExpectQuery(tc.expectedQuery).
 					WithArgs(tc.expectedArgs...).
 					WillReturnRows(sqlmock.NewRows(s.rows).AddRow(expectedRowValues...))
-				s.dbmock.ExpectCommit()
 
 				_, actualError := s.repository.GetOne(tc.expectedID, tc.expectedVersion)
 

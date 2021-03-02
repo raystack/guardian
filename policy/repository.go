@@ -41,24 +41,18 @@ func (r *Repository) Create(p *domain.Policy) error {
 // Find records based on filters
 func (r *Repository) Find() ([]*domain.Policy, error) {
 	policies := []*domain.Policy{}
-	err := r.db.Transaction(func(tx *gorm.DB) error {
-		var models []*Model
-		if err := tx.Find(&models).Error; err != nil {
-			return err
-		}
-		for _, m := range models {
-			p, err := m.toDomain()
-			if err != nil {
-				return err
-			}
 
-			policies = append(policies, p)
-		}
-
-		return nil
-	})
-	if err != nil {
+	var models []*Model
+	if err := r.db.Find(&models).Error; err != nil {
 		return nil, err
+	}
+	for _, m := range models {
+		p, err := m.toDomain()
+		if err != nil {
+			return nil, err
+		}
+
+		policies = append(policies, p)
 	}
 
 	return policies, nil
@@ -69,31 +63,25 @@ func (r *Repository) Find() ([]*domain.Policy, error) {
 func (r *Repository) GetOne(id string, version int) (*domain.Policy, error) {
 	policy := &domain.Policy{}
 
-	err := r.db.Transaction(func(tx *gorm.DB) error {
-		m := &Model{}
-		condition := "id = ?"
-		args := []interface{}{id}
-		if version != 0 {
-			condition = "id = ? AND version = ?"
-			args = append(args, version)
-		}
+	m := &Model{}
+	condition := "id = ?"
+	args := []interface{}{id}
+	if version != 0 {
+		condition = "id = ? AND version = ?"
+		args = append(args, version)
+	}
 
-		conds := append([]interface{}{condition}, args...)
-		if err := tx.Last(m, conds...).Error; err != nil {
-			return err
-		}
+	conds := append([]interface{}{condition}, args...)
+	if err := r.db.Last(m, conds...).Error; err != nil {
+		return nil, err
+	}
 
-		p, err := m.toDomain()
-		if err != nil {
-			return err
-		}
-
-		policy = p
-		return nil
-	})
+	p, err := m.toDomain()
 	if err != nil {
 		return nil, err
 	}
+
+	policy = p
 
 	return policy, nil
 }
