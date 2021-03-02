@@ -42,14 +42,14 @@ type Policy struct {
 type PolicyRepository interface {
 	Create(*Policy) error
 	Find() ([]*Policy, error)
-	GetOne(id string, version int) (*Policy, error)
+	GetOne(id string, version uint) (*Policy, error)
 }
 
 // PolicyService interface
 type PolicyService interface {
 	Create(*Policy) error
 	Find() ([]*Policy, error)
-	GetOne(id string, version int) (*Policy, error)
+	GetOne(id string, version uint) (*Policy, error)
 }
 
 // PolicyHandler interface

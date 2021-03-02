@@ -165,7 +165,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 		testCases := []struct {
 			name            string
 			expectedID      string
-			expectedVersion int
+			expectedVersion uint
 			expectedQuery   string
 			expectedArgs    []driver.Value
 		}{

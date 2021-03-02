@@ -23,6 +23,6 @@ func (s *Service) Find() ([]*domain.Policy, error) {
 }
 
 // GetOne record
-func (s *Service) GetOne(id string, version int) (*domain.Policy, error) {
+func (s *Service) GetOne(id string, version uint) (*domain.Policy, error) {
 	return s.policyRepository.GetOne(id, version)
 }
