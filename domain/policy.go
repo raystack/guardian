@@ -50,6 +50,7 @@ type PolicyService interface {
 	Create(*Policy) error
 	Find() ([]*Policy, error)
 	GetOne(id string, version uint) (*Policy, error)
+	Update(*Policy) error
 }
 
 // PolicyHandler interface

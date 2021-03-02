@@ -17,3 +17,17 @@ func (p *createPayload) toDomain() *domain.Policy {
 		Labels:      p.Labels,
 	}
 }
+
+type updatePayload struct {
+	Description string                 `yaml:"description"`
+	Steps       []*domain.Step         `yaml:"steps" validate:"required"`
+	Labels      map[string]interface{} `yaml:"labels"`
+}
+
+func (p *updatePayload) toDomain() *domain.Policy {
+	return &domain.Policy{
+		Description: p.Description,
+		Steps:       p.Steps,
+		Labels:      p.Labels,
+	}
+}

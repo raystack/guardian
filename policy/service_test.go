@@ -111,6 +111,38 @@ func (s *ServiceTestSuite) TestGetOne() {
 	})
 }
 
+func (s *ServiceTestSuite) TestUpdate() {
+	s.Run("should return error if policy id doesn't exists", func() {
+		p := &domain.Policy{}
+		expectedError := policy.ErrEmptyIDParam
+
+		actualError := s.service.Update(p)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return increment policy version", func() {
+		p := &domain.Policy{
+			ID: "test",
+		}
+
+		expectedLatestPolicy := &domain.Policy{
+			ID:      p.ID,
+			Version: 5,
+		}
+		expectedCreationPolicy := &domain.Policy{
+			ID:      p.ID,
+			Version: expectedLatestPolicy.Version + 1,
+		}
+		s.mockPolicyRepository.On("GetOne", p.ID, p.Version).Return(expectedLatestPolicy, nil).Once()
+		s.mockPolicyRepository.On("Create", expectedCreationPolicy).Return(nil)
+
+		s.service.Update(p)
+
+		s.mockPolicyRepository.AssertExpectations(s.T())
+	})
+}
+
 func TestService(t *testing.T) {
 	suite.Run(t, new(ServiceTestSuite))
 }

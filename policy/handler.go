@@ -19,6 +19,7 @@ func SetupHandler(r *mux.Router, ps domain.PolicyService) {
 	h := &Handler{ps}
 	r.Methods(http.MethodGet).Path("/policies").HandlerFunc(h.Find)
 	r.Methods(http.MethodPost).Path("/policies").HandlerFunc(h.Create)
+	r.Methods(http.MethodPut).Path("/policies/{id}").HandlerFunc(h.Update)
 }
 
 // Create parses http request body to policy domain and passes it to the policy service
@@ -54,5 +55,41 @@ func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, policies)
+	return
+}
+
+// Update
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	policyID := params["id"]
+	if policyID == "" {
+		http.Error(w, ErrEmptyIDParam.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var payload updatePayload
+	if err := yaml.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := utils.ValidateStruct(payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	p := payload.toDomain()
+	p.ID = policyID
+	if err := h.PolicyService.Update(p); err != nil {
+		if err == ErrPolicyDoesNotExists || err == ErrEmptyIDParam {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.ReturnJSON(w, p)
 	return
 }
