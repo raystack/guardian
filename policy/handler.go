@@ -58,7 +58,7 @@ func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// Update
+// Update is the http handler for policy update
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	policyID := params["id"]
