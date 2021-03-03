@@ -2,6 +2,7 @@ package policy
 
 import (
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/model"
 	"gorm.io/gorm"
 )
 
@@ -17,8 +18,8 @@ func NewRepository(db *gorm.DB) *Repository {
 
 // Create new record to database
 func (r *Repository) Create(p *domain.Policy) error {
-	m := new(Model)
-	if err := m.fromDomain(p); err != nil {
+	m := new(model.Policy)
+	if err := m.FromDomain(p); err != nil {
 		return err
 	}
 
@@ -27,7 +28,7 @@ func (r *Repository) Create(p *domain.Policy) error {
 			return result.Error
 		}
 
-		newPolicy, err := m.toDomain()
+		newPolicy, err := m.ToDomain()
 		if err != nil {
 			return err
 		}
@@ -42,12 +43,12 @@ func (r *Repository) Create(p *domain.Policy) error {
 func (r *Repository) Find() ([]*domain.Policy, error) {
 	policies := []*domain.Policy{}
 
-	var models []*Model
+	var models []*model.Policy
 	if err := r.db.Find(&models).Error; err != nil {
 		return nil, err
 	}
 	for _, m := range models {
-		p, err := m.toDomain()
+		p, err := m.ToDomain()
 		if err != nil {
 			return nil, err
 		}
@@ -63,7 +64,7 @@ func (r *Repository) Find() ([]*domain.Policy, error) {
 func (r *Repository) GetOne(id string, version uint) (*domain.Policy, error) {
 	policy := &domain.Policy{}
 
-	m := &Model{}
+	m := &model.Policy{}
 	condition := "id = ?"
 	args := []interface{}{id}
 	if version != 0 {
@@ -79,7 +80,7 @@ func (r *Repository) GetOne(id string, version uint) (*domain.Policy, error) {
 		return nil, err
 	}
 
-	p, err := m.toDomain()
+	p, err := m.ToDomain()
 	if err != nil {
 		return nil, err
 	}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/odpf/guardian/api"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/provider"
 	"github.com/odpf/guardian/provider/bigquery"
@@ -47,8 +48,8 @@ func Migrate(c *Config) error {
 	}
 
 	models := []interface{}{
-		&provider.Model{},
-		&policy.Model{},
+		&model.Provider{},
+		&model.Policy{},
 	}
 	return store.Migrate(db, models...)
 }

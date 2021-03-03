@@ -1,4 +1,4 @@
-package provider
+package model
 
 import (
 	"encoding/json"
@@ -9,8 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// Model is the database model for provider
-type Model struct {
+// Provider is the database model for provider
+type Provider struct {
 	ID        uint `gorm:"primaryKey"`
 	Type      string
 	URN       string
@@ -21,11 +21,12 @@ type Model struct {
 }
 
 // TableName overrides the table name
-func (Model) TableName() string {
+func (Provider) TableName() string {
 	return "providers"
 }
 
-func (m *Model) fromDomain(p *domain.Provider) error {
+// FromDomain uses *domain.Provider values as the model values
+func (m *Provider) FromDomain(p *domain.Provider) error {
 	config, err := json.Marshal(p.Config)
 	if err != nil {
 		return err
@@ -41,7 +42,8 @@ func (m *Model) fromDomain(p *domain.Provider) error {
 	return nil
 }
 
-func (m *Model) toDomain() (*domain.Provider, error) {
+// ToDomain transforms model into *domain.Provider
+func (m *Provider) ToDomain() (*domain.Provider, error) {
 	config := &domain.ProviderConfig{}
 	if err := json.Unmarshal(m.Config, config); err != nil {
 		return nil, err

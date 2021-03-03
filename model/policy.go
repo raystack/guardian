@@ -1,4 +1,4 @@
-package policy
+package model
 
 import (
 	"encoding/json"
@@ -9,8 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// Model is the database model for policy
-type Model struct {
+// Policy is the database model for policy
+type Policy struct {
 	ID          string `gorm:"primaryKey"`
 	Version     uint   `gorm:"primaryKey"`
 	Description string
@@ -22,11 +22,12 @@ type Model struct {
 }
 
 // TableName overrides the table name
-func (Model) TableName() string {
+func (Policy) TableName() string {
 	return "policies"
 }
 
-func (m *Model) fromDomain(p *domain.Policy) error {
+// FromDomain transforms *domain.Policy values into the model
+func (m *Policy) FromDomain(p *domain.Policy) error {
 	steps, err := json.Marshal(p.Steps)
 	if err != nil {
 		return err
@@ -48,7 +49,8 @@ func (m *Model) fromDomain(p *domain.Policy) error {
 	return nil
 }
 
-func (m *Model) toDomain() (*domain.Policy, error) {
+// ToDomain transforms model into *domain.Policy
+func (m *Policy) ToDomain() (*domain.Policy, error) {
 	var steps []*domain.Step
 	if err := json.Unmarshal(m.Steps, &steps); err != nil {
 		return nil, err

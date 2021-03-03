@@ -2,6 +2,7 @@ package provider
 
 import (
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/model"
 	"gorm.io/gorm"
 )
 
@@ -17,8 +18,8 @@ func NewRepository(db *gorm.DB) *Repository {
 
 // Create new record to database
 func (r *Repository) Create(p *domain.Provider) error {
-	m := new(Model)
-	if err := m.fromDomain(p); err != nil {
+	m := new(model.Provider)
+	if err := m.FromDomain(p); err != nil {
 		return err
 	}
 
@@ -27,7 +28,7 @@ func (r *Repository) Create(p *domain.Provider) error {
 			return result.Error
 		}
 
-		newProvider, err := m.toDomain()
+		newProvider, err := m.ToDomain()
 		if err != nil {
 			return err
 		}
