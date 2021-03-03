@@ -25,3 +25,26 @@ func (_m *ProviderService) Create(_a0 *domain.Provider) error {
 
 	return r0
 }
+
+// Find provides a mock function with given fields:
+func (_m *ProviderService) Find() ([]*domain.Provider, error) {
+	ret := _m.Called()
+
+	var r0 []*domain.Provider
+	if rf, ok := ret.Get(0).(func() []*domain.Provider); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.Provider)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}

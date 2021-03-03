@@ -17,6 +17,7 @@ type Handler struct {
 // SetupHandler registers api handlers to the endpoints
 func SetupHandler(r *mux.Router, ps domain.ProviderService) {
 	h := &Handler{ps}
+	r.Methods(http.MethodGet).Path("/providers").HandlerFunc(h.Find)
 	r.Methods(http.MethodPost).Path("/providers").HandlerFunc(h.Create)
 }
 
@@ -45,5 +46,17 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, p)
+	return
+}
+
+// Find handles http request for list of provider records
+func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
+	records, err := h.ProviderService.Find()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.ReturnJSON(w, records)
 	return
 }

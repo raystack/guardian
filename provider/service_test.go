@@ -78,6 +78,29 @@ func (s *ServiceTestSuite) TestCreate() {
 	})
 }
 
+func (s *ServiceTestSuite) TestFind() {
+	s.Run("should return nil and error if got error from repository", func() {
+		expectedError := errors.New("error from repository")
+		s.mockProviderRepository.On("Find").Return(nil, expectedError).Once()
+
+		actualResult, actualError := s.service.Find()
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return list of records on success", func() {
+		expectedResult := []*domain.Provider{}
+		s.mockProviderRepository.On("Find").Return(expectedResult, nil).Once()
+
+		actualResult, actualError := s.service.Find()
+
+		s.Equal(expectedResult, actualResult)
+		s.Nil(actualError)
+		s.mockProviderRepository.AssertExpectations(s.T())
+	})
+}
+
 func TestService(t *testing.T) {
 	suite.Run(t, new(ServiceTestSuite))
 }

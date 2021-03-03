@@ -45,8 +45,23 @@ func (r *Repository) Update(p *domain.Provider) error {
 }
 
 // Find records based on filters
-func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Provider, error) {
-	return nil, nil
+func (r *Repository) Find() ([]*domain.Provider, error) {
+	providers := []*domain.Provider{}
+
+	var models []*model.Provider
+	if err := r.db.Find(&models).Error; err != nil {
+		return nil, err
+	}
+	for _, m := range models {
+		p, err := m.ToDomain()
+		if err != nil {
+			return nil, err
+		}
+
+		providers = append(providers, p)
+	}
+
+	return providers, nil
 }
 
 // GetOne record by ID

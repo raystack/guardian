@@ -169,6 +169,40 @@ resources:
 	})
 }
 
+func (s *HandlerTestSuite) TestFind() {
+	s.Run("should return internal server error if provider service returns error", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+		expectedStatusCode := http.StatusInternalServerError
+		expectedError := errors.New("service error")
+		s.mockProviderService.On("Find").Return(nil, expectedError)
+
+		s.handler.Find(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+
+	s.Run("should return ok and the provider records on success", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+		expectedStatusCode := http.StatusOK
+		expectedResponseBody := []*domain.Provider{}
+		s.mockProviderService.On("Find").Return(expectedResponseBody, nil)
+
+		s.handler.Find(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+		actualResponseBody := []*domain.Provider{}
+		err := json.NewDecoder(s.res.Body).Decode(&actualResponseBody)
+		s.NoError(err)
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+		s.Equal(expectedResponseBody, actualResponseBody)
+	})
+}
+
 func TestHandler(t *testing.T) {
 	suite.Run(t, new(HandlerTestSuite))
 }

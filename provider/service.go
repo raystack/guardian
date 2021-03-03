@@ -41,3 +41,8 @@ func (s *Service) Create(p *domain.Provider) error {
 func (s *Service) getProvider(pType string) domain.ProviderInterface {
 	return s.providers[pType]
 }
+
+// Find records
+func (s *Service) Find() ([]*domain.Provider, error) {
+	return s.providerRepository.Find()
+}

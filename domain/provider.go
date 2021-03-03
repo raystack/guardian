@@ -61,7 +61,7 @@ type Provider struct {
 type ProviderRepository interface {
 	Create(*Provider) error
 	Update(*Provider) error
-	Find(filters map[string]interface{}) ([]*Provider, error)
+	Find() ([]*Provider, error)
 	GetOne(uint) (*Provider, error)
 	Delete(uint) error
 }
@@ -69,6 +69,7 @@ type ProviderRepository interface {
 // ProviderService interface
 type ProviderService interface {
 	Create(*Provider) error
+	Find() ([]*Provider, error)
 }
 
 // ProviderHandler interface
