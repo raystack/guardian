@@ -10,13 +10,6 @@ import (
 	"github.com/odpf/guardian/utils"
 )
 
-var (
-	// ErrInvalidCredentials is the error value for invalid credentials
-	ErrInvalidCredentials = errors.New("invalid credentials type")
-	// ErrInvalidPermissionConfig is the error value for invalid permission config
-	ErrInvalidPermissionConfig = errors.New("invalid permission config type")
-)
-
 // Credentials is the authentication configuration used by the bigquery client
 type Credentials string
 

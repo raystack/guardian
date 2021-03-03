@@ -1,16 +1,7 @@
 package policy
 
 import (
-	"errors"
-
 	"github.com/odpf/guardian/domain"
-)
-
-var (
-	// ErrEmptyIDParam is the error value if the policy id is empty
-	ErrEmptyIDParam = errors.New("id can't be empty")
-	// ErrPolicyDoesNotExists is the error value if the designated policy is not exists
-	ErrPolicyDoesNotExists = errors.New("policy does not exists")
 )
 
 // Service handling the business logics

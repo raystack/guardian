@@ -1,14 +1,7 @@
 package provider
 
 import (
-	"errors"
-
 	"github.com/odpf/guardian/domain"
-)
-
-var (
-	// ErrInvalidProviderType
-	ErrInvalidProviderType = errors.New("invalid provider type")
 )
 
 // Service handling the business logics
