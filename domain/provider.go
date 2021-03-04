@@ -70,6 +70,7 @@ type ProviderRepository interface {
 type ProviderService interface {
 	Create(*Provider) error
 	Find() ([]*Provider, error)
+	Update(*Provider) error
 }
 
 // ProviderHandler interface

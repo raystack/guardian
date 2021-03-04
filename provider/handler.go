@@ -2,6 +2,7 @@ package provider
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/odpf/guardian/domain"
@@ -19,6 +20,7 @@ func SetupHandler(r *mux.Router, ps domain.ProviderService) {
 	h := &Handler{ps}
 	r.Methods(http.MethodGet).Path("/providers").HandlerFunc(h.Find)
 	r.Methods(http.MethodPost).Path("/providers").HandlerFunc(h.Create)
+	r.Methods(http.MethodPut).Path("/providers/{id}").HandlerFunc(h.Update)
 }
 
 // Create parses http request body to provider domain and passes it to the provider service
@@ -58,5 +60,39 @@ func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, records)
+	return
+}
+
+// Update handles http request for provider update
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} else if id == 0 {
+		http.Error(w, ErrEmptyIDParam.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var payload updatePayload
+	if err := yaml.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := utils.ValidateStruct(payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	p := payload.toDomain()
+	p.ID = uint(id)
+	if err := h.ProviderService.Update(p); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.ReturnJSON(w, p)
 	return
 }

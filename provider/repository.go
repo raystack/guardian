@@ -39,11 +39,6 @@ func (r *Repository) Create(p *domain.Provider) error {
 	})
 }
 
-// Update record by ID
-func (r *Repository) Update(p *domain.Provider) error {
-	return nil
-}
-
 // Find records based on filters
 func (r *Repository) Find() ([]*domain.Provider, error) {
 	providers := []*domain.Provider{}
@@ -66,7 +61,45 @@ func (r *Repository) Find() ([]*domain.Provider, error) {
 
 // GetOne record by ID
 func (r *Repository) GetOne(id uint) (*domain.Provider, error) {
-	return nil, nil
+	m := &model.Provider{
+		ID: id,
+	}
+	if err := r.db.Take(m).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	p, err := m.ToDomain()
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+// Update record by ID
+func (r *Repository) Update(p *domain.Provider) error {
+	m := new(model.Provider)
+	if err := m.FromDomain(p); err != nil {
+		return err
+	}
+
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(m).Updates(*m).Error; err != nil {
+			return err
+		}
+
+		newRecord, err := m.ToDomain()
+		if err != nil {
+			return err
+		}
+
+		*p = *newRecord
+
+		return nil
+	})
 }
 
 // Delete record by ID

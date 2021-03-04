@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
 )
 
@@ -45,4 +46,25 @@ func (s *Service) getProvider(pType string) domain.ProviderInterface {
 // Find records
 func (s *Service) Find() ([]*domain.Provider, error) {
 	return s.providerRepository.Find()
+}
+
+// Update updates the non-zero value(s) only
+func (s *Service) Update(p *domain.Provider) error {
+	if p.ID == 0 {
+		return ErrEmptyIDParam
+	}
+
+	currentProvider, err := s.providerRepository.GetOne(p.ID)
+	if err != nil {
+		return err
+	}
+	if currentProvider == nil {
+		return ErrRecordNotFound
+	}
+
+	if err := mergo.Merge(p, currentProvider); err != nil {
+		return err
+	}
+
+	return s.providerRepository.Update(p)
 }
