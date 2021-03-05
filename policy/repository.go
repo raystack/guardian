@@ -62,8 +62,6 @@ func (r *Repository) Find() ([]*domain.Policy, error) {
 // GetOne returns a policy record based on the id and version params.
 // If version is 0, the latest version will be returned
 func (r *Repository) GetOne(id string, version uint) (*domain.Policy, error) {
-	policy := &domain.Policy{}
-
 	m := &model.Policy{}
 	condition := "id = ?"
 	args := []interface{}{id}
@@ -85,7 +83,5 @@ func (r *Repository) GetOne(id string, version uint) (*domain.Policy, error) {
 		return nil, err
 	}
 
-	policy = p
-
-	return policy, nil
+	return p, nil
 }
