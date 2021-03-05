@@ -61,6 +61,10 @@ func (r *Repository) Find() ([]*domain.Provider, error) {
 
 // GetOne record by ID
 func (r *Repository) GetOne(id uint) (*domain.Provider, error) {
+	if id == 0 {
+		return nil, ErrEmptyIDParam
+	}
+
 	m := &model.Provider{
 		ID: id,
 	}
@@ -81,6 +85,10 @@ func (r *Repository) GetOne(id uint) (*domain.Provider, error) {
 
 // Update record by ID
 func (r *Repository) Update(p *domain.Provider) error {
+	if p.ID == 0 {
+		return ErrEmptyIDParam
+	}
+
 	m := new(model.Provider)
 	if err := m.FromDomain(p); err != nil {
 		return err

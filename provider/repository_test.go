@@ -116,12 +116,21 @@ func (s *RepositoryTestSuite) TestFind() {
 }
 
 func (s *RepositoryTestSuite) TestGetOne() {
+	s.Run("should return error if id is empty", func() {
+		expectedError := provider.ErrEmptyIDParam
+
+		actualResult, actualError := s.repository.GetOne(0)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
 	s.Run("should return nil record and nil error if record not found", func() {
 		expectedError := gorm.ErrRecordNotFound
 		s.dbmock.ExpectQuery(".*").
 			WillReturnError(expectedError)
 
-		actualResult, actualError := s.repository.GetOne(0)
+		actualResult, actualError := s.repository.GetOne(1)
 
 		s.Nil(actualResult)
 		s.Nil(actualError)
@@ -132,7 +141,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 		s.dbmock.ExpectQuery(".*").
 			WillReturnError(expectedError)
 
-		actualResult, actualError := s.repository.GetOne(0)
+		actualResult, actualError := s.repository.GetOne(1)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -163,6 +172,14 @@ func (s *RepositoryTestSuite) TestGetOne() {
 }
 
 func (s *RepositoryTestSuite) TestUpdate() {
+	s.Run("should return error if id is empty", func() {
+		expectedError := provider.ErrEmptyIDParam
+
+		actualError := s.repository.Update(&domain.Provider{})
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
 	s.Run("should return error if got error from transaction", func() {
 		expectedError := errors.New("db error")
 		s.dbmock.ExpectBegin()
