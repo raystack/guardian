@@ -89,6 +89,10 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	p := payload.toDomain()
 	p.ID = uint(id)
 	if err := h.ProviderService.Update(p); err != nil {
+		if err == ErrRecordNotFound {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
