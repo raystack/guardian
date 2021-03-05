@@ -3,11 +3,13 @@ package provider_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/gorilla/mux"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/provider"
@@ -195,6 +197,164 @@ func (s *HandlerTestSuite) TestFind() {
 		s.handler.Find(s.res, req)
 		actualStatusCode := s.res.Result().StatusCode
 		actualResponseBody := []*domain.Provider{}
+		err := json.NewDecoder(s.res.Body).Decode(&actualResponseBody)
+		s.NoError(err)
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+		s.Equal(expectedResponseBody, actualResponseBody)
+	})
+}
+
+func (s *HandlerTestSuite) TestUpdate() {
+	s.Run("should return error if got invalid id param", func() {
+		testCases := []struct {
+			params             map[string]string
+			expectedStatusCode int
+		}{
+			{
+				params:             map[string]string{},
+				expectedStatusCode: http.StatusBadRequest,
+			},
+			{
+				params: map[string]string{
+					"id": "",
+				},
+				expectedStatusCode: http.StatusBadRequest,
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Setup()
+			req, _ := http.NewRequest(http.MethodPut, "/", nil)
+			req = mux.SetURLVars(req, tc.params)
+
+			expectedStatusCode := tc.expectedStatusCode
+
+			s.handler.Update(s.res, req)
+			actualStatusCode := s.res.Result().StatusCode
+
+			s.Equal(expectedStatusCode, actualStatusCode)
+		}
+	})
+
+	s.Run("should return bad request if the payload is invalid", func() {
+		testCases := []struct {
+			name               string
+			payload            string
+			expectedStatusCode int
+		}{
+			{
+				name:               "malformed yaml",
+				payload:            `invalid yaml format...`,
+				expectedStatusCode: http.StatusBadRequest,
+			},
+			{
+				name: "invalid yaml update payload validation",
+				payload: `
+appeal:
+  - test
+	- test2
+`,
+				expectedStatusCode: http.StatusBadRequest,
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				s.Setup()
+				req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(tc.payload))
+				req = mux.SetURLVars(req, map[string]string{
+					"id": "1",
+				})
+
+				expectedStatusCode := tc.expectedStatusCode
+
+				s.handler.Update(s.res, req)
+				actualStatusCode := s.res.Result().StatusCode
+
+				s.Equal(expectedStatusCode, actualStatusCode)
+			})
+		}
+	})
+
+	validPayload := `
+appeal:
+  allow_active_access_extension_in: 7d
+resources:
+  - type: type
+    policy:
+      id: policy_x
+      version: 1
+`
+	s.Run("should return error based on the service error", func() {
+		testCases := []struct {
+			name                 string
+			expectedServiceError error
+			expectedStatusCode   int
+		}{
+			{
+				name:                 "provider with the specified id doesn't exists",
+				expectedServiceError: provider.ErrRecordNotFound,
+				expectedStatusCode:   http.StatusNotFound,
+			},
+			{
+				name:                 "any unexpected error from the provider service",
+				expectedServiceError: errors.New("any service error"),
+				expectedStatusCode:   http.StatusInternalServerError,
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				s.Setup()
+				req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(validPayload))
+				req = mux.SetURLVars(req, map[string]string{
+					"id": "1",
+				})
+
+				expectedStatusCode := tc.expectedStatusCode
+				s.mockProviderService.On("Update", mock.Anything).Return(tc.expectedServiceError).Once()
+
+				s.handler.Update(s.res, req)
+				actualStatusCode := s.res.Result().StatusCode
+
+				s.Equal(expectedStatusCode, actualStatusCode)
+			})
+		}
+	})
+
+	s.Run("should return the new version of the provider on success", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(validPayload))
+
+		expectedProviderID := uint(1)
+		req = mux.SetURLVars(req, map[string]string{
+			"id": fmt.Sprintf("%d", expectedProviderID),
+		})
+		expectedStatusCode := http.StatusOK
+		expectedProvider := &domain.Provider{
+			ID: expectedProviderID,
+			Config: &domain.ProviderConfig{
+				Appeal: &domain.AppealConfig{
+					AllowActiveAccessExtensionIn: "7d",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: "type",
+						Policy: &domain.PolicyConfig{
+							ID:      "policy_x",
+							Version: 1,
+						},
+					},
+				},
+			},
+		}
+		expectedResponseBody := expectedProvider
+		s.mockProviderService.On("Update", expectedProvider).Return(nil).Once()
+
+		s.handler.Update(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+		actualResponseBody := &domain.Provider{}
 		err := json.NewDecoder(s.res.Body).Decode(&actualResponseBody)
 		s.NoError(err)
 

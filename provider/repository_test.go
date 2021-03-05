@@ -12,6 +12,7 @@ import (
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/provider"
 	"github.com/stretchr/testify/suite"
+	"gorm.io/gorm"
 )
 
 type RepositoryTestSuite struct {
@@ -111,6 +112,89 @@ func (s *RepositoryTestSuite) TestFind() {
 
 		s.Equal(expectedRecords, actualRecords)
 		s.Nil(actualError)
+	})
+}
+
+func (s *RepositoryTestSuite) TestGetOne() {
+	s.Run("should return nil record and nil error if record not found", func() {
+		expectedError := gorm.ErrRecordNotFound
+		s.dbmock.ExpectQuery(".*").
+			WillReturnError(expectedError)
+
+		actualResult, actualError := s.repository.GetOne(0)
+
+		s.Nil(actualResult)
+		s.Nil(actualError)
+	})
+
+	s.Run("should return error if got error from db", func() {
+		expectedError := errors.New("unexpected error")
+		s.dbmock.ExpectQuery(".*").
+			WillReturnError(expectedError)
+
+		actualResult, actualError := s.repository.GetOne(0)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "providers" WHERE "providers"."deleted_at" IS NULL AND "providers"."id" = $1 LIMIT 1`)
+	s.Run("should return record and nil error on success", func() {
+		expectedID := uint(10)
+		timeNow := time.Now()
+		expectedRows := sqlmock.NewRows(s.rows).
+			AddRow(
+				expectedID,
+				"type_test",
+				"urn_test",
+				"null",
+				timeNow,
+				timeNow,
+			)
+		s.dbmock.ExpectQuery(expectedQuery).
+			WithArgs(expectedID).
+			WillReturnRows(expectedRows)
+
+		_, actualError := s.repository.GetOne(expectedID)
+
+		s.Nil(actualError)
+		s.dbmock.ExpectationsWereMet()
+	})
+}
+
+func (s *RepositoryTestSuite) TestUpdate() {
+	s.Run("should return error if got error from transaction", func() {
+		expectedError := errors.New("db error")
+		s.dbmock.ExpectBegin()
+		s.dbmock.ExpectExec(".*").
+			WillReturnError(expectedError)
+		s.dbmock.ExpectRollback()
+
+		actualError := s.repository.Update(&domain.Provider{ID: 1})
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	expectedQuery := regexp.QuoteMeta(`UPDATE "providers" SET "id"=$1,"config"=$2,"updated_at"=$3 WHERE "id" = $4`)
+	s.Run("should return error if got error from transaction", func() {
+		config := &domain.ProviderConfig{}
+		expectedID := uint(1)
+		provider := &domain.Provider{
+			ID:     expectedID,
+			Config: config,
+		}
+
+		s.dbmock.ExpectBegin()
+		s.dbmock.ExpectExec(expectedQuery).
+			WillReturnResult(sqlmock.NewResult(int64(expectedID), 1))
+		s.dbmock.ExpectCommit()
+
+		err := s.repository.Update(provider)
+
+		actualID := provider.ID
+
+		s.Nil(err)
+		s.Equal(expectedID, actualID)
 	})
 }
 
