@@ -9,6 +9,8 @@ import (
 const (
 	// PortKey is the key for port configuration
 	PortKey = "PORT"
+	// EncryptionSecretKeyKey is the key for encryption secret key
+	EncryptionSecretKeyKey = "ENCRYPTION_SECRET_KEY"
 	// DBHostKey is the key for database host configuration
 	DBHostKey = "DB_HOST"
 	// DBUserKey is the key for database user configuration
@@ -25,7 +27,8 @@ const (
 
 // Config contains the application configuration
 type Config struct {
-	Port int
+	Port                   int
+	EncryptionSecretKeyKey string
 
 	DBHost     string
 	DBUser     string
@@ -52,7 +55,9 @@ func LoadConfig() *Config {
 	viper.SetDefault(DBSslModeKey, "disable")
 
 	return &Config{
-		Port:       viper.GetInt(PortKey),
+		Port:                   viper.GetInt(PortKey),
+		EncryptionSecretKeyKey: viper.GetString(EncryptionSecretKeyKey),
+
 		DBHost:     viper.GetString(DBHostKey),
 		DBUser:     viper.GetString(DBUserKey),
 		DBPassword: viper.GetString(DBPasswordKey),
