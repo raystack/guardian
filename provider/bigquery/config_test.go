@@ -73,7 +73,7 @@ func TestValidate(t *testing.T) {
 				}
 				mockCrypto.On("Encrypt", mock.Anything).Return("", nil).Once()
 
-				err := bigquery.NewConfig(pc, mockCrypto).Validate()
+				err := bigquery.NewConfig(pc, mockCrypto).ParseAndValidate()
 				assert.Error(t, err)
 			})
 		}
@@ -94,7 +94,7 @@ func TestValidate(t *testing.T) {
 		}
 		mockCrypto.On("Encrypt", mock.Anything).Return("", nil).Once()
 
-		err := bigquery.NewConfig(pc, mockCrypto).Validate()
+		err := bigquery.NewConfig(pc, mockCrypto).ParseAndValidate()
 		_, credentialsOk := pc.Credentials.(*bigquery.Credentials)
 		_, permissionConfigOk := pc.Resources[0].Roles[0].Permissions[0].(*bigquery.PermissionConfig)
 

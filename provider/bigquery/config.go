@@ -67,8 +67,8 @@ func NewConfig(pc *domain.ProviderConfig, crypto domain.Crypto) *Config {
 	}
 }
 
-// Validate validates bigquery config within provider config and make the interface{} config value castable into the expected bigquery config value
-func (c *Config) Validate() error {
+// ParseAndValidate validates bigquery config within provider config and make the interface{} config value castable into the expected bigquery config value
+func (c *Config) ParseAndValidate() error {
 	return c.parseAndValidate()
 }
 

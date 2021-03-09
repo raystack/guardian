@@ -12,6 +12,20 @@ type ProviderInterface struct {
 	mock.Mock
 }
 
+// CreateConfig provides a mock function with given fields: _a0
+func (_m *ProviderInterface) CreateConfig(_a0 *domain.ProviderConfig) error {
+	ret := _m.Called(_a0)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*domain.ProviderConfig) error); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetType provides a mock function with given fields:
 func (_m *ProviderInterface) GetType() string {
 	ret := _m.Called()
@@ -21,20 +35,6 @@ func (_m *ProviderInterface) GetType() string {
 		r0 = rf()
 	} else {
 		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// ValidateConfig provides a mock function with given fields: _a0
-func (_m *ProviderInterface) ValidateConfig(_a0 *domain.ProviderConfig) error {
-	ret := _m.Called(_a0)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*domain.ProviderConfig) error); ok {
-		r0 = rf(_a0)
-	} else {
-		r0 = ret.Error(0)
 	}
 
 	return r0

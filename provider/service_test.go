@@ -50,7 +50,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 	s.Run("should return error if got error from the provider config validation", func() {
 		expectedError := errors.New("provider config validation error")
-		s.mockProvider.On("ValidateConfig", mock.Anything).Return(expectedError).Once()
+		s.mockProvider.On("CreateConfig", mock.Anything).Return(expectedError).Once()
 
 		actualError := s.service.Create(p)
 
@@ -59,7 +59,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 	s.Run("should return error if got error from the provider repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockProvider.On("ValidateConfig", mock.Anything).Return(nil).Once()
+		s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 		s.mockProviderRepository.On("Create", mock.Anything).Return(expectedError).Once()
 
 		actualError := s.service.Create(p)
@@ -68,7 +68,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	})
 
 	s.Run("should pass the model from the param", func() {
-		s.mockProvider.On("ValidateConfig", mock.Anything).Return(nil).Once()
+		s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 		s.mockProviderRepository.On("Create", p).Return(nil).Once()
 
 		actualError := s.service.Create(p)

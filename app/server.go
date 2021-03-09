@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/odpf/guardian/api"
+	"github.com/odpf/guardian/crypto"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/policy"
@@ -22,11 +23,13 @@ func RunServer(c *Config) error {
 		return err
 	}
 
+	crypto := crypto.NewAES(c.EncryptionSecretKeyKey)
+
 	providerRepository := provider.NewRepository(db)
 	policyRepository := policy.NewRepository(db)
 
 	providers := []domain.ProviderInterface{
-		bigquery.NewProvider(domain.ProviderTypeBigQuery),
+		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
 	}
 
 	providerService := provider.NewService(providerRepository, providers)

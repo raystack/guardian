@@ -81,5 +81,5 @@ type ProviderHandler interface {
 // ProviderInterface abstracts guardian communicates with external data providers
 type ProviderInterface interface {
 	GetType() string
-	ValidateConfig(*ProviderConfig) error
+	CreateConfig(*ProviderConfig) error
 }

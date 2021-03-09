@@ -32,7 +32,7 @@ func (s *Service) Create(p *domain.Provider) error {
 		return ErrInvalidProviderType
 	}
 
-	if err := provider.ValidateConfig(p.Config); err != nil {
+	if err := provider.CreateConfig(p.Config); err != nil {
 		return err
 	}
 

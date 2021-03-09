@@ -1,16 +1,20 @@
 package bigquery
 
-import "github.com/odpf/guardian/domain"
+import (
+	"github.com/odpf/guardian/domain"
+)
 
 // Provider for bigquery
 type Provider struct {
 	typeName string
+	crypto   domain.Crypto
 }
 
 // NewProvider returns bigquery provider
-func NewProvider(typeName string) *Provider {
+func NewProvider(typeName string, crypto domain.Crypto) *Provider {
 	return &Provider{
 		typeName: typeName,
+		crypto:   crypto,
 	}
 }
 
@@ -19,7 +23,13 @@ func (p *Provider) GetType() string {
 	return p.typeName
 }
 
-// ValidateConfig validates provider config
-func (p *Provider) ValidateConfig(pc *domain.ProviderConfig) error {
-	return NewConfig(pc).Validate()
+// CreateConfig validates provider config
+func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
+	c := NewConfig(pc, p.crypto)
+
+	if err := c.ParseAndValidate(); err != nil {
+		return err
+	}
+
+	return c.EncryptCredentials()
 }
