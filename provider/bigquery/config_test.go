@@ -5,16 +5,19 @@ import (
 	"testing"
 
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/provider/bigquery"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestNewConfig(t *testing.T) {
 	t.Run("should return bigquery config containing the same provider config", func(t *testing.T) {
+		mockCrypto := new(mocks.Crypto)
 		pc := &domain.ProviderConfig{}
 		expectedProviderConfig := pc
 
-		c := bigquery.NewConfig(pc)
+		c := bigquery.NewConfig(pc, mockCrypto)
 		actualProviderConfig := c.ProviderConfig
 
 		assert.NotNil(t, c)
@@ -23,6 +26,7 @@ func TestNewConfig(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
+	mockCrypto := new(mocks.Crypto)
 	validCredentials := base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
 	validPermissionConfig := map[string]interface{}{
 		"name": "roleName",
@@ -67,8 +71,9 @@ func TestValidate(t *testing.T) {
 						},
 					},
 				}
+				mockCrypto.On("Encrypt", mock.Anything).Return("", nil).Once()
 
-				err := bigquery.NewConfig(pc).Validate()
+				err := bigquery.NewConfig(pc, mockCrypto).Validate()
 				assert.Error(t, err)
 			})
 		}
@@ -87,8 +92,9 @@ func TestValidate(t *testing.T) {
 				},
 			},
 		}
+		mockCrypto.On("Encrypt", mock.Anything).Return("", nil).Once()
 
-		err := bigquery.NewConfig(pc).Validate()
+		err := bigquery.NewConfig(pc, mockCrypto).Validate()
 		_, credentialsOk := pc.Credentials.(*bigquery.Credentials)
 		_, permissionConfigOk := pc.Resources[0].Roles[0].Permissions[0].(*bigquery.PermissionConfig)
 
