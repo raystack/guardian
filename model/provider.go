@@ -11,9 +11,9 @@ import (
 
 // Provider is the database model for provider
 type Provider struct {
-	ID        uint `gorm:"primaryKey"`
-	Type      string
-	URN       string
+	ID        uint   `gorm:"autoIncrement;uniqueIndex"`
+	Type      string `gorm:"primaryKey"`
+	URN       string `gorm:"primaryKey"`
 	Config    datatypes.JSON
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
