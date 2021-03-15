@@ -53,6 +53,7 @@ func Migrate(c *Config) error {
 	models := []interface{}{
 		&model.Provider{},
 		&model.Policy{},
+		&model.Resource{},
 	}
 	return store.Migrate(db, models...)
 }
