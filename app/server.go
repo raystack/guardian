@@ -12,6 +12,8 @@ import (
 	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/provider"
 	"github.com/odpf/guardian/provider/bigquery"
+	"github.com/odpf/guardian/resource"
+	"github.com/odpf/guardian/scheduler"
 	"github.com/odpf/guardian/store"
 	"gorm.io/gorm"
 )
@@ -27,17 +29,34 @@ func RunServer(c *Config) error {
 
 	providerRepository := provider.NewRepository(db)
 	policyRepository := policy.NewRepository(db)
+	resourceRepository := resource.NewRepository(db)
 
 	providers := []domain.ProviderInterface{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
 	}
 
-	providerService := provider.NewService(providerRepository, providers)
+	resourceService := resource.NewService(resourceRepository)
+	providerService := provider.NewService(providerRepository, resourceService, providers)
 	policyService := policy.NewService(policyRepository)
 
 	r := api.New()
 	provider.SetupHandler(r, providerService)
 	policy.SetupHandler(r, policyService)
+	resource.SetupHandler(r, resourceService)
+
+	providerJobHandler := provider.NewJobHandler(providerService)
+
+	tasks := []*scheduler.Task{
+		{
+			CronTab: "* */2 * * *",
+			Func:    providerJobHandler.GetResources,
+		},
+	}
+	s, err := scheduler.New(tasks)
+	if err != nil {
+		return err
+	}
+	s.Run()
 
 	log.Printf("running server on port %d\n", c.Port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", c.Port), r)

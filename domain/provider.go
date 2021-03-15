@@ -71,6 +71,7 @@ type ProviderService interface {
 	Create(*Provider) error
 	Find() ([]*Provider, error)
 	Update(*Provider) error
+	FetchResources() error
 }
 
 // ProviderHandler interface

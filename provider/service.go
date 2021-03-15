@@ -8,12 +8,13 @@ import (
 // Service handling the business logics
 type Service struct {
 	providerRepository domain.ProviderRepository
+	resourceService    domain.ResourceService
 
 	providers map[string]domain.ProviderInterface
 }
 
 // NewService returns service struct
-func NewService(pr domain.ProviderRepository, providers []domain.ProviderInterface) *Service {
+func NewService(pr domain.ProviderRepository, rs domain.ResourceService, providers []domain.ProviderInterface) *Service {
 	mapProviders := make(map[string]domain.ProviderInterface)
 	for _, p := range providers {
 		mapProviders[p.GetType()] = p
@@ -21,6 +22,7 @@ func NewService(pr domain.ProviderRepository, providers []domain.ProviderInterfa
 
 	return &Service{
 		providerRepository: pr,
+		resourceService:    rs,
 		providers:          mapProviders,
 	}
 }
@@ -63,4 +65,29 @@ func (s *Service) Update(p *domain.Provider) error {
 	}
 
 	return s.providerRepository.Update(p)
+}
+
+// FetchResources fetches all resources for all registered providers
+func (s *Service) FetchResources() error {
+	providers, err := s.providerRepository.Find()
+	if err != nil {
+		return err
+	}
+
+	resources := []*domain.Resource{}
+	for _, p := range providers {
+		provider := s.getProvider(p.Type)
+		if provider == nil {
+			return ErrInvalidProviderType
+		}
+
+		res, err := provider.GetResources(p.Config)
+		if err != nil {
+			return err
+		}
+
+		resources = append(resources, res...)
+	}
+
+	return s.resourceService.BulkUpsert(resources)
 }

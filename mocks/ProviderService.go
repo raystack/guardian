@@ -26,6 +26,20 @@ func (_m *ProviderService) Create(_a0 *domain.Provider) error {
 	return r0
 }
 
+// FetchResources provides a mock function with given fields:
+func (_m *ProviderService) FetchResources() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Find provides a mock function with given fields:
 func (_m *ProviderService) Find() ([]*domain.Provider, error) {
 	ret := _m.Called()
