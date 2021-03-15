@@ -12,6 +12,11 @@ func NewService(repo domain.ResourceRepository) *Service {
 	return &Service{repo}
 }
 
+// Find records
+func (s *Service) Find() ([]*domain.Resource, error) {
+	return s.repo.Find()
+}
+
 // BulkUpsert inserts or updates records
 func (s *Service) BulkUpsert(resources []*domain.Resource) error {
 	return s.repo.BulkUpsert(resources)

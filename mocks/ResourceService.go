@@ -25,3 +25,26 @@ func (_m *ResourceService) BulkUpsert(_a0 []*domain.Resource) error {
 
 	return r0
 }
+
+// Find provides a mock function with given fields:
+func (_m *ResourceService) Find() ([]*domain.Resource, error) {
+	ret := _m.Called()
+
+	var r0 []*domain.Resource
+	if rf, ok := ret.Get(0).(func() []*domain.Resource); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.Resource)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
