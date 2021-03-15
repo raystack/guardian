@@ -1,6 +1,7 @@
 package bigquery
 
 import (
+	"encoding/base64"
 	"errors"
 	"strings"
 
@@ -101,7 +102,6 @@ func (c *Config) parseAndValidate() error {
 	if credentials, err := c.validateCredentials(c.ProviderConfig.Credentials); err != nil {
 		validationErrors = append(validationErrors, err)
 	} else {
-		credentials.Encrypt(c.crypto)
 		c.ProviderConfig.Credentials = credentials
 	}
 
@@ -135,8 +135,17 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 		return nil, ErrInvalidCredentials
 	}
 
-	configValue := Credentials(credentials)
-	return &configValue, c.validator.Var(configValue, "required,base64")
+	if err := c.validator.Var(credentials, "required,base64"); err != nil {
+		return nil, err
+	}
+
+	bqCreds, err := base64.StdEncoding.DecodeString(credentials)
+	if err != nil {
+		return nil, err
+	}
+
+	configValue := Credentials(bqCreds)
+	return &configValue, nil
 }
 
 func (c *Config) validatePermission(value interface{}) (*PermissionConfig, error) {

@@ -82,4 +82,5 @@ type ProviderHandler interface {
 type ProviderInterface interface {
 	GetType() string
 	CreateConfig(*ProviderConfig) error
+	GetResources(pc *ProviderConfig) ([]*Resource, error)
 }

@@ -26,6 +26,29 @@ func (_m *ProviderInterface) CreateConfig(_a0 *domain.ProviderConfig) error {
 	return r0
 }
 
+// GetResources provides a mock function with given fields: pc
+func (_m *ProviderInterface) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
+	ret := _m.Called(pc)
+
+	var r0 []*domain.Resource
+	if rf, ok := ret.Get(0).(func(*domain.ProviderConfig) []*domain.Resource); ok {
+		r0 = rf(pc)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.Resource)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*domain.ProviderConfig) error); ok {
+		r1 = rf(pc)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetType provides a mock function with given fields:
 func (_m *ProviderInterface) GetType() string {
 	ret := _m.Called()
