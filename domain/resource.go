@@ -20,10 +20,12 @@ type Resource struct {
 type ResourceRepository interface {
 	Find() ([]*Resource, error)
 	BulkUpsert([]*Resource) error
+	Update(*Resource) error
 }
 
 // ResourceService interface
 type ResourceService interface {
 	Find() ([]*Resource, error)
 	BulkUpsert([]*Resource) error
+	Update(*Resource) error
 }

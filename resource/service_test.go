@@ -56,6 +56,71 @@ func (s *ServiceTestSuite) TestBulkUpsert() {
 	})
 }
 
+func (s *ServiceTestSuite) TestUpdate() {
+	s.Run("should return error if got error from repository", func() {
+		expectedError := errors.New("error from repository")
+		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
+
+		actualError := s.service.Update(&domain.Resource{})
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should only allows details and labels to be edited", func() {
+		testCases := []struct {
+			resourceUpdatePayload *domain.Resource
+			expectedUpdatedValues *domain.Resource
+		}{
+			{
+				resourceUpdatePayload: &domain.Resource{
+					ID: 1,
+					Labels: map[string]interface{}{
+						"key": "value",
+					},
+				},
+				expectedUpdatedValues: &domain.Resource{
+					ID: 1,
+					Labels: map[string]interface{}{
+						"key": "value",
+					},
+				},
+			},
+			{
+				resourceUpdatePayload: &domain.Resource{
+					ID: 2,
+					Details: map[string]interface{}{
+						"key": "value",
+					},
+				},
+				expectedUpdatedValues: &domain.Resource{
+					ID: 2,
+					Details: map[string]interface{}{
+						"key": "value",
+					},
+				},
+			},
+			{
+				resourceUpdatePayload: &domain.Resource{
+					ID:   2,
+					Type: "test",
+				},
+				expectedUpdatedValues: &domain.Resource{
+					ID: 2,
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			s.mockRepository.On("Update", tc.expectedUpdatedValues).Return(nil)
+
+			actualError := s.service.Update(tc.resourceUpdatePayload)
+
+			s.Nil(actualError)
+			s.mockRepository.AssertExpectations(s.T())
+		}
+	})
+}
+
 func TestService(t *testing.T) {
 	suite.Run(t, new(ServiceTestSuite))
 }

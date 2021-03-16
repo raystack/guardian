@@ -74,3 +74,30 @@ func (r *Repository) BulkUpsert(resources []*domain.Resource) error {
 		return nil
 	})
 }
+
+// Update record by ID
+func (r *Repository) Update(resource *domain.Resource) error {
+	if resource.ID == 0 {
+		return ErrEmptyIDParam
+	}
+
+	m := new(model.Resource)
+	if err := m.FromDomain(resource); err != nil {
+		return err
+	}
+
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(m).Where("id = ?", m.ID).Updates(*m).Error; err != nil {
+			return err
+		}
+
+		newRecord, err := m.ToDomain()
+		if err != nil {
+			return err
+		}
+
+		*resource = *newRecord
+
+		return nil
+	})
+}

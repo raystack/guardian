@@ -154,6 +154,48 @@ func (s *RepositoryTestSuite) TestBulkUpsert() {
 	})
 }
 
+func (s *RepositoryTestSuite) TestUpdate() {
+	s.Run("should return error if id is empty", func() {
+		expectedError := resource.ErrEmptyIDParam
+
+		actualError := s.repository.Update(&domain.Resource{})
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if got error from transaction", func() {
+		expectedError := errors.New("db error")
+		s.dbmock.ExpectBegin()
+		s.dbmock.ExpectExec(".*").
+			WillReturnError(expectedError)
+		s.dbmock.ExpectRollback()
+
+		actualError := s.repository.Update(&domain.Resource{ID: 1})
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	expectedQuery := regexp.QuoteMeta(`UPDATE "resources" SET "id"=$1,"details"=$2,"labels"=$3,"updated_at"=$4 WHERE id = $5`)
+	s.Run("should return error if got error from transaction", func() {
+		expectedID := uint(1)
+		resource := &domain.Resource{
+			ID: expectedID,
+		}
+
+		s.dbmock.ExpectBegin()
+		s.dbmock.ExpectExec(expectedQuery).
+			WillReturnResult(sqlmock.NewResult(int64(expectedID), 1))
+		s.dbmock.ExpectCommit()
+
+		err := s.repository.Update(resource)
+
+		actualID := resource.ID
+
+		s.Nil(err)
+		s.Equal(expectedID, actualID)
+	})
+}
+
 func TestRepository(t *testing.T) {
 	suite.Run(t, new(RepositoryTestSuite))
 }
