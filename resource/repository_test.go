@@ -99,6 +99,64 @@ func (s *RepositoryTestSuite) TestFind() {
 	})
 }
 
+func (s *RepositoryTestSuite) TestGetOne() {
+	s.Run("should return error if id is empty", func() {
+		expectedError := resource.ErrEmptyIDParam
+
+		actualResult, actualError := s.repository.GetOne(0)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return nil record and nil error if record not found", func() {
+		expectedError := gorm.ErrRecordNotFound
+		s.dbmock.ExpectQuery(".*").
+			WillReturnError(expectedError)
+
+		actualResult, actualError := s.repository.GetOne(1)
+
+		s.Nil(actualResult)
+		s.Nil(actualError)
+	})
+
+	s.Run("should return error if got error from db", func() {
+		expectedError := errors.New("unexpected error")
+		s.dbmock.ExpectQuery(".*").
+			WillReturnError(expectedError)
+
+		actualResult, actualError := s.repository.GetOne(1)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."deleted_at" IS NULL LIMIT 1`)
+	s.Run("should return record and nil error on success", func() {
+		expectedID := uint(10)
+		timeNow := time.Now()
+		expectedRows := sqlmock.NewRows(s.columnNames).
+			AddRow(
+				1,
+				"provider_type_test",
+				"provider_urn_test",
+				"type_test",
+				"urn_test",
+				"null",
+				"null",
+				timeNow,
+				timeNow,
+			)
+		s.dbmock.ExpectQuery(expectedQuery).
+			WillReturnRows(expectedRows)
+
+		_, actualError := s.repository.GetOne(expectedID)
+
+		s.Nil(actualError)
+		s.dbmock.ExpectationsWereMet()
+	})
+}
+
 func (s *RepositoryTestSuite) TestBulkUpsert() {
 	s.Run("should return records with with existing or new IDs", func() {
 		resources := []*domain.Resource{

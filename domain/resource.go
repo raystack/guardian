@@ -19,6 +19,7 @@ type Resource struct {
 // ResourceRepository interface
 type ResourceRepository interface {
 	Find() ([]*Resource, error)
+	GetOne(uint) (*Resource, error)
 	BulkUpsert([]*Resource) error
 	Update(*Resource) error
 }

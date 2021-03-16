@@ -1,6 +1,9 @@
 package resource
 
-import "github.com/odpf/guardian/domain"
+import (
+	"github.com/imdario/mergo"
+	"github.com/odpf/guardian/domain"
+)
 
 // Service handles the business logic for resource
 type Service struct {
@@ -24,6 +27,18 @@ func (s *Service) BulkUpsert(resources []*domain.Resource) error {
 
 // Update updates only details and labels of a resource by ID
 func (s *Service) Update(r *domain.Resource) error {
+	existingResource, err := s.repo.GetOne(r.ID)
+	if err != nil {
+		return err
+	}
+	if existingResource == nil {
+		return ErrRecordNotFound
+	}
+
+	if err := mergo.Merge(r, existingResource); err != nil {
+		return err
+	}
+
 	res := &domain.Resource{
 		ID:      r.ID,
 		Details: r.Details,

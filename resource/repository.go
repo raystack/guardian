@@ -37,6 +37,30 @@ func (r *Repository) Find() ([]*domain.Resource, error) {
 	return records, nil
 }
 
+// GetOne record by ID
+func (r *Repository) GetOne(id uint) (*domain.Resource, error) {
+	if id == 0 {
+		return nil, ErrEmptyIDParam
+	}
+
+	m := &model.Resource{
+		ID: id,
+	}
+	if err := r.db.Take(m).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	res, err := m.ToDomain()
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // BulkUpsert inserts records if the records are not exist, or updates the records if they are already exist
 func (r *Repository) BulkUpsert(resources []*domain.Resource) error {
 	var models []*model.Resource
