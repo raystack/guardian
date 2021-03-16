@@ -1,8 +1,6 @@
 package provider
 
 import (
-	"log"
-
 	"github.com/odpf/guardian/domain"
 )
 
@@ -18,6 +16,5 @@ func NewJobHandler(ps domain.ProviderService) *JobHandler {
 
 // GetResources fetches all resources for all registered providers
 func (h *JobHandler) GetResources() error {
-	log.Print("GetResources")
 	return h.providerService.FetchResources()
 }
