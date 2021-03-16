@@ -3,8 +3,10 @@ package resource_test
 import (
 	"database/sql"
 	"database/sql/driver"
+	"errors"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/odpf/guardian/domain"
@@ -20,6 +22,8 @@ type RepositoryTestSuite struct {
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
 	repository *resource.Repository
+
+	columnNames []string
 }
 
 func (s *RepositoryTestSuite) SetupTest() {
@@ -27,10 +31,72 @@ func (s *RepositoryTestSuite) SetupTest() {
 	s.sqldb, _ = db.DB()
 	s.dbmock = mock
 	s.repository = resource.NewRepository(db)
+
+	s.columnNames = []string{
+		"id",
+		"provider_type",
+		"provider_urn",
+		"type",
+		"urn",
+		"details",
+		"labels",
+		"created_at",
+		"updated_at",
+	}
 }
 
 func (s *RepositoryTestSuite) TearDownTest() {
 	s.sqldb.Close()
+}
+
+func (s *RepositoryTestSuite) TestFind() {
+	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."deleted_at" IS NULL`)
+
+	s.Run("should return error if db returns error", func() {
+		expectedError := errors.New("unexpected error")
+
+		s.dbmock.ExpectQuery(expectedQuery).
+			WillReturnError(expectedError)
+
+		actualRecords, actualError := s.repository.Find()
+
+		s.EqualError(actualError, expectedError.Error())
+		s.Nil(actualRecords)
+	})
+
+	s.Run("should return list of records on success", func() {
+		timeNow := time.Now()
+		expectedRecords := []*domain.Resource{
+			{
+				ID:           1,
+				ProviderType: "provider_type_test",
+				ProviderURN:  "provider_urn_test",
+				Type:         "type_test",
+				URN:          "urn_test",
+				CreatedAt:    timeNow,
+				UpdatedAt:    timeNow,
+			},
+		}
+		expectedRows := sqlmock.NewRows(s.columnNames).
+			AddRow(
+				1,
+				"provider_type_test",
+				"provider_urn_test",
+				"type_test",
+				"urn_test",
+				"null",
+				"null",
+				timeNow,
+				timeNow,
+			)
+
+		s.dbmock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
+
+		actualRecords, actualError := s.repository.Find()
+
+		s.Equal(expectedRecords, actualRecords)
+		s.Nil(actualError)
+	})
 }
 
 func (s *RepositoryTestSuite) TestBulkUpsert() {
