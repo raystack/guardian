@@ -18,17 +18,18 @@ const (
 type ServiceTestSuite struct {
 	suite.Suite
 	mockProviderRepository *mocks.ProviderRepository
+	mockResourceService    *mocks.ResourceService
 	mockProvider           *mocks.ProviderInterface
 	service                *provider.Service
 }
 
 func (s *ServiceTestSuite) SetupTest() {
 	s.mockProviderRepository = new(mocks.ProviderRepository)
-
+	s.mockResourceService = new(mocks.ResourceService)
 	s.mockProvider = new(mocks.ProviderInterface)
 	s.mockProvider.On("GetType").Return(mockProviderType).Once()
 
-	s.service = provider.NewService(s.mockProviderRepository, []domain.ProviderInterface{s.mockProvider})
+	s.service = provider.NewService(s.mockProviderRepository, s.mockResourceService, []domain.ProviderInterface{s.mockProvider})
 }
 
 func (s *ServiceTestSuite) TestCreate() {

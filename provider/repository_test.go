@@ -147,7 +147,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "providers" WHERE "providers"."deleted_at" IS NULL AND "providers"."id" = $1 LIMIT 1`)
+	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "providers" WHERE "providers"."deleted_at" IS NULL LIMIT 1`)
 	s.Run("should return record and nil error on success", func() {
 		expectedID := uint(10)
 		timeNow := time.Now()
@@ -161,7 +161,6 @@ func (s *RepositoryTestSuite) TestGetOne() {
 				timeNow,
 			)
 		s.dbmock.ExpectQuery(expectedQuery).
-			WithArgs(expectedID).
 			WillReturnRows(expectedRows)
 
 		_, actualError := s.repository.GetOne(expectedID)
@@ -187,17 +186,19 @@ func (s *RepositoryTestSuite) TestUpdate() {
 			WillReturnError(expectedError)
 		s.dbmock.ExpectRollback()
 
-		actualError := s.repository.Update(&domain.Provider{ID: 1})
+		actualError := s.repository.Update(&domain.Provider{ID: 1, Type: "test-type", URN: "test-urn"})
 
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	expectedQuery := regexp.QuoteMeta(`UPDATE "providers" SET "id"=$1,"config"=$2,"updated_at"=$3 WHERE "id" = $4`)
+	expectedQuery := regexp.QuoteMeta(`UPDATE "providers" SET "id"=$1,"type"=$2,"urn"=$3,"config"=$4,"updated_at"=$5 WHERE "type" = $6 AND "urn" = $7`)
 	s.Run("should return error if got error from transaction", func() {
 		config := &domain.ProviderConfig{}
 		expectedID := uint(1)
 		provider := &domain.Provider{
 			ID:     expectedID,
+			Type:   "test-type",
+			URN:    "test-urn",
 			Config: config,
 		}
 
