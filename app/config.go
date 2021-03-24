@@ -23,6 +23,8 @@ const (
 	DBPortKey = "DB_PORT"
 	// DBSslModeKey is the key for database ssl mode configuration
 	DBSslModeKey = "DB_SSLMODE"
+	// EntityManagerURL is the key for external entity manager url
+	EntityManagerURL = "ENTITY_MANAGER_URL"
 )
 
 // Config contains the application configuration
@@ -36,6 +38,8 @@ type Config struct {
 	DBName     string
 	DBPort     string
 	DBSslMode  string
+
+	EntityManagerURL string
 }
 
 // LoadConfig returns application configuration
@@ -64,5 +68,7 @@ func LoadConfig() *Config {
 		DBName:     viper.GetString(DBNameKey),
 		DBPort:     viper.GetString(DBPortKey),
 		DBSslMode:  viper.GetString(DBSslModeKey),
+
+		EntityManagerURL: viper.GetString(EntityManagerURL),
 	}
 }
