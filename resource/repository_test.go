@@ -50,6 +50,35 @@ func (s *RepositoryTestSuite) TearDownTest() {
 }
 
 func (s *RepositoryTestSuite) TestFind() {
+	s.Run("should pass conditions based on filters", func() {
+		testCases := []struct {
+			filters       map[string]interface{}
+			expectedQuery string
+			expectedArgs  []driver.Value
+		}{
+			{
+				filters:       map[string]interface{}{},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."deleted_at" IS NULL`),
+			},
+			{
+				filters: map[string]interface{}{
+					"ids": []uint{1, 2, 3},
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."id" IN ($1,$2,$3) AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{1, 2, 3},
+			},
+		}
+
+		for _, tc := range testCases {
+			s.dbmock.ExpectQuery(tc.expectedQuery).WithArgs(tc.expectedArgs...).WillReturnRows(sqlmock.NewRows(s.columnNames))
+
+			_, actualError := s.repository.Find(tc.filters)
+
+			s.Nil(actualError)
+			s.dbmock.ExpectationsWereMet()
+		}
+	})
+
 	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."deleted_at" IS NULL`)
 
 	s.Run("should return error if db returns error", func() {
@@ -58,7 +87,7 @@ func (s *RepositoryTestSuite) TestFind() {
 		s.dbmock.ExpectQuery(expectedQuery).
 			WillReturnError(expectedError)
 
-		actualRecords, actualError := s.repository.Find()
+		actualRecords, actualError := s.repository.Find(map[string]interface{}{})
 
 		s.EqualError(actualError, expectedError.Error())
 		s.Nil(actualRecords)
@@ -92,7 +121,7 @@ func (s *RepositoryTestSuite) TestFind() {
 
 		s.dbmock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
 
-		actualRecords, actualError := s.repository.Find()
+		actualRecords, actualError := s.repository.Find(map[string]interface{}{})
 
 		s.Equal(expectedRecords, actualRecords)
 		s.Nil(actualError)

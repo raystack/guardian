@@ -26,13 +26,13 @@ func (_m *ResourceRepository) BulkUpsert(_a0 []*domain.Resource) error {
 	return r0
 }
 
-// Find provides a mock function with given fields:
-func (_m *ResourceRepository) Find() ([]*domain.Resource, error) {
-	ret := _m.Called()
+// Find provides a mock function with given fields: filters
+func (_m *ResourceRepository) Find(filters map[string]interface{}) ([]*domain.Resource, error) {
+	ret := _m.Called(filters)
 
 	var r0 []*domain.Resource
-	if rf, ok := ret.Get(0).(func() []*domain.Resource); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(map[string]interface{}) []*domain.Resource); ok {
+		r0 = rf(filters)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*domain.Resource)
@@ -40,8 +40,8 @@ func (_m *ResourceRepository) Find() ([]*domain.Resource, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(map[string]interface{}) error); ok {
+		r1 = rf(filters)
 	} else {
 		r1 = ret.Error(1)
 	}

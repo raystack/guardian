@@ -25,19 +25,20 @@ func (s *ServiceTestSuite) SetupTest() {
 func (s *ServiceTestSuite) TestFind() {
 	s.Run("should return nil and error if got error from repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockRepository.On("Find").Return(nil, expectedError).Once()
+		s.mockRepository.On("Find", mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Find()
+		actualResult, actualError := s.service.Find(map[string]interface{}{})
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should return list of records on success", func() {
+		expectedFilters := map[string]interface{}{}
 		expectedResult := []*domain.Resource{}
-		s.mockRepository.On("Find").Return(expectedResult, nil).Once()
+		s.mockRepository.On("Find", expectedFilters).Return(expectedResult, nil).Once()
 
-		actualResult, actualError := s.service.Find()
+		actualResult, actualError := s.service.Find(expectedFilters)
 
 		s.Equal(expectedResult, actualResult)
 		s.Nil(actualError)

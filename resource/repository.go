@@ -1,11 +1,17 @@
 package resource
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/model"
+	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+type findFilters struct {
+	IDs []uint `mapstructure:"ids" validate:"omitempty,min=1"`
+}
 
 // Repository talks to the store/database to read/insert data
 type Repository struct {
@@ -18,9 +24,21 @@ func NewRepository(db *gorm.DB) *Repository {
 }
 
 // Find records based on filters
-func (r *Repository) Find() ([]*domain.Resource, error) {
+func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Resource, error) {
+	var conditions findFilters
+	if err := mapstructure.Decode(filters, &conditions); err != nil {
+		return nil, err
+	}
+	if err := utils.ValidateStruct(conditions); err != nil {
+		return nil, err
+	}
+
+	db := r.db
+	if conditions.IDs != nil {
+		db = db.Where(conditions.IDs)
+	}
 	var models []*model.Resource
-	if err := r.db.Find(&models).Error; err != nil {
+	if err := db.Find(&models).Error; err != nil {
 		return nil, err
 	}
 

@@ -18,7 +18,7 @@ type Resource struct {
 
 // ResourceRepository interface
 type ResourceRepository interface {
-	Find() ([]*Resource, error)
+	Find(filters map[string]interface{}) ([]*Resource, error)
 	GetOne(uint) (*Resource, error)
 	BulkUpsert([]*Resource) error
 	Update(*Resource) error
@@ -26,7 +26,7 @@ type ResourceRepository interface {
 
 // ResourceService interface
 type ResourceService interface {
-	Find() ([]*Resource, error)
+	Find(filters map[string]interface{}) ([]*Resource, error)
 	BulkUpsert([]*Resource) error
 	Update(*Resource) error
 }

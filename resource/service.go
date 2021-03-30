@@ -15,9 +15,9 @@ func NewService(repo domain.ResourceRepository) *Service {
 	return &Service{repo}
 }
 
-// Find records
-func (s *Service) Find() ([]*domain.Resource, error) {
-	return s.repo.Find()
+// Find records based on filters
+func (s *Service) Find(filters map[string]interface{}) ([]*domain.Resource, error) {
+	return s.repo.Find(filters)
 }
 
 // BulkUpsert inserts or updates records

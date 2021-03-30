@@ -24,7 +24,7 @@ func SetupHandler(r *mux.Router, rs domain.ResourceService) {
 
 // Find handles http request for list of provider records
 func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
-	records, err := h.ResourceService.Find()
+	records, err := h.ResourceService.Find(map[string]interface{}{})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
