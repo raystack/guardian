@@ -104,7 +104,7 @@ func (s *RepositoryTestSuite) TestCreate() {
 }
 
 func (s *RepositoryTestSuite) TestFind() {
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "policies" WHERE "policies"."deleted_at" IS NULL`)
+	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "policies" WHERE (id,version) IN (SELECT id, max(version) FROM "policies" WHERE "policies"."deleted_at" IS NULL GROUP BY "id") AND "policies"."deleted_at" IS NULL`)
 
 	s.Run("should return error if db returns error", func() {
 		expectedError := errors.New("unexpected error")
