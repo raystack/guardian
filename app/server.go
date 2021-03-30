@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/odpf/guardian/api"
+	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/crypto"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/model"
@@ -30,6 +31,7 @@ func RunServer(c *Config) error {
 	providerRepository := provider.NewRepository(db)
 	policyRepository := policy.NewRepository(db)
 	resourceRepository := resource.NewRepository(db)
+	appealRepository := appeal.NewRepository(db)
 
 	providers := []domain.ProviderInterface{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
@@ -38,11 +40,13 @@ func RunServer(c *Config) error {
 	resourceService := resource.NewService(resourceRepository)
 	providerService := provider.NewService(providerRepository, resourceService, providers)
 	policyService := policy.NewService(policyRepository)
+	appealService := appeal.NewService(appealRepository, resourceService, providerService)
 
 	r := api.New()
 	provider.SetupHandler(r, providerService)
 	policy.SetupHandler(r, policyService)
 	resource.SetupHandler(r, resourceService)
+	appeal.SetupHandler(r, appealService)
 
 	providerJobHandler := provider.NewJobHandler(providerService)
 
@@ -73,6 +77,7 @@ func Migrate(c *Config) error {
 		&model.Provider{},
 		&model.Policy{},
 		&model.Resource{},
+		&model.Appeal{},
 	}
 	return store.Migrate(db, models...)
 }
