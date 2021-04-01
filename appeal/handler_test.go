@@ -56,7 +56,7 @@ func (s *HandlerTestSuite) TestCreate() {
 			invalidPayload string
 		}{
 			{
-				name: "missing email",
+				name: "missing user",
 				invalidPayload: `{
 	"resources": [
 		{
@@ -71,13 +71,13 @@ func (s *HandlerTestSuite) TestCreate() {
 			{
 				name: "missing resources",
 				invalidPayload: `{
-	"email": "test@domain.com"
+	"user": "test@domain.com"
 }`,
 			},
 			{
 				name: "empty resources",
 				invalidPayload: `{
-	"email": "test@domain.com",
+	"user": "test@domain.com",
 	"resources": []
 }`,
 			},
@@ -96,7 +96,7 @@ func (s *HandlerTestSuite) TestCreate() {
 	})
 
 	validPayload := `{
-	"email": "test@email.com",
+	"user": "test@email.com",
 	"resources": [
 		{
 			"id": 1
@@ -135,7 +135,7 @@ func (s *HandlerTestSuite) TestCreate() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(validPayload))
 
-		expectedEmail := "test@email.com"
+		expectedUser := "test@email.com"
 		expectedResourceIDs := []uint{1, 2}
 		expectedResponseBody := []*domain.Appeal{
 			{
@@ -146,7 +146,7 @@ func (s *HandlerTestSuite) TestCreate() {
 			},
 		}
 		s.mockAppealService.
-			On("Create", expectedEmail, expectedResourceIDs).
+			On("Create", expectedUser, expectedResourceIDs).
 			Return(expectedResponseBody, nil).
 			Once()
 		expectedStatusCode := http.StatusOK

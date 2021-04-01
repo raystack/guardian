@@ -8,7 +8,7 @@ type resourceCreatePayload struct {
 }
 
 type createPayload struct {
-	Email     string                  `json:"email" validate:"required"`
+	User      string                  `json:"user" validate:"required"`
 	Resources []resourceCreatePayload `json:"resources" validate:"required,min=1"`
 }
 
@@ -21,5 +21,5 @@ func (p *createPayload) toDomain() (string, []*domain.Resource) {
 		})
 	}
 
-	return p.Email, resources
+	return p.User, resources
 }

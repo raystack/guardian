@@ -32,12 +32,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email, resources := payload.toDomain()
+	user, resources := payload.toDomain()
 	resourceIDs := []uint{}
 	for _, r := range resources {
 		resourceIDs = append(resourceIDs, r.ID)
 	}
-	appeals, err := h.AppealService.Create(email, resourceIDs)
+	appeals, err := h.AppealService.Create(user, resourceIDs)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

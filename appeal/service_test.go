@@ -140,7 +140,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
-			Email:         user,
+			User:          user,
 			Approvals: []*domain.Approval{
 				{
 					Name:          "step_1",
@@ -164,7 +164,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
-			Email:         user,
+			User:          user,
 			Approvals: []*domain.Approval{
 				{
 					ID:            1,
@@ -188,7 +188,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
-			Email:         user,
+			User:          user,
 			Approvals: []*domain.Approval{
 				{
 					ID:            1,

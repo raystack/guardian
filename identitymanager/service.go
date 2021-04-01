@@ -13,13 +13,13 @@ func NewService(client domain.IdentityManagerClient) *Service {
 }
 
 // GetUserApproverEmails returns array of approver emails or error if any
-func (s *Service) GetUserApproverEmails(userEmail string) ([]string, error) {
-	if userEmail == "" {
+func (s *Service) GetUserApproverEmails(user string) ([]string, error) {
+	if user == "" {
 		return nil, ErrEmptyUserEmailParam
 	}
 
 	q := map[string]string{
-		"email": userEmail,
+		"user": user,
 	}
 	approverEmails, err := s.client.GetUserApproverEmails(q)
 	if err != nil {

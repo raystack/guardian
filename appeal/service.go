@@ -41,7 +41,7 @@ func NewService(
 }
 
 // Create record
-func (s *Service) Create(email string, resourceIDs []uint) ([]*domain.Appeal, error) {
+func (s *Service) Create(user string, resourceIDs []uint) ([]*domain.Appeal, error) {
 	resources, err := s.resourceService.Find(map[string]interface{}{"ids": resourceIDs})
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (s *Service) Create(email string, resourceIDs []uint) ([]*domain.Appeal, er
 		for _, step := range steps {
 			var approvers []string
 			if step.Approvers != "" {
-				approvers, err = s.resolveApprovers(email, r, step.Approvers)
+				approvers, err = s.resolveApprovers(user, r, step.Approvers)
 				if err != nil {
 					return nil, err
 				}
@@ -96,7 +96,7 @@ func (s *Service) Create(email string, resourceIDs []uint) ([]*domain.Appeal, er
 			ResourceID:    r.ID,
 			PolicyID:      policyConfig.ID,
 			PolicyVersion: uint(policyConfig.Version),
-			Email:         email,
+			User:          user,
 			Status:        domain.AppealStatusPending,
 			Approvals:     approvals,
 		})
