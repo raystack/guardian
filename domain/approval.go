@@ -4,6 +4,7 @@ import "time"
 
 const (
 	ApprovalStatusPending  = "pending"
+	ApprovalStatusSkipped  = "skipped"
 	ApprovalStatusApproved = "approved"
 	ApprovalStatusRejected = "rejected"
 )
@@ -16,7 +17,7 @@ type Approval struct {
 	PolicyID      string `json:"policy_id"`
 	PolicyVersion uint   `json:"policy_version"`
 
-	Approvers []string `json:"approvers"`
+	Approvers []string `json:"approvers,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

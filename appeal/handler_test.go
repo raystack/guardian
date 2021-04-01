@@ -145,7 +145,10 @@ func (s *HandlerTestSuite) TestCreate() {
 				ID: 2,
 			},
 		}
-		s.mockAppealService.On("Create", expectedEmail, expectedResourceIDs).Return(expectedResponseBody, nil).Once()
+		s.mockAppealService.
+			On("Create", expectedEmail, expectedResourceIDs).
+			Return(expectedResponseBody, nil).
+			Once()
 		expectedStatusCode := http.StatusOK
 
 		s.handler.Create(s.res, req)

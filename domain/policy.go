@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+const (
+	ApproversKeyResource      = "$resource"
+	ApproversKeyUserApprovers = "$user_approvers"
+)
+
 // MatchCondition is for determining the requirement of the condition
 type MatchCondition struct {
 	Eq interface{} `json:"eq" yaml:"eq"`

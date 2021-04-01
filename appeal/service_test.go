@@ -13,10 +13,11 @@ import (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockRepository      *mocks.AppealRepository
-	mockResourceService *mocks.ResourceService
-	mockProviderService *mocks.ProviderService
-	mockPolicyService   *mocks.PolicyService
+	mockRepository             *mocks.AppealRepository
+	mockResourceService        *mocks.ResourceService
+	mockProviderService        *mocks.ProviderService
+	mockPolicyService          *mocks.PolicyService
+	mockIdentityManagerService *mocks.IdentityManagerService
 
 	service *appeal.Service
 }
@@ -26,8 +27,14 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockResourceService = new(mocks.ResourceService)
 	s.mockProviderService = new(mocks.ProviderService)
 	s.mockPolicyService = new(mocks.PolicyService)
+	s.mockIdentityManagerService = new(mocks.IdentityManagerService)
 
-	s.service = appeal.NewService(s.mockRepository, s.mockResourceService, s.mockProviderService, s.mockPolicyService)
+	s.service = appeal.NewService(s.mockRepository,
+		s.mockResourceService,
+		s.mockProviderService,
+		s.mockPolicyService,
+		s.mockIdentityManagerService,
+	)
 }
 
 func (s *ServiceTestSuite) TestCreate() {
@@ -206,15 +213,19 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockResourceService.On("Find", expectedFilters).Return(resources, nil).Once()
 		s.mockProviderService.On("Find").Return(providers, nil).Once()
 		s.mockPolicyService.On("Find").Return(policies, nil).Once()
-		s.mockRepository.On("BulkInsert", expectedAppealsInsertionParam).Return(nil).Run(func(args mock.Arguments) {
-			appeals := args.Get(0).([]*domain.Appeal)
-			for i, a := range appeals {
-				a.ID = expectedResult[i].ID
-				for j, approval := range a.Approvals {
-					approval.ID = expectedResult[i].Approvals[j].ID
+		s.mockRepository.
+			On("BulkInsert", expectedAppealsInsertionParam).
+			Return(nil).
+			Run(func(args mock.Arguments) {
+				appeals := args.Get(0).([]*domain.Appeal)
+				for i, a := range appeals {
+					a.ID = expectedResult[i].ID
+					for j, approval := range a.Approvals {
+						approval.ID = expectedResult[i].Approvals[j].ID
+					}
 				}
-			}
-		}).Once()
+			}).
+			Once()
 
 		actualResult, actualError := s.service.Create(user, resourceIDs)
 

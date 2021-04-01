@@ -1,6 +1,12 @@
 package appeal
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/mcuadros/go-lookup"
 	"github.com/odpf/guardian/domain"
 )
 
@@ -8,14 +14,30 @@ import (
 type Service struct {
 	repo domain.AppealRepository
 
-	resourceService domain.ResourceService
-	providerService domain.ProviderService
-	policyService   domain.PolicyService
+	resourceService        domain.ResourceService
+	providerService        domain.ProviderService
+	policyService          domain.PolicyService
+	identityManagerService domain.IdentityManagerService
+
+	validator *validator.Validate
 }
 
 // NewService returns service struct
-func NewService(ar domain.AppealRepository, rs domain.ResourceService, ps domain.ProviderService, policyService domain.PolicyService) *Service {
-	return &Service{ar, rs, ps, policyService}
+func NewService(
+	appealRepository domain.AppealRepository,
+	resourceService domain.ResourceService,
+	providerService domain.ProviderService,
+	policyService domain.PolicyService,
+	identityManagerService domain.IdentityManagerService,
+) *Service {
+	return &Service{
+		repo:                   appealRepository,
+		resourceService:        resourceService,
+		providerService:        providerService,
+		policyService:          policyService,
+		identityManagerService: identityManagerService,
+		validator:              validator.New(),
+	}
 }
 
 // Create record
@@ -52,13 +74,21 @@ func (s *Service) Create(email string, resourceIDs []uint) ([]*domain.Appeal, er
 		steps := approvalSteps[policyConfig.ID][uint(policyConfig.Version)]
 
 		approvals := []*domain.Approval{}
-		for _, s := range steps {
+		for _, step := range steps {
+			var approvers []string
+			if step.Approvers != "" {
+				approvers, err = s.resolveApprovers(email, r, step.Approvers)
+				if err != nil {
+					return nil, err
+				}
+			}
+
 			approvals = append(approvals, &domain.Approval{
-				Name:          s.Name,
+				Name:          step.Name,
 				Status:        domain.ApprovalStatusPending,
 				PolicyID:      policyConfig.ID,
 				PolicyVersion: uint(policyConfig.Version),
-				// TODO: retrieve approvers based on the approval flow config
+				Approvers:     approvers,
 			})
 		}
 
@@ -119,4 +149,69 @@ func (s *Service) getApprovalSteps() (map[string]map[uint][]*domain.Step, error)
 	}
 
 	return approvalSteps, nil
+}
+
+func (s *Service) resolveApprovers(user string, resource *domain.Resource, approversKey string) ([]string, error) {
+	var approvers []string
+
+	if strings.HasPrefix(approversKey, domain.ApproversKeyResource) {
+		mapResource, err := structToMap(resource)
+		if err != nil {
+			return nil, err
+		}
+
+		path := strings.TrimPrefix(approversKey, fmt.Sprintf("%s.", domain.ApproversKeyResource))
+		approversReflectValue, err := lookup.LookupString(mapResource, path)
+		if err != nil {
+			return nil, err
+		}
+
+		email, ok := approversReflectValue.Interface().(string)
+		if !ok {
+			emails, ok := approversReflectValue.Interface().([]interface{})
+			if !ok {
+				return nil, ErrApproverInvalidType
+			}
+
+			for _, e := range emails {
+				emailString, ok := e.(string)
+				if !ok {
+					return nil, ErrApproverInvalidType
+				}
+				approvers = append(approvers, emailString)
+			}
+		} else {
+			approvers = append(approvers, email)
+		}
+	} else if strings.HasPrefix(approversKey, domain.ApproversKeyUserApprovers) {
+		approverEmails, err := s.identityManagerService.GetUserApproverEmails(user)
+		if err != nil {
+			return nil, err
+		}
+		approvers = approverEmails
+	} else {
+		return nil, ErrApproverKeyNotRecognized
+	}
+
+	if err := s.validator.Var(approvers, "dive,email"); err != nil {
+		return nil, err
+	}
+	return approvers, nil
+}
+
+func structToMap(item interface{}) (map[string]interface{}, error) {
+	result := map[string]interface{}{}
+
+	if item != nil {
+		jsonString, err := json.Marshal(item)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal(jsonString, &result); err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
 }

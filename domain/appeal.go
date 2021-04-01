@@ -18,7 +18,7 @@ type Appeal struct {
 	Status        string                 `json:"status"`
 	Email         string                 `json:"email"`
 	Labels        map[string]interface{} `json:"labels"`
-	Resource      *Resource              `json:"resource"`
+	Resource      *Resource              `json:"resource,omitempty"`
 	Approvals     []*Approval            `json:"approvals"`
 	CreatedAt     time.Time              `json:"created_at"`
 	UpdatedAt     time.Time              `json:"updated_at"`
