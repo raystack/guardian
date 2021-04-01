@@ -24,39 +24,13 @@ func (s *Service) Create(email string, resourceIDs []uint) ([]*domain.Appeal, er
 	if err != nil {
 		return nil, err
 	}
-
-	providers, err := s.providerService.Find()
+	policyConfigs, err := s.getPolicyConfigMap()
 	if err != nil {
 		return nil, err
 	}
-	policyConfigs := map[string]map[string]map[string]*domain.PolicyConfig{}
-	for _, p := range providers {
-		providerType := p.Type
-		providerURN := p.URN
-		if policyConfigs[providerType] == nil {
-			policyConfigs[providerType] = map[string]map[string]*domain.PolicyConfig{}
-		}
-		if policyConfigs[providerType][providerURN] == nil {
-			policyConfigs[providerType][providerURN] = map[string]*domain.PolicyConfig{}
-		}
-		for _, r := range p.Config.Resources {
-			resourceType := r.Type
-			policyConfigs[providerType][providerURN][resourceType] = r.Policy
-		}
-	}
-
-	policies, err := s.policyService.Find()
+	approvalSteps, err := s.getApprovalSteps()
 	if err != nil {
 		return nil, err
-	}
-	approvalSteps := map[string]map[uint][]*domain.Step{}
-	for _, p := range policies {
-		id := p.ID
-		version := p.Version
-		if approvalSteps[id] == nil {
-			approvalSteps[id] = map[uint][]*domain.Step{}
-		}
-		approvalSteps[id][version] = p.Steps
 	}
 
 	appeals := []*domain.Appeal{}
@@ -103,4 +77,46 @@ func (s *Service) Create(email string, resourceIDs []uint) ([]*domain.Appeal, er
 	}
 
 	return appeals, nil
+}
+
+func (s *Service) getPolicyConfigMap() (map[string]map[string]map[string]*domain.PolicyConfig, error) {
+	providers, err := s.providerService.Find()
+	if err != nil {
+		return nil, err
+	}
+	policyConfigs := map[string]map[string]map[string]*domain.PolicyConfig{}
+	for _, p := range providers {
+		providerType := p.Type
+		providerURN := p.URN
+		if policyConfigs[providerType] == nil {
+			policyConfigs[providerType] = map[string]map[string]*domain.PolicyConfig{}
+		}
+		if policyConfigs[providerType][providerURN] == nil {
+			policyConfigs[providerType][providerURN] = map[string]*domain.PolicyConfig{}
+		}
+		for _, r := range p.Config.Resources {
+			resourceType := r.Type
+			policyConfigs[providerType][providerURN][resourceType] = r.Policy
+		}
+	}
+
+	return policyConfigs, nil
+}
+
+func (s *Service) getApprovalSteps() (map[string]map[uint][]*domain.Step, error) {
+	policies, err := s.policyService.Find()
+	if err != nil {
+		return nil, err
+	}
+	approvalSteps := map[string]map[uint][]*domain.Step{}
+	for _, p := range policies {
+		id := p.ID
+		version := p.Version
+		if approvalSteps[id] == nil {
+			approvalSteps[id] = map[uint][]*domain.Step{}
+		}
+		approvalSteps[id][version] = p.Steps
+	}
+
+	return approvalSteps, nil
 }
