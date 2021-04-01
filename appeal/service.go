@@ -10,11 +10,12 @@ type Service struct {
 
 	resourceService domain.ResourceService
 	providerService domain.ProviderService
+	policyService   domain.PolicyService
 }
 
 // NewService returns service struct
-func NewService(ar domain.AppealRepository, rs domain.ResourceService, ps domain.ProviderService) *Service {
-	return &Service{ar, rs, ps}
+func NewService(ar domain.AppealRepository, rs domain.ResourceService, ps domain.ProviderService, policyService domain.PolicyService) *Service {
+	return &Service{ar, rs, ps, policyService}
 }
 
 // Create record
@@ -44,6 +45,20 @@ func (s *Service) Create(email string, resourceIDs []uint) ([]*domain.Appeal, er
 		}
 	}
 
+	policies, err := s.policyService.Find()
+	if err != nil {
+		return nil, err
+	}
+	approvalSteps := map[string]map[uint][]*domain.Step{}
+	for _, p := range policies {
+		id := p.ID
+		version := p.Version
+		if approvalSteps[id] == nil {
+			approvalSteps[id] = map[uint][]*domain.Step{}
+		}
+		approvalSteps[id][version] = p.Steps
+	}
+
 	appeals := []*domain.Appeal{}
 	for _, r := range resources {
 		if policyConfigs[r.ProviderType] == nil {
@@ -53,14 +68,33 @@ func (s *Service) Create(email string, resourceIDs []uint) ([]*domain.Appeal, er
 		} else if policyConfigs[r.ProviderType][r.ProviderURN][r.Type] == nil {
 			return nil, ErrPolicyConfigNotFound
 		}
-		pc := policyConfigs[r.ProviderType][r.ProviderURN][r.Type]
+		policyConfig := policyConfigs[r.ProviderType][r.ProviderURN][r.Type]
+
+		if approvalSteps[policyConfig.ID] == nil {
+			return nil, ErrPolicyIDNotFound
+		} else if approvalSteps[policyConfig.ID][uint(policyConfig.Version)] == nil {
+			return nil, ErrPolicyVersionNotFound
+		}
+		steps := approvalSteps[policyConfig.ID][uint(policyConfig.Version)]
+
+		approvals := []*domain.Approval{}
+		for _, s := range steps {
+			approvals = append(approvals, &domain.Approval{
+				Name:          s.Name,
+				Status:        domain.ApprovalStatusPending,
+				PolicyID:      policyConfig.ID,
+				PolicyVersion: uint(policyConfig.Version),
+				// TODO: retrieve approvers based on the approval flow config
+			})
+		}
 
 		appeals = append(appeals, &domain.Appeal{
 			ResourceID:    r.ID,
-			PolicyID:      pc.ID,
-			PolicyVersion: uint(pc.Version),
+			PolicyID:      policyConfig.ID,
+			PolicyVersion: uint(policyConfig.Version),
 			Email:         email,
 			Status:        domain.AppealStatusPending,
+			Approvals:     approvals,
 		})
 	}
 

@@ -40,7 +40,7 @@ func RunServer(c *Config) error {
 	resourceService := resource.NewService(resourceRepository)
 	providerService := provider.NewService(providerRepository, resourceService, providers)
 	policyService := policy.NewService(policyRepository)
-	appealService := appeal.NewService(appealRepository, resourceService, providerService)
+	appealService := appeal.NewService(appealRepository, resourceService, providerService, policyService)
 
 	r := api.New()
 	provider.SetupHandler(r, providerService)
