@@ -149,11 +149,14 @@ resources:
 
 		expectedStatusCode := http.StatusOK
 		expectedID := uint(1)
+		expectedConfig := &domain.ProviderConfig{}
+		*expectedConfig = *provider.Config
+		expectedConfig.Credentials = nil
 		expectedResponseBody := &domain.Provider{
 			ID:     expectedID,
 			Type:   provider.Type,
 			URN:    provider.URN,
-			Config: provider.Config,
+			Config: expectedConfig,
 		}
 		s.mockProviderService.On("Create", provider).Return(nil).Run(func(args mock.Arguments) {
 			p := args.Get(0).(*domain.Provider)
