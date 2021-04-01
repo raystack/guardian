@@ -21,8 +21,6 @@ type RepositoryTestSuite struct {
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
 	repository *appeal.Repository
-
-	columnNames []string
 }
 
 func (s *RepositoryTestSuite) SetupTest() {
@@ -30,18 +28,6 @@ func (s *RepositoryTestSuite) SetupTest() {
 	s.sqldb, _ = db.DB()
 	s.dbmock = mock
 	s.repository = appeal.NewRepository(db)
-
-	s.columnNames = []string{
-		"id",
-		"provider_type",
-		"provider_urn",
-		"type",
-		"urn",
-		"details",
-		"labels",
-		"created_at",
-		"updated_at",
-	}
 }
 
 func (s *RepositoryTestSuite) TearDownTest() {
