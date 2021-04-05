@@ -41,6 +41,15 @@ func NewService(
 	}
 }
 
+// GetByID returns one record by id
+func (s *Service) GetByID(id uint) (*domain.Appeal, error) {
+	if id == 0 {
+		return nil, ErrAppealIDEmptyParam
+	}
+
+	return s.repo.GetByID(id)
+}
+
 // Create record
 func (s *Service) Create(appeals []*domain.Appeal) error {
 	resourceIDs := []uint{}

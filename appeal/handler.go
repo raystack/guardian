@@ -3,6 +3,7 @@ package appeal
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/odpf/guardian/domain"
@@ -18,6 +19,29 @@ type Handler struct {
 func SetupHandler(r *mux.Router, as domain.AppealService) {
 	h := &Handler{as}
 	r.Methods(http.MethodPost).Path("/appeals").HandlerFunc(h.Create)
+	r.Methods(http.MethodGet).Path("/appeals/{id}").HandlerFunc(h.GetByID)
+}
+
+func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	a, err := h.AppealService.GetByID(uint(id))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if a == nil {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+
+	utils.ReturnJSON(w, a)
+	return
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {

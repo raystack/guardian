@@ -37,6 +37,40 @@ func (s *ServiceTestSuite) SetupTest() {
 	)
 }
 
+func (s *ServiceTestSuite) TestGetByID() {
+	s.Run("should return error if id is empty/0", func() {
+		expectedError := appeal.ErrAppealIDEmptyParam
+
+		actualResult, actualError := s.service.GetByID(0)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if got any from repository", func() {
+		expectedError := errors.New("repository error")
+		s.mockRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
+
+		actualResult, actualError := s.service.GetByID(1)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return record on success", func() {
+		expectedID := uint(1)
+		expectedResult := &domain.Appeal{
+			ID: uint(expectedID),
+		}
+		s.mockRepository.On("GetByID", expectedID).Return(expectedResult, nil).Once()
+
+		actualResult, actualError := s.service.GetByID(expectedID)
+
+		s.Equal(expectedResult, actualResult)
+		s.Nil(actualError)
+	})
+}
+
 func (s *ServiceTestSuite) TestCreate() {
 	s.Run("should return error if got error from resource service", func() {
 		expectedError := errors.New("resource service error")

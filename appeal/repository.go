@@ -1,6 +1,8 @@
 package appeal
 
 import (
+	"errors"
+
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/model"
 	"gorm.io/gorm"
@@ -14,6 +16,24 @@ type Repository struct {
 // NewRepository returns repository struct
 func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db}
+}
+
+// GetByID returns appeal record by id along with the approvals and the approvers
+func (r *Repository) GetByID(id uint) (*domain.Appeal, error) {
+	m := new(model.Appeal)
+	if err := r.db.Preload("Approvals.Approvers").First(&m, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	a, err := m.ToDomain()
+	if err != nil {
+		return nil, err
+	}
+
+	return a, nil
 }
 
 // Create new record to database
