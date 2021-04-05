@@ -17,6 +17,7 @@ type Appeal struct {
 	PolicyVersion uint
 	Status        string
 	User          string
+	Role          string
 	Labels        datatypes.JSON
 
 	Resource  Resource `gorm:"ForeignKey:ResourceID;References:ID"`
@@ -52,6 +53,7 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	m.PolicyVersion = a.PolicyVersion
 	m.Status = a.Status
 	m.User = a.User
+	m.Role = a.Role
 	m.Labels = datatypes.JSON(labels)
 	m.Approvals = approvals
 	m.CreatedAt = a.CreatedAt
@@ -85,6 +87,7 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		PolicyVersion: m.PolicyVersion,
 		Status:        m.Status,
 		User:          m.User,
+		Role:          m.Role,
 		Labels:        labels,
 		Approvals:     approvals,
 		CreatedAt:     m.CreatedAt,

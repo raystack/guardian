@@ -42,9 +42,8 @@ func (s *ServiceTestSuite) TestCreate() {
 		expectedError := errors.New("resource service error")
 		s.mockResourceService.On("Find", mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Create("", []uint{})
+		actualError := s.service.Create([]*domain.Appeal{})
 
-		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
@@ -54,9 +53,8 @@ func (s *ServiceTestSuite) TestCreate() {
 		expectedError := errors.New("provider service error")
 		s.mockProviderService.On("Find").Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Create("", []uint{})
+		actualError := s.service.Create([]*domain.Appeal{})
 
-		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
@@ -68,9 +66,8 @@ func (s *ServiceTestSuite) TestCreate() {
 		expectedError := errors.New("policy service error")
 		s.mockPolicyService.On("Find").Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Create("", []uint{})
+		actualError := s.service.Create([]*domain.Appeal{})
 
-		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
@@ -84,9 +81,8 @@ func (s *ServiceTestSuite) TestCreate() {
 		expectedError := errors.New("repository error")
 		s.mockRepository.On("BulkInsert", mock.Anything).Return(expectedError).Once()
 
-		actualResult, actualError := s.service.Create("", []uint{})
+		actualError := s.service.Create([]*domain.Appeal{})
 
-		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
@@ -227,9 +223,19 @@ func (s *ServiceTestSuite) TestCreate() {
 			}).
 			Once()
 
-		actualResult, actualError := s.service.Create(user, resourceIDs)
+		appeals := []*domain.Appeal{
+			{
+				User:       user,
+				ResourceID: 1,
+			},
+			{
+				User:       user,
+				ResourceID: 2,
+			},
+		}
+		actualError := s.service.Create(appeals)
 
-		s.Equal(expectedResult, actualResult)
+		s.Equal(expectedResult, appeals)
 		s.Nil(actualError)
 	})
 }

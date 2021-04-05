@@ -2,6 +2,7 @@ package appeal
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -41,35 +42,43 @@ func NewService(
 }
 
 // Create record
-func (s *Service) Create(user string, resourceIDs []uint) ([]*domain.Appeal, error) {
-	resources, err := s.resourceService.Find(map[string]interface{}{"ids": resourceIDs})
+func (s *Service) Create(appeals []*domain.Appeal) error {
+	resourceIDs := []uint{}
+	for _, a := range appeals {
+		resourceIDs = append(resourceIDs, a.ResourceID)
+	}
+	resources, err := s.getResourceMap(resourceIDs)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	policyConfigs, err := s.getPolicyConfigMap()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	approvalSteps, err := s.getApprovalSteps()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	appeals := []*domain.Appeal{}
-	for _, r := range resources {
+	for _, a := range appeals {
+		r := resources[a.ResourceID]
+		if r == nil {
+			return errors.New("resource doesn't exists")
+		}
+
 		if policyConfigs[r.ProviderType] == nil {
-			return nil, ErrProviderTypeNotFound
+			return ErrProviderTypeNotFound
 		} else if policyConfigs[r.ProviderType][r.ProviderURN] == nil {
-			return nil, ErrProviderURNNotFound
+			return ErrProviderURNNotFound
 		} else if policyConfigs[r.ProviderType][r.ProviderURN][r.Type] == nil {
-			return nil, ErrPolicyConfigNotFound
+			return ErrPolicyConfigNotFound
 		}
 		policyConfig := policyConfigs[r.ProviderType][r.ProviderURN][r.Type]
 
 		if approvalSteps[policyConfig.ID] == nil {
-			return nil, ErrPolicyIDNotFound
+			return ErrPolicyIDNotFound
 		} else if approvalSteps[policyConfig.ID][uint(policyConfig.Version)] == nil {
-			return nil, ErrPolicyVersionNotFound
+			return ErrPolicyVersionNotFound
 		}
 		steps := approvalSteps[policyConfig.ID][uint(policyConfig.Version)]
 
@@ -77,9 +86,9 @@ func (s *Service) Create(user string, resourceIDs []uint) ([]*domain.Appeal, err
 		for _, step := range steps {
 			var approvers []string
 			if step.Approvers != "" {
-				approvers, err = s.resolveApprovers(user, r, step.Approvers)
+				approvers, err = s.resolveApprovers(a.User, r, step.Approvers)
 				if err != nil {
-					return nil, err
+					return err
 				}
 			}
 
@@ -92,21 +101,32 @@ func (s *Service) Create(user string, resourceIDs []uint) ([]*domain.Appeal, err
 			})
 		}
 
-		appeals = append(appeals, &domain.Appeal{
-			ResourceID:    r.ID,
-			PolicyID:      policyConfig.ID,
-			PolicyVersion: uint(policyConfig.Version),
-			User:          user,
-			Status:        domain.AppealStatusPending,
-			Approvals:     approvals,
-		})
+		a.PolicyID = policyConfig.ID
+		a.PolicyVersion = uint(policyConfig.Version)
+		a.Status = domain.AppealStatusPending
+		a.Approvals = approvals
 	}
 
 	if err := s.repo.BulkInsert(appeals); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) {
+	filters := map[string]interface{}{"ids": ids}
+	resources, err := s.resourceService.Find(filters)
+	if err != nil {
 		return nil, err
 	}
 
-	return appeals, nil
+	result := map[uint]*domain.Resource{}
+	for _, r := range resources {
+		result[r.ID] = r
+	}
+
+	return result, nil
 }
 
 func (s *Service) getPolicyConfigMap() (map[string]map[string]map[string]*domain.PolicyConfig, error) {
