@@ -28,23 +28,23 @@ func (s *ServiceTestSuite) TestGetUserApproverEmails() {
 		s.EqualError(actualError, identitymanager.ErrEmptyUserEmailParam.Error())
 	})
 
-	s.Run("should pass email as the query string to client", func() {
-		email := "test@email.com"
+	s.Run("should pass user as the query string to client", func() {
+		user := "test@email.com"
 		expectedQuery := map[string]string{
-			"email": email,
+			"user": user,
 		}
 		s.mockClient.On("GetUserApproverEmails", expectedQuery).Return(nil, nil).Once()
 
-		s.service.GetUserApproverEmails(email)
+		s.service.GetUserApproverEmails(user)
 
 		s.mockClient.AssertExpectations(s.T())
 	})
 
 	s.Run("should return error if approver emails are empty", func() {
-		email := "test@email.com"
+		user := "test@email.com"
 		s.mockClient.On("GetUserApproverEmails", mock.Anything).Return([]string{}, nil).Once()
 
-		actualResult, actualError := s.service.GetUserApproverEmails(email)
+		actualResult, actualError := s.service.GetUserApproverEmails(user)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, identitymanager.ErrEmptyApprovers.Error())

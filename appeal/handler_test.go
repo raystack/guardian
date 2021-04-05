@@ -56,7 +56,7 @@ func (s *HandlerTestSuite) TestCreate() {
 			invalidPayload string
 		}{
 			{
-				name: "missing email",
+				name: "missing user",
 				invalidPayload: `{
 	"resources": [
 		{
@@ -71,13 +71,13 @@ func (s *HandlerTestSuite) TestCreate() {
 			{
 				name: "missing resources",
 				invalidPayload: `{
-	"email": "test@domain.com"
+	"user": "test@domain.com"
 }`,
 			},
 			{
 				name: "empty resources",
 				invalidPayload: `{
-	"email": "test@domain.com",
+	"user": "test@domain.com",
 	"resources": []
 }`,
 			},
@@ -96,13 +96,19 @@ func (s *HandlerTestSuite) TestCreate() {
 	})
 
 	validPayload := `{
-	"email": "test@email.com",
+	"user": "test@email.com",
 	"resources": [
 		{
-			"id": 1
+			"id": 1,
+			"options": {
+				"role": "viewer"
+			}
 		},
 		{
-			"id": 2
+			"id": 2,
+			"options": {
+				"role": "editor"
+			}
 		}
 	]
 }`
@@ -122,7 +128,7 @@ func (s *HandlerTestSuite) TestCreate() {
 			s.Setup()
 			req, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(validPayload))
 
-			s.mockAppealService.On("Create", mock.Anything, mock.Anything).Return(nil, tc.expectedServiceError).Once()
+			s.mockAppealService.On("Create", mock.Anything).Return(tc.expectedServiceError).Once()
 
 			s.handler.Create(s.res, req)
 			actualStatusCode := s.res.Result().StatusCode
@@ -135,17 +141,43 @@ func (s *HandlerTestSuite) TestCreate() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(validPayload))
 
-		expectedEmail := "test@email.com"
-		expectedResourceIDs := []uint{1, 2}
+		expectedUser := "test@email.com"
 		expectedResponseBody := []*domain.Appeal{
 			{
-				ID: 1,
+				ID:         1,
+				User:       expectedUser,
+				ResourceID: 1,
+				Role:       "viewer",
 			},
 			{
-				ID: 2,
+				ID:         2,
+				User:       expectedUser,
+				ResourceID: 2,
+				Role:       "editor",
 			},
 		}
-		s.mockAppealService.On("Create", expectedEmail, expectedResourceIDs).Return(expectedResponseBody, nil).Once()
+		expectedAppeals := []*domain.Appeal{
+			{
+				User:       expectedUser,
+				ResourceID: 1,
+				Role:       "viewer",
+			},
+			{
+				User:       expectedUser,
+				ResourceID: 2,
+				Role:       "editor",
+			},
+		}
+		s.mockAppealService.
+			On("Create", expectedAppeals).
+			Return(nil).
+			Run(func(args mock.Arguments) {
+				appeals := args.Get(0).([]*domain.Appeal)
+				for i, a := range appeals {
+					a.ID = expectedResponseBody[i].ID
+				}
+			}).
+			Once()
 		expectedStatusCode := http.StatusOK
 
 		s.handler.Create(s.res, req)

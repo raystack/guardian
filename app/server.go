@@ -9,6 +9,7 @@ import (
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/crypto"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/identitymanager"
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/provider"
@@ -33,14 +34,32 @@ func RunServer(c *Config) error {
 	resourceRepository := resource.NewRepository(db)
 	appealRepository := appeal.NewRepository(db)
 
+	identityManagerClient := identitymanager.NewClient(
+		&identitymanager.ClientConfig{
+			URL:        c.IdentityManagerURL,
+			HttpClient: &http.Client{},
+		},
+	)
+	identityManagerService := identitymanager.NewService(identityManagerClient)
+
 	providers := []domain.ProviderInterface{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
 	}
 
 	resourceService := resource.NewService(resourceRepository)
-	providerService := provider.NewService(providerRepository, resourceService, providers)
+	providerService := provider.NewService(
+		providerRepository,
+		resourceService,
+		providers,
+	)
 	policyService := policy.NewService(policyRepository)
-	appealService := appeal.NewService(appealRepository, resourceService, providerService)
+	appealService := appeal.NewService(
+		appealRepository,
+		resourceService,
+		providerService,
+		policyService,
+		identityManagerService,
+	)
 
 	r := api.New()
 	provider.SetupHandler(r, providerService)
@@ -78,6 +97,8 @@ func Migrate(c *Config) error {
 		&model.Policy{},
 		&model.Resource{},
 		&model.Appeal{},
+		&model.Approval{},
+		&model.Approver{},
 	}
 	return store.Migrate(db, models...)
 }

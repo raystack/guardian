@@ -16,8 +16,11 @@ type Appeal struct {
 	PolicyID      string                 `json:"policy_id"`
 	PolicyVersion uint                   `json:"policy_version"`
 	Status        string                 `json:"status"`
-	Email         string                 `json:"email"`
+	User          string                 `json:"user"`
+	Role          string                 `json:"role"`
 	Labels        map[string]interface{} `json:"labels"`
+	Resource      *Resource              `json:"resource,omitempty"`
+	Approvals     []*Approval            `json:"approvals"`
 	CreatedAt     time.Time              `json:"created_at"`
 	UpdatedAt     time.Time              `json:"updated_at"`
 }
@@ -29,5 +32,5 @@ type AppealRepository interface {
 
 // AppealService interface
 type AppealService interface {
-	Create(user string, resourceIDs []uint) ([]*Appeal, error)
+	Create([]*Appeal) error
 }

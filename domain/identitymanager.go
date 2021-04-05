@@ -12,5 +12,5 @@ type IdentityManagerClient interface {
 
 // IdentityManagerService interface
 type IdentityManagerService interface {
-	GetUserApproverEmails(userEmail string) ([]string, error)
+	GetUserApproverEmails(user string) ([]string, error)
 }

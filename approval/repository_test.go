@@ -1,4 +1,4 @@
-package appeal_test
+package approval_test
 
 import (
 	"database/sql"
@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/odpf/guardian/appeal"
+	"github.com/odpf/guardian/approval"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/utils"
@@ -20,14 +20,14 @@ type RepositoryTestSuite struct {
 	suite.Suite
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
-	repository *appeal.Repository
+	repository domain.ApprovalRepository
 }
 
 func (s *RepositoryTestSuite) SetupTest() {
 	db, mock, _ := mocks.NewStore()
 	s.sqldb, _ = db.DB()
 	s.dbmock = mock
-	s.repository = appeal.NewRepository(db)
+	s.repository = approval.NewRepository(db)
 }
 
 func (s *RepositoryTestSuite) TearDownTest() {
@@ -35,32 +35,33 @@ func (s *RepositoryTestSuite) TearDownTest() {
 }
 
 func (s *RepositoryTestSuite) TestBulkInsert() {
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","user","role","labels","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10),($11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING "id"`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","appeal_id","status","policy_id","policy_version","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($9,$10,$11,$12,$13,$14,$15,$16) RETURNING "id"`)
 
-	appeals := []*domain.Appeal{
+	approvals := []*domain.Approval{
 		{
-			User:       "test@email.com",
-			Role:       "role_name",
-			ResourceID: 1,
+			Name:          "approval_step_1",
+			AppealID:      1,
+			Status:        domain.ApprovalStatusPending,
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
 		},
 		{
-			User:       "test2@email.com",
-			Role:       "role_name",
-			ResourceID: 3,
+			Name:          "approval_step_2",
+			AppealID:      1,
+			Status:        domain.ApprovalStatusPending,
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
 		},
 	}
 
-	expectedError := errors.New("transaction error")
 	expectedArgs := []driver.Value{}
-	for _, a := range appeals {
+	for _, a := range approvals {
 		expectedArgs = append(expectedArgs,
-			a.ResourceID,
+			a.Name,
+			a.AppealID,
+			a.Status,
 			a.PolicyID,
 			a.PolicyVersion,
-			a.Status,
-			a.User,
-			a.Role,
-			"null",
 			utils.AnyTime{},
 			utils.AnyTime{},
 			gorm.DeletedAt{},
@@ -68,13 +69,14 @@ func (s *RepositoryTestSuite) TestBulkInsert() {
 	}
 
 	s.Run("should return error if got any from transaction", func() {
+		expectedError := errors.New("transaction error")
 		s.dbmock.ExpectBegin()
 		s.dbmock.ExpectQuery(expectedQuery).
 			WithArgs(expectedArgs...).
 			WillReturnError(expectedError)
 		s.dbmock.ExpectRollback()
 
-		actualError := s.repository.BulkInsert(appeals)
+		actualError := s.repository.BulkInsert(approvals)
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -92,10 +94,10 @@ func (s *RepositoryTestSuite) TestBulkInsert() {
 			WillReturnRows(expectedRows)
 		s.dbmock.ExpectCommit()
 
-		actualError := s.repository.BulkInsert(appeals)
+		actualError := s.repository.BulkInsert(approvals)
 
 		s.Nil(actualError)
-		for i, a := range appeals {
+		for i, a := range approvals {
 			s.Equal(expectedIDs[i], a.ID)
 		}
 	})

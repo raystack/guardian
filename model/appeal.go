@@ -16,7 +16,8 @@ type Appeal struct {
 	PolicyID      string
 	PolicyVersion uint
 	Status        string
-	Email         string
+	User          string
+	Role          string
 	Labels        datatypes.JSON
 
 	Resource  Resource `gorm:"ForeignKey:ResourceID;References:ID"`
@@ -35,13 +36,26 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 		return err
 	}
 
+	var approvals []Approval
+	if a.Approvals != nil {
+		for _, approval := range a.Approvals {
+			m := new(Approval)
+			if err := m.FromDomain(approval); err != nil {
+				return err
+			}
+			approvals = append(approvals, *m)
+		}
+	}
+
 	m.ID = a.ID
 	m.ResourceID = a.ResourceID
 	m.PolicyID = a.PolicyID
 	m.PolicyVersion = a.PolicyVersion
 	m.Status = a.Status
-	m.Email = a.Email
+	m.User = a.User
+	m.Role = a.Role
 	m.Labels = datatypes.JSON(labels)
+	m.Approvals = approvals
 	m.CreatedAt = a.CreatedAt
 	m.UpdatedAt = a.UpdatedAt
 
@@ -55,14 +69,27 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		return nil, err
 	}
 
+	var approvals []*domain.Approval
+	if m.Approvals != nil {
+		for _, a := range m.Approvals {
+			approval, err := a.ToDomain()
+			if err != nil {
+				return nil, err
+			}
+			approvals = append(approvals, approval)
+		}
+	}
+
 	return &domain.Appeal{
 		ID:            m.ID,
 		ResourceID:    m.ResourceID,
 		PolicyID:      m.PolicyID,
 		PolicyVersion: m.PolicyVersion,
 		Status:        m.Status,
-		Email:         m.Email,
+		User:          m.User,
+		Role:          m.Role,
 		Labels:        labels,
+		Approvals:     approvals,
 		CreatedAt:     m.CreatedAt,
 		UpdatedAt:     m.UpdatedAt,
 	}, nil

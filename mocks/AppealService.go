@@ -12,25 +12,16 @@ type AppealService struct {
 	mock.Mock
 }
 
-// Create provides a mock function with given fields: user, resourceIDs
-func (_m *AppealService) Create(user string, resourceIDs []uint) ([]*domain.Appeal, error) {
-	ret := _m.Called(user, resourceIDs)
+// Create provides a mock function with given fields: _a0
+func (_m *AppealService) Create(_a0 []*domain.Appeal) error {
+	ret := _m.Called(_a0)
 
-	var r0 []*domain.Appeal
-	if rf, ok := ret.Get(0).(func(string, []uint) []*domain.Appeal); ok {
-		r0 = rf(user, resourceIDs)
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]*domain.Appeal) error); ok {
+		r0 = rf(_a0)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*domain.Appeal)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string, []uint) error); ok {
-		r1 = rf(user, resourceIDs)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }

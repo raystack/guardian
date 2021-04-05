@@ -1,25 +1,42 @@
 package appeal
 
-import "github.com/odpf/guardian/domain"
+import (
+	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/utils"
+)
 
-type resourceCreatePayload struct {
-	ID      uint        `json:"id" validate:"required"`
-	Options interface{} `json:"options"`
+type resourceOptions struct {
+	Role string `json:"role" validate:"required"`
+}
+
+type createPayloadResource struct {
+	ID      uint                   `json:"id" validate:"required"`
+	Options map[string]interface{} `json:"options"`
 }
 
 type createPayload struct {
-	Email     string                  `json:"email" validate:"required"`
-	Resources []resourceCreatePayload `json:"resources" validate:"required,min=1"`
+	User      string                  `json:"user" validate:"required"`
+	Resources []createPayloadResource `json:"resources" validate:"required,min=1"`
 }
 
-func (p *createPayload) toDomain() (string, []*domain.Resource) {
-	// TODO: add options
-	resources := []*domain.Resource{}
+func (p *createPayload) toDomain() ([]*domain.Appeal, error) {
+	appeals := []*domain.Appeal{}
 	for _, r := range p.Resources {
-		resources = append(resources, &domain.Resource{
-			ID: r.ID,
+		var options resourceOptions
+		if err := mapstructure.Decode(r.Options, &options); err != nil {
+			return nil, err
+		}
+		if err := utils.ValidateStruct(options); err != nil {
+			return nil, err
+		}
+
+		appeals = append(appeals, &domain.Appeal{
+			User:       p.User,
+			ResourceID: r.ID,
+			Role:       options.Role,
 		})
 	}
 
-	return p.Email, resources
+	return appeals, nil
 }
