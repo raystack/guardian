@@ -59,6 +59,10 @@ func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for _, r := range records {
+		r.Config.Credentials = nil
+	}
+
 	utils.ReturnJSON(w, records)
 	return
 }

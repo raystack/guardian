@@ -42,7 +42,7 @@ type ProviderConfig struct {
 	Type        string                 `json:"type" yaml:"type" validate:"required,eq=google_bigquery"`
 	URN         string                 `json:"urn" yaml:"urn" validate:"required"`
 	Labels      map[string]interface{} `json:"labels" yaml:"labels"`
-	Credentials interface{}            `json:"credentials" yaml:"credentials" validate:"required"`
+	Credentials interface{}            `json:"credentials,omitempty" yaml:"credentials" validate:"required"`
 	Appeal      *AppealConfig          `json:"appeal" yaml:"appeal" validate:"required"`
 	Resources   []*ResourceConfig      `json:"resources" yaml:"resources" validate:"required"`
 }

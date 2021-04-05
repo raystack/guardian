@@ -191,8 +191,23 @@ func (s *HandlerTestSuite) TestFind() {
 		req, _ := http.NewRequest(http.MethodGet, "/", nil)
 
 		expectedStatusCode := http.StatusOK
-		expectedResponseBody := []*domain.Provider{}
-		s.mockProviderService.On("Find").Return(expectedResponseBody, nil)
+		expectedResponseBody := []*domain.Provider{
+			{
+				ID: 1,
+				Config: &domain.ProviderConfig{
+					Credentials: nil,
+				},
+			},
+		}
+		expectedProviders := []*domain.Provider{
+			{
+				ID: 1,
+				Config: &domain.ProviderConfig{
+					Credentials: "creds",
+				},
+			},
+		}
+		s.mockProviderService.On("Find").Return(expectedProviders, nil)
 
 		s.handler.Find(s.res, req)
 		actualStatusCode := s.res.Result().StatusCode
