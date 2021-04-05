@@ -28,11 +28,13 @@ type Appeal struct {
 // AppealRepository interface
 type AppealRepository interface {
 	BulkInsert([]*Appeal) error
+	Find(map[string]interface{}) ([]*Appeal, error)
 	GetByID(uint) (*Appeal, error)
 }
 
 // AppealService interface
 type AppealService interface {
 	Create([]*Appeal) error
+	Find(map[string]interface{}) ([]*Appeal, error)
 	GetByID(uint) (*Appeal, error)
 }

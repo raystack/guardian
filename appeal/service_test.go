@@ -71,6 +71,38 @@ func (s *ServiceTestSuite) TestGetByID() {
 	})
 }
 
+func (s *ServiceTestSuite) TestFind() {
+	s.Run("should return error if got any from repository", func() {
+		expectedError := errors.New("unexpected repository error")
+		s.mockRepository.On("Find", mock.Anything).Return(nil, expectedError).Once()
+
+		actualResult, actualError := s.service.Find(map[string]interface{}{})
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return records on success", func() {
+		expectedFilters := map[string]interface{}{
+			"user": "user@email.com",
+		}
+		expectedResult := []*domain.Appeal{
+			{
+				ID:         1,
+				ResourceID: 1,
+				User:       "user@email.com",
+				Role:       "viewer",
+			},
+		}
+		s.mockRepository.On("Find", expectedFilters).Return(expectedResult, nil).Once()
+
+		actualResult, actualError := s.service.Find(expectedFilters)
+
+		s.Equal(expectedResult, actualResult)
+		s.Nil(actualError)
+	})
+}
+
 func (s *ServiceTestSuite) TestCreate() {
 	s.Run("should return error if got error from resource service", func() {
 		expectedError := errors.New("resource service error")

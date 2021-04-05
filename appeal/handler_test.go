@@ -126,6 +126,52 @@ func (s *HandlerTestSuite) TestGetByID() {
 	})
 }
 
+func (s *HandlerTestSuite) TestFind() {
+	s.Run("should return error if got any from service", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+		expectedError := errors.New("service error")
+		s.mockAppealService.On("Find", mock.Anything).Return(nil, expectedError).Once()
+		expectedStatusCode := http.StatusInternalServerError
+
+		s.handler.Find(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+
+	s.Run("should return records on success", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+		expectedUser := "user@email.com"
+		q := req.URL.Query()
+		q.Set("user", expectedUser)
+		req.URL.RawQuery = q.Encode()
+		expectedFilters := map[string]interface{}{
+			"user": expectedUser,
+		}
+		expectedResponseBody := []*domain.Appeal{
+			{
+				ID:   1,
+				User: expectedUser,
+			},
+		}
+		s.mockAppealService.On("Find", expectedFilters).Return(expectedResponseBody, nil).Once()
+		expectedStatusCode := http.StatusOK
+
+		s.handler.Find(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+		actualResponseBody := []*domain.Appeal{}
+		err := json.NewDecoder(s.res.Body).Decode(&actualResponseBody)
+		s.NoError(err)
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+		s.Equal(expectedResponseBody, actualResponseBody)
+	})
+}
+
 func (s *HandlerTestSuite) TestCreate() {
 	s.Run("should return bad request error if received malformed payload", func() {
 		s.Setup()

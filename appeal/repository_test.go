@@ -207,6 +207,99 @@ func (s *RepositoryTestSuite) TestGetByID() {
 	})
 }
 
+func (s *RepositoryTestSuite) TestFind() {
+	s.Run("should return error if got any from db", func() {
+		expectedError := errors.New("db error")
+		s.dbmock.
+			ExpectQuery(".*").
+			WillReturnError(expectedError)
+
+		actualResult, actualError := s.repository.Find(map[string]interface{}{})
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should run query based on filters", func() {
+		testCases := []struct {
+			filters       map[string]interface{}
+			expectedQuery string
+			expectedArgs  []driver.Value
+		}{
+			{
+				filters:       map[string]interface{}{},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "appeals"."deleted_at" IS NULL`),
+			},
+			{
+				filters: map[string]interface{}{
+					"user": "user@email.com",
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "user" = $1 AND "appeals"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{"user@email.com"},
+			},
+		}
+
+		for _, tc := range testCases {
+			s.dbmock.
+				ExpectQuery(tc.expectedQuery).
+				WithArgs(tc.expectedArgs...).
+				WillReturnRows(sqlmock.NewRows(s.columnNames))
+
+			_, actualError := s.repository.Find(tc.filters)
+
+			s.Nil(actualError)
+		}
+	})
+
+	s.Run("should return records on success", func() {
+		expectedQuery := regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "appeals"."deleted_at" IS NULL`)
+		expectedFilters := map[string]interface{}{}
+		expectedRecords := []*domain.Appeal{
+			{
+				ID:            1,
+				ResourceID:    1,
+				PolicyID:      "policy_1",
+				PolicyVersion: 1,
+				Status:        domain.AppealStatusPending,
+				User:          "user@email.com",
+				Role:          "role_name",
+			},
+			{
+				ID:            2,
+				ResourceID:    2,
+				PolicyID:      "policy_1",
+				PolicyVersion: 1,
+				Status:        domain.AppealStatusPending,
+				User:          "user@email.com",
+				Role:          "role_name",
+			},
+		}
+		expecterRows := sqlmock.NewRows(s.columnNames)
+		for _, r := range expectedRecords {
+			expecterRows.AddRow(
+				r.ID,
+				r.ResourceID,
+				r.PolicyID,
+				r.PolicyVersion,
+				r.Status,
+				r.User,
+				r.Role,
+				"null",
+				r.CreatedAt,
+				r.UpdatedAt,
+			)
+		}
+		s.dbmock.
+			ExpectQuery(expectedQuery).
+			WillReturnRows(expecterRows)
+
+		actualRecords, actualError := s.repository.Find(expectedFilters)
+
+		s.Equal(expectedRecords, actualRecords)
+		s.Nil(actualError)
+	})
+}
+
 func (s *RepositoryTestSuite) TestBulkInsert() {
 	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","user","role","labels","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10),($11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING "id"`)
 

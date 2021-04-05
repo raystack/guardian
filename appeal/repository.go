@@ -36,6 +36,29 @@ func (r *Repository) GetByID(id uint) (*domain.Appeal, error) {
 	return a, nil
 }
 
+func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Appeal, error) {
+	whereConditions := map[string]interface{}{}
+	if filters["user"] != nil && filters["user"] != "" {
+		whereConditions["user"] = filters["user"]
+	}
+	var models []*model.Appeal
+	if err := r.db.Debug().Find(&models, whereConditions).Error; err != nil {
+		return nil, err
+	}
+
+	records := []*domain.Appeal{}
+	for _, m := range models {
+		a, err := m.ToDomain()
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, a)
+	}
+
+	return records, nil
+}
+
 // Create new record to database
 func (r *Repository) BulkInsert(appeals []*domain.Appeal) error {
 	models := []*model.Appeal{}

@@ -19,6 +19,7 @@ type Handler struct {
 func SetupHandler(r *mux.Router, as domain.AppealService) {
 	h := &Handler{as}
 	r.Methods(http.MethodPost).Path("/appeals").HandlerFunc(h.Create)
+	r.Methods(http.MethodGet).Path("/appeals").HandlerFunc(h.Find)
 	r.Methods(http.MethodGet).Path("/appeals/{id}").HandlerFunc(h.GetByID)
 }
 
@@ -41,6 +42,21 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, a)
+	return
+}
+
+func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
+	filters := map[string]interface{}{
+		"user": r.URL.Query().Get("user"),
+	}
+
+	records, err := h.AppealService.Find(filters)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.ReturnJSON(w, records)
 	return
 }
 

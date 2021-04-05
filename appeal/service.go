@@ -50,6 +50,11 @@ func (s *Service) GetByID(id uint) (*domain.Appeal, error) {
 	return s.repo.GetByID(id)
 }
 
+// Find appeals by filters
+func (s *Service) Find(filters map[string]interface{}) ([]*domain.Appeal, error) {
+	return s.repo.Find(filters)
+}
+
 // Create record
 func (s *Service) Create(appeals []*domain.Appeal) error {
 	resourceIDs := []uint{}
