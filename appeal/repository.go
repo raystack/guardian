@@ -21,7 +21,13 @@ func NewRepository(db *gorm.DB) *Repository {
 // GetByID returns appeal record by id along with the approvals and the approvers
 func (r *Repository) GetByID(id uint) (*domain.Appeal, error) {
 	m := new(model.Appeal)
-	if err := r.db.Preload("Approvals.Approvers").First(&m, id).Error; err != nil {
+	if err := r.db.
+		Preload("Approvals", func(db *gorm.DB) *gorm.DB {
+			return db.Order("Approvals.index ASC")
+		}).
+		Preload("Approvals.Approvers").
+		First(&m, id).
+		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -83,6 +89,29 @@ func (r *Repository) BulkInsert(appeals []*domain.Appeal) error {
 
 			*appeals[i] = *newAppeal
 		}
+
+		return nil
+	})
+}
+
+// Update an approval step
+func (r *Repository) Update(a *domain.Appeal) error {
+	m := new(model.Appeal)
+	if err := m.FromDomain(a); err != nil {
+		return err
+	}
+
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Omit("Approvals.Approvers").Session(&gorm.Session{FullSaveAssociations: true}).Save(&m).Error; err != nil {
+			return err
+		}
+
+		newRecord, err := m.ToDomain()
+		if err != nil {
+			return err
+		}
+
+		*a = *newRecord
 
 		return nil
 	})

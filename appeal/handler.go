@@ -21,6 +21,7 @@ func SetupHandler(r *mux.Router, as domain.AppealService) {
 	r.Methods(http.MethodPost).Path("/appeals").HandlerFunc(h.Create)
 	r.Methods(http.MethodGet).Path("/appeals").HandlerFunc(h.Find)
 	r.Methods(http.MethodGet).Path("/appeals/approvals").HandlerFunc(h.GetPendingApprovals)
+	r.Methods(http.MethodPost).Path("/appeals/{id}/approvals/{name}").HandlerFunc(h.MakeAction)
 	r.Methods(http.MethodGet).Path("/appeals/{id}").HandlerFunc(h.GetByID)
 }
 
@@ -97,5 +98,35 @@ func (h *Handler) GetPendingApprovals(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, approvals)
+	return
+}
+
+func (h *Handler) MakeAction(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	appealID, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	approvalName := params["name"]
+
+	var payload actionPayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	appeal, err := h.AppealService.MakeAction(domain.ApprovalAction{
+		AppealID:     uint(appealID),
+		ApprovalName: approvalName,
+		Actor:        payload.Actor,
+		Action:       payload.Action,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.ReturnJSON(w, appeal)
 	return
 }

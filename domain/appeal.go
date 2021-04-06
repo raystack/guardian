@@ -3,6 +3,9 @@ package domain
 import "time"
 
 const (
+	AppealActionNameApprove = "approve"
+	AppealActionNameReject  = "reject"
+
 	AppealStatusPending    = "pending"
 	AppealStatusActive     = "active"
 	AppealStatusRejected   = "rejected"
@@ -25,11 +28,19 @@ type Appeal struct {
 	UpdatedAt     time.Time              `json:"updated_at"`
 }
 
+type ApprovalAction struct {
+	AppealID     uint   `validate:"required"`
+	ApprovalName string `validate:"required"`
+	Actor        string `validate:"email"`
+	Action       string `validate:"required"`
+}
+
 // AppealRepository interface
 type AppealRepository interface {
 	BulkInsert([]*Appeal) error
 	Find(map[string]interface{}) ([]*Appeal, error)
 	GetByID(uint) (*Appeal, error)
+	Update(*Appeal) error
 }
 
 // AppealService interface
@@ -38,4 +49,5 @@ type AppealService interface {
 	Find(map[string]interface{}) ([]*Appeal, error)
 	GetByID(uint) (*Appeal, error)
 	GetPendingApprovals(user string) ([]*Approval, error)
+	MakeAction(ApprovalAction) (*Appeal, error)
 }

@@ -10,13 +10,14 @@ const (
 )
 
 type Approval struct {
-	ID            uint   `json:"id"`
-	Name          string `json:"name"`
-	Index         int    `json:"-"`
-	AppealID      uint   `json:"appeal_id"`
-	Status        string `json:"status"`
-	PolicyID      string `json:"policy_id"`
-	PolicyVersion uint   `json:"policy_version"`
+	ID            uint    `json:"id"`
+	Name          string  `json:"name"`
+	Index         int     `json:"-"`
+	AppealID      uint    `json:"appeal_id"`
+	Status        string  `json:"status"`
+	Actor         *string `json:"actor"`
+	PolicyID      string  `json:"policy_id"`
+	PolicyVersion uint    `json:"policy_version"`
 
 	Approvers []string `json:"approvers,omitempty"`
 	Appeal    *Appeal  `json:"appeal,omitempty"`

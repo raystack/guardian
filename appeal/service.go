@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-lookup"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/utils"
 )
 
 // Service handling the business logics
@@ -130,6 +132,98 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	}
 
 	return nil
+}
+
+// Approve an approval step
+func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appeal, error) {
+	if err := utils.ValidateStruct(approvalAction); err != nil {
+		return nil, err
+	}
+	appeal, err := s.repo.GetByID(approvalAction.AppealID)
+	if err != nil {
+		return nil, err
+	}
+	if appeal == nil {
+		return nil, nil
+	}
+
+	if appeal.Status != domain.AppealStatusPending {
+		switch appeal.Status {
+		case domain.AppealStatusActive:
+			err = ErrAppealStatusApproved
+		case domain.AppealStatusRejected:
+			err = ErrAppealStatusRejected
+		case domain.AppealStatusTerminated:
+			err = ErrAppealStatusTerminated
+		default:
+			err = ErrAppealStatusUnrecognized
+		}
+		return nil, err
+	}
+
+	for i, approval := range appeal.Approvals {
+		if approval.Name != approvalAction.ApprovalName {
+			switch approval.Status {
+			case domain.ApprovalStatusApproved:
+			case domain.ApprovalStatusSkipped:
+				continue
+			case domain.ApprovalStatusPending:
+				return nil, ErrApprovalDependencyIsPending
+			case domain.ApprovalStatusRejected:
+				return nil, ErrAppealStatusRejected
+			default:
+				return nil, ErrApprovalStatusUnrecognized
+			}
+		} else {
+			if approval.Status != domain.ApprovalStatusPending {
+				switch approval.Status {
+				case domain.ApprovalStatusApproved:
+					err = ErrApprovalStatusApproved
+				case domain.ApprovalStatusRejected:
+					err = ErrApprovalStatusRejected
+				case domain.ApprovalStatusSkipped:
+					err = ErrApprovalStatusSkipped
+				default:
+					err = ErrApprovalStatusUnrecognized
+				}
+				return nil, err
+			}
+
+			if !utils.ContainsString(approval.Approvers, approvalAction.Actor) {
+				return nil, ErrActionForbidden
+			}
+
+			approval.Actor = &approvalAction.Actor
+			approval.UpdatedAt = time.Now()
+			if approvalAction.Action == domain.AppealActionNameApprove {
+				approval.Status = domain.ApprovalStatusApproved
+				if i == len(appeal.Approvals)-1 {
+					// TODO: grant access to the actual provider
+					appeal.Status = domain.AppealStatusActive
+				}
+			} else if approvalAction.Action == domain.AppealActionNameReject {
+				approval.Status = domain.ApprovalStatusRejected
+				appeal.Status = domain.AppealStatusRejected
+				if i < len(appeal.Approvals)-1 {
+					for j := i + 1; j < len(appeal.Approvals); j++ {
+						appeal.Approvals[j].Status = domain.ApprovalStatusSkipped
+						appeal.Approvals[j].UpdatedAt = time.Now()
+					}
+				}
+			} else {
+				return nil, ErrActionInvalidValue
+			}
+
+			if err := s.repo.Update(appeal); err != nil {
+				// TODO: rollback granted access in the actual provider
+				return nil, err
+			}
+
+			return appeal, nil
+		}
+	}
+
+	return nil, ErrApprovalNameNotFound
 }
 
 func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) {
