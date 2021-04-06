@@ -25,11 +25,14 @@ func (r *repository) GetPendingApprovals(approverEmail string) ([]*domain.Approv
 		approvalIDs = append(approvalIDs, a.ApprovalID)
 	}
 
+	earliestPendingApprovalQuery := r.db.Model(&model.Approval{}).
+		Select(`appeal_id, min("index")`).
+		Where("status = ?", domain.ApprovalStatusPending).
+		Group("appeal_id")
 	var models []*model.Approval
 	if err := r.db.
 		Preload("Appeal").
-		// TODO: filter to only return earliest pending appeal on that appeal group
-		Where("status = ? AND id IN ?", domain.ApprovalStatusPending, approvalIDs).
+		Where(`("appeal_id","index") IN (?)`, earliestPendingApprovalQuery).
 		Find(&models, approvalIDs).
 		Error; err != nil {
 		return nil, err
