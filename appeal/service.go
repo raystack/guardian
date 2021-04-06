@@ -2,7 +2,6 @@ package appeal
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -82,7 +81,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	for _, a := range appeals {
 		r := resources[a.ResourceID]
 		if r == nil {
-			return errors.New("resource doesn't exists")
+			return ErrResourceNotFound
 		}
 
 		if policyConfigs[r.ProviderType] == nil {
