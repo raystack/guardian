@@ -20,6 +20,7 @@ func SetupHandler(r *mux.Router, as domain.AppealService) {
 	h := &Handler{as}
 	r.Methods(http.MethodPost).Path("/appeals").HandlerFunc(h.Create)
 	r.Methods(http.MethodGet).Path("/appeals").HandlerFunc(h.Find)
+	r.Methods(http.MethodGet).Path("/appeals/approvals").HandlerFunc(h.GetPendingApprovals)
 	r.Methods(http.MethodGet).Path("/appeals/{id}").HandlerFunc(h.GetByID)
 }
 
@@ -83,5 +84,18 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, appeals)
+	return
+}
+
+func (h *Handler) GetPendingApprovals(w http.ResponseWriter, r *http.Request) {
+	user := r.URL.Query().Get("user")
+
+	approvals, err := h.AppealService.GetPendingApprovals(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.ReturnJSON(w, approvals)
 	return
 }

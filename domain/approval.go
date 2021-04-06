@@ -18,6 +18,7 @@ type Approval struct {
 	PolicyVersion uint   `json:"policy_version"`
 
 	Approvers []string `json:"approvers,omitempty"`
+	Appeal    *Appeal  `json:"appeal,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -25,8 +26,10 @@ type Approval struct {
 
 type ApprovalRepository interface {
 	BulkInsert([]*Approval) error
+	GetPendingApprovals(user string) ([]*Approval, error)
 }
 
 type ApprovalService interface {
 	BulkInsert([]*Approval) error
+	GetPendingApprovals(user string) ([]*Approval, error)
 }

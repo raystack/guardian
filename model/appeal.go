@@ -22,7 +22,7 @@ type Appeal struct {
 
 	Resource  Resource `gorm:"ForeignKey:ResourceID;References:ID"`
 	Policy    Policy   `gorm:"ForeignKey:PolicyID,PolicyVersion;References:ID,Version"`
-	Approvals []Approval
+	Approvals []*Approval
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
@@ -36,14 +36,14 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 		return err
 	}
 
-	var approvals []Approval
+	var approvals []*Approval
 	if a.Approvals != nil {
 		for _, approval := range a.Approvals {
 			m := new(Approval)
 			if err := m.FromDomain(approval); err != nil {
 				return err
 			}
-			approvals = append(approvals, *m)
+			approvals = append(approvals, m)
 		}
 	}
 
@@ -72,11 +72,13 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 	var approvals []*domain.Approval
 	if m.Approvals != nil {
 		for _, a := range m.Approvals {
-			approval, err := a.ToDomain()
-			if err != nil {
-				return nil, err
+			if a != nil {
+				approval, err := a.ToDomain()
+				if err != nil {
+					return nil, err
+				}
+				approvals = append(approvals, approval)
 			}
-			approvals = append(approvals, approval)
 		}
 	}
 

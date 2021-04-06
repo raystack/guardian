@@ -71,3 +71,26 @@ func (_m *AppealService) GetByID(_a0 uint) (*domain.Appeal, error) {
 
 	return r0, r1
 }
+
+// GetPendingApprovals provides a mock function with given fields: user
+func (_m *AppealService) GetPendingApprovals(user string) ([]*domain.Approval, error) {
+	ret := _m.Called(user)
+
+	var r0 []*domain.Approval
+	if rf, ok := ret.Get(0).(func(string) []*domain.Approval); ok {
+		r0 = rf(user)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.Approval)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(user)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}

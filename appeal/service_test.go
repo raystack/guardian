@@ -14,6 +14,7 @@ import (
 type ServiceTestSuite struct {
 	suite.Suite
 	mockRepository             *mocks.AppealRepository
+	mockApprovalService        *mocks.ApprovalService
 	mockResourceService        *mocks.ResourceService
 	mockProviderService        *mocks.ProviderService
 	mockPolicyService          *mocks.PolicyService
@@ -24,12 +25,15 @@ type ServiceTestSuite struct {
 
 func (s *ServiceTestSuite) SetupTest() {
 	s.mockRepository = new(mocks.AppealRepository)
+	s.mockApprovalService = new(mocks.ApprovalService)
 	s.mockResourceService = new(mocks.ResourceService)
 	s.mockProviderService = new(mocks.ProviderService)
 	s.mockPolicyService = new(mocks.PolicyService)
 	s.mockIdentityManagerService = new(mocks.IdentityManagerService)
 
-	s.service = appeal.NewService(s.mockRepository,
+	s.service = appeal.NewService(
+		s.mockRepository,
+		s.mockApprovalService,
 		s.mockResourceService,
 		s.mockProviderService,
 		s.mockPolicyService,

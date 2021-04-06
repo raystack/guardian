@@ -14,6 +14,40 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
+func (r *repository) GetPendingApprovals(approverEmail string) ([]*domain.Approval, error) {
+	var approverModels []*model.Approver
+	if err := r.db.Find(&approverModels, "email = ?", approverEmail).Error; err != nil {
+		return nil, err
+	}
+
+	var approvalIDs []uint
+	for _, a := range approverModels {
+		approvalIDs = append(approvalIDs, a.ApprovalID)
+	}
+
+	var models []*model.Approval
+	if err := r.db.
+		Preload("Appeal").
+		// TODO: filter to only return earliest pending appeal on that appeal group
+		Where("status = ? AND id IN ?", domain.ApprovalStatusPending, approvalIDs).
+		Find(&models, approvalIDs).
+		Error; err != nil {
+		return nil, err
+	}
+
+	records := []*domain.Approval{}
+	for _, m := range models {
+		appeal, err := m.ToDomain()
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, appeal)
+	}
+
+	return records, nil
+}
+
 func (r *repository) BulkInsert(approvals []*domain.Approval) error {
 	models := []*model.Approval{}
 	for _, a := range approvals {

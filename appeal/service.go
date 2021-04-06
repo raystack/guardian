@@ -15,6 +15,7 @@ import (
 type Service struct {
 	repo domain.AppealRepository
 
+	approvalService        domain.ApprovalService
 	resourceService        domain.ResourceService
 	providerService        domain.ProviderService
 	policyService          domain.PolicyService
@@ -26,6 +27,7 @@ type Service struct {
 // NewService returns service struct
 func NewService(
 	appealRepository domain.AppealRepository,
+	approvalService domain.ApprovalService,
 	resourceService domain.ResourceService,
 	providerService domain.ProviderService,
 	policyService domain.PolicyService,
@@ -33,6 +35,7 @@ func NewService(
 ) *Service {
 	return &Service{
 		repo:                   appealRepository,
+		approvalService:        approvalService,
 		resourceService:        resourceService,
 		providerService:        providerService,
 		policyService:          policyService,
@@ -248,4 +251,8 @@ func structToMap(item interface{}) (map[string]interface{}, error) {
 	}
 
 	return result, nil
+}
+
+func (s *Service) GetPendingApprovals(user string) ([]*domain.Approval, error) {
+	return s.approvalService.GetPendingApprovals(user)
 }
