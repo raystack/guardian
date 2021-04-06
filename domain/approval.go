@@ -12,6 +12,7 @@ const (
 type Approval struct {
 	ID            uint   `json:"id"`
 	Name          string `json:"name"`
+	Index         int    `json:"-"`
 	AppealID      uint   `json:"appeal_id"`
 	Status        string `json:"status"`
 	PolicyID      string `json:"policy_id"`

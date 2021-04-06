@@ -11,6 +11,7 @@ import (
 type Approval struct {
 	ID            uint   `gorm:"primaryKey"`
 	Name          string `gorm:"index"`
+	Index         int
 	AppealID      uint
 	Status        string
 	PolicyID      string
@@ -47,6 +48,7 @@ func (m *Approval) FromDomain(a *domain.Approval) error {
 
 	m.ID = a.ID
 	m.Name = a.Name
+	m.Index = a.Index
 	m.AppealID = a.AppealID
 	m.Status = a.Status
 	m.PolicyID = a.PolicyID
@@ -83,6 +85,7 @@ func (m *Approval) ToDomain() (*domain.Approval, error) {
 	return &domain.Approval{
 		ID:            m.ID,
 		Name:          m.Name,
+		Index:         m.Index,
 		AppealID:      m.AppealID,
 		Status:        m.Status,
 		PolicyID:      m.PolicyID,

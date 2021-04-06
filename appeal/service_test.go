@@ -210,12 +210,14 @@ func (s *ServiceTestSuite) TestCreate() {
 			Approvals: []*domain.Approval{
 				{
 					Name:          "step_1",
+					Index:         0,
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
 				},
 				{
 					Name:          "step_2",
+					Index:         1,
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
@@ -235,6 +237,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				{
 					ID:            1,
 					Name:          "step_1",
+					Index:         0,
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
@@ -242,6 +245,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				{
 					ID:            2,
 					Name:          "step_2",
+					Index:         1,
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
@@ -259,6 +263,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				{
 					ID:            1,
 					Name:          "step_1",
+					Index:         0,
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
@@ -266,6 +271,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				{
 					ID:            2,
 					Name:          "step_2",
+					Index:         1,
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,

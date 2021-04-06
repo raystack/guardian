@@ -35,11 +35,12 @@ func (s *RepositoryTestSuite) TearDownTest() {
 }
 
 func (s *RepositoryTestSuite) TestBulkInsert() {
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","appeal_id","status","policy_id","policy_version","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8),($9,$10,$11,$12,$13,$14,$15,$16) RETURNING "id"`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","policy_id","policy_version","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9),($10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING "id"`)
 
 	approvals := []*domain.Approval{
 		{
 			Name:          "approval_step_1",
+			Index:         0,
 			AppealID:      1,
 			Status:        domain.ApprovalStatusPending,
 			PolicyID:      "policy_1",
@@ -47,6 +48,7 @@ func (s *RepositoryTestSuite) TestBulkInsert() {
 		},
 		{
 			Name:          "approval_step_2",
+			Index:         1,
 			AppealID:      1,
 			Status:        domain.ApprovalStatusPending,
 			PolicyID:      "policy_1",
@@ -58,6 +60,7 @@ func (s *RepositoryTestSuite) TestBulkInsert() {
 	for _, a := range approvals {
 		expectedArgs = append(expectedArgs,
 			a.Name,
+			a.Index,
 			a.AppealID,
 			a.Status,
 			a.PolicyID,

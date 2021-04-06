@@ -100,7 +100,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		steps := approvalSteps[policyConfig.ID][uint(policyConfig.Version)]
 
 		approvals := []*domain.Approval{}
-		for _, step := range steps {
+		for i, step := range steps {
 			var approvers []string
 			if step.Approvers != "" {
 				approvers, err = s.resolveApprovers(a.User, r, step.Approvers)
@@ -111,6 +111,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 			approvals = append(approvals, &domain.Approval{
 				Name:          step.Name,
+				Index:         i,
 				Status:        domain.ApprovalStatusPending,
 				PolicyID:      policyConfig.ID,
 				PolicyVersion: uint(policyConfig.Version),
