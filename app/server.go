@@ -75,7 +75,7 @@ func RunServer(c *Config) error {
 
 	tasks := []*scheduler.Task{
 		{
-			CronTab: "* */2 * * *",
+			CronTab: "0 */2 * * *",
 			Func:    providerJobHandler.GetResources,
 		},
 	}
