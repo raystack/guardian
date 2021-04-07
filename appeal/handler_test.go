@@ -414,13 +414,57 @@ func (s *HandlerTestSuite) TestMakeAction() {
 			"name": "approval_1",
 		})
 		expectedError := errors.New("service error")
-		s.mockAppealService.On("MakeAction", mock.Anything).Return(nil, expectedError)
+		s.mockAppealService.On("MakeAction", mock.Anything).
+			Return(nil, expectedError).
+			Once()
 		expectedStatusCode := http.StatusInternalServerError
 
 		s.handler.MakeAction(s.res, req)
 		actualStatusCode := s.res.Result().StatusCode
 
 		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+
+	s.Run("should return error based on service error on make action call", func() {
+		testCases := []struct {
+			expectedServiceError error
+			expectedStatusCode   int
+		}{
+			{appeal.ErrAppealStatusApproved, http.StatusBadRequest},
+			{appeal.ErrAppealStatusRejected, http.StatusBadRequest},
+			{appeal.ErrAppealStatusTerminated, http.StatusBadRequest},
+			{appeal.ErrAppealStatusUnrecognized, http.StatusBadRequest},
+			{appeal.ErrApprovalDependencyIsPending, http.StatusBadRequest},
+			{appeal.ErrAppealStatusRejected, http.StatusBadRequest},
+			{appeal.ErrApprovalStatusUnrecognized, http.StatusBadRequest},
+			{appeal.ErrApprovalStatusApproved, http.StatusBadRequest},
+			{appeal.ErrApprovalStatusRejected, http.StatusBadRequest},
+			{appeal.ErrApprovalStatusSkipped, http.StatusBadRequest},
+			{appeal.ErrActionInvalidValue, http.StatusBadRequest},
+			{appeal.ErrActionForbidden, http.StatusForbidden},
+			{appeal.ErrApprovalNameNotFound, http.StatusNotFound},
+			{errors.New("any error"), http.StatusInternalServerError},
+		}
+		for _, tc := range testCases {
+			s.Run(tc.expectedServiceError.Error(), func() {
+				s.Setup()
+				req, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(validPayload))
+
+				req = mux.SetURLVars(req, map[string]string{
+					"id":   "1",
+					"name": "approval_1",
+				})
+				s.mockAppealService.On("MakeAction", mock.Anything).
+					Return(nil, tc.expectedServiceError).
+					Once()
+				expectedStatusCode := tc.expectedStatusCode
+
+				s.handler.MakeAction(s.res, req)
+				actualStatusCode := s.res.Result().StatusCode
+
+				s.Equal(expectedStatusCode, actualStatusCode)
+			})
+		}
 	})
 
 	s.Run("should return appeal on success", func() {
@@ -440,7 +484,9 @@ func (s *HandlerTestSuite) TestMakeAction() {
 		expectedResponseBody := &domain.Appeal{
 			ID: 1,
 		}
-		s.mockAppealService.On("MakeAction", expectedApprovalAction).Return(expectedResponseBody, nil)
+		s.mockAppealService.On("MakeAction", expectedApprovalAction).
+			Return(expectedResponseBody, nil).
+			Once()
 		expectedStatusCode := http.StatusOK
 
 		s.handler.MakeAction(s.res, req)

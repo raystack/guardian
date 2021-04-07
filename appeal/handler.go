@@ -123,7 +123,28 @@ func (h *Handler) MakeAction(w http.ResponseWriter, r *http.Request) {
 		Action:       payload.Action,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		var statusCode int
+		switch err {
+		case ErrAppealStatusApproved,
+			ErrAppealStatusRejected,
+			ErrAppealStatusTerminated,
+			ErrAppealStatusUnrecognized,
+			ErrApprovalDependencyIsPending,
+			ErrAppealStatusRejected,
+			ErrApprovalStatusUnrecognized,
+			ErrApprovalStatusApproved,
+			ErrApprovalStatusRejected,
+			ErrApprovalStatusSkipped,
+			ErrActionInvalidValue:
+			statusCode = http.StatusBadRequest
+		case ErrActionForbidden:
+			statusCode = http.StatusForbidden
+		case ErrApprovalNameNotFound:
+			statusCode = http.StatusNotFound
+		default:
+			statusCode = http.StatusInternalServerError
+		}
+		http.Error(w, err.Error(), statusCode)
 		return
 	}
 
