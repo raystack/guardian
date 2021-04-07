@@ -165,8 +165,8 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 	for i, approval := range appeal.Approvals {
 		if approval.Name != approvalAction.ApprovalName {
 			switch approval.Status {
-			case domain.ApprovalStatusApproved:
-			case domain.ApprovalStatusSkipped:
+			case domain.ApprovalStatusApproved,
+				domain.ApprovalStatusSkipped:
 				continue
 			case domain.ApprovalStatusPending:
 				return nil, ErrApprovalDependencyIsPending
