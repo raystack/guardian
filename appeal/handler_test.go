@@ -3,6 +3,7 @@ package appeal_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -362,6 +363,90 @@ func (s *HandlerTestSuite) TestGetPendingApprovals() {
 
 		s.Equal(expectedStatusCode, actualStatusCode)
 		s.Equal(expectedApprovals, actualResponseBody)
+	})
+}
+
+func (s *HandlerTestSuite) TestMakeAction() {
+	s.Run("should return bad request if given invalid appeal id", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+		req = mux.SetURLVars(req, map[string]string{
+			"id": "invalid id",
+		})
+		expectedStatusCode := http.StatusBadRequest
+
+		s.handler.MakeAction(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+
+	s.Run("should return bad request if given invalid payload", func() {
+		s.Setup()
+		invalidPayload := `invalid json`
+		req, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(invalidPayload))
+
+		req = mux.SetURLVars(req, map[string]string{
+			"id":   "1",
+			"name": "approval_1",
+		})
+		expectedStatusCode := http.StatusBadRequest
+
+		s.handler.MakeAction(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+
+	actor := "user@email.com"
+	action := domain.AppealActionNameApprove
+	validPayload := fmt.Sprintf(`{
+	"actor": "%s",
+	"action": "%s"
+}`, actor, action)
+	s.Run("should return error if got any from appeal service", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(validPayload))
+
+		req = mux.SetURLVars(req, map[string]string{
+			"id":   "1",
+			"name": "approval_1",
+		})
+		expectedError := errors.New("service error")
+		s.mockAppealService.On("MakeAction", mock.Anything).Return(nil, expectedError)
+		expectedStatusCode := http.StatusInternalServerError
+
+		s.handler.MakeAction(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+
+	s.Run("should return appeal on success", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(validPayload))
+
+		req = mux.SetURLVars(req, map[string]string{
+			"id":   "1",
+			"name": "approval_1",
+		})
+		expectedApprovalAction := domain.ApprovalAction{
+			AppealID:     1,
+			ApprovalName: "approval_1",
+			Actor:        actor,
+			Action:       action,
+		}
+		expectedResponseBody := &domain.Appeal{
+			ID: 1,
+		}
+		s.mockAppealService.On("MakeAction", expectedApprovalAction).Return(expectedResponseBody, nil)
+		expectedStatusCode := http.StatusOK
+
+		s.handler.MakeAction(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+
+		s.Equal(expectedStatusCode, actualStatusCode)
 	})
 }
 
