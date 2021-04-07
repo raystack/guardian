@@ -327,6 +327,44 @@ func (s *HandlerTestSuite) TestCreate() {
 	})
 }
 
+func (s *HandlerTestSuite) TestGetPendingApprovals() {
+	s.Run("should return error if got any from appeal service", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+		expectedError := errors.New("service error")
+		s.mockAppealService.On("GetPendingApprovals", mock.Anything).Return(nil, expectedError)
+		expectedStatusCode := http.StatusInternalServerError
+
+		s.handler.GetPendingApprovals(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+
+	s.Run("should return approval list on success", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodGet, "/", nil)
+
+		user := "user@email.com"
+		q := req.URL.Query()
+		q.Set("user", user)
+		req.URL.RawQuery = q.Encode()
+		expectedApprovals := []*domain.Approval{}
+		s.mockAppealService.On("GetPendingApprovals", user).Return(expectedApprovals, nil)
+		expectedStatusCode := http.StatusOK
+
+		s.handler.GetPendingApprovals(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+		actualResponseBody := []*domain.Approval{}
+		err := json.NewDecoder(s.res.Body).Decode(&actualResponseBody)
+		s.NoError(err)
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+		s.Equal(expectedApprovals, actualResponseBody)
+	})
+}
+
 func TestHandler(t *testing.T) {
 	suite.Run(t, new(HandlerTestSuite))
 }

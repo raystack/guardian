@@ -759,6 +759,18 @@ func (s *ServiceTestSuite) TestMakeAction() {
 	})
 }
 
+func (s *ServiceTestSuite) TestGetPendingApprovals() {
+	s.Run("should return error if got error from repository", func() {
+		expectedError := errors.New("repository error")
+		s.mockApprovalService.On("GetPendingApprovals", mock.Anything).Return(nil, expectedError).Once()
+
+		actualResult, actualError := s.service.GetPendingApprovals("user@email.com")
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+}
+
 func TestService(t *testing.T) {
 	suite.Run(t, new(ServiceTestSuite))
 }
