@@ -367,6 +367,71 @@ func (s *RepositoryTestSuite) TestBulkInsert() {
 	})
 }
 
+func (s *RepositoryTestSuite) TestUpdate() {
+	s.Run("should return error if got error from transaction", func() {
+		expectedError := errors.New("db error")
+		s.dbmock.ExpectBegin()
+		s.dbmock.ExpectExec(".*").
+			WillReturnError(expectedError)
+		s.dbmock.ExpectRollback()
+
+		actualError := s.repository.Update(&domain.Appeal{ID: 1})
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	expectedUpdateApprovalsQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","policy_id","policy_version","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) ON CONFLICT ("id") DO UPDATE SET "name"="excluded"."name","index"="excluded"."index","appeal_id"="excluded"."appeal_id","status"="excluded"."status","actor"="excluded"."actor","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","created_at"="excluded"."created_at","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
+	expectedUpdateAppealQuery := regexp.QuoteMeta(`UPDATE "appeals" SET "resource_id"=$1,"policy_id"=$2,"policy_version"=$3,"status"=$4,"user"=$5,"role"=$6,"labels"=$7,"created_at"=$8,"updated_at"=$9,"deleted_at"=$10 WHERE "id" = $11`)
+	s.Run("should return nil on success", func() {
+		expectedID := uint(1)
+		appeal := &domain.Appeal{
+			ID: expectedID,
+			Approvals: []*domain.Approval{
+				{
+					ID:       11,
+					AppealID: expectedID,
+				},
+				{
+					ID:       12,
+					AppealID: expectedID,
+				},
+			},
+		}
+
+		s.dbmock.ExpectBegin()
+		s.dbmock.ExpectExec(expectedUpdateAppealQuery).
+			WillReturnResult(sqlmock.NewResult(int64(expectedID), 1))
+		var expectedApprovalArgs []driver.Value
+		expectedApprovalRows := sqlmock.NewRows([]string{"id"})
+		for _, approval := range appeal.Approvals {
+			expectedApprovalArgs = append(expectedApprovalArgs,
+				approval.Name,
+				approval.Index,
+				approval.AppealID,
+				approval.Status,
+				approval.Actor,
+				approval.PolicyID,
+				approval.PolicyVersion,
+				utils.AnyTime{},
+				utils.AnyTime{},
+				gorm.DeletedAt{},
+				approval.ID,
+			)
+			expectedApprovalRows.AddRow(
+				approval.ID,
+			)
+		}
+		s.dbmock.ExpectQuery(expectedUpdateApprovalsQuery).
+			WithArgs(expectedApprovalArgs...).
+			WillReturnRows(expectedApprovalRows)
+		s.dbmock.ExpectCommit()
+
+		err := s.repository.Update(appeal)
+
+		s.Nil(err)
+	})
+}
+
 func TestRepository(t *testing.T) {
 	suite.Run(t, new(RepositoryTestSuite))
 }
