@@ -3,6 +3,7 @@ package appeal_test
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/domain"
@@ -326,6 +327,435 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		s.Equal(expectedResult, appeals)
 		s.Nil(actualError)
+	})
+}
+
+func (s *ServiceTestSuite) TestMakeAction() {
+	timeNow := time.Now()
+	appeal.TimeNow = func() time.Time {
+		return timeNow
+	}
+	s.Run("should return error if approval action parameter is invalid", func() {
+		invalidApprovalActionParameters := []domain.ApprovalAction{
+			{
+				ApprovalName: "approval_1",
+				Actor:        "user@email.com",
+				Action:       "name",
+			},
+			{
+				AppealID: 1,
+				Actor:    "user@email.com",
+				Action:   "name",
+			},
+			{
+				AppealID:     1,
+				ApprovalName: "approval_1",
+				Actor:        "invalidemail",
+				Action:       "name",
+			},
+			{
+				AppealID:     1,
+				ApprovalName: "approval_1",
+				Action:       "name",
+			},
+			{
+				AppealID:     1,
+				ApprovalName: "approval_1",
+				Actor:        "user@email.com",
+			},
+		}
+
+		for _, param := range invalidApprovalActionParameters {
+			actualResult, actualError := s.service.MakeAction(param)
+
+			s.Nil(actualResult)
+			s.Error(actualError)
+		}
+	})
+
+	validApprovalActionParam := domain.ApprovalAction{
+		AppealID:     1,
+		ApprovalName: "approval_1",
+		Actor:        "user@email.com",
+		Action:       "approve",
+	}
+
+	s.Run("should return error if got any from repository while getting appeal details", func() {
+		expectedError := errors.New("repository error")
+		s.mockRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
+
+		actualResult, actualError := s.service.MakeAction(validApprovalActionParam)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return nil and nil error if appeal not found", func() {
+		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(nil, nil).Once()
+
+		actualResult, actualError := s.service.MakeAction(validApprovalActionParam)
+
+		s.Nil(actualResult)
+		s.Nil(actualError)
+	})
+
+	s.Run("should return error based on statuses conditions", func() {
+		testCases := []struct {
+			name          string
+			appealStatus  string
+			approvals     []*domain.Approval
+			expectedError error
+		}{
+			{
+				name:          "appeal not eligible, status: active",
+				appealStatus:  domain.AppealStatusActive,
+				expectedError: appeal.ErrAppealStatusApproved,
+			},
+			{
+				name:          "appeal not eligible, status: rejected",
+				appealStatus:  domain.AppealStatusRejected,
+				expectedError: appeal.ErrAppealStatusRejected,
+			},
+			{
+				name:          "appeal not eligible, status: terminated",
+				appealStatus:  domain.AppealStatusTerminated,
+				expectedError: appeal.ErrAppealStatusTerminated,
+			},
+			{
+				name:          "invalid appeal status",
+				appealStatus:  "invalidstatus",
+				expectedError: appeal.ErrAppealStatusUnrecognized,
+			},
+			{
+				name:         "previous approval step still on pending",
+				appealStatus: domain.AppealStatusPending,
+				approvals: []*domain.Approval{
+					{
+						Name:   "approval_0",
+						Status: domain.ApprovalStatusPending,
+					},
+					{
+						Name:   "approval_1",
+						Status: domain.ApprovalStatusPending,
+					},
+				},
+				expectedError: appeal.ErrApprovalDependencyIsPending,
+			},
+			{
+				name:         "found one previous approval is reject",
+				appealStatus: domain.AppealStatusPending,
+				approvals: []*domain.Approval{
+					{
+						Name:   "approval_0",
+						Status: domain.ApprovalStatusRejected,
+					},
+					{
+						Name:   "approval_1",
+						Status: domain.ApprovalStatusPending,
+					},
+				},
+				expectedError: appeal.ErrAppealStatusRejected,
+			},
+			{
+				name:         "invalid approval status",
+				appealStatus: domain.AppealStatusPending,
+				approvals: []*domain.Approval{
+					{
+						Name:   "approval_0",
+						Status: "invalidstatus",
+					},
+					{
+						Name:   "approval_1",
+						Status: domain.ApprovalStatusPending,
+					},
+				},
+				expectedError: appeal.ErrApprovalStatusUnrecognized,
+			},
+			{
+				name:         "approval step already approved",
+				appealStatus: domain.AppealStatusPending,
+				approvals: []*domain.Approval{
+					{
+						Name:   "approval_0",
+						Status: domain.ApprovalStatusApproved,
+					},
+					{
+						Name:   "approval_1",
+						Status: domain.ApprovalStatusApproved,
+					},
+				},
+				expectedError: appeal.ErrApprovalStatusApproved,
+			},
+			{
+				name:         "approval step already rejected",
+				appealStatus: domain.AppealStatusPending,
+				approvals: []*domain.Approval{
+					{
+						Name:   "approval_0",
+						Status: domain.ApprovalStatusApproved,
+					},
+					{
+						Name:   "approval_1",
+						Status: domain.ApprovalStatusRejected,
+					},
+				},
+				expectedError: appeal.ErrApprovalStatusRejected,
+			},
+			{
+				name:         "approval step already skipped",
+				appealStatus: domain.AppealStatusPending,
+				approvals: []*domain.Approval{
+					{
+						Name:   "approval_0",
+						Status: domain.ApprovalStatusApproved,
+					},
+					{
+						Name:   "approval_1",
+						Status: domain.ApprovalStatusSkipped,
+					},
+				},
+				expectedError: appeal.ErrApprovalStatusSkipped,
+			},
+			{
+				name:         "invalid approval status",
+				appealStatus: domain.AppealStatusPending,
+				approvals: []*domain.Approval{
+					{
+						Name:   "approval_0",
+						Status: domain.ApprovalStatusApproved,
+					},
+					{
+						Name:   "approval_1",
+						Status: "invalidstatus",
+					},
+				},
+				expectedError: appeal.ErrApprovalStatusUnrecognized,
+			},
+			{
+				name:         "user doesn't have permission",
+				appealStatus: domain.AppealStatusPending,
+				approvals: []*domain.Approval{
+					{
+						Name:   "approval_0",
+						Status: domain.ApprovalStatusApproved,
+					},
+					{
+						Name:      "approval_1",
+						Status:    domain.ApprovalStatusPending,
+						Approvers: []string{"another.user@email.com"},
+					},
+				},
+				expectedError: appeal.ErrActionForbidden,
+			},
+			{
+				name:         "approval step not found",
+				appealStatus: domain.AppealStatusPending,
+				approvals: []*domain.Approval{
+					{
+						Name:   "approval_0",
+						Status: domain.ApprovalStatusApproved,
+					},
+					{
+						Name:   "approval_x",
+						Status: domain.ApprovalStatusApproved,
+					},
+				},
+				expectedError: appeal.ErrApprovalNameNotFound,
+			},
+		}
+
+		for _, tc := range testCases {
+			expectedAppeal := &domain.Appeal{
+				ID:        validApprovalActionParam.AppealID,
+				Status:    tc.appealStatus,
+				Approvals: tc.approvals,
+			}
+			s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
+
+			actualResult, actualError := s.service.MakeAction(validApprovalActionParam)
+
+			s.Nil(actualResult)
+			s.EqualError(actualError, tc.expectedError.Error())
+		}
+	})
+
+	s.Run("should return error if got any from repository while updating appeal", func() {
+		expectedAppeal := &domain.Appeal{
+			ID:     validApprovalActionParam.AppealID,
+			Status: domain.AppealStatusPending,
+			Approvals: []*domain.Approval{
+				{
+					Name:   "approval_0",
+					Status: domain.ApprovalStatusApproved,
+				},
+				{
+					Name:      "approval_1",
+					Status:    domain.ApprovalStatusPending,
+					Approvers: []string{"user@email.com"},
+				},
+			},
+		}
+		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
+		expectedError := errors.New("repository error")
+		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
+
+		actualResult, actualError := s.service.MakeAction(validApprovalActionParam)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return updated appeal on success", func() {
+		user := "user@email.com"
+		testCases := []struct {
+			name                   string
+			expectedApprovalAction domain.ApprovalAction
+			expectedAppealDetails  *domain.Appeal
+			expectedResult         *domain.Appeal
+		}{
+			{
+				name:                   "approve",
+				expectedApprovalAction: validApprovalActionParam,
+				expectedAppealDetails: &domain.Appeal{
+					ID:     validApprovalActionParam.AppealID,
+					Status: domain.AppealStatusPending,
+					Approvals: []*domain.Approval{
+						{
+							Name:   "approval_0",
+							Status: domain.ApprovalStatusApproved,
+						},
+						{
+							Name:      "approval_1",
+							Status:    domain.ApprovalStatusPending,
+							Approvers: []string{"user@email.com"},
+						},
+					},
+				},
+				expectedResult: &domain.Appeal{
+					ID:     validApprovalActionParam.AppealID,
+					Status: domain.AppealStatusActive,
+					Approvals: []*domain.Approval{
+						{
+							Name:   "approval_0",
+							Status: domain.ApprovalStatusApproved,
+						},
+						{
+							Name:      "approval_1",
+							Status:    domain.ApprovalStatusApproved,
+							Approvers: []string{"user@email.com"},
+							Actor:     &user,
+							UpdatedAt: timeNow,
+						},
+					},
+				},
+			},
+			{
+				name: "reject",
+				expectedApprovalAction: domain.ApprovalAction{
+					AppealID:     1,
+					ApprovalName: "approval_1",
+					Actor:        "user@email.com",
+					Action:       "reject",
+				},
+				expectedAppealDetails: &domain.Appeal{
+					ID:     validApprovalActionParam.AppealID,
+					Status: domain.AppealStatusPending,
+					Approvals: []*domain.Approval{
+						{
+							Name:   "approval_0",
+							Status: domain.ApprovalStatusApproved,
+						},
+						{
+							Name:      "approval_1",
+							Status:    domain.ApprovalStatusPending,
+							Approvers: []string{"user@email.com"},
+						},
+					},
+				},
+				expectedResult: &domain.Appeal{
+					ID:     validApprovalActionParam.AppealID,
+					Status: domain.AppealStatusRejected,
+					Approvals: []*domain.Approval{
+						{
+							Name:   "approval_0",
+							Status: domain.ApprovalStatusApproved,
+						},
+						{
+							Name:      "approval_1",
+							Status:    domain.ApprovalStatusRejected,
+							Approvers: []string{"user@email.com"},
+							Actor:     &user,
+							UpdatedAt: timeNow,
+						},
+					},
+				},
+			},
+			{
+				name: "reject in the middle step",
+				expectedApprovalAction: domain.ApprovalAction{
+					AppealID:     1,
+					ApprovalName: "approval_1",
+					Actor:        user,
+					Action:       "reject",
+				},
+				expectedAppealDetails: &domain.Appeal{
+					ID:     validApprovalActionParam.AppealID,
+					Status: domain.AppealStatusPending,
+					Approvals: []*domain.Approval{
+						{
+							Name:   "approval_0",
+							Status: domain.ApprovalStatusApproved,
+						},
+						{
+							Name:      "approval_1",
+							Status:    domain.ApprovalStatusPending,
+							Approvers: []string{"user@email.com"},
+						},
+						{
+							Name:   "approval_2",
+							Status: domain.ApprovalStatusPending,
+						},
+					},
+				},
+				expectedResult: &domain.Appeal{
+					ID:     validApprovalActionParam.AppealID,
+					Status: domain.AppealStatusRejected,
+					Approvals: []*domain.Approval{
+						{
+							Name:   "approval_0",
+							Status: domain.ApprovalStatusApproved,
+						},
+						{
+							Name:      "approval_1",
+							Status:    domain.ApprovalStatusRejected,
+							Approvers: []string{"user@email.com"},
+							Actor:     &user,
+							UpdatedAt: timeNow,
+						},
+						{
+							Name:      "approval_2",
+							Status:    domain.ApprovalStatusSkipped,
+							UpdatedAt: timeNow,
+						},
+					},
+				},
+			},
+		}
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).
+					Return(tc.expectedAppealDetails, nil).
+					Once()
+				s.mockRepository.On("Update", mock.Anything).
+					Return(nil).
+					Once()
+
+				actualResult, actualError := s.service.MakeAction(tc.expectedApprovalAction)
+
+				s.Equal(tc.expectedResult, actualResult)
+				s.Nil(actualError)
+			})
+		}
 	})
 }
 

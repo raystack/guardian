@@ -32,7 +32,7 @@ type ApprovalAction struct {
 	AppealID     uint   `validate:"required"`
 	ApprovalName string `validate:"required"`
 	Actor        string `validate:"email"`
-	Action       string `validate:"required"`
+	Action       string `validate:"required,oneof=approve reject"`
 }
 
 // AppealRepository interface

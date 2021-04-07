@@ -12,6 +12,8 @@ import (
 	"github.com/odpf/guardian/utils"
 )
 
+var TimeNow = time.Now
+
 // Service handling the business logics
 type Service struct {
 	repo domain.AppealRepository
@@ -193,7 +195,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 			}
 
 			approval.Actor = &approvalAction.Actor
-			approval.UpdatedAt = time.Now()
+			approval.UpdatedAt = TimeNow()
 			if approvalAction.Action == domain.AppealActionNameApprove {
 				approval.Status = domain.ApprovalStatusApproved
 				if i == len(appeal.Approvals)-1 {
@@ -206,7 +208,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				if i < len(appeal.Approvals)-1 {
 					for j := i + 1; j < len(appeal.Approvals); j++ {
 						appeal.Approvals[j].Status = domain.ApprovalStatusSkipped
-						appeal.Approvals[j].UpdatedAt = time.Now()
+						appeal.Approvals[j].UpdatedAt = TimeNow()
 					}
 				}
 			} else {
