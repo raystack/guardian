@@ -165,6 +165,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			Type:         "resource_type_1",
 			ProviderType: "provider_type",
 			ProviderURN:  "provider1",
+			Details: map[string]interface{}{
+				"owner": []string{"resource.owner@email.com"},
+			},
 		})
 	}
 	providers := []*domain.Provider{
@@ -191,10 +194,12 @@ func (s *ServiceTestSuite) TestCreate() {
 			Version: 1,
 			Steps: []*domain.Step{
 				{
-					Name: "step_1",
+					Name:      "step_1",
+					Approvers: "$resource.details.owner",
 				},
 				{
-					Name: "step_2",
+					Name:      "step_2",
+					Approvers: "$user_approvers",
 				},
 			},
 		},
@@ -214,6 +219,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
+					Approvers:     []string{"resource.owner@email.com"},
 				},
 				{
 					Name:          "step_2",
@@ -221,6 +227,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
+					Approvers:     []string{"user.approver@email.com"},
 				},
 			},
 		})
@@ -241,6 +248,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
+					Approvers:     []string{"resource.owner@email.com"},
 				},
 				{
 					ID:            2,
@@ -249,6 +257,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
+					Approvers:     []string{"user.approver@email.com"},
 				},
 			},
 		},
@@ -267,6 +276,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
+					Approvers:     []string{"resource.owner@email.com"},
 				},
 				{
 					ID:            2,
@@ -275,6 +285,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Status:        domain.ApprovalStatusPending,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
+					Approvers:     []string{"user.approver@email.com"},
 				},
 			},
 		},
@@ -285,6 +296,8 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockResourceService.On("Find", expectedFilters).Return(resources, nil).Once()
 		s.mockProviderService.On("Find").Return(providers, nil).Once()
 		s.mockPolicyService.On("Find").Return(policies, nil).Once()
+		expectedUserApprovers := []string{"user.approver@email.com"}
+		s.mockIdentityManagerService.On("GetUserApproverEmails", user).Return(expectedUserApprovers, nil)
 		s.mockRepository.
 			On("BulkInsert", expectedAppealsInsertionParam).
 			Return(nil).
