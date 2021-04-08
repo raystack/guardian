@@ -126,7 +126,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 				ID: 1,
 			}
 			expectedError := tc.expectedError
-			s.mockProviderRepository.On("GetOne", expectedProvider.ID).Return(tc.expectedExistingProvider, tc.expectedRepositoryError).Once()
+			s.mockProviderRepository.On("GetByID", expectedProvider.ID).Return(tc.expectedExistingProvider, tc.expectedRepositoryError).Once()
 
 			actualError := s.service.Update(expectedProvider)
 
@@ -178,7 +178,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 		}
 
 		for _, tc := range testCases {
-			s.mockProviderRepository.On("GetOne", tc.updatePayload.ID).Return(tc.existingProvider, nil).Once()
+			s.mockProviderRepository.On("GetByID", tc.updatePayload.ID).Return(tc.existingProvider, nil).Once()
 			s.mockProviderRepository.On("Update", tc.expectedNewProvider).Return(nil)
 
 			actualError := s.service.Update(tc.updatePayload)

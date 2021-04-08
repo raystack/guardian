@@ -52,7 +52,7 @@ func (s *Service) Find() ([]*domain.Provider, error) {
 
 // Update updates the non-zero value(s) only
 func (s *Service) Update(p *domain.Provider) error {
-	currentProvider, err := s.providerRepository.GetOne(p.ID)
+	currentProvider, err := s.providerRepository.GetByID(p.ID)
 	if err != nil {
 		return err
 	}

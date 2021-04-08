@@ -62,7 +62,7 @@ type ProviderRepository interface {
 	Create(*Provider) error
 	Update(*Provider) error
 	Find() ([]*Provider, error)
-	GetOne(uint) (*Provider, error)
+	GetByID(uint) (*Provider, error)
 	Delete(uint) error
 }
 
