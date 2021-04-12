@@ -20,8 +20,8 @@ type Appeal struct {
 	Role          string
 	Labels        datatypes.JSON
 
-	Resource  Resource `gorm:"ForeignKey:ResourceID;References:ID"`
-	Policy    Policy   `gorm:"ForeignKey:PolicyID,PolicyVersion;References:ID,Version"`
+	Resource  *Resource `gorm:"ForeignKey:ResourceID;References:ID"`
+	Policy    Policy    `gorm:"ForeignKey:PolicyID,PolicyVersion;References:ID,Version"`
 	Approvals []*Approval
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
@@ -45,6 +45,14 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 			}
 			approvals = append(approvals, m)
 		}
+	}
+
+	if a.Resource != nil {
+		r := new(Resource)
+		if err := r.FromDomain(a.Resource); err != nil {
+			return err
+		}
+		m.Resource = r
 	}
 
 	m.ID = a.ID
@@ -82,6 +90,15 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		}
 	}
 
+	var resource *domain.Resource
+	if m.Resource != nil {
+		r, err := m.Resource.ToDomain()
+		if err != nil {
+			return nil, err
+		}
+		resource = r
+	}
+
 	return &domain.Appeal{
 		ID:            m.ID,
 		ResourceID:    m.ResourceID,
@@ -92,6 +109,7 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		Role:          m.Role,
 		Labels:        labels,
 		Approvals:     approvals,
+		Resource:      resource,
 		CreatedAt:     m.CreatedAt,
 		UpdatedAt:     m.UpdatedAt,
 	}, nil

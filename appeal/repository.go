@@ -26,6 +26,7 @@ func (r *Repository) GetByID(id uint) (*domain.Appeal, error) {
 			return db.Order("Approvals.index ASC")
 		}).
 		Preload("Approvals.Approvers").
+		Preload("Resource").
 		First(&m, id).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

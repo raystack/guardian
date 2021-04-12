@@ -86,6 +86,29 @@ func (_m *ProviderRepository) GetByID(_a0 uint) (*domain.Provider, error) {
 	return r0, r1
 }
 
+// GetOne provides a mock function with given fields: pType, urn
+func (_m *ProviderRepository) GetOne(pType string, urn string) (*domain.Provider, error) {
+	ret := _m.Called(pType, urn)
+
+	var r0 *domain.Provider
+	if rf, ok := ret.Get(0).(func(string, string) *domain.Provider); ok {
+		r0 = rf(pType, urn)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.Provider)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(pType, urn)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Update provides a mock function with given fields: _a0
 func (_m *ProviderRepository) Update(_a0 *domain.Provider) error {
 	ret := _m.Called(_a0)

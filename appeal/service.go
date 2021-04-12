@@ -3,6 +3,7 @@ package appeal
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -80,6 +81,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		return err
 	}
 
+	fmt.Printf("%+v\n%+v\n", policyConfigs, approvalSteps)
 	for _, a := range appeals {
 		r := resources[a.ResourceID]
 		if r == nil {
@@ -112,6 +114,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 				}
 			}
 
+			log.Println("approvals", approvals)
 			approvals = append(approvals, &domain.Approval{
 				Name:          step.Name,
 				Index:         i,
@@ -129,6 +132,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	}
 
 	if err := s.repo.BulkInsert(appeals); err != nil {
+		log.Println("error", err)
 		return err
 	}
 
@@ -172,11 +176,14 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 			approval.Actor = &approvalAction.Actor
 			approval.UpdatedAt = TimeNow()
 
+			log.Println("approvalAction.Action", approvalAction.Action)
 			if approvalAction.Action == domain.AppealActionNameApprove {
 				approval.Status = domain.ApprovalStatusApproved
 
 				if i == len(appeal.Approvals)-1 {
-					// TODO: grant access to the actual provider
+					if err := s.providerService.GrantAccess(appeal); err != nil {
+						return nil, err
+					}
 					appeal.Status = domain.AppealStatusActive
 				}
 			} else if approvalAction.Action == domain.AppealActionNameReject {
@@ -194,7 +201,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 			}
 
 			if err := s.repo.Update(appeal); err != nil {
-				// TODO: rollback granted access in the actual provider
+				if err := s.providerService.RevokeAccess(appeal); err != nil {
+					return nil, err
+				}
 				return nil, err
 			}
 
