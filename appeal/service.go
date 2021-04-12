@@ -148,46 +148,21 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 		return nil, nil
 	}
 
-	if appeal.Status != domain.AppealStatusPending {
-		switch appeal.Status {
-		case domain.AppealStatusActive:
-			err = ErrAppealStatusApproved
-		case domain.AppealStatusRejected:
-			err = ErrAppealStatusRejected
-		case domain.AppealStatusTerminated:
-			err = ErrAppealStatusTerminated
-		default:
-			err = ErrAppealStatusUnrecognized
-		}
+	if err := checkAppealStatus(appeal.Status); err != nil {
 		return nil, err
 	}
 
 	for i, approval := range appeal.Approvals {
 		if approval.Name != approvalAction.ApprovalName {
-			switch approval.Status {
-			case domain.ApprovalStatusApproved,
-				domain.ApprovalStatusSkipped:
-				continue
-			case domain.ApprovalStatusPending:
-				return nil, ErrApprovalDependencyIsPending
-			case domain.ApprovalStatusRejected:
-				return nil, ErrAppealStatusRejected
-			default:
-				return nil, ErrApprovalStatusUnrecognized
+			if err := checkPreviousApprovalStatus(approval.Status); err != nil {
+				return nil, err
 			}
+			continue
 		} else {
 			if approval.Status != domain.ApprovalStatusPending {
-				switch approval.Status {
-				case domain.ApprovalStatusApproved:
-					err = ErrApprovalStatusApproved
-				case domain.ApprovalStatusRejected:
-					err = ErrApprovalStatusRejected
-				case domain.ApprovalStatusSkipped:
-					err = ErrApprovalStatusSkipped
-				default:
-					err = ErrApprovalStatusUnrecognized
+				if err := checkApprovalStatus(approval.Status); err != nil {
+					return nil, err
 				}
-				return nil, err
 			}
 
 			if !utils.ContainsString(approval.Approvers, approvalAction.Actor) {
@@ -196,8 +171,10 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 
 			approval.Actor = &approvalAction.Actor
 			approval.UpdatedAt = TimeNow()
+
 			if approvalAction.Action == domain.AppealActionNameApprove {
 				approval.Status = domain.ApprovalStatusApproved
+
 				if i == len(appeal.Approvals)-1 {
 					// TODO: grant access to the actual provider
 					appeal.Status = domain.AppealStatusActive
@@ -205,6 +182,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 			} else if approvalAction.Action == domain.AppealActionNameReject {
 				approval.Status = domain.ApprovalStatusRejected
 				appeal.Status = domain.AppealStatusRejected
+
 				if i < len(appeal.Approvals)-1 {
 					for j := i + 1; j < len(appeal.Approvals); j++ {
 						appeal.Approvals[j].Status = domain.ApprovalStatusSkipped
@@ -225,6 +203,10 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 	}
 
 	return nil, ErrApprovalNameNotFound
+}
+
+func (s *Service) GetPendingApprovals(user string) ([]*domain.Approval, error) {
+	return s.approvalService.GetPendingApprovals(user)
 }
 
 func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) {
@@ -332,6 +314,55 @@ func (s *Service) resolveApprovers(user string, resource *domain.Resource, appro
 	return approvers, nil
 }
 
+func checkAppealStatus(status string) error {
+	var err error
+	if status != domain.AppealStatusPending {
+		switch status {
+		case domain.AppealStatusActive:
+			err = ErrAppealStatusApproved
+		case domain.AppealStatusRejected:
+			err = ErrAppealStatusRejected
+		case domain.AppealStatusTerminated:
+			err = ErrAppealStatusTerminated
+		default:
+			err = ErrAppealStatusUnrecognized
+		}
+		return err
+	}
+	return nil
+}
+
+func checkPreviousApprovalStatus(status string) error {
+	var err error
+	switch status {
+	case domain.ApprovalStatusApproved,
+		domain.ApprovalStatusSkipped:
+		err = nil
+	case domain.ApprovalStatusPending:
+		err = ErrApprovalDependencyIsPending
+	case domain.ApprovalStatusRejected:
+		err = ErrAppealStatusRejected
+	default:
+		err = ErrApprovalStatusUnrecognized
+	}
+	return err
+}
+
+func checkApprovalStatus(status string) error {
+	var err error
+	switch status {
+	case domain.ApprovalStatusApproved:
+		err = ErrApprovalStatusApproved
+	case domain.ApprovalStatusRejected:
+		err = ErrApprovalStatusRejected
+	case domain.ApprovalStatusSkipped:
+		err = ErrApprovalStatusSkipped
+	default:
+		err = ErrApprovalStatusUnrecognized
+	}
+	return err
+}
+
 func structToMap(item interface{}) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 
@@ -347,8 +378,4 @@ func structToMap(item interface{}) (map[string]interface{}, error) {
 	}
 
 	return result, nil
-}
-
-func (s *Service) GetPendingApprovals(user string) ([]*domain.Approval, error) {
-	return s.approvalService.GetPendingApprovals(user)
 }
