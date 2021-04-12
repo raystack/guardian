@@ -11,12 +11,15 @@ import (
 type Approval struct {
 	ID            uint   `gorm:"primaryKey"`
 	Name          string `gorm:"index"`
+	Index         int
 	AppealID      uint
 	Status        string
+	Actor         *string
 	PolicyID      string
 	PolicyVersion uint
 
 	Approvers []Approver
+	Appeal    *Appeal
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
@@ -36,10 +39,20 @@ func (m *Approval) FromDomain(a *domain.Approval) error {
 		}
 	}
 
+	if a.Appeal != nil {
+		appealModel := new(Appeal)
+		if err := appealModel.FromDomain(a.Appeal); err != nil {
+			return err
+		}
+		m.Appeal = appealModel
+	}
+
 	m.ID = a.ID
 	m.Name = a.Name
+	m.Index = a.Index
 	m.AppealID = a.AppealID
 	m.Status = a.Status
+	m.Actor = a.Actor
 	m.PolicyID = a.PolicyID
 	m.PolicyVersion = a.PolicyVersion
 	m.Approvers = approvers
@@ -62,14 +75,26 @@ func (m *Approval) ToDomain() (*domain.Approval, error) {
 		}
 	}
 
+	var appeal *domain.Appeal
+	if m.Appeal != nil {
+		a, err := m.Appeal.ToDomain()
+		if err != nil {
+			return nil, err
+		}
+		appeal = a
+	}
+
 	return &domain.Approval{
 		ID:            m.ID,
 		Name:          m.Name,
+		Index:         m.Index,
 		AppealID:      m.AppealID,
 		Status:        m.Status,
+		Actor:         m.Actor,
 		PolicyID:      m.PolicyID,
 		PolicyVersion: m.PolicyVersion,
 		Approvers:     approvers,
+		Appeal:        appeal,
 		CreatedAt:     m.CreatedAt,
 		UpdatedAt:     m.UpdatedAt,
 	}, nil

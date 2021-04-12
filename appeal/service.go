@@ -2,19 +2,23 @@ package appeal
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-lookup"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/utils"
 )
+
+var TimeNow = time.Now
 
 // Service handling the business logics
 type Service struct {
 	repo domain.AppealRepository
 
+	approvalService        domain.ApprovalService
 	resourceService        domain.ResourceService
 	providerService        domain.ProviderService
 	policyService          domain.PolicyService
@@ -26,6 +30,7 @@ type Service struct {
 // NewService returns service struct
 func NewService(
 	appealRepository domain.AppealRepository,
+	approvalService domain.ApprovalService,
 	resourceService domain.ResourceService,
 	providerService domain.ProviderService,
 	policyService domain.PolicyService,
@@ -33,12 +38,27 @@ func NewService(
 ) *Service {
 	return &Service{
 		repo:                   appealRepository,
+		approvalService:        approvalService,
 		resourceService:        resourceService,
 		providerService:        providerService,
 		policyService:          policyService,
 		identityManagerService: identityManagerService,
 		validator:              validator.New(),
 	}
+}
+
+// GetByID returns one record by id
+func (s *Service) GetByID(id uint) (*domain.Appeal, error) {
+	if id == 0 {
+		return nil, ErrAppealIDEmptyParam
+	}
+
+	return s.repo.GetByID(id)
+}
+
+// Find appeals by filters
+func (s *Service) Find(filters map[string]interface{}) ([]*domain.Appeal, error) {
+	return s.repo.Find(filters)
 }
 
 // Create record
@@ -63,7 +83,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	for _, a := range appeals {
 		r := resources[a.ResourceID]
 		if r == nil {
-			return errors.New("resource doesn't exists")
+			return ErrResourceNotFound
 		}
 
 		if policyConfigs[r.ProviderType] == nil {
@@ -83,7 +103,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		steps := approvalSteps[policyConfig.ID][uint(policyConfig.Version)]
 
 		approvals := []*domain.Approval{}
-		for _, step := range steps {
+		for i, step := range steps {
 			var approvers []string
 			if step.Approvers != "" {
 				approvers, err = s.resolveApprovers(a.User, r, step.Approvers)
@@ -94,6 +114,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 			approvals = append(approvals, &domain.Approval{
 				Name:          step.Name,
+				Index:         i,
 				Status:        domain.ApprovalStatusPending,
 				PolicyID:      policyConfig.ID,
 				PolicyVersion: uint(policyConfig.Version),
@@ -112,6 +133,80 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	}
 
 	return nil
+}
+
+// Approve an approval step
+func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appeal, error) {
+	if err := utils.ValidateStruct(approvalAction); err != nil {
+		return nil, err
+	}
+	appeal, err := s.repo.GetByID(approvalAction.AppealID)
+	if err != nil {
+		return nil, err
+	}
+	if appeal == nil {
+		return nil, nil
+	}
+
+	if err := checkAppealStatus(appeal.Status); err != nil {
+		return nil, err
+	}
+
+	for i, approval := range appeal.Approvals {
+		if approval.Name != approvalAction.ApprovalName {
+			if err := checkPreviousApprovalStatus(approval.Status); err != nil {
+				return nil, err
+			}
+			continue
+		} else {
+			if approval.Status != domain.ApprovalStatusPending {
+				if err := checkApprovalStatus(approval.Status); err != nil {
+					return nil, err
+				}
+			}
+
+			if !utils.ContainsString(approval.Approvers, approvalAction.Actor) {
+				return nil, ErrActionForbidden
+			}
+
+			approval.Actor = &approvalAction.Actor
+			approval.UpdatedAt = TimeNow()
+
+			if approvalAction.Action == domain.AppealActionNameApprove {
+				approval.Status = domain.ApprovalStatusApproved
+
+				if i == len(appeal.Approvals)-1 {
+					// TODO: grant access to the actual provider
+					appeal.Status = domain.AppealStatusActive
+				}
+			} else if approvalAction.Action == domain.AppealActionNameReject {
+				approval.Status = domain.ApprovalStatusRejected
+				appeal.Status = domain.AppealStatusRejected
+
+				if i < len(appeal.Approvals)-1 {
+					for j := i + 1; j < len(appeal.Approvals); j++ {
+						appeal.Approvals[j].Status = domain.ApprovalStatusSkipped
+						appeal.Approvals[j].UpdatedAt = TimeNow()
+					}
+				}
+			} else {
+				return nil, ErrActionInvalidValue
+			}
+
+			if err := s.repo.Update(appeal); err != nil {
+				// TODO: rollback granted access in the actual provider
+				return nil, err
+			}
+
+			return appeal, nil
+		}
+	}
+
+	return nil, ErrApprovalNameNotFound
+}
+
+func (s *Service) GetPendingApprovals(user string) ([]*domain.Approval, error) {
+	return s.approvalService.GetPendingApprovals(user)
 }
 
 func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) {
@@ -217,6 +312,55 @@ func (s *Service) resolveApprovers(user string, resource *domain.Resource, appro
 		return nil, err
 	}
 	return approvers, nil
+}
+
+func checkAppealStatus(status string) error {
+	var err error
+	if status != domain.AppealStatusPending {
+		switch status {
+		case domain.AppealStatusActive:
+			err = ErrAppealStatusApproved
+		case domain.AppealStatusRejected:
+			err = ErrAppealStatusRejected
+		case domain.AppealStatusTerminated:
+			err = ErrAppealStatusTerminated
+		default:
+			err = ErrAppealStatusUnrecognized
+		}
+		return err
+	}
+	return nil
+}
+
+func checkPreviousApprovalStatus(status string) error {
+	var err error
+	switch status {
+	case domain.ApprovalStatusApproved,
+		domain.ApprovalStatusSkipped:
+		err = nil
+	case domain.ApprovalStatusPending:
+		err = ErrApprovalDependencyIsPending
+	case domain.ApprovalStatusRejected:
+		err = ErrAppealStatusRejected
+	default:
+		err = ErrApprovalStatusUnrecognized
+	}
+	return err
+}
+
+func checkApprovalStatus(status string) error {
+	var err error
+	switch status {
+	case domain.ApprovalStatusApproved:
+		err = ErrApprovalStatusApproved
+	case domain.ApprovalStatusRejected:
+		err = ErrApprovalStatusRejected
+	case domain.ApprovalStatusSkipped:
+		err = ErrApprovalStatusSkipped
+	default:
+		err = ErrApprovalStatusUnrecognized
+	}
+	return err
 }
 
 func structToMap(item interface{}) (map[string]interface{}, error) {

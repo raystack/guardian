@@ -63,8 +63,8 @@ func (_m *ProviderRepository) Find() ([]*domain.Provider, error) {
 	return r0, r1
 }
 
-// GetOne provides a mock function with given fields: _a0
-func (_m *ProviderRepository) GetOne(_a0 uint) (*domain.Provider, error) {
+// GetByID provides a mock function with given fields: _a0
+func (_m *ProviderRepository) GetByID(_a0 uint) (*domain.Provider, error) {
 	ret := _m.Called(_a0)
 
 	var r0 *domain.Provider

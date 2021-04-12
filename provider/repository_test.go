@@ -115,11 +115,11 @@ func (s *RepositoryTestSuite) TestFind() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestGetOne() {
+func (s *RepositoryTestSuite) TestGetByID() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := provider.ErrEmptyIDParam
 
-		actualResult, actualError := s.repository.GetOne(0)
+		actualResult, actualError := s.repository.GetByID(0)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -130,7 +130,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 		s.dbmock.ExpectQuery(".*").
 			WillReturnError(expectedError)
 
-		actualResult, actualError := s.repository.GetOne(1)
+		actualResult, actualError := s.repository.GetByID(1)
 
 		s.Nil(actualResult)
 		s.Nil(actualError)
@@ -141,7 +141,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 		s.dbmock.ExpectQuery(".*").
 			WillReturnError(expectedError)
 
-		actualResult, actualError := s.repository.GetOne(1)
+		actualResult, actualError := s.repository.GetByID(1)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -163,7 +163,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 		s.dbmock.ExpectQuery(expectedQuery).
 			WillReturnRows(expectedRows)
 
-		_, actualError := s.repository.GetOne(expectedID)
+		_, actualError := s.repository.GetByID(expectedID)
 
 		s.Nil(actualError)
 		s.dbmock.ExpectationsWereMet()

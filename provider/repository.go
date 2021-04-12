@@ -59,8 +59,8 @@ func (r *Repository) Find() ([]*domain.Provider, error) {
 	return providers, nil
 }
 
-// GetOne record by ID
-func (r *Repository) GetOne(id uint) (*domain.Provider, error) {
+// GetByID record by ID
+func (r *Repository) GetByID(id uint) (*domain.Provider, error) {
 	if id == 0 {
 		return nil, ErrEmptyIDParam
 	}

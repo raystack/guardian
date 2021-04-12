@@ -7,6 +7,7 @@ import (
 
 	"github.com/odpf/guardian/api"
 	"github.com/odpf/guardian/appeal"
+	"github.com/odpf/guardian/approval"
 	"github.com/odpf/guardian/crypto"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/identitymanager"
@@ -33,6 +34,7 @@ func RunServer(c *Config) error {
 	policyRepository := policy.NewRepository(db)
 	resourceRepository := resource.NewRepository(db)
 	appealRepository := appeal.NewRepository(db)
+	approvalRepository := approval.NewRepository(db)
 
 	identityManagerClient := identitymanager.NewClient(
 		&identitymanager.ClientConfig{
@@ -53,8 +55,10 @@ func RunServer(c *Config) error {
 		providers,
 	)
 	policyService := policy.NewService(policyRepository)
+	approvalService := approval.NewService(approvalRepository)
 	appealService := appeal.NewService(
 		appealRepository,
+		approvalService,
 		resourceService,
 		providerService,
 		policyService,
@@ -71,7 +75,7 @@ func RunServer(c *Config) error {
 
 	tasks := []*scheduler.Task{
 		{
-			CronTab: "* */2 * * *",
+			CronTab: "0 */2 * * *",
 			Func:    providerJobHandler.GetResources,
 		},
 	}

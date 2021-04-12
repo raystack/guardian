@@ -40,3 +40,8 @@ func (p *createPayload) toDomain() ([]*domain.Appeal, error) {
 
 	return appeals, nil
 }
+
+type actionPayload struct {
+	Actor  string `json:"actor"`
+	Action string `json:"action"`
+}

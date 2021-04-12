@@ -10,14 +10,17 @@ const (
 )
 
 type Approval struct {
-	ID            uint   `json:"id"`
-	Name          string `json:"name"`
-	AppealID      uint   `json:"appeal_id"`
-	Status        string `json:"status"`
-	PolicyID      string `json:"policy_id"`
-	PolicyVersion uint   `json:"policy_version"`
+	ID            uint    `json:"id"`
+	Name          string  `json:"name"`
+	Index         int     `json:"-"`
+	AppealID      uint    `json:"appeal_id"`
+	Status        string  `json:"status"`
+	Actor         *string `json:"actor"`
+	PolicyID      string  `json:"policy_id"`
+	PolicyVersion uint    `json:"policy_version"`
 
 	Approvers []string `json:"approvers,omitempty"`
+	Appeal    *Appeal  `json:"appeal,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -25,8 +28,10 @@ type Approval struct {
 
 type ApprovalRepository interface {
 	BulkInsert([]*Approval) error
+	GetPendingApprovals(user string) ([]*Approval, error)
 }
 
 type ApprovalService interface {
 	BulkInsert([]*Approval) error
+	GetPendingApprovals(user string) ([]*Approval, error)
 }
