@@ -150,18 +150,20 @@ func (s *ServiceTestSuite) TestUpdate() {
 					},
 				},
 				existingProvider: &domain.Provider{
-					ID: 1,
+					ID:   1,
+					Type: mockProviderType,
 					Config: &domain.ProviderConfig{
 						Appeal: &domain.AppealConfig{
 							AllowPermanentAccess:         true,
 							AllowActiveAccessExtensionIn: "1d",
 						},
-						Type: "type",
+						Type: mockProviderType,
 						URN:  "urn",
 					},
 				},
 				expectedNewProvider: &domain.Provider{
-					ID: 1,
+					ID:   1,
+					Type: mockProviderType,
 					Config: &domain.ProviderConfig{
 						Appeal: &domain.AppealConfig{
 							AllowPermanentAccess:         true,
@@ -170,7 +172,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 						Labels: map[string]interface{}{
 							"foo": "bar",
 						},
-						Type: "type",
+						Type: mockProviderType,
 						URN:  "urn",
 					},
 				},
@@ -179,6 +181,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 
 		for _, tc := range testCases {
 			s.mockProviderRepository.On("GetByID", tc.updatePayload.ID).Return(tc.existingProvider, nil).Once()
+			s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 			s.mockProviderRepository.On("Update", tc.expectedNewProvider).Return(nil)
 
 			actualError := s.service.Update(tc.updatePayload)
