@@ -150,18 +150,20 @@ func (s *ServiceTestSuite) TestUpdate() {
 					},
 				},
 				existingProvider: &domain.Provider{
-					ID: 1,
+					ID:   1,
+					Type: mockProviderType,
 					Config: &domain.ProviderConfig{
 						Appeal: &domain.AppealConfig{
 							AllowPermanentAccess:         true,
 							AllowActiveAccessExtensionIn: "1d",
 						},
-						Type: "type",
+						Type: mockProviderType,
 						URN:  "urn",
 					},
 				},
 				expectedNewProvider: &domain.Provider{
-					ID: 1,
+					ID:   1,
+					Type: mockProviderType,
 					Config: &domain.ProviderConfig{
 						Appeal: &domain.AppealConfig{
 							AllowPermanentAccess:         true,
@@ -170,7 +172,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 						Labels: map[string]interface{}{
 							"foo": "bar",
 						},
-						Type: "type",
+						Type: mockProviderType,
 						URN:  "urn",
 					},
 				},
@@ -179,12 +181,271 @@ func (s *ServiceTestSuite) TestUpdate() {
 
 		for _, tc := range testCases {
 			s.mockProviderRepository.On("GetByID", tc.updatePayload.ID).Return(tc.existingProvider, nil).Once()
+			s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 			s.mockProviderRepository.On("Update", tc.expectedNewProvider).Return(nil)
 
 			actualError := s.service.Update(tc.updatePayload)
 
 			s.Nil(actualError)
 		}
+	})
+}
+
+func (s *ServiceTestSuite) TestFetchResources() {
+	s.Run("should return error if got any from provider respository", func() {
+		expectedError := errors.New("any error")
+		s.mockProviderRepository.On("Find").Return(nil, expectedError).Once()
+
+		actualError := s.service.FetchResources()
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	providers := []*domain.Provider{
+		{
+			ID:     1,
+			Type:   mockProviderType,
+			Config: &domain.ProviderConfig{},
+		},
+	}
+
+	s.Run("should return error if got any from provider's GetResources", func() {
+		s.mockProviderRepository.On("Find").Return(providers, nil).Once()
+		expectedError := errors.New("any error")
+		s.mockProvider.On("GetResources", mock.Anything).Return(nil, expectedError).Once()
+
+		actualError := s.service.FetchResources()
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if got any from resource service", func() {
+		s.mockProviderRepository.On("Find").Return(providers, nil).Once()
+		for _, p := range providers {
+			s.mockProvider.On("GetResources", p.Config).Return([]*domain.Resource{}, nil).Once()
+		}
+		expectedError := errors.New("any error")
+		s.mockResourceService.On("BulkUpsert", mock.Anything).Return(expectedError).Once()
+
+		actualError := s.service.FetchResources()
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should upsert all resources on success", func() {
+		s.mockProviderRepository.On("Find").Return(providers, nil).Once()
+		expectedResources := []*domain.Resource{}
+		for _, p := range providers {
+			resources := []*domain.Resource{
+				{
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+				},
+			}
+			s.mockProvider.On("GetResources", p.Config).Return(resources, nil).Once()
+			expectedResources = append(expectedResources, resources...)
+		}
+		s.mockResourceService.On("BulkUpsert", expectedResources).Return(nil).Once()
+
+		actualError := s.service.FetchResources()
+
+		s.Nil(actualError)
+	})
+}
+
+func (s *ServiceTestSuite) TestGrantAccess() {
+	s.Run("should return error if got error on appeal param validation", func() {
+		testCases := []struct {
+			appealParam   *domain.Appeal
+			expectedError error
+		}{
+			{
+				appealParam:   nil,
+				expectedError: provider.ErrNilAppeal,
+			},
+			{
+				appealParam:   &domain.Appeal{},
+				expectedError: provider.ErrNilResource,
+			},
+		}
+		for _, tc := range testCases {
+			actualError := s.service.GrantAccess(tc.appealParam)
+			s.EqualError(actualError, tc.expectedError.Error())
+		}
+	})
+
+	s.Run("should return error if provider is not exists", func() {
+		appeal := &domain.Appeal{
+			Resource: &domain.Resource{
+				ProviderType: "invalid-provider-type",
+			},
+		}
+		expectedError := provider.ErrInvalidProviderType
+		actualError := s.service.GrantAccess(appeal)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	validAppeal := &domain.Appeal{
+		Resource: &domain.Resource{
+			ProviderType: mockProviderType,
+			ProviderURN:  "urn",
+		},
+	}
+
+	s.Run("should return error if got any from provider repository", func() {
+		expectedError := errors.New("any error")
+		s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
+			Return(nil, expectedError).
+			Once()
+
+		actualError := s.service.GrantAccess(validAppeal)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if provider not found", func() {
+		s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
+			Return(nil, nil).
+			Once()
+		expectedError := provider.ErrProviderNotFound
+
+		actualError := s.service.GrantAccess(validAppeal)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if error if got error from provider.GrantAccess", func() {
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{},
+		}
+		s.mockProviderRepository.
+			On("GetOne", validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
+			Return(provider, nil).
+			Once()
+		expectedError := errors.New("any error")
+		s.mockProvider.On("GrantAccess", mock.Anything, mock.Anything).
+			Return(expectedError).
+			Once()
+
+		actualError := s.service.GrantAccess(validAppeal)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should grant access to the provider on success", func() {
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{},
+		}
+		s.mockProviderRepository.
+			On("GetOne", validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
+			Return(provider, nil).
+			Once()
+		s.mockProvider.
+			On("GrantAccess", provider.Config, validAppeal).
+			Return(nil).
+			Once()
+
+		actualError := s.service.GrantAccess(validAppeal)
+
+		s.Nil(actualError)
+	})
+}
+
+func (s *ServiceTestSuite) TestRevokeAccess() {
+	s.Run("should return error if got error on appeal param validation", func() {
+		testCases := []struct {
+			appealParam   *domain.Appeal
+			expectedError error
+		}{
+			{
+				appealParam:   nil,
+				expectedError: provider.ErrNilAppeal,
+			},
+			{
+				appealParam:   &domain.Appeal{},
+				expectedError: provider.ErrNilResource,
+			},
+		}
+		for _, tc := range testCases {
+			actualError := s.service.RevokeAccess(tc.appealParam)
+			s.EqualError(actualError, tc.expectedError.Error())
+		}
+	})
+
+	s.Run("should return error if provider is not exists", func() {
+		appeal := &domain.Appeal{
+			Resource: &domain.Resource{
+				ProviderType: "invalid-provider-type",
+			},
+		}
+		expectedError := provider.ErrInvalidProviderType
+		actualError := s.service.RevokeAccess(appeal)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	validAppeal := &domain.Appeal{
+		Resource: &domain.Resource{
+			ProviderType: mockProviderType,
+			ProviderURN:  "urn",
+		},
+	}
+
+	s.Run("should return error if got any from provider repository", func() {
+		expectedError := errors.New("any error")
+		s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
+			Return(nil, expectedError).
+			Once()
+
+		actualError := s.service.RevokeAccess(validAppeal)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if provider not found", func() {
+		s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
+			Return(nil, nil).
+			Once()
+		expectedError := provider.ErrProviderNotFound
+
+		actualError := s.service.RevokeAccess(validAppeal)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if error if got error from provider.RevokeAccess", func() {
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{},
+		}
+		s.mockProviderRepository.
+			On("GetOne", validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
+			Return(provider, nil).
+			Once()
+		expectedError := errors.New("any error")
+		s.mockProvider.On("RevokeAccess", mock.Anything, mock.Anything).
+			Return(expectedError).
+			Once()
+
+		actualError := s.service.RevokeAccess(validAppeal)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should grant access to the provider on success", func() {
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{},
+		}
+		s.mockProviderRepository.
+			On("GetOne", validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
+			Return(provider, nil).
+			Once()
+		s.mockProvider.
+			On("RevokeAccess", provider.Config, validAppeal).
+			Return(nil).
+			Once()
+
+		actualError := s.service.RevokeAccess(validAppeal)
+
+		s.Nil(actualError)
 	})
 }
 

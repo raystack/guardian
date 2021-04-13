@@ -11,6 +11,12 @@ import (
 	"github.com/odpf/guardian/utils"
 )
 
+const (
+	DatasetRoleReader = "READER"
+	DatasetRoleWriter = "WRITER"
+	DatasetRoleOwner  = "OWNER"
+)
+
 // Credentials is the authentication configuration used by the bigquery client
 type Credentials string
 

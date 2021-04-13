@@ -22,10 +22,12 @@ type Appeal struct {
 	User          string                 `json:"user"`
 	Role          string                 `json:"role"`
 	Labels        map[string]interface{} `json:"labels"`
-	Resource      *Resource              `json:"resource,omitempty"`
-	Approvals     []*Approval            `json:"approvals,omitempty"`
-	CreatedAt     time.Time              `json:"created_at"`
-	UpdatedAt     time.Time              `json:"updated_at"`
+
+	Resource  *Resource   `json:"resource,omitempty"`
+	Approvals []*Approval `json:"approvals,omitempty"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type ApprovalAction struct {

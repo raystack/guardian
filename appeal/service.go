@@ -176,7 +176,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				approval.Status = domain.ApprovalStatusApproved
 
 				if i == len(appeal.Approvals)-1 {
-					// TODO: grant access to the actual provider
+					if err := s.providerService.GrantAccess(appeal); err != nil {
+						return nil, err
+					}
 					appeal.Status = domain.AppealStatusActive
 				}
 			} else if approvalAction.Action == domain.AppealActionNameReject {
@@ -194,7 +196,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 			}
 
 			if err := s.repo.Update(appeal); err != nil {
-				// TODO: rollback granted access in the actual provider
+				if err := s.providerService.RevokeAccess(appeal); err != nil {
+					return nil, err
+				}
 				return nil, err
 			}
 

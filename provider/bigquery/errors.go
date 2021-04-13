@@ -12,5 +12,15 @@ var (
 	// ErrUnableToDecryptNilCredentials is the error value if the to be decrypted credentials is nil
 	ErrUnableToDecryptNilCredentials = errors.New("unable to decrypt nil credentials")
 	// ErrInvalidCredentialsType is the error value if the credentials value can't be casted into the bigquery.Credentials type
-	ErrInvalidCredentialsType = errors.New("invalid credentials type")
+	ErrInvalidCredentialsType  = errors.New("invalid credentials type")
+	ErrInvalidRole             = errors.New("invalid role")
+	ErrInvalidResourceType     = errors.New("invalid resource type")
+	ErrInvalidTableURN         = errors.New("table URN is invalid")
+	ErrPermissionAlreadyExists = errors.New("permission already exists")
+	ErrPermissionNotFound      = errors.New("permission not found")
+	ErrNilProviderConfig       = errors.New("provider config can't be nil")
+	ErrNilAppeal               = errors.New("appeal can't be nil")
+	ErrNilResource             = errors.New("designated resource can't be nil")
+	ErrProviderTypeMismatch    = errors.New("provider type in the config and in the appeal don't match")
+	ErrProviderURNMismatch     = errors.New("provider urn in the config and in the appeal don't match")
 )

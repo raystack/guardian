@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"errors"
+
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/model"
 	"gorm.io/gorm"
@@ -81,6 +83,34 @@ func (r *Repository) GetByID(id uint) (*domain.Provider, error) {
 	}
 
 	return p, nil
+}
+
+// GetOne returns provider by type and urn
+func (r *Repository) GetOne(pType, urn string) (*domain.Provider, error) {
+	if pType == "" {
+		return nil, ErrEmptyProviderType
+	}
+	if urn == "" {
+		return nil, ErrEmptyProviderURN
+	}
+
+	m := &model.Provider{
+		Type: pType,
+		URN:  urn,
+	}
+	if err := r.db.Take(m).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	p, err := m.ToDomain()
+	if err != nil {
+		return nil, err
+	}
+
+	return p, err
 }
 
 // Update record by ID

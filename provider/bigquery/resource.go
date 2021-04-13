@@ -2,6 +2,7 @@ package bigquery
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/odpf/guardian/domain"
 )
@@ -19,6 +20,16 @@ type Dataset struct {
 	DatasetID string
 }
 
+func (d *Dataset) fromDomain(r *domain.Resource) error {
+	if r.Type != ResourceTypeDataset {
+		return ErrInvalidResourceType
+	}
+
+	d.ProjectID = strings.TrimSuffix(r.URN, fmt.Sprintf(":%s", r.Name))
+	d.DatasetID = r.Name
+	return nil
+}
+
 func (d *Dataset) toDomain() *domain.Resource {
 	return &domain.Resource{
 		Type: ResourceTypeDataset,
@@ -32,6 +43,21 @@ type Table struct {
 	ProjectID string
 	DatasetID string
 	TableID   string
+}
+
+func (t *Table) fromDomain(r *domain.Resource) error {
+	if r.Type != ResourceTypeTable {
+		return ErrInvalidResourceType
+	}
+
+	datasetURN := strings.Split(strings.TrimSuffix(r.URN, fmt.Sprintf(".%s", r.Name)), ":")
+	if len(datasetURN) != 2 {
+		return ErrInvalidTableURN
+	}
+	t.ProjectID = datasetURN[0]
+	t.DatasetID = datasetURN[1]
+	t.TableID = r.Name
+	return nil
 }
 
 func (t *Table) toDomain() *domain.Resource {

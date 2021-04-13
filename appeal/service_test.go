@@ -597,7 +597,9 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		}
 		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
 		expectedError := errors.New("repository error")
+		s.mockProviderService.On("GrantAccess", expectedAppeal).Return(nil).Once()
 		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
+		s.mockProviderService.On("RevokeAccess", expectedAppeal).Return(nil).Once()
 
 		actualResult, actualError := s.service.MakeAction(validApprovalActionParam)
 
@@ -745,6 +747,9 @@ func (s *ServiceTestSuite) TestMakeAction() {
 			s.Run(tc.name, func() {
 				s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).
 					Return(tc.expectedAppealDetails, nil).
+					Once()
+				s.mockProviderService.On("GrantAccess", tc.expectedAppealDetails).
+					Return(nil).
 					Once()
 				s.mockRepository.On("Update", mock.Anything).
 					Return(nil).

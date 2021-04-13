@@ -63,6 +63,7 @@ type ProviderRepository interface {
 	Update(*Provider) error
 	Find() ([]*Provider, error)
 	GetByID(uint) (*Provider, error)
+	GetOne(pType, urn string) (*Provider, error)
 	Delete(uint) error
 }
 
@@ -72,6 +73,8 @@ type ProviderService interface {
 	Find() ([]*Provider, error)
 	Update(*Provider) error
 	FetchResources() error
+	GrantAccess(*Appeal) error
+	RevokeAccess(*Appeal) error
 }
 
 // ProviderHandler interface
@@ -84,4 +87,6 @@ type ProviderInterface interface {
 	GetType() string
 	CreateConfig(*ProviderConfig) error
 	GetResources(pc *ProviderConfig) ([]*Resource, error)
+	GrantAccess(*ProviderConfig, *Appeal) error
+	RevokeAccess(*ProviderConfig, *Appeal) error
 }
