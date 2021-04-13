@@ -214,7 +214,7 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 
 	var roleConfig *domain.RoleConfig
 	for _, rc := range resourceConfig.Roles {
-		if rc.Name == a.Role {
+		if rc.ID == a.Role {
 			roleConfig = rc
 		}
 	}
