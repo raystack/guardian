@@ -7,6 +7,7 @@ import (
 	bq "cloud.google.com/go/bigquery"
 	bqApi "google.golang.org/api/bigquery/v2"
 	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 )
 
 // Client is wrapper for bigquery client
@@ -19,14 +20,12 @@ type Client struct {
 // NewClient returns *bigquery.Client
 func NewClient(projectID string, credentialsJSON []byte) (*Client, error) {
 	ctx := context.Background()
-	// client, err := bq.NewClient(ctx, projectID, option.WithCredentialsJSON(credentialsJSON))
-	client, err := bq.NewClient(ctx, projectID)
+	client, err := bq.NewClient(ctx, projectID, option.WithCredentialsJSON(credentialsJSON))
 	if err != nil {
 		return nil, err
 	}
 
-	// apiClient, err := bqApi.NewService(ctx, option.WithCredentialsJSON(credentialsJSON))
-	apiClient, err := bqApi.NewService(ctx)
+	apiClient, err := bqApi.NewService(ctx, option.WithCredentialsJSON(credentialsJSON))
 	if err != nil {
 		return nil, err
 	}
