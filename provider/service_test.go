@@ -191,6 +191,68 @@ func (s *ServiceTestSuite) TestUpdate() {
 	})
 }
 
+func (s *ServiceTestSuite) TestFetchResources() {
+	s.Run("should return error if got any from provider respository", func() {
+		expectedError := errors.New("any error")
+		s.mockProviderRepository.On("Find").Return(nil, expectedError).Once()
+
+		actualError := s.service.FetchResources()
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	providers := []*domain.Provider{
+		{
+			ID:     1,
+			Type:   mockProviderType,
+			Config: &domain.ProviderConfig{},
+		},
+	}
+
+	s.Run("should return error if got any from provider's GetResources", func() {
+		s.mockProviderRepository.On("Find").Return(providers, nil).Once()
+		expectedError := errors.New("any error")
+		s.mockProvider.On("GetResources", mock.Anything).Return(nil, expectedError).Once()
+
+		actualError := s.service.FetchResources()
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if got any from resource service", func() {
+		s.mockProviderRepository.On("Find").Return(providers, nil).Once()
+		for _, p := range providers {
+			s.mockProvider.On("GetResources", p.Config).Return([]*domain.Resource{}, nil).Once()
+		}
+		expectedError := errors.New("any error")
+		s.mockResourceService.On("BulkUpsert", mock.Anything).Return(expectedError).Once()
+
+		actualError := s.service.FetchResources()
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should upsert all resources on success", func() {
+		s.mockProviderRepository.On("Find").Return(providers, nil).Once()
+		expectedResources := []*domain.Resource{}
+		for _, p := range providers {
+			resources := []*domain.Resource{
+				{
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+				},
+			}
+			s.mockProvider.On("GetResources", p.Config).Return(resources, nil).Once()
+			expectedResources = append(expectedResources, resources...)
+		}
+		s.mockResourceService.On("BulkUpsert", expectedResources).Return(nil).Once()
+
+		actualError := s.service.FetchResources()
+
+		s.Nil(actualError)
+	})
+}
+
 func TestService(t *testing.T) {
 	suite.Run(t, new(ServiceTestSuite))
 }
