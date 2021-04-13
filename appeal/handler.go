@@ -2,7 +2,6 @@ package appeal
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -81,12 +80,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.AppealService.Create(appeals); err != nil {
-		log.Println("appeal service create error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	log.Println("appeals", appeals)
 	utils.ReturnJSON(w, appeals)
 	return
 }
