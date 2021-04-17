@@ -235,6 +235,37 @@ func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 
 	return appeal, nil
 }
+func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
+	appeal, err := s.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if appeal == nil {
+		return nil, ErrAppealNotFound
+	}
+
+	lastApprovalStep := appeal.Approvals[len(appeal.Approvals)-1]
+	if !utils.ContainsString(lastApprovalStep.Approvers, actor) {
+		return nil, ErrRevokeAppealForbidden
+	}
+
+	revokedAppeal := &domain.Appeal{}
+	*revokedAppeal = *appeal
+	revokedAppeal.Status = domain.AppealStatusTerminated
+
+	if err := s.repo.Update(revokedAppeal); err != nil {
+		return nil, err
+	}
+
+	if err := s.providerService.RevokeAccess(appeal); err != nil {
+		if err := s.repo.Update(revokedAppeal); err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return revokedAppeal, nil
+}
 
 func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) {
 	filters := map[string]interface{}{"ids": ids}

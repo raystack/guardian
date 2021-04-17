@@ -45,3 +45,7 @@ type actionPayload struct {
 	Actor  string `json:"actor"`
 	Action string `json:"action"`
 }
+
+type revokePayload struct {
+	Actor string `json:"actor"`
+}

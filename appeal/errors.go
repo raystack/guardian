@@ -27,6 +27,8 @@ var (
 	ErrPolicyIDNotFound      = errors.New("unable to find approval policy for specified id")
 	ErrPolicyVersionNotFound = errors.New("unable to find approval policy for specified version")
 	ErrResourceNotFound      = errors.New("resource not found")
+	ErrAppealNotFound        = errors.New("appeal not found")
+	ErrRevokeAppealForbidden = errors.New("user doesn't have permission to revoke this active access")
 
 	ErrApproverKeyNotRecognized = errors.New("unrecognized approvers key")
 	ErrApproverInvalidType      = errors.New("invalid approver type, expected an email or array of email")

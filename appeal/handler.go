@@ -23,6 +23,7 @@ func SetupHandler(r *mux.Router, as domain.AppealService) {
 	r.Methods(http.MethodGet).Path("/appeals/approvals").HandlerFunc(h.GetPendingApprovals)
 	r.Methods(http.MethodPost).Path("/appeals/{id}/approvals/{name}").HandlerFunc(h.MakeAction)
 	r.Methods(http.MethodPut).Path("/appeals/{id}/cancel").HandlerFunc(h.Cancel)
+	r.Methods(http.MethodPut).Path("/appeals/{id}/revoke").HandlerFunc(h.Revoke)
 	r.Methods(http.MethodGet).Path("/appeals/{id}").HandlerFunc(h.GetByID)
 }
 
@@ -175,6 +176,41 @@ func (h *Handler) Cancel(w http.ResponseWriter, r *http.Request) {
 		default:
 			statusCode = http.StatusInternalServerError
 		}
+
+		http.Error(w, err.Error(), statusCode)
+		return
+	}
+
+	utils.ReturnJSON(w, appeal)
+	return
+}
+
+func (h *Handler) Revoke(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	appealID, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var payload revokePayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	appeal, err := h.AppealService.Revoke(uint(appealID), payload.Actor)
+	if err != nil {
+		var statusCode int
+		switch err {
+		case ErrRevokeAppealForbidden:
+			statusCode = http.StatusForbidden
+		case ErrAppealNotFound:
+			statusCode = http.StatusNotFound
+		default:
+			statusCode = http.StatusInternalServerError
+		}
+
 		http.Error(w, err.Error(), statusCode)
 		return
 	}
