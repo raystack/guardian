@@ -780,6 +780,96 @@ func (s *ServiceTestSuite) TestGetPendingApprovals() {
 	})
 }
 
+func (s *ServiceTestSuite) TestRevoke() {
+	s.Run("should return error if got any while getting appeal details", func() {
+		expectedError := errors.New("repository error")
+		s.mockRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
+
+		actualResult, actualError := s.service.Revoke(0, "")
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if appeal not found", func() {
+		s.mockRepository.On("GetByID", mock.Anything).Return(nil, nil).Once()
+		expectedError := appeal.ErrAppealNotFound
+
+		actualResult, actualError := s.service.Revoke(0, "")
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	appealID := uint(1)
+	actor := "user@email.com"
+
+	s.Run("should return error if actor doesn't have permission to revoke", func() {
+		expectedAppeal := &domain.Appeal{
+			ID: appealID,
+			Approvals: []*domain.Approval{
+				{
+					Approvers: []string{"approver@email.com"},
+				},
+			},
+		}
+		s.mockRepository.On("GetByID", appealID).Return(expectedAppeal, nil).Once()
+		expectedError := appeal.ErrRevokeAppealForbidden
+
+		actualResult, actualError := s.service.Revoke(appealID, actor)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	appealDetails := &domain.Appeal{
+		ID: appealID,
+		Approvals: []*domain.Approval{
+			{
+				Approvers: []string{actor},
+			},
+		},
+	}
+
+	s.Run("should return error if got any while updating appeal", func() {
+		s.mockRepository.On("GetByID", appealID).Return(appealDetails, nil).Once()
+		expectedError := errors.New("repository error")
+		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
+
+		actualResult, actualError := s.service.Revoke(appealID, actor)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error and rollback updated appeal if failed granting the access to the provider", func() {
+		s.mockRepository.On("GetByID", appealID).Return(appealDetails, nil).Once()
+		s.mockRepository.On("Update", mock.Anything).Return(nil).Once()
+		expectedError := errors.New("provider service error")
+		s.mockProviderService.On("RevokeAccess", mock.Anything).Return(expectedError).Once()
+		s.mockRepository.On("Update", appealDetails).Return(nil).Once()
+
+		actualResult, actualError := s.service.Revoke(appealID, actor)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return appeal and nil error on success", func() {
+		s.mockRepository.On("GetByID", appealID).Return(appealDetails, nil).Once()
+		expectedAppeal := &domain.Appeal{}
+		*expectedAppeal = *appealDetails
+		expectedAppeal.Status = domain.AppealStatusTerminated
+		s.mockRepository.On("Update", expectedAppeal).Return(nil).Once()
+		s.mockProviderService.On("RevokeAccess", appealDetails).Return(nil).Once()
+
+		actualResult, actualError := s.service.Revoke(appealID, actor)
+
+		s.Equal(expectedAppeal, actualResult)
+		s.Nil(actualError)
+	})
+}
+
 func TestService(t *testing.T) {
 	suite.Run(t, new(ServiceTestSuite))
 }

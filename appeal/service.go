@@ -258,7 +258,7 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 	}
 
 	if err := s.providerService.RevokeAccess(appeal); err != nil {
-		if err := s.repo.Update(revokedAppeal); err != nil {
+		if err := s.repo.Update(appeal); err != nil {
 			return nil, err
 		}
 		return nil, err
