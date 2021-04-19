@@ -142,6 +142,108 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
+	s.Run("should return error for invalid appeals", func() {
+		provider := &domain.Provider{
+			ID:   1,
+			Type: "provider_type",
+			URN:  "provider_urn",
+			Config: &domain.ProviderConfig{
+				Appeal: &domain.AppealConfig{},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: "resource_type",
+						Policy: &domain.PolicyConfig{
+							ID:      "policy_id",
+							Version: 1,
+						},
+					},
+				},
+			},
+		}
+		testCases := []struct {
+			name          string
+			resources     []*domain.Resource
+			providers     []*domain.Provider
+			policies      []*domain.Policy
+			appeals       []*domain.Appeal
+			expectedError error
+		}{
+			{
+				name: "provider type not found",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "invalid_provider_type",
+					ProviderURN:  "provider_urn",
+				}},
+				providers:     []*domain.Provider{provider},
+				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				expectedError: appeal.ErrProviderTypeNotFound,
+			},
+			{
+				name: "provider urn not found",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "invalid_provider_urn",
+				}},
+				providers:     []*domain.Provider{provider},
+				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				expectedError: appeal.ErrProviderURNNotFound,
+			},
+			{
+				name: "resource type not found",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "invalid_resource_type",
+				}},
+				providers:     []*domain.Provider{provider},
+				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				expectedError: appeal.ErrResourceTypeNotFound,
+			},
+			{
+				name: "policy id not found",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				providers:     []*domain.Provider{provider},
+				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				expectedError: appeal.ErrPolicyIDNotFound,
+			},
+			{
+				name: "policy version not found",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				providers: []*domain.Provider{provider},
+				policies: []*domain.Policy{{
+					ID: "policy_id",
+				}},
+				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				expectedError: appeal.ErrPolicyVersionNotFound,
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				s.mockResourceService.On("Find", mock.Anything).Return(tc.resources, nil).Once()
+				s.mockProviderService.On("Find").Return(tc.providers, nil).Once()
+				s.mockPolicyService.On("Find").Return(tc.policies, nil).Once()
+
+				actualError := s.service.Create(tc.appeals)
+
+				s.EqualError(actualError, tc.expectedError.Error())
+			})
+		}
+	})
+
 	s.Run("should return error if got error from repository", func() {
 		expectedResources := []*domain.Resource{}
 		expectedProviders := []*domain.Provider{}
