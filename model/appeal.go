@@ -18,6 +18,7 @@ type Appeal struct {
 	Status        string
 	User          string
 	Role          string
+	Options       datatypes.JSON
 	Labels        datatypes.JSON
 
 	Resource  *Resource `gorm:"ForeignKey:ResourceID;References:ID"`
@@ -32,6 +33,11 @@ type Appeal struct {
 // FromDomain transforms *domain.Appeal values into the model
 func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	labels, err := json.Marshal(a.Labels)
+	if err != nil {
+		return err
+	}
+
+	options, err := json.Marshal(a.Options)
 	if err != nil {
 		return err
 	}
@@ -62,6 +68,7 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	m.Status = a.Status
 	m.User = a.User
 	m.Role = a.Role
+	m.Options = datatypes.JSON(options)
 	m.Labels = datatypes.JSON(labels)
 	m.Approvals = approvals
 	m.CreatedAt = a.CreatedAt
@@ -75,6 +82,13 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 	var labels map[string]interface{}
 	if err := json.Unmarshal(m.Labels, &labels); err != nil {
 		return nil, err
+	}
+
+	var options *domain.AppealOptions
+	if m.Options != nil {
+		if err := json.Unmarshal(m.Options, &options); err != nil {
+			return nil, err
+		}
 	}
 
 	var approvals []*domain.Approval
@@ -107,6 +121,7 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		Status:        m.Status,
 		User:          m.User,
 		Role:          m.Role,
+		Options:       options,
 		Labels:        labels,
 		Approvals:     approvals,
 		Resource:      resource,

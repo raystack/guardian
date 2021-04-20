@@ -2,11 +2,20 @@ package appeal
 
 import (
 	"errors"
+	"time"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/model"
+	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
 )
+
+type findFilters struct {
+	User                   string    `mapstructure:"user" validate:"omitempty,required"`
+	Statuses               []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
+	ExpirationDateLessThan time.Time `mapstructure:"expiration_date_lt" validate:"omitempty,required"`
+}
 
 // Repository talks to the store to read or insert data
 type Repository struct {
@@ -44,12 +53,27 @@ func (r *Repository) GetByID(id uint) (*domain.Appeal, error) {
 }
 
 func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Appeal, error) {
-	whereConditions := map[string]interface{}{}
-	if filters["user"] != nil && filters["user"] != "" {
-		whereConditions["user"] = filters["user"]
+	var conditions findFilters
+	if err := mapstructure.Decode(filters, &conditions); err != nil {
+		return nil, err
 	}
+	if err := utils.ValidateStruct(conditions); err != nil {
+		return nil, err
+	}
+
+	db := r.db
+	if conditions.User != "" {
+		db = db.Where(`"user" = ?`, conditions.User)
+	}
+	if conditions.Statuses != nil {
+		db = db.Where(`"status" IN ?`, conditions.Statuses)
+	}
+	if !conditions.ExpirationDateLessThan.IsZero() {
+		db = db.Where(`"options" -> 'expiration_date' < ?`, conditions.ExpirationDateLessThan)
+	}
+
 	var models []*model.Appeal
-	if err := r.db.Debug().Find(&models, whereConditions).Error; err != nil {
+	if err := db.Debug().Find(&models).Error; err != nil {
 		return nil, err
 	}
 

@@ -148,7 +148,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			Type: "provider_type",
 			URN:  "provider_urn",
 			Config: &domain.ProviderConfig{
-				Appeal: &domain.AppealConfig{},
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess: false,
+				},
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: "resource_type",
@@ -160,6 +162,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				},
 			},
 		}
+		timeNow := time.Now()
 		testCases := []struct {
 			name          string
 			resources     []*domain.Resource
@@ -203,6 +206,37 @@ func (s *ServiceTestSuite) TestCreate() {
 				expectedError: appeal.ErrResourceTypeNotFound,
 			},
 			{
+				name: "expiration date nil or not found when the appeal config disallow permanent access",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				providers: []*domain.Provider{provider},
+				appeals: []*domain.Appeal{{
+					ResourceID: 1,
+				}},
+				expectedError: appeal.ErrOptionsExpirationDateOptionNotFound,
+			},
+			{
+				name: "expiration date not set when the appeal config disallow permanent access",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				providers: []*domain.Provider{provider},
+				appeals: []*domain.Appeal{{
+					ResourceID: 1,
+					Options: &domain.AppealOptions{
+						ExpirationDate: &time.Time{},
+					},
+				}},
+				expectedError: appeal.ErrExpirationDateIsRequired,
+			},
+			{
 				name: "policy id not found",
 				resources: []*domain.Resource{{
 					ID:           1,
@@ -210,8 +244,13 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
-				providers:     []*domain.Provider{provider},
-				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				providers: []*domain.Provider{provider},
+				appeals: []*domain.Appeal{{
+					ResourceID: 1,
+					Options: &domain.AppealOptions{
+						ExpirationDate: &timeNow,
+					},
+				}},
 				expectedError: appeal.ErrPolicyIDNotFound,
 			},
 			{
@@ -226,7 +265,12 @@ func (s *ServiceTestSuite) TestCreate() {
 				policies: []*domain.Policy{{
 					ID: "policy_id",
 				}},
-				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				appeals: []*domain.Appeal{{
+					ResourceID: 1,
+					Options: &domain.AppealOptions{
+						ExpirationDate: &timeNow,
+					},
+				}},
 				expectedError: appeal.ErrPolicyVersionNotFound,
 			},
 		}
@@ -279,6 +323,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			Type: "provider_type",
 			URN:  "provider1",
 			Config: &domain.ProviderConfig{
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess: true,
+				},
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: "resource_type_1",

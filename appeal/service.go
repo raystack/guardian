@@ -106,6 +106,15 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return ErrResourceTypeNotFound
 		}
 
+		appealConfig := providerConfig.appeal
+		if !appealConfig.AllowPermanentAccess {
+			if a.Options == nil || a.Options.ExpirationDate == nil {
+				return ErrOptionsExpirationDateOptionNotFound
+			} else if a.Options.ExpirationDate.IsZero() {
+				return ErrExpirationDateIsRequired
+			}
+		}
+
 		resourceConfig := providerConfig.resources[resource.Type]
 		policyConfig := resourceConfig.policy
 		if approvalSteps[policyConfig.ID] == nil {
@@ -257,9 +266,11 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 		return nil, ErrAppealNotFound
 	}
 
-	lastApprovalStep := appeal.Approvals[len(appeal.Approvals)-1]
-	if !utils.ContainsString(lastApprovalStep.Approvers, actor) {
-		return nil, ErrRevokeAppealForbidden
+	if actor != domain.SystemActorName {
+		lastApprovalStep := appeal.Approvals[len(appeal.Approvals)-1]
+		if !utils.ContainsString(lastApprovalStep.Approvers, actor) {
+			return nil, ErrRevokeAppealForbidden
+		}
 	}
 
 	revokedAppeal := &domain.Appeal{}

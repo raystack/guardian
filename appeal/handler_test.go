@@ -237,15 +237,11 @@ func (s *HandlerTestSuite) TestCreate() {
 	"resources": [
 		{
 			"id": 1,
-			"options": {
-				"role": "viewer"
-			}
+			"role": "viewer"
 		},
 		{
 			"id": 2,
-			"options": {
-				"role": "editor"
-			}
+			"role": "editor"
 		}
 	]
 }`
