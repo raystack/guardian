@@ -116,6 +116,10 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 
 		resourceConfig := providerConfig.resources[resource.Type]
+		if !utils.ContainsString(resourceConfig.availableRoleIDs, a.Role) {
+			return ErrInvalidRole
+		}
+
 		policyConfig := resourceConfig.policy
 		if approvalSteps[policyConfig.ID] == nil {
 			return ErrPolicyIDNotFound

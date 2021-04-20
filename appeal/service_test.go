@@ -158,6 +158,11 @@ func (s *ServiceTestSuite) TestCreate() {
 							ID:      "policy_id",
 							Version: 1,
 						},
+						Roles: []*domain.RoleConfig{
+							{
+								ID: "role_1",
+							},
+						},
 					},
 				},
 			},
@@ -237,6 +242,24 @@ func (s *ServiceTestSuite) TestCreate() {
 				expectedError: appeal.ErrExpirationDateIsRequired,
 			},
 			{
+				name: "invalid role",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				providers: []*domain.Provider{provider},
+				appeals: []*domain.Appeal{{
+					ResourceID: 1,
+					Role:       "invalid_role",
+					Options: &domain.AppealOptions{
+						ExpirationDate: &timeNow,
+					},
+				}},
+				expectedError: appeal.ErrInvalidRole,
+			},
+			{
 				name: "policy id not found",
 				resources: []*domain.Resource{{
 					ID:           1,
@@ -247,6 +270,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				providers: []*domain.Provider{provider},
 				appeals: []*domain.Appeal{{
 					ResourceID: 1,
+					Role:       "role_1",
 					Options: &domain.AppealOptions{
 						ExpirationDate: &timeNow,
 					},
@@ -267,6 +291,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				}},
 				appeals: []*domain.Appeal{{
 					ResourceID: 1,
+					Role:       "role_1",
 					Options: &domain.AppealOptions{
 						ExpirationDate: &timeNow,
 					},
@@ -333,6 +358,11 @@ func (s *ServiceTestSuite) TestCreate() {
 							ID:      "policy_1",
 							Version: 1,
 						},
+						Roles: []*domain.RoleConfig{
+							{
+								ID: "role_id",
+							},
+						},
 					},
 				},
 			},
@@ -362,6 +392,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
 			User:          user,
+			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
 					Name:          "step_1",
@@ -390,6 +421,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
 			User:          user,
+			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
 					ID:            1,
@@ -418,6 +450,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
 			User:          user,
+			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
 					ID:            1,
@@ -466,10 +499,12 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				User:       user,
 				ResourceID: 1,
+				Role:       "role_id",
 			},
 			{
 				User:       user,
 				ResourceID: 2,
+				Role:       "role_id",
 			},
 		}
 		actualError := s.service.Create(appeals)

@@ -25,6 +25,7 @@ var (
 	ErrProviderURNNotFound                 = errors.New("provider with specified urn is not registered")
 	ErrResourceTypeNotFound                = errors.New("unable to find matching resource config for specified resource type")
 	ErrOptionsExpirationDateOptionNotFound = errors.New("expiration date is required, unable to find expiration date option")
+	ErrInvalidRole                         = errors.New("invalid role")
 	ErrExpirationDateIsRequired            = errors.New("having permanent access to this resource is not allowed, access duration is required")
 	ErrPolicyIDNotFound                    = errors.New("unable to find approval policy for specified id")
 	ErrPolicyVersionNotFound               = errors.New("unable to find approval policy for specified version")
