@@ -7,6 +7,7 @@ const (
 	AppealActionNameReject  = "reject"
 
 	AppealStatusPending    = "pending"
+	AppealStatusCancelled  = "cancelled"
 	AppealStatusActive     = "active"
 	AppealStatusRejected   = "rejected"
 	AppealStatusTerminated = "terminated"
@@ -52,4 +53,5 @@ type AppealService interface {
 	GetByID(uint) (*Appeal, error)
 	GetPendingApprovals(user string) ([]*Approval, error)
 	MakeAction(ApprovalAction) (*Appeal, error)
+	Cancel(uint) (*Appeal, error)
 }

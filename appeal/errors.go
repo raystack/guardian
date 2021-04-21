@@ -5,6 +5,7 @@ import "errors"
 var (
 	ErrAppealIDEmptyParam = errors.New("appeal id is required")
 
+	ErrAppealStatusCancelled    = errors.New("appeal already cancelled")
 	ErrAppealStatusApproved     = errors.New("appeal already approved")
 	ErrAppealStatusRejected     = errors.New("appeal already rejected")
 	ErrAppealStatusTerminated   = errors.New("appeal already terminated")
