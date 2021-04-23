@@ -342,23 +342,24 @@ func (s *Service) resolveApprovers(user string, resource *domain.Resource, appro
 }
 
 func checkIfAppealStatusStillPending(status string) error {
-	var err error
-	if status != domain.AppealStatusPending {
-		switch status {
-		case domain.AppealStatusCancelled:
-			err = ErrAppealStatusCancelled
-		case domain.AppealStatusActive:
-			err = ErrAppealStatusApproved
-		case domain.AppealStatusRejected:
-			err = ErrAppealStatusRejected
-		case domain.AppealStatusTerminated:
-			err = ErrAppealStatusTerminated
-		default:
-			err = ErrAppealStatusUnrecognized
-		}
-		return err
+	if status == domain.AppealStatusPending {
+		return nil
 	}
-	return nil
+
+	var err error
+	switch status {
+	case domain.AppealStatusCancelled:
+		err = ErrAppealStatusCancelled
+	case domain.AppealStatusActive:
+		err = ErrAppealStatusApproved
+	case domain.AppealStatusRejected:
+		err = ErrAppealStatusRejected
+	case domain.AppealStatusTerminated:
+		err = ErrAppealStatusTerminated
+	default:
+		err = ErrAppealStatusUnrecognized
+	}
+	return err
 }
 
 func checkPreviousApprovalStatus(status string) error {
