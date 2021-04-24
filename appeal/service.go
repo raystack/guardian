@@ -228,7 +228,7 @@ func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 		return nil, err
 	}
 
-	appeal.Status = domain.AppealStatusCancelled
+	appeal.Status = domain.AppealStatusCanceled
 	if err := s.repo.Update(appeal); err != nil {
 		return nil, err
 	}
@@ -348,8 +348,8 @@ func checkIfAppealStatusStillPending(status string) error {
 
 	var err error
 	switch status {
-	case domain.AppealStatusCancelled:
-		err = ErrAppealStatusCancelled
+	case domain.AppealStatusCanceled:
+		err = ErrAppealStatusCanceled
 	case domain.AppealStatusActive:
 		err = ErrAppealStatusApproved
 	case domain.AppealStatusRejected:

@@ -126,7 +126,7 @@ func (h *Handler) MakeAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var statusCode int
 		switch err {
-		case ErrAppealStatusCancelled,
+		case ErrAppealStatusCanceled,
 			ErrAppealStatusApproved,
 			ErrAppealStatusRejected,
 			ErrAppealStatusTerminated,
@@ -166,7 +166,7 @@ func (h *Handler) Cancel(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var statusCode int
 		switch err {
-		case ErrAppealStatusCancelled,
+		case ErrAppealStatusCanceled,
 			ErrAppealStatusApproved,
 			ErrAppealStatusRejected,
 			ErrAppealStatusTerminated,

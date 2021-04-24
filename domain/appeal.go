@@ -7,7 +7,7 @@ const (
 	AppealActionNameReject  = "reject"
 
 	AppealStatusPending    = "pending"
-	AppealStatusCancelled  = "cancelled"
+	AppealStatusCanceled   = "canceled"
 	AppealStatusActive     = "active"
 	AppealStatusRejected   = "rejected"
 	AppealStatusTerminated = "terminated"
