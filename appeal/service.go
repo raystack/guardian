@@ -262,7 +262,7 @@ func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 	return appeal, nil
 }
 func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
-	appeal, err := s.GetByID(id)
+	appeal, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, err
 	}
