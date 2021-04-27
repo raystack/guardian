@@ -22,6 +22,7 @@ func SetupHandler(r *mux.Router, as domain.AppealService) {
 	r.Methods(http.MethodGet).Path("/appeals").HandlerFunc(h.Find)
 	r.Methods(http.MethodGet).Path("/appeals/approvals").HandlerFunc(h.GetPendingApprovals)
 	r.Methods(http.MethodPost).Path("/appeals/{id}/approvals/{name}").HandlerFunc(h.MakeAction)
+	r.Methods(http.MethodPut).Path("/appeals/{id}/cancel").HandlerFunc(h.Cancel)
 	r.Methods(http.MethodGet).Path("/appeals/{id}").HandlerFunc(h.GetByID)
 }
 
@@ -125,7 +126,8 @@ func (h *Handler) MakeAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var statusCode int
 		switch err {
-		case ErrAppealStatusApproved,
+		case ErrAppealStatusCanceled,
+			ErrAppealStatusApproved,
 			ErrAppealStatusRejected,
 			ErrAppealStatusTerminated,
 			ErrAppealStatusUnrecognized,
@@ -141,6 +143,35 @@ func (h *Handler) MakeAction(w http.ResponseWriter, r *http.Request) {
 			statusCode = http.StatusForbidden
 		case ErrApprovalNameNotFound:
 			statusCode = http.StatusNotFound
+		default:
+			statusCode = http.StatusInternalServerError
+		}
+		http.Error(w, err.Error(), statusCode)
+		return
+	}
+
+	utils.ReturnJSON(w, appeal)
+	return
+}
+
+func (h *Handler) Cancel(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	appealID, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	appeal, err := h.AppealService.Cancel(uint(appealID))
+	if err != nil {
+		var statusCode int
+		switch err {
+		case ErrAppealStatusCanceled,
+			ErrAppealStatusApproved,
+			ErrAppealStatusRejected,
+			ErrAppealStatusTerminated,
+			ErrAppealStatusUnrecognized:
+			statusCode = http.StatusBadRequest
 		default:
 			statusCode = http.StatusInternalServerError
 		}
