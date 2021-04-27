@@ -11,7 +11,14 @@ const (
 	AppealStatusActive     = "active"
 	AppealStatusRejected   = "rejected"
 	AppealStatusTerminated = "terminated"
+
+	SystemActorName = "system"
 )
+
+// AppealOptions
+type AppealOptions struct {
+	ExpirationDate *time.Time `json:"expiration_date,omitempty"`
+}
 
 // Appeal struct
 type Appeal struct {
@@ -22,6 +29,7 @@ type Appeal struct {
 	Status        string                 `json:"status"`
 	User          string                 `json:"user"`
 	Role          string                 `json:"role"`
+	Options       *AppealOptions         `json:"options"`
 	Labels        map[string]interface{} `json:"labels"`
 
 	Resource  *Resource   `json:"resource,omitempty"`
@@ -54,4 +62,5 @@ type AppealService interface {
 	GetPendingApprovals(user string) ([]*Approval, error)
 	MakeAction(ApprovalAction) (*Appeal, error)
 	Cancel(uint) (*Appeal, error)
+	Revoke(id uint, actor string) (*Appeal, error)
 }

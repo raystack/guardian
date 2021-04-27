@@ -237,15 +237,11 @@ func (s *HandlerTestSuite) TestCreate() {
 	"resources": [
 		{
 			"id": 1,
-			"options": {
-				"role": "viewer"
-			}
+			"role": "viewer"
 		},
 		{
 			"id": 2,
-			"options": {
-				"role": "editor"
-			}
+			"role": "editor"
 		}
 	]
 }`
@@ -493,6 +489,106 @@ func (s *HandlerTestSuite) TestMakeAction() {
 		actualStatusCode := s.res.Result().StatusCode
 
 		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+}
+
+func (s *HandlerTestSuite) TestRevoke() {
+	s.Run("should return bad request if id param is invalid", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodPut, "/", nil)
+
+		req = mux.SetURLVars(req, map[string]string{
+			"id": "invalid id",
+		})
+		expectedStatusCode := http.StatusBadRequest
+
+		s.handler.Revoke(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+
+	s.Run("should return bad request if payload is invalid", func() {
+		s.Setup()
+		invalidPayload := `invalid json...`
+		req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(invalidPayload))
+
+		req = mux.SetURLVars(req, map[string]string{
+			"id": "1",
+		})
+		expectedStatusCode := http.StatusBadRequest
+
+		s.handler.Revoke(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+
+	actor := "user@email.com"
+	validPayload := fmt.Sprintf(`{
+	"actor": "%s"
+}`, actor)
+	s.Run("should return error if got any from appeal service", func() {
+		testCases := []struct {
+			expectedError      error
+			expectedStatusCode int
+		}{
+			{
+				expectedError:      appeal.ErrRevokeAppealForbidden,
+				expectedStatusCode: http.StatusForbidden,
+			},
+			{
+				expectedError:      appeal.ErrAppealNotFound,
+				expectedStatusCode: http.StatusNotFound,
+			},
+			{
+				expectedError:      errors.New("any error"),
+				expectedStatusCode: http.StatusInternalServerError,
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Setup()
+			req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(validPayload))
+
+			req = mux.SetURLVars(req, map[string]string{
+				"id": "1",
+			})
+			s.mockAppealService.On("Revoke", mock.Anything, mock.Anything).
+				Return(nil, tc.expectedError).
+				Once()
+			expectedStatusCode := tc.expectedStatusCode
+
+			s.handler.Revoke(s.res, req)
+			actualStatusCode := s.res.Result().StatusCode
+
+			s.Equal(expectedStatusCode, actualStatusCode)
+		}
+	})
+
+	s.Run("should return appeal on success", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(validPayload))
+
+		req = mux.SetURLVars(req, map[string]string{
+			"id": "1",
+		})
+		expectedResult := &domain.Appeal{
+			ID: 1,
+		}
+		s.mockAppealService.On("Revoke", uint(1), actor).
+			Return(expectedResult, nil).
+			Once()
+		expectedStatusCode := http.StatusOK
+
+		s.handler.Revoke(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+		actualResponseBody := &domain.Appeal{}
+		err := json.NewDecoder(s.res.Body).Decode(&actualResponseBody)
+		s.NoError(err)
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+		s.Equal(expectedResult, actualResponseBody)
 	})
 }
 

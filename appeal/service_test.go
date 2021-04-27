@@ -142,6 +142,177 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
+	s.Run("should return error for invalid appeals", func() {
+		provider := &domain.Provider{
+			ID:   1,
+			Type: "provider_type",
+			URN:  "provider_urn",
+			Config: &domain.ProviderConfig{
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess: false,
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: "resource_type",
+						Policy: &domain.PolicyConfig{
+							ID:      "policy_id",
+							Version: 1,
+						},
+						Roles: []*domain.RoleConfig{
+							{
+								ID: "role_1",
+							},
+						},
+					},
+				},
+			},
+		}
+		timeNow := time.Now()
+		testCases := []struct {
+			name          string
+			resources     []*domain.Resource
+			providers     []*domain.Provider
+			policies      []*domain.Policy
+			appeals       []*domain.Appeal
+			expectedError error
+		}{
+			{
+				name: "provider type not found",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "invalid_provider_type",
+					ProviderURN:  "provider_urn",
+				}},
+				providers:     []*domain.Provider{provider},
+				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				expectedError: appeal.ErrProviderTypeNotFound,
+			},
+			{
+				name: "provider urn not found",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "invalid_provider_urn",
+				}},
+				providers:     []*domain.Provider{provider},
+				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				expectedError: appeal.ErrProviderURNNotFound,
+			},
+			{
+				name: "resource type not found",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "invalid_resource_type",
+				}},
+				providers:     []*domain.Provider{provider},
+				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				expectedError: appeal.ErrResourceTypeNotFound,
+			},
+			{
+				name: "expiration date nil or not found when the appeal config disallow permanent access",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				providers: []*domain.Provider{provider},
+				appeals: []*domain.Appeal{{
+					ResourceID: 1,
+				}},
+				expectedError: appeal.ErrOptionsExpirationDateOptionNotFound,
+			},
+			{
+				name: "expiration date not set when the appeal config disallow permanent access",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				providers: []*domain.Provider{provider},
+				appeals: []*domain.Appeal{{
+					ResourceID: 1,
+					Options: &domain.AppealOptions{
+						ExpirationDate: &time.Time{},
+					},
+				}},
+				expectedError: appeal.ErrExpirationDateIsRequired,
+			},
+			{
+				name: "invalid role",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				providers: []*domain.Provider{provider},
+				appeals: []*domain.Appeal{{
+					ResourceID: 1,
+					Role:       "invalid_role",
+					Options: &domain.AppealOptions{
+						ExpirationDate: &timeNow,
+					},
+				}},
+				expectedError: appeal.ErrInvalidRole,
+			},
+			{
+				name: "policy id not found",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				providers: []*domain.Provider{provider},
+				appeals: []*domain.Appeal{{
+					ResourceID: 1,
+					Role:       "role_1",
+					Options: &domain.AppealOptions{
+						ExpirationDate: &timeNow,
+					},
+				}},
+				expectedError: appeal.ErrPolicyIDNotFound,
+			},
+			{
+				name: "policy version not found",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				providers: []*domain.Provider{provider},
+				policies: []*domain.Policy{{
+					ID: "policy_id",
+				}},
+				appeals: []*domain.Appeal{{
+					ResourceID: 1,
+					Role:       "role_1",
+					Options: &domain.AppealOptions{
+						ExpirationDate: &timeNow,
+					},
+				}},
+				expectedError: appeal.ErrPolicyVersionNotFound,
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				s.mockResourceService.On("Find", mock.Anything).Return(tc.resources, nil).Once()
+				s.mockProviderService.On("Find").Return(tc.providers, nil).Once()
+				s.mockPolicyService.On("Find").Return(tc.policies, nil).Once()
+
+				actualError := s.service.Create(tc.appeals)
+
+				s.EqualError(actualError, tc.expectedError.Error())
+			})
+		}
+	})
+
 	s.Run("should return error if got error from repository", func() {
 		expectedResources := []*domain.Resource{}
 		expectedProviders := []*domain.Provider{}
@@ -177,12 +348,20 @@ func (s *ServiceTestSuite) TestCreate() {
 			Type: "provider_type",
 			URN:  "provider1",
 			Config: &domain.ProviderConfig{
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess: true,
+				},
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: "resource_type_1",
 						Policy: &domain.PolicyConfig{
 							ID:      "policy_1",
 							Version: 1,
+						},
+						Roles: []*domain.RoleConfig{
+							{
+								ID: "role_id",
+							},
 						},
 					},
 				},
@@ -213,6 +392,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
 			User:          user,
+			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
 					Name:          "step_1",
@@ -241,6 +421,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
 			User:          user,
+			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
 					ID:            1,
@@ -269,6 +450,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
 			User:          user,
+			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
 					ID:            1,
@@ -317,10 +499,12 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				User:       user,
 				ResourceID: 1,
+				Role:       "role_id",
 			},
 			{
 				User:       user,
 				ResourceID: 2,
+				Role:       "role_id",
 			},
 		}
 		actualError := s.service.Create(appeals)
@@ -777,6 +961,96 @@ func (s *ServiceTestSuite) TestGetPendingApprovals() {
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
+	})
+}
+
+func (s *ServiceTestSuite) TestRevoke() {
+	s.Run("should return error if got any while getting appeal details", func() {
+		expectedError := errors.New("repository error")
+		s.mockRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
+
+		actualResult, actualError := s.service.Revoke(0, "")
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if appeal not found", func() {
+		s.mockRepository.On("GetByID", mock.Anything).Return(nil, nil).Once()
+		expectedError := appeal.ErrAppealNotFound
+
+		actualResult, actualError := s.service.Revoke(0, "")
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	appealID := uint(1)
+	actor := "user@email.com"
+
+	s.Run("should return error if actor doesn't have permission to revoke", func() {
+		expectedAppeal := &domain.Appeal{
+			ID: appealID,
+			Approvals: []*domain.Approval{
+				{
+					Approvers: []string{"approver@email.com"},
+				},
+			},
+		}
+		s.mockRepository.On("GetByID", appealID).Return(expectedAppeal, nil).Once()
+		expectedError := appeal.ErrRevokeAppealForbidden
+
+		actualResult, actualError := s.service.Revoke(appealID, actor)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	appealDetails := &domain.Appeal{
+		ID: appealID,
+		Approvals: []*domain.Approval{
+			{
+				Approvers: []string{actor},
+			},
+		},
+	}
+
+	s.Run("should return error if got any while updating appeal", func() {
+		s.mockRepository.On("GetByID", appealID).Return(appealDetails, nil).Once()
+		expectedError := errors.New("repository error")
+		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
+
+		actualResult, actualError := s.service.Revoke(appealID, actor)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error and rollback updated appeal if failed granting the access to the provider", func() {
+		s.mockRepository.On("GetByID", appealID).Return(appealDetails, nil).Once()
+		s.mockRepository.On("Update", mock.Anything).Return(nil).Once()
+		expectedError := errors.New("provider service error")
+		s.mockProviderService.On("RevokeAccess", mock.Anything).Return(expectedError).Once()
+		s.mockRepository.On("Update", appealDetails).Return(nil).Once()
+
+		actualResult, actualError := s.service.Revoke(appealID, actor)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return appeal and nil error on success", func() {
+		s.mockRepository.On("GetByID", appealID).Return(appealDetails, nil).Once()
+		expectedAppeal := &domain.Appeal{}
+		*expectedAppeal = *appealDetails
+		expectedAppeal.Status = domain.AppealStatusTerminated
+		s.mockRepository.On("Update", expectedAppeal).Return(nil).Once()
+		s.mockProviderService.On("RevokeAccess", appealDetails).Return(nil).Once()
+
+		actualResult, actualError := s.service.Revoke(appealID, actor)
+
+		s.Equal(expectedAppeal, actualResult)
+		s.Nil(actualError)
 	})
 }
 

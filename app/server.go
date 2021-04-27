@@ -72,11 +72,16 @@ func RunServer(c *Config) error {
 	appeal.SetupHandler(r, appealService)
 
 	providerJobHandler := provider.NewJobHandler(providerService)
+	appealJobHandler := appeal.NewJobHandler(appealService)
 
 	tasks := []*scheduler.Task{
 		{
 			CronTab: "0 */2 * * *",
 			Func:    providerJobHandler.GetResources,
+		},
+		{
+			CronTab: "0/20 * * * *",
+			Func:    appealJobHandler.RevokeExpiredAccess,
 		},
 	}
 	s, err := scheduler.New(tasks)

@@ -105,7 +105,7 @@ func (s *RepositoryTestSuite) TestGetPendingApprovals() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	expectedApprovalsQuery := regexp.QuoteMeta(`SELECT * FROM "approvals" WHERE ("appeal_id","index") IN (SELECT appeal_id, min("index") FROM "approvals" WHERE status = $1 AND "approvals"."deleted_at" IS NULL GROUP BY "appeal_id") AND "approvals"."id" IN ($2,$3) AND "approvals"."deleted_at" IS NULL`)
+	expectedApprovalsQuery := regexp.QuoteMeta(`SELECT "approvals"."id","approvals"."name","approvals"."index","approvals"."appeal_id","approvals"."status","approvals"."actor","approvals"."policy_id","approvals"."policy_version","approvals"."created_at","approvals"."updated_at","approvals"."deleted_at","Appeal"."id" AS "Appeal__id","Appeal"."resource_id" AS "Appeal__resource_id","Appeal"."policy_id" AS "Appeal__policy_id","Appeal"."policy_version" AS "Appeal__policy_version","Appeal"."status" AS "Appeal__status","Appeal"."user" AS "Appeal__user","Appeal"."role" AS "Appeal__role","Appeal"."options" AS "Appeal__options","Appeal"."labels" AS "Appeal__labels","Appeal"."created_at" AS "Appeal__created_at","Appeal"."updated_at" AS "Appeal__updated_at","Appeal"."deleted_at" AS "Appeal__deleted_at" FROM "approvals" LEFT JOIN "appeals" "Appeal" ON "approvals"."appeal_id" = "Appeal"."id" WHERE ("appeal_id","index") IN (SELECT appeal_id, min("index") FROM "approvals" WHERE status = $1 AND "approvals"."deleted_at" IS NULL GROUP BY "appeal_id") AND "Appeal"."status" = $2 AND "approvals"."id" IN ($3,$4) AND "approvals"."deleted_at" IS NULL`)
 
 	s.Run("return records on success", func() {
 		expectedApprovers := []*domain.Approver{
@@ -159,7 +159,7 @@ func (s *RepositoryTestSuite) TestGetPendingApprovals() {
 			)
 		}
 
-		expectedArgs := []driver.Value{domain.ApprovalStatusPending, 11, 12}
+		expectedArgs := []driver.Value{domain.ApprovalStatusPending, domain.AppealStatusPending, 11, 12}
 		s.dbmock.ExpectQuery(expectedApprovalsQuery).
 			WithArgs(expectedArgs...).
 			WillReturnRows(expectedUserApprovalRows)

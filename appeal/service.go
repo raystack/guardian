@@ -14,6 +14,15 @@ import (
 
 var TimeNow = time.Now
 
+type resourceConfig struct {
+	policy           *domain.PolicyConfig
+	availableRoleIDs []string
+}
+type providerConfig struct {
+	appeal    *domain.AppealConfig
+	resources map[string]*resourceConfig
+}
+
 // Service handling the business logics
 type Service struct {
 	repo domain.AppealRepository
@@ -71,7 +80,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	if err != nil {
 		return err
 	}
-	policyConfigs, err := s.getPolicyConfigMap()
+	providerConfigs, err := s.getProviderConfigs()
 	if err != nil {
 		return err
 	}
@@ -81,20 +90,37 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	}
 
 	for _, a := range appeals {
-		r := resources[a.ResourceID]
-		if r == nil {
+		resource := resources[a.ResourceID]
+		if resource == nil {
 			return ErrResourceNotFound
 		}
 
-		if policyConfigs[r.ProviderType] == nil {
+		if providerConfigs[resource.ProviderType] == nil {
 			return ErrProviderTypeNotFound
-		} else if policyConfigs[r.ProviderType][r.ProviderURN] == nil {
+		} else if providerConfigs[resource.ProviderType][resource.ProviderURN] == nil {
 			return ErrProviderURNNotFound
-		} else if policyConfigs[r.ProviderType][r.ProviderURN][r.Type] == nil {
-			return ErrPolicyConfigNotFound
 		}
-		policyConfig := policyConfigs[r.ProviderType][r.ProviderURN][r.Type]
+		providerConfig := providerConfigs[resource.ProviderType][resource.ProviderURN]
 
+		if providerConfig.resources[resource.Type] == nil {
+			return ErrResourceTypeNotFound
+		}
+
+		appealConfig := providerConfig.appeal
+		if !appealConfig.AllowPermanentAccess {
+			if a.Options == nil || a.Options.ExpirationDate == nil {
+				return ErrOptionsExpirationDateOptionNotFound
+			} else if a.Options.ExpirationDate.IsZero() {
+				return ErrExpirationDateIsRequired
+			}
+		}
+
+		resourceConfig := providerConfig.resources[resource.Type]
+		if !utils.ContainsString(resourceConfig.availableRoleIDs, a.Role) {
+			return ErrInvalidRole
+		}
+
+		policyConfig := resourceConfig.policy
 		if approvalSteps[policyConfig.ID] == nil {
 			return ErrPolicyIDNotFound
 		} else if approvalSteps[policyConfig.ID][uint(policyConfig.Version)] == nil {
@@ -106,7 +132,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		for i, step := range steps {
 			var approvers []string
 			if step.Approvers != "" {
-				approvers, err = s.resolveApprovers(a.User, r, step.Approvers)
+				approvers, err = s.resolveApprovers(a.User, resource, step.Approvers)
 				if err != nil {
 					return err
 				}
@@ -235,6 +261,39 @@ func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 
 	return appeal, nil
 }
+func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
+	appeal, err := s.repo.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if appeal == nil {
+		return nil, ErrAppealNotFound
+	}
+
+	if actor != domain.SystemActorName {
+		lastApprovalStep := appeal.Approvals[len(appeal.Approvals)-1]
+		if !utils.ContainsString(lastApprovalStep.Approvers, actor) {
+			return nil, ErrRevokeAppealForbidden
+		}
+	}
+
+	revokedAppeal := &domain.Appeal{}
+	*revokedAppeal = *appeal
+	revokedAppeal.Status = domain.AppealStatusTerminated
+
+	if err := s.repo.Update(revokedAppeal); err != nil {
+		return nil, err
+	}
+
+	if err := s.providerService.RevokeAccess(appeal); err != nil {
+		if err := s.repo.Update(appeal); err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return revokedAppeal, nil
+}
 
 func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) {
 	filters := map[string]interface{}{"ids": ids}
@@ -251,28 +310,40 @@ func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) 
 	return result, nil
 }
 
-func (s *Service) getPolicyConfigMap() (map[string]map[string]map[string]*domain.PolicyConfig, error) {
+func (s *Service) getProviderConfigs() (map[string]map[string]*providerConfig, error) {
 	providers, err := s.providerService.Find()
 	if err != nil {
 		return nil, err
 	}
-	policyConfigs := map[string]map[string]map[string]*domain.PolicyConfig{}
+
+	providerConfigs := map[string]map[string]*providerConfig{}
 	for _, p := range providers {
 		providerType := p.Type
 		providerURN := p.URN
-		if policyConfigs[providerType] == nil {
-			policyConfigs[providerType] = map[string]map[string]*domain.PolicyConfig{}
+		if providerConfigs[providerType] == nil {
+			providerConfigs[providerType] = map[string]*providerConfig{}
 		}
-		if policyConfigs[providerType][providerURN] == nil {
-			policyConfigs[providerType][providerURN] = map[string]*domain.PolicyConfig{}
+		if providerConfigs[providerType][providerURN] == nil {
+			providerConfigs[providerType][providerURN] = &providerConfig{
+				appeal:    p.Config.Appeal,
+				resources: map[string]*resourceConfig{},
+			}
 		}
 		for _, r := range p.Config.Resources {
 			resourceType := r.Type
-			policyConfigs[providerType][providerURN][resourceType] = r.Policy
+
+			availableRoleIDs := []string{}
+			for _, role := range r.Roles {
+				availableRoleIDs = append(availableRoleIDs, role.ID)
+			}
+			providerConfigs[providerType][providerURN].resources[resourceType] = &resourceConfig{
+				policy:           r.Policy,
+				availableRoleIDs: availableRoleIDs,
+			}
 		}
 	}
 
-	return policyConfigs, nil
+	return providerConfigs, nil
 }
 
 func (s *Service) getApprovalSteps() (map[string]map[uint][]*domain.Step, error) {

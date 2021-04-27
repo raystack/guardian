@@ -1,17 +1,20 @@
 package appeal
 
 import (
+	"time"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/utils"
 )
 
 type resourceOptions struct {
-	Role string `json:"role" validate:"required"`
+	Duration string `json:"duration"`
 }
 
 type createPayloadResource struct {
 	ID      uint                   `json:"id" validate:"required"`
+	Role    string                 `json:"role" validate:"required"`
 	Options map[string]interface{} `json:"options"`
 }
 
@@ -23,18 +26,35 @@ type createPayload struct {
 func (p *createPayload) toDomain() ([]*domain.Appeal, error) {
 	appeals := []*domain.Appeal{}
 	for _, r := range p.Resources {
-		var options resourceOptions
-		if err := mapstructure.Decode(r.Options, &options); err != nil {
+		var options *domain.AppealOptions
+
+		var resOptions *resourceOptions
+		if err := mapstructure.Decode(r.Options, &resOptions); err != nil {
 			return nil, err
 		}
-		if err := utils.ValidateStruct(options); err != nil {
-			return nil, err
+		if resOptions != nil {
+			if err := utils.ValidateStruct(resOptions); err != nil {
+				return nil, err
+			}
+			var expirationDate time.Time
+			if resOptions.Duration != "" {
+				duration, err := time.ParseDuration(resOptions.Duration)
+				if err != nil {
+					return nil, err
+				}
+				expirationDate = TimeNow().Add(duration)
+			}
+
+			options = &domain.AppealOptions{
+				ExpirationDate: &expirationDate,
+			}
 		}
 
 		appeals = append(appeals, &domain.Appeal{
 			User:       p.User,
 			ResourceID: r.ID,
-			Role:       options.Role,
+			Role:       r.Role,
+			Options:    options,
 		})
 	}
 
@@ -44,4 +64,8 @@ func (p *createPayload) toDomain() ([]*domain.Appeal, error) {
 type actionPayload struct {
 	Actor  string `json:"actor"`
 	Action string `json:"action"`
+}
+
+type revokePayload struct {
+	Actor string `json:"actor"`
 }
