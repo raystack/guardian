@@ -31,8 +31,9 @@ func (r *repository) GetPendingApprovals(approverEmail string) ([]*domain.Approv
 		Group("appeal_id")
 	var models []*model.Approval
 	if err := r.db.
-		Preload("Appeal").
+		Joins("Appeal").
 		Where(`("appeal_id","index") IN (?)`, earliestPendingApprovalQuery).
+		Where(`"Appeal"."status" = ?`, domain.AppealStatusPending).
 		Find(&models, approvalIDs).
 		Error; err != nil {
 		return nil, err
