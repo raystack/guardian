@@ -764,6 +764,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 	})
 }
 
+// func (s *ServiceTestSuite) TestCancel() {
+// 	s.Run("should return error from")
+// }
+
 func (s *ServiceTestSuite) TestGetPendingApprovals() {
 	s.Run("should return error if got error from repository", func() {
 		expectedError := errors.New("repository error")

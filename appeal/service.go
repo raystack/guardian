@@ -148,7 +148,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 		return nil, nil
 	}
 
-	if err := checkAppealStatus(appeal.Status); err != nil {
+	if err := checkIfAppealStatusStillPending(appeal.Status); err != nil {
 		return nil, err
 	}
 
@@ -211,6 +211,29 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 
 func (s *Service) GetPendingApprovals(user string) ([]*domain.Approval, error) {
 	return s.approvalService.GetPendingApprovals(user)
+}
+
+func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
+	appeal, err := s.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if appeal == nil {
+		return nil, nil
+	}
+
+	// TODO: check only appeal creator who is allowed to cancel the appeal
+
+	if err := checkIfAppealStatusStillPending(appeal.Status); err != nil {
+		return nil, err
+	}
+
+	appeal.Status = domain.AppealStatusCanceled
+	if err := s.repo.Update(appeal); err != nil {
+		return nil, err
+	}
+
+	return appeal, nil
 }
 
 func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) {
@@ -318,22 +341,25 @@ func (s *Service) resolveApprovers(user string, resource *domain.Resource, appro
 	return approvers, nil
 }
 
-func checkAppealStatus(status string) error {
-	var err error
-	if status != domain.AppealStatusPending {
-		switch status {
-		case domain.AppealStatusActive:
-			err = ErrAppealStatusApproved
-		case domain.AppealStatusRejected:
-			err = ErrAppealStatusRejected
-		case domain.AppealStatusTerminated:
-			err = ErrAppealStatusTerminated
-		default:
-			err = ErrAppealStatusUnrecognized
-		}
-		return err
+func checkIfAppealStatusStillPending(status string) error {
+	if status == domain.AppealStatusPending {
+		return nil
 	}
-	return nil
+
+	var err error
+	switch status {
+	case domain.AppealStatusCanceled:
+		err = ErrAppealStatusCanceled
+	case domain.AppealStatusActive:
+		err = ErrAppealStatusApproved
+	case domain.AppealStatusRejected:
+		err = ErrAppealStatusRejected
+	case domain.AppealStatusTerminated:
+		err = ErrAppealStatusTerminated
+	default:
+		err = ErrAppealStatusUnrecognized
+	}
+	return err
 }
 
 func checkPreviousApprovalStatus(status string) error {
