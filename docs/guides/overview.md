@@ -1,11 +1,15 @@
 # Overview
 
-Guardian comes with built in command which perform specific tasks.
+The following topics will describe how to setup and use Guardian.
 
-## List of available commands
+## 1. Managing Policies
 
-1. Serve
-    - Runs the Server  `$ go run main.go serve`
+The first step required to onboard your resources to Guardian is configuring the approval policy.
 
-2. Migrate
-    - Runs the DB Migrations `$ go run main.go migrate`
+[Managing Policies](./managing-policies.md)
+
+## 2. Managing Providers
+
+## 3. Managing Resources
+
+## 4. Managing Appeals
