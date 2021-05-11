@@ -1,12 +1,18 @@
-# guardian
+# Guardian
+
+![test workflow](https://github.com/odpf/guardian/actions/workflows/test.yml/badge.svg)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?logo=apache)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/odpf/guardian?logo=semantic-release)](Version)
 
 Guardian is a data access management tool. It manages resources from various data providers along with the users’ access. Users required to raise an appeal in order to gain access to a particular resource. The appeal will go through several approvals before it is getting approved and granted the access to the user.
+
+<p align="center"><img src="./docs/assets/overview.svg" /></p>
 
 ## Key Features
 
 - **Provider Management**: Support various providers (currently only BigQuery, more coming up!) and multiple instances for each provider type
 - **Resource Management**: Resources from a provider are managed in Guardian's database. There is also an API to update resource's metadata to add additional information.
-- ** Appeal-based access**: Users are expected to create an appeal for accessing data from registered providers. The appeal will get reviewed by the configured approvers before it gives the access to the user.
+- **Appeal-based access**: Users are expected to create an appeal for accessing data from registered providers. The appeal will get reviewed by the configured approvers before it gives the access to the user.
 - **Configurable approval flow**: Approval flow configures what are needed for an appeal to get approved and who are eligible to approve/reject. It can be configured and linked to a provider so that every appeal created to their resources will follow the procedure in order to get approved.
 - **External Identity Manager**: This gives the flexibility to use any third-party identity manager. User properties.
 

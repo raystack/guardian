@@ -2,6 +2,8 @@
 
 Guardian is a data access management tool. It manages resources from various data providers along with the users’ access. Users required to raise an appeal in order to gain access to a particular resource. The appeal will go through several approvals before it is getting approved and granted the access to the user.
 
+![](./assets/overview.svg)
+
 ## Key Features
 
 - **Provider Management**: Support various providers (currently only BigQuery, more coming up!) and multiple instances for each provider type
