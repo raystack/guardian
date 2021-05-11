@@ -25,3 +25,4 @@ Guardian manages resources from multiple providers.
 Appeal is the core part in Guardian which is created by the users to get access to a particular resource.
 
 [Managing Appeals](./managing-appeals.md)
+
