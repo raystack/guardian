@@ -1,4 +1,4 @@
-# Managing Resources
+# Managing resources
 
 ## Collecting Resources
 
@@ -6,7 +6,7 @@ Guardian collects resources from the providers automatically as soon as it regis
 
 Example resource object:
 
-```json
+```javascript
 {
   "id": 1,
   "provider_type": "google_bigquery",
@@ -27,7 +27,7 @@ Example resource object:
 
 You can see all the resources by using this endpoint:
 
-```
+```text
 GET /resources
 Accept: application/json
 
@@ -54,13 +54,13 @@ Response:
 
 ## Adding metadata to resources
 
-Guardian also still allows user to add their own metadata or any additional information into the resources. 
+Guardian also still allows user to add their own metadata or any additional information into the resources.
 
 This can be useful when we configuring the approval policy, and we need information from metadata e.g. “owners” as the approvers.
 
 Endpoint:
 
-```
+```text
 PUT /resources/:id
 Content-Type: application/json
 Accept: application/json
@@ -91,3 +91,4 @@ Response:
   }
 }
 ```
+

@@ -1,10 +1,10 @@
-# Managing Policies
+# Managing policies
 
-Access can be given to a user after it passed a set of approval steps that we called policy. Guardian lets you configure the policy based on your own governance rules of the data access.
+Access can be given to a user after it passed a set of approval steps that we call policy. Guardian lets you configure the policy based on your own governance rules of the data access.
 
 ## Creating Policy
 
-Creating a policy is the first step required for setting up Guardian in your environment. It’s gonna be a dependency for the next step which is setting up provider configuration.
+Creating a policy is the first step required for setting up Guardian in your environment. It is a dependency for the next step which is setting up provider configuration.
 
 Policy created by providing a configuration of the approval flow itself. Here’s the example of the configuration:
 
@@ -30,7 +30,8 @@ steps:
 Check [policy reference](../reference/policy-config.md) for more details on the policy configuration
 
 To create a policy, you can use this endpoint
-```
+
+```text
 POST /policies
 Accept: application/json
 
@@ -96,7 +97,6 @@ Response:
   "created_at": "2021-05-04T08:05:07.691557+07:00",
   "updated_at": "2021-05-04T08:05:07.691557+07:00"
 }
-
 ```
 
 ## Updating Policy
@@ -106,7 +106,8 @@ In Guardian, we keep track of the policy changes using the policy version which 
 By updating a policy, Guardian will automatically bump up the version of that particular policy. For example, if the current version of policy `bigquery_dataset` is `1`, the version will automatically get increased to `2` when it gets updated.
 
 To update a policy, you can use this endpoint:
-```
+
+```text
 PUT /policies/:id
 Accept: application/json
 
@@ -174,3 +175,4 @@ Response:
   "updated_at": "2021-05-04T08:05:07.691557+07:00"
 }
 ```
+
