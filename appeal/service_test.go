@@ -20,6 +20,7 @@ type ServiceTestSuite struct {
 	mockProviderService        *mocks.ProviderService
 	mockPolicyService          *mocks.PolicyService
 	mockIdentityManagerService *mocks.IdentityManagerService
+	mockNotifier               *mocks.Notifier
 
 	service *appeal.Service
 }
@@ -31,6 +32,7 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockProviderService = new(mocks.ProviderService)
 	s.mockPolicyService = new(mocks.PolicyService)
 	s.mockIdentityManagerService = new(mocks.IdentityManagerService)
+	s.mockNotifier = new(mocks.Notifier)
 
 	s.service = appeal.NewService(
 		s.mockRepository,
@@ -39,6 +41,7 @@ func (s *ServiceTestSuite) SetupTest() {
 		s.mockProviderService,
 		s.mockPolicyService,
 		s.mockIdentityManagerService,
+		s.mockNotifier,
 	)
 }
 
@@ -387,7 +390,11 @@ func (s *ServiceTestSuite) TestCreate() {
 	expectedAppealsInsertionParam := []*domain.Appeal{}
 	for _, r := range resourceIDs {
 		expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, &domain.Appeal{
-			ResourceID:    r,
+			ResourceID: r,
+			Resource: &domain.Resource{
+				ID:  r,
+				URN: "urn",
+			},
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
@@ -415,8 +422,12 @@ func (s *ServiceTestSuite) TestCreate() {
 	}
 	expectedResult := []*domain.Appeal{
 		{
-			ID:            1,
-			ResourceID:    1,
+			ID:         1,
+			ResourceID: 1,
+			Resource: &domain.Resource{
+				ID:  1,
+				URN: "urn",
+			},
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
@@ -444,8 +455,12 @@ func (s *ServiceTestSuite) TestCreate() {
 			},
 		},
 		{
-			ID:            2,
-			ResourceID:    2,
+			ID:         2,
+			ResourceID: 2,
+			Resource: &domain.Resource{
+				ID:  2,
+				URN: "urn",
+			},
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
@@ -494,17 +509,26 @@ func (s *ServiceTestSuite) TestCreate() {
 				}
 			}).
 			Once()
+		s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 
 		appeals := []*domain.Appeal{
 			{
 				User:       user,
 				ResourceID: 1,
-				Role:       "role_id",
+				Resource: &domain.Resource{
+					ID:  1,
+					URN: "urn",
+				},
+				Role: "role_id",
 			},
 			{
 				User:       user,
 				ResourceID: 2,
-				Role:       "role_id",
+				Resource: &domain.Resource{
+					ID:  2,
+					URN: "urn",
+				},
+				Role: "role_id",
 			},
 		}
 		actualError := s.service.Create(appeals)
@@ -803,7 +827,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				name:                   "approve",
 				expectedApprovalAction: validApprovalActionParam,
 				expectedAppealDetails: &domain.Appeal{
-					ID:     validApprovalActionParam.AppealID,
+					ID:         validApprovalActionParam.AppealID,
+					ResourceID: 1,
+					Resource: &domain.Resource{
+						ID:  1,
+						URN: "urn",
+					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
 						{
@@ -818,7 +847,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					},
 				},
 				expectedResult: &domain.Appeal{
-					ID:     validApprovalActionParam.AppealID,
+					ID:         validApprovalActionParam.AppealID,
+					ResourceID: 1,
+					Resource: &domain.Resource{
+						ID:  1,
+						URN: "urn",
+					},
 					Status: domain.AppealStatusActive,
 					Approvals: []*domain.Approval{
 						{
@@ -844,7 +878,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					Action:       "reject",
 				},
 				expectedAppealDetails: &domain.Appeal{
-					ID:     validApprovalActionParam.AppealID,
+					ID:         validApprovalActionParam.AppealID,
+					ResourceID: 1,
+					Resource: &domain.Resource{
+						ID:  1,
+						URN: "urn",
+					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
 						{
@@ -859,7 +898,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					},
 				},
 				expectedResult: &domain.Appeal{
-					ID:     validApprovalActionParam.AppealID,
+					ID:         validApprovalActionParam.AppealID,
+					ResourceID: 1,
+					Resource: &domain.Resource{
+						ID:  1,
+						URN: "urn",
+					},
 					Status: domain.AppealStatusRejected,
 					Approvals: []*domain.Approval{
 						{
@@ -885,7 +929,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					Action:       "reject",
 				},
 				expectedAppealDetails: &domain.Appeal{
-					ID:     validApprovalActionParam.AppealID,
+					ID:         validApprovalActionParam.AppealID,
+					ResourceID: 1,
+					Resource: &domain.Resource{
+						ID:  1,
+						URN: "urn",
+					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
 						{
@@ -904,7 +953,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					},
 				},
 				expectedResult: &domain.Appeal{
-					ID:     validApprovalActionParam.AppealID,
+					ID:         validApprovalActionParam.AppealID,
+					ResourceID: 1,
+					Resource: &domain.Resource{
+						ID:  1,
+						URN: "urn",
+					},
 					Status: domain.AppealStatusRejected,
 					Approvals: []*domain.Approval{
 						{
@@ -938,6 +992,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				s.mockRepository.On("Update", mock.Anything).
 					Return(nil).
 					Once()
+				s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 
 				actualResult, actualError := s.service.MakeAction(tc.expectedApprovalAction)
 
@@ -1007,7 +1062,12 @@ func (s *ServiceTestSuite) TestRevoke() {
 	})
 
 	appealDetails := &domain.Appeal{
-		ID: appealID,
+		ID:         appealID,
+		ResourceID: 1,
+		Resource: &domain.Resource{
+			ID:  1,
+			URN: "urn",
+		},
 		Approvals: []*domain.Approval{
 			{
 				Approvers: []string{actor},
@@ -1046,6 +1106,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 		expectedAppeal.Status = domain.AppealStatusTerminated
 		s.mockRepository.On("Update", expectedAppeal).Return(nil).Once()
 		s.mockProviderService.On("RevokeAccess", appealDetails).Return(nil).Once()
+		s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 
 		actualResult, actualError := s.service.Revoke(appealID, actor)
 

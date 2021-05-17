@@ -12,6 +12,7 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/identitymanager"
 	"github.com/odpf/guardian/model"
+	"github.com/odpf/guardian/notifier"
 	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/provider"
 	"github.com/odpf/guardian/provider/bigquery"
@@ -48,6 +49,8 @@ func RunServer(c *Config) error {
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
 	}
 
+	notifier := notifier.NewSlackNotifier(c.SlackAccessToken)
+
 	resourceService := resource.NewService(resourceRepository)
 	providerService := provider.NewService(
 		providerRepository,
@@ -63,6 +66,7 @@ func RunServer(c *Config) error {
 		providerService,
 		policyService,
 		identityManagerService,
+		notifier,
 	)
 
 	r := api.New()

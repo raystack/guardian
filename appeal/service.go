@@ -32,6 +32,7 @@ type Service struct {
 	providerService        domain.ProviderService
 	policyService          domain.PolicyService
 	identityManagerService domain.IdentityManagerService
+	notifier               domain.Notifier
 
 	validator *validator.Validate
 }
@@ -44,6 +45,7 @@ func NewService(
 	providerService domain.ProviderService,
 	policyService domain.PolicyService,
 	identityManagerService domain.IdentityManagerService,
+	notifier domain.Notifier,
 ) *Service {
 	return &Service{
 		repo:                   appealRepository,
@@ -52,6 +54,7 @@ func NewService(
 		providerService:        providerService,
 		policyService:          policyService,
 		identityManagerService: identityManagerService,
+		notifier:               notifier,
 		validator:              validator.New(),
 	}
 }
@@ -158,6 +161,22 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		return err
 	}
 
+	notifications := []domain.Notification{}
+	for _, appeal := range appeals {
+		approval := appeal.GetFirstPendingUserApproval()
+		if approval != nil {
+			for _, approver := range approval.Approvers {
+				notifications = append(notifications, domain.Notification{
+					User:    approver,
+					Message: fmt.Sprintf("You have an appeal from %s to access %s", appeal.User, appeal.Resource.URN),
+				})
+			}
+		}
+	}
+	if len(notifications) > 0 {
+		s.notifier.Notify(notifications)
+	}
+
 	return nil
 }
 
@@ -228,6 +247,27 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				return nil, err
 			}
 
+			notifications := []domain.Notification{}
+			if appeal.Status == domain.AppealStatusActive {
+				notifications = append(notifications, domain.Notification{
+					User:    appeal.User,
+					Message: fmt.Sprintf("Your appeal to %s has been approved", appeal.Resource.URN),
+				})
+			} else {
+				approval := appeal.GetFirstPendingUserApproval()
+				if approval != nil {
+					for _, approver := range approval.Approvers {
+						notifications = append(notifications, domain.Notification{
+							User:    approver,
+							Message: fmt.Sprintf("You have an appeal from %s to access %s", appeal.User, appeal.Resource.URN),
+						})
+					}
+				}
+			}
+			if len(notifications) > 0 {
+				s.notifier.Notify(notifications)
+			}
+
 			return appeal, nil
 		}
 	}
@@ -261,6 +301,7 @@ func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 
 	return appeal, nil
 }
+
 func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 	appeal, err := s.repo.GetByID(id)
 	if err != nil {
@@ -291,6 +332,11 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 		}
 		return nil, err
 	}
+
+	s.notifier.Notify([]domain.Notification{{
+		User:    appeal.User,
+		Message: fmt.Sprintf("Your access to %s has been expired", appeal.Resource.URN),
+	}})
 
 	return revokedAppeal, nil
 }
