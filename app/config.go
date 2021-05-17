@@ -25,6 +25,8 @@ const (
 	DBSslModeKey = "DB_SSLMODE"
 	// IdentityManagerURL is the key for external identity manager url
 	IdentityManagerURL = "IDENTITY_MANAGER_URL"
+	// SlackAccessToken is the key for slack access token
+	SlackAccessTokenKey = "SLACK_ACCESS_TOKEN"
 )
 
 // Config contains the application configuration
@@ -38,6 +40,8 @@ type Config struct {
 	DBName     string
 	DBPort     string
 	DBSslMode  string
+
+	SlackAccessToken string
 
 	IdentityManagerURL string
 }
@@ -68,6 +72,8 @@ func LoadConfig() *Config {
 		DBName:     viper.GetString(DBNameKey),
 		DBPort:     viper.GetString(DBPortKey),
 		DBSslMode:  viper.GetString(DBSslModeKey),
+
+		SlackAccessToken: viper.GetString(SlackAccessTokenKey),
 
 		IdentityManagerURL: viper.GetString(IdentityManagerURL),
 	}
