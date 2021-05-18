@@ -39,6 +39,15 @@ type Appeal struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+func (a *Appeal) GetNextPendingApproval() *Approval {
+	for _, approval := range a.Approvals {
+		if approval.Status == ApprovalStatusPending && len(approval.Approvers) > 0 {
+			return approval
+		}
+	}
+	return nil
+}
+
 type ApprovalAction struct {
 	AppealID     uint   `validate:"required"`
 	ApprovalName string `validate:"required"`

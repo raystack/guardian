@@ -11,6 +11,8 @@ const (
 	PortKey = "PORT"
 	// EncryptionSecretKeyKey is the key for encryption secret key
 	EncryptionSecretKeyKey = "ENCRYPTION_SECRET_KEY"
+	// LogLevelKey is the key for log level
+	LogLevelKey = "LOG_LEVEL"
 	// DBHostKey is the key for database host configuration
 	DBHostKey = "DB_HOST"
 	// DBUserKey is the key for database user configuration
@@ -25,12 +27,15 @@ const (
 	DBSslModeKey = "DB_SSLMODE"
 	// IdentityManagerURL is the key for external identity manager url
 	IdentityManagerURL = "IDENTITY_MANAGER_URL"
+	// SlackAccessToken is the key for slack access token
+	SlackAccessTokenKey = "SLACK_ACCESS_TOKEN"
 )
 
 // Config contains the application configuration
 type Config struct {
 	Port                   int
 	EncryptionSecretKeyKey string
+	LogLevel               string
 
 	DBHost     string
 	DBUser     string
@@ -38,6 +43,8 @@ type Config struct {
 	DBName     string
 	DBPort     string
 	DBSslMode  string
+
+	SlackAccessToken string
 
 	IdentityManagerURL string
 }
@@ -61,6 +68,7 @@ func LoadConfig() *Config {
 	return &Config{
 		Port:                   viper.GetInt(PortKey),
 		EncryptionSecretKeyKey: viper.GetString(EncryptionSecretKeyKey),
+		LogLevel:               viper.GetString(LogLevelKey),
 
 		DBHost:     viper.GetString(DBHostKey),
 		DBUser:     viper.GetString(DBUserKey),
@@ -68,6 +76,8 @@ func LoadConfig() *Config {
 		DBName:     viper.GetString(DBNameKey),
 		DBPort:     viper.GetString(DBPortKey),
 		DBSslMode:  viper.GetString(DBSslModeKey),
+
+		SlackAccessToken: viper.GetString(SlackAccessTokenKey),
 
 		IdentityManagerURL: viper.GetString(IdentityManagerURL),
 	}

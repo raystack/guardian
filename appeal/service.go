@@ -10,6 +10,7 @@ import (
 	"github.com/mcuadros/go-lookup"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/utils"
+	"go.uber.org/zap"
 )
 
 var TimeNow = time.Now
@@ -32,6 +33,8 @@ type Service struct {
 	providerService        domain.ProviderService
 	policyService          domain.PolicyService
 	identityManagerService domain.IdentityManagerService
+	notifier               domain.Notifier
+	logger                 *zap.Logger
 
 	validator *validator.Validate
 }
@@ -44,6 +47,8 @@ func NewService(
 	providerService domain.ProviderService,
 	policyService domain.PolicyService,
 	identityManagerService domain.IdentityManagerService,
+	notifier domain.Notifier,
+	logger *zap.Logger,
 ) *Service {
 	return &Service{
 		repo:                   appealRepository,
@@ -52,7 +57,9 @@ func NewService(
 		providerService:        providerService,
 		policyService:          policyService,
 		identityManagerService: identityManagerService,
+		notifier:               notifier,
 		validator:              validator.New(),
+		logger:                 logger,
 	}
 }
 
@@ -158,6 +165,16 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		return err
 	}
 
+	notifications := []domain.Notification{}
+	for _, appeal := range appeals {
+		notifications = append(notifications, getApprovalNotifications(appeal)...)
+	}
+	if len(notifications) > 0 {
+		if err := s.notifier.Notify(notifications); err != nil {
+			s.logger.Error(err.Error())
+		}
+	}
+
 	return nil
 }
 
@@ -228,6 +245,26 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				return nil, err
 			}
 
+			notifications := []domain.Notification{}
+			if appeal.Status == domain.AppealStatusActive {
+				notifications = append(notifications, domain.Notification{
+					User:    appeal.User,
+					Message: fmt.Sprintf("Your appeal to %s has been approved", appeal.Resource.URN),
+				})
+			} else if appeal.Status == domain.AppealStatusRejected {
+				notifications = append(notifications, domain.Notification{
+					User:    appeal.User,
+					Message: fmt.Sprintf("Your appeal to %s is rejected", appeal.Resource.URN),
+				})
+			} else {
+				notifications = append(notifications, getApprovalNotifications(appeal)...)
+			}
+			if len(notifications) > 0 {
+				if err := s.notifier.Notify(notifications); err != nil {
+					s.logger.Error(err.Error())
+				}
+			}
+
 			return appeal, nil
 		}
 	}
@@ -261,6 +298,7 @@ func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 
 	return appeal, nil
 }
+
 func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 	appeal, err := s.repo.GetByID(id)
 	if err != nil {
@@ -290,6 +328,13 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 			return nil, err
 		}
 		return nil, err
+	}
+
+	if err := s.notifier.Notify([]domain.Notification{{
+		User:    appeal.User,
+		Message: fmt.Sprintf("Your access to %s has been revoked", appeal.Resource.URN),
+	}}); err != nil {
+		s.logger.Error(err.Error())
 	}
 
 	return revokedAppeal, nil
@@ -410,6 +455,20 @@ func (s *Service) resolveApprovers(user string, resource *domain.Resource, appro
 		return nil, err
 	}
 	return approvers, nil
+}
+
+func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
+	notifications := []domain.Notification{}
+	approval := appeal.GetNextPendingApproval()
+	if approval != nil {
+		for _, approver := range approval.Approvers {
+			notifications = append(notifications, domain.Notification{
+				User:    approver,
+				Message: fmt.Sprintf("You have an appeal from %s to access %s", appeal.User, appeal.Resource.URN),
+			})
+		}
+	}
+	return notifications
 }
 
 func checkIfAppealStatusStillPending(status string) error {
