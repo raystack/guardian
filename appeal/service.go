@@ -259,6 +259,11 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 					User:    appeal.User,
 					Message: fmt.Sprintf("Your appeal to %s has been approved", appeal.Resource.URN),
 				})
+			} else if appeal.Status == domain.AppealStatusRejected {
+				notifications = append(notifications, domain.Notification{
+					User:    appeal.User,
+					Message: fmt.Sprintf("Your appeal to %s is rejected", appeal.Resource.URN),
+				})
 			} else {
 				approval := appeal.GetNextPendingApproval()
 				if approval != nil {
