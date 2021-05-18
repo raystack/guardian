@@ -332,7 +332,7 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 
 	if err := s.notifier.Notify([]domain.Notification{{
 		User:    appeal.User,
-		Message: fmt.Sprintf("Your access to %s has been expired", appeal.Resource.URN),
+		Message: fmt.Sprintf("Your access to %s has been revoked", appeal.Resource.URN),
 	}}); err != nil {
 		s.logger.Error(err.Error())
 	}
