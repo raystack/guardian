@@ -167,7 +167,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 	notifications := []domain.Notification{}
 	for _, appeal := range appeals {
-		approval := appeal.GetFirstPendingUserApproval()
+		approval := appeal.GetNextPendingApproval()
 		if approval != nil {
 			for _, approver := range approval.Approvers {
 				notifications = append(notifications, domain.Notification{
@@ -260,7 +260,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 					Message: fmt.Sprintf("Your appeal to %s has been approved", appeal.Resource.URN),
 				})
 			} else {
-				approval := appeal.GetFirstPendingUserApproval()
+				approval := appeal.GetNextPendingApproval()
 				if approval != nil {
 					for _, approver := range approval.Approvers {
 						notifications = append(notifications, domain.Notification{
