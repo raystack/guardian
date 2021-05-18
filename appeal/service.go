@@ -167,15 +167,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 	notifications := []domain.Notification{}
 	for _, appeal := range appeals {
-		approval := appeal.GetNextPendingApproval()
-		if approval != nil {
-			for _, approver := range approval.Approvers {
-				notifications = append(notifications, domain.Notification{
-					User:    approver,
-					Message: fmt.Sprintf("You have an appeal from %s to access %s", appeal.User, appeal.Resource.URN),
-				})
-			}
-		}
+		notifications = append(notifications, getApprovalNotifications(appeal)...)
 	}
 	if len(notifications) > 0 {
 		if err := s.notifier.Notify(notifications); err != nil {
@@ -265,15 +257,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 					Message: fmt.Sprintf("Your appeal to %s is rejected", appeal.Resource.URN),
 				})
 			} else {
-				approval := appeal.GetNextPendingApproval()
-				if approval != nil {
-					for _, approver := range approval.Approvers {
-						notifications = append(notifications, domain.Notification{
-							User:    approver,
-							Message: fmt.Sprintf("You have an appeal from %s to access %s", appeal.User, appeal.Resource.URN),
-						})
-					}
-				}
+				notifications = append(notifications, getApprovalNotifications(appeal)...)
 			}
 			if len(notifications) > 0 {
 				if err := s.notifier.Notify(notifications); err != nil {
@@ -471,6 +455,20 @@ func (s *Service) resolveApprovers(user string, resource *domain.Resource, appro
 		return nil, err
 	}
 	return approvers, nil
+}
+
+func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
+	notifications := []domain.Notification{}
+	approval := appeal.GetNextPendingApproval()
+	if approval != nil {
+		for _, approver := range approval.Approvers {
+			notifications = append(notifications, domain.Notification{
+				User:    approver,
+				Message: fmt.Sprintf("You have an appeal from %s to access %s", appeal.User, appeal.Resource.URN),
+			})
+		}
+	}
+	return notifications
 }
 
 func checkIfAppealStatusStillPending(status string) error {
