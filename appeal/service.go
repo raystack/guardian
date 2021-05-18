@@ -10,6 +10,7 @@ import (
 	"github.com/mcuadros/go-lookup"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/utils"
+	"go.uber.org/zap"
 )
 
 var TimeNow = time.Now
@@ -33,6 +34,7 @@ type Service struct {
 	policyService          domain.PolicyService
 	identityManagerService domain.IdentityManagerService
 	notifier               domain.Notifier
+	logger                 *zap.Logger
 
 	validator *validator.Validate
 }
@@ -46,6 +48,7 @@ func NewService(
 	policyService domain.PolicyService,
 	identityManagerService domain.IdentityManagerService,
 	notifier domain.Notifier,
+	logger *zap.Logger,
 ) *Service {
 	return &Service{
 		repo:                   appealRepository,
@@ -56,6 +59,7 @@ func NewService(
 		identityManagerService: identityManagerService,
 		notifier:               notifier,
 		validator:              validator.New(),
+		logger:                 logger,
 	}
 }
 
@@ -174,7 +178,9 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 	}
 	if len(notifications) > 0 {
-		s.notifier.Notify(notifications)
+		if err := s.notifier.Notify(notifications); err != nil {
+			s.logger.Error(err.Error())
+		}
 	}
 
 	return nil
@@ -265,7 +271,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				}
 			}
 			if len(notifications) > 0 {
-				s.notifier.Notify(notifications)
+				if err := s.notifier.Notify(notifications); err != nil {
+					s.logger.Error(err.Error())
+				}
 			}
 
 			return appeal, nil
@@ -333,10 +341,12 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 		return nil, err
 	}
 
-	s.notifier.Notify([]domain.Notification{{
+	if err := s.notifier.Notify([]domain.Notification{{
 		User:    appeal.User,
 		Message: fmt.Sprintf("Your access to %s has been expired", appeal.Resource.URN),
-	}})
+	}}); err != nil {
+		s.logger.Error(err.Error())
+	}
 
 	return revokedAppeal, nil
 }

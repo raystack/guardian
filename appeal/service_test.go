@@ -10,6 +10,7 @@ import (
 	"github.com/odpf/guardian/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 )
 
 type ServiceTestSuite struct {
@@ -42,6 +43,7 @@ func (s *ServiceTestSuite) SetupTest() {
 		s.mockPolicyService,
 		s.mockIdentityManagerService,
 		s.mockNotifier,
+		&zap.Logger{},
 	)
 }
 

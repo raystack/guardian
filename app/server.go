@@ -75,6 +75,7 @@ func RunServer(c *Config) error {
 		policyService,
 		identityManagerService,
 		notifier,
+		logger,
 	)
 
 	r := api.New(logger)
