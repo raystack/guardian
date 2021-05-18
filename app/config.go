@@ -11,6 +11,8 @@ const (
 	PortKey = "PORT"
 	// EncryptionSecretKeyKey is the key for encryption secret key
 	EncryptionSecretKeyKey = "ENCRYPTION_SECRET_KEY"
+	// LogLevelKey is the key for log level
+	LogLevelKey = "LOG_LEVEL"
 	// DBHostKey is the key for database host configuration
 	DBHostKey = "DB_HOST"
 	// DBUserKey is the key for database user configuration
@@ -33,6 +35,7 @@ const (
 type Config struct {
 	Port                   int
 	EncryptionSecretKeyKey string
+	LogLevel               string
 
 	DBHost     string
 	DBUser     string
@@ -65,6 +68,7 @@ func LoadConfig() *Config {
 	return &Config{
 		Port:                   viper.GetInt(PortKey),
 		EncryptionSecretKeyKey: viper.GetString(EncryptionSecretKeyKey),
+		LogLevel:               viper.GetString(LogLevelKey),
 
 		DBHost:     viper.GetString(DBHostKey),
 		DBUser:     viper.GetString(DBUserKey),
