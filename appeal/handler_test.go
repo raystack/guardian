@@ -398,9 +398,8 @@ func (s *HandlerTestSuite) TestMakeAction() {
 	actor := "user@email.com"
 	action := domain.AppealActionNameApprove
 	validPayload := fmt.Sprintf(`{
-	"actor": "%s",
 	"action": "%s"
-}`, actor, action)
+}`, action)
 	s.Run("should return error if got any from appeal service", func() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(validPayload))
@@ -409,6 +408,7 @@ func (s *HandlerTestSuite) TestMakeAction() {
 			"id":   "1",
 			"name": "approval_1",
 		})
+		req.Header.Add(domain.AuthenticatedEmailHeaderKey, actor)
 		expectedError := errors.New("service error")
 		s.mockAppealService.On("MakeAction", mock.Anything).
 			Return(nil, expectedError).
@@ -450,6 +450,7 @@ func (s *HandlerTestSuite) TestMakeAction() {
 					"id":   "1",
 					"name": "approval_1",
 				})
+				req.Header.Add(domain.AuthenticatedEmailHeaderKey, actor)
 				s.mockAppealService.On("MakeAction", mock.Anything).
 					Return(nil, tc.expectedServiceError).
 					Once()
@@ -471,6 +472,7 @@ func (s *HandlerTestSuite) TestMakeAction() {
 			"id":   "1",
 			"name": "approval_1",
 		})
+		req.Header.Add(domain.AuthenticatedEmailHeaderKey, actor)
 		expectedApprovalAction := domain.ApprovalAction{
 			AppealID:     1,
 			ApprovalName: "approval_1",
@@ -508,26 +510,7 @@ func (s *HandlerTestSuite) TestRevoke() {
 		s.Equal(expectedStatusCode, actualStatusCode)
 	})
 
-	s.Run("should return bad request if payload is invalid", func() {
-		s.Setup()
-		invalidPayload := `invalid json...`
-		req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(invalidPayload))
-
-		req = mux.SetURLVars(req, map[string]string{
-			"id": "1",
-		})
-		expectedStatusCode := http.StatusBadRequest
-
-		s.handler.Revoke(s.res, req)
-		actualStatusCode := s.res.Result().StatusCode
-
-		s.Equal(expectedStatusCode, actualStatusCode)
-	})
-
 	actor := "user@email.com"
-	validPayload := fmt.Sprintf(`{
-	"actor": "%s"
-}`, actor)
 	s.Run("should return error if got any from appeal service", func() {
 		testCases := []struct {
 			expectedError      error
@@ -549,11 +532,12 @@ func (s *HandlerTestSuite) TestRevoke() {
 
 		for _, tc := range testCases {
 			s.Setup()
-			req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(validPayload))
+			req, _ := http.NewRequest(http.MethodPut, "/", nil)
 
 			req = mux.SetURLVars(req, map[string]string{
 				"id": "1",
 			})
+			req.Header.Add(domain.AuthenticatedEmailHeaderKey, actor)
 			s.mockAppealService.On("Revoke", mock.Anything, mock.Anything).
 				Return(nil, tc.expectedError).
 				Once()
@@ -568,11 +552,12 @@ func (s *HandlerTestSuite) TestRevoke() {
 
 	s.Run("should return appeal on success", func() {
 		s.Setup()
-		req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(validPayload))
+		req, _ := http.NewRequest(http.MethodPut, "/", nil)
 
 		req = mux.SetURLVars(req, map[string]string{
 			"id": "1",
 		})
+		req.Header.Add(domain.AuthenticatedEmailHeaderKey, actor)
 		expectedResult := &domain.Appeal{
 			ID: 1,
 		}

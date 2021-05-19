@@ -117,11 +117,12 @@ func (h *Handler) MakeAction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	actor := getActor(r)
 
 	appeal, err := h.AppealService.MakeAction(domain.ApprovalAction{
 		AppealID:     uint(appealID),
 		ApprovalName: approvalName,
-		Actor:        payload.Actor,
+		Actor:        actor,
 		Action:       payload.Action,
 	})
 	if err != nil {
@@ -193,13 +194,9 @@ func (h *Handler) Revoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload revokePayload
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	actor := getActor(r)
 
-	appeal, err := h.AppealService.Revoke(uint(appealID), payload.Actor)
+	appeal, err := h.AppealService.Revoke(uint(appealID), actor)
 	if err != nil {
 		var statusCode int
 		switch err {
@@ -217,4 +214,8 @@ func (h *Handler) Revoke(w http.ResponseWriter, r *http.Request) {
 
 	utils.ReturnJSON(w, appeal)
 	return
+}
+
+func getActor(r *http.Request) string {
+	return r.Header.Get(domain.AuthenticatedEmailHeaderKey)
 }
