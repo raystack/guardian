@@ -1,10 +1,11 @@
-name: Build
+name: Release
 on:
   push:
     tags:
       - "v*.*.*"
 jobs:
   build:
+    name: push docker image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -34,3 +35,17 @@ jobs:
             docker.pkg.github.com/${{ github.repository }}/guardian:${{ steps.get_version.outputs.version-without-v }}
             odpf/guardian:latest
             odpf/guardian:${{ steps.get_version.outputs.version-without-v }}
+
+  create-release:
+    name: create release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
