@@ -4,9 +4,22 @@ on:
     tags:
       - "v*.*.*"
 jobs:
-  build:
+  create-release:
+    name: create release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release-docker:
     name: push docker image
     runs-on: ubuntu-latest
+    needs: create-release
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -35,17 +48,22 @@ jobs:
             docker.pkg.github.com/${{ github.repository }}/guardian:${{ steps.get_version.outputs.version-without-v }}
             odpf/guardian:latest
             odpf/guardian:${{ steps.get_version.outputs.version-without-v }}
-
-  create-release:
-    name: create release
+  release-executable:
+    name: release linux/amd64
     runs-on: ubuntu-latest
+    needs: create-release
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          - goarch: arm64
+            goos: windows
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - uses: actions/checkout@v2
+      - uses: wangyoucao577/go-release-action@v1.17
         with:
-          body_path: CHANGELOG.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
   
