@@ -10,15 +10,13 @@ import (
 	"google.golang.org/api/option"
 )
 
-// Client is wrapper for bigquery client
-type Client struct {
+type bigQueryClient struct {
 	projectID string
 	client    *bq.Client
 	apiClient *bqApi.Service
 }
 
-// NewClient returns *bigquery.Client
-func NewClient(projectID string, credentialsJSON []byte) (*Client, error) {
+func newBigQueryClient(projectID string, credentialsJSON []byte) (*bigQueryClient, error) {
 	ctx := context.Background()
 	client, err := bq.NewClient(ctx, projectID, option.WithCredentialsJSON(credentialsJSON))
 	if err != nil {
@@ -30,7 +28,26 @@ func NewClient(projectID string, credentialsJSON []byte) (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{
+	return &bigQueryClient{
+		projectID: projectID,
+		client:    client,
+		apiClient: apiClient,
+	}, nil
+}
+
+func newDefaultBigQueryClient(projectID string) (*bigQueryClient, error) {
+	ctx := context.Background()
+	client, err := bq.NewClient(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	apiClient, err := bqApi.NewService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bigQueryClient{
 		projectID: projectID,
 		client:    client,
 		apiClient: apiClient,
@@ -38,7 +55,7 @@ func NewClient(projectID string, credentialsJSON []byte) (*Client, error) {
 }
 
 // GetDatasets returns all datasets within a project
-func (c *Client) GetDatasets(ctx context.Context) ([]*Dataset, error) {
+func (c *bigQueryClient) GetDatasets(ctx context.Context) ([]*Dataset, error) {
 	var results []*Dataset
 	it := c.client.Datasets(ctx)
 	for {
@@ -60,7 +77,7 @@ func (c *Client) GetDatasets(ctx context.Context) ([]*Dataset, error) {
 }
 
 // GetTables returns all tables within a dataset
-func (c *Client) GetTables(ctx context.Context, datasetID string) ([]*Table, error) {
+func (c *bigQueryClient) GetTables(ctx context.Context, datasetID string) ([]*Table, error) {
 	var results []*Table
 	it := c.client.Dataset(datasetID).Tables(ctx)
 	for {
@@ -82,7 +99,7 @@ func (c *Client) GetTables(ctx context.Context, datasetID string) ([]*Table, err
 	return results, nil
 }
 
-func (c *Client) ResolveDatasetRole(role string) (bq.AccessRole, error) {
+func (c *bigQueryClient) ResolveDatasetRole(role string) (bq.AccessRole, error) {
 	switch role {
 	case DatasetRoleReader:
 		return bq.ReaderRole, nil
@@ -95,7 +112,7 @@ func (c *Client) ResolveDatasetRole(role string) (bq.AccessRole, error) {
 	}
 }
 
-func (c *Client) GrantDatasetAccess(ctx context.Context, d *Dataset, user, role string) error {
+func (c *bigQueryClient) GrantDatasetAccess(ctx context.Context, d *Dataset, user, role string) error {
 	dataset := c.client.Dataset(d.DatasetID)
 	metadata, err := dataset.Metadata(ctx)
 	if err != nil {
@@ -123,7 +140,7 @@ func (c *Client) GrantDatasetAccess(ctx context.Context, d *Dataset, user, role 
 	return err
 }
 
-func (c *Client) RevokeDatasetAccess(ctx context.Context, d *Dataset, user, role string) error {
+func (c *bigQueryClient) RevokeDatasetAccess(ctx context.Context, d *Dataset, user, role string) error {
 	dataset := c.client.Dataset(d.DatasetID)
 	metadata, err := dataset.Metadata(ctx)
 	if err != nil {
@@ -153,8 +170,9 @@ func (c *Client) RevokeDatasetAccess(ctx context.Context, d *Dataset, user, role
 	return err
 }
 
-func (c *Client) GrantTableAccess(ctx context.Context, t *Table, user, role string) error {
+func (c *bigQueryClient) GrantTableAccess(ctx context.Context, t *Table, user, role string) error {
 	resourceName := fmt.Sprintf("projects/%s/datasets/%s/tables/%s", c.projectID, t.DatasetID, t.TableID)
+	member := fmt.Sprintf("user:%s", user)
 
 	tableService := c.apiClient.Tables
 	getIamPolicyRequest := &bqApi.GetIamPolicyRequest{
@@ -163,13 +181,21 @@ func (c *Client) GrantTableAccess(ctx context.Context, t *Table, user, role stri
 		},
 	}
 	policy, err := tableService.GetIamPolicy(resourceName, getIamPolicyRequest).Do()
+	roleExists := false
 	for _, b := range policy.Bindings {
 		if b.Role == role {
-			if containsString(b.Members, user) {
+			roleExists = true
+			if containsString(b.Members, member) {
 				return ErrPermissionAlreadyExists
 			}
-			b.Members = append(b.Members, user)
+			b.Members = append(b.Members, member)
 		}
+	}
+	if !roleExists {
+		policy.Bindings = append(policy.Bindings, &bqApi.Binding{
+			Role:    role,
+			Members: []string{member},
+		})
 	}
 
 	setIamPolicyRequest := &bqApi.SetIamPolicyRequest{
@@ -179,8 +205,9 @@ func (c *Client) GrantTableAccess(ctx context.Context, t *Table, user, role stri
 	return err
 }
 
-func (c *Client) RevokeTableAccess(ctx context.Context, t *Table, user, role string) error {
+func (c *bigQueryClient) RevokeTableAccess(ctx context.Context, t *Table, user, role string) error {
 	resourceName := fmt.Sprintf("projects/%s/datasets/%s/tables/%s", c.projectID, t.DatasetID, t.TableID)
+	member := fmt.Sprintf("user:%s", user)
 
 	tableService := c.apiClient.Tables
 	getIamPolicyRequest := &bqApi.GetIamPolicyRequest{
@@ -194,7 +221,7 @@ func (c *Client) RevokeTableAccess(ctx context.Context, t *Table, user, role str
 		if b.Role == role {
 			var removeIndex int
 			for i, m := range b.Members {
-				if m == user {
+				if m == member {
 					removeIndex = i
 				}
 			}
