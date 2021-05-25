@@ -160,7 +160,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."deleted_at" IS NULL LIMIT 1`)
+	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE id = $1 AND "resources"."deleted_at" IS NULL LIMIT 1`)
 	s.Run("should return record and nil error on success", func() {
 		expectedID := uint(10)
 		timeNow := time.Now()
@@ -177,6 +177,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 				timeNow,
 			)
 		s.dbmock.ExpectQuery(expectedQuery).
+			WithArgs(expectedID).
 			WillReturnRows(expectedRows)
 
 		_, actualError := s.repository.GetOne(expectedID)
