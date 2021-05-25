@@ -155,6 +155,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			})
 		}
 
+		a.Resource = resource
 		a.PolicyID = policyConfig.ID
 		a.PolicyVersion = uint(policyConfig.Version)
 		a.Status = domain.AppealStatusPending
