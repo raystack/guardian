@@ -390,13 +390,10 @@ func (s *ServiceTestSuite) TestCreate() {
 		},
 	}
 	expectedAppealsInsertionParam := []*domain.Appeal{}
-	for _, r := range resourceIDs {
+	for i, r := range resourceIDs {
 		expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, &domain.Appeal{
-			ResourceID: r,
-			Resource: &domain.Resource{
-				ID:  r,
-				URN: "urn",
-			},
+			ResourceID:    r,
+			Resource:      resources[i],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
@@ -424,12 +421,9 @@ func (s *ServiceTestSuite) TestCreate() {
 	}
 	expectedResult := []*domain.Appeal{
 		{
-			ID:         1,
-			ResourceID: 1,
-			Resource: &domain.Resource{
-				ID:  1,
-				URN: "urn",
-			},
+			ID:            1,
+			ResourceID:    1,
+			Resource:      resources[0],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
@@ -457,12 +451,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			},
 		},
 		{
-			ID:         2,
-			ResourceID: 2,
-			Resource: &domain.Resource{
-				ID:  2,
-				URN: "urn",
-			},
+			ID:            2,
+			ResourceID:    2,
+			Resource:      resources[1],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
