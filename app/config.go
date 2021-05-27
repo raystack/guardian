@@ -59,7 +59,11 @@ func LoadConfig() *Config {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("fatal error reading config: %s", err))
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			fmt.Println("config file was not found. Env vars and defaults will be used")
+		} else {
+			panic(fmt.Errorf("fatal error reading config: %s", err))
+		}
 	}
 
 	viper.SetDefault(PortKey, 3000)
