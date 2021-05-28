@@ -15,13 +15,13 @@ import (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockRepository             *mocks.AppealRepository
-	mockApprovalService        *mocks.ApprovalService
-	mockResourceService        *mocks.ResourceService
-	mockProviderService        *mocks.ProviderService
-	mockPolicyService          *mocks.PolicyService
-	mockIdentityManagerService *mocks.IdentityManagerService
-	mockNotifier               *mocks.Notifier
+	mockRepository      *mocks.AppealRepository
+	mockApprovalService *mocks.ApprovalService
+	mockResourceService *mocks.ResourceService
+	mockProviderService *mocks.ProviderService
+	mockPolicyService   *mocks.PolicyService
+	mockIAMService      *mocks.IAMService
+	mockNotifier        *mocks.Notifier
 
 	service *appeal.Service
 }
@@ -32,7 +32,7 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockResourceService = new(mocks.ResourceService)
 	s.mockProviderService = new(mocks.ProviderService)
 	s.mockPolicyService = new(mocks.PolicyService)
-	s.mockIdentityManagerService = new(mocks.IdentityManagerService)
+	s.mockIAMService = new(mocks.IAMService)
 	s.mockNotifier = new(mocks.Notifier)
 
 	s.service = appeal.NewService(
@@ -41,7 +41,7 @@ func (s *ServiceTestSuite) SetupTest() {
 		s.mockResourceService,
 		s.mockProviderService,
 		s.mockPolicyService,
-		s.mockIdentityManagerService,
+		s.mockIAMService,
 		s.mockNotifier,
 		&zap.Logger{},
 	)
@@ -497,7 +497,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockProviderService.On("Find").Return(providers, nil).Once()
 		s.mockPolicyService.On("Find").Return(policies, nil).Once()
 		expectedUserApprovers := []string{"user.approver@email.com"}
-		s.mockIdentityManagerService.On("GetUserApproverEmails", user).Return(expectedUserApprovers, nil)
+		s.mockIAMService.On("GetUserApproverEmails", user).Return(expectedUserApprovers, nil)
 		s.mockRepository.
 			On("BulkInsert", expectedAppealsInsertionParam).
 			Return(nil).

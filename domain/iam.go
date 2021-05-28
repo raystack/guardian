@@ -5,12 +5,12 @@ type ApproversResponse struct {
 	Emails []string `json:"emails"`
 }
 
-// IdentityManagerClient interface
-type IdentityManagerClient interface {
+// IAMClient interface
+type IAMClient interface {
 	GetUserApproverEmails(query map[string]string) ([]string, error)
 }
 
-// IdentityManagerService interface
-type IdentityManagerService interface {
+// IAMService interface
+type IAMService interface {
 	GetUserApproverEmails(user string) ([]string, error)
 }

@@ -1,14 +1,14 @@
-package identitymanager
+package iam
 
 import "github.com/odpf/guardian/domain"
 
 // Service handles business logic for identity manager
 type Service struct {
-	client domain.IdentityManagerClient
+	client domain.IAMClient
 }
 
-// NewService returns *identitymanager.Service
-func NewService(client domain.IdentityManagerClient) *Service {
+// NewService returns *iam.Service
+func NewService(client domain.IAMClient) *Service {
 	return &Service{client}
 }
 

@@ -10,7 +10,7 @@ import (
 	"github.com/odpf/guardian/approval"
 	"github.com/odpf/guardian/crypto"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/identitymanager"
+	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/logger"
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/notifier"
@@ -45,13 +45,13 @@ func RunServer(c *Config) error {
 	appealRepository := appeal.NewRepository(db)
 	approvalRepository := approval.NewRepository(db)
 
-	identityManagerClient := identitymanager.NewClient(
-		&identitymanager.ClientConfig{
+	iamClient := iam.NewClient(
+		&iam.ClientConfig{
 			URL:        c.IdentityManagerURL,
 			HttpClient: &http.Client{},
 		},
 	)
-	identityManagerService := identitymanager.NewService(identityManagerClient)
+	iamService := iam.NewService(iamClient)
 
 	providers := []domain.ProviderInterface{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
@@ -73,7 +73,7 @@ func RunServer(c *Config) error {
 		resourceService,
 		providerService,
 		policyService,
-		identityManagerService,
+		iamService,
 		notifier,
 		logger,
 	)

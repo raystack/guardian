@@ -1,4 +1,4 @@
-package identitymanager
+package iam
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ type HTTPClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
-// ClientConfig is the configuration required by identitymanager.Client
+// ClientConfig is the configuration required by iam.Client
 type ClientConfig struct {
 	URL        string
 	HttpClient HTTPClient
@@ -24,7 +24,7 @@ type Client struct {
 	httpClient HTTPClient
 }
 
-// NewClient returns *identitymanager.Client
+// NewClient returns *iam.Client
 func NewClient(config *ClientConfig) *Client {
 	return &Client{
 		url:        config.URL,
