@@ -1,0 +1,191 @@
+package iam
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+
+	"github.com/go-playground/validator/v10"
+)
+
+type ShieldClientOptions struct {
+	Host string `validate:"required,url" mapstructure:"host"`
+}
+
+type role struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"displayname"`
+}
+
+type policy struct {
+	Subject  map[string]string `json:"subject"`
+	Resource map[string]string `json:"resource"`
+	Action   map[string]string `json:"action"`
+}
+
+type group struct {
+	ID           string   `json:"id"`
+	IsMember     bool     `json:"isMember"`
+	UserPolicies []policy `json:"userPolicies"`
+}
+
+type user struct {
+	ID       string            `json:"id"`
+	Username string            `json:"username"`
+	Metadata map[string]string `json:"metadata"`
+}
+
+type shieldClient struct {
+	baseURL *url.URL
+
+	teamAdminRoleID string
+	userEmail       string
+	users           map[string]user
+
+	httpClient *http.Client
+}
+
+func NewShieldClient(opts ShieldClientOptions) (*shieldClient, error) {
+	if err := validator.New().Struct(opts); err != nil {
+		return nil, err
+	}
+
+	return &shieldClient{
+		baseURL: &url.URL{
+			Host: opts.Host,
+		},
+		httpClient: http.DefaultClient,
+	}, nil
+}
+
+func (c *shieldClient) GetManagerEmails(userEmail string) ([]string, error) {
+	c.userEmail = userEmail
+
+	if c.teamAdminRoleID == "" {
+		roles, err := c.getRoles()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, r := range roles {
+			if r.DisplayName == "Team Admin" {
+				c.teamAdminRoleID = r.ID
+				break
+			}
+		}
+
+		return nil, errors.New("team admin role id not found")
+	}
+
+	groups, err := c.getGroups()
+	if err != nil {
+		return nil, err
+	}
+
+	users, err := c.getUsers()
+	if err != nil {
+		return nil, err
+	}
+	if c.users == nil {
+		c.users = map[string]user{}
+	}
+	for _, u := range users {
+		c.users[u.ID] = u
+	}
+
+	var teamLeadEmails []string
+	for _, g := range groups {
+		if g.IsMember {
+			for _, p := range g.UserPolicies {
+				teamLeadID := p.Subject["user"]
+				teamLeadEmail := c.users[teamLeadID].Metadata["email"]
+				teamLeadEmails = append(teamLeadEmails, teamLeadEmail)
+			}
+		}
+	}
+
+	return teamLeadEmails, nil
+}
+
+func (c *shieldClient) getRoles() ([]role, error) {
+	req, err := c.newRequest(http.MethodGet, "/api/roles", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var roles []role
+	_, err = c.do(req, &roles)
+	if err != nil {
+		return nil, err
+	}
+
+	return roles, nil
+}
+
+func (c *shieldClient) getGroups() ([]group, error) {
+	url := fmt.Sprintf("/api/groups?user_role=%s", c.teamAdminRoleID)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var groups []group
+	_, err = c.do(req, &groups)
+	if err != nil {
+		return nil, err
+	}
+
+	return groups, nil
+}
+
+func (c *shieldClient) getUsers() ([]user, error) {
+	req, err := c.newRequest(http.MethodGet, "/api/users", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []user
+	_, err = c.do(req, &users)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (c *shieldClient) newRequest(method, path string, body interface{}) (*http.Request, error) {
+	rel := &url.URL{Path: path}
+	u := c.baseURL.ResolveReference(rel)
+	var buf io.ReadWriter
+	if body != nil {
+		buf = new(bytes.Buffer)
+		err := json.NewEncoder(buf).Encode(body)
+		if err != nil {
+			return nil, err
+		}
+	}
+	req, err := http.NewRequest(method, u.String(), buf)
+	if err != nil {
+		return nil, err
+	}
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-Goog-Authenticated-User-Email", c.userEmail)
+	return req, nil
+}
+
+func (c *shieldClient) do(req *http.Request, v interface{}) (*http.Response, error) {
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	err = json.NewDecoder(resp.Body).Decode(v)
+	return resp, err
+}
