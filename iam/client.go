@@ -1,59 +1,26 @@
 package iam
 
 import (
-	"encoding/json"
-	"net/http"
+	"errors"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 )
 
-// HTTPClient abstracts the http client
-type HTTPClient interface {
-	Do(*http.Request) (*http.Response, error)
-}
+const (
+	IAMProviderShield = "shield"
+	IAMProviderHTTP   = "http"
+)
 
-// ClientConfig is the configuration required by iam.Client
-type ClientConfig struct {
-	URL        string
-	HttpClient HTTPClient
-}
+func NewClient(config map[string]interface{}) (domain.IAMClient, error) {
+	if config["provider"] == IAMProviderShield {
+		var shieldConfig ShieldClientOptions
+		if err := mapstructure.Decode(config, &shieldConfig); err != nil {
+			return nil, err
+		}
 
-// Client wraps the http client for external approver resolver service
-type Client struct {
-	url        string
-	httpClient HTTPClient
-}
-
-// NewClient returns *iam.Client
-func NewClient(config *ClientConfig) *Client {
-	return &Client{
-		url:        config.URL,
-		httpClient: config.HttpClient,
-	}
-}
-
-// GetUserApproverEmails fetches to external approver resolver service and returns approver emails
-func (c *Client) GetUserApproverEmails(query map[string]string) ([]string, error) {
-	req, err := http.NewRequest(http.MethodGet, c.url, nil)
-	if err != nil {
-		return nil, err
+		return NewShieldClient(shieldConfig)
 	}
 
-	q := req.URL.Query()
-	for k, v := range query {
-		q.Add(k, v)
-	}
-	req.URL.RawQuery = q.Encode()
-
-	res, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	var approvers domain.ApproversResponse
-	if err := json.NewDecoder(res.Body).Decode(&approvers); err != nil {
-		return nil, err
-	}
-
-	return approvers.Emails, nil
+	return nil, errors.New("invalid iam provider type")
 }

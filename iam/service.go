@@ -18,10 +18,7 @@ func (s *Service) GetUserApproverEmails(user string) ([]string, error) {
 		return nil, ErrEmptyUserEmailParam
 	}
 
-	q := map[string]string{
-		"user": user,
-	}
-	approverEmails, err := s.client.GetUserApproverEmails(q)
+	approverEmails, err := s.client.GetManagerEmails(user)
 	if err != nil {
 		return nil, err
 	}

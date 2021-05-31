@@ -9,13 +9,13 @@ type IAMClient struct {
 	mock.Mock
 }
 
-// GetUserApproverEmails provides a mock function with given fields: query
-func (_m *IAMClient) GetUserApproverEmails(query map[string]string) ([]string, error) {
-	ret := _m.Called(query)
+// GetManagerEmails provides a mock function with given fields: user
+func (_m *IAMClient) GetManagerEmails(user string) ([]string, error) {
+	ret := _m.Called(user)
 
 	var r0 []string
-	if rf, ok := ret.Get(0).(func(map[string]string) []string); ok {
-		r0 = rf(query)
+	if rf, ok := ret.Get(0).(func(string) []string); ok {
+		r0 = rf(user)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
@@ -23,8 +23,8 @@ func (_m *IAMClient) GetUserApproverEmails(query map[string]string) ([]string, e
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(map[string]string) error); ok {
-		r1 = rf(query)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(user)
 	} else {
 		r1 = ret.Error(1)
 	}

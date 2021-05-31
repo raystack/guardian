@@ -30,10 +30,7 @@ func (s *ServiceTestSuite) TestGetUserApproverEmails() {
 
 	s.Run("should pass user as the query string to client", func() {
 		user := "test@email.com"
-		expectedQuery := map[string]string{
-			"user": user,
-		}
-		s.mockClient.On("GetUserApproverEmails", expectedQuery).Return(nil, nil).Once()
+		s.mockClient.On("GetManagerEmails", user).Return(nil, nil).Once()
 
 		s.service.GetUserApproverEmails(user)
 
@@ -42,7 +39,7 @@ func (s *ServiceTestSuite) TestGetUserApproverEmails() {
 
 	s.Run("should return error if approver emails are empty", func() {
 		user := "test@email.com"
-		s.mockClient.On("GetUserApproverEmails", mock.Anything).Return([]string{}, nil).Once()
+		s.mockClient.On("GetManagerEmails", mock.Anything).Return([]string{}, nil).Once()
 
 		actualResult, actualError := s.service.GetUserApproverEmails(user)
 

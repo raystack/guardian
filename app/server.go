@@ -24,14 +24,14 @@ import (
 )
 
 // RunServer runs the application server
-func RunServer(c *Config) error {
+func RunServer(c *domain.Config) error {
 	db, err := getDB(c)
 	if err != nil {
 		return err
 	}
 
 	logger, err := logger.New(&logger.Config{
-		Level: c.LogLevel,
+		Level: c.Log.Level,
 	})
 	if err != nil {
 		return err
@@ -45,12 +45,10 @@ func RunServer(c *Config) error {
 	appealRepository := appeal.NewRepository(db)
 	approvalRepository := approval.NewRepository(db)
 
-	iamClient := iam.NewClient(
-		&iam.ClientConfig{
-			URL:        c.IdentityManagerURL,
-			HttpClient: &http.Client{},
-		},
-	)
+	iamClient, err := iam.NewClient(c.IAM)
+	if err != nil {
+		return err
+	}
 	iamService := iam.NewService(iamClient)
 
 	providers := []domain.ProviderInterface{
@@ -108,7 +106,7 @@ func RunServer(c *Config) error {
 }
 
 // Migrate runs the schema migration scripts
-func Migrate(c *Config) error {
+func Migrate(c *domain.Config) error {
 	db, err := getDB(c)
 	if err != nil {
 		return err
@@ -125,13 +123,13 @@ func Migrate(c *Config) error {
 	return store.Migrate(db, models...)
 }
 
-func getDB(c *Config) (*gorm.DB, error) {
+func getDB(c *domain.Config) (*gorm.DB, error) {
 	return store.New(&store.Config{
-		Host:     c.DBHost,
-		User:     c.DBUser,
-		Password: c.DBPassword,
-		Name:     c.DBName,
-		Port:     c.DBPort,
-		SslMode:  c.DBSslMode,
+		Host:     c.DB.Host,
+		User:     c.DB.User,
+		Password: c.DB.Password,
+		Name:     c.DB.Name,
+		Port:     c.DB.Port,
+		SslMode:  c.DB.SslMode,
 	})
 }

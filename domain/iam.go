@@ -7,7 +7,7 @@ type ApproversResponse struct {
 
 // IAMClient interface
 type IAMClient interface {
-	GetUserApproverEmails(query map[string]string) ([]string, error)
+	GetManagerEmails(user string) ([]string, error)
 }
 
 // IAMService interface

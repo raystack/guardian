@@ -8,6 +8,8 @@ require (
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/gorilla/mux v1.8.0
 	github.com/imdario/mergo v0.3.11
+	github.com/jeremywohl/flatten v1.0.1
+	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mcuadros/go-lookup v0.0.0-20200831155250-80f87a4fa5ee
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/purini-to/zapmw v1.1.0
