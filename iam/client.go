@@ -20,6 +20,13 @@ func NewClient(config map[string]interface{}) (domain.IAMClient, error) {
 		}
 
 		return NewShieldClient(shieldConfig)
+	} else if config["provider"] == IAMProviderHTTP {
+		var httpConfig HTTPClientConfig
+		if err := mapstructure.Decode(config, &httpConfig); err != nil {
+			return nil, err
+		}
+
+		return NewHTTPClient(&httpConfig)
 	}
 
 	return nil, errors.New("invalid iam provider type")
