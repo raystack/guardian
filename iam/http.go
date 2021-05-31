@@ -5,13 +5,16 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/domain"
 )
 
 // HTTPClientConfig is the configuration required by iam.Client
 type HTTPClientConfig struct {
 	GetManagersURL string `validate:"required,url" mapstructure:"get_managers_url"`
 	HTTPClient     *http.Client
+}
+
+type managerEmailsResponse struct {
+	Emails []string `json:"emails"`
 }
 
 // HTTPClient wraps the http client for external approver resolver service
@@ -41,6 +44,7 @@ func (c *HTTPClient) GetManagerEmails(user string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("Accept", "application/json")
 
 	q := req.URL.Query()
 	q.Add("user", user)
@@ -51,7 +55,7 @@ func (c *HTTPClient) GetManagerEmails(user string) ([]string, error) {
 		return nil, err
 	}
 
-	var approvers domain.ApproversResponse
+	var approvers managerEmailsResponse
 	if err := json.NewDecoder(res.Body).Decode(&approvers); err != nil {
 		return nil, err
 	}
