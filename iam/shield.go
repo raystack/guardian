@@ -54,10 +54,13 @@ func NewShieldClient(opts ShieldClientOptions) (*shieldClient, error) {
 		return nil, err
 	}
 
+	baseURL, err := url.Parse(opts.Host)
+	if err != nil {
+		return nil, err
+	}
+
 	return &shieldClient{
-		baseURL: &url.URL{
-			Host: opts.Host,
-		},
+		baseURL:    baseURL,
 		httpClient: http.DefaultClient,
 	}, nil
 }
@@ -77,8 +80,9 @@ func (c *shieldClient) GetManagerEmails(userEmail string) ([]string, error) {
 				break
 			}
 		}
-
-		return nil, errors.New("team admin role id not found")
+		if c.teamAdminRoleID == "" {
+			return nil, errors.New("team admin role id not found")
+		}
 	}
 
 	groups, err := c.getGroups()
@@ -158,8 +162,10 @@ func (c *shieldClient) getUsers() ([]user, error) {
 }
 
 func (c *shieldClient) newRequest(method, path string, body interface{}) (*http.Request, error) {
-	rel := &url.URL{Path: path}
-	u := c.baseURL.ResolveReference(rel)
+	u, err := c.baseURL.Parse(path)
+	if err != nil {
+		return nil, err
+	}
 	var buf io.ReadWriter
 	if body != nil {
 		buf = new(bytes.Buffer)
