@@ -12,7 +12,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type ShieldClientOptions struct {
+type ShieldClientConfig struct {
 	Host string `validate:"required,url" mapstructure:"host"`
 }
 
@@ -49,12 +49,12 @@ type shieldClient struct {
 	httpClient *http.Client
 }
 
-func NewShieldClient(opts ShieldClientOptions) (*shieldClient, error) {
-	if err := validator.New().Struct(opts); err != nil {
+func NewShieldClient(config *ShieldClientConfig) (*shieldClient, error) {
+	if err := validator.New().Struct(config); err != nil {
 		return nil, err
 	}
 
-	baseURL, err := url.Parse(opts.Host)
+	baseURL, err := url.Parse(config.Host)
 	if err != nil {
 		return nil, err
 	}

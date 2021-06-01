@@ -7,12 +7,23 @@ import (
 	"github.com/jeremywohl/flatten"
 	"github.com/mcuadros/go-defaults"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/iam"
+	"github.com/odpf/guardian/logger"
+	"github.com/odpf/guardian/store"
 	"github.com/spf13/viper"
 )
 
+type Config struct {
+	Port                   int              `mapstructure:"port" default:"8080"`
+	EncryptionSecretKeyKey string           `mapstructure:"encryption_secret_key"`
+	SlackAccessToken       string           `mapstructure:"slack_access_token"`
+	IAM                    iam.ClientConfig `mapstructure:"iam"`
+	Log                    logger.Config    `mapstructure:"log"`
+	DB                     store.Config     `mapstructure:"db"`
+}
+
 // LoadConfig returns application configuration
-func LoadConfig() *domain.Config {
+func LoadConfig() *Config {
 	viper.SetConfigName("config")
 	viper.AddConfigPath("./")
 	viper.AddConfigPath("../")
@@ -29,7 +40,7 @@ func LoadConfig() *domain.Config {
 		}
 	}
 
-	configKeys, err := getFlattenedStructKeys(domain.Config{})
+	configKeys, err := getFlattenedStructKeys(Config{})
 	if err != nil {
 		panic(err)
 	}
@@ -42,7 +53,7 @@ func LoadConfig() *domain.Config {
 		}
 	}
 
-	var config domain.Config
+	var config Config
 	defaults.SetDefaults(&config)
 
 	err = viper.Unmarshal(&config)
@@ -52,7 +63,7 @@ func LoadConfig() *domain.Config {
 	return &config
 }
 
-func getFlattenedStructKeys(config domain.Config) ([]string, error) {
+func getFlattenedStructKeys(config Config) ([]string, error) {
 	var structMap map[string]interface{}
 	err := mapstructure.Decode(config, &structMap)
 	if err != nil {

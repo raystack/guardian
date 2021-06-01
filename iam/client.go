@@ -3,7 +3,6 @@ package iam
 import (
 	"errors"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 )
 
@@ -12,21 +11,25 @@ const (
 	IAMProviderHTTP   = "http"
 )
 
-func NewClient(config map[string]interface{}) (domain.IAMClient, error) {
-	if config["provider"] == IAMProviderShield {
-		var shieldConfig ShieldClientOptions
-		if err := mapstructure.Decode(config, &shieldConfig); err != nil {
-			return nil, err
-		}
+type ClientConfig struct {
+	Provider string `mapstructure:"provider"`
 
-		return NewShieldClient(shieldConfig)
-	} else if config["provider"] == IAMProviderHTTP {
-		var httpConfig HTTPClientConfig
-		if err := mapstructure.Decode(config, &httpConfig); err != nil {
-			return nil, err
-		}
+	// shield config
+	Host string `mapstructure:"host"`
 
-		return NewHTTPClient(&httpConfig)
+	// http config
+	GetManagersURL string `mapstructure:"get_managers_url"`
+}
+
+func NewClient(config *ClientConfig) (domain.IAMClient, error) {
+	if config.Provider == IAMProviderShield {
+		return NewShieldClient(&ShieldClientConfig{
+			Host: config.Host,
+		})
+	} else if config.Provider == IAMProviderHTTP {
+		return NewHTTPClient(&HTTPClientConfig{
+			GetManagersURL: config.GetManagersURL,
+		})
 	}
 
 	return nil, errors.New("invalid iam provider type")

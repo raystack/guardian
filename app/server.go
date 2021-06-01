@@ -24,7 +24,7 @@ import (
 )
 
 // RunServer runs the application server
-func RunServer(c *domain.Config) error {
+func RunServer(c *Config) error {
 	db, err := getDB(c)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func RunServer(c *domain.Config) error {
 	appealRepository := appeal.NewRepository(db)
 	approvalRepository := approval.NewRepository(db)
 
-	iamClient, err := iam.NewClient(c.IAM)
+	iamClient, err := iam.NewClient(&c.IAM)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func RunServer(c *domain.Config) error {
 }
 
 // Migrate runs the schema migration scripts
-func Migrate(c *domain.Config) error {
+func Migrate(c *Config) error {
 	db, err := getDB(c)
 	if err != nil {
 		return err
@@ -123,13 +123,6 @@ func Migrate(c *domain.Config) error {
 	return store.Migrate(db, models...)
 }
 
-func getDB(c *domain.Config) (*gorm.DB, error) {
-	return store.New(&store.Config{
-		Host:     c.DB.Host,
-		User:     c.DB.User,
-		Password: c.DB.Password,
-		Name:     c.DB.Name,
-		Port:     c.DB.Port,
-		SslMode:  c.DB.SslMode,
-	})
+func getDB(c *Config) (*gorm.DB, error) {
+	return store.New(&c.DB)
 }
