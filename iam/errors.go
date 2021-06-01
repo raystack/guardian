@@ -1,4 +1,4 @@
-package identitymanager
+package iam
 
 import "errors"
 

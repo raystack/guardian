@@ -15,13 +15,13 @@ import (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockRepository             *mocks.AppealRepository
-	mockApprovalService        *mocks.ApprovalService
-	mockResourceService        *mocks.ResourceService
-	mockProviderService        *mocks.ProviderService
-	mockPolicyService          *mocks.PolicyService
-	mockIdentityManagerService *mocks.IdentityManagerService
-	mockNotifier               *mocks.Notifier
+	mockRepository      *mocks.AppealRepository
+	mockApprovalService *mocks.ApprovalService
+	mockResourceService *mocks.ResourceService
+	mockProviderService *mocks.ProviderService
+	mockPolicyService   *mocks.PolicyService
+	mockIAMService      *mocks.IAMService
+	mockNotifier        *mocks.Notifier
 
 	service *appeal.Service
 }
@@ -32,7 +32,7 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockResourceService = new(mocks.ResourceService)
 	s.mockProviderService = new(mocks.ProviderService)
 	s.mockPolicyService = new(mocks.PolicyService)
-	s.mockIdentityManagerService = new(mocks.IdentityManagerService)
+	s.mockIAMService = new(mocks.IAMService)
 	s.mockNotifier = new(mocks.Notifier)
 
 	s.service = appeal.NewService(
@@ -41,7 +41,7 @@ func (s *ServiceTestSuite) SetupTest() {
 		s.mockResourceService,
 		s.mockProviderService,
 		s.mockPolicyService,
-		s.mockIdentityManagerService,
+		s.mockIAMService,
 		s.mockNotifier,
 		&zap.Logger{},
 	)
@@ -390,13 +390,10 @@ func (s *ServiceTestSuite) TestCreate() {
 		},
 	}
 	expectedAppealsInsertionParam := []*domain.Appeal{}
-	for _, r := range resourceIDs {
+	for i, r := range resourceIDs {
 		expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, &domain.Appeal{
-			ResourceID: r,
-			Resource: &domain.Resource{
-				ID:  r,
-				URN: "urn",
-			},
+			ResourceID:    r,
+			Resource:      resources[i],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
@@ -424,12 +421,9 @@ func (s *ServiceTestSuite) TestCreate() {
 	}
 	expectedResult := []*domain.Appeal{
 		{
-			ID:         1,
-			ResourceID: 1,
-			Resource: &domain.Resource{
-				ID:  1,
-				URN: "urn",
-			},
+			ID:            1,
+			ResourceID:    1,
+			Resource:      resources[0],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
@@ -457,12 +451,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			},
 		},
 		{
-			ID:         2,
-			ResourceID: 2,
-			Resource: &domain.Resource{
-				ID:  2,
-				URN: "urn",
-			},
+			ID:            2,
+			ResourceID:    2,
+			Resource:      resources[1],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
@@ -497,7 +488,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockProviderService.On("Find").Return(providers, nil).Once()
 		s.mockPolicyService.On("Find").Return(policies, nil).Once()
 		expectedUserApprovers := []string{"user.approver@email.com"}
-		s.mockIdentityManagerService.On("GetUserApproverEmails", user).Return(expectedUserApprovers, nil)
+		s.mockIAMService.On("GetUserApproverEmails", user).Return(expectedUserApprovers, nil)
 		s.mockRepository.
 			On("BulkInsert", expectedAppealsInsertionParam).
 			Return(nil).
