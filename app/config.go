@@ -2,51 +2,24 @@ package app
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/jeremywohl/flatten"
+	"github.com/mcuadros/go-defaults"
+	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/guardian/iam"
+	"github.com/odpf/guardian/logger"
+	"github.com/odpf/guardian/store"
 	"github.com/spf13/viper"
 )
 
-const (
-	// PortKey is the key for port configuration
-	PortKey = "PORT"
-	// EncryptionSecretKeyKey is the key for encryption secret key
-	EncryptionSecretKeyKey = "ENCRYPTION_SECRET_KEY"
-	// LogLevelKey is the key for log level
-	LogLevelKey = "LOG_LEVEL"
-	// DBHostKey is the key for database host configuration
-	DBHostKey = "DB_HOST"
-	// DBUserKey is the key for database user configuration
-	DBUserKey = "DB_USER"
-	// DBPasswordKey is the key for database password configuration
-	DBPasswordKey = "DB_PASSWORD"
-	// DBNameKey is the key for database name configuration
-	DBNameKey = "DB_NAME"
-	// DBPortKey is the key for database port configuration
-	DBPortKey = "DB_PORT"
-	// DBSslModeKey is the key for database ssl mode configuration
-	DBSslModeKey = "DB_SSLMODE"
-	// IdentityManagerURL is the key for external identity manager url
-	IdentityManagerURL = "IDENTITY_MANAGER_URL"
-	// SlackAccessToken is the key for slack access token
-	SlackAccessTokenKey = "SLACK_ACCESS_TOKEN"
-)
-
-// Config contains the application configuration
 type Config struct {
-	Port                   int
-	EncryptionSecretKeyKey string
-	LogLevel               string
-
-	DBHost     string
-	DBUser     string
-	DBPassword string
-	DBName     string
-	DBPort     string
-	DBSslMode  string
-
-	SlackAccessToken string
-
-	IdentityManagerURL string
+	Port                   int              `mapstructure:"port" default:"8080"`
+	EncryptionSecretKeyKey string           `mapstructure:"encryption_secret_key"`
+	SlackAccessToken       string           `mapstructure:"slack_access_token"`
+	IAM                    iam.ClientConfig `mapstructure:"iam"`
+	Log                    logger.Config    `mapstructure:"log"`
+	DB                     store.Config     `mapstructure:"db"`
 }
 
 // LoadConfig returns application configuration
@@ -56,6 +29,7 @@ func LoadConfig() *Config {
 	viper.AddConfigPath("../")
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -66,23 +40,45 @@ func LoadConfig() *Config {
 		}
 	}
 
-	viper.SetDefault(PortKey, 3000)
-	viper.SetDefault(DBSslModeKey, "disable")
-
-	return &Config{
-		Port:                   viper.GetInt(PortKey),
-		EncryptionSecretKeyKey: viper.GetString(EncryptionSecretKeyKey),
-		LogLevel:               viper.GetString(LogLevelKey),
-
-		DBHost:     viper.GetString(DBHostKey),
-		DBUser:     viper.GetString(DBUserKey),
-		DBPassword: viper.GetString(DBPasswordKey),
-		DBName:     viper.GetString(DBNameKey),
-		DBPort:     viper.GetString(DBPortKey),
-		DBSslMode:  viper.GetString(DBSslModeKey),
-
-		SlackAccessToken: viper.GetString(SlackAccessTokenKey),
-
-		IdentityManagerURL: viper.GetString(IdentityManagerURL),
+	configKeys, err := getFlattenedStructKeys(Config{})
+	if err != nil {
+		panic(err)
 	}
+
+	// Bind each conf fields to environment vars
+	for key := range configKeys {
+		err := viper.BindEnv(configKeys[key])
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	var config Config
+	defaults.SetDefaults(&config)
+
+	err = viper.Unmarshal(&config)
+	if err != nil {
+		panic(fmt.Errorf("unable to unmarshal config to struct: %v\n", err))
+	}
+	return &config
+}
+
+func getFlattenedStructKeys(config Config) ([]string, error) {
+	var structMap map[string]interface{}
+	err := mapstructure.Decode(config, &structMap)
+	if err != nil {
+		return nil, err
+	}
+
+	flat, err := flatten.Flatten(structMap, "", flatten.DotStyle)
+	if err != nil {
+		return nil, err
+	}
+
+	keys := make([]string, 0, len(flat))
+	for k := range flat {
+		keys = append(keys, k)
+	}
+
+	return keys, nil
 }

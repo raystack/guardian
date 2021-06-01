@@ -10,7 +10,7 @@ import (
 	"github.com/odpf/guardian/approval"
 	"github.com/odpf/guardian/crypto"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/identitymanager"
+	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/logger"
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/notifier"
@@ -31,7 +31,7 @@ func RunServer(c *Config) error {
 	}
 
 	logger, err := logger.New(&logger.Config{
-		Level: c.LogLevel,
+		Level: c.Log.Level,
 	})
 	if err != nil {
 		return err
@@ -45,13 +45,11 @@ func RunServer(c *Config) error {
 	appealRepository := appeal.NewRepository(db)
 	approvalRepository := approval.NewRepository(db)
 
-	identityManagerClient := identitymanager.NewClient(
-		&identitymanager.ClientConfig{
-			URL:        c.IdentityManagerURL,
-			HttpClient: &http.Client{},
-		},
-	)
-	identityManagerService := identitymanager.NewService(identityManagerClient)
+	iamClient, err := iam.NewClient(&c.IAM)
+	if err != nil {
+		return err
+	}
+	iamService := iam.NewService(iamClient)
 
 	providers := []domain.ProviderInterface{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
@@ -73,7 +71,7 @@ func RunServer(c *Config) error {
 		resourceService,
 		providerService,
 		policyService,
-		identityManagerService,
+		iamService,
 		notifier,
 		logger,
 	)
@@ -126,12 +124,5 @@ func Migrate(c *Config) error {
 }
 
 func getDB(c *Config) (*gorm.DB, error) {
-	return store.New(&store.Config{
-		Host:     c.DBHost,
-		User:     c.DBUser,
-		Password: c.DBPassword,
-		Name:     c.DBName,
-		Port:     c.DBPort,
-		SslMode:  c.DBSslMode,
-	})
+	return store.New(&c.DB)
 }

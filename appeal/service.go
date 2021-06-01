@@ -28,13 +28,13 @@ type providerConfig struct {
 type Service struct {
 	repo domain.AppealRepository
 
-	approvalService        domain.ApprovalService
-	resourceService        domain.ResourceService
-	providerService        domain.ProviderService
-	policyService          domain.PolicyService
-	identityManagerService domain.IdentityManagerService
-	notifier               domain.Notifier
-	logger                 *zap.Logger
+	approvalService domain.ApprovalService
+	resourceService domain.ResourceService
+	providerService domain.ProviderService
+	policyService   domain.PolicyService
+	iamService      domain.IAMService
+	notifier        domain.Notifier
+	logger          *zap.Logger
 
 	validator *validator.Validate
 }
@@ -46,20 +46,20 @@ func NewService(
 	resourceService domain.ResourceService,
 	providerService domain.ProviderService,
 	policyService domain.PolicyService,
-	identityManagerService domain.IdentityManagerService,
+	iamService domain.IAMService,
 	notifier domain.Notifier,
 	logger *zap.Logger,
 ) *Service {
 	return &Service{
-		repo:                   appealRepository,
-		approvalService:        approvalService,
-		resourceService:        resourceService,
-		providerService:        providerService,
-		policyService:          policyService,
-		identityManagerService: identityManagerService,
-		notifier:               notifier,
-		validator:              validator.New(),
-		logger:                 logger,
+		repo:            appealRepository,
+		approvalService: approvalService,
+		resourceService: resourceService,
+		providerService: providerService,
+		policyService:   policyService,
+		iamService:      iamService,
+		notifier:        notifier,
+		validator:       validator.New(),
+		logger:          logger,
 	}
 }
 
@@ -443,7 +443,7 @@ func (s *Service) resolveApprovers(user string, resource *domain.Resource, appro
 			approvers = append(approvers, email)
 		}
 	} else if strings.HasPrefix(approversKey, domain.ApproversKeyUserApprovers) {
-		approverEmails, err := s.identityManagerService.GetUserApproverEmails(user)
+		approverEmails, err := s.iamService.GetUserApproverEmails(user)
 		if err != nil {
 			return nil, err
 		}

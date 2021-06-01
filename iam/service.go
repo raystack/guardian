@@ -1,14 +1,14 @@
-package identitymanager
+package iam
 
 import "github.com/odpf/guardian/domain"
 
 // Service handles business logic for identity manager
 type Service struct {
-	client domain.IdentityManagerClient
+	client domain.IAMClient
 }
 
-// NewService returns *identitymanager.Service
-func NewService(client domain.IdentityManagerClient) *Service {
+// NewService returns *iam.Service
+func NewService(client domain.IAMClient) *Service {
 	return &Service{client}
 }
 
@@ -18,10 +18,7 @@ func (s *Service) GetUserApproverEmails(user string) ([]string, error) {
 		return nil, ErrEmptyUserEmailParam
 	}
 
-	q := map[string]string{
-		"user": user,
-	}
-	approverEmails, err := s.client.GetUserApproverEmails(q)
+	approverEmails, err := s.client.GetManagerEmails(user)
 	if err != nil {
 		return nil, err
 	}

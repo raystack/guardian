@@ -1,9 +1,9 @@
-package identitymanager_test
+package iam_test
 
 import (
 	"testing"
 
-	"github.com/odpf/guardian/identitymanager"
+	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -11,13 +11,13 @@ import (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockClient *mocks.IdentityManagerClient
-	service    *identitymanager.Service
+	mockClient *mocks.IAMClient
+	service    *iam.Service
 }
 
 func (s *ServiceTestSuite) SetupTest() {
-	s.mockClient = new(mocks.IdentityManagerClient)
-	s.service = identitymanager.NewService(s.mockClient)
+	s.mockClient = new(mocks.IAMClient)
+	s.service = iam.NewService(s.mockClient)
 }
 
 func (s *ServiceTestSuite) TestGetUserApproverEmails() {
@@ -25,15 +25,12 @@ func (s *ServiceTestSuite) TestGetUserApproverEmails() {
 		actualResult, actualError := s.service.GetUserApproverEmails("")
 
 		s.Nil(actualResult)
-		s.EqualError(actualError, identitymanager.ErrEmptyUserEmailParam.Error())
+		s.EqualError(actualError, iam.ErrEmptyUserEmailParam.Error())
 	})
 
 	s.Run("should pass user as the query string to client", func() {
 		user := "test@email.com"
-		expectedQuery := map[string]string{
-			"user": user,
-		}
-		s.mockClient.On("GetUserApproverEmails", expectedQuery).Return(nil, nil).Once()
+		s.mockClient.On("GetManagerEmails", user).Return(nil, nil).Once()
 
 		s.service.GetUserApproverEmails(user)
 
@@ -42,12 +39,12 @@ func (s *ServiceTestSuite) TestGetUserApproverEmails() {
 
 	s.Run("should return error if approver emails are empty", func() {
 		user := "test@email.com"
-		s.mockClient.On("GetUserApproverEmails", mock.Anything).Return([]string{}, nil).Once()
+		s.mockClient.On("GetManagerEmails", mock.Anything).Return([]string{}, nil).Once()
 
 		actualResult, actualError := s.service.GetUserApproverEmails(user)
 
 		s.Nil(actualResult)
-		s.EqualError(actualError, identitymanager.ErrEmptyApprovers.Error())
+		s.EqualError(actualError, iam.ErrEmptyApprovers.Error())
 	})
 }
 
