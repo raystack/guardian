@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"net/http"
 	"time"
 )
 
@@ -75,11 +74,6 @@ type ProviderService interface {
 	FetchResources() error
 	GrantAccess(*Appeal) error
 	RevokeAccess(*Appeal) error
-}
-
-// ProviderHandler interface
-type ProviderHandler interface {
-	Create(http.ResponseWriter, *http.Request)
 }
 
 // ProviderInterface abstracts guardian communicates with external data providers
