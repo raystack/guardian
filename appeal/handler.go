@@ -15,16 +15,8 @@ type Handler struct {
 	AppealService domain.AppealService
 }
 
-// SetupHandler registers api handlers to the endpoints
-func SetupHandler(r *mux.Router, as domain.AppealService) {
-	h := &Handler{as}
-	r.Methods(http.MethodPost).Path("/appeals").HandlerFunc(h.Create)
-	r.Methods(http.MethodGet).Path("/appeals").HandlerFunc(h.Find)
-	r.Methods(http.MethodGet).Path("/appeals/approvals").HandlerFunc(h.GetPendingApprovals)
-	r.Methods(http.MethodPost).Path("/appeals/{id}/approvals/{name}").HandlerFunc(h.MakeAction)
-	r.Methods(http.MethodPut).Path("/appeals/{id}/cancel").HandlerFunc(h.Cancel)
-	r.Methods(http.MethodPut).Path("/appeals/{id}/revoke").HandlerFunc(h.Revoke)
-	r.Methods(http.MethodGet).Path("/appeals/{id}").HandlerFunc(h.GetByID)
+func NewHTTPHandler(as domain.AppealService) *Handler {
+	return &Handler{as}
 }
 
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {

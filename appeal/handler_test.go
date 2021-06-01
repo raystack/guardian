@@ -26,7 +26,7 @@ type HandlerTestSuite struct {
 
 func (s *HandlerTestSuite) Setup() {
 	s.mockAppealService = new(mocks.AppealService)
-	s.handler = &appeal.Handler{s.mockAppealService}
+	s.handler = appeal.NewHTTPHandler(s.mockAppealService)
 	s.res = httptest.NewRecorder()
 }
 

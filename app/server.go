@@ -76,11 +76,35 @@ func RunServer(c *Config) error {
 		logger,
 	)
 
+	providerHttpHandler := provider.NewHTTPHandler(providerService)
+	policyHttpHandler := policy.NewHTTPHandler(policyService)
+	resourceHttpHandler := resource.NewHTTPHandler(resourceService)
+	appealHttpHandler := appeal.NewHTTPHandler(appealService)
+
 	r := api.New(logger)
-	provider.SetupHandler(r, providerService)
-	policy.SetupHandler(r, policyService)
-	resource.SetupHandler(r, resourceService)
-	appeal.SetupHandler(r, appealService)
+
+	// provider routes
+	r.Methods(http.MethodGet).Path("/providers").HandlerFunc(providerHttpHandler.Find)
+	r.Methods(http.MethodPost).Path("/providers").HandlerFunc(providerHttpHandler.Create)
+	r.Methods(http.MethodPut).Path("/providers/{id}").HandlerFunc(providerHttpHandler.Update)
+
+	// policy routes
+	r.Methods(http.MethodGet).Path("/policies").HandlerFunc(policyHttpHandler.Find)
+	r.Methods(http.MethodPost).Path("/policies").HandlerFunc(policyHttpHandler.Create)
+	r.Methods(http.MethodPut).Path("/policies/{id}").HandlerFunc(policyHttpHandler.Update)
+
+	// resource routes
+	r.Methods(http.MethodGet).Path("/resources").HandlerFunc(resourceHttpHandler.Find)
+	r.Methods(http.MethodPut).Path("/resources/{id}").HandlerFunc(resourceHttpHandler.Update)
+
+	// appeal routes
+	r.Methods(http.MethodPost).Path("/appeals").HandlerFunc(appealHttpHandler.Create)
+	r.Methods(http.MethodGet).Path("/appeals").HandlerFunc(appealHttpHandler.Find)
+	r.Methods(http.MethodGet).Path("/appeals/approvals").HandlerFunc(appealHttpHandler.GetPendingApprovals)
+	r.Methods(http.MethodPost).Path("/appeals/{id}/approvals/{name}").HandlerFunc(appealHttpHandler.MakeAction)
+	r.Methods(http.MethodPut).Path("/appeals/{id}/cancel").HandlerFunc(appealHttpHandler.Cancel)
+	r.Methods(http.MethodPut).Path("/appeals/{id}/revoke").HandlerFunc(appealHttpHandler.Revoke)
+	r.Methods(http.MethodGet).Path("/appeals/{id}").HandlerFunc(appealHttpHandler.GetByID)
 
 	providerJobHandler := provider.NewJobHandler(providerService)
 	appealJobHandler := appeal.NewJobHandler(appealService)

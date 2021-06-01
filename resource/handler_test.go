@@ -26,7 +26,7 @@ type HandlerTestSuite struct {
 
 func (s *HandlerTestSuite) Setup() {
 	s.mockResourceService = new(mocks.ResourceService)
-	s.handler = &resource.Handler{s.mockResourceService}
+	s.handler = resource.NewHTTPHandler(s.mockResourceService)
 	s.res = httptest.NewRecorder()
 }
 

@@ -15,11 +15,8 @@ type Handler struct {
 	ResourceService domain.ResourceService
 }
 
-// SetupHandler registers api handlers to the endpoints
-func SetupHandler(r *mux.Router, rs domain.ResourceService) {
-	h := &Handler{rs}
-	r.Methods(http.MethodGet).Path("/resources").HandlerFunc(h.Find)
-	r.Methods(http.MethodPut).Path("/resources/{id}").HandlerFunc(h.Update)
+func NewHTTPHandler(rs domain.ResourceService) *Handler {
+	return &Handler{rs}
 }
 
 // Find handles http request for list of provider records
