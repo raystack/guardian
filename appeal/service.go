@@ -96,20 +96,23 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		return err
 	}
 
+	notifications := []domain.Notification{}
+
 	for _, a := range appeals {
-		resource := resources[a.ResourceID]
-		if resource == nil {
+		r := resources[a.ResourceID]
+		if r == nil {
 			return ErrResourceNotFound
 		}
+		a.Resource = r
 
-		if providerConfigs[resource.ProviderType] == nil {
+		if providerConfigs[a.Resource.ProviderType] == nil {
 			return ErrProviderTypeNotFound
-		} else if providerConfigs[resource.ProviderType][resource.ProviderURN] == nil {
+		} else if providerConfigs[a.Resource.ProviderType][a.Resource.ProviderURN] == nil {
 			return ErrProviderURNNotFound
 		}
-		providerConfig := providerConfigs[resource.ProviderType][resource.ProviderURN]
+		providerConfig := providerConfigs[a.Resource.ProviderType][a.Resource.ProviderURN]
 
-		if providerConfig.resources[resource.Type] == nil {
+		if providerConfig.resources[a.Resource.Type] == nil {
 			return ErrResourceTypeNotFound
 		}
 
@@ -122,7 +125,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			}
 		}
 
-		resourceConfig := providerConfig.resources[resource.Type]
+		resourceConfig := providerConfig.resources[a.Resource.Type]
 		if !utils.ContainsString(resourceConfig.availableRoleIDs, a.Role) {
 			return ErrInvalidRole
 		}
@@ -139,7 +142,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		for i, step := range steps {
 			var approvers []string
 			if step.Approvers != "" {
-				approvers, err = s.resolveApprovers(a.User, resource, step.Approvers)
+				approvers, err = s.resolveApprovers(a.User, a.Resource, step.Approvers)
 				if err != nil {
 					return err
 				}
@@ -155,21 +158,18 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			})
 		}
 
-		a.Resource = resource
 		a.PolicyID = policyConfig.ID
 		a.PolicyVersion = uint(policyConfig.Version)
 		a.Status = domain.AppealStatusPending
 		a.Approvals = approvals
+
+		notifications = append(notifications, getApprovalNotifications(a)...)
 	}
 
 	if err := s.repo.BulkInsert(appeals); err != nil {
 		return err
 	}
 
-	notifications := []domain.Notification{}
-	for _, appeal := range appeals {
-		notifications = append(notifications, getApprovalNotifications(appeal)...)
-	}
 	if len(notifications) > 0 {
 		if err := s.notifier.Notify(notifications); err != nil {
 			s.logger.Error(err.Error())
