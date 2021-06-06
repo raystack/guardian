@@ -26,6 +26,10 @@ type Approval struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+func (a *Approval) IsHumanApproval() bool {
+	return len(a.Approvers) > 0
+}
+
 type ApprovalRepository interface {
 	BulkInsert([]*Approval) error
 	GetPendingApprovals(user string) ([]*Approval, error)

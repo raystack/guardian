@@ -1,6 +1,8 @@
 package domain
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	AppealActionNameApprove = "approve"
@@ -41,7 +43,7 @@ type Appeal struct {
 
 func (a *Appeal) GetNextPendingApproval() *Approval {
 	for _, approval := range a.Approvals {
-		if approval.Status == ApprovalStatusPending && len(approval.Approvers) > 0 {
+		if approval.Status == ApprovalStatusPending && approval.IsHumanApproval() {
 			return approval
 		}
 	}
