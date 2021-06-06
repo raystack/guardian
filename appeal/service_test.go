@@ -489,6 +489,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockPolicyService.On("Find").Return(policies, nil).Once()
 		expectedUserApprovers := []string{"user.approver@email.com"}
 		s.mockIAMService.On("GetUserApproverEmails", user).Return(expectedUserApprovers, nil)
+		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 		s.mockRepository.
 			On("BulkInsert", expectedAppealsInsertionParam).
 			Return(nil).
@@ -798,6 +799,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		}
 		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
 		expectedError := errors.New("repository error")
+		s.mockApprovalService.On("AdvanceApproval", expectedAppeal).Return(nil).Once()
 		s.mockProviderService.On("GrantAccess", expectedAppeal).Return(nil).Once()
 		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
 		s.mockProviderService.On("RevokeAccess", expectedAppeal).Return(nil).Once()
@@ -979,6 +981,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).
 					Return(tc.expectedAppealDetails, nil).
 					Once()
+				s.mockApprovalService.On("AdvanceApproval", tc.expectedAppealDetails).
+					Return(nil).Once()
 				s.mockProviderService.On("GrantAccess", tc.expectedAppealDetails).
 					Return(nil).
 					Once()

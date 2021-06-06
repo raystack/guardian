@@ -34,6 +34,7 @@ type Appeal struct {
 	Options       *AppealOptions         `json:"options"`
 	Labels        map[string]interface{} `json:"labels"`
 
+	Policy    *Policy     `json:"-"`
 	Resource  *Resource   `json:"resource,omitempty"`
 	Approvals []*Approval `json:"approvals,omitempty"`
 

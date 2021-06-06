@@ -38,4 +38,5 @@ type ApprovalRepository interface {
 type ApprovalService interface {
 	BulkInsert([]*Approval) error
 	GetPendingApprovals(user string) ([]*Approval, error)
+	AdvanceApproval(appeal *Appeal) error
 }

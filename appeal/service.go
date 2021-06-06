@@ -136,10 +136,10 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		} else if policies[policyConfig.ID][uint(policyConfig.Version)] == nil {
 			return ErrPolicyVersionNotFound
 		}
-		policy := policies[policyConfig.ID][uint(policyConfig.Version)]
+		a.Policy = policies[policyConfig.ID][uint(policyConfig.Version)]
 
 		approvals := []*domain.Approval{}
-		for i, step := range policy.Steps {
+		for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService
 			var approvers []string
 			if step.Approvers != "" {
 				approvers, err = s.resolveApprovers(a.User, a.Resource, step.Approvers)
@@ -162,6 +162,11 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		a.PolicyVersion = uint(policyConfig.Version)
 		a.Status = domain.AppealStatusPending
 		a.Approvals = approvals
+
+		if err := s.approvalService.AdvanceApproval(a); err != nil {
+			return err
+		}
+		a.Policy = nil
 
 		notifications = append(notifications, getApprovalNotifications(a)...)
 	}
@@ -218,13 +223,20 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 
 			if approvalAction.Action == domain.AppealActionNameApprove {
 				approval.Status = domain.ApprovalStatusApproved
+				if err := s.approvalService.AdvanceApproval(appeal); err != nil {
+					return nil, err
+				}
 
+				// TODO: decide if appeal status should be marked as active by checking
+				// through all approval step statuses
 				if i == len(appeal.Approvals)-1 {
 					if err := s.providerService.GrantAccess(appeal); err != nil {
 						return nil, err
 					}
+
 					appeal.Status = domain.AppealStatusActive
 				}
+
 			} else if approvalAction.Action == domain.AppealActionNameReject {
 				approval.Status = domain.ApprovalStatusRejected
 				appeal.Status = domain.AppealStatusRejected
