@@ -13,6 +13,8 @@ import (
 
 type findFilters struct {
 	User                   string    `mapstructure:"user" validate:"omitempty,required"`
+	ResourceID             uint      `mapstructure:"resource_id" validate:"omitempty,required"`
+	Role                   string    `mapstructure:"role" validate:"omitempty,required"`
 	Statuses               []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
 	ExpirationDateLessThan time.Time `mapstructure:"expiration_date_lt" validate:"omitempty,required"`
 }
@@ -67,6 +69,12 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Appeal, err
 	}
 	if conditions.Statuses != nil {
 		db = db.Where(`"status" IN ?`, conditions.Statuses)
+	}
+	if conditions.ResourceID != 0 {
+		db = db.Where(`"resource_id" = ?`, conditions.ResourceID)
+	}
+	if conditions.Role != "" {
+		db = db.Where(`"role" = ?`, conditions.Role)
 	}
 	if !conditions.ExpirationDateLessThan.IsZero() {
 		db = db.Where(`"options" -> 'expiration_date' < ?`, conditions.ExpirationDateLessThan)
