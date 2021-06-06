@@ -91,7 +91,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	if err != nil {
 		return err
 	}
-	approvalSteps, err := s.getApprovalSteps()
+	policies, err := s.getPolicies()
 	if err != nil {
 		return err
 	}
@@ -131,15 +131,15 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 
 		policyConfig := resourceConfig.policy
-		if approvalSteps[policyConfig.ID] == nil {
+		if policies[policyConfig.ID] == nil {
 			return ErrPolicyIDNotFound
-		} else if approvalSteps[policyConfig.ID][uint(policyConfig.Version)] == nil {
+		} else if policies[policyConfig.ID][uint(policyConfig.Version)] == nil {
 			return ErrPolicyVersionNotFound
 		}
-		steps := approvalSteps[policyConfig.ID][uint(policyConfig.Version)]
+		policy := policies[policyConfig.ID][uint(policyConfig.Version)]
 
 		approvals := []*domain.Approval{}
-		for i, step := range steps {
+		for i, step := range policy.Steps {
 			var approvers []string
 			if step.Approvers != "" {
 				approvers, err = s.resolveApprovers(a.User, a.Resource, step.Approvers)
@@ -392,22 +392,22 @@ func (s *Service) getProviderConfigs() (map[string]map[string]*providerConfig, e
 	return providerConfigs, nil
 }
 
-func (s *Service) getApprovalSteps() (map[string]map[uint][]*domain.Step, error) {
+func (s *Service) getPolicies() (map[string]map[uint]*domain.Policy, error) {
 	policies, err := s.policyService.Find()
 	if err != nil {
 		return nil, err
 	}
-	approvalSteps := map[string]map[uint][]*domain.Step{}
+	policiesMap := map[string]map[uint]*domain.Policy{}
 	for _, p := range policies {
 		id := p.ID
 		version := p.Version
-		if approvalSteps[id] == nil {
-			approvalSteps[id] = map[uint][]*domain.Step{}
+		if policiesMap[id] == nil {
+			policiesMap[id] = map[uint]*domain.Policy{}
 		}
-		approvalSteps[id][version] = p.Steps
+		policiesMap[id][version] = p
 	}
 
-	return approvalSteps, nil
+	return policiesMap, nil
 }
 
 func (s *Service) resolveApprovers(user string, resource *domain.Resource, approversKey string) ([]string, error) {
