@@ -252,6 +252,10 @@ func (s *HandlerTestSuite) TestCreate() {
 			expectedStatusCode   int
 		}{
 			{
+				expectedServiceError: appeal.ErrAppealDuplicate,
+				expectedStatusCode:   http.StatusConflict,
+			},
+			{
 				expectedServiceError: errors.New("appeal service error"),
 				expectedStatusCode:   http.StatusInternalServerError,
 			},

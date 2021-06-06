@@ -95,10 +95,20 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	if err != nil {
 		return err
 	}
+	pendingAppeals, err := s.getPendingAppeals()
+	if err != nil {
+		return err
+	}
 
 	notifications := []domain.Notification{}
 
 	for _, a := range appeals {
+		if pendingAppeals[a.User] != nil &&
+			pendingAppeals[a.User][a.ResourceID] != nil &&
+			pendingAppeals[a.User][a.ResourceID][a.Role] != nil {
+			return ErrAppealDuplicate
+		}
+
 		r := resources[a.ResourceID]
 		if r == nil {
 			return ErrResourceNotFound
@@ -351,6 +361,28 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 	}
 
 	return revokedAppeal, nil
+}
+
+func (s *Service) getPendingAppeals() (map[string]map[uint]map[string]*domain.Appeal, error) {
+	appeals, err := s.repo.Find(map[string]interface{}{
+		"statuses": []string{domain.AppealStatusPending},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	appealsMap := map[string]map[uint]map[string]*domain.Appeal{}
+	for _, a := range appeals {
+		if appealsMap[a.User] == nil {
+			appealsMap[a.User] = map[uint]map[string]*domain.Appeal{}
+		}
+		if appealsMap[a.User][a.ResourceID] == nil {
+			appealsMap[a.User][a.ResourceID] = map[string]*domain.Appeal{}
+		}
+		appealsMap[a.User][a.ResourceID][a.Role] = a
+	}
+
+	return appealsMap, nil
 }
 
 func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) {

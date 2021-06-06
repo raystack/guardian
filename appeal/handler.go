@@ -2,6 +2,7 @@ package appeal
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -74,7 +75,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.AppealService.Create(appeals); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		status := http.StatusInternalServerError
+		if errors.Is(err, ErrAppealDuplicate) {
+			status = http.StatusConflict
+		}
+
+		http.Error(w, err.Error(), status)
 		return
 	}
 
