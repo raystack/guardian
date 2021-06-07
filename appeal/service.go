@@ -91,25 +91,38 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	if err != nil {
 		return err
 	}
-	approvalSteps, err := s.getApprovalSteps()
+	policies, err := s.getPolicies()
+	if err != nil {
+		return err
+	}
+	pendingAppeals, err := s.getPendingAppeals()
 	if err != nil {
 		return err
 	}
 
+	notifications := []domain.Notification{}
+
 	for _, a := range appeals {
-		resource := resources[a.ResourceID]
-		if resource == nil {
+		if pendingAppeals[a.User] != nil &&
+			pendingAppeals[a.User][a.ResourceID] != nil &&
+			pendingAppeals[a.User][a.ResourceID][a.Role] != nil {
+			return ErrAppealDuplicate
+		}
+
+		r := resources[a.ResourceID]
+		if r == nil {
 			return ErrResourceNotFound
 		}
+		a.Resource = r
 
-		if providerConfigs[resource.ProviderType] == nil {
+		if providerConfigs[a.Resource.ProviderType] == nil {
 			return ErrProviderTypeNotFound
-		} else if providerConfigs[resource.ProviderType][resource.ProviderURN] == nil {
+		} else if providerConfigs[a.Resource.ProviderType][a.Resource.ProviderURN] == nil {
 			return ErrProviderURNNotFound
 		}
-		providerConfig := providerConfigs[resource.ProviderType][resource.ProviderURN]
+		providerConfig := providerConfigs[a.Resource.ProviderType][a.Resource.ProviderURN]
 
-		if providerConfig.resources[resource.Type] == nil {
+		if providerConfig.resources[a.Resource.Type] == nil {
 			return ErrResourceTypeNotFound
 		}
 
@@ -122,24 +135,24 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			}
 		}
 
-		resourceConfig := providerConfig.resources[resource.Type]
+		resourceConfig := providerConfig.resources[a.Resource.Type]
 		if !utils.ContainsString(resourceConfig.availableRoleIDs, a.Role) {
 			return ErrInvalidRole
 		}
 
 		policyConfig := resourceConfig.policy
-		if approvalSteps[policyConfig.ID] == nil {
+		if policies[policyConfig.ID] == nil {
 			return ErrPolicyIDNotFound
-		} else if approvalSteps[policyConfig.ID][uint(policyConfig.Version)] == nil {
+		} else if policies[policyConfig.ID][uint(policyConfig.Version)] == nil {
 			return ErrPolicyVersionNotFound
 		}
-		steps := approvalSteps[policyConfig.ID][uint(policyConfig.Version)]
+		a.Policy = policies[policyConfig.ID][uint(policyConfig.Version)]
 
 		approvals := []*domain.Approval{}
-		for i, step := range steps {
+		for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService
 			var approvers []string
 			if step.Approvers != "" {
-				approvers, err = s.resolveApprovers(a.User, resource, step.Approvers)
+				approvers, err = s.resolveApprovers(a.User, a.Resource, step.Approvers)
 				if err != nil {
 					return err
 				}
@@ -155,21 +168,23 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			})
 		}
 
-		a.Resource = resource
 		a.PolicyID = policyConfig.ID
 		a.PolicyVersion = uint(policyConfig.Version)
 		a.Status = domain.AppealStatusPending
 		a.Approvals = approvals
+
+		if err := s.approvalService.AdvanceApproval(a); err != nil {
+			return err
+		}
+		a.Policy = nil
+
+		notifications = append(notifications, getApprovalNotifications(a)...)
 	}
 
 	if err := s.repo.BulkInsert(appeals); err != nil {
 		return err
 	}
 
-	notifications := []domain.Notification{}
-	for _, appeal := range appeals {
-		notifications = append(notifications, getApprovalNotifications(appeal)...)
-	}
 	if len(notifications) > 0 {
 		if err := s.notifier.Notify(notifications); err != nil {
 			s.logger.Error(err.Error())
@@ -218,13 +233,20 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 
 			if approvalAction.Action == domain.AppealActionNameApprove {
 				approval.Status = domain.ApprovalStatusApproved
+				if err := s.approvalService.AdvanceApproval(appeal); err != nil {
+					return nil, err
+				}
 
+				// TODO: decide if appeal status should be marked as active by checking
+				// through all approval step statuses
 				if i == len(appeal.Approvals)-1 {
 					if err := s.providerService.GrantAccess(appeal); err != nil {
 						return nil, err
 					}
+
 					appeal.Status = domain.AppealStatusActive
 				}
+
 			} else if approvalAction.Action == domain.AppealActionNameReject {
 				approval.Status = domain.ApprovalStatusRejected
 				appeal.Status = domain.AppealStatusRejected
@@ -341,6 +363,28 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 	return revokedAppeal, nil
 }
 
+func (s *Service) getPendingAppeals() (map[string]map[uint]map[string]*domain.Appeal, error) {
+	appeals, err := s.repo.Find(map[string]interface{}{
+		"statuses": []string{domain.AppealStatusPending},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	appealsMap := map[string]map[uint]map[string]*domain.Appeal{}
+	for _, a := range appeals {
+		if appealsMap[a.User] == nil {
+			appealsMap[a.User] = map[uint]map[string]*domain.Appeal{}
+		}
+		if appealsMap[a.User][a.ResourceID] == nil {
+			appealsMap[a.User][a.ResourceID] = map[string]*domain.Appeal{}
+		}
+		appealsMap[a.User][a.ResourceID][a.Role] = a
+	}
+
+	return appealsMap, nil
+}
+
 func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) {
 	filters := map[string]interface{}{"ids": ids}
 	resources, err := s.resourceService.Find(filters)
@@ -392,22 +436,22 @@ func (s *Service) getProviderConfigs() (map[string]map[string]*providerConfig, e
 	return providerConfigs, nil
 }
 
-func (s *Service) getApprovalSteps() (map[string]map[uint][]*domain.Step, error) {
+func (s *Service) getPolicies() (map[string]map[uint]*domain.Policy, error) {
 	policies, err := s.policyService.Find()
 	if err != nil {
 		return nil, err
 	}
-	approvalSteps := map[string]map[uint][]*domain.Step{}
+	policiesMap := map[string]map[uint]*domain.Policy{}
 	for _, p := range policies {
 		id := p.ID
 		version := p.Version
-		if approvalSteps[id] == nil {
-			approvalSteps[id] = map[uint][]*domain.Step{}
+		if policiesMap[id] == nil {
+			policiesMap[id] = map[uint]*domain.Policy{}
 		}
-		approvalSteps[id][version] = p.Steps
+		policiesMap[id][version] = p
 	}
 
-	return approvalSteps, nil
+	return policiesMap, nil
 }
 
 func (s *Service) resolveApprovers(user string, resource *domain.Resource, approversKey string) ([]string, error) {

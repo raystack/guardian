@@ -1,6 +1,8 @@
 package domain
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	AppealActionNameApprove = "approve"
@@ -32,6 +34,7 @@ type Appeal struct {
 	Options       *AppealOptions         `json:"options"`
 	Labels        map[string]interface{} `json:"labels"`
 
+	Policy    *Policy     `json:"-"`
 	Resource  *Resource   `json:"resource,omitempty"`
 	Approvals []*Approval `json:"approvals,omitempty"`
 
@@ -41,7 +44,7 @@ type Appeal struct {
 
 func (a *Appeal) GetNextPendingApproval() *Approval {
 	for _, approval := range a.Approvals {
-		if approval.Status == ApprovalStatusPending && len(approval.Approvers) > 0 {
+		if approval.Status == ApprovalStatusPending && approval.IsHumanApproval() {
 			return approval
 		}
 	}

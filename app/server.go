@@ -58,13 +58,13 @@ func RunServer(c *Config) error {
 	notifier := notifier.NewSlackNotifier(c.SlackAccessToken)
 
 	resourceService := resource.NewService(resourceRepository)
+	policyService := policy.NewService(policyRepository)
 	providerService := provider.NewService(
 		providerRepository,
 		resourceService,
 		providers,
 	)
-	policyService := policy.NewService(policyRepository)
-	approvalService := approval.NewService(approvalRepository)
+	approvalService := approval.NewService(approvalRepository, policyService)
 	appealService := appeal.NewService(
 		appealRepository,
 		approvalService,
