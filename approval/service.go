@@ -52,7 +52,7 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 		if approval.Status == domain.ApprovalStatusRejected {
 			break
 		} else if approval.Status == domain.ApprovalStatusPending {
-			if approval.IsHumanApproval() {
+			if approval.IsManualApproval() {
 				break
 			}
 

@@ -44,7 +44,7 @@ type Appeal struct {
 
 func (a *Appeal) GetNextPendingApproval() *Approval {
 	for _, approval := range a.Approvals {
-		if approval.Status == ApprovalStatusPending && approval.IsHumanApproval() {
+		if approval.Status == ApprovalStatusPending && approval.IsManualApproval() {
 			return approval
 		}
 	}

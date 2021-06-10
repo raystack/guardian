@@ -26,7 +26,7 @@ type Approval struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (a *Approval) IsHumanApproval() bool {
+func (a *Approval) IsManualApproval() bool {
 	return len(a.Approvers) > 0
 }
 
