@@ -11,6 +11,10 @@ import (
 	"github.com/odpf/guardian/utils"
 )
 
+const (
+	AuthenticatedEmailHeaderKey = "X-Goog-Authenticated-User-Email"
+)
+
 // Handler for http service
 type Handler struct {
 	AppealService domain.AppealService
@@ -215,5 +219,5 @@ func (h *Handler) Revoke(w http.ResponseWriter, r *http.Request) {
 }
 
 func getActor(r *http.Request) string {
-	return r.Header.Get(domain.AuthenticatedEmailHeaderKey)
+	return r.Header.Get(AuthenticatedEmailHeaderKey)
 }

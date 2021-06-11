@@ -412,7 +412,7 @@ func (s *HandlerTestSuite) TestMakeAction() {
 			"id":   "1",
 			"name": "approval_1",
 		})
-		req.Header.Add(domain.AuthenticatedEmailHeaderKey, actor)
+		req.Header.Add(appeal.AuthenticatedEmailHeaderKey, actor)
 		expectedError := errors.New("service error")
 		s.mockAppealService.On("MakeAction", mock.Anything).
 			Return(nil, expectedError).
@@ -454,7 +454,7 @@ func (s *HandlerTestSuite) TestMakeAction() {
 					"id":   "1",
 					"name": "approval_1",
 				})
-				req.Header.Add(domain.AuthenticatedEmailHeaderKey, actor)
+				req.Header.Add(appeal.AuthenticatedEmailHeaderKey, actor)
 				s.mockAppealService.On("MakeAction", mock.Anything).
 					Return(nil, tc.expectedServiceError).
 					Once()
@@ -476,7 +476,7 @@ func (s *HandlerTestSuite) TestMakeAction() {
 			"id":   "1",
 			"name": "approval_1",
 		})
-		req.Header.Add(domain.AuthenticatedEmailHeaderKey, actor)
+		req.Header.Add(appeal.AuthenticatedEmailHeaderKey, actor)
 		expectedApprovalAction := domain.ApprovalAction{
 			AppealID:     1,
 			ApprovalName: "approval_1",
@@ -541,7 +541,7 @@ func (s *HandlerTestSuite) TestRevoke() {
 			req = mux.SetURLVars(req, map[string]string{
 				"id": "1",
 			})
-			req.Header.Add(domain.AuthenticatedEmailHeaderKey, actor)
+			req.Header.Add(appeal.AuthenticatedEmailHeaderKey, actor)
 			s.mockAppealService.On("Revoke", mock.Anything, mock.Anything).
 				Return(nil, tc.expectedError).
 				Once()
@@ -561,7 +561,7 @@ func (s *HandlerTestSuite) TestRevoke() {
 		req = mux.SetURLVars(req, map[string]string{
 			"id": "1",
 		})
-		req.Header.Add(domain.AuthenticatedEmailHeaderKey, actor)
+		req.Header.Add(appeal.AuthenticatedEmailHeaderKey, actor)
 		expectedResult := &domain.Appeal{
 			ID: 1,
 		}
