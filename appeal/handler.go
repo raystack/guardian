@@ -2,6 +2,7 @@ package appeal
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -10,21 +11,17 @@ import (
 	"github.com/odpf/guardian/utils"
 )
 
+const (
+	AuthenticatedEmailHeaderKey = "X-Goog-Authenticated-User-Email"
+)
+
 // Handler for http service
 type Handler struct {
 	AppealService domain.AppealService
 }
 
-// SetupHandler registers api handlers to the endpoints
-func SetupHandler(r *mux.Router, as domain.AppealService) {
-	h := &Handler{as}
-	r.Methods(http.MethodPost).Path("/appeals").HandlerFunc(h.Create)
-	r.Methods(http.MethodGet).Path("/appeals").HandlerFunc(h.Find)
-	r.Methods(http.MethodGet).Path("/appeals/approvals").HandlerFunc(h.GetPendingApprovals)
-	r.Methods(http.MethodPost).Path("/appeals/{id}/approvals/{name}").HandlerFunc(h.MakeAction)
-	r.Methods(http.MethodPut).Path("/appeals/{id}/cancel").HandlerFunc(h.Cancel)
-	r.Methods(http.MethodPut).Path("/appeals/{id}/revoke").HandlerFunc(h.Revoke)
-	r.Methods(http.MethodGet).Path("/appeals/{id}").HandlerFunc(h.GetByID)
+func NewHTTPHandler(as domain.AppealService) *Handler {
+	return &Handler{as}
 }
 
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +79,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.AppealService.Create(appeals); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		status := http.StatusInternalServerError
+		if errors.Is(err, ErrAppealDuplicate) {
+			status = http.StatusConflict
+		}
+
+		http.Error(w, err.Error(), status)
 		return
 	}
 
@@ -117,11 +119,12 @@ func (h *Handler) MakeAction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	actor := getActor(r)
 
 	appeal, err := h.AppealService.MakeAction(domain.ApprovalAction{
 		AppealID:     uint(appealID),
 		ApprovalName: approvalName,
-		Actor:        payload.Actor,
+		Actor:        actor,
 		Action:       payload.Action,
 	})
 	if err != nil {
@@ -193,13 +196,9 @@ func (h *Handler) Revoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload revokePayload
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	actor := getActor(r)
 
-	appeal, err := h.AppealService.Revoke(uint(appealID), payload.Actor)
+	appeal, err := h.AppealService.Revoke(uint(appealID), actor)
 	if err != nil {
 		var statusCode int
 		switch err {
@@ -217,4 +216,8 @@ func (h *Handler) Revoke(w http.ResponseWriter, r *http.Request) {
 
 	utils.ReturnJSON(w, appeal)
 	return
+}
+
+func getActor(r *http.Request) string {
+	return r.Header.Get(AuthenticatedEmailHeaderKey)
 }

@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"net/http"
 	"time"
 )
 
@@ -56,9 +55,4 @@ type PolicyService interface {
 	Find() ([]*Policy, error)
 	GetOne(id string, version uint) (*Policy, error)
 	Update(*Policy) error
-}
-
-// PolicyHandler interface
-type PolicyHandler interface {
-	Create(http.ResponseWriter, *http.Request)
 }

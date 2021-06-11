@@ -160,7 +160,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."deleted_at" IS NULL LIMIT 1`)
+	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE id = $1 AND "resources"."deleted_at" IS NULL LIMIT 1`)
 	s.Run("should return record and nil error on success", func() {
 		expectedID := uint(10)
 		timeNow := time.Now()
@@ -177,6 +177,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 				timeNow,
 			)
 		s.dbmock.ExpectQuery(expectedQuery).
+			WithArgs(expectedID).
 			WillReturnRows(expectedRows)
 
 		_, actualError := s.repository.GetOne(expectedID)
@@ -205,7 +206,7 @@ func (s *RepositoryTestSuite) TestBulkUpsert() {
 			},
 		}
 
-		expectedQuery := regexp.QuoteMeta(`INSERT INTO "resources" ("provider_type","provider_urn","type","urn","name","details","labels","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10),($11,$12,$13,$14,$15,$16,$17,$18,$19,$20) ON CONFLICT ("provider_type","provider_urn","type","urn") DO UPDATE SET "name"="excluded"."name","details"="excluded"."details","labels"="excluded"."labels","updated_at"="excluded"."updated_at" RETURNING "id"`)
+		expectedQuery := regexp.QuoteMeta(`INSERT INTO "resources" ("provider_type","provider_urn","type","urn","name","details","labels","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10),($11,$12,$13,$14,$15,$16,$17,$18,$19,$20) ON CONFLICT ("provider_type","provider_urn","type","urn") DO UPDATE SET "name"="excluded"."name","updated_at"="excluded"."updated_at" RETURNING "id"`)
 		expectedArgs := []driver.Value{}
 		for _, r := range resources {
 			expectedArgs = append(expectedArgs,

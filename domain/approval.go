@@ -26,6 +26,10 @@ type Approval struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+func (a *Approval) IsManualApproval() bool {
+	return len(a.Approvers) > 0
+}
+
 type ApprovalRepository interface {
 	BulkInsert([]*Approval) error
 	GetPendingApprovals(user string) ([]*Approval, error)
@@ -34,4 +38,5 @@ type ApprovalRepository interface {
 type ApprovalService interface {
 	BulkInsert([]*Approval) error
 	GetPendingApprovals(user string) ([]*Approval, error)
+	AdvanceApproval(appeal *Appeal) error
 }

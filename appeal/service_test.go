@@ -147,6 +147,21 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
+	s.Run("should return error if got error from appeal repository", func() {
+		expectedResources := []*domain.Resource{}
+		expectedProviders := []*domain.Provider{}
+		expectedPolicies := []*domain.Policy{}
+		s.mockResourceService.On("Find", mock.Anything).Return(expectedResources, nil).Once()
+		s.mockProviderService.On("Find").Return(expectedProviders, nil).Once()
+		s.mockPolicyService.On("Find").Return(expectedPolicies, nil).Once()
+		expectedError := errors.New("appeal repository error")
+		s.mockRepository.On("Find", mock.Anything).Return(nil, expectedError).Once()
+
+		actualError := s.service.Create([]*domain.Appeal{})
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
 	s.Run("should return error for invalid appeals", func() {
 		provider := &domain.Provider{
 			ID:   1,
@@ -174,13 +189,28 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		timeNow := time.Now()
 		testCases := []struct {
-			name          string
-			resources     []*domain.Resource
-			providers     []*domain.Provider
-			policies      []*domain.Policy
-			appeals       []*domain.Appeal
-			expectedError error
+			name           string
+			resources      []*domain.Resource
+			providers      []*domain.Provider
+			policies       []*domain.Policy
+			pendingAppeals []*domain.Appeal
+			appeals        []*domain.Appeal
+			expectedError  error
 		}{
+			{
+				name: "duplciate appeal",
+				pendingAppeals: []*domain.Appeal{{
+					User:       "test-user",
+					ResourceID: 1,
+					Role:       "test-role",
+				}},
+				appeals: []*domain.Appeal{{
+					User:       "test-user",
+					ResourceID: 1,
+					Role:       "test-role",
+				}},
+				expectedError: appeal.ErrAppealDuplicate,
+			},
 			{
 				name: "provider type not found",
 				resources: []*domain.Resource{{
@@ -310,6 +340,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				s.mockResourceService.On("Find", mock.Anything).Return(tc.resources, nil).Once()
 				s.mockProviderService.On("Find").Return(tc.providers, nil).Once()
 				s.mockPolicyService.On("Find").Return(tc.policies, nil).Once()
+				s.mockRepository.On("Find", mock.Anything).Return(tc.pendingAppeals, nil).Once()
 
 				actualError := s.service.Create(tc.appeals)
 
@@ -318,13 +349,15 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 	})
 
-	s.Run("should return error if got error from repository", func() {
+	s.Run("should return error if got error from repository on bulk insert", func() {
 		expectedResources := []*domain.Resource{}
 		expectedProviders := []*domain.Provider{}
 		expectedPolicies := []*domain.Policy{}
+		expectedPendingAppeals := []*domain.Appeal{}
 		s.mockResourceService.On("Find", mock.Anything).Return(expectedResources, nil).Once()
 		s.mockProviderService.On("Find").Return(expectedProviders, nil).Once()
 		s.mockPolicyService.On("Find").Return(expectedPolicies, nil).Once()
+		s.mockRepository.On("Find", mock.Anything).Return(expectedPendingAppeals, nil).Once()
 		expectedError := errors.New("repository error")
 		s.mockRepository.On("BulkInsert", mock.Anything).Return(expectedError).Once()
 
@@ -483,12 +516,17 @@ func (s *ServiceTestSuite) TestCreate() {
 	}
 
 	s.Run("should return appeals on success", func() {
-		expectedFilters := map[string]interface{}{"ids": resourceIDs}
-		s.mockResourceService.On("Find", expectedFilters).Return(resources, nil).Once()
+		expectedResourceFilters := map[string]interface{}{"ids": resourceIDs}
+		s.mockResourceService.On("Find", expectedResourceFilters).Return(resources, nil).Once()
 		s.mockProviderService.On("Find").Return(providers, nil).Once()
 		s.mockPolicyService.On("Find").Return(policies, nil).Once()
+		expectedPendingAppealsFilters := map[string]interface{}{
+			"statuses": []string{domain.AppealStatusPending},
+		}
+		s.mockRepository.On("Find", expectedPendingAppealsFilters).Return([]*domain.Appeal{}, nil).Once()
 		expectedUserApprovers := []string{"user.approver@email.com"}
 		s.mockIAMService.On("GetUserApproverEmails", user).Return(expectedUserApprovers, nil)
+		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 		s.mockRepository.
 			On("BulkInsert", expectedAppealsInsertionParam).
 			Return(nil).
@@ -798,6 +836,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		}
 		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
 		expectedError := errors.New("repository error")
+		s.mockApprovalService.On("AdvanceApproval", expectedAppeal).Return(nil).Once()
 		s.mockProviderService.On("GrantAccess", expectedAppeal).Return(nil).Once()
 		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
 		s.mockProviderService.On("RevokeAccess", expectedAppeal).Return(nil).Once()
@@ -979,6 +1018,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).
 					Return(tc.expectedAppealDetails, nil).
 					Once()
+				s.mockApprovalService.On("AdvanceApproval", tc.expectedAppealDetails).
+					Return(nil).Once()
 				s.mockProviderService.On("GrantAccess", tc.expectedAppealDetails).
 					Return(nil).
 					Once()

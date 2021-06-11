@@ -249,6 +249,20 @@ func (s *RepositoryTestSuite) TestFind() {
 			},
 			{
 				filters: map[string]interface{}{
+					"resource_id": uint(1),
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "resource_id" = $1 AND "appeals"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{uint(1)},
+			},
+			{
+				filters: map[string]interface{}{
+					"role": "test-role",
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "role" = $1 AND "appeals"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{"test-role"},
+			},
+			{
+				filters: map[string]interface{}{
 					"expiration_date_lt": timeNow,
 				},
 				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "options" -> 'expiration_date' < $1 AND "appeals"."deleted_at" IS NULL`),

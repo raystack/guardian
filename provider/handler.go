@@ -15,12 +15,8 @@ type Handler struct {
 	ProviderService domain.ProviderService
 }
 
-// SetupHandler registers api handlers to the endpoints
-func SetupHandler(r *mux.Router, ps domain.ProviderService) {
-	h := &Handler{ps}
-	r.Methods(http.MethodGet).Path("/providers").HandlerFunc(h.Find)
-	r.Methods(http.MethodPost).Path("/providers").HandlerFunc(h.Create)
-	r.Methods(http.MethodPut).Path("/providers/{id}").HandlerFunc(h.Update)
+func NewHTTPHandler(ps domain.ProviderService) *Handler {
+	return &Handler{ps}
 }
 
 // Create parses http request body to provider domain and passes it to the provider service

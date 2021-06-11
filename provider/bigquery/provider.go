@@ -9,17 +9,19 @@ import (
 
 // Provider for bigquery
 type Provider struct {
-	typeName string
-	clients  map[string]*Client
-	crypto   domain.Crypto
+	typeName   string
+	bqClients  map[string]*bigQueryClient
+	iamClients map[string]*iamClient
+	crypto     domain.Crypto
 }
 
 // NewProvider returns bigquery provider
 func NewProvider(typeName string, crypto domain.Crypto) *Provider {
 	return &Provider{
-		typeName: typeName,
-		clients:  map[string]*Client{},
-		crypto:   crypto,
+		typeName:   typeName,
+		bqClients:  map[string]*bigQueryClient{},
+		iamClients: map[string]*iamClient{},
+		crypto:     crypto,
 	}
 }
 
@@ -41,7 +43,7 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 
 // GetResources returns BigQuery dataset and table resources
 func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
-	client, err := p.getClient(pc.URN, Credentials(pc.Credentials.(string)))
+	client, err := p.getBigQueryClient(pc.URN, Credentials(pc.Credentials.(string)))
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +85,12 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return err
 	}
 
-	client, err := p.getClient(pc.URN, Credentials(pc.Credentials.(string)))
+	bqClient, err := p.getBigQueryClient(pc.URN, Credentials(pc.Credentials.(string)))
+	if err != nil {
+		return err
+	}
+
+	iamClient, err := p.getIamClient(pc.URN, Credentials(pc.Credentials.(string)))
 	if err != nil {
 		return err
 	}
@@ -97,11 +104,17 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 
 		for _, p := range permissions {
 			if p.Target == "" {
-				return client.GrantDatasetAccess(ctx, d, a.User, p.Name)
+				if err := bqClient.GrantDatasetAccess(ctx, d, a.User, p.Name); err != nil {
+					return err
+				}
+			} else {
+				if err := iamClient.GrantAccess(ctx, p.Target, a.User, p.Name); err != nil {
+					return err
+				}
 			}
-
-			// TODO: grant access to the targetted project id
 		}
+
+		return nil
 	} else if a.Resource.Type == ResourceTypeTable {
 		t := new(Table)
 		if err := t.fromDomain(a.Resource); err != nil {
@@ -110,11 +123,17 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 
 		for _, p := range permissions {
 			if p.Target == "" {
-				return client.GrantTableAccess(ctx, t, a.User, p.Name)
+				if err := bqClient.GrantTableAccess(ctx, t, a.User, p.Name); err != nil {
+					return err
+				}
+			} else {
+				if err := iamClient.GrantAccess(ctx, p.Target, a.User, p.Name); err != nil {
+					return err
+				}
 			}
-
-			// TODO: grant access to the targetted project id
 		}
+
+		return nil
 	}
 
 	return ErrInvalidResourceType
@@ -130,7 +149,12 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return err
 	}
 
-	client, err := p.getClient(pc.URN, Credentials(pc.Credentials.(string)))
+	bqClient, err := p.getBigQueryClient(pc.URN, Credentials(pc.Credentials.(string)))
+	if err != nil {
+		return err
+	}
+
+	iamClient, err := p.getIamClient(pc.URN, Credentials(pc.Credentials.(string)))
 	if err != nil {
 		return err
 	}
@@ -144,11 +168,17 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 
 		for _, p := range permissions {
 			if p.Target == "" {
-				return client.RevokeDatasetAccess(ctx, d, a.User, p.Name)
+				if err := bqClient.RevokeDatasetAccess(ctx, d, a.User, p.Name); err != nil {
+					return err
+				}
+			} else {
+				if err := iamClient.RevokeAccess(ctx, p.Target, a.User, p.Name); err != nil {
+					return err
+				}
 			}
-
-			// TODO: revoke access to the targetted project id
 		}
+
+		return nil
 	} else if a.Resource.Type == ResourceTypeTable {
 		t := new(Table)
 		if err := t.fromDomain(a.Resource); err != nil {
@@ -157,28 +187,49 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 
 		for _, p := range permissions {
 			if p.Target == "" {
-				return client.RevokeTableAccess(ctx, t, a.User, p.Name)
+				if err := bqClient.RevokeTableAccess(ctx, t, a.User, p.Name); err != nil {
+					return err
+				}
+			} else {
+				if err := iamClient.RevokeAccess(ctx, p.Target, a.User, p.Name); err != nil {
+					return err
+				}
 			}
-
-			// TODO: revoke access to the targetted project id
 		}
+
+		return nil
 	}
 
 	return ErrInvalidResourceType
 }
 
-func (p *Provider) getClient(projectID string, credentials Credentials) (*Client, error) {
-	if p.clients[projectID] != nil {
-		return p.clients[projectID], nil
+func (p *Provider) getBigQueryClient(projectID string, credentials Credentials) (*bigQueryClient, error) {
+	if p.bqClients[projectID] != nil {
+		return p.bqClients[projectID], nil
 	}
 
 	credentials.Decrypt(p.crypto)
-	client, err := NewClient(projectID, []byte(credentials))
+	client, err := newBigQueryClient(projectID, []byte(credentials))
 	if err != nil {
 		return nil, err
 	}
 
-	p.clients[projectID] = client
+	p.bqClients[projectID] = client
+	return client, nil
+}
+
+func (p *Provider) getIamClient(projectID string, credentials Credentials) (*iamClient, error) {
+	if p.iamClients[projectID] != nil {
+		return p.iamClients[projectID], nil
+	}
+
+	credentials.Decrypt(p.crypto)
+	client, err := newCloudResourceManagerClient([]byte(credentials))
+	if err != nil {
+		return nil, err
+	}
+
+	p.iamClients[projectID] = client
 	return client, nil
 }
 

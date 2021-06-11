@@ -61,10 +61,8 @@ func (r *Repository) GetOne(id uint) (*domain.Resource, error) {
 		return nil, ErrEmptyIDParam
 	}
 
-	m := &model.Resource{
-		ID: id,
-	}
-	if err := r.db.Take(m).Error; err != nil {
+	var m model.Resource
+	if err := r.db.Where("id = ?", id).Take(&m).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -99,7 +97,7 @@ func (r *Repository) BulkUpsert(resources []*domain.Resource) error {
 				{Name: "type"},
 				{Name: "urn"},
 			},
-			DoUpdates: clause.AssignmentColumns([]string{"name", "details", "labels", "updated_at"}),
+			DoUpdates: clause.AssignmentColumns([]string{"name", "updated_at"}),
 		}
 		if err := r.db.Clauses(upsertClause).Create(models).Error; err != nil {
 			return err

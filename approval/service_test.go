@@ -13,15 +13,17 @@ import (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockRepository *mocks.ApprovalRepository
+	mockRepository    *mocks.ApprovalRepository
+	mockPolicyService *mocks.PolicyService
 
 	service domain.ApprovalService
 }
 
 func (s *ServiceTestSuite) SetupTest() {
 	s.mockRepository = new(mocks.ApprovalRepository)
+	s.mockPolicyService = new(mocks.PolicyService)
 
-	s.service = approval.NewService(s.mockRepository)
+	s.service = approval.NewService(s.mockRepository, s.mockPolicyService)
 }
 
 func (s *ServiceTestSuite) TestGetPendingApprovals() {
@@ -45,6 +47,10 @@ func (s *ServiceTestSuite) TestBulkInsert() {
 
 		s.EqualError(actualError, expectedError.Error())
 	})
+}
+
+func (s *ServiceTestSuite) TestAdvanceApproval() {
+	// TODO: test
 }
 
 func TestService(t *testing.T) {

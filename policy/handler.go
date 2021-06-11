@@ -14,12 +14,8 @@ type Handler struct {
 	PolicyService domain.PolicyService
 }
 
-// SetupHandler registers api handlers to the endpoints
-func SetupHandler(r *mux.Router, ps domain.PolicyService) {
-	h := &Handler{ps}
-	r.Methods(http.MethodGet).Path("/policies").HandlerFunc(h.Find)
-	r.Methods(http.MethodPost).Path("/policies").HandlerFunc(h.Create)
-	r.Methods(http.MethodPut).Path("/policies/{id}").HandlerFunc(h.Update)
+func NewHTTPHandler(ps domain.PolicyService) *Handler {
+	return &Handler{ps}
 }
 
 // Create parses http request body to policy domain and passes it to the policy service
