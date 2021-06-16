@@ -1,37 +1,46 @@
-# Provider configuration
+# Provider Configuration
 
 A provider configuration is required when we want to register a provider instance to Guardian.
 
-Field | Description | Required | Default value
-------|-------------|----------|--------------
-type | [Available provider types](#providers) | YES | -
-urn | Provider instance identifier | YES | -
-credentials | Credentials that will be used by Guardian to connect to the provider instance, check [Provider Credentials](#provider-credentials) | YES | -
-appeal | Appeal options, check [Appeal Config](#appeal-config) | YES | -
-resources | List of permission configurations for each available resource type, check [Resource Config](#resource-config) | YES | -
+#### YAML representation
+```yaml
+type: string
+urn: string
+credentials: any
+appeal: object
+resources: []object
+```
 
-## Appeal Config
+Fields ||
+-|-
+`type` | `string` <br> Required. Provider type<br><br> Possible values: `google_bigquery`, `metabase`
+`urn` | `string` <br> Required. Provider instance identifier
+`credentials` | `object` <br> Required. Credentials to setup connection and access the provider instance <br><br> Possible values: <br> - BigQuery: [`string(BigQueryCredentials)`](bigquery-provider.md#bigquerycredentials) <br> - Metabase: [`object(MetabaseCredentials)`](metabase-provider.md#metabasecredentials) 
+`appeal` | [`object(AppealConfig)`](#appealconfig) <br> Required. Appeal options
+`resources[]` | [`object(ResourceConfig)`](#resourceconfig) <br> Required. List of permission configurations for each resource type
 
-Field | Description | Required | Default value
-------|-------------|----------|--------------
-allow_permanent_access | Set this to `true` if you want to allow users to have permanent access to the resources | NO | `false`
-allow_active_access_extension_in | Duration before the access expiration date when the user allowed to create appeal to the same resource (extend their current access). | NO | -
+### `AppealConfig`
 
-## Resource Config
+Fields ||
+-|-
+`allow_permanent_access` | `boolean` <br> Set this to true if you want to allow users to have permanent access to the resources. Default: `false`
+`allow_active_access_extension_in` | `string` <br> Duration before the access expiration date when the user allowed to create appeal to the same resource (extend their current access).
 
-Field | Description | Required | Default value
-------|-------------|----------|--------------
-type | Resource type in that provider, check  | YES | -
-policy | Approval policy config want to be applied. Requires the `id` and the `version` of the policy | YES | -
-roles | List of [Role config](#role-config)
+### `ResourceConfig`
 
-## Role Config
+Field ||
+-|-
+`type` | `string` <br> Required. <br><br> Possible values: <br> - BigQuery: [`string(BigQueryResourceType)`](bigquery-provider.md#bigqueryresourcetype) <br> - Metabase: [`string(MetabaseResourceType)`](metabase-provider.md#metabaseresourcetype)
+`policy` | `object(id: string, version: int)` <br> Required. Approval policy config that want to be applied to this resource config. Example: `id: approval_policy_x, version: 1`
+`roles[]` | [`object(RoleConfig)`](#roleconfig) <br> Required. List of resource permissions mapping
 
-Field | Description | Required | Default value
-------|-------------|----------|--------------
-id | Role ID. On the appeal creation, user is asked a role id for each resource access appeal | YES | -
-name | Display name | NO | empty
-permissions | Set of permissions want to given when the access granted | YES | -
+### `RoleConfig`
+
+Fields ||
+-|-
+`id` | `string` <br> Required. Role identifier
+`name` | `string` <br> Display name for role
+`permissions[]` | `object` <br> Required. Set of permissions that will be granted to the requested resource <br><br> Possible values: <br> - BigQuery: [`object(BigQueryResourcePermission)`](bigquery-provider.md#bigqueryresourcepermission) <br> - Metabase: [`object(MetabaseResourcePermission)`](metabase-provider.md#metabaseresourcepermission)
 
 ## Providers
 
@@ -43,44 +52,7 @@ Provider type | `google_bigquery`
 Credentials value | Base64 encrypted value of a service account key JSON
 Available resource types | `dataset`, `table`
 
-## Example
+## Examples
 
-```yaml
-type: google_bigquery
-urn: gcp-project-id
-credentials: credentials...
-appeal:
-  allow_permanent_access: true
-  allow_active_access_extension_in: '7d'
-resources:
-  - type: dataset
-    policy:
-      id: bigquery_approval
-      version: 1
-    roles:
-      - id: viewer
-        name: Viewer
-        permissions:
-          - name: roles/bigQuery.dataViewer
-          - name: roles/customRole
-            target: other-gcp-project-id
-      - id: editor
-        name: Editor
-        permissions:
-          - name: roles/bigQuery.dataEditor
-  - type: table
-    policy:
-      id: bigquery_approval
-      version: 1
-    roles:
-      - id: viewer
-        name: Viewer
-        permissions:
-          - name: roles/bigQuery.dataViewer
-          - name: roles/customRole
-            target: other-gcp-project-id
-      - id: editor
-        name: Editor
-        permissions:
-          - name: roles/bigQuery.dataEditor
-```
+- [Metabase](metabase-provider.md#example)
+- [BigQuery](bigquery-provider.md#example)
