@@ -61,6 +61,34 @@ func newClient(config *ClientConfig) (*client, error) {
 	return c, nil
 }
 
+func (c *client) GetDatabases() ([]*Database, error) {
+	req, err := c.newRequest(http.MethodGet, "/api/database", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var databases []*Database
+	if _, err := c.do(req, &databases); err != nil {
+		return nil, err
+	}
+
+	return databases, nil
+}
+
+func (c *client) GetCollections() ([]*Collection, error) {
+	req, err := c.newRequest(http.MethodGet, "/api/collection", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var collection []*Collection
+	if _, err := c.do(req, &collection); err != nil {
+		return nil, err
+	}
+
+	return collection, nil
+}
+
 func (c *client) getSessionToken() (string, error) {
 	sessionRequest := &sessionRequest{
 		Username: c.username,
