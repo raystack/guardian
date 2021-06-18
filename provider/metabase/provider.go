@@ -51,7 +51,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 	for _, d := range databases {
-		db := d.toDomain()
+		db := d.ToDomain()
 		db.ProviderType = pc.Type
 		db.ProviderURN = pc.URN
 		resources = append(resources, db)
@@ -62,7 +62,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 	for _, c := range collections {
-		db := c.toDomain()
+		db := c.ToDomain()
 		db.ProviderType = pc.Type
 		db.ProviderURN = pc.URN
 		resources = append(resources, db)

@@ -22,7 +22,7 @@ type Database struct {
 	NativePermissions        string `json:"native_permissions"`
 }
 
-func (d *Database) toDomain() *domain.Resource {
+func (d *Database) ToDomain() *domain.Resource {
 	return &domain.Resource{
 		Type: ResourceTypeDatabase,
 		Name: d.Name,
@@ -46,7 +46,7 @@ type Collection struct {
 	Namespace string      `json:"namespace,omitempty"`
 }
 
-func (c *Collection) toDomain() *domain.Resource {
+func (c *Collection) ToDomain() *domain.Resource {
 	details := map[string]interface{}{}
 	if c.Location != "" {
 		details["location"] = c.Location
