@@ -96,12 +96,12 @@ func (c *client) getSessionToken() (string, error) {
 	}
 	req, err := c.newRequest(http.MethodPost, "/api/session", sessionRequest)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	var sessionResponse sessionResponse
 	if _, err := c.do(req, &sessionResponse); err != nil {
-		return "", nil
+		return "", err
 	}
 
 	return sessionResponse.ID, nil
