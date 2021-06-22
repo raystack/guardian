@@ -32,7 +32,7 @@ func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
 
 func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 	if c == nil {
-		return ErrUnableToEncryptNilCredentials
+		return ErrUnableToDecryptNilCredentials
 	}
 
 	decryptedPassword, err := decryptor.Decrypt(c.Password)
