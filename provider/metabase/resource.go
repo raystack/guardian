@@ -2,6 +2,7 @@ package metabase
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/odpf/guardian/domain"
 )
@@ -20,6 +21,21 @@ type Database struct {
 	MetadataSyncSchedule     string `json:"metadata_sync_schedule"`
 	Engine                   string `json:"engine"`
 	NativePermissions        string `json:"native_permissions"`
+}
+
+func (d *Database) FromDomain(r *domain.Resource) error {
+	if r.Type != ResourceTypeDatabase {
+		return ErrInvalidResourceType
+	}
+
+	id, err := strconv.Atoi(r.URN)
+	if err != nil {
+		return err
+	}
+
+	d.ID = id
+	d.Name = r.Name
+	return nil
 }
 
 func (d *Database) ToDomain() *domain.Resource {

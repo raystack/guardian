@@ -3,9 +3,12 @@ package metabase
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"reflect"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -14,6 +17,16 @@ type ClientConfig struct {
 	Host     string `validate:"required,url" mapstructure:"host"`
 	Username string `validate:"required" mapstructure:"username"`
 	Password string `validate:"required" mapstructure:"password"`
+}
+
+type user struct {
+	ID    int    `json:"id"`
+	Email string `json:"email"`
+}
+
+type group struct {
+	ID   int    `json:"id,omitempty"`
+	Name string `json:"name"`
 }
 
 type sessionRequest struct {
@@ -25,6 +38,22 @@ type sessionResponse struct {
 	ID string `json:"id"`
 }
 
+type databasePermission struct {
+	Native  string `json:"native" mapstructure:"native"`
+	Schemas string `json:"schemas" mapstructure:"schemas"`
+}
+
+type databaseGraph struct {
+	Revision int `json:"revision"`
+	// Groups is a map[group_id]map[database_id]databasePermission
+	Groups map[string]map[string]databasePermission `json:"groups"`
+}
+
+type membershipRequest struct {
+	GroupID int `json:"group_id"`
+	UserID  int `json:"user_id"`
+}
+
 type client struct {
 	baseURL *url.URL
 
@@ -33,6 +62,8 @@ type client struct {
 	sessionToken string
 
 	httpClient *http.Client
+
+	userIDs map[string]int
 }
 
 func newClient(config *ClientConfig) (*client, error) {
@@ -50,6 +81,7 @@ func newClient(config *ClientConfig) (*client, error) {
 		username:   config.Username,
 		password:   config.Password,
 		httpClient: &http.Client{},
+		userIDs:    map[string]int{},
 	}
 
 	sessionToken, err := c.getSessionToken()
@@ -89,6 +121,96 @@ func (c *client) GetCollections() ([]*Collection, error) {
 	return collection, nil
 }
 
+func (c *client) GrantDatabaseAccess(resource *Database, user, role string) error {
+	graph, err := c.getDatabaseAccess()
+	if err != nil {
+		return err
+	}
+
+	var groupNameSuffix string
+	var designatedRole databasePermission
+	if role == DatabaseRoleViewer {
+		designatedRole = databasePermission{
+			Schemas: "all",
+		}
+		groupNameSuffix = "Viewer"
+	} else if role == DatabaseRoleEditor {
+		designatedRole = databasePermission{
+			Schemas: "all",
+			Native:  "write",
+		}
+		groupNameSuffix = "Editor"
+	}
+
+	var designatedGroupID int
+	resourceID := fmt.Sprintf("%v", resource.ID)
+	for groupID, databaseMap := range graph.Groups {
+		for databaseID, permission := range databaseMap {
+			if databaseID == resourceID && reflect.DeepEqual(designatedRole, permission) {
+				groupIDint, err := strconv.Atoi(groupID)
+				if err != nil {
+					return err
+				}
+
+				designatedGroupID = groupIDint
+				break
+			}
+		}
+	}
+
+	if designatedGroupID == 0 {
+		group := &group{
+			Name: fmt.Sprintf("%s - %s", resource.Name, groupNameSuffix),
+		}
+		if err := c.createGroup(group); err != nil {
+			return err
+		}
+		designatedGroupID = group.ID
+	}
+
+	userID, err := c.getUserID(user)
+	if err != nil {
+		return err
+	}
+	return c.addGroupMember(designatedGroupID, userID)
+}
+
+func (c *client) getUserID(email string) (int, error) {
+	if c.userIDs[email] != 0 {
+		return c.userIDs[email], nil
+	}
+
+	users, err := c.getUsers()
+	if err != nil {
+		return 0, err
+	}
+
+	userIDs := map[string]int{}
+	for _, u := range users {
+		userIDs[u.Email] = u.ID
+	}
+	c.userIDs = userIDs
+
+	if c.userIDs[email] == 0 {
+		return 0, ErrUserNotFound
+	}
+	return c.userIDs[email], nil
+}
+
+func (c *client) getUsers() ([]user, error) {
+	req, err := c.newRequest(http.MethodGet, "/api/user", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []user
+	if _, err := c.do(req, &users); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (c *client) getSessionToken() (string, error) {
 	sessionRequest := &sessionRequest{
 		Username: c.username,
@@ -105,6 +227,49 @@ func (c *client) getSessionToken() (string, error) {
 	}
 
 	return sessionResponse.ID, nil
+}
+
+func (c *client) getDatabaseAccess() (*databaseGraph, error) {
+	req, err := c.newRequest(http.MethodGet, "/api/permissions/graph", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var dbGraph databaseGraph
+	if _, err := c.do(req, &dbGraph); err != nil {
+		return nil, err
+	}
+
+	return &dbGraph, nil
+}
+
+func (c *client) createGroup(group *group) error {
+	req, err := c.newRequest(http.MethodPost, "/api/permissions/group", group)
+	if err != nil {
+		return err
+	}
+
+	if _, err := c.do(req, group); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *client) addGroupMember(groupID, userID int) error {
+	req, err := c.newRequest(http.MethodPost, "/api/permissions/membership", membershipRequest{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if err != nil {
+		return err
+	}
+
+	if _, err := c.do(req, nil); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *client) newRequest(method, path string, body interface{}) (*http.Request, error) {
