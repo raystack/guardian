@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/odpf/guardian/api/handlers"
 	"github.com/purini-to/zapmw"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -19,7 +18,7 @@ func New(logger *zap.Logger) *mux.Router {
 	}
 	r.Use(zapMiddlewares...)
 
-	r.Methods("GET").Path("/ping").Handler(handlers.Ping())
+	r.Methods("GET").Path("/ping").Handler(Ping())
 
 	return r
 }
