@@ -1,30 +1,92 @@
-package appeal
+package api
 
 import (
 	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/utils"
 )
+
+var TimeNow = time.Now
+
+type resourceOptions struct {
+	Duration string `json:"duration"`
+}
+
+type appealResource struct {
+	ID      uint                   `json:"id" validate:"required"`
+	Role    string                 `json:"role" validate:"required"`
+	Options map[string]interface{} `json:"options"`
+}
+
+type appealCreatePayload struct {
+	User      string           `json:"user" validate:"required"`
+	Resources []appealResource `json:"resources" validate:"required,min=1"`
+}
+
+func (p *appealCreatePayload) toDomain() ([]*domain.Appeal, error) {
+	appeals := []*domain.Appeal{}
+	for _, r := range p.Resources {
+		var options *domain.AppealOptions
+
+		var resOptions *resourceOptions
+		if err := mapstructure.Decode(r.Options, &resOptions); err != nil {
+			return nil, err
+		}
+		if resOptions != nil {
+			if err := utils.ValidateStruct(resOptions); err != nil {
+				return nil, err
+			}
+			var expirationDate time.Time
+			if resOptions.Duration != "" {
+				duration, err := time.ParseDuration(resOptions.Duration)
+				if err != nil {
+					return nil, err
+				}
+				expirationDate = TimeNow().Add(duration)
+			}
+
+			options = &domain.AppealOptions{
+				ExpirationDate: &expirationDate,
+			}
+		}
+
+		appeals = append(appeals, &domain.Appeal{
+			User:       p.User,
+			ResourceID: r.ID,
+			Role:       r.Role,
+			Options:    options,
+		})
+	}
+
+	return appeals, nil
+}
+
+type appealActionPayload struct {
+	Action string `json:"action"`
+}
 
 const (
 	AuthenticatedEmailHeaderKey = "X-Goog-Authenticated-User-Email"
 )
 
-// Handler for http service
-type Handler struct {
+// AppealHandler for http service
+type AppealHandler struct {
 	AppealService domain.AppealService
 }
 
-func NewHTTPHandler(as domain.AppealService) *Handler {
-	return &Handler{as}
+func NewAppealHandler(as domain.AppealService) *AppealHandler {
+	return &AppealHandler{as}
 }
 
-func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
+func (h *AppealHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
@@ -46,7 +108,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
+func (h *AppealHandler) Find(w http.ResponseWriter, r *http.Request) {
 	filters := map[string]interface{}{
 		"user": r.URL.Query().Get("user"),
 	}
@@ -61,8 +123,8 @@ func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	var payload createPayload
+func (h *AppealHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var payload appealCreatePayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -80,7 +142,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.AppealService.Create(appeals); err != nil {
 		status := http.StatusInternalServerError
-		if errors.Is(err, ErrAppealDuplicate) {
+		if errors.Is(err, appeal.ErrAppealDuplicate) {
 			status = http.StatusConflict
 		}
 
@@ -92,7 +154,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h *Handler) GetPendingApprovals(w http.ResponseWriter, r *http.Request) {
+func (h *AppealHandler) GetPendingApprovals(w http.ResponseWriter, r *http.Request) {
 	user := r.URL.Query().Get("user")
 
 	approvals, err := h.AppealService.GetPendingApprovals(user)
@@ -105,7 +167,7 @@ func (h *Handler) GetPendingApprovals(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h *Handler) MakeAction(w http.ResponseWriter, r *http.Request) {
+func (h *AppealHandler) MakeAction(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	appealID, err := strconv.Atoi(params["id"])
 	if err != nil {
@@ -114,14 +176,14 @@ func (h *Handler) MakeAction(w http.ResponseWriter, r *http.Request) {
 	}
 	approvalName := params["name"]
 
-	var payload actionPayload
+	var payload appealActionPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	actor := getActor(r)
 
-	appeal, err := h.AppealService.MakeAction(domain.ApprovalAction{
+	a, err := h.AppealService.MakeAction(domain.ApprovalAction{
 		AppealID:     uint(appealID),
 		ApprovalName: approvalName,
 		Actor:        actor,
@@ -130,22 +192,22 @@ func (h *Handler) MakeAction(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var statusCode int
 		switch err {
-		case ErrAppealStatusCanceled,
-			ErrAppealStatusApproved,
-			ErrAppealStatusRejected,
-			ErrAppealStatusTerminated,
-			ErrAppealStatusUnrecognized,
-			ErrApprovalDependencyIsPending,
-			ErrAppealStatusRejected,
-			ErrApprovalStatusUnrecognized,
-			ErrApprovalStatusApproved,
-			ErrApprovalStatusRejected,
-			ErrApprovalStatusSkipped,
-			ErrActionInvalidValue:
+		case appeal.ErrAppealStatusCanceled,
+			appeal.ErrAppealStatusApproved,
+			appeal.ErrAppealStatusRejected,
+			appeal.ErrAppealStatusTerminated,
+			appeal.ErrAppealStatusUnrecognized,
+			appeal.ErrApprovalDependencyIsPending,
+			appeal.ErrAppealStatusRejected,
+			appeal.ErrApprovalStatusUnrecognized,
+			appeal.ErrApprovalStatusApproved,
+			appeal.ErrApprovalStatusRejected,
+			appeal.ErrApprovalStatusSkipped,
+			appeal.ErrActionInvalidValue:
 			statusCode = http.StatusBadRequest
-		case ErrActionForbidden:
+		case appeal.ErrActionForbidden:
 			statusCode = http.StatusForbidden
-		case ErrApprovalNameNotFound:
+		case appeal.ErrApprovalNameNotFound:
 			statusCode = http.StatusNotFound
 		default:
 			statusCode = http.StatusInternalServerError
@@ -154,11 +216,11 @@ func (h *Handler) MakeAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.ReturnJSON(w, appeal)
+	utils.ReturnJSON(w, a)
 	return
 }
 
-func (h *Handler) Cancel(w http.ResponseWriter, r *http.Request) {
+func (h *AppealHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	appealID, err := strconv.Atoi(params["id"])
 	if err != nil {
@@ -166,15 +228,15 @@ func (h *Handler) Cancel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appeal, err := h.AppealService.Cancel(uint(appealID))
+	a, err := h.AppealService.Cancel(uint(appealID))
 	if err != nil {
 		var statusCode int
 		switch err {
-		case ErrAppealStatusCanceled,
-			ErrAppealStatusApproved,
-			ErrAppealStatusRejected,
-			ErrAppealStatusTerminated,
-			ErrAppealStatusUnrecognized:
+		case appeal.ErrAppealStatusCanceled,
+			appeal.ErrAppealStatusApproved,
+			appeal.ErrAppealStatusRejected,
+			appeal.ErrAppealStatusTerminated,
+			appeal.ErrAppealStatusUnrecognized:
 			statusCode = http.StatusBadRequest
 		default:
 			statusCode = http.StatusInternalServerError
@@ -184,11 +246,11 @@ func (h *Handler) Cancel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.ReturnJSON(w, appeal)
+	utils.ReturnJSON(w, a)
 	return
 }
 
-func (h *Handler) Revoke(w http.ResponseWriter, r *http.Request) {
+func (h *AppealHandler) Revoke(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	appealID, err := strconv.Atoi(params["id"])
 	if err != nil {
@@ -198,13 +260,13 @@ func (h *Handler) Revoke(w http.ResponseWriter, r *http.Request) {
 
 	actor := getActor(r)
 
-	appeal, err := h.AppealService.Revoke(uint(appealID), actor)
+	a, err := h.AppealService.Revoke(uint(appealID), actor)
 	if err != nil {
 		var statusCode int
 		switch err {
-		case ErrRevokeAppealForbidden:
+		case appeal.ErrRevokeAppealForbidden:
 			statusCode = http.StatusForbidden
-		case ErrAppealNotFound:
+		case appeal.ErrAppealNotFound:
 			statusCode = http.StatusNotFound
 		default:
 			statusCode = http.StatusInternalServerError
@@ -214,7 +276,7 @@ func (h *Handler) Revoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.ReturnJSON(w, appeal)
+	utils.ReturnJSON(w, a)
 	return
 }
 

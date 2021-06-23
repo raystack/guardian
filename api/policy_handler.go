@@ -10,14 +10,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type createPayload struct {
+type policyCreatePayload struct {
 	ID          string                 `yaml:"id" validate:"required"`
 	Description string                 `yaml:"description"`
 	Steps       []*domain.Step         `yaml:"steps" validate:"required"`
 	Labels      map[string]interface{} `yaml:"labels"`
 }
 
-func (p *createPayload) toDomain() *domain.Policy {
+func (p *policyCreatePayload) toDomain() *domain.Policy {
 	return &domain.Policy{
 		ID:          p.ID,
 		Description: p.Description,
@@ -51,7 +51,7 @@ func NewPolicyHandler(ps domain.PolicyService) *PolicyHandler {
 
 // Create parses http request body to policy domain and passes it to the policy service
 func (h *PolicyHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var payload createPayload
+	var payload policyCreatePayload
 
 	if err := yaml.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
