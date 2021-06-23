@@ -78,7 +78,7 @@ func RunServer(c *Config) error {
 		logger,
 	)
 
-	providerHttpHandler := provider.NewHTTPHandler(providerService)
+	providerHttpHandler := api.NewProviderHandler(providerService)
 	policyHttpHandler := policy.NewHTTPHandler(policyService)
 	resourceHttpHandler := resource.NewHTTPHandler(resourceService)
 	appealHttpHandler := appeal.NewHTTPHandler(appealService)

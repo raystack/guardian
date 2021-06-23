@@ -1,4 +1,4 @@
-package provider_test
+package api_test
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/odpf/guardian/api"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/provider"
@@ -17,28 +18,28 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type HandlerTestSuite struct {
+type ProviderHandlerTestSuite struct {
 	suite.Suite
 	mockProviderService *mocks.ProviderService
-	handler             *provider.Handler
+	handler             *api.ProviderHandler
 	res                 *httptest.ResponseRecorder
 }
 
-func (s *HandlerTestSuite) Setup() {
+func (s *ProviderHandlerTestSuite) Setup() {
 	s.mockProviderService = new(mocks.ProviderService)
-	s.handler = provider.NewHTTPHandler(s.mockProviderService)
+	s.handler = api.NewProviderHandler(s.mockProviderService)
 	s.res = httptest.NewRecorder()
 }
 
-func (s *HandlerTestSuite) SetupTest() {
+func (s *ProviderHandlerTestSuite) SetupTest() {
 	s.Setup()
 }
 
-func (s *HandlerTestSuite) AfterTest() {
+func (s *ProviderHandlerTestSuite) AfterTest() {
 	s.mockProviderService.AssertExpectations(s.T())
 }
 
-func (s *HandlerTestSuite) TestCreate() {
+func (s *ProviderHandlerTestSuite) TestCreate() {
 	s.Run("should return bad request error if received malformed payload", func() {
 		s.Setup()
 		malformedPayload := `invalid yaml format...`
@@ -171,7 +172,7 @@ resources:
 	})
 }
 
-func (s *HandlerTestSuite) TestFind() {
+func (s *ProviderHandlerTestSuite) TestFind() {
 	s.Run("should return internal server error if provider service returns error", func() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodGet, "/", nil)
@@ -220,7 +221,7 @@ func (s *HandlerTestSuite) TestFind() {
 	})
 }
 
-func (s *HandlerTestSuite) TestUpdate() {
+func (s *ProviderHandlerTestSuite) TestUpdate() {
 	s.Run("should return error if got invalid id param", func() {
 		testCases := []struct {
 			params             map[string]string
@@ -378,6 +379,6 @@ resources:
 	})
 }
 
-func TestHandler(t *testing.T) {
-	suite.Run(t, new(HandlerTestSuite))
+func TestProviderHandler(t *testing.T) {
+	suite.Run(t, new(ProviderHandlerTestSuite))
 }
