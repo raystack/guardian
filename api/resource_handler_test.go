@@ -1,4 +1,4 @@
-package resource_test
+package api_test
 
 import (
 	"encoding/json"
@@ -10,35 +10,35 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/odpf/guardian/api"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
-type HandlerTestSuite struct {
+type ResourceHandlerTestSuite struct {
 	suite.Suite
 	mockResourceService *mocks.ResourceService
-	handler             *resource.Handler
+	handler             *api.ResourceHandler
 	res                 *httptest.ResponseRecorder
 }
 
-func (s *HandlerTestSuite) Setup() {
+func (s *ResourceHandlerTestSuite) Setup() {
 	s.mockResourceService = new(mocks.ResourceService)
-	s.handler = resource.NewHTTPHandler(s.mockResourceService)
+	s.handler = api.NewResourceHandler(s.mockResourceService)
 	s.res = httptest.NewRecorder()
 }
 
-func (s *HandlerTestSuite) SetupTest() {
+func (s *ResourceHandlerTestSuite) SetupTest() {
 	s.Setup()
 }
 
-func (s *HandlerTestSuite) AfterTest() {
+func (s *ResourceHandlerTestSuite) AfterTest() {
 	s.mockResourceService.AssertExpectations(s.T())
 }
 
-func (s *HandlerTestSuite) TestUpdate() {
+func (s *ResourceHandlerTestSuite) TestUpdate() {
 	s.Run("should return error if got invalid id param", func() {
 		testCases := []struct {
 			params             map[string]string
@@ -182,6 +182,6 @@ func (s *HandlerTestSuite) TestUpdate() {
 	})
 }
 
-func TestHandler(t *testing.T) {
-	suite.Run(t, new(HandlerTestSuite))
+func TestResourceHandler(t *testing.T) {
+	suite.Run(t, new(ResourceHandlerTestSuite))
 }
