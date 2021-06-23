@@ -70,7 +70,6 @@ func (h *PolicyHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, p)
-	return
 }
 
 // Find handles http request for list of policy records
@@ -82,7 +81,6 @@ func (h *PolicyHandler) Find(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, policies)
-	return
 }
 
 // Update is the http handler for policy update
@@ -118,5 +116,4 @@ func (h *PolicyHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, p)
-	return
 }

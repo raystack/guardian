@@ -105,7 +105,6 @@ func (h *AppealHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, a)
-	return
 }
 
 func (h *AppealHandler) Find(w http.ResponseWriter, r *http.Request) {
@@ -120,7 +119,6 @@ func (h *AppealHandler) Find(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, records)
-	return
 }
 
 func (h *AppealHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -151,7 +149,6 @@ func (h *AppealHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, appeals)
-	return
 }
 
 func (h *AppealHandler) GetPendingApprovals(w http.ResponseWriter, r *http.Request) {
@@ -164,7 +161,6 @@ func (h *AppealHandler) GetPendingApprovals(w http.ResponseWriter, r *http.Reque
 	}
 
 	utils.ReturnJSON(w, approvals)
-	return
 }
 
 func (h *AppealHandler) MakeAction(w http.ResponseWriter, r *http.Request) {
@@ -217,7 +213,6 @@ func (h *AppealHandler) MakeAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, a)
-	return
 }
 
 func (h *AppealHandler) Cancel(w http.ResponseWriter, r *http.Request) {
@@ -247,7 +242,6 @@ func (h *AppealHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, a)
-	return
 }
 
 func (h *AppealHandler) Revoke(w http.ResponseWriter, r *http.Request) {
@@ -277,7 +271,6 @@ func (h *AppealHandler) Revoke(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, a)
-	return
 }
 
 func getActor(r *http.Request) string {

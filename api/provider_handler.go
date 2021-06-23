@@ -63,7 +63,6 @@ func (h *ProviderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, p)
-	return
 }
 
 // Find handles http request for list of provider records
@@ -79,7 +78,6 @@ func (h *ProviderHandler) Find(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, records)
-	return
 }
 
 // Update handles http request for provider update
@@ -117,5 +115,4 @@ func (h *ProviderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, p)
-	return
 }

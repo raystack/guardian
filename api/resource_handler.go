@@ -41,7 +41,6 @@ func (h *ResourceHandler) Find(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, records)
-	return
 }
 
 func (h *ResourceHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -74,5 +73,4 @@ func (h *ResourceHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, res)
-	return
 }
