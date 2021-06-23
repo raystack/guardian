@@ -101,6 +101,19 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 
 		return nil
+	} else if a.Resource.Type == ResourceTypeCollection {
+		c := new(Collection)
+		if err := c.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if err := client.GrantCollectionAccess(c, a.User, p.Name); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 
 	return ErrInvalidResourceType

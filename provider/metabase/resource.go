@@ -62,6 +62,21 @@ type Collection struct {
 	Namespace string      `json:"namespace,omitempty"`
 }
 
+func (c *Collection) FromDomain(r *domain.Resource) error {
+	if r.Type != ResourceTypeCollection {
+		return ErrInvalidResourceType
+	}
+
+	id, _ := strconv.Atoi(r.URN)
+	if id == 0 {
+		c.ID = r.URN
+	} else {
+		c.ID = id
+	}
+	c.Name = r.Name
+	return nil
+}
+
 func (c *Collection) ToDomain() *domain.Resource {
 	details := map[string]interface{}{}
 	if c.Location != "" {

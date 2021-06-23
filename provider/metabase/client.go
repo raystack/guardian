@@ -49,6 +49,12 @@ type databaseGraph struct {
 	Groups map[string]map[string]databasePermission `json:"groups"`
 }
 
+type collectionGraph struct {
+	Revision int `json:"revision"`
+	// Groups is a map[group_id]map[database_id]role string
+	Groups map[string]map[string]string `json:"groups"`
+}
+
 type membershipRequest struct {
 	GroupID int `json:"group_id"`
 	UserID  int `json:"user_id"`
@@ -209,6 +215,53 @@ func (c *client) RevokeDatabaseAccess(resource *Database, user, role string) err
 	return c.updateDatabaseAccess(access)
 }
 
+func (c *client) GrantCollectionAccess(resource *Collection, user, role string) error {
+	access, err := c.getCollectionAccess()
+	if err != nil {
+		return err
+	}
+
+	var designatedGroupID int
+	for groupID, collections := range access.Groups {
+		for collectionID, currentRole := range collections {
+			if collectionID == resource.ID && currentRole == role {
+				groupIDint, err := strconv.Atoi(groupID)
+				if err != nil {
+					return err
+				}
+
+				designatedGroupID = groupIDint
+				break
+			}
+		}
+	}
+
+	if designatedGroupID == 0 {
+		group := &group{
+			Name: fmt.Sprintf("%s - %s", resource.Name, role),
+		}
+		if err := c.createGroup(group); err != nil {
+			return err
+		}
+		designatedGroupID = group.ID
+
+		groupIDstr := strconv.Itoa(group.ID)
+		collectionID := fmt.Sprintf("%v", resource.ID)
+		access.Groups[groupIDstr] = map[string]string{}
+		access.Groups[groupIDstr][collectionID] = role
+		if err := c.updateCollectionAccess(access); err != nil {
+			return err
+		}
+	}
+
+	userID, err := c.getUserID(user)
+	if err != nil {
+		return err
+	}
+
+	return c.addGroupMember(designatedGroupID, userID)
+}
+
 func (c *client) getUserID(email string) (int, error) {
 	if c.userIDs[email] != 0 {
 		return c.userIDs[email], nil
@@ -261,6 +314,33 @@ func (c *client) getSessionToken() (string, error) {
 	}
 
 	return sessionResponse.ID, nil
+}
+
+func (c *client) getCollectionAccess() (*collectionGraph, error) {
+	req, err := c.newRequest(http.MethodGet, "/api/collection/graph", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var graph collectionGraph
+	if _, err := c.do(req, &graph); err != nil {
+		return nil, err
+	}
+
+	return &graph, nil
+}
+
+func (c *client) updateCollectionAccess(access *collectionGraph) error {
+	req, err := c.newRequest(http.MethodPut, "/api/collection/graph", access)
+	if err != nil {
+		return err
+	}
+
+	if _, err := c.do(req, &access); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *client) getDatabaseAccess() (*databaseGraph, error) {
@@ -366,6 +446,8 @@ func (c *client) do(req *http.Request, v interface{}) (*http.Response, error) {
 		}
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(v)
+	if v != nil {
+		err = json.NewDecoder(resp.Body).Decode(v)
+	}
 	return resp, err
 }
