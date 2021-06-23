@@ -122,7 +122,7 @@ func (c *client) GetCollections() ([]*Collection, error) {
 }
 
 func (c *client) GrantDatabaseAccess(resource *Database, user, role string) error {
-	graph, err := c.getDatabaseAccess()
+	access, err := c.getDatabaseAccess()
 	if err != nil {
 		return err
 	}
@@ -144,8 +144,8 @@ func (c *client) GrantDatabaseAccess(resource *Database, user, role string) erro
 
 	var designatedGroupID int
 	resourceID := fmt.Sprintf("%v", resource.ID)
-	for groupID, databaseMap := range graph.Groups {
-		for databaseID, permission := range databaseMap {
+	for groupID, permissions := range access.Groups {
+		for databaseID, permission := range permissions {
 			if databaseID == resourceID && reflect.DeepEqual(designatedRole, permission) {
 				groupIDint, err := strconv.Atoi(groupID)
 				if err != nil {
@@ -173,6 +173,40 @@ func (c *client) GrantDatabaseAccess(resource *Database, user, role string) erro
 		return err
 	}
 	return c.addGroupMember(designatedGroupID, userID)
+}
+
+func (c *client) RevokeDatabaseAccess(resource *Database, user, role string) error {
+	access, err := c.getDatabaseAccess()
+	if err != nil {
+		return err
+	}
+
+	var designatedRole databasePermission
+	if role == DatabaseRoleViewer {
+		designatedRole = databasePermission{
+			Schemas: "all",
+		}
+	} else if role == DatabaseRoleEditor {
+		designatedRole = databasePermission{
+			Schemas: "all",
+			Native:  "write",
+		}
+	}
+
+	resourceID := fmt.Sprintf("%v", resource.ID)
+	for groupID, permissions := range access.Groups {
+		for databaseID, permission := range permissions {
+			if databaseID == resourceID && reflect.DeepEqual(designatedRole, permission) {
+				permissions[databaseID] = databasePermission{}
+				if len(permissions) == 0 {
+					access.Groups[groupID] = nil
+				}
+				break
+			}
+		}
+	}
+
+	return c.updateDatabaseAccess(access)
 }
 
 func (c *client) getUserID(email string) (int, error) {
@@ -241,6 +275,19 @@ func (c *client) getDatabaseAccess() (*databaseGraph, error) {
 	}
 
 	return &dbGraph, nil
+}
+
+func (c *client) updateDatabaseAccess(dbGraph *databaseGraph) error {
+	req, err := c.newRequest(http.MethodPut, "/api/permissions/graph", dbGraph)
+	if err != nil {
+		return err
+	}
+
+	if _, err := c.do(req, &dbGraph); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *client) createGroup(group *group) error {
