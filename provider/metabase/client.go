@@ -41,7 +41,7 @@ type sessionResponse struct {
 }
 
 type databasePermission struct {
-	Native  string `json:"native" mapstructure:"native"`
+	Native  string `json:"native,omitempty" mapstructure:"native"`
 	Schemas string `json:"schemas" mapstructure:"schemas"`
 }
 
@@ -61,6 +61,16 @@ type membershipRequest struct {
 	GroupID int `json:"group_id"`
 	UserID  int `json:"user_id"`
 }
+
+var (
+	databaseViewerPermission = databasePermission{
+		Schemas: "all",
+	}
+	databaseEditorPermission = databasePermission{
+		Schemas: "all",
+		Native:  "write",
+	}
+)
 
 type client struct {
 	baseURL *url.URL
@@ -136,59 +146,45 @@ func (c *client) GrantDatabaseAccess(resource *Database, user, role string) erro
 	}
 
 	var groupNameSuffix string
-	var designatedRole databasePermission
+	var dbPermission databasePermission
 	if role == DatabaseRoleViewer {
-		designatedRole = databasePermission{
-			Schemas: "all",
-		}
+		dbPermission = databaseViewerPermission
 		groupNameSuffix = "Viewer"
 	} else if role == DatabaseRoleEditor {
-		designatedRole = databasePermission{
-			Schemas: "all",
-			Native:  "write",
-		}
+		dbPermission = databaseEditorPermission
 		groupNameSuffix = "Editor"
 	}
 
-	var designatedGroupID int
-	resourceID := fmt.Sprintf("%v", resource.ID)
-	for groupID, permissions := range access.Groups {
-		for databaseID, permission := range permissions {
-			if databaseID == resourceID && reflect.DeepEqual(designatedRole, permission) {
-				groupIDint, err := strconv.Atoi(groupID)
-				if err != nil {
-					return err
-				}
+	resourceIDStr := strconv.Itoa(resource.ID)
+	groupID := c.findDatabaseAccessGroup(access, resourceIDStr, dbPermission)
 
-				designatedGroupID = groupIDint
-				break
-			}
-		}
-	}
-
-	if designatedGroupID == 0 {
-		group := &group{
+	if groupID == "" {
+		g := &group{
 			Name: fmt.Sprintf("%s - %s", resource.Name, groupNameSuffix),
 		}
-		if err := c.createGroup(group); err != nil {
+		if err := c.createGroup(g); err != nil {
 			return err
 		}
-		designatedGroupID = group.ID
 
-		groupIDstr := strconv.Itoa(group.ID)
-		collectionID := fmt.Sprintf("%v", resource.ID)
-		access.Groups[groupIDstr] = map[string]databasePermission{}
-		access.Groups[groupIDstr][collectionID] = designatedRole
+		groupID = strconv.Itoa(g.ID)
+		databaseID := fmt.Sprintf("%v", resource.ID)
+
+		access.Groups[groupID] = map[string]databasePermission{}
+		access.Groups[groupID][databaseID] = dbPermission
 		if err := c.updateDatabaseAccess(access); err != nil {
 			return err
 		}
 	}
 
+	groupIDint, err := strconv.Atoi(groupID)
+	if err != nil {
+		return err
+	}
 	userID, err := c.getUserID(user)
 	if err != nil {
 		return err
 	}
-	return c.addGroupMember(designatedGroupID, userID)
+	return c.addGroupMember(groupIDint, userID)
 }
 
 func (c *client) RevokeDatabaseAccess(resource *Database, user, role string) error {
@@ -197,42 +193,25 @@ func (c *client) RevokeDatabaseAccess(resource *Database, user, role string) err
 		return err
 	}
 
-	var designatedRole databasePermission
+	var dbPermission databasePermission
 	if role == DatabaseRoleViewer {
-		designatedRole = databasePermission{
-			Schemas: "all",
-		}
+		dbPermission = databaseViewerPermission
 	} else if role == DatabaseRoleEditor {
-		designatedRole = databasePermission{
-			Schemas: "all",
-			Native:  "write",
-		}
+		dbPermission = databaseEditorPermission
 	}
 
-	resourceID := fmt.Sprintf("%v", resource.ID)
-	var designatedGroupID int
-	for groupID, permissions := range access.Groups {
+	resourceIDStr := strconv.Itoa(resource.ID)
+	groupID := c.findDatabaseAccessGroup(access, resourceIDStr, dbPermission)
 
-		for databaseID, permission := range permissions {
-			if databaseID == resourceID && reflect.DeepEqual(designatedRole, permission) {
-				groupIDInt, err := strconv.Atoi(groupID)
-				if err != nil {
-					return err
-				}
-				designatedGroupID = groupIDInt
-				break
-			}
-		}
-		if designatedGroupID != 0 {
-			break
-		}
-	}
-
-	if designatedGroupID != 0 {
+	if groupID == "" {
 		return ErrPermissionNotFound
 	}
 
-	return c.removeMembership(designatedGroupID, user)
+	groupIDInt, err := strconv.Atoi(groupID)
+	if err != nil {
+		return err
+	}
+	return c.removeMembership(groupIDInt, user)
 }
 
 func (c *client) GrantCollectionAccess(resource *Collection, user, role string) error {
@@ -496,6 +475,20 @@ group:
 				}
 			}
 
+			return groupID
+		}
+	}
+
+	return ""
+}
+
+func (c *client) findDatabaseAccessGroup(access *databaseGraph, resourceID string, role databasePermission) string {
+	expectedDatabasePermission := map[string]databasePermission{
+		resourceID: role,
+	}
+
+	for groupID, databasePermissions := range access.Groups {
+		if reflect.DeepEqual(databasePermissions, expectedDatabasePermission) {
 			return groupID
 		}
 	}
