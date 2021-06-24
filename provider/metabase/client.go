@@ -232,23 +232,7 @@ func (c *client) RevokeDatabaseAccess(resource *Database, user, role string) err
 		return ErrPermissionNotFound
 	}
 
-	group, err := c.getGroup(designatedGroupID)
-	if err != nil {
-		return err
-	}
-
-	var membershipID int
-	for _, member := range group.Members {
-		if member.Email == user {
-			membershipID = member.MembershipID
-			break
-		}
-	}
-	if membershipID == 0 {
-		return ErrPermissionNotFound
-	}
-
-	return c.removeGroupMember(membershipID)
+	return c.removeMembership(designatedGroupID, user)
 }
 
 func (c *client) GrantCollectionAccess(resource *Collection, user, role string) error {
@@ -327,7 +311,12 @@ func (c *client) RevokeCollectionAccess(resource *Collection, user, role string)
 		return ErrPermissionNotFound
 	}
 
-	group, err := c.getGroup(designatedGroupID)
+	return c.removeMembership(designatedGroupID, user)
+}
+
+func (c *client) removeMembership(groupID int, user string) error {
+
+	group, err := c.getGroup(groupID)
 	if err != nil {
 		return err
 	}
