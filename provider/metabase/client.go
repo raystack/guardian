@@ -241,56 +241,36 @@ func (c *client) GrantCollectionAccess(resource *Collection, user, role string) 
 		return err
 	}
 
-	var designatedGroupID int
-	for groupID, collections := range access.Groups {
-		resourceID := fmt.Sprintf("%v", resource.ID)
-		if collections[resourceID] == role {
-			for collectionID, currentRole := range collections {
-				if collectionID == resourceID {
-					continue
-				}
-				if currentRole != "none" {
-					break
-				}
+	resourceIDStr := fmt.Sprintf("%v", resource.ID)
+	groupID := c.findCollectionAccessGroup(access, resourceIDStr, role)
 
-				groupIDint, err := strconv.Atoi(groupID)
-				if err != nil {
-					return err
-				}
-				designatedGroupID = groupIDint
-				break
-			}
-		}
-
-		if designatedGroupID != 0 {
-			break
-		}
-	}
-
-	if designatedGroupID == 0 {
-		group := &group{
+	if groupID == "" {
+		g := &group{
 			Name: fmt.Sprintf("%s - %s", resource.Name, role),
 		}
-		if err := c.createGroup(group); err != nil {
+		if err := c.createGroup(g); err != nil {
 			return err
 		}
-		designatedGroupID = group.ID
 
-		groupIDstr := strconv.Itoa(group.ID)
+		groupID = strconv.Itoa(g.ID)
 		collectionID := fmt.Sprintf("%v", resource.ID)
-		access.Groups[groupIDstr] = map[string]string{}
-		access.Groups[groupIDstr][collectionID] = role
+
+		access.Groups[groupID] = map[string]string{}
+		access.Groups[groupID][collectionID] = role
 		if err := c.updateCollectionAccess(access); err != nil {
 			return err
 		}
 	}
 
+	groupIDInt, err := strconv.Atoi(groupID)
+	if err != nil {
+		return err
+	}
 	userID, err := c.getUserID(user)
 	if err != nil {
 		return err
 	}
-
-	return c.addGroupMember(designatedGroupID, userID)
+	return c.addGroupMember(groupIDInt, userID)
 }
 
 func (c *client) RevokeCollectionAccess(resource *Collection, user, role string) error {
@@ -299,30 +279,18 @@ func (c *client) RevokeCollectionAccess(resource *Collection, user, role string)
 		return err
 	}
 
-	resourceID := fmt.Sprintf("%v", resource.ID)
-	var designatedGroupID int
-	for groupID, permissions := range access.Groups {
+	resourceIDStr := fmt.Sprintf("%v", resource.ID)
+	groupID := c.findCollectionAccessGroup(access, resourceIDStr, role)
 
-		for collectionID, permission := range permissions {
-			if collectionID == resourceID && role == permission {
-				groupIDInt, err := strconv.Atoi(groupID)
-				if err != nil {
-					return err
-				}
-				designatedGroupID = groupIDInt
-				break
-			}
-		}
-		if designatedGroupID != 0 {
-			break
-		}
-	}
-
-	if designatedGroupID != 0 {
+	if groupID == "" {
 		return ErrPermissionNotFound
 	}
 
-	return c.removeMembership(designatedGroupID, user)
+	groupIDInt, err := strconv.Atoi(groupID)
+	if err != nil {
+		return err
+	}
+	return c.removeMembership(groupIDInt, user)
 }
 
 func (c *client) removeMembership(groupID int, user string) error {
@@ -512,6 +480,27 @@ func (c *client) removeGroupMember(membershipID int) error {
 	}
 
 	return nil
+}
+
+func (c *client) findCollectionAccessGroup(access *collectionGraph, resourceID, role string) string {
+group:
+	for groupID, collections := range access.Groups {
+		if collections[resourceID] == role {
+			for collectionID, restRole := range collections {
+				if collectionID == resourceID {
+					continue
+				}
+
+				if restRole != "none" {
+					continue group
+				}
+			}
+
+			return groupID
+		}
+	}
+
+	return ""
 }
 
 func (c *client) newRequest(method, path string, body interface{}) (*http.Request, error) {
