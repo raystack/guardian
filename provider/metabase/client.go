@@ -243,16 +243,27 @@ func (c *client) GrantCollectionAccess(resource *Collection, user, role string) 
 
 	var designatedGroupID int
 	for groupID, collections := range access.Groups {
-		for collectionID, currentRole := range collections {
-			if collectionID == resource.ID && currentRole == role {
+		resourceID := fmt.Sprintf("%v", resource.ID)
+		if collections[resourceID] == role {
+			for collectionID, currentRole := range collections {
+				if collectionID == resourceID {
+					continue
+				}
+				if currentRole != "none" {
+					break
+				}
+
 				groupIDint, err := strconv.Atoi(groupID)
 				if err != nil {
 					return err
 				}
-
 				designatedGroupID = groupIDint
 				break
 			}
+		}
+
+		if designatedGroupID != 0 {
+			break
 		}
 	}
 
