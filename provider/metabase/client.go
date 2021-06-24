@@ -20,13 +20,15 @@ type ClientConfig struct {
 }
 
 type user struct {
-	ID    int    `json:"id"`
-	Email string `json:"email"`
+	ID           int    `json:"id"`
+	Email        string `json:"email"`
+	MembershipID int    `json:"membership_id"`
 }
 
 type group struct {
-	ID   int    `json:"id,omitempty"`
-	Name string `json:"name"`
+	ID      int    `json:"id,omitempty"`
+	Name    string `json:"name"`
+	Members []user `json:"members"`
 }
 
 type sessionRequest struct {
@@ -208,19 +210,45 @@ func (c *client) RevokeDatabaseAccess(resource *Database, user, role string) err
 	}
 
 	resourceID := fmt.Sprintf("%v", resource.ID)
+	var designatedGroupID int
 	for groupID, permissions := range access.Groups {
+
 		for databaseID, permission := range permissions {
 			if databaseID == resourceID && reflect.DeepEqual(designatedRole, permission) {
-				permissions[databaseID] = databasePermission{}
-				if len(permissions) == 0 {
-					access.Groups[groupID] = nil
+				groupIDInt, err := strconv.Atoi(groupID)
+				if err != nil {
+					return err
 				}
+				designatedGroupID = groupIDInt
 				break
 			}
 		}
+		if designatedGroupID != 0 {
+			break
+		}
 	}
 
-	return c.updateDatabaseAccess(access)
+	if designatedGroupID != 0 {
+		return ErrPermissionNotFound
+	}
+
+	group, err := c.getGroup(designatedGroupID)
+	if err != nil {
+		return err
+	}
+
+	var membershipID int
+	for _, member := range group.Members {
+		if member.Email == user {
+			membershipID = member.MembershipID
+			break
+		}
+	}
+	if membershipID == 0 {
+		return ErrPermissionNotFound
+	}
+
+	return c.removeGroupMember(membershipID)
 }
 
 func (c *client) GrantCollectionAccess(resource *Collection, user, role string) error {
@@ -391,11 +419,42 @@ func (c *client) createGroup(group *group) error {
 	return nil
 }
 
+func (c *client) getGroup(id int) (*group, error) {
+	url := fmt.Sprintf("/api/permissions/group/%d", id)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var group group
+
+	if _, err := c.do(req, &group); err != nil {
+		return nil, err
+	}
+
+	return &group, nil
+}
+
 func (c *client) addGroupMember(groupID, userID int) error {
 	req, err := c.newRequest(http.MethodPost, "/api/permissions/membership", membershipRequest{
 		GroupID: groupID,
 		UserID:  userID,
 	})
+	if err != nil {
+		return err
+	}
+
+	if _, err := c.do(req, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *client) removeGroupMember(membershipID int) error {
+	url := fmt.Sprintf("/api/permissions/membership/%d", membershipID)
+	req, err := c.newRequest(http.MethodDelete, url, nil)
+
 	if err != nil {
 		return err
 	}

@@ -10,4 +10,5 @@ var (
 	ErrUserNotFound                  = errors.New("metabase user not found")
 	ErrInvalidRole                   = errors.New("invalid role")
 	ErrInvalidResourceType           = errors.New("invalid resource type")
+	ErrPermissionNotFound            = errors.New("permission not found")
 )
