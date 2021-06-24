@@ -145,14 +145,11 @@ func (c *client) GrantDatabaseAccess(resource *Database, user, role string) erro
 		return err
 	}
 
-	var groupNameSuffix string
 	var dbPermission databasePermission
 	if role == DatabaseRoleViewer {
 		dbPermission = databaseViewerPermission
-		groupNameSuffix = "Viewer"
 	} else if role == DatabaseRoleEditor {
 		dbPermission = databaseEditorPermission
-		groupNameSuffix = "Editor"
 	}
 
 	resourceIDStr := strconv.Itoa(resource.ID)
@@ -160,7 +157,7 @@ func (c *client) GrantDatabaseAccess(resource *Database, user, role string) erro
 
 	if groupID == "" {
 		g := &group{
-			Name: fmt.Sprintf("%s - %s", resource.Name, groupNameSuffix),
+			Name: fmt.Sprintf("%s_%v_%s", ResourceTypeDatabase, resource.ID, role),
 		}
 		if err := c.createGroup(g); err != nil {
 			return err
@@ -225,7 +222,7 @@ func (c *client) GrantCollectionAccess(resource *Collection, user, role string) 
 
 	if groupID == "" {
 		g := &group{
-			Name: fmt.Sprintf("%s - %s", resource.Name, role),
+			Name: fmt.Sprintf("%s_%s_%s", ResourceTypeCollection, resource.ID, role),
 		}
 		if err := c.createGroup(g); err != nil {
 			return err
