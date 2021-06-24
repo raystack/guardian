@@ -172,6 +172,14 @@ func (c *client) GrantDatabaseAccess(resource *Database, user, role string) erro
 			return err
 		}
 		designatedGroupID = group.ID
+
+		groupIDstr := strconv.Itoa(group.ID)
+		collectionID := fmt.Sprintf("%v", resource.ID)
+		access.Groups[groupIDstr] = map[string]databasePermission{}
+		access.Groups[groupIDstr][collectionID] = designatedRole
+		if err := c.updateDatabaseAccess(access); err != nil {
+			return err
+		}
 	}
 
 	userID, err := c.getUserID(user)
