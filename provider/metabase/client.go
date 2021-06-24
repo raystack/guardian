@@ -298,6 +298,54 @@ func (c *client) GrantCollectionAccess(resource *Collection, user, role string) 
 	return c.addGroupMember(designatedGroupID, userID)
 }
 
+func (c *client) RevokeCollectionAccess(resource *Collection, user, role string) error {
+	access, err := c.getCollectionAccess()
+	if err != nil {
+		return err
+	}
+
+	resourceID := fmt.Sprintf("%v", resource.ID)
+	var designatedGroupID int
+	for groupID, permissions := range access.Groups {
+
+		for collectionID, permission := range permissions {
+			if collectionID == resourceID && role == permission {
+				groupIDInt, err := strconv.Atoi(groupID)
+				if err != nil {
+					return err
+				}
+				designatedGroupID = groupIDInt
+				break
+			}
+		}
+		if designatedGroupID != 0 {
+			break
+		}
+	}
+
+	if designatedGroupID != 0 {
+		return ErrPermissionNotFound
+	}
+
+	group, err := c.getGroup(designatedGroupID)
+	if err != nil {
+		return err
+	}
+
+	var membershipID int
+	for _, member := range group.Members {
+		if member.Email == user {
+			membershipID = member.MembershipID
+			break
+		}
+	}
+	if membershipID == 0 {
+		return ErrPermissionNotFound
+	}
+
+	return c.removeGroupMember(membershipID)
+}
+
 func (c *client) getUserID(email string) (int, error) {
 	if c.userIDs[email] != 0 {
 		return c.userIDs[email], nil

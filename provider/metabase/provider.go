@@ -147,6 +147,19 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		}
 
 		return nil
+	} else if a.Resource.Type == ResourceTypeCollection {
+		c := new(Collection)
+		if err := c.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if err := client.RevokeCollectionAccess(c, a.User, p.Name); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 
 	return ErrInvalidResourceType
