@@ -7,14 +7,14 @@ import (
 
 type provider struct {
 	typeName string
-	clients  map[string]*client
+	Clients  map[string]MetabaseClient
 	crypto   domain.Crypto
 }
 
 func NewProvider(typeName string, crypto domain.Crypto) *provider {
 	return &provider{
 		typeName: typeName,
-		clients:  map[string]*client{},
+		Clients:  map[string]MetabaseClient{},
 		crypto:   crypto,
 	}
 }
@@ -165,12 +165,14 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	return ErrInvalidResourceType
 }
 
-func (p *provider) getClient(providerURN string, credentials Credentials) (*client, error) {
-	if p.clients[providerURN] != nil {
-		return p.clients[providerURN], nil
+func (p *provider) getClient(providerURN string, credentials Credentials) (MetabaseClient, error) {
+	if p.Clients[providerURN] != nil {
+		return p.Clients[providerURN], nil
 	}
 
-	credentials.Decrypt(p.crypto)
+	if err := credentials.Decrypt(p.crypto); err != nil {
+		return nil, err
+	}
 	client, err := NewClient(&ClientConfig{
 		Host:     credentials.Host,
 		Username: credentials.Username,
@@ -180,7 +182,7 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (*clie
 		return nil, err
 	}
 
-	p.clients[providerURN] = client
+	p.Clients[providerURN] = client
 	return client, nil
 }
 

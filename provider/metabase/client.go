@@ -13,6 +13,15 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type MetabaseClient interface {
+	GetDatabases() ([]*Database, error)
+	GetCollections() ([]*Collection, error)
+	GrantDatabaseAccess(resource *Database, user, role string) error
+	RevokeDatabaseAccess(resource *Database, user, role string) error
+	GrantCollectionAccess(resource *Collection, user, role string) error
+	RevokeCollectionAccess(resource *Collection, user, role string) error
+}
+
 type ClientConfig struct {
 	Host       string `validate:"required,url" mapstructure:"host"`
 	Username   string `validate:"required" mapstructure:"username"`
