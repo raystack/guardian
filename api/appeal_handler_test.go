@@ -1,4 +1,4 @@
-package appeal_test
+package api_test
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/odpf/guardian/api"
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
@@ -17,28 +18,28 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type HandlerTestSuite struct {
+type AppealHandlerTestSuite struct {
 	suite.Suite
 	mockAppealService *mocks.AppealService
-	handler           *appeal.Handler
+	handler           *api.AppealHandler
 	res               *httptest.ResponseRecorder
 }
 
-func (s *HandlerTestSuite) Setup() {
+func (s *AppealHandlerTestSuite) Setup() {
 	s.mockAppealService = new(mocks.AppealService)
-	s.handler = appeal.NewHTTPHandler(s.mockAppealService)
+	s.handler = api.NewAppealHandler(s.mockAppealService)
 	s.res = httptest.NewRecorder()
 }
 
-func (s *HandlerTestSuite) SetupTest() {
+func (s *AppealHandlerTestSuite) SetupTest() {
 	s.Setup()
 }
 
-func (s *HandlerTestSuite) AfterTest() {
+func (s *AppealHandlerTestSuite) AfterTest() {
 	s.mockAppealService.AssertExpectations(s.T())
 }
 
-func (s *HandlerTestSuite) TestGetByID() {
+func (s *AppealHandlerTestSuite) TestGetByID() {
 	s.Run("should return bad request if param ID is invalid", func() {
 		s.Setup()
 
@@ -127,7 +128,7 @@ func (s *HandlerTestSuite) TestGetByID() {
 	})
 }
 
-func (s *HandlerTestSuite) TestFind() {
+func (s *AppealHandlerTestSuite) TestFind() {
 	s.Run("should return error if got any from service", func() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodGet, "/", nil)
@@ -173,7 +174,7 @@ func (s *HandlerTestSuite) TestFind() {
 	})
 }
 
-func (s *HandlerTestSuite) TestCreate() {
+func (s *AppealHandlerTestSuite) TestCreate() {
 	s.Run("should return bad request error if received malformed payload", func() {
 		s.Setup()
 		malformedPayload := "invalid json format..."
@@ -328,7 +329,7 @@ func (s *HandlerTestSuite) TestCreate() {
 	})
 }
 
-func (s *HandlerTestSuite) TestGetPendingApprovals() {
+func (s *AppealHandlerTestSuite) TestGetPendingApprovals() {
 	s.Run("should return error if got any from appeal service", func() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodGet, "/", nil)
@@ -366,7 +367,7 @@ func (s *HandlerTestSuite) TestGetPendingApprovals() {
 	})
 }
 
-func (s *HandlerTestSuite) TestMakeAction() {
+func (s *AppealHandlerTestSuite) TestMakeAction() {
 	s.Run("should return bad request if given invalid appeal id", func() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodGet, "/", nil)
@@ -412,7 +413,7 @@ func (s *HandlerTestSuite) TestMakeAction() {
 			"id":   "1",
 			"name": "approval_1",
 		})
-		req.Header.Add(appeal.AuthenticatedEmailHeaderKey, actor)
+		req.Header.Add(api.AuthenticatedEmailHeaderKey, actor)
 		expectedError := errors.New("service error")
 		s.mockAppealService.On("MakeAction", mock.Anything).
 			Return(nil, expectedError).
@@ -454,7 +455,7 @@ func (s *HandlerTestSuite) TestMakeAction() {
 					"id":   "1",
 					"name": "approval_1",
 				})
-				req.Header.Add(appeal.AuthenticatedEmailHeaderKey, actor)
+				req.Header.Add(api.AuthenticatedEmailHeaderKey, actor)
 				s.mockAppealService.On("MakeAction", mock.Anything).
 					Return(nil, tc.expectedServiceError).
 					Once()
@@ -476,7 +477,7 @@ func (s *HandlerTestSuite) TestMakeAction() {
 			"id":   "1",
 			"name": "approval_1",
 		})
-		req.Header.Add(appeal.AuthenticatedEmailHeaderKey, actor)
+		req.Header.Add(api.AuthenticatedEmailHeaderKey, actor)
 		expectedApprovalAction := domain.ApprovalAction{
 			AppealID:     1,
 			ApprovalName: "approval_1",
@@ -498,7 +499,7 @@ func (s *HandlerTestSuite) TestMakeAction() {
 	})
 }
 
-func (s *HandlerTestSuite) TestRevoke() {
+func (s *AppealHandlerTestSuite) TestRevoke() {
 	s.Run("should return bad request if id param is invalid", func() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodPut, "/", nil)
@@ -541,7 +542,7 @@ func (s *HandlerTestSuite) TestRevoke() {
 			req = mux.SetURLVars(req, map[string]string{
 				"id": "1",
 			})
-			req.Header.Add(appeal.AuthenticatedEmailHeaderKey, actor)
+			req.Header.Add(api.AuthenticatedEmailHeaderKey, actor)
 			s.mockAppealService.On("Revoke", mock.Anything, mock.Anything).
 				Return(nil, tc.expectedError).
 				Once()
@@ -561,7 +562,7 @@ func (s *HandlerTestSuite) TestRevoke() {
 		req = mux.SetURLVars(req, map[string]string{
 			"id": "1",
 		})
-		req.Header.Add(appeal.AuthenticatedEmailHeaderKey, actor)
+		req.Header.Add(api.AuthenticatedEmailHeaderKey, actor)
 		expectedResult := &domain.Appeal{
 			ID: 1,
 		}
@@ -582,5 +583,5 @@ func (s *HandlerTestSuite) TestRevoke() {
 }
 
 func TestHandler(t *testing.T) {
-	suite.Run(t, new(HandlerTestSuite))
+	suite.Run(t, new(AppealHandlerTestSuite))
 }

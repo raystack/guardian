@@ -1,4 +1,4 @@
-package provider
+package api
 
 import (
 	"net/http"
@@ -6,21 +6,40 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/provider"
 	"github.com/odpf/guardian/utils"
 	"gopkg.in/yaml.v3"
 )
 
-// Handler for http service
-type Handler struct {
+type providerUpdatePayload struct {
+	Labels      map[string]interface{}   `yaml:"labels"`
+	Credentials interface{}              `yaml:"credentials"`
+	Appeal      *domain.AppealConfig     `yaml:"appeal"`
+	Resources   []*domain.ResourceConfig `yaml:"resources"`
+}
+
+func (p *providerUpdatePayload) toDomain() *domain.Provider {
+	return &domain.Provider{
+		Config: &domain.ProviderConfig{
+			Labels:      p.Labels,
+			Credentials: p.Credentials,
+			Appeal:      p.Appeal,
+			Resources:   p.Resources,
+		},
+	}
+}
+
+// ProviderHandler for http service
+type ProviderHandler struct {
 	ProviderService domain.ProviderService
 }
 
-func NewHTTPHandler(ps domain.ProviderService) *Handler {
-	return &Handler{ps}
+func NewProviderHandler(ps domain.ProviderService) *ProviderHandler {
+	return &ProviderHandler{ps}
 }
 
 // Create parses http request body to provider domain and passes it to the provider service
-func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *ProviderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var providerConfig domain.ProviderConfig
 
 	if err := yaml.NewDecoder(r.Body).Decode(&providerConfig); err != nil {
@@ -44,11 +63,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, p)
-	return
 }
 
 // Find handles http request for list of provider records
-func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
+func (h *ProviderHandler) Find(w http.ResponseWriter, r *http.Request) {
 	records, err := h.ProviderService.Find()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -60,22 +78,21 @@ func (h *Handler) Find(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, records)
-	return
 }
 
 // Update handles http request for provider update
-func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+func (h *ProviderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if id == 0 {
-		http.Error(w, ErrEmptyIDParam.Error(), http.StatusBadRequest)
+		http.Error(w, provider.ErrEmptyIDParam.Error(), http.StatusBadRequest)
 		return
 	}
 
-	var payload updatePayload
+	var payload providerUpdatePayload
 	if err := yaml.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -89,7 +106,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	p := payload.toDomain()
 	p.ID = uint(id)
 	if err := h.ProviderService.Update(p); err != nil {
-		if err == ErrRecordNotFound {
+		if err == provider.ErrRecordNotFound {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
@@ -98,5 +115,4 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ReturnJSON(w, p)
-	return
 }

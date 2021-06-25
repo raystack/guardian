@@ -1,43 +1,45 @@
-package policy_test
+package api_test
 
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/odpf/guardian/api"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/policy"
+	"github.com/odpf/guardian/provider"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
-type HandlerTestSuite struct {
+type ProviderHandlerTestSuite struct {
 	suite.Suite
-	mockPolicyService *mocks.PolicyService
-	handler           *policy.Handler
-	res               *httptest.ResponseRecorder
+	mockProviderService *mocks.ProviderService
+	handler             *api.ProviderHandler
+	res                 *httptest.ResponseRecorder
 }
 
-func (s *HandlerTestSuite) Setup() {
-	s.mockPolicyService = new(mocks.PolicyService)
-	s.handler = policy.NewHTTPHandler(s.mockPolicyService)
+func (s *ProviderHandlerTestSuite) Setup() {
+	s.mockProviderService = new(mocks.ProviderService)
+	s.handler = api.NewProviderHandler(s.mockProviderService)
 	s.res = httptest.NewRecorder()
 }
 
-func (s *HandlerTestSuite) SetupTest() {
+func (s *ProviderHandlerTestSuite) SetupTest() {
 	s.Setup()
 }
 
-func (s *HandlerTestSuite) AfterTest() {
-	s.mockPolicyService.AssertExpectations(s.T())
+func (s *ProviderHandlerTestSuite) AfterTest() {
+	s.mockProviderService.AssertExpectations(s.T())
 }
 
-func (s *HandlerTestSuite) TestCreate() {
+func (s *ProviderHandlerTestSuite) TestCreate() {
 	s.Run("should return bad request error if received malformed payload", func() {
 		s.Setup()
 		malformedPayload := `invalid yaml format...`
@@ -52,68 +54,14 @@ func (s *HandlerTestSuite) TestCreate() {
 	})
 
 	s.Run("should return bad request if payload validation returns error", func() {
-		testCases := []struct {
-			name           string
-			invalidPayload string
-		}{
-			{
-				name: "incomplete config",
-				invalidPayload: `
-id: provider_type_test
-`,
-			},
-			{
-				name: "a step contains both approvers and conditions",
-				invalidPayload: `
-id: bq_dataset
-steps:
-  - name: step_name
-    conditions:
-    - field: field_name
-      match:
-        eq: true
-		approvers: approver_names
-`,
-			},
-		}
-
-		for _, tc := range testCases {
-			s.Run(tc.name, func() {
-				s.Setup()
-				req, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(tc.invalidPayload))
-
-				expectedStatusCode := http.StatusBadRequest
-
-				s.handler.Create(s.res, req)
-				actualStatusCode := s.res.Result().StatusCode
-
-				s.Equal(expectedStatusCode, actualStatusCode)
-			})
-		}
-	})
-
-	validPayload := `
-id: bq_dataset
-steps:
-  - name: check_if_dataset_is_pii
-    description: pii dataset needs additional approval from the team lead
-    conditions:
-    - field: $resource.details.is_pii
-      match:
-        eq: true
-    allow_failed: true
-  - name: supervisor_approval
-    description: 'only will get evaluated if check_if_dataset_is_pii return true'
-    dependencies: [check_if_dataset_is_pii]
-    approvers: $user.profile.team_leads.[].email
-`
-	s.Run("should return internal server error if policy service returns error", func() {
 		s.Setup()
-		req, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(validPayload))
+		invalidPayload := `
+type: provider_type_test
+urn: provider_name
+`
+		req, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(invalidPayload))
 
-		expectedStatusCode := http.StatusInternalServerError
-		expectedError := errors.New("service error")
-		s.mockPolicyService.On("Create", mock.Anything).Return(expectedError)
+		expectedStatusCode := http.StatusBadRequest
 
 		s.handler.Create(s.res, req)
 		actualStatusCode := s.res.Result().StatusCode
@@ -121,47 +69,101 @@ steps:
 		s.Equal(expectedStatusCode, actualStatusCode)
 	})
 
-	policy := &domain.Policy{
-		ID: "bq_dataset",
-		Steps: []*domain.Step{
-			{
-				Name:        "check_if_dataset_is_pii",
-				Description: "pii dataset needs additional approval from the team lead",
-				Conditions: []*domain.Condition{
-					{
-						Field: "$resource.details.is_pii",
-						Match: &domain.MatchCondition{
-							Eq: true,
+	validPayload := `
+type: google_bigquery
+urn: gcp-project-id
+credentials: service-account-key.json
+appeal:
+  allow_active_access_extension_in: 7d
+resources:
+  - type: dataset
+    policy:
+      id: policy_x
+      version: 1
+    roles:
+      - id: viewer
+        name: Viewer
+        permissions:
+          - name: roles/bigQuery.dataViewer
+          - name: roles/customRole
+            target: other-gcp-project-id
+      - id: editor
+        name: Editor
+        permissions:
+          - name: roles/bigQuery.dataEditor
+`
+	s.Run("should return internal server error if provider service returns error", func() {
+		s.Setup()
+		req, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(validPayload))
+
+		expectedStatusCode := http.StatusInternalServerError
+		expectedError := errors.New("service error")
+		s.mockProviderService.On("Create", mock.Anything).Return(expectedError)
+
+		s.handler.Create(s.res, req)
+		actualStatusCode := s.res.Result().StatusCode
+
+		s.Equal(expectedStatusCode, actualStatusCode)
+	})
+
+	provider := &domain.Provider{
+		Type: "google_bigquery",
+		URN:  "gcp-project-id",
+		Config: &domain.ProviderConfig{
+			Type:        "google_bigquery",
+			URN:         "gcp-project-id",
+			Credentials: "service-account-key.json",
+			Appeal: &domain.AppealConfig{
+				AllowActiveAccessExtensionIn: "7d",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "dataset",
+					Policy: &domain.PolicyConfig{
+						ID:      "policy_x",
+						Version: 1,
+					},
+					Roles: []*domain.RoleConfig{
+						{
+							ID:   "viewer",
+							Name: "Viewer",
+							Permissions: []interface{}{
+								map[string]interface{}{"name": "roles/bigQuery.dataViewer"},
+								map[string]interface{}{"name": "roles/customRole", "target": "other-gcp-project-id"},
+							},
+						},
+						{
+							ID:   "editor",
+							Name: "Editor",
+							Permissions: []interface{}{
+								map[string]interface{}{"name": "roles/bigQuery.dataEditor"},
+							},
 						},
 					},
 				},
-				AllowFailed: true,
-			},
-			{
-				Name:         "supervisor_approval",
-				Description:  "only will get evaluated if check_if_dataset_is_pii return true",
-				Dependencies: []string{"check_if_dataset_is_pii"},
-				Approvers:    "$user.profile.team_leads.[].email",
 			},
 		},
 	}
-
-	s.Run("should return ok and the newly created policy data on success", func() {
+	s.Run("should return ok and the newly created provider data on success", func() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(validPayload))
 
 		expectedStatusCode := http.StatusOK
-		expectedResponseBody := &domain.Policy{}
-		*expectedResponseBody = *policy
-		expectedResponseBody.Version = 1
-		s.mockPolicyService.On("Create", policy).Return(nil).Run(func(args mock.Arguments) {
-			p := args.Get(0).(*domain.Policy)
-			p.Version = 1
+		expectedID := uint(1)
+		expectedResponseBody := &domain.Provider{
+			ID:     expectedID,
+			Type:   provider.Type,
+			URN:    provider.URN,
+			Config: provider.Config,
+		}
+		s.mockProviderService.On("Create", provider).Return(nil).Run(func(args mock.Arguments) {
+			p := args.Get(0).(*domain.Provider)
+			p.ID = expectedID
 		})
 
 		s.handler.Create(s.res, req)
 		actualStatusCode := s.res.Result().StatusCode
-		actualResponseBody := &domain.Policy{}
+		actualResponseBody := &domain.Provider{}
 		err := json.NewDecoder(s.res.Body).Decode(&actualResponseBody)
 		s.NoError(err)
 
@@ -170,14 +172,14 @@ steps:
 	})
 }
 
-func (s *HandlerTestSuite) TestFind() {
-	s.Run("should return internal server error if policy service returns error", func() {
+func (s *ProviderHandlerTestSuite) TestFind() {
+	s.Run("should return internal server error if provider service returns error", func() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodGet, "/", nil)
 
 		expectedStatusCode := http.StatusInternalServerError
 		expectedError := errors.New("service error")
-		s.mockPolicyService.On("Find").Return(nil, expectedError)
+		s.mockProviderService.On("Find").Return(nil, expectedError)
 
 		s.handler.Find(s.res, req)
 		actualStatusCode := s.res.Result().StatusCode
@@ -185,17 +187,32 @@ func (s *HandlerTestSuite) TestFind() {
 		s.Equal(expectedStatusCode, actualStatusCode)
 	})
 
-	s.Run("should return ok and the policy records on success", func() {
+	s.Run("should return ok and the provider records on success", func() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodGet, "/", nil)
 
 		expectedStatusCode := http.StatusOK
-		expectedResponseBody := []*domain.Policy{}
-		s.mockPolicyService.On("Find").Return(expectedResponseBody, nil)
+		expectedResponseBody := []*domain.Provider{
+			{
+				ID: 1,
+				Config: &domain.ProviderConfig{
+					Credentials: nil,
+				},
+			},
+		}
+		expectedProviders := []*domain.Provider{
+			{
+				ID: 1,
+				Config: &domain.ProviderConfig{
+					Credentials: "creds",
+				},
+			},
+		}
+		s.mockProviderService.On("Find").Return(expectedProviders, nil)
 
 		s.handler.Find(s.res, req)
 		actualStatusCode := s.res.Result().StatusCode
-		actualResponseBody := []*domain.Policy{}
+		actualResponseBody := []*domain.Provider{}
 		err := json.NewDecoder(s.res.Body).Decode(&actualResponseBody)
 		s.NoError(err)
 
@@ -204,7 +221,7 @@ func (s *HandlerTestSuite) TestFind() {
 	})
 }
 
-func (s *HandlerTestSuite) TestUpdate() {
+func (s *ProviderHandlerTestSuite) TestUpdate() {
 	s.Run("should return error if got invalid id param", func() {
 		testCases := []struct {
 			params             map[string]string
@@ -250,7 +267,7 @@ func (s *HandlerTestSuite) TestUpdate() {
 			{
 				name: "invalid yaml update payload validation",
 				payload: `
-steps:
+appeal:
   - test
 	- test2
 `,
@@ -263,7 +280,7 @@ steps:
 				s.Setup()
 				req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(tc.payload))
 				req = mux.SetURLVars(req, map[string]string{
-					"id": "test",
+					"id": "1",
 				})
 
 				expectedStatusCode := tc.expectedStatusCode
@@ -277,12 +294,14 @@ steps:
 	})
 
 	validPayload := `
-steps:
-  - name: step_name
-    description: ...
-    approvers: $resource.field
+appeal:
+  allow_active_access_extension_in: 7d
+resources:
+  - type: type
+    policy:
+      id: policy_x
+      version: 1
 `
-
 	s.Run("should return error based on the service error", func() {
 		testCases := []struct {
 			name                 string
@@ -290,12 +309,12 @@ steps:
 			expectedStatusCode   int
 		}{
 			{
-				name:                 "policy with the specified id doesn't exists",
-				expectedServiceError: policy.ErrPolicyDoesNotExists,
-				expectedStatusCode:   http.StatusBadRequest,
+				name:                 "provider with the specified id doesn't exists",
+				expectedServiceError: provider.ErrRecordNotFound,
+				expectedStatusCode:   http.StatusNotFound,
 			},
 			{
-				name:                 "any unexpected error from the policy service",
+				name:                 "any unexpected error from the provider service",
 				expectedServiceError: errors.New("any service error"),
 				expectedStatusCode:   http.StatusInternalServerError,
 			},
@@ -306,11 +325,11 @@ steps:
 				s.Setup()
 				req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(validPayload))
 				req = mux.SetURLVars(req, map[string]string{
-					"id": "test",
+					"id": "1",
 				})
 
 				expectedStatusCode := tc.expectedStatusCode
-				s.mockPolicyService.On("Update", mock.Anything).Return(tc.expectedServiceError).Once()
+				s.mockProviderService.On("Update", mock.Anything).Return(tc.expectedServiceError).Once()
 
 				s.handler.Update(s.res, req)
 				actualStatusCode := s.res.Result().StatusCode
@@ -320,31 +339,38 @@ steps:
 		}
 	})
 
-	s.Run("should return the new version of the policy on success", func() {
+	s.Run("should return the new version of the provider on success", func() {
 		s.Setup()
 		req, _ := http.NewRequest(http.MethodPut, "/", strings.NewReader(validPayload))
 
-		expectedPolicyID := "test-id"
+		expectedProviderID := uint(1)
 		req = mux.SetURLVars(req, map[string]string{
-			"id": expectedPolicyID,
+			"id": fmt.Sprintf("%d", expectedProviderID),
 		})
 		expectedStatusCode := http.StatusOK
-		expectedPolicy := &domain.Policy{
-			ID: expectedPolicyID,
-			Steps: []*domain.Step{
-				{
-					Name:        "step_name",
-					Description: "...",
-					Approvers:   "$resource.field",
+		expectedProvider := &domain.Provider{
+			ID: expectedProviderID,
+			Config: &domain.ProviderConfig{
+				Appeal: &domain.AppealConfig{
+					AllowActiveAccessExtensionIn: "7d",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: "type",
+						Policy: &domain.PolicyConfig{
+							ID:      "policy_x",
+							Version: 1,
+						},
+					},
 				},
 			},
 		}
-		expectedResponseBody := expectedPolicy
-		s.mockPolicyService.On("Update", expectedPolicy).Return(nil).Once()
+		expectedResponseBody := expectedProvider
+		s.mockProviderService.On("Update", expectedProvider).Return(nil).Once()
 
 		s.handler.Update(s.res, req)
 		actualStatusCode := s.res.Result().StatusCode
-		actualResponseBody := &domain.Policy{}
+		actualResponseBody := &domain.Provider{}
 		err := json.NewDecoder(s.res.Body).Decode(&actualResponseBody)
 		s.NoError(err)
 
@@ -353,6 +379,6 @@ steps:
 	})
 }
 
-func TestHandler(t *testing.T) {
-	suite.Run(t, new(HandlerTestSuite))
+func TestProviderHandler(t *testing.T) {
+	suite.Run(t, new(ProviderHandlerTestSuite))
 }

@@ -1,11 +1,11 @@
-package handlers_test
+package api_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/odpf/guardian/api/handlers"
+	"github.com/odpf/guardian/api"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +15,7 @@ func TestPing(t *testing.T) {
 		t.Fatal(err)
 	}
 	w := httptest.NewRecorder()
-	handler := http.HandlerFunc(handlers.Ping())
+	handler := http.HandlerFunc(api.Ping())
 
 	expectedStatusCode := http.StatusOK
 	expectedStringBody := "\"pong\"\n"

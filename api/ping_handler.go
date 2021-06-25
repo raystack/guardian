@@ -1,4 +1,4 @@
-package handlers
+package api
 
 import (
 	"net/http"
@@ -10,6 +10,5 @@ import (
 func Ping() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		utils.ReturnJSON(w, "pong")
-		return
 	}
 }
