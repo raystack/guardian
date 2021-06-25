@@ -122,4 +122,58 @@ func TestCollection(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("FromDomain", func(t *testing.T) {
+		t.Run("should return error if the resource type is not collection", func(t *testing.T) {
+			expectedErr := metabase.ErrInvalidResourceType
+
+			r := &domain.Resource{
+				Type: "not-collection-type",
+			}
+
+			c := new(metabase.Collection)
+			actualError := c.FromDomain(r)
+
+			assert.Equal(t, expectedErr, actualError)
+		})
+
+		t.Run("should pass right values for id", func(t *testing.T) {
+			testCases := []struct {
+				expectedResource   *domain.Resource
+				expectedCollection *metabase.Collection
+			}{
+				{
+					expectedResource: &domain.Resource{
+						URN:  "non-numeric",
+						Name: "test-collection",
+						Type: metabase.ResourceTypeCollection,
+					},
+					expectedCollection: &metabase.Collection{
+						ID:   "non-numeric",
+						Name: "test-collection",
+					},
+				},
+				{
+					expectedResource: &domain.Resource{
+						URN:  "1",
+						Name: "test-collection",
+						Type: metabase.ResourceTypeCollection,
+					},
+					expectedCollection: &metabase.Collection{
+						ID:   1,
+						Name: "test-collection",
+					},
+				},
+			}
+
+			for _, tc := range testCases {
+				c := new(metabase.Collection)
+
+				actualError := c.FromDomain(tc.expectedResource)
+
+				assert.Nil(t, actualError)
+				assert.Equal(t, tc.expectedCollection, c)
+			}
+		})
+	})
 }
