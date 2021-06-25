@@ -171,7 +171,7 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (*clie
 	}
 
 	credentials.Decrypt(p.crypto)
-	client, err := newClient(&ClientConfig{
+	client, err := NewClient(&ClientConfig{
 		Host:     credentials.Host,
 		Username: credentials.Username,
 		Password: credentials.Password,

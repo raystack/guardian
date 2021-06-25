@@ -14,9 +14,10 @@ import (
 )
 
 type ClientConfig struct {
-	Host     string `validate:"required,url" mapstructure:"host"`
-	Username string `validate:"required" mapstructure:"username"`
-	Password string `validate:"required" mapstructure:"password"`
+	Host       string `validate:"required,url" mapstructure:"host"`
+	Username   string `validate:"required" mapstructure:"username"`
+	Password   string `validate:"required" mapstructure:"password"`
+	HTTPClient HTTPClient
 }
 
 type user struct {
@@ -31,12 +32,12 @@ type group struct {
 	Members []user `json:"members"`
 }
 
-type sessionRequest struct {
+type SessionRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-type sessionResponse struct {
+type SessionResponse struct {
 	ID string `json:"id"`
 }
 
@@ -79,12 +80,12 @@ type client struct {
 	password     string
 	sessionToken string
 
-	httpClient *http.Client
+	httpClient HTTPClient
 
 	userIDs map[string]int
 }
 
-func newClient(config *ClientConfig) (*client, error) {
+func NewClient(config *ClientConfig) (*client, error) {
 	if err := validator.New().Struct(config); err != nil {
 		return nil, err
 	}
@@ -94,11 +95,16 @@ func newClient(config *ClientConfig) (*client, error) {
 		return nil, err
 	}
 
+	httpClient := config.HTTPClient
+	if httpClient == nil {
+		httpClient = &http.Client{}
+	}
+
 	c := &client{
 		baseURL:    baseURL,
 		username:   config.Username,
 		password:   config.Password,
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 		userIDs:    map[string]int{},
 	}
 
@@ -327,7 +333,7 @@ func (c *client) getUsers() ([]user, error) {
 }
 
 func (c *client) getSessionToken() (string, error) {
-	sessionRequest := &sessionRequest{
+	sessionRequest := &SessionRequest{
 		Username: c.username,
 		Password: c.password,
 	}
@@ -336,7 +342,7 @@ func (c *client) getSessionToken() (string, error) {
 		return "", err
 	}
 
-	var sessionResponse sessionResponse
+	var sessionResponse SessionResponse
 	if _, err := c.do(req, &sessionResponse); err != nil {
 		return "", err
 	}
