@@ -4,10 +4,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/provider/metabase"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestGetType(t *testing.T) {
@@ -155,5 +157,410 @@ func TestGetResources(t *testing.T) {
 
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
+	})
+}
+
+func TestGrantAccess(t *testing.T) {
+	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
+		var permission metabase.PermissionConfig
+		invalidPermissionConfig := "invalid-permisiion-config"
+		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
+
+		testcases := []struct {
+			resourceConfigs []*domain.ResourceConfig
+			appeal          *domain.Appeal
+			expectedError   error
+		}{
+			{
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Type: "test-type",
+					},
+				},
+				expectedError: metabase.ErrInvalidResourceType,
+			},
+			{
+				resourceConfigs: []*domain.ResourceConfig{
+					{
+						Type: "test-type",
+						Roles: []*domain.RoleConfig{
+							{
+								ID: "not-test-role",
+							},
+						},
+					},
+				},
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Type: "test-type",
+					},
+					Role: "test-role",
+				},
+				expectedError: metabase.ErrInvalidRole,
+			},
+			{
+				resourceConfigs: []*domain.ResourceConfig{
+					{
+						Type: "test-type",
+						Roles: []*domain.RoleConfig{
+							{
+								ID: "test-role",
+								Permissions: []interface{}{
+									invalidPermissionConfig,
+								},
+							},
+						},
+					},
+				},
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Type: "test-type",
+					},
+					Role: "test-role",
+				},
+				expectedError: invalidPermissionConfigError,
+			},
+		}
+
+		for _, tc := range testcases {
+			crypto := new(mocks.Crypto)
+			p := metabase.NewProvider("", crypto)
+
+			providerConfig := &domain.ProviderConfig{
+				Resources: tc.resourceConfigs,
+			}
+
+			actualError := p.GrantAccess(providerConfig, tc.appeal)
+			assert.EqualError(t, actualError, tc.expectedError.Error())
+		}
+	})
+
+	t.Run("should return error if credentials is invalid", func(t *testing.T) {
+		crypto := new(mocks.Crypto)
+		p := metabase.NewProvider("", crypto)
+
+		pc := &domain.ProviderConfig{
+			Credentials: "invalid-credentials",
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "test-type",
+					Roles: []*domain.RoleConfig{
+						{
+							ID: "test-role",
+							Permissions: []interface{}{
+								metabase.PermissionConfig{
+									Name: "test-permission-config",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		a := &domain.Appeal{
+			Resource: &domain.Resource{
+				Type: "test-type",
+			},
+			Role: "test-role",
+		}
+
+		actualError := p.GrantAccess(pc, a)
+		assert.Error(t, actualError)
+
+	})
+
+	t.Run("should return error if there are any on client initialization", func(t *testing.T) {
+		crypto := new(mocks.Crypto)
+		p := metabase.NewProvider("", crypto)
+		expectedError := errors.New("decrypt error")
+		crypto.On("Decrypt", "test-password").Return("", expectedError).Once()
+
+		pc := &domain.ProviderConfig{
+			Credentials: metabase.Credentials{
+				Host:     "localhost",
+				Username: "test-username",
+				Password: "test-password",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "test-type",
+					Roles: []*domain.RoleConfig{
+						{
+							ID: "test-role",
+							Permissions: []interface{}{
+								metabase.PermissionConfig{
+									Name: "test-permission-config",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		a := &domain.Appeal{
+			Resource: &domain.Resource{
+				Type: "test-type",
+			},
+			Role: "test-role",
+		}
+
+		actualError := p.GrantAccess(pc, a)
+
+		assert.EqualError(t, actualError, expectedError.Error())
+
+	})
+
+	t.Run("should return error if resource type in unknown", func(t *testing.T) {
+		crypto := new(mocks.Crypto)
+		p := metabase.NewProvider("", crypto)
+		expectedError := errors.New("invalid resource type")
+		crypto.On("Decrypt", "test-password").Return("", expectedError).Once()
+
+		pc := &domain.ProviderConfig{
+			Credentials: metabase.Credentials{
+				Host:     "localhost",
+				Username: "test-username",
+				Password: "test-password",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "test-type",
+					Roles: []*domain.RoleConfig{
+						{
+							ID: "test-role",
+							Permissions: []interface{}{
+								metabase.PermissionConfig{
+									Name: "test-permission-config",
+								},
+							},
+						},
+					},
+				},
+			},
+			URN: "test-urn",
+		}
+		a := &domain.Appeal{
+			Resource: &domain.Resource{
+				Type: "test-type",
+			},
+			Role: "test-role",
+		}
+
+		actualError := p.GrantAccess(pc, a)
+
+		assert.EqualError(t, actualError, expectedError.Error())
+	})
+
+	t.Run("given database resource", func(t *testing.T) {
+		t.Run("should return error if there is an error in granting database access", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			expectedError := errors.New("client error")
+			crypto := new(mocks.Crypto)
+			client := new(mocks.MetabaseClient)
+			p := metabase.NewProvider("", crypto)
+			p.Clients = map[string]metabase.MetabaseClient{
+				providerURN: client,
+			}
+			client.On("GrantDatabaseAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: metabase.Credentials{
+					Host:     "localhost",
+					Username: "test-username",
+					Password: "test-password",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: metabase.ResourceTypeDatabase,
+						Roles: []*domain.RoleConfig{
+							{
+								ID: "test-role",
+								Permissions: []interface{}{
+									metabase.PermissionConfig{
+										Name: "test-permission-config",
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: metabase.ResourceTypeDatabase,
+					URN:  "999",
+					Name: "test-database",
+				},
+				Role: "test-role",
+			}
+
+			actualError := p.GrantAccess(pc, a)
+
+			assert.EqualError(t, actualError, expectedError.Error())
+		})
+
+		t.Run("should return nil error if granting access is successful", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			crypto := new(mocks.Crypto)
+			client := new(mocks.MetabaseClient)
+			expectedDatabase := &metabase.Database{
+				Name: "test-database",
+				ID:   999,
+			}
+			expectedUser := "test@email.com"
+			expectedRole := metabase.DatabaseRoleViewer
+			p := metabase.NewProvider("", crypto)
+			p.Clients = map[string]metabase.MetabaseClient{
+				providerURN: client,
+			}
+			client.On("GrantDatabaseAccess", expectedDatabase, expectedUser, expectedRole).Return(nil).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: metabase.Credentials{
+					Host:     "localhost",
+					Username: "test-username",
+					Password: "test-password",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: metabase.ResourceTypeDatabase,
+						Roles: []*domain.RoleConfig{
+							{
+								ID: "viewer",
+								Permissions: []interface{}{
+									metabase.PermissionConfig{
+										Name: expectedRole,
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: metabase.ResourceTypeDatabase,
+					URN:  "999",
+					Name: "test-database",
+				},
+				Role:       "viewer",
+				User:       expectedUser,
+				ResourceID: 999,
+				ID:         999,
+			}
+
+			actualError := p.GrantAccess(pc, a)
+
+			assert.Nil(t, actualError)
+		})
+	})
+
+	t.Run("given collection resource", func(t *testing.T) {
+		t.Run("should return error if there is an error in grandting collection access", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			expectedError := errors.New("client error")
+			crypto := new(mocks.Crypto)
+			client := new(mocks.MetabaseClient)
+			p := metabase.NewProvider("", crypto)
+			p.Clients = map[string]metabase.MetabaseClient{
+				providerURN: client,
+			}
+			client.On("GrantCollectionAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: metabase.Credentials{
+					Host:     "localhost",
+					Username: "test-username",
+					Password: "test-password",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: metabase.ResourceTypeCollection,
+						Roles: []*domain.RoleConfig{
+							{
+								ID: "test-role",
+								Permissions: []interface{}{
+									metabase.PermissionConfig{
+										Name: "test-permission-config",
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: metabase.ResourceTypeCollection,
+					URN:  "999",
+					Name: "test-collection",
+				},
+				Role: "test-role",
+			}
+
+			actualError := p.GrantAccess(pc, a)
+
+			assert.EqualError(t, actualError, expectedError.Error())
+		})
+
+		t.Run("should return nil error if granting access is successful", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			crypto := new(mocks.Crypto)
+			client := new(mocks.MetabaseClient)
+			expectedCollection := &metabase.Collection{
+				Name: "test-collection",
+				ID:   999,
+			}
+			expectedUser := "test@email.com"
+			expectedRole := "viewer"
+			p := metabase.NewProvider("", crypto)
+
+			p.Clients = map[string]metabase.MetabaseClient{
+				providerURN: client,
+			}
+			client.On("GrantCollectionAccess", expectedCollection, expectedUser, expectedRole).Return(nil).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: metabase.Credentials{
+					Host:     "localhost",
+					Username: "test-username",
+					Password: "test-password",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: metabase.ResourceTypeCollection,
+						Roles: []*domain.RoleConfig{
+							{
+								ID: "viewer",
+								Permissions: []interface{}{
+									metabase.PermissionConfig{
+										Name: expectedRole,
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: metabase.ResourceTypeCollection,
+					URN:  "999",
+					Name: "test-collection",
+				},
+				Role:       "viewer",
+				User:       expectedUser,
+				ResourceID: 999,
+				ID:         999,
+			}
+
+			actualError := p.GrantAccess(pc, a)
+
+			assert.Nil(t, actualError)
+		})
 	})
 }
