@@ -181,6 +181,10 @@ func (c *bigQueryClient) GrantTableAccess(ctx context.Context, t *Table, user, r
 		},
 	}
 	policy, err := tableService.GetIamPolicy(resourceName, getIamPolicyRequest).Do()
+	if err != nil {
+		return err
+	}
+
 	roleExists := false
 	for _, b := range policy.Bindings {
 		if b.Role == role {
@@ -216,6 +220,10 @@ func (c *bigQueryClient) RevokeTableAccess(ctx context.Context, t *Table, user, 
 		},
 	}
 	policy, err := tableService.GetIamPolicy(resourceName, getIamPolicyRequest).Do()
+	if err != nil {
+		return err
+	}
+
 	var accessRemoved bool
 	for _, b := range policy.Bindings {
 		if b.Role == role {
