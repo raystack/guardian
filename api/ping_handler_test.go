@@ -15,7 +15,7 @@ func TestPing(t *testing.T) {
 		t.Fatal(err)
 	}
 	w := httptest.NewRecorder()
-	handler := http.HandlerFunc(api.Ping())
+	handler := api.Ping()
 
 	expectedStatusCode := http.StatusOK
 	expectedStringBody := "\"pong\"\n"

@@ -70,7 +70,7 @@ func (s *ServiceTestSuite) TestGetByID() {
 	s.Run("should return record on success", func() {
 		expectedID := uint(1)
 		expectedResult := &domain.Appeal{
-			ID: uint(expectedID),
+			ID: expectedID,
 		}
 		s.mockRepository.On("GetByID", expectedID).Return(expectedResult, nil).Once()
 

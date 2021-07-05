@@ -35,7 +35,7 @@ func newBigQueryClient(projectID string, credentialsJSON []byte) (*bigQueryClien
 	}, nil
 }
 
-func newDefaultBigQueryClient(projectID string) (*bigQueryClient, error) {
+func NewDefaultBigQueryClient(projectID string) (*bigQueryClient, error) {
 	ctx := context.Background()
 	client, err := bq.NewClient(ctx, projectID)
 	if err != nil {
@@ -184,7 +184,6 @@ func (c *bigQueryClient) GrantTableAccess(ctx context.Context, t *Table, user, r
 	if err != nil {
 		return err
 	}
-
 	roleExists := false
 	for _, b := range policy.Bindings {
 		if b.Role == role {
@@ -223,7 +222,6 @@ func (c *bigQueryClient) RevokeTableAccess(ctx context.Context, t *Table, user, 
 	if err != nil {
 		return err
 	}
-
 	var accessRemoved bool
 	for _, b := range policy.Bindings {
 		if b.Role == role {

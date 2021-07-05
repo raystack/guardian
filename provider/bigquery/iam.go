@@ -31,7 +31,7 @@ func newCloudResourceManagerClient(credentialsJSON []byte) (*iamClient, error) {
 	}, nil
 }
 
-func newDefaultCloudResourceManagerClient() (*iamClient, error) {
+func NewDefaultCloudResourceManagerClient() (*iamClient, error) {
 	ctx := context.Background()
 	client, err := google.DefaultClient(ctx, cloudresourcemanager.CloudPlatformScope)
 	if err != nil {
