@@ -1,5 +1,7 @@
 NAME="github.com/odpf/guardian"
-VERSION=$(shell git describe --always --tags 2>/dev/null)
+LAST_COMMIT := $(shell git rev-parse --short HEAD)
+LAST_TAG := "$(shell git rev-list --tags --max-count=1)"
+OPMS_VERSION := "$(shell git describe --tags ${LAST_TAG})-next"
 COVERFILE="/tmp/guardian.coverprofile"
 
 .PHONY: all build test clean
@@ -7,7 +9,7 @@ COVERFILE="/tmp/guardian.coverprofile"
 all: build
 
 build:
-	go build -ldflags "-X main.Version=${VERSION}" ${NAME}
+	go build -ldflags "-X ${NAME}/config.Version=${OPMS_VERSION} -X ${NAME}/config.BuildCommit=${LAST_COMMIT}" -o guardian .
 
 clean:
 	rm -rf guardian dist/
