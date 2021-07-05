@@ -10,6 +10,11 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
+const (
+	DatabaseRoleViewer = "schemas:all"
+	DatabaseRoleEditor = "native:write"
+)
+
 type Credentials struct {
 	Host     string `json:"host" mapstructure:"host" validate:"required"`
 	Username string `json:"username" mapstructure:"username" validate:"required"`
