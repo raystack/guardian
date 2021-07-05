@@ -19,5 +19,7 @@ linters-settings:
   revive:
     ignore-generated-header: true
     severity: warning
+issues:
+  fix: true
 severity:
   default-severity: error
