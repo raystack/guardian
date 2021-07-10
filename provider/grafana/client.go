@@ -3,6 +3,7 @@ package grafana
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -78,4 +79,32 @@ func (c *client) do(req *http.Request, v interface{}) (*http.Response, error) {
 
 	err = json.NewDecoder(resp.Body).Decode(v)
 	return resp, err
+}
+
+func (c *client) getFolders() ([]*Folder, error) {
+	req, err := c.newRequest(http.MethodGet, "/api/folders", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var folders []*Folder
+	if _, err := c.do(req, &folders); err != nil {
+		return nil, err
+	}
+	return folders, nil
+}
+
+func (c *client) getDashboards(folderId uint) ([]*Dashboard, error) {
+	url := fmt.Sprintf("/api/search?folderIds=%d&type=dash-db", folderId)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var dashboard []*Dashboard
+	if _, err := c.do(req, &dashboard); err != nil {
+		return nil, err
+	}
+
+	return dashboard, nil
 }
