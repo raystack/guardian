@@ -1,6 +1,8 @@
 package grafana
 
 import (
+	"strconv"
+
 	"github.com/odpf/guardian/domain"
 )
 
@@ -9,47 +11,42 @@ const (
 	ResourceTypeDashboard = "dashboard"
 )
 
-type Folder struct {
-	ID    uint   `json:"id"`
+type folder struct {
+	ID    int    `json:"id"`
 	UID   string `json:"uid"`
 	Title string `json:"title"`
 }
 
-func (f *Folder) toDomain() *domain.Resource {
-	return &domain.Resource{
-		Type: ResourceTypeFolder,
-		Name: f.Title,
-		ID:   f.ID,
-		URN:  f.UID,
-	}
-}
-
 type Dashboard struct {
-	ID          uint   `json:"id"`
+	ID          int    `json:"id"`
 	UID         string `json:"uid"`
 	Title       string `json:"title"`
 	Slug        string `json:"slug"`
-	FolderID    uint   `json:"folderId"`
-	FolderUId   string `json:"folderUid"`
+	FolderID    int    `json:"folderId"`
+	FolderUID   string `json:"folderUid"`
 	FolderTitle string `json:"folderTitle"`
 }
 
 func (d *Dashboard) toDomain() *domain.Resource {
 	details := map[string]interface{}{}
+	id := strconv.Itoa(d.ID)
+
 	if d.FolderID != 0 {
-		details["folderId"] = d.FolderID
+		details["folder_id"] = d.FolderID
 	}
-	if d.FolderUId != "" {
-		details["folderUid"] = d.FolderUId
+	if d.FolderUID != "" {
+		details["folder_uid"] = d.FolderUID
 	}
 	if d.FolderTitle != "" {
-		details["folderTitle"] = d.FolderTitle
+		details["folder_title"] = d.FolderTitle
+	}
+	if d.UID != "" {
+		details["uid"] = d.UID
 	}
 	return &domain.Resource{
 		Type:    ResourceTypeDashboard,
 		Name:    d.Title,
-		URN:     d.UID,
-		ID:      d.ID,
+		URN:     id,
 		Details: details,
 	}
 }

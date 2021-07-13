@@ -81,20 +81,20 @@ func (c *client) do(req *http.Request, v interface{}) (*http.Response, error) {
 	return resp, err
 }
 
-func (c *client) getFolders() ([]*Folder, error) {
+func (c *client) getFolders() ([]*folder, error) {
 	req, err := c.newRequest(http.MethodGet, "/api/folders", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var folders []*Folder
+	var folders []*folder
 	if _, err := c.do(req, &folders); err != nil {
 		return nil, err
 	}
 	return folders, nil
 }
 
-func (c *client) getDashboards(folderId uint) ([]*Dashboard, error) {
+func (c *client) getDashboards(folderId int) ([]*Dashboard, error) {
 	url := fmt.Sprintf("/api/search?folderIds=%d&type=dash-db", folderId)
 	req, err := c.newRequest(http.MethodGet, url, nil)
 	if err != nil {

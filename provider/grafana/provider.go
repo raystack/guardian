@@ -51,8 +51,8 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 	for _, f := range folders {
-		fd := f.toDomain()
-		dashboards, err := client.getDashboards(fd.ID)
+
+		dashboards, err := client.getDashboards(f.ID)
 		if err != nil {
 			return nil, err
 		}
