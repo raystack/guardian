@@ -27,6 +27,21 @@ type Dashboard struct {
 	FolderTitle string `json:"folderTitle"`
 }
 
+func (d *Dashboard) fromDomain(r *domain.Resource) error {
+	if r.Type != ResourceTypeDashboard {
+		return ErrInvalidResourceType
+	}
+
+	id, err := strconv.Atoi(r.URN)
+	if err != nil {
+		return err
+	}
+
+	d.ID = id
+	d.Title = r.Name
+	return nil
+}
+
 func (d *Dashboard) toDomain() *domain.Resource {
 	details := map[string]interface{}{}
 	id := strconv.Itoa(d.ID)

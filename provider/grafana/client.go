@@ -16,6 +16,23 @@ type ClientConfig struct {
 	ApiKey string `validate:"required" mapstructure:"api_key"`
 }
 
+type permission struct {
+	UserID     int    `json:"userId,omitempty"`
+	TeamID     int    `json:"teamId,omitempty"`
+	Permission int    `json:"permission"`
+	Role       string `json:"role,omitempty"`
+	Inherited  bool   `json:"inherited,omitempty"`
+}
+
+type user struct {
+	ID    int    `json:"id"`
+	Email string `json:"email"`
+}
+
+type updatePermissionRequest struct {
+	Items []*permission `json:"items"`
+}
+
 type client struct {
 	baseURL *url.URL
 
@@ -43,6 +60,45 @@ func NewClient(config *ClientConfig) (*client, error) {
 	}
 
 	return c, nil
+}
+
+func (c *client) GrantDashboardAccess(resource *Dashboard, user, role string) error {
+	userDetails, err := c.getUser(user)
+	if err != nil {
+		return err
+	}
+
+	permissionCode := permissionCodes[role]
+	if permissionCode == 0 {
+		return ErrInvalidPermissionType
+	}
+
+	permissions, err := c.getDashboardPermissions(resource.ID)
+	if err != nil {
+		return err
+	}
+
+	nonInheritedPermissions := []*permission{}
+	isPermissionUpdated := false
+	for _, permission := range permissions {
+		if !permission.Inherited {
+			p := permission
+			if permission.UserID == userDetails.ID {
+				p.Permission = permissionCode
+				isPermissionUpdated = true
+			}
+
+			nonInheritedPermissions = append(nonInheritedPermissions, p)
+		}
+	}
+
+	if !isPermissionUpdated {
+		nonInheritedPermissions = append(nonInheritedPermissions, &permission{
+			UserID:     userDetails.ID,
+			Permission: permissionCode,
+		})
+	}
+	return c.updateDashboardPermissions(resource.ID, nonInheritedPermissions)
 }
 
 func (c *client) newRequest(method, path string, body interface{}) (*http.Request, error) {
@@ -77,7 +133,9 @@ func (c *client) do(req *http.Request, v interface{}) (*http.Response, error) {
 	}
 	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(v)
+	if v != nil {
+		err = json.NewDecoder(resp.Body).Decode(v)
+	}
 	return resp, err
 }
 
@@ -107,4 +165,53 @@ func (c *client) getDashboards(folderId int) ([]*Dashboard, error) {
 	}
 
 	return dashboard, nil
+}
+
+func (c *client) getDashboardPermissions(id int) ([]*permission, error) {
+	url := fmt.Sprintf("/api/dashboards/id/%d/permissions", id)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var permissions []*permission
+	if _, err := c.do(req, &permissions); err != nil {
+		return nil, err
+	}
+
+	return permissions, nil
+}
+
+func (c *client) updateDashboardPermissions(id int, permissions []*permission) error {
+	body := updatePermissionRequest{
+		Items: permissions,
+	}
+	url := fmt.Sprintf("/api/dashboards/id/%d/permissions", id)
+	req, err := c.newRequest(http.MethodPost, url, body)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.do(req, nil)
+	return err
+
+}
+
+func (c *client) getUser(email string) (*user, error) {
+	url := fmt.Sprintf("/api/users/lookup?loginOrEmail=%s", email)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var user *user
+	res, err := c.do(req, &user)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode != http.StatusNotFound {
+		return nil, ErrUserNotFound
+	}
+
+	return user, nil
 }

@@ -43,6 +43,12 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 	return nil
 }
 
+var permissionCodes = map[string]int{
+	"view":  1,
+	"edit":  2,
+	"admin": 4,
+}
+
 type PermissionConfig struct {
 	Name string `json:"name" mapstructure:"name" validate:"required,oneof=view edit admin"`
 }
