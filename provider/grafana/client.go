@@ -101,6 +101,41 @@ func (c *client) GrantDashboardAccess(resource *Dashboard, user, role string) er
 	return c.updateDashboardPermissions(resource.ID, nonInheritedPermissions)
 }
 
+func (c *client) RevokeDashboardAccess(resource *Dashboard, user, role string) error {
+	userDetails, err := c.getUser(user)
+	if err != nil {
+		return err
+	}
+	permissionCode := permissionCodes[role]
+	if permissionCode == 0 {
+		return ErrInvalidPermissionType
+	}
+
+	permissions, err := c.getDashboardPermissions(resource.ID)
+	if err != nil {
+		return err
+	}
+
+	nonInheritedPermissions := []*permission{}
+	isPermissionFound := false
+	for _, permission := range permissions {
+		if !permission.Inherited {
+			p := permission
+			if permission.UserID == userDetails.ID && permission.Permission == permissionCode {
+				isPermissionFound = true
+			} else {
+				nonInheritedPermissions = append(nonInheritedPermissions, p)
+			}
+		}
+	}
+
+	if !isPermissionFound {
+		return ErrPermissionNotFound
+	}
+
+	return c.updateDashboardPermissions(resource.ID, nonInheritedPermissions)
+}
+
 func (c *client) newRequest(method, path string, body interface{}) (*http.Request, error) {
 	u, err := c.baseURL.Parse(path)
 	if err != nil {
