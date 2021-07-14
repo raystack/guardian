@@ -244,7 +244,7 @@ func (c *client) getUser(email string) (*user, error) {
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode != http.StatusNotFound {
+	if res.StatusCode == http.StatusNotFound {
 		return nil, ErrUserNotFound
 	}
 
