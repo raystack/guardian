@@ -7,14 +7,14 @@ import (
 
 type provider struct {
 	typeName string
-	clients  map[string]*client
+	Clients  map[string]GrafanaClient
 	crypto   domain.Crypto
 }
 
 func NewProvider(typeName string, crypto domain.Crypto) *provider {
 	return &provider{
 		typeName: typeName,
-		clients:  map[string]*client{},
+		Clients:  map[string]GrafanaClient{},
 		crypto:   crypto,
 	}
 }
@@ -46,18 +46,18 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 
 	resources := []*domain.Resource{}
 
-	folders, err := client.getFolders()
+	folders, err := client.GetFolders()
 	if err != nil {
 		return nil, err
 	}
 	for _, f := range folders {
 
-		dashboards, err := client.getDashboards(f.ID)
+		dashboards, err := client.GetDashboards(f.ID)
 		if err != nil {
 			return nil, err
 		}
 		for _, d := range dashboards {
-			db := d.toDomain()
+			db := d.ToDomain()
 			db.ProviderType = pc.Type
 			db.ProviderURN = pc.URN
 			resources = append(resources, db)
@@ -83,7 +83,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 
 	if a.Resource.Type == ResourceTypeDashboard {
 		d := new(Dashboard)
-		if err := d.fromDomain(a.Resource); err != nil {
+		if err := d.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
@@ -116,7 +116,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 
 	if a.Resource.Type == ResourceTypeDashboard {
 		d := new(Dashboard)
-		if err := d.fromDomain(a.Resource); err != nil {
+		if err := d.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
@@ -132,12 +132,14 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	return ErrInvalidResourceType
 }
 
-func (p *provider) getClient(providerURN string, credentials Credentials) (*client, error) {
-	if p.clients[providerURN] != nil {
-		return p.clients[providerURN], nil
+func (p *provider) getClient(providerURN string, credentials Credentials) (GrafanaClient, error) {
+	if p.Clients[providerURN] != nil {
+		return p.Clients[providerURN], nil
 	}
 
-	credentials.Decrypt(p.crypto)
+	if err := credentials.Decrypt(p.crypto); err != nil {
+		return nil, err
+	}
 	client, err := NewClient(&ClientConfig{
 		Host:   credentials.Host,
 		ApiKey: credentials.ApiKey,
@@ -146,7 +148,7 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (*clie
 		return nil, err
 	}
 
-	p.clients[providerURN] = client
+	p.Clients[providerURN] = client
 	return client, nil
 }
 

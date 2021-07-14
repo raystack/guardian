@@ -11,9 +11,17 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type GrafanaClient interface {
+	GetDashboards(folderId int) ([]*Dashboard, error)
+	GetFolders() ([]*Folder, error)
+	GrantDashboardAccess(resource *Dashboard, user, role string) error
+	RevokeDashboardAccess(resource *Dashboard, user, role string) error
+}
+
 type ClientConfig struct {
-	Host   string `validate:"required,url" mapstructure:"host"`
-	ApiKey string `validate:"required" mapstructure:"api_key"`
+	Host       string `validate:"required,url" mapstructure:"host"`
+	ApiKey     string `validate:"required" mapstructure:"api_key"`
+	HTTPClient HTTPClient
 }
 
 type permission struct {
@@ -38,12 +46,17 @@ type client struct {
 
 	apiKey string
 
-	httpClient *http.Client
+	httpClient HTTPClient
 }
 
 func NewClient(config *ClientConfig) (*client, error) {
 	if err := validator.New().Struct(config); err != nil {
 		return nil, err
+	}
+
+	httpClient := config.HTTPClient
+	if httpClient == nil {
+		httpClient = &http.Client{}
 	}
 
 	baseURL, err := url.Parse(config.Host)
@@ -56,7 +69,7 @@ func NewClient(config *ClientConfig) (*client, error) {
 	c := &client{
 		baseURL:    baseURL,
 		apiKey:     apiKey,
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 	}
 
 	return c, nil
@@ -174,20 +187,20 @@ func (c *client) do(req *http.Request, v interface{}) (*http.Response, error) {
 	return resp, err
 }
 
-func (c *client) getFolders() ([]*folder, error) {
+func (c *client) GetFolders() ([]*Folder, error) {
 	req, err := c.newRequest(http.MethodGet, "/api/folders", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var folders []*folder
+	var folders []*Folder
 	if _, err := c.do(req, &folders); err != nil {
 		return nil, err
 	}
 	return folders, nil
 }
 
-func (c *client) getDashboards(folderId int) ([]*Dashboard, error) {
+func (c *client) GetDashboards(folderId int) ([]*Dashboard, error) {
 	url := fmt.Sprintf("/api/search?folderIds=%d&type=dash-db", folderId)
 	req, err := c.newRequest(http.MethodGet, url, nil)
 	if err != nil {

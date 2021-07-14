@@ -11,7 +11,7 @@ const (
 	ResourceTypeDashboard = "dashboard"
 )
 
-type folder struct {
+type Folder struct {
 	ID    int    `json:"id"`
 	UID   string `json:"uid"`
 	Title string `json:"title"`
@@ -27,7 +27,7 @@ type Dashboard struct {
 	FolderTitle string `json:"folderTitle"`
 }
 
-func (d *Dashboard) fromDomain(r *domain.Resource) error {
+func (d *Dashboard) FromDomain(r *domain.Resource) error {
 	if r.Type != ResourceTypeDashboard {
 		return ErrInvalidResourceType
 	}
@@ -42,7 +42,7 @@ func (d *Dashboard) fromDomain(r *domain.Resource) error {
 	return nil
 }
 
-func (d *Dashboard) toDomain() *domain.Resource {
+func (d *Dashboard) ToDomain() *domain.Resource {
 	details := map[string]interface{}{}
 	id := strconv.Itoa(d.ID)
 
