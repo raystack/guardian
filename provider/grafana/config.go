@@ -10,6 +10,12 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
+const (
+	DashboardRoleViewer = "view"
+	DashboardRoleEditor = "edit"
+	DashboardRoleAdmin  = "admin"
+)
+
 type Credentials struct {
 	Host   string `json:"host" mapstructure:"host" validate:"required,url"`
 	ApiKey string `json:"api_key" mapstructure:"api_key" validate:"required"`
