@@ -17,8 +17,9 @@ const (
 )
 
 type Credentials struct {
-	Host   string `json:"host" mapstructure:"host" validate:"required,url"`
-	ApiKey string `json:"api_key" mapstructure:"api_key" validate:"required"`
+	Host     string `json:"host" mapstructure:"host" validate:"required,url"`
+	Username string `json:"username" mapstructure:"username" validate:"required"`
+	Password string `json:"password" mapstructure:"password" validate:"required"`
 }
 
 func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
@@ -26,12 +27,12 @@ func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
 		return ErrUnableToEncryptNilCredentials
 	}
 
-	encryptedApiKey, err := encryptor.Encrypt(c.ApiKey)
+	encryptedPassword, err := encryptor.Encrypt(c.Password)
 	if err != nil {
 		return err
 	}
 
-	c.ApiKey = encryptedApiKey
+	c.Password = encryptedPassword
 	return nil
 }
 
@@ -40,12 +41,12 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 		return ErrUnableToDecryptNilCredentials
 	}
 
-	decryptedApiKey, err := decryptor.Decrypt(c.ApiKey)
+	decryptedPassword, err := decryptor.Decrypt(c.Password)
 	if err != nil {
 		return err
 	}
 
-	c.ApiKey = decryptedApiKey
+	c.Password = decryptedPassword
 	return nil
 }
 

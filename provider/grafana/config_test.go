@@ -35,19 +35,21 @@ func TestCredentials(t *testing.T) {
 		})
 
 		t.Run("should return encrypted password inside Credentials on success", func(t *testing.T) {
-			api_key := "test_api_key"
+			username := "username"
+			password := "password"
 			creds := grafana.Credentials{
-				Host:   "http://localhost:4000",
-				ApiKey: api_key,
+				Host:     "http://localhost:4000",
+				Username: username,
+				Password: password,
 			}
 
 			expectedEncryptedApiKey := "encrypted_api_key"
-			encryptor.On("Encrypt", api_key).Return(expectedEncryptedApiKey, nil).Once()
+			encryptor.On("Encrypt", password).Return(expectedEncryptedApiKey, nil).Once()
 
 			actualError := creds.Encrypt(encryptor)
 
 			assert.Nil(t, actualError)
-			assert.Equal(t, expectedEncryptedApiKey, creds.ApiKey)
+			assert.Equal(t, expectedEncryptedApiKey, creds.Password)
 		})
 	})
 
@@ -73,19 +75,21 @@ func TestCredentials(t *testing.T) {
 		})
 
 		t.Run("should return decrypted password inside Credentials on success", func(t *testing.T) {
-			api_key := "encrypted_api_key"
+			username := "username"
+			password := "encrypted_password"
 			creds := grafana.Credentials{
-				Host:   "http://localhost:3000",
-				ApiKey: api_key,
+				Host:     "http://localhost:3000",
+				Username: username,
+				Password: password,
 			}
 
 			expectedDecryptedApiKey := "decrypted_api_key"
-			decryptor.On("Decrypt", api_key).Return(expectedDecryptedApiKey, nil).Once()
+			decryptor.On("Decrypt", password).Return(expectedDecryptedApiKey, nil).Once()
 
 			actualError := creds.Decrypt(decryptor)
 
 			assert.Nil(t, actualError)
-			assert.Equal(t, expectedDecryptedApiKey, creds.ApiKey)
+			assert.Equal(t, expectedDecryptedApiKey, creds.Password)
 		})
 	})
 }

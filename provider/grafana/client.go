@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"bytes"
+	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,7 +21,8 @@ type GrafanaClient interface {
 
 type ClientConfig struct {
 	Host       string `validate:"required,url" mapstructure:"host"`
-	ApiKey     string `validate:"required" mapstructure:"api_key"`
+	Username   string `validate:"required" mapstructure:"username"`
+	Password   string `validate:"required" mapstructure:"password"`
 	HTTPClient HTTPClient
 }
 
@@ -44,7 +46,8 @@ type updatePermissionRequest struct {
 type client struct {
 	baseURL *url.URL
 
-	apiKey string
+	username string
+	password string
 
 	httpClient HTTPClient
 }
@@ -64,11 +67,13 @@ func NewClient(config *ClientConfig) (*client, error) {
 		return nil, err
 	}
 
-	apiKey := config.ApiKey
+	username := config.Username
+	password := config.Password
 
 	c := &client{
 		baseURL:    baseURL,
-		apiKey:     apiKey,
+		username:   username,
+		password:   password,
 		httpClient: httpClient,
 	}
 
@@ -149,7 +154,15 @@ func (c *client) RevokeDashboardAccess(resource *Dashboard, user, role string) e
 	return c.updateDashboardPermissions(resource.ID, nonInheritedPermissions)
 }
 
+func (c *client) base64Encode() string {
+	data := c.username + ":" + c.password
+	basicKeyEncoded := b64.StdEncoding.EncodeToString([]byte(data))
+
+	return basicKeyEncoded
+}
+
 func (c *client) newRequest(method, path string, body interface{}) (*http.Request, error) {
+	basicKey := c.base64Encode()
 	u, err := c.baseURL.Parse(path)
 	if err != nil {
 		return nil, err
@@ -170,7 +183,7 @@ func (c *client) newRequest(method, path string, body interface{}) (*http.Reques
 		req.Header.Set("Content-Type", "application/json")
 	}
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	req.Header.Set("Authorization", "Basic "+basicKey)
 	return req, nil
 }
 

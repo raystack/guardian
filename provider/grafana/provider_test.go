@@ -44,10 +44,10 @@ func TestGetResources(t *testing.T) {
 		p := grafana.NewProvider("", crypto)
 
 		expectedError := errors.New("decrypt error")
-		crypto.On("Decrypt", "test-api-key").Return("", expectedError).Once()
+		crypto.On("Decrypt", "test-password").Return("", expectedError).Once()
 		pc := &domain.ProviderConfig{
 			Credentials: map[string]interface{}{
-				"api_key": "test-api-key",
+				"password": "test-password",
 			},
 		}
 
@@ -262,15 +262,17 @@ func TestGrantAccess(t *testing.T) {
 	})
 
 	t.Run("should return error if there are any on client initialization", func(t *testing.T) {
+		password := "test-password"
 		crypto := new(mocks.Crypto)
 		p := grafana.NewProvider("", crypto)
 		expectedError := errors.New("decrypt error")
-		crypto.On("Decrypt", "test-api-key").Return("", expectedError).Once()
+		crypto.On("Decrypt", password).Return("", expectedError).Once()
 
 		pc := &domain.ProviderConfig{
 			Credentials: grafana.Credentials{
-				Host:   "localhost",
-				ApiKey: "test-api-key",
+				Host:     "localhost",
+				Username: "test-username",
+				Password: password,
 			},
 			Resources: []*domain.ResourceConfig{
 				{
@@ -302,15 +304,17 @@ func TestGrantAccess(t *testing.T) {
 	})
 
 	t.Run("should return error if resource type in unknown", func(t *testing.T) {
+		password := "test-password"
 		crypto := new(mocks.Crypto)
 		p := grafana.NewProvider("", crypto)
 		expectedError := errors.New("invalid resource type")
-		crypto.On("Decrypt", "test-api-key").Return("", expectedError).Once()
+		crypto.On("Decrypt", password).Return("", expectedError).Once()
 
 		pc := &domain.ProviderConfig{
 			Credentials: grafana.Credentials{
-				Host:   "localhost",
-				ApiKey: "test-api-key",
+				Host:     "localhost",
+				Username: "test-username",
+				Password: password,
 			},
 			Resources: []*domain.ResourceConfig{
 				{
@@ -355,8 +359,9 @@ func TestGrantAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: grafana.Credentials{
-					Host:   "localhost",
-					ApiKey: "test-api-key",
+					Host:     "localhost",
+					Username: "test-username",
+					Password: "test-password",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -407,8 +412,9 @@ func TestGrantAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: grafana.Credentials{
-					Host:   "localhost",
-					ApiKey: "test-api-key",
+					Host:     "localhost",
+					Username: "test-username",
+					Password: "test-password",
 				},
 				Resources: []*domain.ResourceConfig{
 					{

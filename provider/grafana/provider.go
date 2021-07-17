@@ -141,8 +141,9 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Grafa
 		return nil, err
 	}
 	client, err := NewClient(&ClientConfig{
-		Host:   credentials.Host,
-		ApiKey: credentials.ApiKey,
+		Host:     credentials.Host,
+		Username: credentials.Username,
+		Password: credentials.Password,
 	})
 	if err != nil {
 		return nil, err
