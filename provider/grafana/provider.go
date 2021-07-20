@@ -140,10 +140,13 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Grafa
 	if err := credentials.Decrypt(p.crypto); err != nil {
 		return nil, err
 	}
+
+	org := providerURN
 	client, err := NewClient(&ClientConfig{
 		Host:     credentials.Host,
 		Username: credentials.Username,
 		Password: credentials.Password,
+		Org:      org,
 	})
 	if err != nil {
 		return nil, err

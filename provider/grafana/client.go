@@ -23,6 +23,7 @@ type ClientConfig struct {
 	Host       string `validate:"required,url" mapstructure:"host"`
 	Username   string `validate:"required" mapstructure:"username"`
 	Password   string `validate:"required" mapstructure:"password"`
+	Org        string `validate:"required" mapstructure:"org"`
 	HTTPClient HTTPClient
 }
 
@@ -48,6 +49,7 @@ type client struct {
 
 	username string
 	password string
+	org      string
 
 	httpClient HTTPClient
 }
@@ -69,11 +71,13 @@ func NewClient(config *ClientConfig) (*client, error) {
 
 	username := config.Username
 	password := config.Password
+	org := config.Org
 
 	c := &client{
 		baseURL:    baseURL,
 		username:   username,
 		password:   password,
+		org:        org,
 		httpClient: httpClient,
 	}
 
@@ -184,6 +188,8 @@ func (c *client) newRequest(method, path string, body interface{}) (*http.Reques
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", "Basic "+basicKey)
+	req.Header.Set("X-Grafana-Org-Id", c.org)
+
 	return req, nil
 }
 
