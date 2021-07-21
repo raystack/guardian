@@ -1,17 +1,20 @@
 package grafana
 
-import "github.com/odpf/guardian/domain"
+import (
+	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/guardian/domain"
+)
 
 type provider struct {
 	typeName string
-	clients  map[string]*client
+	Clients  map[string]GrafanaClient
 	crypto   domain.Crypto
 }
 
 func NewProvider(typeName string, crypto domain.Crypto) *provider {
 	return &provider{
 		typeName: typeName,
-		clients:  map[string]*client{},
+		Clients:  map[string]GrafanaClient{},
 		crypto:   crypto,
 	}
 }
@@ -31,16 +34,158 @@ func (p *provider) CreateConfig(pc *domain.ProviderConfig) error {
 }
 
 func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
-	//TO DO
-	return nil, nil
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return nil, err
+	}
+
+	client, err := p.getClient(pc.URN, creds)
+	if err != nil {
+		return nil, err
+	}
+
+	resources := []*domain.Resource{}
+
+	folders, err := client.GetFolders()
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range folders {
+
+		dashboards, err := client.GetDashboards(f.ID)
+		if err != nil {
+			return nil, err
+		}
+		for _, d := range dashboards {
+			db := d.ToDomain()
+			db.ProviderType = pc.Type
+			db.ProviderURN = pc.URN
+			resources = append(resources, db)
+		}
+	}
+	return resources, nil
 }
 
 func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
-	//TO DO
-	return nil
+	permissions, err := getPermissions(pc.Resources, a)
+	if err != nil {
+		return err
+	}
+
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return err
+	}
+	client, err := p.getClient(pc.URN, creds)
+	if err != nil {
+		return err
+	}
+
+	if a.Resource.Type == ResourceTypeDashboard {
+		d := new(Dashboard)
+		if err := d.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if err := client.GrantDashboardAccess(d, a.User, p.Name); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	return ErrInvalidResourceType
 }
 
 func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
-	//TO DO
-	return nil
+	permissions, err := getPermissions(pc.Resources, a)
+	if err != nil {
+		return err
+	}
+
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return err
+	}
+	client, err := p.getClient(pc.URN, creds)
+	if err != nil {
+		return err
+	}
+
+	if a.Resource.Type == ResourceTypeDashboard {
+		d := new(Dashboard)
+		if err := d.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if err := client.RevokeDashboardAccess(d, a.User, p.Name); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	return ErrInvalidResourceType
+}
+
+func (p *provider) getClient(providerURN string, credentials Credentials) (GrafanaClient, error) {
+	if p.Clients[providerURN] != nil {
+		return p.Clients[providerURN], nil
+	}
+
+	if err := credentials.Decrypt(p.crypto); err != nil {
+		return nil, err
+	}
+
+	org := providerURN
+	client, err := NewClient(&ClientConfig{
+		Host:     credentials.Host,
+		Username: credentials.Username,
+		Password: credentials.Password,
+		Org:      org,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	p.Clients[providerURN] = client
+	return client, nil
+}
+
+func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) ([]PermissionConfig, error) {
+	var resourceConfig *domain.ResourceConfig
+	for _, rc := range resourceConfigs {
+		if rc.Type == a.Resource.Type {
+			resourceConfig = rc
+		}
+	}
+	if resourceConfig == nil {
+		return nil, ErrInvalidResourceType
+	}
+
+	var roleConfig *domain.RoleConfig
+	for _, rc := range resourceConfig.Roles {
+		if rc.ID == a.Role {
+			roleConfig = rc
+		}
+	}
+	if roleConfig == nil {
+		return nil, ErrInvalidRole
+	}
+
+	var permissions []PermissionConfig
+	for _, p := range roleConfig.Permissions {
+		var permission PermissionConfig
+		if err := mapstructure.Decode(p, &permission); err != nil {
+			return nil, err
+		}
+
+		permissions = append(permissions, permission)
+	}
+
+	return permissions, nil
 }
