@@ -9,6 +9,8 @@ const (
 	ProviderTypeBigQuery = "google_bigquery"
 	// ProviderTypeMetabase is the type name for Metabase provider
 	ProviderTypeMetabase = "metabase"
+	// ProviderTypeGrafana is the type name for Grafana provider
+	ProviderTypeGrafana = "grafana"
 )
 
 // RoleConfig is the configuration to define a role and mapping the permissions in the provider
@@ -40,7 +42,7 @@ type AppealConfig struct {
 
 // ProviderConfig is the configuration for a data provider
 type ProviderConfig struct {
-	Type        string                 `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase"`
+	Type        string                 `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana"`
 	URN         string                 `json:"urn" yaml:"urn" validate:"required"`
 	Labels      map[string]interface{} `json:"labels" yaml:"labels"`
 	Credentials interface{}            `json:"credentials,omitempty" yaml:"credentials" validate:"required"`

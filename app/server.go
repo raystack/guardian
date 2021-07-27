@@ -17,6 +17,7 @@ import (
 	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/provider"
 	"github.com/odpf/guardian/provider/bigquery"
+	"github.com/odpf/guardian/provider/grafana"
 	"github.com/odpf/guardian/provider/metabase"
 	"github.com/odpf/guardian/resource"
 	"github.com/odpf/guardian/scheduler"
@@ -55,6 +56,7 @@ func RunServer(c *Config) error {
 	providers := []domain.ProviderInterface{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
 		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
+		grafana.NewProvider(domain.ProviderTypeGrafana, crypto),
 	}
 
 	notifier := notifier.NewSlackNotifier(c.SlackAccessToken)
