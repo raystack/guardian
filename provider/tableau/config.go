@@ -11,9 +11,10 @@ import (
 )
 
 type Credentials struct {
-	Host     string `json:"host" mapstructure:"host" validate:"required,url"`
-	Username string `json:"username" mapstructure:"username" validate:"required"`
-	Password string `json:"password" mapstructure:"password" validate:"required"`
+	Host       string `json:"host" mapstructure:"host" validate:"required,url"`
+	Username   string `json:"username" mapstructure:"username" validate:"required"`
+	Password   string `json:"password" mapstructure:"password" validate:"required"`
+	ContentURL string `json:"content_url" mapstructure:"content_url" validate:"required"`
 }
 
 func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
