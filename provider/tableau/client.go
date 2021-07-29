@@ -2,7 +2,8 @@ package tableau
 
 import (
 	"bytes"
-	"encoding/xml"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -17,53 +18,36 @@ type ClientConfig struct {
 }
 
 type sessionRequest struct {
-	XMLName     xml.Name           `xml:"tsRequest"`
-	Credentials requestCredentials `xml:"credentials"`
+	Credentials requestCredentials `json:"credentials"`
 }
 
 type requestCredentials struct {
-	Name     string      `xml:"name,attr"`
-	Password string      `xml:"password,attr"`
-	Site     requestSite `xml:"site"`
+	Site     requestSite `json:"site"`
+	Name     string      `json:"name"`
+	Password string      `json:"password"`
 }
 
 type requestSite struct {
-	ContentUrl string `xml:"contentUrl,attr"`
+	ContentURL string `json:"contentUrl"`
 }
 
 type sessionResponse struct {
-	XMLName        xml.Name            `xml:"tsResponse"`
-	Text           string              `xml:",chardata"`
-	Xmlns          string              `xml:"xmlns,attr"`
-	Xsi            string              `xml:"xsi,attr"`
-	SchemaLocation string              `xml:"schemaLocation,attr"`
-	Credentials    responseCredentials `xml:"credentials"`
-	Error          responseError       `xml:"error"`
-}
-
-type responseError struct {
-	Text    string `xml:",chardata"`
-	Code    string `xml:"code,attr"`
-	Summary string `xml:"summary"`
-	Detail  string `xml:"detail"`
+	Credentials responseCredentials `json:"credentials"`
 }
 
 type responseCredentials struct {
-	Text  string       `xml:",chardata"`
-	Token string       `xml:"token,attr"`
-	Site  responseSite `xml:"site"`
-	User  responseUser `xml:"user"`
+	Site  responseSite `json:"site"`
+	User  responseUser `json:"user"`
+	Token string       `json:"token"`
 }
 
 type responseUser struct {
-	Text string `xml:",chardata"`
-	ID   string `xml:"id,attr"`
+	ID string `json:"id"`
 }
 
 type responseSite struct {
-	Text       string `xml:",chardata"`
-	ID         string `xml:"id,attr"`
-	ContentUrl string `xml:"contentUrl,attr"`
+	ID         string `json:"id"`
+	ContentURL string `json:"contentUrl"`
 }
 
 type client struct {
@@ -104,7 +88,6 @@ func newClient(config *ClientConfig) (*client, error) {
 	c.sessionToken = sessionToken
 	c.siteID = siteID
 	c.userID = userID
-
 	return c, nil
 }
 
@@ -114,17 +97,12 @@ func (c *client) getSession() (string, string, string, error) {
 			Name:     c.username,
 			Password: c.password,
 			Site: requestSite{
-				ContentUrl: c.contentUrl,
+				ContentURL: c.contentUrl,
 			},
 		},
 	}
 
-	sessionRequestXML, err := xml.MarshalIndent(sessionRequest, " ", "  ")
-	if err != nil {
-		return "", "", "", err
-	}
-
-	req, err := c.newRequest(http.MethodPost, "/api/3.12/auth/signin", string(sessionRequestXML))
+	req, err := c.newRequest(http.MethodPost, "/api/3.12/auth/signin", sessionRequest)
 	if err != nil {
 		return "", "", "", nil
 	}
@@ -142,15 +120,22 @@ func (c *client) newRequest(method, path string, body interface{}) (*http.Reques
 	if err != nil {
 		return nil, err
 	}
-	load := body.(string)
-	req, err := http.NewRequest(method, u.String(), bytes.NewBuffer([]byte(load)))
+	var buf io.ReadWriter
+	if body != nil {
+		buf = new(bytes.Buffer)
+		err := json.NewEncoder(buf).Encode(body)
+		if err != nil {
+			return nil, err
+		}
+	}
+	req, err := http.NewRequest(method, u.String(), buf)
 	if err != nil {
 		return nil, err
 	}
 	if body != nil {
-		req.Header.Set("Content-Type", "text/xml")
+		req.Header.Set("Content-Type", "application/json")
 	}
-	req.Header.Set("Accept", "application/xml")
+	req.Header.Set("Accept", "application/json")
 	req.Header.Set("X-Tableau-Auth", c.sessionToken)
 	return req, nil
 }
@@ -177,6 +162,8 @@ func (c *client) do(req *http.Request, v interface{}) (*http.Response, error) {
 		}
 	}
 
-	err = xml.NewDecoder(resp.Body).Decode(v)
+	if v != nil {
+		err = json.NewDecoder(resp.Body).Decode(v)
+	}
 	return resp, err
 }
