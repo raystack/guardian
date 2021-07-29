@@ -17,6 +17,13 @@ type Credentials struct {
 	ContentURL string `json:"content_url" mapstructure:"content_url" validate:"required"`
 }
 
+var permissionNames = map[string][]string{
+	ResourceTypeWorkbook: {"AddComment", "ChangeHierarchy", "ChangePermissions", "Delete", "ExportData", "ExportImage", "ExportXml", "Filter", "Read", "ShareView", "ViewComments", "ViewUnderlyingData", "WebAuthoring", "Write"},
+	ResourceTypeFlow:     {"ChangeHierarchy", "ChangePermissions", "Delete", "Execute", "ExportXml", "Read", "Write"},
+}
+
+var permissionModes = []string{"Allow", "Deny"}
+
 func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
 	if c == nil {
 		return ErrUnableToEncryptNilCredentials
@@ -150,6 +157,17 @@ func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
 	return nil
 }
 
+func (c *Config) getValidationString(resource string) string {
+	validation := "oneof="
+
+	for _, mode := range permissionModes {
+		for _, permission := range permissionNames[resource] {
+			validation = fmt.Sprintf("%v%v:%v ", validation, permission, mode)
+		}
+	}
+	return validation
+}
+
 func (c *Config) validatePermission(resourceType string, value interface{}) (*PermissionConfig, error) {
 	permissionConfig, ok := value.(map[string]interface{})
 	if !ok {
@@ -163,9 +181,9 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 
 	var nameValidation string
 	if resourceType == ResourceTypeWorkbook {
-		nameValidation = "oneof=AddComment:Allow ChangeHierarchy:Allow ChangePermissions:Allow Delete:Allow ExportData:Allow ExportImage:Allow ExportXml:Allow Filter:Allow Read:Allow ShareView:Allow ViewComments:Allow ViewUnderlyingData:Allow WebAuthoring:Allow Write:Allow AddComment:Deny ChangeHierarchy:Deny ChangePermissions:Deny Delete:Deny ExportData:Deny ExportImage:Deny ExportXml:Deny Filter:Deny Read:Deny ShareView:Deny ViewComments:Deny ViewUnderlyingData:Deny WebAuthoring:Deny Write:Deny"
+		nameValidation = c.getValidationString(ResourceTypeWorkbook)
 	} else if resourceType == ResourceTypeFlow {
-		nameValidation = "oneof=ChangeHierarchy:Allow ChangePermissions:Allow Delete:Allow Execute:Allow ExportXml:Allow Read:Allow Write:Allow ChangeHierarchy:Deny ChangePermissions:Deny Delete:Deny Execute:Deny ExportXml:Deny Read:Deny Write:Deny"
+		nameValidation = c.getValidationString(ResourceTypeFlow)
 	}
 
 	if err := c.validator.Var(pc.Name, nameValidation); err != nil {
