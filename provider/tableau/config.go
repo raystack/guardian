@@ -53,7 +53,8 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 }
 
 type PermissionConfig struct {
-	Name string `json:"name" mapstructure:"name" validate:"required"`
+	Name   string `json:"name" mapstructure:"name" validate:"required"`
+	Target string `json:"target,omitempty" mapstructure:"target"`
 }
 
 type Config struct {
