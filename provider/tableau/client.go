@@ -3,12 +3,17 @@ package tableau
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 
 	"github.com/go-playground/validator/v10"
 )
+
+type TableauClient interface {
+	GetWorkbooks() ([]*Workbook, error)
+}
 
 type ClientConfig struct {
 	Host       string `validate:"required,url" mapstructure:"host"`
@@ -61,6 +66,34 @@ type client struct {
 	userID       string
 
 	httpClient *http.Client
+}
+
+type responseWorkbooks struct {
+	Pagination pagination `json:"pagination"`
+	Workbooks  workbooks  `json:"workbooks"`
+}
+
+type workbooks struct {
+	Workbook []*Workbook `json:"workbook"`
+}
+type pagination struct {
+	PageNumber     string `json:"pageNumber"`
+	PageSize       string `json:"pageSize"`
+	TotalAvailable string `json:"totalAvailable"`
+}
+
+func (c *client) GetWorkbooks() ([]*Workbook, error) {
+	url := fmt.Sprintf("/api/3.12/sites/%v/workbooks", c.siteID)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var workbooks responseWorkbooks
+	if _, err := c.do(req, &workbooks); err != nil {
+		return nil, err
+	}
+	return workbooks.Workbooks.Workbook, nil
 }
 
 func newClient(config *ClientConfig) (*client, error) {

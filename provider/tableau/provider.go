@@ -34,18 +34,29 @@ func (p *provider) CreateConfig(pc *domain.ProviderConfig) error {
 }
 
 func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
-	//TO DO
-
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return nil, err
 	}
 
-	_, err := p.getClient(pc.URN, creds)
+	client, err := p.getClient(pc.URN, creds)
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+
+	resources := []*domain.Resource{}
+	workbooks, err := client.GetWorkbooks()
+	if err != nil {
+		return nil, err
+	}
+	for _, w := range workbooks {
+		wb := w.ToDomain()
+		wb.ProviderType = pc.Type
+		wb.ProviderURN = pc.URN
+		resources = append(resources, wb)
+	}
+
+	return resources, nil
 }
 
 func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
