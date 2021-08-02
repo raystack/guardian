@@ -7,12 +7,16 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
 
 type TableauClient interface {
 	GetWorkbooks() ([]*Workbook, error)
+	UpdateSiteRole(user, role string) error
+	GrantWorkbookAccess(resource *Workbook, user, role string) error
+	RevokeWorkbookAccess(resource *Workbook, user, role string) error
 }
 
 type ClientConfig struct {
@@ -68,9 +72,43 @@ type client struct {
 	httpClient *http.Client
 }
 
+type workbookPermissions struct {
+	Permissions permissions `json:"permissions"`
+}
+type workbook struct {
+	ID string `json:"id"`
+}
+type workbookUser struct {
+	ID string `json:"id"`
+}
+type capability struct {
+	Name string `json:"name"`
+	Mode string `json:"mode"`
+}
+type capabilities struct {
+	Capability []capability `json:"capability"`
+}
+type granteeCapabilities struct {
+	User         workbookUser `json:"user"`
+	Capabilities capabilities `json:"capabilities"`
+}
+type permissions struct {
+	Workbook            workbook              `json:"workbook"`
+	GranteeCapabilities []granteeCapabilities `json:"granteeCapabilities"`
+}
+
 type responseWorkbooks struct {
 	Pagination pagination `json:"pagination"`
 	Workbooks  workbooks  `json:"workbooks"`
+}
+
+type siteUsers struct {
+	Pagination pagination    `json:"pagination"`
+	Users      responseUsers `json:"users"`
+}
+
+type responseUsers struct {
+	User []responseUser `json:"user"`
 }
 
 type workbooks struct {
@@ -80,6 +118,14 @@ type pagination struct {
 	PageNumber     string `json:"pageNumber"`
 	PageSize       string `json:"pageSize"`
 	TotalAvailable string `json:"totalAvailable"`
+}
+
+type userSiteRoleData struct {
+	User userSiteRole `json:"user"`
+}
+
+type userSiteRole struct {
+	SiteRole string `json:"siteRole"`
 }
 
 func (c *client) GetWorkbooks() ([]*Workbook, error) {
@@ -94,6 +140,102 @@ func (c *client) GetWorkbooks() ([]*Workbook, error) {
 		return nil, err
 	}
 	return workbooks.Workbooks.Workbook, nil
+}
+
+func (c *client) UpdateSiteRole(user, role string) error {
+	foundUser, err := c.getUser(user)
+	if err != nil {
+		return err
+	}
+	userId := foundUser.Users.User[0].ID
+
+	body := userSiteRoleData{
+		User: userSiteRole{
+			SiteRole: role,
+		},
+	}
+	url := fmt.Sprintf("/api/3.12/sites/%v/users/%v", c.siteID, userId)
+	req, err := c.newRequest(http.MethodPut, url, body)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.do(req, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) GrantWorkbookAccess(resource *Workbook, user, role string) error {
+	requestWorkbook := workbook{
+		ID: resource.ID,
+	}
+	foundUser, err := c.getUser(user)
+	if err != nil {
+		return err
+	}
+	userId := foundUser.Users.User[0].ID
+	requestUser := workbookUser{
+		ID: userId,
+	}
+
+	split := strings.Split(role, ":")
+	requestCapability := capability{
+		Name: split[0],
+		Mode: split[1],
+	}
+
+	capabilityArr := []capability{requestCapability}
+	requestCapabilities := capabilities{
+		Capability: capabilityArr,
+	}
+
+	requestGranteeCapabilities := granteeCapabilities{
+		User:         requestUser,
+		Capabilities: requestCapabilities,
+	}
+
+	granteeCapabilities := []granteeCapabilities{requestGranteeCapabilities}
+
+	permission := permissions{
+		Workbook:            requestWorkbook,
+		GranteeCapabilities: granteeCapabilities,
+	}
+	c.addWorkbookPermissions(resource.ID, permission)
+
+	return nil
+}
+
+func (c *client) RevokeWorkbookAccess(resource *Workbook, user, role string) error {
+	foundUser, err := c.getUser(user)
+	if err != nil {
+		return err
+	}
+	userId := foundUser.Users.User[0].ID
+	c.deleteWorkbookPermissions(resource.ID, userId, role)
+	return nil
+}
+
+func (c *client) getUser(email string) (*siteUsers, error) {
+	filter := fmt.Sprintf("name:eq:%v", email)
+	url := fmt.Sprintf("/api/3.12/sites/%v/users?filter=%v", c.siteID, filter)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var user *siteUsers
+	_, err = c.do(req, &user)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(user.Users.User) == 0 {
+		return nil, ErrUserNotFound
+	}
+
+	return user, nil
 }
 
 func newClient(config *ClientConfig) (*client, error) {
@@ -122,6 +264,36 @@ func newClient(config *ClientConfig) (*client, error) {
 	c.siteID = siteID
 	c.userID = userID
 	return c, nil
+}
+
+func (c *client) addWorkbookPermissions(id string, permissions permissions) error {
+	body := workbookPermissions{
+		Permissions: permissions,
+	}
+	url := fmt.Sprintf("/api/3.12/sites/%v/workbooks/%v/permissions", c.siteID, id)
+	req, err := c.newRequest(http.MethodPut, url, body)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.do(req, nil)
+	return err
+
+}
+
+func (c *client) deleteWorkbookPermissions(id, user, role string) error {
+	split := strings.Split(role, ":")
+	capabilityName := split[0]
+	capabilityMode := split[1]
+	url := fmt.Sprintf("/api/3.12/sites/%v/workbooks/%v/permissions/users/%v/%v/%v", c.siteID, id, user, capabilityName, capabilityMode)
+	req, err := c.newRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.do(req, nil)
+	return err
+
 }
 
 func (c *client) getSession() (string, string, string, error) {
@@ -188,7 +360,6 @@ func (c *client) do(req *http.Request, v interface{}) (*http.Response, error) {
 		c.sessionToken = newSessionToken
 		req.Header.Set("X-Tableau-Auth", c.sessionToken)
 
-		// re-do the request
 		resp, err = c.httpClient.Do(req)
 		if err != nil {
 			return nil, err
