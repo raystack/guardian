@@ -2,10 +2,12 @@ package v1
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	pb "github.com/odpf/guardian/api/proto/guardian"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/policy"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -160,17 +162,23 @@ func (s *GuardianServiceServer) CreatePolicy(ctx context.Context, req *pb.Create
 }
 
 func (s *GuardianServiceServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyRequest) (*pb.UpdatePolicyResponse, error) {
-	policy, err := s.adapter.FromPolicyProto(req.GetPolicy())
+	p, err := s.adapter.FromPolicyProto(req.GetPolicy())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s: cannot deserialize policy", err)
 	}
 
-	policy.ID = req.GetId()
-	if err := s.policyService.Update(policy); err != nil {
+	p.ID = req.GetId()
+	if err := s.policyService.Update(p); err != nil {
+		if errors.Is(err, policy.ErrPolicyDoesNotExists) {
+			return nil, status.Error(codes.NotFound, "policy id not found")
+		} else if errors.Is(err, policy.ErrEmptyIDParam) {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
 		return nil, status.Errorf(codes.Internal, "%s: failed to update policy", err)
 	}
 
-	policyProto, err := s.adapter.ToPolicyProto(policy)
+	policyProto, err := s.adapter.ToPolicyProto(p)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s: failed to parse policy", err)
 	}
