@@ -3,9 +3,13 @@ package app
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/odpf/guardian/api"
+	v1 "github.com/odpf/guardian/api/handler/v1"
+	v1handler "github.com/odpf/guardian/api/handler/v1"
+	pb "github.com/odpf/guardian/api/proto/guardian"
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/approval"
 	"github.com/odpf/guardian/crypto"
@@ -22,6 +26,7 @@ import (
 	"github.com/odpf/guardian/resource"
 	"github.com/odpf/guardian/scheduler"
 	"github.com/odpf/guardian/store"
+	"google.golang.org/grpc"
 	"gorm.io/gorm"
 )
 
@@ -113,6 +118,7 @@ func RunServer(c *Config) error {
 	providerJobHandler := provider.NewJobHandler(providerService)
 	appealJobHandler := appeal.NewJobHandler(appealService)
 
+	// init scheduler
 	tasks := []*scheduler.Task{
 		{
 			CronTab: "0 */2 * * *",
@@ -129,8 +135,23 @@ func RunServer(c *Config) error {
 	}
 	s.Run()
 
-	log.Printf("running server on port %d\n", c.Port)
-	return http.ListenAndServe(fmt.Sprintf(":%d", c.Port), r)
+	// init server
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", c.Port))
+	if err != nil {
+		return fmt.Errorf("failed to listen: %v", err)
+	}
+	grpcServer := grpc.NewServer()
+	adapter := v1.NewAdapter()
+	pb.RegisterGuardianServiceServer(grpcServer, v1handler.NewGuardianServiceServer(
+		resourceService,
+		providerService,
+		policyService,
+		appealService,
+		adapter,
+	))
+
+	log.Println("server running on port:", c.Port)
+	return grpcServer.Serve(lis)
 }
 
 // Migrate runs the schema migration scripts
