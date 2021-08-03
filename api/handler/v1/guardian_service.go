@@ -8,6 +8,7 @@ import (
 	pb "github.com/odpf/guardian/api/proto/guardian"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/policy"
+	"github.com/odpf/guardian/resource"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -19,6 +20,9 @@ type ProtoAdapter interface {
 
 	FromPolicyProto(*pb.Policy) (*domain.Policy, error)
 	ToPolicyProto(*domain.Policy) (*pb.Policy, error)
+
+	FromResourceProto(*pb.Resource) *domain.Resource
+	ToResourceProto(*domain.Resource) (*pb.Resource, error)
 }
 
 type GuardianServiceServer struct {
@@ -185,5 +189,46 @@ func (s *GuardianServiceServer) UpdatePolicy(ctx context.Context, req *pb.Update
 
 	return &pb.UpdatePolicyResponse{
 		Policy: policyProto,
+	}, nil
+}
+
+func (s *GuardianServiceServer) ListResources(ctx context.Context, req *pb.ListResourcesRequest) (*pb.ListResourcesResponse, error) {
+	resources, err := s.resourceService.Find(map[string]interface{}{})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%s: failed to get resource list", err)
+	}
+
+	resourceProtos := []*pb.Resource{}
+	for _, r := range resources {
+		resourceProto, err := s.adapter.ToResourceProto(r)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "%s: failed to parse resource %s", err.Error(), r.Name)
+		}
+		resourceProtos = append(resourceProtos, resourceProto)
+	}
+
+	return &pb.ListResourcesResponse{
+		Resources: resourceProtos,
+	}, nil
+}
+
+func (s *GuardianServiceServer) UpdateResource(ctx context.Context, req *pb.UpdateResourceRequest) (*pb.UpdateResourceResponse, error) {
+	r := s.adapter.FromResourceProto(req.GetResource())
+	r.ID = uint(req.GetId())
+
+	if err := s.resourceService.Update(r); err != nil {
+		return nil, status.Errorf(codes.Internal, "%s: failed to update resource", err)
+	}
+
+	resourceProto, err := s.adapter.ToResourceProto(r)
+	if err != nil {
+		if errors.Is(err, resource.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "resource not found")
+		}
+		return nil, status.Errorf(codes.Internal, "%s: failed to parse resource", err)
+	}
+
+	return &pb.UpdateResourceResponse{
+		Resource: resourceProto,
 	}, nil
 }

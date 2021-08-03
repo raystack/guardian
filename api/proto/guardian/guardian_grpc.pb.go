@@ -25,7 +25,7 @@ type GuardianServiceClient interface {
 	CreatePolicy(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error)
 	UpdatePolicy(ctx context.Context, in *UpdatePolicyRequest, opts ...grpc.CallOption) (*UpdatePolicyResponse, error)
 	ListResources(ctx context.Context, in *ListResourcesRequest, opts ...grpc.CallOption) (*ListResourcesResponse, error)
-	UpdateResource(ctx context.Context, in *UpdateResourceRequest, opts ...grpc.CallOption) (*Resource, error)
+	UpdateResource(ctx context.Context, in *UpdateResourceRequest, opts ...grpc.CallOption) (*UpdateResourceResponse, error)
 	ListAppeals(ctx context.Context, in *ListAppealsRequest, opts ...grpc.CallOption) (*ListAppealsResponse, error)
 	GetAppeal(ctx context.Context, in *GetAppealRequest, opts ...grpc.CallOption) (*GetAppealResponse, error)
 	CancelAppeal(ctx context.Context, in *CancelAppealRequest, opts ...grpc.CallOption) (*CancelAppealResponse, error)
@@ -106,8 +106,8 @@ func (c *guardianServiceClient) ListResources(ctx context.Context, in *ListResou
 	return out, nil
 }
 
-func (c *guardianServiceClient) UpdateResource(ctx context.Context, in *UpdateResourceRequest, opts ...grpc.CallOption) (*Resource, error) {
-	out := new(Resource)
+func (c *guardianServiceClient) UpdateResource(ctx context.Context, in *UpdateResourceRequest, opts ...grpc.CallOption) (*UpdateResourceResponse, error) {
+	out := new(UpdateResourceResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.GuardianService/UpdateResource", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -189,7 +189,7 @@ type GuardianServiceServer interface {
 	CreatePolicy(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error)
 	UpdatePolicy(context.Context, *UpdatePolicyRequest) (*UpdatePolicyResponse, error)
 	ListResources(context.Context, *ListResourcesRequest) (*ListResourcesResponse, error)
-	UpdateResource(context.Context, *UpdateResourceRequest) (*Resource, error)
+	UpdateResource(context.Context, *UpdateResourceRequest) (*UpdateResourceResponse, error)
 	ListAppeals(context.Context, *ListAppealsRequest) (*ListAppealsResponse, error)
 	GetAppeal(context.Context, *GetAppealRequest) (*GetAppealResponse, error)
 	CancelAppeal(context.Context, *CancelAppealRequest) (*CancelAppealResponse, error)
@@ -225,7 +225,7 @@ func (UnimplementedGuardianServiceServer) UpdatePolicy(context.Context, *UpdateP
 func (UnimplementedGuardianServiceServer) ListResources(context.Context, *ListResourcesRequest) (*ListResourcesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListResources not implemented")
 }
-func (UnimplementedGuardianServiceServer) UpdateResource(context.Context, *UpdateResourceRequest) (*Resource, error) {
+func (UnimplementedGuardianServiceServer) UpdateResource(context.Context, *UpdateResourceRequest) (*UpdateResourceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateResource not implemented")
 }
 func (UnimplementedGuardianServiceServer) ListAppeals(context.Context, *ListAppealsRequest) (*ListAppealsResponse, error) {

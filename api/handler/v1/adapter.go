@@ -230,3 +230,51 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 		UpdatedAt:   updatedAt,
 	}, nil
 }
+
+func (a *adapter) FromResourceProto(r *pb.Resource) *domain.Resource {
+	details := map[string]interface{}{}
+	if r.GetDetails() != nil {
+		details = r.GetDetails().AsMap()
+	}
+	return &domain.Resource{
+		ID:           uint(r.GetId()),
+		ProviderType: r.GetProviderType(),
+		ProviderURN:  r.GetProviderUrn(),
+		Type:         r.GetType(),
+		URN:          r.GetUrn(),
+		Name:         r.GetName(),
+		Details:      details,
+		Labels:       r.GetLabels(),
+		CreatedAt:    r.GetCreatedAt().AsTime(),
+		UpdatedAt:    r.GetUpdatedAt().AsTime(),
+	}
+}
+
+func (a *adapter) ToResourceProto(r *domain.Resource) (*pb.Resource, error) {
+	details, err := structpb.NewStruct(r.Details)
+	if err != nil {
+		return nil, err
+	}
+
+	createdAt, err := ptypes.TimestampProto(r.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	updatedAt, err := ptypes.TimestampProto(r.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.Resource{
+		Id:           uint32(r.ID),
+		ProviderType: r.ProviderType,
+		ProviderUrn:  r.ProviderURN,
+		Type:         r.Type,
+		Urn:          r.URN,
+		Name:         r.Name,
+		Details:      details,
+		Labels:       r.Labels,
+		CreatedAt:    createdAt,
+		UpdatedAt:    updatedAt,
+	}, nil
+}
