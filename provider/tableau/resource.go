@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	ResourceTypeWorkbook = "workbook"
-	ResourceTypeFlow     = "flow"
+	ResourceTypeWorkbook   = "workbook"
+	ResourceTypeFlow       = "flow"
+	ResourceTypeDataSource = "datasource"
 )
 
 type Workbook struct {
@@ -36,6 +37,21 @@ type Flow struct {
 	Name       string      `json:"name"`
 	WebpageURL string      `json:"webpageUrl"`
 	FileType   string      `json:"fileType"`
+}
+
+type DataSource struct {
+	Project             project     `json:"project"`
+	Owner               owner       `json:"owner"`
+	Tags                interface{} `json:"tags"`
+	ID                  string      `json:"id"`
+	Name                string      `json:"name"`
+	EncryptExtracts     string      `json:"encryptExtracts"`
+	ContentURL          string      `json:"contentUrl"`
+	HasExtracts         bool        `json:"hasExtracts"`
+	IsCertified         bool        `json:"isCertified"`
+	Type                string      `json:"type"`
+	UseRemoteQueryAgent bool        `json:"useRemoteQueryAgent"`
+	WebpageURL          string      `json:"webpageUrl"`
 }
 
 type project struct {
@@ -104,6 +120,37 @@ func (f *Flow) ToDomain() *domain.Resource {
 			"webpage_url":  f.WebpageURL,
 			"tags":         f.Tags,
 			"fileType":     f.FileType,
+		},
+	}
+}
+
+func (d *DataSource) FromDomain(r *domain.Resource) error {
+	if r.Type != ResourceTypeWorkbook {
+		return ErrInvalidResourceType
+	}
+
+	d.ID = r.URN
+	d.Name = r.Name
+	return nil
+}
+
+func (d *DataSource) ToDomain() *domain.Resource {
+	return &domain.Resource{
+		Type: ResourceTypeDataSource,
+		Name: d.Name,
+		URN:  d.ID,
+		Details: map[string]interface{}{
+			"project_name":        d.Project.Name,
+			"project_id":          d.Project.ID,
+			"owner_id":            d.Owner.ID,
+			"content_url":         d.ContentURL,
+			"webpage_url":         d.WebpageURL,
+			"tags":                d.Tags,
+			"encryptExtracts":     d.EncryptExtracts,
+			"hasExtracts":         d.HasExtracts,
+			"isCertified":         d.IsCertified,
+			"type":                d.Type,
+			"useRemoteQueryAgent": d.UseRemoteQueryAgent,
 		},
 	}
 }
