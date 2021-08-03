@@ -131,11 +131,10 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 			}
 		}
 
+		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+			return err
+		}
 		return nil
-	}
-
-	if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
-		return err
 	}
 
 	return ErrInvalidResourceType
