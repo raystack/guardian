@@ -147,13 +147,12 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (*clie
 
 	credentials.Decrypt(p.crypto)
 
-	config := ClientConfig{
+	client, err := newClient(&ClientConfig{
 		Host:       credentials.Host,
 		Username:   credentials.Username,
 		Password:   credentials.Password,
 		ContentURL: credentials.ContentURL,
-	}
-	client, err := newClient(&config)
+	})
 	if err != nil {
 		return nil, err
 	}
