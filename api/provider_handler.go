@@ -12,7 +12,7 @@ import (
 )
 
 type providerUpdatePayload struct {
-	Labels      map[string]interface{}   `yaml:"labels"`
+	Labels      map[string]string        `yaml:"labels"`
 	Credentials interface{}              `yaml:"credentials"`
 	Appeal      *domain.AppealConfig     `yaml:"appeal"`
 	Resources   []*domain.ResourceConfig `yaml:"resources"`

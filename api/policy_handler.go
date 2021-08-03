@@ -11,10 +11,10 @@ import (
 )
 
 type policyCreatePayload struct {
-	ID          string                 `yaml:"id" validate:"required"`
-	Description string                 `yaml:"description"`
-	Steps       []*domain.Step         `yaml:"steps" validate:"required"`
-	Labels      map[string]interface{} `yaml:"labels"`
+	ID          string            `yaml:"id" validate:"required"`
+	Description string            `yaml:"description"`
+	Steps       []*domain.Step    `yaml:"steps" validate:"required"`
+	Labels      map[string]string `yaml:"labels"`
 }
 
 func (p *policyCreatePayload) toDomain() *domain.Policy {
@@ -27,9 +27,9 @@ func (p *policyCreatePayload) toDomain() *domain.Policy {
 }
 
 type policyUpdatePayload struct {
-	Description string                 `yaml:"description"`
-	Steps       []*domain.Step         `yaml:"steps" validate:"required"`
-	Labels      map[string]interface{} `yaml:"labels"`
+	Description string            `yaml:"description"`
+	Steps       []*domain.Step    `yaml:"steps" validate:"required"`
+	Labels      map[string]string `yaml:"labels"`
 }
 
 func (p *policyUpdatePayload) toDomain() *domain.Policy {

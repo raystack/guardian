@@ -161,7 +161,7 @@ func (s *ResourceHandlerTestSuite) TestUpdate() {
 		expectedStatusCode := http.StatusOK
 		expectedResource := &domain.Resource{
 			ID: expectedID,
-			Labels: map[string]interface{}{
+			Labels: map[string]string{
 				"key": "value",
 			},
 			Details: map[string]interface{}{

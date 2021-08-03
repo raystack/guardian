@@ -108,7 +108,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 			{
 				resourceUpdatePayload: &domain.Resource{
 					ID: 1,
-					Labels: map[string]interface{}{
+					Labels: map[string]string{
 						"key": "value",
 					},
 				},
@@ -117,7 +117,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 				},
 				expectedUpdatedValues: &domain.Resource{
 					ID: 1,
-					Labels: map[string]interface{}{
+					Labels: map[string]string{
 						"key": "value",
 					},
 				},

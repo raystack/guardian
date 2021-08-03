@@ -42,12 +42,12 @@ type AppealConfig struct {
 
 // ProviderConfig is the configuration for a data provider
 type ProviderConfig struct {
-	Type        string                 `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana"`
-	URN         string                 `json:"urn" yaml:"urn" validate:"required"`
-	Labels      map[string]interface{} `json:"labels" yaml:"labels"`
-	Credentials interface{}            `json:"credentials,omitempty" yaml:"credentials" validate:"required"`
-	Appeal      *AppealConfig          `json:"appeal" yaml:"appeal" validate:"required"`
-	Resources   []*ResourceConfig      `json:"resources" yaml:"resources" validate:"required"`
+	Type        string            `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana"`
+	URN         string            `json:"urn" yaml:"urn" validate:"required"`
+	Labels      map[string]string `json:"labels" yaml:"labels"`
+	Credentials interface{}       `json:"credentials,omitempty" yaml:"credentials" validate:"required"`
+	Appeal      *AppealConfig     `json:"appeal" yaml:"appeal" validate:"required"`
+	Resources   []*ResourceConfig `json:"resources" yaml:"resources" validate:"required"`
 }
 
 // Provider domain structure

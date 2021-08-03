@@ -13,7 +13,7 @@ import (
 
 type resourceUpdatePayload struct {
 	Details map[string]interface{} `json:"details"`
-	Labels  map[string]interface{} `json:"labels"`
+	Labels  map[string]string      `json:"labels"`
 }
 
 func (p *resourceUpdatePayload) toDomain() *domain.Resource {
