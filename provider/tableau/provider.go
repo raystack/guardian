@@ -56,6 +56,17 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		resources = append(resources, wb)
 	}
 
+	flows, err := client.GetFlows()
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range flows {
+		fl := f.ToDomain()
+		fl.ProviderType = pc.Type
+		fl.ProviderURN = pc.URN
+		resources = append(resources, fl)
+	}
+
 	return resources, nil
 }
 
