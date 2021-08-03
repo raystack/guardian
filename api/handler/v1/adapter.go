@@ -145,3 +145,88 @@ func (a *adapter) ToProviderProto(p *domain.Provider) (*pb.Provider, error) {
 		UpdatedAt: updatedAt,
 	}, nil
 }
+
+func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
+	steps := []*domain.Step{}
+	for _, s := range p.Steps {
+		conditions := []*domain.Condition{}
+		for _, c := range s.Conditions {
+			match := &domain.MatchCondition{
+				Eq: c.GetMatch().GetEq().AsInterface(),
+			}
+
+			conditions = append(conditions, &domain.Condition{
+				Field: c.GetField(),
+				Match: match,
+			})
+		}
+
+		steps = append(steps, &domain.Step{
+			Name:         s.GetName(),
+			Description:  s.GetDescription(),
+			Conditions:   conditions,
+			AllowFailed:  s.GetAllowFailed(),
+			Dependencies: s.GetDependencies(),
+			Approvers:    s.GetApprovers(),
+		})
+	}
+
+	return &domain.Policy{
+		ID:          p.GetId(),
+		Version:     uint(p.GetVersion()),
+		Description: p.GetDescription(),
+		Steps:       steps,
+		Labels:      p.GetLabels(),
+		CreatedAt:   p.GetCreatedAt().AsTime(),
+		UpdatedAt:   p.GetUpdatedAt().AsTime(),
+	}, nil
+}
+
+func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
+	approvalSteps := []*pb.Policy_ApprovalStep{}
+	for _, s := range p.Steps {
+		conditions := []*pb.Policy_ApprovalStep_Condition{}
+		for _, c := range s.Conditions {
+			eqCondition, err := structpb.NewValue(c.Match.Eq)
+			if err != nil {
+				return nil, err
+			}
+
+			match := &pb.Policy_ApprovalStep_Condition_MatchCondition{
+				Eq: eqCondition,
+			}
+			conditions = append(conditions, &pb.Policy_ApprovalStep_Condition{
+				Field: c.Field,
+				Match: match,
+			})
+		}
+
+		approvalSteps = append(approvalSteps, &pb.Policy_ApprovalStep{
+			Name:         s.Name,
+			Description:  s.Description,
+			Conditions:   conditions,
+			AllowFailed:  s.AllowFailed,
+			Dependencies: s.Dependencies,
+			Approvers:    s.Approvers,
+		})
+	}
+
+	createdAt, err := ptypes.TimestampProto(p.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	updatedAt, err := ptypes.TimestampProto(p.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.Policy{
+		Id:          p.ID,
+		Version:     uint32(p.Version),
+		Description: p.Description,
+		Steps:       approvalSteps,
+		Labels:      p.Labels,
+		CreatedAt:   createdAt,
+		UpdatedAt:   updatedAt,
+	}, nil
+}
