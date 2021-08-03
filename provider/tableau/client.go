@@ -16,7 +16,8 @@ import (
 type TableauClient interface {
 	GetWorkbooks() ([]*Workbook, error)
 	GetFlows() ([]*Flow, error)
-	GetDataSources() ([]*Flow, error)
+	GetDataSources() ([]*DataSource, error)
+	GetViews() ([]*View, error)
 	UpdateSiteRole(user, role string) error
 	GrantWorkbookAccess(resource *Workbook, user, role string) error
 	RevokeWorkbookAccess(resource *Workbook, user, role string) error
@@ -141,6 +142,11 @@ type responseDataSources struct {
 	DataSources datasources `json:"datasources"`
 }
 
+type responseViews struct {
+	Pagination pagination `json:"pagination"`
+	Views      views      `json:"views"`
+}
+
 type siteUsers struct {
 	Pagination pagination    `json:"pagination"`
 	Users      responseUsers `json:"users"`
@@ -160,6 +166,10 @@ type flows struct {
 
 type datasources struct {
 	DataSource []*DataSource `json:"datasource"`
+}
+
+type views struct {
+	View []*View `json:"view"`
 }
 
 type pagination struct {
@@ -216,6 +226,20 @@ func (c *client) GetDataSources() ([]*DataSource, error) {
 		return nil, err
 	}
 	return datasources.DataSources.DataSource, nil
+}
+
+func (c *client) GetViews() ([]*View, error) {
+	url := fmt.Sprintf("/api/%v/sites/%v/views", c.apiVersion, c.siteID)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var views responseViews
+	if _, err := c.do(req, &views); err != nil {
+		return nil, err
+	}
+	return views.Views.View, nil
 }
 
 func (c *client) UpdateSiteRole(user, role string) error {
