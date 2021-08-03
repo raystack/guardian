@@ -105,6 +105,11 @@ type responseWorkbooks struct {
 	Workbooks  workbooks  `json:"workbooks"`
 }
 
+type responseFlows struct {
+	Pagination pagination `json:"pagination"`
+	Flows      flows      `json:"flows"`
+}
+
 type siteUsers struct {
 	Pagination pagination    `json:"pagination"`
 	Users      responseUsers `json:"users"`
@@ -116,6 +121,10 @@ type responseUsers struct {
 
 type workbooks struct {
 	Workbook []*Workbook `json:"workbook"`
+}
+
+type flows struct {
+	Flow []*Flow `json:"flow"`
 }
 type pagination struct {
 	PageNumber     string `json:"pageNumber"`
@@ -143,6 +152,20 @@ func (c *client) GetWorkbooks() ([]*Workbook, error) {
 		return nil, err
 	}
 	return workbooks.Workbooks.Workbook, nil
+}
+
+func (c *client) GetFlows() ([]*Flow, error) {
+	url := fmt.Sprintf("/api/%v/sites/%v/flows", c.apiVersion, c.siteID)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var flows responseFlows
+	if _, err := c.do(req, &flows); err != nil {
+		return nil, err
+	}
+	return flows.Flows.Flow, nil
 }
 
 func (c *client) UpdateSiteRole(user, role string) error {
