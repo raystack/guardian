@@ -137,6 +137,10 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return nil
 	}
 
+	if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+		return err
+	}
+
 	return ErrInvalidResourceType
 }
 
@@ -146,12 +150,14 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (*clie
 	}
 
 	credentials.Decrypt(p.crypto)
-	client, err := newClient(&ClientConfig{
+
+	config := ClientConfig{
 		Host:       credentials.Host,
 		Username:   credentials.Username,
 		Password:   credentials.Password,
 		ContentURL: credentials.ContentURL,
-	})
+	}
+	client, err := newClient(&config)
 	if err != nil {
 		return nil, err
 	}
