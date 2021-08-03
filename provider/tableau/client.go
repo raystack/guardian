@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/mcuadros/go-defaults"
 )
 
 type TableauClient interface {
@@ -24,6 +25,7 @@ type ClientConfig struct {
 	Username   string `validate:"required" mapstructure:"username"`
 	Password   string `validate:"required" mapstructure:"password"`
 	ContentURL string `validate:"required" mapstructure:"content_url"`
+	APIVersion string `mapstructure:"apiVersion" default:"3.12"`
 }
 
 type sessionRequest struct {
@@ -65,6 +67,7 @@ type client struct {
 	username     string
 	password     string
 	contentUrl   string
+	apiVersion   string
 	sessionToken string
 	siteID       string
 	userID       string
@@ -129,7 +132,7 @@ type userSiteRole struct {
 }
 
 func (c *client) GetWorkbooks() ([]*Workbook, error) {
-	url := fmt.Sprintf("/api/3.12/sites/%v/workbooks", c.siteID)
+	url := fmt.Sprintf("/api/%v/sites/%v/workbooks", c.apiVersion, c.siteID)
 	req, err := c.newRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -154,7 +157,7 @@ func (c *client) UpdateSiteRole(user, role string) error {
 			SiteRole: role,
 		},
 	}
-	url := fmt.Sprintf("/api/3.12/sites/%v/users/%v", c.siteID, userId)
+	url := fmt.Sprintf("/api/%v/sites/%v/users/%v", c.apiVersion, c.siteID, userId)
 	req, err := c.newRequest(http.MethodPut, url, body)
 	if err != nil {
 		return err
@@ -219,7 +222,7 @@ func (c *client) RevokeWorkbookAccess(resource *Workbook, user, role string) err
 
 func (c *client) getUser(email string) (*siteUsers, error) {
 	filter := fmt.Sprintf("name:eq:%v", email)
-	url := fmt.Sprintf("/api/3.12/sites/%v/users?filter=%v", c.siteID, filter)
+	url := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", c.apiVersion, c.siteID, filter)
 	req, err := c.newRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -239,6 +242,7 @@ func (c *client) getUser(email string) (*siteUsers, error) {
 }
 
 func newClient(config *ClientConfig) (*client, error) {
+	defaults.SetDefaults(config)
 	if err := validator.New().Struct(config); err != nil {
 		return nil, err
 	}
@@ -247,12 +251,12 @@ func newClient(config *ClientConfig) (*client, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	c := &client{
 		baseURL:    baseURL,
 		username:   config.Username,
 		password:   config.Password,
 		contentUrl: config.ContentURL,
+		apiVersion: config.APIVersion,
 		httpClient: &http.Client{},
 	}
 
@@ -270,7 +274,7 @@ func (c *client) addWorkbookPermissions(id string, permissions permissions) erro
 	body := workbookPermissions{
 		Permissions: permissions,
 	}
-	url := fmt.Sprintf("/api/3.12/sites/%v/workbooks/%v/permissions", c.siteID, id)
+	url := fmt.Sprintf("/api/%v/sites/%v/workbooks/%v/permissions", c.apiVersion, c.siteID, id)
 	req, err := c.newRequest(http.MethodPut, url, body)
 	if err != nil {
 		return err
@@ -285,7 +289,7 @@ func (c *client) deleteWorkbookPermissions(id, user, role string) error {
 	split := strings.Split(role, ":")
 	capabilityName := split[0]
 	capabilityMode := split[1]
-	url := fmt.Sprintf("/api/3.12/sites/%v/workbooks/%v/permissions/users/%v/%v/%v", c.siteID, id, user, capabilityName, capabilityMode)
+	url := fmt.Sprintf("/api/%v/sites/%v/workbooks/%v/permissions/users/%v/%v/%v", c.apiVersion, c.siteID, id, user, capabilityName, capabilityMode)
 	req, err := c.newRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return err
@@ -307,7 +311,8 @@ func (c *client) getSession() (string, string, string, error) {
 		},
 	}
 
-	req, err := c.newRequest(http.MethodPost, "/api/3.12/auth/signin", sessionRequest)
+	url := fmt.Sprintf("/api/%v/auth/signin", c.apiVersion)
+	req, err := c.newRequest(http.MethodPost, url, sessionRequest)
 	if err != nil {
 		return "", "", "", nil
 	}
