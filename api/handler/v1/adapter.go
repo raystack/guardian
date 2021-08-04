@@ -240,9 +240,13 @@ func (a *adapter) FromResourceProto(r *pb.Resource) *domain.Resource {
 }
 
 func (a *adapter) ToResourceProto(r *domain.Resource) (*pb.Resource, error) {
-	details, err := structpb.NewStruct(r.Details)
-	if err != nil {
-		return nil, err
+	var detailsProto *structpb.Struct
+	if r.Details != nil {
+		details, err := structpb.NewStruct(r.Details)
+		if err != nil {
+			return nil, err
+		}
+		detailsProto = details
 	}
 
 	return &pb.Resource{
@@ -252,7 +256,7 @@ func (a *adapter) ToResourceProto(r *domain.Resource) (*pb.Resource, error) {
 		Type:         r.Type,
 		Urn:          r.URN,
 		Name:         r.Name,
-		Details:      details,
+		Details:      detailsProto,
 		Labels:       r.Labels,
 		CreatedAt:    timestamppb.New(r.CreatedAt),
 		UpdatedAt:    timestamppb.New(r.UpdatedAt),
@@ -307,9 +311,13 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		ExpirationDate: expirationDate,
 	}
 
-	resource, err := a.ToResourceProto(appeal.Resource)
-	if err != nil {
-		return nil, err
+	var resource *pb.Resource
+	if appeal.Resource != nil {
+		r, err := a.ToResourceProto(appeal.Resource)
+		if err != nil {
+			return nil, err
+		}
+		resource = r
 	}
 
 	approvals := []*pb.Approval{}
@@ -383,13 +391,18 @@ func (a *adapter) ToApprovalProto(approval *domain.Approval) (*pb.Approval, erro
 		appealProto = appeal
 	}
 
+	var actor string
+	if approval.Actor != nil {
+		actor = *approval.Actor
+	}
+
 	return &pb.Approval{
 		Id:            uint32(approval.ID),
 		Name:          approval.Name,
 		AppealId:      uint32(approval.AppealID),
 		Appeal:        appealProto,
 		Status:        approval.Status,
-		Actor:         *approval.Actor,
+		Actor:         actor,
 		PolicyId:      approval.PolicyID,
 		PolicyVersion: uint32(approval.PolicyVersion),
 		Approvers:     approval.Approvers,
