@@ -26,6 +26,8 @@ type TableauClient interface {
 	RevokeFlowAccess(resource *Flow, user, role string) error
 	GrantDataSourceAccess(resource *DataSource, user, role string) error
 	RevokeDataSourceAccess(resource *DataSource, user, role string) error
+	GrantViewAccess(resource *View, user, role string) error
+	RevokeViewAccess(resource *View, user, role string) error
 }
 
 type ClientConfig struct {
@@ -320,9 +322,8 @@ func (c *client) GrantWorkbookAccess(resource *Workbook, user, role string) erro
 		Workbook:            requestWorkbook,
 		GranteeCapabilities: granteeCapabilities,
 	}
-	c.addWorkbookPermissions(resource.ID, permission)
-
-	return nil
+	err = c.addWorkbookPermissions(resource.ID, permission)
+	return err
 }
 
 func (c *client) RevokeWorkbookAccess(resource *Workbook, user, role string) error {
@@ -331,8 +332,8 @@ func (c *client) RevokeWorkbookAccess(resource *Workbook, user, role string) err
 		return err
 	}
 	userId := foundUser.Users.User[0].ID
-	c.deleteWorkbookPermissions(resource.ID, userId, role)
-	return nil
+	err = c.deleteWorkbookPermissions(resource.ID, userId, role)
+	return err
 }
 
 func (c *client) GrantFlowAccess(resource *Flow, user, role string) error {
@@ -370,9 +371,8 @@ func (c *client) GrantFlowAccess(resource *Flow, user, role string) error {
 		Flow:                requestFlow,
 		GranteeCapabilities: granteeCapabilities,
 	}
-	c.addFlowPermissions(resource.ID, permission)
-
-	return nil
+	err = c.addFlowPermissions(resource.ID, permission)
+	return err
 }
 
 func (c *client) RevokeFlowAccess(resource *Flow, user, role string) error {
@@ -381,8 +381,8 @@ func (c *client) RevokeFlowAccess(resource *Flow, user, role string) error {
 		return err
 	}
 	userId := foundUser.Users.User[0].ID
-	c.deleteFlowPermissions(resource.ID, userId, role)
-	return nil
+	err = c.deleteFlowPermissions(resource.ID, userId, role)
+	return err
 }
 
 func (c *client) GrantDataSourceAccess(resource *DataSource, user, role string) error {
@@ -420,9 +420,8 @@ func (c *client) GrantDataSourceAccess(resource *DataSource, user, role string) 
 		DataSource:          requestDataSource,
 		GranteeCapabilities: granteeCapabilities,
 	}
-	c.addDataSourcePermissions(resource.ID, permission)
-
-	return nil
+	err = c.addDataSourcePermissions(resource.ID, permission)
+	return err
 }
 
 func (c *client) RevokeDataSourceAccess(resource *DataSource, user, role string) error {
@@ -431,8 +430,8 @@ func (c *client) RevokeDataSourceAccess(resource *DataSource, user, role string)
 		return err
 	}
 	userId := foundUser.Users.User[0].ID
-	c.deleteDataSourcePermissions(resource.ID, userId, role)
-	return nil
+	err = c.deleteDataSourcePermissions(resource.ID, userId, role)
+	return err
 }
 
 func (c *client) GrantViewAccess(resource *View, user, role string) error {
