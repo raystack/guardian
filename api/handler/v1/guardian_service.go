@@ -6,10 +6,12 @@ import (
 	"time"
 
 	pb "github.com/odpf/guardian/api/proto/guardian"
+	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/resource"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -23,6 +25,11 @@ type ProtoAdapter interface {
 
 	FromResourceProto(*pb.Resource) *domain.Resource
 	ToResourceProto(*domain.Resource) (*pb.Resource, error)
+
+	FromAppealProto(*pb.Appeal) (*domain.Appeal, error)
+	ToAppealProto(*domain.Appeal) (*pb.Appeal, error)
+	FromCreateAppealProto(*pb.CreateAppealRequest) ([]*domain.Appeal, error)
+	ToApprovalProto(*domain.Approval) (*pb.Approval, error)
 }
 
 type GuardianServiceServer struct {
@@ -231,4 +238,211 @@ func (s *GuardianServiceServer) UpdateResource(ctx context.Context, req *pb.Upda
 	return &pb.UpdateResourceResponse{
 		Resource: resourceProto,
 	}, nil
+}
+
+func (s *GuardianServiceServer) ListAppeals(ctx context.Context, req *pb.ListAppealsRequest) (*pb.ListAppealsResponse, error) {
+	filters := map[string]interface{}{}
+	if req.GetUser() != "" {
+		filters["user"] = req.GetUser()
+	}
+
+	appeals, err := s.appealService.Find(filters)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%s: failed to get appeal list", err)
+	}
+
+	appealProtos := []*pb.Appeal{}
+	for _, a := range appeals {
+		appealProto, err := s.adapter.ToAppealProto(a)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
+		}
+		appealProtos = append(appealProtos, appealProto)
+	}
+
+	return &pb.ListAppealsResponse{
+		Appeals: appealProtos,
+	}, nil
+}
+
+func (s *GuardianServiceServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealRequest) (*pb.CreateAppealResponse, error) {
+	appeals, err := s.adapter.FromCreateAppealProto(req)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%s: cannot deserialize payload", err)
+	}
+
+	if err := s.appealService.Create(appeals); err != nil {
+		if errors.Is(err, appeal.ErrAppealDuplicate) {
+			return nil, status.Errorf(codes.AlreadyExists, "%s: appeal already exists", err)
+		}
+		return nil, status.Errorf(codes.Internal, "%s: failed to create appeal", err)
+	}
+
+	appealProtos := []*pb.Appeal{}
+	for _, appeal := range appeals {
+		appealProto, err := s.adapter.ToAppealProto(appeal)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
+		}
+		appealProtos = append(appealProtos, appealProto)
+	}
+
+	return &pb.CreateAppealResponse{
+		Appeals: appealProtos,
+	}, nil
+}
+
+func (s *GuardianServiceServer) ListApprovals(ctx context.Context, req *pb.ListApprovalsRequest) (*pb.ListApprovalsResponse, error) {
+	approvals, err := s.appealService.GetPendingApprovals(req.GetUser())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%s: failed to get approval list", err)
+	}
+
+	approvalProtos := []*pb.Approval{}
+	for _, a := range approvals {
+		approvalProto, err := s.adapter.ToApprovalProto(a)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "%s: failed to parse approval: %v", err, a.ID)
+		}
+		approvalProtos = append(approvalProtos, approvalProto)
+	}
+
+	return &pb.ListApprovalsResponse{
+		Approvals: approvalProtos,
+	}, nil
+}
+
+func (s *GuardianServiceServer) GetAppeal(ctx context.Context, req *pb.GetAppealRequest) (*pb.GetAppealResponse, error) {
+	id := req.GetId()
+	appeal, err := s.appealService.GetByID(uint(id))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%s: failed to retrieve appeal", err)
+	}
+	if appeal == nil {
+		return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
+	}
+
+	appealProto, err := s.adapter.ToAppealProto(appeal)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
+	}
+
+	return &pb.GetAppealResponse{
+		Appeal: appealProto,
+	}, nil
+}
+
+func (s *GuardianServiceServer) UpdateApproval(ctx context.Context, req *pb.UpdateApprovalRequest) (*pb.UpdateApprovalResponse, error) {
+	actor, err := s.getActor(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id := req.GetId()
+	a, err := s.appealService.MakeAction(domain.ApprovalAction{
+		AppealID:     uint(id),
+		ApprovalName: req.GetApprovalName(),
+		Actor:        actor,
+		Action:       req.GetAction().GetAction(),
+	})
+	if err != nil {
+		switch err {
+		case appeal.ErrAppealStatusCanceled,
+			appeal.ErrAppealStatusApproved,
+			appeal.ErrAppealStatusRejected,
+			appeal.ErrAppealStatusTerminated,
+			appeal.ErrAppealStatusUnrecognized,
+			appeal.ErrApprovalDependencyIsPending,
+			appeal.ErrAppealStatusRejected,
+			appeal.ErrApprovalStatusUnrecognized,
+			appeal.ErrApprovalStatusApproved,
+			appeal.ErrApprovalStatusRejected,
+			appeal.ErrApprovalStatusSkipped,
+			appeal.ErrActionInvalidValue:
+			return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %s", err)
+		case appeal.ErrActionForbidden:
+			return nil, status.Error(codes.PermissionDenied, "permission denied")
+		case appeal.ErrApprovalNameNotFound:
+			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
+		default:
+			return nil, status.Errorf(codes.Internal, "%s: failed to update approval", err)
+		}
+	}
+
+	appealProto, err := s.adapter.ToAppealProto(a)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
+	}
+
+	return &pb.UpdateApprovalResponse{
+		Appeal: appealProto,
+	}, nil
+}
+
+func (s *GuardianServiceServer) CancelAppeal(ctx context.Context, req *pb.CancelAppealRequest) (*pb.CancelAppealResponse, error) {
+	id := req.GetId()
+	a, err := s.appealService.Cancel(uint(id))
+	if err != nil {
+		switch err {
+		case appeal.ErrAppealStatusCanceled,
+			appeal.ErrAppealStatusApproved,
+			appeal.ErrAppealStatusRejected,
+			appeal.ErrAppealStatusTerminated,
+			appeal.ErrAppealStatusUnrecognized:
+			return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %s", err)
+		default:
+			return nil, status.Errorf(codes.Internal, "%s: failed to cancel appeal", err)
+		}
+	}
+
+	appealProto, err := s.adapter.ToAppealProto(a)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
+	}
+
+	return &pb.CancelAppealResponse{
+		Appeal: appealProto,
+	}, nil
+}
+
+func (s *GuardianServiceServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealRequest) (*pb.RevokeAppealResponse, error) {
+	id := req.GetId()
+	actor, err := s.getActor(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to get metadata: actor")
+	}
+
+	a, err := s.appealService.Revoke(uint(id), actor)
+	if err != nil {
+		switch err {
+		case appeal.ErrRevokeAppealForbidden:
+			return nil, status.Error(codes.PermissionDenied, "permission denied")
+		case appeal.ErrAppealNotFound:
+			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
+		default:
+			return nil, status.Errorf(codes.Internal, "%s: failed to cancel appeal", err)
+		}
+	}
+
+	appealProto, err := s.adapter.ToAppealProto(a)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
+	}
+
+	return &pb.RevokeAppealResponse{
+		Appeal: appealProto,
+	}, nil
+}
+
+func (s *GuardianServiceServer) getActor(ctx context.Context) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", status.Error(codes.Internal, "failed to get request metadata")
+	}
+
+	vals := md.Get("X-Goog-Authenticated-User-Email")
+	if len(vals) == 0 {
+		return "", nil
+	}
+	return vals[0], nil
 }

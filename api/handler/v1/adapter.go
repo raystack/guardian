@@ -1,11 +1,18 @@
 package v1
 
 import (
+	"time"
+
 	"github.com/golang/protobuf/ptypes"
+	"github.com/mitchellh/mapstructure"
 	pb "github.com/odpf/guardian/api/proto/guardian"
 	"github.com/odpf/guardian/domain"
 	"google.golang.org/protobuf/types/known/structpb"
 )
+
+type resourceOptions struct {
+	Duration string `json:"duration"`
+}
 
 type adapter struct{}
 
@@ -148,7 +155,7 @@ func (a *adapter) ToProviderProto(p *domain.Provider) (*pb.Provider, error) {
 
 func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
 	steps := []*domain.Step{}
-	for _, s := range p.Steps {
+	for _, s := range p.GetSteps() {
 		conditions := []*domain.Condition{}
 		for _, c := range s.Conditions {
 			match := &domain.MatchCondition{
@@ -276,5 +283,165 @@ func (a *adapter) ToResourceProto(r *domain.Resource) (*pb.Resource, error) {
 		Labels:       r.Labels,
 		CreatedAt:    createdAt,
 		UpdatedAt:    updatedAt,
+	}, nil
+}
+
+func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
+	expirationDate := appeal.GetOptions().GetExpirationDate().AsTime()
+	options := &domain.AppealOptions{
+		ExpirationDate: &expirationDate,
+	}
+
+	resource := a.FromResourceProto(appeal.GetResource())
+
+	approvals := []*domain.Approval{}
+	for _, a := range appeal.GetApprovals() {
+		actor := a.GetActor()
+		approvals = append(approvals, &domain.Approval{
+			ID:            uint(a.GetId()),
+			Name:          a.GetName(),
+			AppealID:      uint(a.GetId()),
+			Status:        a.GetStatus(),
+			Actor:         &actor,
+			PolicyID:      a.GetPolicyId(),
+			PolicyVersion: uint(a.GetPolicyVersion()),
+			Approvers:     a.GetApprovers(),
+			CreatedAt:     appeal.GetCreatedAt().AsTime(),
+			UpdatedAt:     appeal.GetUpdatedAt().AsTime(),
+		})
+	}
+
+	return &domain.Appeal{
+		ID:            uint(appeal.GetId()),
+		ResourceID:    uint(appeal.GetResourceId()),
+		PolicyID:      appeal.GetPolicyId(),
+		PolicyVersion: uint(appeal.GetPolicyVersion()),
+		Status:        appeal.GetStatus(),
+		User:          appeal.GetUser(),
+		Role:          appeal.GetRole(),
+		Options:       options,
+		Labels:        appeal.GetLabels(),
+		Resource:      resource,
+		Approvals:     approvals,
+		CreatedAt:     appeal.GetCreatedAt().AsTime(),
+		UpdatedAt:     appeal.GetUpdatedAt().AsTime(),
+	}, nil
+}
+
+func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
+	expirationDate, err := ptypes.TimestampProto(*appeal.Options.ExpirationDate)
+	if err != nil {
+		return nil, err
+	}
+	options := &pb.Appeal_AppealOptions{
+		ExpirationDate: expirationDate,
+	}
+
+	resource, err := a.ToResourceProto(appeal.Resource)
+	if err != nil {
+		return nil, err
+	}
+
+	approvals := []*pb.Approval{}
+	for _, approval := range appeal.Approvals {
+		approvalProto, err := a.ToApprovalProto(approval)
+		if err != nil {
+			return nil, err
+		}
+
+		approvals = append(approvals, approvalProto)
+	}
+
+	createdAt, err := ptypes.TimestampProto(appeal.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	updatedAt, err := ptypes.TimestampProto(appeal.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.Appeal{
+		Id:            uint32(appeal.ID),
+		ResourceId:    uint32(appeal.ResourceID),
+		PolicyId:      appeal.PolicyID,
+		PolicyVersion: uint32(appeal.PolicyVersion),
+		Status:        appeal.Status,
+		User:          appeal.User,
+		Role:          appeal.Role,
+		Options:       options,
+		Labels:        appeal.Labels,
+		Resource:      resource,
+		Approvals:     approvals,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
+	}, nil
+}
+
+func (a *adapter) FromCreateAppealProto(ca *pb.CreateAppealRequest) ([]*domain.Appeal, error) {
+	appeals := []*domain.Appeal{}
+
+	for _, r := range ca.GetResources() {
+		var options domain.AppealOptions
+
+		var resOptions resourceOptions
+		if err := mapstructure.Decode(r.GetOptions().AsMap(), &resOptions); err != nil {
+			return nil, err
+		}
+
+		var expirationDate time.Time
+		if r.GetOptions() != nil {
+			if resOptions.Duration != "" {
+				duration, err := time.ParseDuration(resOptions.Duration)
+				if err != nil {
+					return nil, err
+				}
+				expirationDate = time.Now().Add(duration)
+			}
+		}
+		options.ExpirationDate = &expirationDate
+
+		appeals = append(appeals, &domain.Appeal{
+			User:       ca.GetUser(),
+			ResourceID: uint(r.GetId()),
+			Role:       r.GetRole(),
+			Options:    &options,
+		})
+	}
+
+	return appeals, nil
+}
+
+func (a *adapter) ToApprovalProto(approval *domain.Approval) (*pb.Approval, error) {
+	var appealProto *pb.Appeal
+	if approval.Appeal != nil {
+		appeal, err := a.ToAppealProto(approval.Appeal)
+		if err != nil {
+			return nil, err
+		}
+		appealProto = appeal
+	}
+
+	createdAt, err := ptypes.TimestampProto(approval.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	updatedAt, err := ptypes.TimestampProto(approval.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.Approval{
+		Id:            uint32(approval.ID),
+		Name:          approval.Name,
+		AppealId:      uint32(approval.AppealID),
+		Appeal:        appealProto,
+		Status:        approval.Status,
+		Actor:         *approval.Actor,
+		PolicyId:      approval.PolicyID,
+		PolicyVersion: uint32(approval.PolicyVersion),
+		Approvers:     approval.Approvers,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
 	}, nil
 }
