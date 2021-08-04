@@ -435,14 +435,11 @@ func (s *GuardianServiceServer) RevokeAppeal(ctx context.Context, req *pb.Revoke
 }
 
 func (s *GuardianServiceServer) getActor(ctx context.Context) (string, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return "", status.Error(codes.Internal, "failed to get request metadata")
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if userEmail, ok := md["x-goog-authenticated-user-email"]; ok {
+			return userEmail[0], nil
+		}
 	}
 
-	vals := md.Get("X-Goog-Authenticated-User-Email")
-	if len(vals) == 0 {
-		return "", nil
-	}
-	return vals[0], nil
+	return "", status.Error(codes.Internal, "failed to get request metadata")
 }

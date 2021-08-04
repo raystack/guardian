@@ -125,6 +125,7 @@ func RunServer(c *Config) error {
 
 	gwmux := runtime.NewServeMux(
 		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
+		runtime.WithIncomingHeaderMatcher(headerMatcher),
 	)
 	address := fmt.Sprintf(":%d", c.Port)
 	grpcConn, err := grpc.DialContext(timeoutGrpcDialCtx, address, grpc.WithInsecure())
@@ -200,4 +201,13 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 			otherHandler.ServeHTTP(w, r)
 		}
 	}), &http2.Server{})
+}
+
+func headerMatcher(key string) (string, bool) {
+	switch key {
+	case "X-Goog-Authenticated-User-Email":
+		return key, true
+	default:
+		return runtime.DefaultHeaderMatcher(key)
+	}
 }
