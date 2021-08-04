@@ -1,14 +1,15 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
+	"strings"
+	"time"
 
-	"github.com/odpf/guardian/api"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/odpf/guardian/api/handler/v1"
-	v1handler "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/guardian"
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/approval"
@@ -26,6 +27,8 @@ import (
 	"github.com/odpf/guardian/resource"
 	"github.com/odpf/guardian/scheduler"
 	"github.com/odpf/guardian/store"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 	"gorm.io/gorm"
 )
@@ -85,36 +88,6 @@ func RunServer(c *Config) error {
 		logger,
 	)
 
-	providerHttpHandler := api.NewProviderHandler(providerService)
-	policyHttpHandler := api.NewPolicyHandler(policyService)
-	resourceHttpHandler := api.NewResourceHandler(resourceService)
-	appealHttpHandler := api.NewAppealHandler(appealService)
-
-	r := api.New(logger)
-
-	// provider routes
-	r.Methods(http.MethodGet).Path("/providers").HandlerFunc(providerHttpHandler.Find)
-	r.Methods(http.MethodPost).Path("/providers").HandlerFunc(providerHttpHandler.Create)
-	r.Methods(http.MethodPut).Path("/providers/{id}").HandlerFunc(providerHttpHandler.Update)
-
-	// policy routes
-	r.Methods(http.MethodGet).Path("/policies").HandlerFunc(policyHttpHandler.Find)
-	r.Methods(http.MethodPost).Path("/policies").HandlerFunc(policyHttpHandler.Create)
-	r.Methods(http.MethodPut).Path("/policies/{id}").HandlerFunc(policyHttpHandler.Update)
-
-	// resource routes
-	r.Methods(http.MethodGet).Path("/resources").HandlerFunc(resourceHttpHandler.Find)
-	r.Methods(http.MethodPut).Path("/resources/{id}").HandlerFunc(resourceHttpHandler.Update)
-
-	// appeal routes
-	r.Methods(http.MethodPost).Path("/appeals").HandlerFunc(appealHttpHandler.Create)
-	r.Methods(http.MethodGet).Path("/appeals").HandlerFunc(appealHttpHandler.Find)
-	r.Methods(http.MethodGet).Path("/appeals/approvals").HandlerFunc(appealHttpHandler.GetPendingApprovals)
-	r.Methods(http.MethodPost).Path("/appeals/{id}/approvals/{name}").HandlerFunc(appealHttpHandler.MakeAction)
-	r.Methods(http.MethodPut).Path("/appeals/{id}/cancel").HandlerFunc(appealHttpHandler.Cancel)
-	r.Methods(http.MethodPut).Path("/appeals/{id}/revoke").HandlerFunc(appealHttpHandler.Revoke)
-	r.Methods(http.MethodGet).Path("/appeals/{id}").HandlerFunc(appealHttpHandler.GetByID)
-
 	providerJobHandler := provider.NewJobHandler(providerService)
 	appealJobHandler := appeal.NewJobHandler(appealService)
 
@@ -135,23 +108,59 @@ func RunServer(c *Config) error {
 	}
 	s.Run()
 
-	// init server
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", c.Port))
-	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
-	}
+	// init grpc server
 	grpcServer := grpc.NewServer()
-	adapter := v1.NewAdapter()
-	pb.RegisterGuardianServiceServer(grpcServer, v1handler.NewGuardianServiceServer(
+	protoAdapter := v1.NewAdapter()
+	pb.RegisterGuardianServiceServer(grpcServer, v1.NewGuardianServiceServer(
 		resourceService,
 		providerService,
 		policyService,
 		appealService,
-		adapter,
+		protoAdapter,
 	))
 
+	// init http proxy
+	timeoutGrpcDialCtx, grpcDialCancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer grpcDialCancel()
+
+	gwmux := runtime.NewServeMux(
+		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
+	)
+	address := fmt.Sprintf(":%d", c.Port)
+	grpcConn, err := grpc.DialContext(timeoutGrpcDialCtx, address, grpc.WithInsecure())
+	if err != nil {
+		return err
+	}
+
+	runtimeCtx, runtimeCancel := context.WithCancel(context.Background())
+	defer runtimeCancel()
+
+	if err := pb.RegisterGuardianServiceHandler(runtimeCtx, gwmux, grpcConn); err != nil {
+		return err
+	}
+
+	baseMux := http.NewServeMux()
+	baseMux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "pong")
+	})
+	baseMux.Handle("/api/", http.StripPrefix("/api", gwmux))
+
+	server := &http.Server{
+		Handler:      grpcHandlerFunc(grpcServer, baseMux),
+		Addr:         address,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
 	log.Println("server running on port:", c.Port)
-	return grpcServer.Serve(lis)
+	if err := server.ListenAndServe(); err != nil {
+		if err != http.ErrServerClosed {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Migrate runs the schema migration scripts
@@ -174,4 +183,21 @@ func Migrate(c *Config) error {
 
 func getDB(c *Config) (*gorm.DB, error) {
 	return store.New(&c.DB)
+}
+
+// grpcHandlerFunc routes http1 calls to baseMux and http2 with grpc header to grpcServer.
+// Using a single port for proxying both http1 & 2 protocols will degrade http performance
+// but for our usecase the convenience per performance tradeoff is better suited
+// if in future, this does become a bottleneck(which I highly doubt), we can break the service
+// into two ports, default port for grpc and default+1 for grpc-gateway proxy.
+// We can also use something like a connection multiplexer
+// https://github.com/soheilhy/cmux to achieve the same.
+func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Handler {
+	return h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+			grpcServer.ServeHTTP(w, r)
+		} else {
+			otherHandler.ServeHTTP(w, r)
+		}
+	}), &http2.Server{})
 }
