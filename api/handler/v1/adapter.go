@@ -3,11 +3,11 @@ package v1
 import (
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/mitchellh/mapstructure"
 	pb "github.com/odpf/guardian/api/proto/guardian"
 	"github.com/odpf/guardian/domain"
 	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type resourceOptions struct {
@@ -134,22 +134,13 @@ func (a *adapter) ToProviderProto(p *domain.Provider) (*pb.Provider, error) {
 		Resources:   resources,
 	}
 
-	createdAt, err := ptypes.TimestampProto(p.CreatedAt)
-	if err != nil {
-		return nil, err
-	}
-	updatedAt, err := ptypes.TimestampProto(p.UpdatedAt)
-	if err != nil {
-		return nil, err
-	}
-
 	return &pb.Provider{
 		Id:        uint32(p.ID),
 		Type:      p.Type,
 		Urn:       p.URN,
 		Config:    config,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
+		CreatedAt: timestamppb.New(p.CreatedAt),
+		UpdatedAt: timestamppb.New(p.UpdatedAt),
 	}, nil
 }
 
@@ -218,23 +209,14 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 		})
 	}
 
-	createdAt, err := ptypes.TimestampProto(p.CreatedAt)
-	if err != nil {
-		return nil, err
-	}
-	updatedAt, err := ptypes.TimestampProto(p.UpdatedAt)
-	if err != nil {
-		return nil, err
-	}
-
 	return &pb.Policy{
 		Id:          p.ID,
 		Version:     uint32(p.Version),
 		Description: p.Description,
 		Steps:       approvalSteps,
 		Labels:      p.Labels,
-		CreatedAt:   createdAt,
-		UpdatedAt:   updatedAt,
+		CreatedAt:   timestamppb.New(p.CreatedAt),
+		UpdatedAt:   timestamppb.New(p.UpdatedAt),
 	}, nil
 }
 
@@ -263,15 +245,6 @@ func (a *adapter) ToResourceProto(r *domain.Resource) (*pb.Resource, error) {
 		return nil, err
 	}
 
-	createdAt, err := ptypes.TimestampProto(r.CreatedAt)
-	if err != nil {
-		return nil, err
-	}
-	updatedAt, err := ptypes.TimestampProto(r.UpdatedAt)
-	if err != nil {
-		return nil, err
-	}
-
 	return &pb.Resource{
 		Id:           uint32(r.ID),
 		ProviderType: r.ProviderType,
@@ -281,8 +254,8 @@ func (a *adapter) ToResourceProto(r *domain.Resource) (*pb.Resource, error) {
 		Name:         r.Name,
 		Details:      details,
 		Labels:       r.Labels,
-		CreatedAt:    createdAt,
-		UpdatedAt:    updatedAt,
+		CreatedAt:    timestamppb.New(r.CreatedAt),
+		UpdatedAt:    timestamppb.New(r.UpdatedAt),
 	}, nil
 }
 
@@ -329,10 +302,7 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 }
 
 func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
-	expirationDate, err := ptypes.TimestampProto(*appeal.Options.ExpirationDate)
-	if err != nil {
-		return nil, err
-	}
+	expirationDate := timestamppb.New(*appeal.Options.ExpirationDate)
 	options := &pb.Appeal_AppealOptions{
 		ExpirationDate: expirationDate,
 	}
@@ -352,15 +322,6 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		approvals = append(approvals, approvalProto)
 	}
 
-	createdAt, err := ptypes.TimestampProto(appeal.CreatedAt)
-	if err != nil {
-		return nil, err
-	}
-	updatedAt, err := ptypes.TimestampProto(appeal.UpdatedAt)
-	if err != nil {
-		return nil, err
-	}
-
 	return &pb.Appeal{
 		Id:            uint32(appeal.ID),
 		ResourceId:    uint32(appeal.ResourceID),
@@ -373,8 +334,8 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		Labels:        appeal.Labels,
 		Resource:      resource,
 		Approvals:     approvals,
-		CreatedAt:     createdAt,
-		UpdatedAt:     updatedAt,
+		CreatedAt:     timestamppb.New(appeal.CreatedAt),
+		UpdatedAt:     timestamppb.New(appeal.UpdatedAt),
 	}, nil
 }
 
@@ -422,15 +383,6 @@ func (a *adapter) ToApprovalProto(approval *domain.Approval) (*pb.Approval, erro
 		appealProto = appeal
 	}
 
-	createdAt, err := ptypes.TimestampProto(approval.CreatedAt)
-	if err != nil {
-		return nil, err
-	}
-	updatedAt, err := ptypes.TimestampProto(approval.UpdatedAt)
-	if err != nil {
-		return nil, err
-	}
-
 	return &pb.Approval{
 		Id:            uint32(approval.ID),
 		Name:          approval.Name,
@@ -441,7 +393,7 @@ func (a *adapter) ToApprovalProto(approval *domain.Approval) (*pb.Approval, erro
 		PolicyId:      approval.PolicyID,
 		PolicyVersion: uint32(approval.PolicyVersion),
 		Approvers:     approval.Approvers,
-		CreatedAt:     createdAt,
-		UpdatedAt:     updatedAt,
+		CreatedAt:     timestamppb.New(approval.CreatedAt),
+		UpdatedAt:     timestamppb.New(approval.UpdatedAt),
 	}, nil
 }

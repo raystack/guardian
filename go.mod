@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go/bigquery v1.8.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/go-playground/validator/v10 v10.4.1
-	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
 	github.com/imdario/mergo v0.3.11
