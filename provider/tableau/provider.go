@@ -34,28 +34,110 @@ func (p *provider) CreateConfig(pc *domain.ProviderConfig) error {
 }
 
 func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
-	//TO DO
-
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return nil, err
 	}
 
-	_, err := p.getClient(pc.URN, creds)
+	client, err := p.getClient(pc.URN, creds)
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+
+	resources := []*domain.Resource{}
+	workbooks, err := client.GetWorkbooks()
+	if err != nil {
+		return nil, err
+	}
+	for _, w := range workbooks {
+		wb := w.ToDomain()
+		wb.ProviderType = pc.Type
+		wb.ProviderURN = pc.URN
+		resources = append(resources, wb)
+	}
+
+	return resources, nil
 }
 
 func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
-	//TO DO
-	return nil
+
+	permissions, err := getPermissions(pc.Resources, a)
+	if err != nil {
+		return err
+	}
+
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return err
+	}
+
+	client, err := p.getClient(pc.URN, creds)
+	if err != nil {
+		return err
+	}
+
+	if a.Resource.Type == ResourceTypeWorkbook {
+		w := new(Workbook)
+		if err := w.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.GrantWorkbookAccess(w, a.User, p.Name); err != nil {
+					return err
+				}
+			} else {
+				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	}
+
+	return ErrInvalidResourceType
 }
 
 func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
-	//TO DO
-	return nil
+
+	permissions, err := getPermissions(pc.Resources, a)
+	if err != nil {
+		return err
+	}
+
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return err
+	}
+
+	client, err := p.getClient(pc.URN, creds)
+	if err != nil {
+		return err
+	}
+
+	if a.Resource.Type == ResourceTypeWorkbook {
+		w := new(Workbook)
+		if err := w.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.RevokeWorkbookAccess(w, a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	return ErrInvalidResourceType
 }
 
 func (p *provider) getClient(providerURN string, credentials Credentials) (*client, error) {
@@ -76,4 +158,38 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (*clie
 
 	p.clients[providerURN] = client
 	return client, nil
+}
+
+func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) ([]PermissionConfig, error) {
+	var resourceConfig *domain.ResourceConfig
+	for _, rc := range resourceConfigs {
+		if rc.Type == a.Resource.Type {
+			resourceConfig = rc
+		}
+	}
+	if resourceConfig == nil {
+		return nil, ErrInvalidResourceType
+	}
+
+	var roleConfig *domain.RoleConfig
+	for _, rc := range resourceConfig.Roles {
+		if rc.ID == a.Role {
+			roleConfig = rc
+		}
+	}
+	if roleConfig == nil {
+		return nil, ErrInvalidRole
+	}
+
+	var permissions []PermissionConfig
+	for _, p := range roleConfig.Permissions {
+		var permission PermissionConfig
+		if err := mapstructure.Decode(p, &permission); err != nil {
+			return nil, err
+		}
+
+		permissions = append(permissions, permission)
+	}
+
+	return permissions, nil
 }

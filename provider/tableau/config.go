@@ -22,6 +22,10 @@ var permissionNames = map[string][]string{
 	ResourceTypeFlow:     {"ChangeHierarchy", "ChangePermissions", "Delete", "Execute", "ExportXml", "Read", "Write"},
 }
 
+var siteRolePermissions = []string{
+	"Creator", "Explorer", "ExplorerCanPublish", "SiteAdministratorExplorer", "SiteAdministratorCreator", "Unlicensed", "Viewer",
+}
+
 var permissionModes = []string{"Allow", "Deny"}
 
 func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
@@ -53,8 +57,8 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 }
 
 type PermissionConfig struct {
-	Name   string `json:"name" mapstructure:"name" validate:"required"`
-	Target string `json:"target,omitempty" mapstructure:"target"`
+	Name string `json:"name" mapstructure:"name" validate:"required"`
+	Type string `json:"type,omitempty" mapstructure:"type"`
 }
 
 type Config struct {
@@ -158,12 +162,18 @@ func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
 	return nil
 }
 
-func (c *Config) getValidationString(resource string) string {
+func (c *Config) getValidationString(permissionFor string) string {
 	validation := "oneof="
 
-	for _, mode := range permissionModes {
-		for _, permission := range permissionNames[resource] {
-			validation = fmt.Sprintf("%v%v:%v ", validation, permission, mode)
+	if permissionFor == "site-role" {
+		for _, permission := range siteRolePermissions {
+			validation = fmt.Sprintf("%v%v ", validation, permission)
+		}
+	} else {
+		for _, mode := range permissionModes {
+			for _, permission := range permissionNames[permissionFor] {
+				validation = fmt.Sprintf("%v%v:%v ", validation, permission, mode)
+			}
 		}
 	}
 	return validation
@@ -181,10 +191,15 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 	}
 
 	var nameValidation string
-	if resourceType == ResourceTypeWorkbook {
-		nameValidation = c.getValidationString(ResourceTypeWorkbook)
-	} else if resourceType == ResourceTypeFlow {
-		nameValidation = c.getValidationString(ResourceTypeFlow)
+	if pc.Type == "" {
+		if resourceType == ResourceTypeWorkbook {
+			nameValidation = c.getValidationString(ResourceTypeWorkbook)
+		} else if resourceType == ResourceTypeFlow {
+			nameValidation = c.getValidationString(ResourceTypeFlow)
+		}
+
+	} else {
+		nameValidation = c.getValidationString("site-role")
 	}
 
 	if err := c.validator.Var(pc.Name, nameValidation); err != nil {
