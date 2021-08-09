@@ -11,6 +11,7 @@ const (
 	ResourceTypeFlow       = "flow"
 	ResourceTypeDataSource = "datasource"
 	ResourceTypeView       = "view"
+	ResourceTypeMetric     = "metric"
 )
 
 type Workbook struct {
@@ -66,6 +67,18 @@ type View struct {
 	ViewUrlName string      `json:"viewUrlName"`
 }
 
+type Metric struct {
+	Project        project        `json:"project"`
+	Owner          owner          `json:"owner"`
+	Tags           interface{}    `json:"tags"`
+	UnderlyingView underlyingView `json:"underlyingView"`
+	ID             string         `json:"id"`
+	Name           string         `json:"name"`
+	Description    string         `json:"description"`
+	WebpageURL     string         `json:"webpageUrl"`
+	Suspended      bool           `json:"suspended"`
+}
+
 type project struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
@@ -74,6 +87,10 @@ type project struct {
 type owner struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+type underlyingView struct {
+	ID string `json:"id"`
 }
 
 type workbook struct {
@@ -195,6 +212,34 @@ func (v *View) ToDomain() *domain.Resource {
 			"content_url":  v.ContentURL,
 			"tags":         v.Tags,
 			"viewUrlName":  v.ViewUrlName,
+		},
+	}
+}
+
+func (m *Metric) FromDomain(r *domain.Resource) error {
+	if r.Type != ResourceTypeMetric {
+		return ErrInvalidResourceType
+	}
+
+	m.ID = r.URN
+	m.Name = r.Name
+	return nil
+}
+
+func (m *Metric) ToDomain() *domain.Resource {
+	return &domain.Resource{
+		Type: ResourceTypeMetric,
+		Name: m.Name,
+		URN:  m.ID,
+		Details: map[string]interface{}{
+			"project_name":   m.Project.Name,
+			"project_id":     m.Project.ID,
+			"owner_id":       m.Owner.ID,
+			"webpage_url":    m.WebpageURL,
+			"tags":           m.Tags,
+			"description":    m.Description,
+			"underlyingView": m.UnderlyingView,
+			"suspended":      m.Suspended,
 		},
 	}
 }

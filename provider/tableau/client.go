@@ -19,6 +19,7 @@ type TableauClient interface {
 	GetFlows() ([]*Flow, error)
 	GetDataSources() ([]*DataSource, error)
 	GetViews() ([]*View, error)
+	GetMetrics() ([]*Metric, error)
 	UpdateSiteRole(user, role string) error
 	GrantWorkbookAccess(resource *Workbook, user, role string) error
 	RevokeWorkbookAccess(resource *Workbook, user, role string) error
@@ -28,6 +29,8 @@ type TableauClient interface {
 	RevokeDataSourceAccess(resource *DataSource, user, role string) error
 	GrantViewAccess(resource *View, user, role string) error
 	RevokeViewAccess(resource *View, user, role string) error
+	GrantMetricAccess(resource *Metric, user, role string) error
+	RevokeMetricAccess(resource *Metric, user, role string) error
 }
 
 type ClientConfig struct {
@@ -101,6 +104,10 @@ type viewPermissions struct {
 	Permissions viewPermission `json:"permissions"`
 }
 
+type metricPermissions struct {
+	Permissions metricPermission `json:"permissions"`
+}
+
 type resourceDetails struct {
 	ID string `json:"id"`
 }
@@ -139,6 +146,11 @@ type viewPermission struct {
 	GranteeCapabilities []granteeCapabilities `json:"granteeCapabilities"`
 }
 
+type metricPermission struct {
+	Metric              resourceDetails       `json:"metric"`
+	GranteeCapabilities []granteeCapabilities `json:"granteeCapabilities"`
+}
+
 type responseWorkbooks struct {
 	Pagination pagination `json:"pagination"`
 	Workbooks  workbooks  `json:"workbooks"`
@@ -157,6 +169,11 @@ type responseDataSources struct {
 type responseViews struct {
 	Pagination pagination `json:"pagination"`
 	Views      views      `json:"views"`
+}
+
+type responseMetrics struct {
+	Pagination pagination `json:"pagination"`
+	Metrics    metrics    `json:"metrics"`
 }
 
 type siteUsers struct {
@@ -182,6 +199,10 @@ type datasources struct {
 
 type views struct {
 	View []*View `json:"view"`
+}
+
+type metrics struct {
+	Metric []*Metric `json:"metric"`
 }
 
 type pagination struct {
@@ -260,6 +281,20 @@ func (c *client) GetViews() ([]*View, error) {
 		return nil, err
 	}
 	return views.Views.View, nil
+}
+
+func (c *client) GetMetrics() ([]*Metric, error) {
+	url := fmt.Sprintf("/api/%v/sites/%v/metrics", c.apiVersion, c.siteID)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var metrics responseMetrics
+	if _, err := c.do(req, &metrics); err != nil {
+		return nil, err
+	}
+	return metrics.Metrics.Metric, nil
 }
 
 func (c *client) UpdateSiteRole(user, role string) error {
@@ -382,6 +417,55 @@ func (c *client) RevokeFlowAccess(resource *Flow, user, role string) error {
 	}
 	userId := foundUser.Users.User[0].ID
 	err = c.deleteFlowPermissions(resource.ID, userId, role)
+	return err
+}
+
+func (c *client) GrantMetricAccess(resource *Metric, user, role string) error {
+	requestMetric := resourceDetails{
+		ID: resource.ID,
+	}
+	foundUser, err := c.getUser(user)
+	if err != nil {
+		return err
+	}
+	userId := foundUser.Users.User[0].ID
+	requestUser := userDetails{
+		ID: userId,
+	}
+
+	split := strings.Split(role, ":")
+	requestCapability := capability{
+		Name: split[0],
+		Mode: split[1],
+	}
+
+	capabilityArr := []capability{requestCapability}
+	requestCapabilities := capabilities{
+		Capability: capabilityArr,
+	}
+
+	requestGranteeCapabilities := granteeCapabilities{
+		User:         requestUser,
+		Capabilities: requestCapabilities,
+	}
+
+	granteeCapabilities := []granteeCapabilities{requestGranteeCapabilities}
+
+	permission := metricPermission{
+		Metric:              requestMetric,
+		GranteeCapabilities: granteeCapabilities,
+	}
+	err = c.addMetricPermissions(resource.ID, permission)
+	return err
+}
+
+func (c *client) RevokeMetricAccess(resource *Metric, user, role string) error {
+	foundUser, err := c.getUser(user)
+	if err != nil {
+		return err
+	}
+	userId := foundUser.Users.User[0].ID
+	err = c.deleteMetricPermissions(resource.ID, userId, role)
 	return err
 }
 
@@ -563,6 +647,21 @@ func (c *client) addFlowPermissions(id string, permissions flowPermission) error
 
 }
 
+func (c *client) addMetricPermissions(id string, permissions metricPermission) error {
+	body := metricPermissions{
+		Permissions: permissions,
+	}
+	url := fmt.Sprintf("/api/%v/sites/%v/metrics/%v/permissions", c.apiVersion, c.siteID, id)
+	req, err := c.newRequest(http.MethodPut, url, body)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.do(req, nil)
+	return err
+
+}
+
 func (c *client) addDataSourcePermissions(id string, permissions datasourcePermission) error {
 	body := datasourcePermissions{
 		Permissions: permissions,
@@ -613,6 +712,21 @@ func (c *client) deleteFlowPermissions(id, user, role string) error {
 	capabilityName := split[0]
 	capabilityMode := split[1]
 	url := fmt.Sprintf("/api/%v/sites/%v/flows/%v/permissions/users/%v/%v/%v", c.apiVersion, c.siteID, id, user, capabilityName, capabilityMode)
+	req, err := c.newRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.do(req, nil)
+	return err
+
+}
+
+func (c *client) deleteMetricPermissions(id, user, role string) error {
+	split := strings.Split(role, ":")
+	capabilityName := split[0]
+	capabilityMode := split[1]
+	url := fmt.Sprintf("/api/%v/sites/%v/metrics/%v/permissions/users/%v/%v/%v", c.apiVersion, c.siteID, id, user, capabilityName, capabilityMode)
 	req, err := c.newRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return err
@@ -728,6 +842,11 @@ func (c *client) do(req *http.Request, v interface{}) (*http.Response, error) {
 		return nil, errors.New(responseError.Error.Detail)
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(v)
-	return resp, err
+	if v != nil {
+		err = json.NewDecoder(resp.Body).Decode(v)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return resp, nil
 }
