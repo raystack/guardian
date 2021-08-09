@@ -32,7 +32,7 @@ type ProtoAdapter interface {
 	ToApprovalProto(*domain.Approval) (*pb.Approval, error)
 }
 
-type GuardianServiceServer struct {
+type GRPCServer struct {
 	resourceService domain.ResourceService
 	providerService domain.ProviderService
 	policyService   domain.PolicyService
@@ -44,14 +44,14 @@ type GuardianServiceServer struct {
 	pb.UnimplementedGuardianServiceServer
 }
 
-func NewGuardianServiceServer(
+func NewGRPCServer(
 	resourceService domain.ResourceService,
 	providerService domain.ProviderService,
 	policyService domain.PolicyService,
 	appealService domain.AppealService,
 	adapter ProtoAdapter,
-) *GuardianServiceServer {
-	return &GuardianServiceServer{
+) *GRPCServer {
+	return &GRPCServer{
 		resourceService: resourceService,
 		providerService: providerService,
 		policyService:   policyService,
@@ -60,7 +60,7 @@ func NewGuardianServiceServer(
 	}
 }
 
-func (s *GuardianServiceServer) ListProviders(ctx context.Context, req *pb.ListProvidersRequest) (*pb.ListProvidersResponse, error) {
+func (s *GRPCServer) ListProviders(ctx context.Context, req *pb.ListProvidersRequest) (*pb.ListProvidersResponse, error) {
 	providers, err := s.providerService.Find()
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (s *GuardianServiceServer) ListProviders(ctx context.Context, req *pb.ListP
 	}, nil
 }
 
-func (s *GuardianServiceServer) CreateProvider(ctx context.Context, req *pb.CreateProviderRequest) (*pb.CreateProviderResponse, error) {
+func (s *GRPCServer) CreateProvider(ctx context.Context, req *pb.CreateProviderRequest) (*pb.CreateProviderResponse, error) {
 	providerConfig, err := s.adapter.FromProviderConfigProto(req.GetConfig())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s: cannot deserialize provider config", err)
@@ -105,7 +105,7 @@ func (s *GuardianServiceServer) CreateProvider(ctx context.Context, req *pb.Crea
 	}, nil
 }
 
-func (s *GuardianServiceServer) UpdateProvider(ctx context.Context, req *pb.UpdateProviderRequest) (*pb.UpdateProviderResponse, error) {
+func (s *GRPCServer) UpdateProvider(ctx context.Context, req *pb.UpdateProviderRequest) (*pb.UpdateProviderResponse, error) {
 	id := req.GetId()
 	providerConfig, err := s.adapter.FromProviderConfigProto(req.GetConfig())
 	if err != nil {
@@ -132,7 +132,7 @@ func (s *GuardianServiceServer) UpdateProvider(ctx context.Context, req *pb.Upda
 	}, nil
 }
 
-func (s *GuardianServiceServer) ListPolicies(ctx context.Context, req *pb.ListPoliciesRequest) (*pb.ListPoliciesResponse, error) {
+func (s *GRPCServer) ListPolicies(ctx context.Context, req *pb.ListPoliciesRequest) (*pb.ListPoliciesResponse, error) {
 	policies, err := s.policyService.Find()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s: failed to get policy list", err)
@@ -152,7 +152,7 @@ func (s *GuardianServiceServer) ListPolicies(ctx context.Context, req *pb.ListPo
 	}, nil
 }
 
-func (s *GuardianServiceServer) CreatePolicy(ctx context.Context, req *pb.CreatePolicyRequest) (*pb.CreatePolicyResponse, error) {
+func (s *GRPCServer) CreatePolicy(ctx context.Context, req *pb.CreatePolicyRequest) (*pb.CreatePolicyResponse, error) {
 	policy, err := s.adapter.FromPolicyProto(req.GetPolicy())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s: cannot deserialize policy", err)
@@ -172,7 +172,7 @@ func (s *GuardianServiceServer) CreatePolicy(ctx context.Context, req *pb.Create
 	}, nil
 }
 
-func (s *GuardianServiceServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyRequest) (*pb.UpdatePolicyResponse, error) {
+func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyRequest) (*pb.UpdatePolicyResponse, error) {
 	p, err := s.adapter.FromPolicyProto(req.GetPolicy())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s: cannot deserialize policy", err)
@@ -199,7 +199,7 @@ func (s *GuardianServiceServer) UpdatePolicy(ctx context.Context, req *pb.Update
 	}, nil
 }
 
-func (s *GuardianServiceServer) ListResources(ctx context.Context, req *pb.ListResourcesRequest) (*pb.ListResourcesResponse, error) {
+func (s *GRPCServer) ListResources(ctx context.Context, req *pb.ListResourcesRequest) (*pb.ListResourcesResponse, error) {
 	resources, err := s.resourceService.Find(map[string]interface{}{})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s: failed to get resource list", err)
@@ -219,7 +219,7 @@ func (s *GuardianServiceServer) ListResources(ctx context.Context, req *pb.ListR
 	}, nil
 }
 
-func (s *GuardianServiceServer) UpdateResource(ctx context.Context, req *pb.UpdateResourceRequest) (*pb.UpdateResourceResponse, error) {
+func (s *GRPCServer) UpdateResource(ctx context.Context, req *pb.UpdateResourceRequest) (*pb.UpdateResourceResponse, error) {
 	r := s.adapter.FromResourceProto(req.GetResource())
 	r.ID = uint(req.GetId())
 
@@ -240,7 +240,7 @@ func (s *GuardianServiceServer) UpdateResource(ctx context.Context, req *pb.Upda
 	}, nil
 }
 
-func (s *GuardianServiceServer) ListAppeals(ctx context.Context, req *pb.ListAppealsRequest) (*pb.ListAppealsResponse, error) {
+func (s *GRPCServer) ListAppeals(ctx context.Context, req *pb.ListAppealsRequest) (*pb.ListAppealsResponse, error) {
 	filters := map[string]interface{}{}
 	if req.GetUser() != "" {
 		filters["user"] = req.GetUser()
@@ -265,7 +265,7 @@ func (s *GuardianServiceServer) ListAppeals(ctx context.Context, req *pb.ListApp
 	}, nil
 }
 
-func (s *GuardianServiceServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealRequest) (*pb.CreateAppealResponse, error) {
+func (s *GRPCServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealRequest) (*pb.CreateAppealResponse, error) {
 	appeals, err := s.adapter.FromCreateAppealProto(req)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s: cannot deserialize payload", err)
@@ -292,7 +292,7 @@ func (s *GuardianServiceServer) CreateAppeal(ctx context.Context, req *pb.Create
 	}, nil
 }
 
-func (s *GuardianServiceServer) ListApprovals(ctx context.Context, req *pb.ListApprovalsRequest) (*pb.ListApprovalsResponse, error) {
+func (s *GRPCServer) ListApprovals(ctx context.Context, req *pb.ListApprovalsRequest) (*pb.ListApprovalsResponse, error) {
 	approvals, err := s.appealService.GetPendingApprovals(req.GetUser())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s: failed to get approval list", err)
@@ -312,7 +312,7 @@ func (s *GuardianServiceServer) ListApprovals(ctx context.Context, req *pb.ListA
 	}, nil
 }
 
-func (s *GuardianServiceServer) GetAppeal(ctx context.Context, req *pb.GetAppealRequest) (*pb.GetAppealResponse, error) {
+func (s *GRPCServer) GetAppeal(ctx context.Context, req *pb.GetAppealRequest) (*pb.GetAppealResponse, error) {
 	id := req.GetId()
 	appeal, err := s.appealService.GetByID(uint(id))
 	if err != nil {
@@ -332,7 +332,7 @@ func (s *GuardianServiceServer) GetAppeal(ctx context.Context, req *pb.GetAppeal
 	}, nil
 }
 
-func (s *GuardianServiceServer) UpdateApproval(ctx context.Context, req *pb.UpdateApprovalRequest) (*pb.UpdateApprovalResponse, error) {
+func (s *GRPCServer) UpdateApproval(ctx context.Context, req *pb.UpdateApprovalRequest) (*pb.UpdateApprovalResponse, error) {
 	actor, err := s.getActor(ctx)
 	if err != nil {
 		return nil, err
@@ -379,7 +379,7 @@ func (s *GuardianServiceServer) UpdateApproval(ctx context.Context, req *pb.Upda
 	}, nil
 }
 
-func (s *GuardianServiceServer) CancelAppeal(ctx context.Context, req *pb.CancelAppealRequest) (*pb.CancelAppealResponse, error) {
+func (s *GRPCServer) CancelAppeal(ctx context.Context, req *pb.CancelAppealRequest) (*pb.CancelAppealResponse, error) {
 	id := req.GetId()
 	a, err := s.appealService.Cancel(uint(id))
 	if err != nil {
@@ -405,7 +405,7 @@ func (s *GuardianServiceServer) CancelAppeal(ctx context.Context, req *pb.Cancel
 	}, nil
 }
 
-func (s *GuardianServiceServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealRequest) (*pb.RevokeAppealResponse, error) {
+func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealRequest) (*pb.RevokeAppealResponse, error) {
 	id := req.GetId()
 	actor, err := s.getActor(ctx)
 	if err != nil {
@@ -434,7 +434,7 @@ func (s *GuardianServiceServer) RevokeAppeal(ctx context.Context, req *pb.Revoke
 	}, nil
 }
 
-func (s *GuardianServiceServer) getActor(ctx context.Context) (string, error) {
+func (s *GRPCServer) getActor(ctx context.Context) (string, error) {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		if userEmail, ok := md["x-goog-authenticated-user-email"]; ok {
 			return userEmail[0], nil

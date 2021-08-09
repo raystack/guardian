@@ -111,7 +111,7 @@ func RunServer(c *Config) error {
 	// init grpc server
 	grpcServer := grpc.NewServer()
 	protoAdapter := v1.NewAdapter()
-	pb.RegisterGuardianServiceServer(grpcServer, v1.NewGuardianServiceServer(
+	pb.RegisterGuardianServiceServer(grpcServer, v1.NewGRPCServer(
 		resourceService,
 		providerService,
 		policyService,
