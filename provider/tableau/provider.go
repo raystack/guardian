@@ -1,4 +1,4 @@
-package grafana
+package tableau
 
 import (
 	"github.com/mitchellh/mapstructure"
@@ -7,14 +7,14 @@ import (
 
 type provider struct {
 	typeName string
-	Clients  map[string]GrafanaClient
+	clients  map[string]*client
 	crypto   domain.Crypto
 }
 
 func NewProvider(typeName string, crypto domain.Crypto) *provider {
 	return &provider{
 		typeName: typeName,
-		Clients:  map[string]GrafanaClient{},
+		clients:  map[string]*client{},
 		crypto:   crypto,
 	}
 }
@@ -45,28 +45,22 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	}
 
 	resources := []*domain.Resource{}
-
-	folders, err := client.GetFolders()
+	workbooks, err := client.GetWorkbooks()
 	if err != nil {
 		return nil, err
 	}
-	for _, f := range folders {
-
-		dashboards, err := client.GetDashboards(f.ID)
-		if err != nil {
-			return nil, err
-		}
-		for _, d := range dashboards {
-			db := d.ToDomain()
-			db.ProviderType = pc.Type
-			db.ProviderURN = pc.URN
-			resources = append(resources, db)
-		}
+	for _, w := range workbooks {
+		wb := w.ToDomain()
+		wb.ProviderType = pc.Type
+		wb.ProviderURN = pc.URN
+		resources = append(resources, wb)
 	}
+
 	return resources, nil
 }
 
 func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
+
 	permissions, err := getPermissions(pc.Resources, a)
 	if err != nil {
 		return err
@@ -76,20 +70,27 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
 	}
+
 	client, err := p.getClient(pc.URN, creds)
 	if err != nil {
 		return err
 	}
 
-	if a.Resource.Type == ResourceTypeDashboard {
-		d := new(Dashboard)
-		if err := d.FromDomain(a.Resource); err != nil {
+	if a.Resource.Type == ResourceTypeWorkbook {
+		w := new(Workbook)
+		if err := w.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
 		for _, p := range permissions {
-			if err := client.GrantDashboardAccess(d, a.User, p.Name); err != nil {
-				return err
+			if p.Type == "" {
+				if err := client.GrantWorkbookAccess(w, a.User, p.Name); err != nil {
+					return err
+				}
+			} else {
+				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -100,6 +101,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 }
 
 func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
+
 	permissions, err := getPermissions(pc.Resources, a)
 	if err != nil {
 		return err
@@ -109,50 +111,52 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
 	}
+
 	client, err := p.getClient(pc.URN, creds)
 	if err != nil {
 		return err
 	}
 
-	if a.Resource.Type == ResourceTypeDashboard {
-		d := new(Dashboard)
-		if err := d.FromDomain(a.Resource); err != nil {
+	if a.Resource.Type == ResourceTypeWorkbook {
+		w := new(Workbook)
+		if err := w.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
 		for _, p := range permissions {
-			if err := client.RevokeDashboardAccess(d, a.User, p.Name); err != nil {
-				return err
+			if p.Type == "" {
+				if err := client.RevokeWorkbookAccess(w, a.User, p.Name); err != nil {
+					return err
+				}
 			}
 		}
 
+		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+			return err
+		}
 		return nil
 	}
 
 	return ErrInvalidResourceType
 }
 
-func (p *provider) getClient(providerURN string, credentials Credentials) (GrafanaClient, error) {
-	if p.Clients[providerURN] != nil {
-		return p.Clients[providerURN], nil
+func (p *provider) getClient(providerURN string, credentials Credentials) (*client, error) {
+	if p.clients[providerURN] != nil {
+		return p.clients[providerURN], nil
 	}
 
-	if err := credentials.Decrypt(p.crypto); err != nil {
-		return nil, err
-	}
-
-	org := providerURN
-	client, err := NewClient(&ClientConfig{
-		Host:     credentials.Host,
-		Username: credentials.Username,
-		Password: credentials.Password,
-		Org:      org,
+	credentials.Decrypt(p.crypto)
+	client, err := newClient(&ClientConfig{
+		Host:       credentials.Host,
+		Username:   credentials.Username,
+		Password:   credentials.Password,
+		ContentURL: credentials.ContentURL,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	p.Clients[providerURN] = client
+	p.clients[providerURN] = client
 	return client, nil
 }
 

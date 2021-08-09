@@ -47,7 +47,7 @@ resources:
 
 Fields ||
 -|-
-`host` | `string` <br> Required. Metabase instace host <br> Example: `http://localhost:12345`
+`host` | `string` <br> Required. Metabase instance host <br> Example: `http://localhost:12345`
 `username` | `email` <br> Required. Email address of an account that has Administration permission
 `password` | `string` <br> Required. Account's password
 

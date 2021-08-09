@@ -1,4 +1,4 @@
-package grafana
+package tableau
 
 import (
 	"errors"
@@ -10,17 +10,23 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
-const (
-	DashboardRoleViewer = "view"
-	DashboardRoleEditor = "edit"
-	DashboardRoleAdmin  = "admin"
-)
-
 type Credentials struct {
-	Host     string `json:"host" mapstructure:"host" validate:"required,url"`
-	Username string `json:"username" mapstructure:"username" validate:"required"`
-	Password string `json:"password" mapstructure:"password" validate:"required"`
+	Host       string `json:"host" mapstructure:"host" validate:"required,url"`
+	Username   string `json:"username" mapstructure:"username" validate:"required"`
+	Password   string `json:"password" mapstructure:"password" validate:"required"`
+	ContentURL string `json:"content_url" mapstructure:"content_url" validate:"required"`
 }
+
+var permissionNames = map[string][]string{
+	ResourceTypeWorkbook: {"AddComment", "ChangeHierarchy", "ChangePermissions", "Delete", "ExportData", "ExportImage", "ExportXml", "Filter", "Read", "ShareView", "ViewComments", "ViewUnderlyingData", "WebAuthoring", "Write"},
+	ResourceTypeFlow:     {"ChangeHierarchy", "ChangePermissions", "Delete", "Execute", "ExportXml", "Read", "Write"},
+}
+
+var siteRolePermissions = []string{
+	"Creator", "Explorer", "ExplorerCanPublish", "SiteAdministratorExplorer", "SiteAdministratorCreator", "Unlicensed", "Viewer",
+}
+
+var permissionModes = []string{"Allow", "Deny"}
 
 func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
 	if c == nil {
@@ -41,23 +47,18 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 		return ErrUnableToDecryptNilCredentials
 	}
 
-	decryptedPassword, err := decryptor.Decrypt(c.Password)
+	encryptedPassword, err := decryptor.Decrypt(c.Password)
 	if err != nil {
 		return err
 	}
 
-	c.Password = decryptedPassword
+	c.Password = encryptedPassword
 	return nil
 }
 
-var permissionCodes = map[string]int{
-	"view":  1,
-	"edit":  2,
-	"admin": 4,
-}
-
 type PermissionConfig struct {
-	Name string `json:"name" mapstructure:"name" validate:"required,oneof=view edit admin"`
+	Name string `json:"name" mapstructure:"name" validate:"required"`
+	Type string `json:"type,omitempty" mapstructure:"type"`
 }
 
 type Config struct {
@@ -143,7 +144,7 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 }
 
 func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
-	resourceTypeValidation := fmt.Sprintf("oneof=%s %s", ResourceTypeFolder, ResourceTypeDashboard)
+	resourceTypeValidation := fmt.Sprintf("oneof=%s %s", ResourceTypeWorkbook, ResourceTypeFlow)
 	if err := c.validator.Var(resource.Type, resourceTypeValidation); err != nil {
 		return err
 	}
@@ -161,6 +162,23 @@ func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
 	return nil
 }
 
+func (c *Config) getValidationString(permissionFor string) string {
+	validation := "oneof="
+
+	if permissionFor == "site-role" {
+		for _, permission := range siteRolePermissions {
+			validation = fmt.Sprintf("%v%v ", validation, permission)
+		}
+	} else {
+		for _, mode := range permissionModes {
+			for _, permission := range permissionNames[permissionFor] {
+				validation = fmt.Sprintf("%v%v:%v ", validation, permission, mode)
+			}
+		}
+	}
+	return validation
+}
+
 func (c *Config) validatePermission(resourceType string, value interface{}) (*PermissionConfig, error) {
 	permissionConfig, ok := value.(map[string]interface{})
 	if !ok {
@@ -173,10 +191,15 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 	}
 
 	var nameValidation string
-	if resourceType == ResourceTypeFolder {
-		nameValidation = "oneof=view edit admin"
-	} else if resourceType == ResourceTypeDashboard {
-		nameValidation = "oneof=view edit admin"
+	if pc.Type == "" {
+		if resourceType == ResourceTypeWorkbook {
+			nameValidation = c.getValidationString(ResourceTypeWorkbook)
+		} else if resourceType == ResourceTypeFlow {
+			nameValidation = c.getValidationString(ResourceTypeFlow)
+		}
+
+	} else {
+		nameValidation = c.getValidationString("site-role")
 	}
 
 	if err := c.validator.Var(pc.Name, nameValidation); err != nil {
