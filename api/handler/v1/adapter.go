@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	pb "github.com/odpf/guardian/api/proto/guardian"
+	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/domain"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"

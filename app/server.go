@@ -10,7 +10,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/odpf/guardian/api/handler/v1"
-	pb "github.com/odpf/guardian/api/proto/guardian"
+	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/approval"
 	"github.com/odpf/guardian/crypto"

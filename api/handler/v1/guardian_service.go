@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	pb "github.com/odpf/guardian/api/proto/guardian"
+	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/policy"
