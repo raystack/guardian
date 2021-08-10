@@ -337,7 +337,11 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Table
 		return p.Clients[providerURN], nil
 	}
 
-	credentials.Decrypt(p.crypto)
+	err := credentials.Decrypt(p.crypto)
+	if err != nil {
+		return nil, err
+	}
+
 	client, err := NewClient(&ClientConfig{
 		Host:       credentials.Host,
 		Username:   credentials.Username,

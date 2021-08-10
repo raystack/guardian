@@ -17,7 +17,7 @@ type Credentials struct {
 	ContentURL string `json:"content_url" mapstructure:"content_url" validate:"required"`
 }
 
-var permissionNames = map[string][]string{
+var PermissionNames = map[string][]string{
 	ResourceTypeWorkbook:   {"AddComment", "ChangeHierarchy", "ChangePermissions", "Delete", "ExportData", "ExportImage", "ExportXml", "Filter", "Read", "ShareView", "ViewComments", "ViewUnderlyingData", "WebAuthoring", "Write"},
 	ResourceTypeFlow:       {"ChangeHierarchy", "ChangePermissions", "Delete", "Execute", "ExportXml", "Read", "Write"},
 	ResourceTypeDataSource: {"ChangePermissions", "Connect", "Delete", "ExportXml", "Read", "Write"},
@@ -25,11 +25,11 @@ var permissionNames = map[string][]string{
 	ResourceTypeMetric:     {"Delete", "Read", "Write"},
 }
 
-var siteRolePermissions = []string{
+var SiteRolePermissions = []string{
 	"Creator", "Explorer", "ExplorerCanPublish", "SiteAdministratorExplorer", "SiteAdministratorCreator", "Unlicensed", "Viewer",
 }
 
-var permissionModes = []string{"Allow", "Deny"}
+var PermissionModes = []string{"Allow", "Deny"}
 
 func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
 	if c == nil {
@@ -169,12 +169,12 @@ func (c *Config) getValidationString(permissionFor string) string {
 	validation := "oneof="
 
 	if permissionFor == "site-role" {
-		for _, permission := range siteRolePermissions {
+		for _, permission := range SiteRolePermissions {
 			validation = fmt.Sprintf("%v%v ", validation, permission)
 		}
 	} else {
-		for _, mode := range permissionModes {
-			for _, permission := range permissionNames[permissionFor] {
+		for _, mode := range PermissionModes {
+			for _, permission := range PermissionNames[permissionFor] {
 				validation = fmt.Sprintf("%v%v:%v ", validation, permission, mode)
 			}
 		}
