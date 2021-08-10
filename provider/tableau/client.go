@@ -438,12 +438,12 @@ func (c *client) getSession() (string, string, string, error) {
 	url := fmt.Sprintf("/api/%v/auth/signin", c.apiVersion)
 	req, err := c.newRequest(http.MethodPost, url, sessionRequest)
 	if err != nil {
-		return "", "", "", nil
+		return "", "", "", err
 	}
 
 	var sessionResponse SessionResponse
 	if _, err := c.do(req, &sessionResponse); err != nil {
-		return "", "", "", nil
+		return "", "", "", err
 	}
 
 	return sessionResponse.Credentials.Token, sessionResponse.Credentials.Site.ID, sessionResponse.Credentials.User.ID, nil
