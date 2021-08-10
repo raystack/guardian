@@ -67,6 +67,39 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		resources = append(resources, fl)
 	}
 
+	datasources, err := client.GetDataSources()
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range datasources {
+		ds := d.ToDomain()
+		ds.ProviderType = pc.Type
+		ds.ProviderURN = pc.URN
+		resources = append(resources, ds)
+	}
+
+	views, err := client.GetViews()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range views {
+		vs := v.ToDomain()
+		vs.ProviderType = pc.Type
+		vs.ProviderURN = pc.URN
+		resources = append(resources, vs)
+	}
+
+	metrics, err := client.GetMetrics()
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range metrics {
+		mt := m.ToDomain()
+		mt.ProviderType = pc.Type
+		mt.ProviderURN = pc.URN
+		resources = append(resources, mt)
+	}
+
 	return resources, nil
 }
 
@@ -115,6 +148,63 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		for _, p := range permissions {
 			if p.Type == "" {
 				if err := client.GrantFlowAccess(f, a.User, p.Name); err != nil {
+					return err
+				}
+			} else {
+				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	} else if a.Resource.Type == ResourceTypeDataSource {
+		d := new(DataSource)
+		if err := d.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.GrantDataSourceAccess(d, a.User, p.Name); err != nil {
+					return err
+				}
+			} else {
+				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	} else if a.Resource.Type == ResourceTypeView {
+		v := new(View)
+		if err := v.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.GrantViewAccess(v, a.User, p.Name); err != nil {
+					return err
+				}
+			} else {
+				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	} else if a.Resource.Type == ResourceTypeMetric {
+		m := new(Metric)
+		if err := m.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.GrantMetricAccess(m, a.User, p.Name); err != nil {
 					return err
 				}
 			} else {
@@ -183,6 +273,60 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 			return err
 		}
 		return nil
+	} else if a.Resource.Type == ResourceTypeDataSource {
+		d := new(DataSource)
+		if err := d.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.RevokeDataSourceAccess(d, a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+			return err
+		}
+		return nil
+	} else if a.Resource.Type == ResourceTypeView {
+		v := new(View)
+		if err := v.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.RevokeViewAccess(v, a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+			return err
+		}
+		return nil
+	} else if a.Resource.Type == ResourceTypeMetric {
+		m := new(Metric)
+		if err := m.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.RevokeMetricAccess(m, a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	return ErrInvalidResourceType
@@ -194,7 +338,6 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Table
 	}
 
 	credentials.Decrypt(p.crypto)
-
 	client, err := NewClient(&ClientConfig{
 		Host:       credentials.Host,
 		Username:   credentials.Username,
