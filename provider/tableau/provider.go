@@ -56,6 +56,17 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		resources = append(resources, wb)
 	}
 
+	flows, err := client.GetFlows()
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range flows {
+		fl := f.ToDomain()
+		fl.ProviderType = pc.Type
+		fl.ProviderURN = pc.URN
+		resources = append(resources, fl)
+	}
+
 	return resources, nil
 }
 
@@ -85,6 +96,25 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		for _, p := range permissions {
 			if p.Type == "" {
 				if err := client.GrantWorkbookAccess(w, a.User, p.Name); err != nil {
+					return err
+				}
+			} else {
+				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	} else if a.Resource.Type == ResourceTypeFlow {
+		f := new(Flow)
+		if err := f.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.GrantFlowAccess(f, a.User, p.Name); err != nil {
 					return err
 				}
 			} else {
@@ -135,6 +165,24 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 			return err
 		}
 		return nil
+	} else if a.Resource.Type == ResourceTypeFlow {
+		f := new(Flow)
+		if err := f.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.RevokeFlowAccess(f, a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	return ErrInvalidResourceType
@@ -146,6 +194,7 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (*clie
 	}
 
 	credentials.Decrypt(p.crypto)
+
 	client, err := newClient(&ClientConfig{
 		Host:       credentials.Host,
 		Username:   credentials.Username,

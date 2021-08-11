@@ -28,6 +28,30 @@ type Workbook struct {
 	DefaultViewID          string                 `json:"defaultViewId"`
 }
 
+type Flow struct {
+	Project    project     `json:"project"`
+	Owner      owner       `json:"owner"`
+	Tags       interface{} `json:"tags"`
+	ID         string      `json:"id"`
+	Name       string      `json:"name"`
+	WebpageURL string      `json:"webpageUrl"`
+	FileType   string      `json:"fileType"`
+}
+
+type project struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type owner struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type dataAccelerationConfig struct {
+	AccelerationEnabled bool `json:"accelerationEnabled"`
+}
+
 func (w *Workbook) FromDomain(r *domain.Resource) error {
 	if r.Type != ResourceTypeWorkbook {
 		return ErrInvalidResourceType
@@ -58,16 +82,28 @@ func (w *Workbook) ToDomain() *domain.Resource {
 	}
 }
 
-type project struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+func (f *Flow) FromDomain(r *domain.Resource) error {
+	if r.Type != ResourceTypeFlow {
+		return ErrInvalidResourceType
+	}
+
+	f.ID = r.URN
+	f.Name = r.Name
+	return nil
 }
 
-type owner struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type dataAccelerationConfig struct {
-	AccelerationEnabled bool `json:"accelerationEnabled"`
+func (f *Flow) ToDomain() *domain.Resource {
+	return &domain.Resource{
+		Type: ResourceTypeFlow,
+		Name: f.Name,
+		URN:  f.ID,
+		Details: map[string]interface{}{
+			"project_name": f.Project.Name,
+			"project_id":   f.Project.ID,
+			"owner_id":     f.Owner.ID,
+			"webpage_url":  f.WebpageURL,
+			"tags":         f.Tags,
+			"fileType":     f.FileType,
+		},
+	}
 }
