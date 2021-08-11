@@ -79,7 +79,7 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 
 // ToDomain transforms model into *domain.Appeal
 func (m *Appeal) ToDomain() (*domain.Appeal, error) {
-	var labels map[string]interface{}
+	var labels map[string]string
 	if err := json.Unmarshal(m.Labels, &labels); err != nil {
 		return nil, err
 	}

@@ -144,7 +144,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 				updatePayload: &domain.Provider{
 					ID: 1,
 					Config: &domain.ProviderConfig{
-						Labels: map[string]interface{}{
+						Labels: map[string]string{
 							"foo": "bar",
 						},
 					},
@@ -169,7 +169,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 							AllowPermanentAccess:         true,
 							AllowActiveAccessExtensionIn: "1d",
 						},
-						Labels: map[string]interface{}{
+						Labels: map[string]string{
 							"foo": "bar",
 						},
 						Type: mockProviderType,

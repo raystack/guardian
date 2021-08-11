@@ -33,13 +33,13 @@ type Step struct {
 
 // Policy is the approval policy configuration
 type Policy struct {
-	ID          string                 `json:"id" yaml:"id" validate:"required"`
-	Version     uint                   `json:"version" yaml:"version" validate:"required"`
-	Description string                 `json:"description" yaml:"description"`
-	Steps       []*Step                `json:"steps" yaml:"steps" validate:"required"`
-	Labels      map[string]interface{} `json:"labels" yaml:"labels"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
+	ID          string            `json:"id" yaml:"id" validate:"required"`
+	Version     uint              `json:"version" yaml:"version" validate:"required"`
+	Description string            `json:"description" yaml:"description"`
+	Steps       []*Step           `json:"steps" yaml:"steps" validate:"required"`
+	Labels      map[string]string `json:"labels" yaml:"labels"`
+	CreatedAt   time.Time         `json:"created_at"`
+	UpdatedAt   time.Time         `json:"updated_at"`
 }
 
 // PolicyRepository interface
