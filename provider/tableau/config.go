@@ -18,8 +18,9 @@ type Credentials struct {
 }
 
 var permissionNames = map[string][]string{
-	ResourceTypeWorkbook: {"AddComment", "ChangeHierarchy", "ChangePermissions", "Delete", "ExportData", "ExportImage", "ExportXml", "Filter", "Read", "ShareView", "ViewComments", "ViewUnderlyingData", "WebAuthoring", "Write"},
-	ResourceTypeFlow:     {"ChangeHierarchy", "ChangePermissions", "Delete", "Execute", "ExportXml", "Read", "Write"},
+	ResourceTypeWorkbook:   {"AddComment", "ChangeHierarchy", "ChangePermissions", "Delete", "ExportData", "ExportImage", "ExportXml", "Filter", "Read", "ShareView", "ViewComments", "ViewUnderlyingData", "WebAuthoring", "Write"},
+	ResourceTypeFlow:       {"ChangeHierarchy", "ChangePermissions", "Delete", "Execute", "ExportXml", "Read", "Write"},
+	ResourceTypeDataSource: {"ChangePermissions", "Connect", "Delete", "ExportXml", "Read", "Write"},
 }
 
 var siteRolePermissions = []string{
@@ -144,7 +145,7 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 }
 
 func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
-	resourceTypeValidation := fmt.Sprintf("oneof=%s %s", ResourceTypeWorkbook, ResourceTypeFlow)
+	resourceTypeValidation := fmt.Sprintf("oneof=%s %s %s", ResourceTypeWorkbook, ResourceTypeFlow, ResourceTypeDataSource)
 	if err := c.validator.Var(resource.Type, resourceTypeValidation); err != nil {
 		return err
 	}
@@ -196,6 +197,8 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 			nameValidation = c.getValidationString(ResourceTypeWorkbook)
 		} else if resourceType == ResourceTypeFlow {
 			nameValidation = c.getValidationString(ResourceTypeFlow)
+		} else if resourceType == ResourceTypeDataSource {
+			nameValidation = c.getValidationString(ResourceTypeDataSource)
 		}
 
 	} else {

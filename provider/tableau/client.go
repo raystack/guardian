@@ -16,11 +16,14 @@ import (
 type TableauClient interface {
 	GetWorkbooks() ([]*Workbook, error)
 	GetFlows() ([]*Flow, error)
+	GetDataSources() ([]*Flow, error)
 	UpdateSiteRole(user, role string) error
 	GrantWorkbookAccess(resource *Workbook, user, role string) error
 	RevokeWorkbookAccess(resource *Workbook, user, role string) error
 	GrantFlowAccess(resource *Flow, user, role string) error
 	RevokeFlowAccess(resource *Flow, user, role string) error
+	GrantDataSourceAccess(resource *DataSource, user, role string) error
+	RevokeDataSourceAccess(resource *DataSource, user, role string) error
 }
 
 type ClientConfig struct {
@@ -86,6 +89,10 @@ type flowPermissions struct {
 	Permissions flowPermission `json:"permissions"`
 }
 
+type datasourcePermissions struct {
+	Permissions datasourcePermission `json:"permissions"`
+}
+
 type resourceDetails struct {
 	ID string `json:"id"`
 }
@@ -114,6 +121,11 @@ type flowPermission struct {
 	GranteeCapabilities []granteeCapabilities `json:"granteeCapabilities"`
 }
 
+type datasourcePermission struct {
+	DataSource          resourceDetails       `json:"datasource"`
+	GranteeCapabilities []granteeCapabilities `json:"granteeCapabilities"`
+}
+
 type responseWorkbooks struct {
 	Pagination pagination `json:"pagination"`
 	Workbooks  workbooks  `json:"workbooks"`
@@ -122,6 +134,11 @@ type responseWorkbooks struct {
 type responseFlows struct {
 	Pagination pagination `json:"pagination"`
 	Flows      flows      `json:"flows"`
+}
+
+type responseDataSources struct {
+	Pagination  pagination  `json:"pagination"`
+	DataSources datasources `json:"datasources"`
 }
 
 type siteUsers struct {
@@ -140,6 +157,11 @@ type workbooks struct {
 type flows struct {
 	Flow []*Flow `json:"flow"`
 }
+
+type datasources struct {
+	DataSource []*DataSource `json:"datasource"`
+}
+
 type pagination struct {
 	PageNumber     string `json:"pageNumber"`
 	PageSize       string `json:"pageSize"`
@@ -180,6 +202,20 @@ func (c *client) GetFlows() ([]*Flow, error) {
 		return nil, err
 	}
 	return flows.Flows.Flow, nil
+}
+
+func (c *client) GetDataSources() ([]*DataSource, error) {
+	url := fmt.Sprintf("/api/%v/sites/%v/datasources", c.apiVersion, c.siteID)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var datasources responseDataSources
+	if _, err := c.do(req, &datasources); err != nil {
+		return nil, err
+	}
+	return datasources.DataSources.DataSource, nil
 }
 
 func (c *client) UpdateSiteRole(user, role string) error {
@@ -307,6 +343,56 @@ func (c *client) RevokeFlowAccess(resource *Flow, user, role string) error {
 	return nil
 }
 
+func (c *client) GrantDataSourceAccess(resource *DataSource, user, role string) error {
+	requestDataSource := resourceDetails{
+		ID: resource.ID,
+	}
+	foundUser, err := c.getUser(user)
+	if err != nil {
+		return err
+	}
+	userId := foundUser.Users.User[0].ID
+	requestUser := userDetails{
+		ID: userId,
+	}
+
+	split := strings.Split(role, ":")
+	requestCapability := capability{
+		Name: split[0],
+		Mode: split[1],
+	}
+
+	capabilityArr := []capability{requestCapability}
+	requestCapabilities := capabilities{
+		Capability: capabilityArr,
+	}
+
+	requestGranteeCapabilities := granteeCapabilities{
+		User:         requestUser,
+		Capabilities: requestCapabilities,
+	}
+
+	granteeCapabilities := []granteeCapabilities{requestGranteeCapabilities}
+
+	permission := datasourcePermission{
+		DataSource:          requestDataSource,
+		GranteeCapabilities: granteeCapabilities,
+	}
+	c.addDataSourcePermissions(resource.ID, permission)
+
+	return nil
+}
+
+func (c *client) RevokeDataSourceAccess(resource *DataSource, user, role string) error {
+	foundUser, err := c.getUser(user)
+	if err != nil {
+		return err
+	}
+	userId := foundUser.Users.User[0].ID
+	c.deleteDataSourcePermissions(resource.ID, userId, role)
+	return nil
+}
+
 func (c *client) getUser(email string) (*siteUsers, error) {
 	filter := fmt.Sprintf("name:eq:%v", email)
 	url := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", c.apiVersion, c.siteID, filter)
@@ -387,6 +473,21 @@ func (c *client) addFlowPermissions(id string, permissions flowPermission) error
 
 }
 
+func (c *client) addDataSourcePermissions(id string, permissions datasourcePermission) error {
+	body := datasourcePermissions{
+		Permissions: permissions,
+	}
+	url := fmt.Sprintf("/api/%v/sites/%v/datasources/%v/permissions", c.apiVersion, c.siteID, id)
+	req, err := c.newRequest(http.MethodPut, url, body)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.do(req, nil)
+	return err
+
+}
+
 func (c *client) deleteWorkbookPermissions(id, user, role string) error {
 	split := strings.Split(role, ":")
 	capabilityName := split[0]
@@ -407,6 +508,21 @@ func (c *client) deleteFlowPermissions(id, user, role string) error {
 	capabilityName := split[0]
 	capabilityMode := split[1]
 	url := fmt.Sprintf("/api/%v/sites/%v/flows/%v/permissions/users/%v/%v/%v", c.apiVersion, c.siteID, id, user, capabilityName, capabilityMode)
+	req, err := c.newRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.do(req, nil)
+	return err
+
+}
+
+func (c *client) deleteDataSourcePermissions(id, user, role string) error {
+	split := strings.Split(role, ":")
+	capabilityName := split[0]
+	capabilityMode := split[1]
+	url := fmt.Sprintf("/api/%v/sites/%v/datasources/%v/permissions/users/%v/%v/%v", c.apiVersion, c.siteID, id, user, capabilityName, capabilityMode)
 	req, err := c.newRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return err
