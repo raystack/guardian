@@ -3,6 +3,7 @@ package tableau
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,7 +17,8 @@ import (
 type TableauClient interface {
 	GetWorkbooks() ([]*Workbook, error)
 	GetFlows() ([]*Flow, error)
-	GetDataSources() ([]*Flow, error)
+	GetDataSources() ([]*DataSource, error)
+	GetViews() ([]*View, error)
 	UpdateSiteRole(user, role string) error
 	GrantWorkbookAccess(resource *Workbook, user, role string) error
 	RevokeWorkbookAccess(resource *Workbook, user, role string) error
@@ -24,6 +26,8 @@ type TableauClient interface {
 	RevokeFlowAccess(resource *Flow, user, role string) error
 	GrantDataSourceAccess(resource *DataSource, user, role string) error
 	RevokeDataSourceAccess(resource *DataSource, user, role string) error
+	GrantViewAccess(resource *View, user, role string) error
+	RevokeViewAccess(resource *View, user, role string) error
 }
 
 type ClientConfig struct {
@@ -93,6 +97,10 @@ type datasourcePermissions struct {
 	Permissions datasourcePermission `json:"permissions"`
 }
 
+type viewPermissions struct {
+	Permissions viewPermission `json:"permissions"`
+}
+
 type resourceDetails struct {
 	ID string `json:"id"`
 }
@@ -126,6 +134,11 @@ type datasourcePermission struct {
 	GranteeCapabilities []granteeCapabilities `json:"granteeCapabilities"`
 }
 
+type viewPermission struct {
+	View                resourceDetails       `json:"view"`
+	GranteeCapabilities []granteeCapabilities `json:"granteeCapabilities"`
+}
+
 type responseWorkbooks struct {
 	Pagination pagination `json:"pagination"`
 	Workbooks  workbooks  `json:"workbooks"`
@@ -139,6 +152,11 @@ type responseFlows struct {
 type responseDataSources struct {
 	Pagination  pagination  `json:"pagination"`
 	DataSources datasources `json:"datasources"`
+}
+
+type responseViews struct {
+	Pagination pagination `json:"pagination"`
+	Views      views      `json:"views"`
 }
 
 type siteUsers struct {
@@ -162,6 +180,10 @@ type datasources struct {
 	DataSource []*DataSource `json:"datasource"`
 }
 
+type views struct {
+	View []*View `json:"view"`
+}
+
 type pagination struct {
 	PageNumber     string `json:"pageNumber"`
 	PageSize       string `json:"pageSize"`
@@ -174,6 +196,14 @@ type userSiteRoleData struct {
 
 type userSiteRole struct {
 	SiteRole string `json:"siteRole"`
+}
+
+type errorTemplate struct {
+	Error struct {
+		Summary string `json:"summary"`
+		Detail  string `json:"detail"`
+		Code    string `json:"code"`
+	} `json:"error"`
 }
 
 func (c *client) GetWorkbooks() ([]*Workbook, error) {
@@ -216,6 +246,20 @@ func (c *client) GetDataSources() ([]*DataSource, error) {
 		return nil, err
 	}
 	return datasources.DataSources.DataSource, nil
+}
+
+func (c *client) GetViews() ([]*View, error) {
+	url := fmt.Sprintf("/api/%v/sites/%v/views", c.apiVersion, c.siteID)
+	req, err := c.newRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var views responseViews
+	if _, err := c.do(req, &views); err != nil {
+		return nil, err
+	}
+	return views.Views.View, nil
 }
 
 func (c *client) UpdateSiteRole(user, role string) error {
@@ -278,9 +322,8 @@ func (c *client) GrantWorkbookAccess(resource *Workbook, user, role string) erro
 		Workbook:            requestWorkbook,
 		GranteeCapabilities: granteeCapabilities,
 	}
-	c.addWorkbookPermissions(resource.ID, permission)
-
-	return nil
+	err = c.addWorkbookPermissions(resource.ID, permission)
+	return err
 }
 
 func (c *client) RevokeWorkbookAccess(resource *Workbook, user, role string) error {
@@ -289,8 +332,8 @@ func (c *client) RevokeWorkbookAccess(resource *Workbook, user, role string) err
 		return err
 	}
 	userId := foundUser.Users.User[0].ID
-	c.deleteWorkbookPermissions(resource.ID, userId, role)
-	return nil
+	err = c.deleteWorkbookPermissions(resource.ID, userId, role)
+	return err
 }
 
 func (c *client) GrantFlowAccess(resource *Flow, user, role string) error {
@@ -328,9 +371,8 @@ func (c *client) GrantFlowAccess(resource *Flow, user, role string) error {
 		Flow:                requestFlow,
 		GranteeCapabilities: granteeCapabilities,
 	}
-	c.addFlowPermissions(resource.ID, permission)
 
-	return nil
+	return c.addFlowPermissions(resource.ID, permission)
 }
 
 func (c *client) RevokeFlowAccess(resource *Flow, user, role string) error {
@@ -339,8 +381,8 @@ func (c *client) RevokeFlowAccess(resource *Flow, user, role string) error {
 		return err
 	}
 	userId := foundUser.Users.User[0].ID
-	c.deleteFlowPermissions(resource.ID, userId, role)
-	return nil
+
+	return c.deleteFlowPermissions(resource.ID, userId, role)
 }
 
 func (c *client) GrantDataSourceAccess(resource *DataSource, user, role string) error {
@@ -378,9 +420,8 @@ func (c *client) GrantDataSourceAccess(resource *DataSource, user, role string) 
 		DataSource:          requestDataSource,
 		GranteeCapabilities: granteeCapabilities,
 	}
-	c.addDataSourcePermissions(resource.ID, permission)
 
-	return nil
+	return c.addDataSourcePermissions(resource.ID, permission)
 }
 
 func (c *client) RevokeDataSourceAccess(resource *DataSource, user, role string) error {
@@ -389,8 +430,56 @@ func (c *client) RevokeDataSourceAccess(resource *DataSource, user, role string)
 		return err
 	}
 	userId := foundUser.Users.User[0].ID
-	c.deleteDataSourcePermissions(resource.ID, userId, role)
-	return nil
+	return c.deleteDataSourcePermissions(resource.ID, userId, role)
+}
+
+func (c *client) GrantViewAccess(resource *View, user, role string) error {
+	requestView := resourceDetails{
+		ID: resource.ID,
+	}
+	foundUser, err := c.getUser(user)
+	if err != nil {
+		return err
+	}
+	userId := foundUser.Users.User[0].ID
+	requestUser := userDetails{
+		ID: userId,
+	}
+
+	split := strings.Split(role, ":")
+	requestCapability := capability{
+		Name: split[0],
+		Mode: split[1],
+	}
+
+	capabilityArr := []capability{requestCapability}
+	requestCapabilities := capabilities{
+		Capability: capabilityArr,
+	}
+
+	requestGranteeCapabilities := granteeCapabilities{
+		User:         requestUser,
+		Capabilities: requestCapabilities,
+	}
+
+	granteeCapabilities := []granteeCapabilities{requestGranteeCapabilities}
+
+	permission := viewPermission{
+		View:                requestView,
+		GranteeCapabilities: granteeCapabilities,
+	}
+	err = c.addViewPermissions(resource.ID, permission)
+	return err
+}
+
+func (c *client) RevokeViewAccess(resource *View, user, role string) error {
+	foundUser, err := c.getUser(user)
+	if err != nil {
+		return err
+	}
+	userId := foundUser.Users.User[0].ID
+	err = c.deleteViewPermissions(resource.ID, userId, role)
+	return err
 }
 
 func (c *client) getUser(email string) (*siteUsers, error) {
@@ -488,6 +577,21 @@ func (c *client) addDataSourcePermissions(id string, permissions datasourcePermi
 
 }
 
+func (c *client) addViewPermissions(id string, permissions viewPermission) error {
+	body := viewPermissions{
+		Permissions: permissions,
+	}
+	url := fmt.Sprintf("/api/%v/sites/%v/views/%v/permissions", c.apiVersion, c.siteID, id)
+	req, err := c.newRequest(http.MethodPut, url, body)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.do(req, nil)
+	return err
+
+}
+
 func (c *client) deleteWorkbookPermissions(id, user, role string) error {
 	split := strings.Split(role, ":")
 	capabilityName := split[0]
@@ -523,6 +627,21 @@ func (c *client) deleteDataSourcePermissions(id, user, role string) error {
 	capabilityName := split[0]
 	capabilityMode := split[1]
 	url := fmt.Sprintf("/api/%v/sites/%v/datasources/%v/permissions/users/%v/%v/%v", c.apiVersion, c.siteID, id, user, capabilityName, capabilityMode)
+	req, err := c.newRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.do(req, nil)
+	return err
+
+}
+
+func (c *client) deleteViewPermissions(id, user, role string) error {
+	split := strings.Split(role, ":")
+	capabilityName := split[0]
+	capabilityMode := split[1]
+	url := fmt.Sprintf("/api/%v/sites/%v/views/%v/permissions/users/%v/%v/%v", c.apiVersion, c.siteID, id, user, capabilityName, capabilityMode)
 	req, err := c.newRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return err
@@ -602,10 +721,12 @@ func (c *client) do(req *http.Request, v interface{}) (*http.Response, error) {
 		if err != nil {
 			return nil, err
 		}
+	} else if resp.StatusCode == http.StatusForbidden {
+		responseError := &errorTemplate{}
+		json.NewDecoder(resp.Body).Decode(responseError)
+		return nil, errors.New(responseError.Error.Detail)
 	}
 
-	if v != nil {
-		err = json.NewDecoder(resp.Body).Decode(v)
-	}
+	err = json.NewDecoder(resp.Body).Decode(v)
 	return resp, err
 }

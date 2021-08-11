@@ -10,6 +10,7 @@ const (
 	ResourceTypeWorkbook   = "workbook"
 	ResourceTypeFlow       = "flow"
 	ResourceTypeDataSource = "datasource"
+	ResourceTypeView       = "view"
 )
 
 type Workbook struct {
@@ -54,6 +55,17 @@ type DataSource struct {
 	WebpageURL          string      `json:"webpageUrl"`
 }
 
+type View struct {
+	Project     project     `json:"project"`
+	Owner       owner       `json:"owner"`
+	Workbook    workbook    `json:"workbook"`
+	Tags        interface{} `json:"tags"`
+	ID          string      `json:"id"`
+	Name        string      `json:"name"`
+	ContentURL  string      `json:"contentUrl"`
+	ViewUrlName string      `json:"viewUrlName"`
+}
+
 type project struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
@@ -62,6 +74,10 @@ type project struct {
 type owner struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+type workbook struct {
+	ID string `json:"id"`
 }
 
 type dataAccelerationConfig struct {
@@ -151,6 +167,34 @@ func (d *DataSource) ToDomain() *domain.Resource {
 			"isCertified":         d.IsCertified,
 			"type":                d.Type,
 			"useRemoteQueryAgent": d.UseRemoteQueryAgent,
+		},
+	}
+}
+
+func (v *View) FromDomain(r *domain.Resource) error {
+	if r.Type != ResourceTypeView {
+		return ErrInvalidResourceType
+	}
+
+	v.ID = r.URN
+	v.Name = r.Name
+	return nil
+}
+
+func (v *View) ToDomain() *domain.Resource {
+	return &domain.Resource{
+		Type: ResourceTypeView,
+		Name: v.Name,
+		URN:  v.ID,
+		Details: map[string]interface{}{
+			"project_name": v.Project.Name,
+			"project_id":   v.Project.ID,
+			"owner_name":   v.Owner.Name,
+			"workbook_id":  v.Workbook.ID,
+			"owner_id":     v.Owner.ID,
+			"content_url":  v.ContentURL,
+			"tags":         v.Tags,
+			"viewUrlName":  v.ViewUrlName,
 		},
 	}
 }
