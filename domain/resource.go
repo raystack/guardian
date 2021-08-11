@@ -11,7 +11,7 @@ type Resource struct {
 	URN          string                 `json:"urn"`
 	Name         string                 `json:"name"`
 	Details      map[string]interface{} `json:"details"`
-	Labels       map[string]interface{} `json:"labels"`
+	Labels       map[string]string      `json:"labels"`
 	CreatedAt    time.Time              `json:"created_at"`
 	UpdatedAt    time.Time              `json:"updated_at"`
 }

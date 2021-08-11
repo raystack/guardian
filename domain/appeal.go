@@ -24,15 +24,15 @@ type AppealOptions struct {
 
 // Appeal struct
 type Appeal struct {
-	ID            uint                   `json:"id"`
-	ResourceID    uint                   `json:"resource_id"`
-	PolicyID      string                 `json:"policy_id"`
-	PolicyVersion uint                   `json:"policy_version"`
-	Status        string                 `json:"status"`
-	User          string                 `json:"user"`
-	Role          string                 `json:"role"`
-	Options       *AppealOptions         `json:"options"`
-	Labels        map[string]interface{} `json:"labels"`
+	ID            uint              `json:"id"`
+	ResourceID    uint              `json:"resource_id"`
+	PolicyID      string            `json:"policy_id"`
+	PolicyVersion uint              `json:"policy_version"`
+	Status        string            `json:"status"`
+	User          string            `json:"user"`
+	Role          string            `json:"role"`
+	Options       *AppealOptions    `json:"options"`
+	Labels        map[string]string `json:"labels"`
 
 	Policy    *Policy     `json:"-"`
 	Resource  *Resource   `json:"resource,omitempty"`

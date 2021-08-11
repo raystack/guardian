@@ -371,8 +371,8 @@ func (c *client) GrantFlowAccess(resource *Flow, user, role string) error {
 		Flow:                requestFlow,
 		GranteeCapabilities: granteeCapabilities,
 	}
-	err = c.addFlowPermissions(resource.ID, permission)
-	return err
+
+	return c.addFlowPermissions(resource.ID, permission)
 }
 
 func (c *client) RevokeFlowAccess(resource *Flow, user, role string) error {
@@ -381,8 +381,8 @@ func (c *client) RevokeFlowAccess(resource *Flow, user, role string) error {
 		return err
 	}
 	userId := foundUser.Users.User[0].ID
-	err = c.deleteFlowPermissions(resource.ID, userId, role)
-	return err
+
+	return c.deleteFlowPermissions(resource.ID, userId, role)
 }
 
 func (c *client) GrantDataSourceAccess(resource *DataSource, user, role string) error {
@@ -420,8 +420,8 @@ func (c *client) GrantDataSourceAccess(resource *DataSource, user, role string) 
 		DataSource:          requestDataSource,
 		GranteeCapabilities: granteeCapabilities,
 	}
-	err = c.addDataSourcePermissions(resource.ID, permission)
-	return err
+
+	return c.addDataSourcePermissions(resource.ID, permission)
 }
 
 func (c *client) RevokeDataSourceAccess(resource *DataSource, user, role string) error {
@@ -430,8 +430,7 @@ func (c *client) RevokeDataSourceAccess(resource *DataSource, user, role string)
 		return err
 	}
 	userId := foundUser.Users.User[0].ID
-	err = c.deleteDataSourcePermissions(resource.ID, userId, role)
-	return err
+	return c.deleteDataSourcePermissions(resource.ID, userId, role)
 }
 
 func (c *client) GrantViewAccess(resource *View, user, role string) error {
