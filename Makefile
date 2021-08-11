@@ -22,3 +22,12 @@ test-coverage: test
 
 dist:
 	@bash ./scripts/build.sh
+
+generate-proto: ## regenerate protos
+	@echo " > cloning protobuf from odpf/proton"
+	@rm -rf proton/
+	@git -c advice.detachedHead=false clone https://github.com/odpf/proton --depth 1 --quiet --branch main
+	@echo " > generating protobuf"
+	@echo " > info: make sure correct version of dependencies are installed using 'install'"
+	@buf generate
+	@echo " > protobuf compilation finished"
