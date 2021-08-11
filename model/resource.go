@@ -65,7 +65,7 @@ func (m *Resource) ToDomain() (*domain.Resource, error) {
 		return nil, err
 	}
 
-	var labels map[string]interface{}
+	var labels map[string]string
 	if err := json.Unmarshal(m.Labels, &labels); err != nil {
 		return nil, err
 	}

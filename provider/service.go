@@ -43,7 +43,16 @@ func (s *Service) Create(p *domain.Provider) error {
 
 // Find records
 func (s *Service) Find() ([]*domain.Provider, error) {
-	return s.providerRepository.Find()
+	providers, err := s.providerRepository.Find()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range providers {
+		p.Config.Credentials = nil
+	}
+
+	return providers, nil
 }
 
 // Update updates the non-zero value(s) only
