@@ -89,6 +89,17 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		resources = append(resources, vs)
 	}
 
+	metrics, err := client.GetMetrics()
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range metrics {
+		mt := m.ToDomain()
+		mt.ProviderType = pc.Type
+		mt.ProviderURN = pc.URN
+		resources = append(resources, mt)
+	}
+
 	return resources, nil
 }
 
@@ -185,6 +196,25 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 
 		return nil
+	} else if a.Resource.Type == ResourceTypeMetric {
+		m := new(Metric)
+		if err := m.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.GrantMetricAccess(m, a.User, p.Name); err != nil {
+					return err
+				}
+			} else {
+				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
 	}
 
 	return ErrInvalidResourceType
@@ -270,6 +300,24 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		for _, p := range permissions {
 			if p.Type == "" {
 				if err := client.RevokeViewAccess(v, a.User, p.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+			return err
+		}
+		return nil
+	} else if a.Resource.Type == ResourceTypeMetric {
+		m := new(Metric)
+		if err := m.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if p.Type == "" {
+				if err := client.RevokeMetricAccess(m, a.User, p.Name); err != nil {
 					return err
 				}
 			}
