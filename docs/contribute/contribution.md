@@ -2,7 +2,7 @@
 
 The following is a set of guidelines for contributing to Guardian. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request. Here are some important resources:
 
-* [Concepts](contribution.md) section will explain you about Guardian architecture,
+* [Concepts](https://odpf.gitbook.io/guardian/concepts/architecture) section will explain you about Guardian architecture,
 * Our [roadmap](https://github.com/odpf/guardian#readme) is the 10k foot view of where we're going, and
 * Github [issues](https://github.com/odpf/guardian/issues) track the ongoing and reported issues.
 
