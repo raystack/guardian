@@ -1,0 +1,64 @@
+package cmd
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"strings"
+	"time"
+
+	v1 "github.com/odpf/guardian/api/handler/v1"
+	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
+	"github.com/spf13/cobra"
+)
+
+func policiesCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "policies",
+		Short: "manage policies",
+	}
+
+	cmd.AddCommand(listPoliciesCommand(c))
+
+	return cmd
+}
+
+func listPoliciesCommand(c *config) *cobra.Command {
+	return &cobra.Command{
+		Use:   "list",
+		Short: "list policies",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
+			defer dialCancel()
+			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer conn.Close()
+			client := pb.NewGuardianServiceClient(conn)
+
+			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
+			defer requestTimeoutCtxCancel()
+			res, err := client.ListPolicies(requestTimeoutCtx, &pb.ListPoliciesRequest{})
+			if err != nil {
+				return err
+			}
+
+			t := getTablePrinter(os.Stdout, []string{"ID", "VERSION", "DESCRIPTION", "STEPS"})
+			for _, p := range res.GetPolicies() {
+				var stepNames []string
+				for _, s := range p.GetSteps() {
+					stepNames = append(stepNames, s.GetName())
+				}
+				t.Append([]string{
+					fmt.Sprintf("%v", p.GetId()),
+					fmt.Sprintf("%v", p.GetVersion()),
+					p.GetDescription(),
+					strings.Join(stepNames, ","),
+				})
+			}
+			t.Render()
+			return nil
+		},
+	}
+}
