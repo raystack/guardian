@@ -139,6 +139,8 @@ func (s *Service) RevokeAccess(a *domain.Appeal) error {
 	}
 
 	return provider.RevokeAccess(p.Config, a)
+	// TODO: handle if permission for the given user with the given role is not found
+	// handle the resolution for the appeal status
 }
 
 func (s *Service) validateAppealParam(a *domain.Appeal) error {

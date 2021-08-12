@@ -19,8 +19,9 @@ func TestNewClient(t *testing.T) {
 
 	t.Run("should return error if config.Host is not a valid url", func(t *testing.T) {
 		invalidHostConfig := &grafana.ClientConfig{
-			Host:   "invalid-url",
-			ApiKey: "test-api-key",
+			Host:     "invalid-url",
+			Username: "test-username",
+			Password: "test-password",
 		}
 
 		actualClient, actualError := grafana.NewClient(invalidHostConfig)
