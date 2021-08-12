@@ -37,3 +37,6 @@ tmp
 
 /third_party/*
 !/third_party/OpenAPI/odpf/guardian/guardian.swagger.json
+
+# guardian config
+.guardian.yaml
