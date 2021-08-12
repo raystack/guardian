@@ -2,14 +2,20 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	v1 "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
+	"github.com/odpf/guardian/domain"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 func policiesCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
@@ -19,6 +25,8 @@ func policiesCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 	}
 
 	cmd.AddCommand(listPoliciesCommand(c))
+	cmd.AddCommand(createPolicyCommand(c, adapter))
+	cmd.AddCommand(updatePolicyCommand(c, adapter))
 
 	return cmd
 }
@@ -61,4 +69,122 @@ func listPoliciesCommand(c *config) *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func createPolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
+	var filePath string
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "create policy",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			b, err := ioutil.ReadFile(filePath)
+			if err != nil {
+				return err
+			}
+
+			var policy domain.Policy
+			switch filepath.Ext(filePath) {
+			case ".json":
+				if err := json.Unmarshal(b, &policy); err != nil {
+					return err
+				}
+			case ".yaml", ".yml":
+				if err := yaml.Unmarshal(b, &policy); err != nil {
+					return err
+				}
+			default:
+				return errors.New("unsupported file type")
+			}
+			policyProto, err := adapter.ToPolicyProto(&policy)
+			if err != nil {
+				return err
+			}
+
+			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
+			defer dialCancel()
+			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer conn.Close()
+			client := pb.NewGuardianServiceClient(conn)
+
+			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
+			defer requestTimeoutCtxCancel()
+			res, err := client.CreatePolicy(requestTimeoutCtx, &pb.CreatePolicyRequest{
+				Policy: policyProto,
+			})
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("policy created with id: %v", res.GetPolicy().GetId())
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "path to the policy config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
+
+func updatePolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
+	var filePath string
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "update policy",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			b, err := ioutil.ReadFile(filePath)
+			if err != nil {
+				return err
+			}
+
+			var policy domain.Policy
+			switch filepath.Ext(filePath) {
+			case ".json":
+				if err := json.Unmarshal(b, &policy); err != nil {
+					return err
+				}
+			case ".yaml", ".yml":
+				if err := yaml.Unmarshal(b, &policy); err != nil {
+					return err
+				}
+			default:
+				return errors.New("unsupported file type")
+			}
+			policyProto, err := adapter.ToPolicyProto(&policy)
+			if err != nil {
+				return err
+			}
+
+			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
+			defer dialCancel()
+			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer conn.Close()
+			client := pb.NewGuardianServiceClient(conn)
+
+			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
+			defer requestTimeoutCtxCancel()
+			_, err = client.UpdatePolicy(requestTimeoutCtx, &pb.UpdatePolicyRequest{
+				Policy: policyProto,
+			})
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("policy updated")
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "path to the policy config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
 }
