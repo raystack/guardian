@@ -19,6 +19,8 @@ func appealsCommand(c *config) *cobra.Command {
 
 	cmd.AddCommand(listAppealsCommand(c))
 	cmd.AddCommand(createAppealCommand(c))
+	cmd.AddCommand(approveApprovalStepCommand(c))
+	cmd.AddCommand(rejectApprovalStepCommand(c))
 
 	return cmd
 }
@@ -118,6 +120,96 @@ func createAppealCommand(c *config) *cobra.Command {
 	cmd.Flags().StringVarP(&role, "role", "r", "", "role")
 	cmd.MarkFlagRequired("role")
 	cmd.Flags().StringVar(&optionsDuration, "options.duration", "", "access duration")
+
+	return cmd
+}
+
+func approveApprovalStepCommand(c *config) *cobra.Command {
+	var id uint
+	var approvalName string
+
+	cmd := &cobra.Command{
+		Use:   "approve",
+		Short: "approve an approval step",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
+			defer dialCancel()
+			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer conn.Close()
+			client := pb.NewGuardianServiceClient(conn)
+
+			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
+			defer requestTimeoutCtxCancel()
+			_, err = client.UpdateApproval(requestTimeoutCtx, &pb.UpdateApprovalRequest{
+				Id:           uint32(id),
+				ApprovalName: approvalName,
+				Action: &pb.UpdateApprovalRequest_Action{
+					Action: "approve",
+				},
+			})
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("appeal with id %v and approval name %v approved successfully", id, approvalName)
+
+			return nil
+		},
+	}
+
+	cmd.Flags().UintVar(&id, "id", 0, "appeal id")
+	cmd.MarkFlagRequired("id")
+	cmd.Flags().StringVarP(&approvalName, "approval-name", "a", "", "approval name going to be approved")
+	cmd.MarkFlagRequired("approval-name")
+
+	return cmd
+}
+
+func rejectApprovalStepCommand(c *config) *cobra.Command {
+	var id uint
+	var approvalName string
+
+	cmd := &cobra.Command{
+		Use:   "reject",
+		Short: "reject an approval step",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
+			defer dialCancel()
+			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer conn.Close()
+			client := pb.NewGuardianServiceClient(conn)
+
+			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
+			defer requestTimeoutCtxCancel()
+			_, err = client.UpdateApproval(requestTimeoutCtx, &pb.UpdateApprovalRequest{
+				Id:           uint32(id),
+				ApprovalName: approvalName,
+				Action: &pb.UpdateApprovalRequest_Action{
+					Action: "reject",
+				},
+			})
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("appeal with id %v and approval name %v rejected successfully", id, approvalName)
+
+			return nil
+		},
+	}
+
+	cmd.Flags().UintVar(&id, "id", 0, "appeal id")
+	cmd.MarkFlagRequired("id")
+	cmd.Flags().StringVarP(&approvalName, "approval-name", "a", "", "approval name going to be approved")
+	cmd.MarkFlagRequired("approval-name")
 
 	return cmd
 }
