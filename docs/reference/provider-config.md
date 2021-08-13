@@ -57,3 +57,4 @@ Available resource types | `dataset`, `table`
 - [Metabase](metabase-provider.md#example)
 - [BigQuery](bigquery-provider.md#example)
 - [Grafana](grafana-provider.md#example)
+- [Tableau](tableau-provider.md#example)
