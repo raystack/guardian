@@ -131,6 +131,7 @@ func createPolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 }
 
 func updatePolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
+	var id string
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "update",
@@ -170,7 +171,12 @@ func updatePolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 
 			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
 			defer requestTimeoutCtxCancel()
+			policyID := id
+			if policyID == "" {
+				policyID = policyProto.GetId()
+			}
 			_, err = client.UpdatePolicy(requestTimeoutCtx, &pb.UpdatePolicyRequest{
+				Id:     policyID,
 				Policy: policyProto,
 			})
 			if err != nil {
@@ -183,6 +189,7 @@ func updatePolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&id, "id", "", "policy id")
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "path to the policy config")
 	cmd.MarkFlagRequired("file")
 

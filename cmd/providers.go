@@ -125,6 +125,7 @@ func createProviderCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 }
 
 func updateProviderCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
+	var id uint
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "update",
@@ -165,6 +166,7 @@ func updateProviderCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
 			defer requestTimeoutCtxCancel()
 			_, err = client.UpdateProvider(requestTimeoutCtx, &pb.UpdateProviderRequest{
+				Id:     uint32(id),
 				Config: configProto,
 			})
 			if err != nil {
@@ -177,6 +179,8 @@ func updateProviderCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().UintVar(&id, "id", 0, "provider id")
+	cmd.MarkFlagRequired("id")
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "path to the provider config")
 	cmd.MarkFlagRequired("file")
 
