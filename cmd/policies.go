@@ -2,12 +2,8 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -15,7 +11,6 @@ import (
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/domain"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 func policiesCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
@@ -77,24 +72,11 @@ func createPolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 		Use:   "create",
 		Short: "create policy",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b, err := ioutil.ReadFile(filePath)
-			if err != nil {
+			var policy domain.Policy
+			if err := parseFile(filePath, &policy); err != nil {
 				return err
 			}
 
-			var policy domain.Policy
-			switch filepath.Ext(filePath) {
-			case ".json":
-				if err := json.Unmarshal(b, &policy); err != nil {
-					return err
-				}
-			case ".yaml", ".yml":
-				if err := yaml.Unmarshal(b, &policy); err != nil {
-					return err
-				}
-			default:
-				return errors.New("unsupported file type")
-			}
 			policyProto, err := adapter.ToPolicyProto(&policy)
 			if err != nil {
 				return err
@@ -137,24 +119,11 @@ func updatePolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 		Use:   "update",
 		Short: "update policy",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b, err := ioutil.ReadFile(filePath)
-			if err != nil {
+			var policy domain.Policy
+			if err := parseFile(filePath, &policy); err != nil {
 				return err
 			}
 
-			var policy domain.Policy
-			switch filepath.Ext(filePath) {
-			case ".json":
-				if err := json.Unmarshal(b, &policy); err != nil {
-					return err
-				}
-			case ".yaml", ".yml":
-				if err := yaml.Unmarshal(b, &policy); err != nil {
-					return err
-				}
-			default:
-				return errors.New("unsupported file type")
-			}
 			policyProto, err := adapter.ToPolicyProto(&policy)
 			if err != nil {
 				return err

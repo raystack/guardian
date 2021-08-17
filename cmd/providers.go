@@ -2,19 +2,14 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"time"
 
 	v1 "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/domain"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 func providersCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
@@ -71,24 +66,11 @@ func createProviderCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 		Use:   "create",
 		Short: "register provider configuration",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b, err := ioutil.ReadFile(filePath)
-			if err != nil {
+			var providerConfig domain.ProviderConfig
+			if err := parseFile(filePath, &providerConfig); err != nil {
 				return err
 			}
 
-			var providerConfig domain.ProviderConfig
-			switch filepath.Ext(filePath) {
-			case ".json":
-				if err := json.Unmarshal(b, &providerConfig); err != nil {
-					return err
-				}
-			case ".yaml", ".yml":
-				if err := yaml.Unmarshal(b, &providerConfig); err != nil {
-					return err
-				}
-			default:
-				return errors.New("unsupported file type")
-			}
 			configProto, err := adapter.ToProviderConfigProto(&providerConfig)
 			if err != nil {
 				return err
@@ -131,24 +113,11 @@ func updateProviderCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 		Use:   "update",
 		Short: "update provider configuration",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			b, err := ioutil.ReadFile(filePath)
-			if err != nil {
+			var providerConfig domain.ProviderConfig
+			if err := parseFile(filePath, &providerConfig); err != nil {
 				return err
 			}
 
-			var providerConfig domain.ProviderConfig
-			switch filepath.Ext(filePath) {
-			case ".json":
-				if err := json.Unmarshal(b, &providerConfig); err != nil {
-					return err
-				}
-			case ".yaml", ".yml":
-				if err := yaml.Unmarshal(b, &providerConfig); err != nil {
-					return err
-				}
-			default:
-				return errors.New("unsupported file type")
-			}
 			configProto, err := adapter.ToProviderConfigProto(&providerConfig)
 			if err != nil {
 				return err
