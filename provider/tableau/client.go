@@ -39,6 +39,7 @@ type ClientConfig struct {
 	Password   string `validate:"required" mapstructure:"password"`
 	ContentURL string `validate:"required" mapstructure:"content_url"`
 	APIVersion string `mapstructure:"apiVersion" default:"3.12"`
+	HTTPClient HTTPClient
 }
 
 type sessionRequest struct {
@@ -55,7 +56,7 @@ type requestSite struct {
 	ContentURL string `json:"contentUrl"`
 }
 
-type sessionResponse struct {
+type SessionResponse struct {
 	Credentials responseCredentials `json:"credentials"`
 }
 
@@ -85,7 +86,7 @@ type client struct {
 	siteID       string
 	userID       string
 
-	httpClient *http.Client
+	httpClient HTTPClient
 }
 
 type workbookPermissions struct {
@@ -588,7 +589,7 @@ func (c *client) getUser(email string) (*siteUsers, error) {
 	return user, nil
 }
 
-func newClient(config *ClientConfig) (*client, error) {
+func NewClient(config *ClientConfig) (*client, error) {
 	defaults.SetDefaults(config)
 	if err := validator.New().Struct(config); err != nil {
 		return nil, err
@@ -598,13 +599,19 @@ func newClient(config *ClientConfig) (*client, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	httpClient := config.HTTPClient
+	if httpClient == nil {
+		httpClient = &http.Client{}
+	}
+
 	c := &client{
 		baseURL:    baseURL,
 		username:   config.Username,
 		password:   config.Password,
 		contentUrl: config.ContentURL,
 		apiVersion: config.APIVersion,
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 	}
 
 	sessionToken, siteID, userID, err := c.getSession()
@@ -784,7 +791,7 @@ func (c *client) getSession() (string, string, string, error) {
 		return "", "", "", err
 	}
 
-	var sessionResponse sessionResponse
+	var sessionResponse SessionResponse
 	if _, err := c.do(req, &sessionResponse); err != nil {
 		return "", "", "", err
 	}

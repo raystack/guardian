@@ -71,7 +71,7 @@ type Metric struct {
 	Project        project        `json:"project"`
 	Owner          owner          `json:"owner"`
 	Tags           interface{}    `json:"tags"`
-	UnderlyingView underlyingView `json:"underlyingView"`
+	UnderlyingView UnderlyingView `json:"underlyingView"`
 	ID             string         `json:"id"`
 	Name           string         `json:"name"`
 	Description    string         `json:"description"`
@@ -89,7 +89,7 @@ type owner struct {
 	Name string `json:"name"`
 }
 
-type underlyingView struct {
+type UnderlyingView struct {
 	ID string `json:"id"`
 }
 
@@ -158,7 +158,7 @@ func (f *Flow) ToDomain() *domain.Resource {
 }
 
 func (d *DataSource) FromDomain(r *domain.Resource) error {
-	if r.Type != ResourceTypeWorkbook {
+	if r.Type != ResourceTypeDataSource {
 		return ErrInvalidResourceType
 	}
 
