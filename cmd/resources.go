@@ -73,7 +73,6 @@ func metadataCommand(c *config) *cobra.Command {
 	setCmd := &cobra.Command{
 		Use:   "set",
 		Short: "store new metadata",
-		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			metadata := map[string]interface{}{}
 			for _, a := range values {

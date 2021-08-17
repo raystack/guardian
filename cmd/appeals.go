@@ -131,7 +131,6 @@ func approveApprovalStepCommand(c *config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "approve",
 		Short: "approve an approval step",
-		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
 			defer dialCancel()
