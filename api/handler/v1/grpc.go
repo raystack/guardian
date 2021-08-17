@@ -416,8 +416,6 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealReque
 	a, err := s.appealService.Revoke(uint(id), actor)
 	if err != nil {
 		switch err {
-		case appeal.ErrRevokeAppealForbidden:
-			return nil, status.Error(codes.PermissionDenied, "permission denied")
 		case appeal.ErrAppealNotFound:
 			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
 		default:

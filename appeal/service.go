@@ -331,16 +331,11 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 		return nil, ErrAppealNotFound
 	}
 
-	if actor != domain.SystemActorName {
-		lastApprovalStep := appeal.Approvals[len(appeal.Approvals)-1]
-		if !utils.ContainsString(lastApprovalStep.Approvers, actor) {
-			return nil, ErrRevokeAppealForbidden
-		}
-	}
-
 	revokedAppeal := &domain.Appeal{}
 	*revokedAppeal = *appeal
 	revokedAppeal.Status = domain.AppealStatusTerminated
+
+	// TODO: add revoked_by field in the appeal and assign `actor` as the value
 
 	if err := s.repo.Update(revokedAppeal); err != nil {
 		return nil, err

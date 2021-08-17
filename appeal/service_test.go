@@ -1173,35 +1173,12 @@ func (s *ServiceTestSuite) TestRevoke() {
 	appealID := uint(1)
 	actor := "user@email.com"
 
-	s.Run("should return error if actor doesn't have permission to revoke", func() {
-		expectedAppeal := &domain.Appeal{
-			ID: appealID,
-			Approvals: []*domain.Approval{
-				{
-					Approvers: []string{"approver@email.com"},
-				},
-			},
-		}
-		s.mockRepository.On("GetByID", appealID).Return(expectedAppeal, nil).Once()
-		expectedError := appeal.ErrRevokeAppealForbidden
-
-		actualResult, actualError := s.service.Revoke(appealID, actor)
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
-	})
-
 	appealDetails := &domain.Appeal{
 		ID:         appealID,
 		ResourceID: 1,
 		Resource: &domain.Resource{
 			ID:  1,
 			URN: "urn",
-		},
-		Approvals: []*domain.Approval{
-			{
-				Approvers: []string{actor},
-			},
 		},
 	}
 
