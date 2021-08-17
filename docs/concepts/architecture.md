@@ -7,6 +7,8 @@ Basic building blocks of Guardian are
 - Guardian Providers
 - Scheduler
 
+<p align="center"><img src="../assets/architecture.png" /></p>
+
 ### Guardian CLI
 
 Guardian CLI will be able to can start a service that controls all that Guardian has to offer. Guardian CLI uses GRPC to communicate with the guardian service for almost all the operations. 
