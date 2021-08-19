@@ -10,7 +10,10 @@ func migrateCommand() *cobra.Command {
 		Use:   "migrate",
 		Short: "Migrate database schema",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := app.LoadConfig()
+			c, err := app.LoadServiceConfig()
+			if err != nil {
+				return err
+			}
 			return app.Migrate(c)
 		},
 	}

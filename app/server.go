@@ -34,8 +34,32 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	ServiceConfigFileName      = "config"
+	ServiceConfigFileExtension = "yaml"
+)
+
+type ServiceConfig struct {
+	Port                   int              `mapstructure:"port" default:"8080"`
+	EncryptionSecretKeyKey string           `mapstructure:"encryption_secret_key"`
+	SlackAccessToken       string           `mapstructure:"slack_access_token"`
+	IAM                    iam.ClientConfig `mapstructure:"iam"`
+	Log                    logger.Config    `mapstructure:"log"`
+	DB                     store.Config     `mapstructure:"db"`
+}
+
+// LoadServiceConfig returns service configuration
+func LoadServiceConfig() (*ServiceConfig, error) {
+	var config ServiceConfig
+	if err := loadConfig(ServiceConfigFileName, ServiceConfigFileExtension, &config); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
+}
+
 // RunServer runs the application server
-func RunServer(c *Config) error {
+func RunServer(c *ServiceConfig) error {
 	db, err := getDB(c)
 	if err != nil {
 		return err
@@ -167,7 +191,7 @@ func RunServer(c *Config) error {
 }
 
 // Migrate runs the schema migration scripts
-func Migrate(c *Config) error {
+func Migrate(c *ServiceConfig) error {
 	db, err := getDB(c)
 	if err != nil {
 		return err
@@ -184,7 +208,7 @@ func Migrate(c *Config) error {
 	return store.Migrate(db, models...)
 }
 
-func getDB(c *Config) (*gorm.DB, error) {
+func getDB(c *ServiceConfig) (*gorm.DB, error) {
 	return store.New(&c.DB)
 }
 

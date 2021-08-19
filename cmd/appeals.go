@@ -6,11 +6,12 @@ import (
 	"os"
 
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
+	"github.com/odpf/guardian/app"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func appealsCommand(c *config) *cobra.Command {
+func appealsCommand(c *app.CLIConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "appeals",
 		Short: "manage appeals",
@@ -24,7 +25,7 @@ func appealsCommand(c *config) *cobra.Command {
 	return cmd
 }
 
-func listAppealsCommand(c *config) *cobra.Command {
+func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "list appeals",
@@ -57,7 +58,7 @@ func listAppealsCommand(c *config) *cobra.Command {
 	}
 }
 
-func createAppealCommand(c *config) *cobra.Command {
+func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 	var user string
 	var resourceID uint
 	var role string
@@ -115,7 +116,7 @@ func createAppealCommand(c *config) *cobra.Command {
 	return cmd
 }
 
-func approveApprovalStepCommand(c *config) *cobra.Command {
+func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 	var id uint
 	var approvalName string
 
@@ -155,7 +156,7 @@ func approveApprovalStepCommand(c *config) *cobra.Command {
 	return cmd
 }
 
-func rejectApprovalStepCommand(c *config) *cobra.Command {
+func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 	var id uint
 	var approvalName string
 

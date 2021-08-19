@@ -10,7 +10,10 @@ func serveCommand() *cobra.Command {
 		Use:   "serve",
 		Short: "Run server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := app.LoadConfig()
+			c, err := app.LoadServiceConfig()
+			if err != nil {
+				return err
+			}
 			return app.RunServer(c)
 		},
 	}

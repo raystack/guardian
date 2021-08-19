@@ -8,11 +8,12 @@ import (
 
 	v1 "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
+	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/spf13/cobra"
 )
 
-func policiesCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
+func policiesCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "policies",
 		Short: "manage policies",
@@ -25,7 +26,7 @@ func policiesCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 	return cmd
 }
 
-func listPoliciesCommand(c *config) *cobra.Command {
+func listPoliciesCommand(c *app.CLIConfig) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "list policies",
@@ -61,7 +62,7 @@ func listPoliciesCommand(c *config) *cobra.Command {
 	}
 }
 
-func createPolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
+func createPolicyCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -103,7 +104,7 @@ func createPolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 	return cmd
 }
 
-func updatePolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
+func updatePolicyCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var id string
 	var filePath string
 	cmd := &cobra.Command{

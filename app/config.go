@@ -7,65 +7,50 @@ import (
 	"github.com/jeremywohl/flatten"
 	"github.com/mcuadros/go-defaults"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/iam"
-	"github.com/odpf/guardian/logger"
-	"github.com/odpf/guardian/store"
 	"github.com/spf13/viper"
 )
 
-type Config struct {
-	Port                   int              `mapstructure:"port" default:"8080"`
-	EncryptionSecretKeyKey string           `mapstructure:"encryption_secret_key"`
-	SlackAccessToken       string           `mapstructure:"slack_access_token"`
-	IAM                    iam.ClientConfig `mapstructure:"iam"`
-	Log                    logger.Config    `mapstructure:"log"`
-	DB                     store.Config     `mapstructure:"db"`
-}
-
-// LoadConfig returns application configuration
-func LoadConfig() *Config {
-	viper.SetConfigName("config")
+func loadConfig(fileName, fileExtension string, v interface{}) error {
+	viper.SetConfigName(fileName)
+	viper.SetConfigType(fileExtension)
 	viper.AddConfigPath("./")
 	viper.AddConfigPath("../")
-	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	err := viper.ReadInConfig()
-	if err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			fmt.Println("config file was not found. Env vars and defaults will be used")
+			fmt.Println("config file was not found. Env vars and defaults will be used. If you are using guardian CLI, make sure you have run \"guardian config init\" once")
 		} else {
-			panic(fmt.Errorf("fatal error reading config: %s", err))
+			return fmt.Errorf("fatal error reading config: %s", err)
 		}
 	}
 
-	configKeys, err := getFlattenedStructKeys(Config{})
+	configKeys, err := getFlattenedStructKeys(v)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// Bind each conf fields to environment vars
 	for key := range configKeys {
 		err := viper.BindEnv(configKeys[key])
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 
-	var config Config
-	defaults.SetDefaults(&config)
+	defaults.SetDefaults(v)
 
-	err = viper.Unmarshal(&config)
-	if err != nil {
-		panic(fmt.Errorf("unable to unmarshal config to struct: %v\n", err))
+	if err := viper.Unmarshal(v); err != nil {
+		return fmt.Errorf("unable to unmarshal config to struct: %v", err)
 	}
-	return &config
+
+	return nil
 }
 
-func getFlattenedStructKeys(config Config) ([]string, error) {
+func getFlattenedStructKeys(v interface{}) ([]string, error) {
 	var structMap map[string]interface{}
-	err := mapstructure.Decode(config, &structMap)
+	err := mapstructure.Decode(v, &structMap)
 	if err != nil {
 		return nil, err
 	}

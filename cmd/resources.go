@@ -7,11 +7,12 @@ import (
 	"strings"
 
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
+	"github.com/odpf/guardian/app"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func resourcesCommand(c *config) *cobra.Command {
+func resourcesCommand(c *app.CLIConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "resources",
 		Short: "manage resources",
@@ -23,7 +24,7 @@ func resourcesCommand(c *config) *cobra.Command {
 	return cmd
 }
 
-func listResourcesCommand(c *config) *cobra.Command {
+func listResourcesCommand(c *app.CLIConfig) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "list resources",
@@ -56,7 +57,7 @@ func listResourcesCommand(c *config) *cobra.Command {
 	}
 }
 
-func metadataCommand(c *config) *cobra.Command {
+func metadataCommand(c *app.CLIConfig) *cobra.Command {
 	var id uint
 	var values []string
 

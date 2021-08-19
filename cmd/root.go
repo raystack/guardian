@@ -5,6 +5,7 @@ import (
 	"os"
 
 	v1 "github.com/odpf/guardian/api/handler/v1"
+	"github.com/odpf/guardian/app"
 	"github.com/spf13/cobra"
 )
 
@@ -16,9 +17,9 @@ func Execute() {
 
 	protoAdapter := v1.NewAdapter()
 
-	cliConfig, err := readConfig()
+	cliConfig, err := app.LoadCLIConfig()
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
 	rootCmd.AddCommand(serveCommand())

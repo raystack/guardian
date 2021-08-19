@@ -7,11 +7,12 @@ import (
 
 	v1 "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
+	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/spf13/cobra"
 )
 
-func providersCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
+func providersCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "providers",
 		Short: "manage providers",
@@ -24,7 +25,7 @@ func providersCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 	return cmd
 }
 
-func listProvidersCommand(c *config) *cobra.Command {
+func listProvidersCommand(c *app.CLIConfig) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "list providers",
@@ -55,7 +56,7 @@ func listProvidersCommand(c *config) *cobra.Command {
 	}
 }
 
-func createProviderCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
+func createProviderCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -97,7 +98,7 @@ func createProviderCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 	return cmd
 }
 
-func updateProviderCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
+func updateProviderCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var id uint
 	var filePath string
 	cmd := &cobra.Command{

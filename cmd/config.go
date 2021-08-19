@@ -4,19 +4,11 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/mcuadros/go-defaults"
+	"github.com/odpf/guardian/app"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
-
-var (
-	DefaultHost   = "localhost"
-	FileName      = ".guardian"
-	FileExtension = "yaml"
-)
-
-type config struct {
-	Host string `yaml:"host"`
-}
 
 func configCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -32,37 +24,21 @@ func configInitCommand() *cobra.Command {
 		Use:   "init",
 		Short: "initialize CLI configuration",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config := config{
-				Host: DefaultHost,
-			}
+			var config app.CLIConfig
+			defaults.SetDefaults(&config)
 
-			b, err := yaml.Marshal(config)
+			b, err := yaml.Marshal(&config)
 			if err != nil {
 				return err
 			}
 
-			filepath := fmt.Sprintf("%v.%v", FileName, FileExtension)
+			filepath := fmt.Sprintf("%v.%v", app.CLIConfigFileName, app.CLIConfigFileExtension)
 			if err := ioutil.WriteFile(filepath, b, 0655); err != nil {
 				return err
 			}
-			fmt.Printf("config created: %v", filepath)
+			fmt.Printf("config created: %v\n", filepath)
 
 			return nil
 		},
 	}
-}
-
-func readConfig() (*config, error) {
-	var c config
-	filepath := fmt.Sprintf("%v.%v", FileName, FileExtension)
-	b, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := yaml.Unmarshal(b, &c); err != nil {
-		return nil, err
-	}
-
-	return &c, nil
 }
