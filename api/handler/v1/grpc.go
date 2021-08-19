@@ -19,6 +19,7 @@ type ProtoAdapter interface {
 	FromProviderProto(*pb.Provider) (*domain.Provider, error)
 	FromProviderConfigProto(*pb.ProviderConfig) (*domain.ProviderConfig, error)
 	ToProviderProto(*domain.Provider) (*pb.Provider, error)
+	ToProviderConfigProto(*domain.ProviderConfig) (*pb.ProviderConfig, error)
 
 	FromPolicyProto(*pb.Policy) (*domain.Policy, error)
 	ToPolicyProto(*domain.Policy) (*pb.Policy, error)

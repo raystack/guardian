@@ -5,15 +5,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(&cobra.Command{
+func migrateCommand() *cobra.Command {
+	return &cobra.Command{
 		Use:   "migrate",
 		Short: "Migrate database schema",
-		RunE:  migrate,
-	})
-}
-
-func migrate(cmd *cobra.Command, args []string) error {
-	c := app.LoadConfig()
-	return app.Migrate(c)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := app.LoadServiceConfig()
+			if err != nil {
+				return err
+			}
+			return app.Migrate(c)
+		},
+	}
 }

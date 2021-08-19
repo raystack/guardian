@@ -9,6 +9,8 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
 	github.com/imdario/mergo v0.3.11
 	github.com/jeremywohl/flatten v1.0.1
+	github.com/kataras/tablewriter v0.0.0-20180708051242-e063d29b7c23
+	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mcuadros/go-lookup v0.0.0-20200831155250-80f87a4fa5ee
 	github.com/mitchellh/mapstructure v1.1.2
@@ -23,6 +25,7 @@ require (
 	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.27.1
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 	gorm.io/datatypes v1.0.0
 	gorm.io/driver/postgres v1.0.8
 	gorm.io/gorm v1.20.12

@@ -82,18 +82,37 @@ func (a *adapter) FromProviderConfigProto(pc *pb.ProviderConfig) (*domain.Provid
 }
 
 func (a *adapter) ToProviderProto(p *domain.Provider) (*pb.Provider, error) {
-	credentials, err := structpb.NewValue(p.Config.Credentials)
+	config, err := a.ToProviderConfigProto(p.Config)
 	if err != nil {
 		return nil, err
 	}
 
-	appeal := &pb.ProviderConfig_AppealConfig{
-		AllowPermanentAccess:         p.Config.Appeal.AllowPermanentAccess,
-		AllowActiveAccessExtensionIn: p.Config.Appeal.AllowActiveAccessExtensionIn,
+	return &pb.Provider{
+		Id:        uint32(p.ID),
+		Type:      p.Type,
+		Urn:       p.URN,
+		Config:    config,
+		CreatedAt: timestamppb.New(p.CreatedAt),
+		UpdatedAt: timestamppb.New(p.UpdatedAt),
+	}, nil
+}
+
+func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*pb.ProviderConfig, error) {
+	credentials, err := structpb.NewValue(pc.Credentials)
+	if err != nil {
+		return nil, err
+	}
+
+	var appeal *pb.ProviderConfig_AppealConfig
+	if pc.Appeal != nil {
+		appeal = &pb.ProviderConfig_AppealConfig{
+			AllowPermanentAccess:         pc.Appeal.AllowPermanentAccess,
+			AllowActiveAccessExtensionIn: pc.Appeal.AllowActiveAccessExtensionIn,
+		}
 	}
 
 	resources := []*pb.ProviderConfig_ResourceConfig{}
-	for _, rc := range p.Config.Resources {
+	for _, rc := range pc.Resources {
 		policy := &pb.ProviderConfig_ResourceConfig_PolicyConfig{
 			Id:      rc.Policy.ID,
 			Version: int32(rc.Policy.Version),
@@ -125,22 +144,13 @@ func (a *adapter) ToProviderProto(p *domain.Provider) (*pb.Provider, error) {
 		})
 	}
 
-	config := &pb.ProviderConfig{
-		Type:        p.Config.Type,
-		Urn:         p.Config.URN,
-		Labels:      p.Config.Labels,
+	return &pb.ProviderConfig{
+		Type:        pc.Type,
+		Urn:         pc.URN,
+		Labels:      pc.Labels,
 		Credentials: credentials,
 		Appeal:      appeal,
 		Resources:   resources,
-	}
-
-	return &pb.Provider{
-		Id:        uint32(p.ID),
-		Type:      p.Type,
-		Urn:       p.URN,
-		Config:    config,
-		CreatedAt: timestamppb.New(p.CreatedAt),
-		UpdatedAt: timestamppb.New(p.UpdatedAt),
 	}, nil
 }
 
@@ -306,7 +316,10 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 }
 
 func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
-	expirationDate := timestamppb.New(*appeal.Options.ExpirationDate)
+	var expirationDate *timestamppb.Timestamp
+	if appeal.Options.ExpirationDate != nil {
+		expirationDate = timestamppb.New(*appeal.Options.ExpirationDate)
+	}
 	options := &pb.Appeal_AppealOptions{
 		ExpirationDate: expirationDate,
 	}
