@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/spf13/cobra"
@@ -29,18 +28,14 @@ func listResourcesCommand(c *config) *cobra.Command {
 		Use:   "list",
 		Short: "list resources",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
-			res, err := client.ListResources(requestTimeoutCtx, &pb.ListResourcesRequest{})
+			res, err := client.ListResources(ctx, &pb.ListResourcesRequest{})
 			if err != nil {
 				return err
 			}
@@ -87,20 +82,16 @@ func metadataCommand(c *config) *cobra.Command {
 				return err
 			}
 
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
 			// TODO: get one resource
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
-			_, err = client.UpdateResource(requestTimeoutCtx, &pb.UpdateResourceRequest{
+			_, err = client.UpdateResource(ctx, &pb.UpdateResourceRequest{
 				Id: uint32(id),
 				Resource: &pb.Resource{
 					Details: metadataProto,

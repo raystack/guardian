@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/spf13/cobra"
@@ -30,18 +29,14 @@ func listAppealsCommand(c *config) *cobra.Command {
 		Use:   "list",
 		Short: "list appeals",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
-			res, err := client.ListAppeals(requestTimeoutCtx, &pb.ListAppealsRequest{})
+			res, err := client.ListAppeals(ctx, &pb.ListAppealsRequest{})
 			if err != nil {
 				return err
 			}
@@ -81,18 +76,14 @@ func createAppealCommand(c *config) *cobra.Command {
 				return err
 			}
 
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
-			res, err := client.CreateAppeal(requestTimeoutCtx, &pb.CreateAppealRequest{
+			res, err := client.CreateAppeal(ctx, &pb.CreateAppealRequest{
 				User: user,
 				Resources: []*pb.CreateAppealRequest_Resource{
 					{
@@ -132,18 +123,14 @@ func approveApprovalStepCommand(c *config) *cobra.Command {
 		Use:   "approve",
 		Short: "approve an approval step",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
-			_, err = client.UpdateApproval(requestTimeoutCtx, &pb.UpdateApprovalRequest{
+			_, err = client.UpdateApproval(ctx, &pb.UpdateApprovalRequest{
 				Id:           uint32(id),
 				ApprovalName: approvalName,
 				Action: &pb.UpdateApprovalRequest_Action{
@@ -177,18 +164,14 @@ func rejectApprovalStepCommand(c *config) *cobra.Command {
 		Short: "reject an approval step",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
-			_, err = client.UpdateApproval(requestTimeoutCtx, &pb.UpdateApprovalRequest{
+			_, err = client.UpdateApproval(ctx, &pb.UpdateApprovalRequest{
 				Id:           uint32(id),
 				ApprovalName: approvalName,
 				Action: &pb.UpdateApprovalRequest_Action{

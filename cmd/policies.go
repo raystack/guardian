@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	v1 "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
@@ -31,18 +30,14 @@ func listPoliciesCommand(c *config) *cobra.Command {
 		Use:   "list",
 		Short: "list policies",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
-			res, err := client.ListPolicies(requestTimeoutCtx, &pb.ListPoliciesRequest{})
+			res, err := client.ListPolicies(ctx, &pb.ListPoliciesRequest{})
 			if err != nil {
 				return err
 			}
@@ -82,18 +77,14 @@ func createPolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 				return err
 			}
 
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
-			res, err := client.CreatePolicy(requestTimeoutCtx, &pb.CreatePolicyRequest{
+			res, err := client.CreatePolicy(ctx, &pb.CreatePolicyRequest{
 				Policy: policyProto,
 			})
 			if err != nil {
@@ -129,22 +120,18 @@ func updatePolicyCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 				return err
 			}
 
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
 			policyID := id
 			if policyID == "" {
 				policyID = policyProto.GetId()
 			}
-			_, err = client.UpdatePolicy(requestTimeoutCtx, &pb.UpdatePolicyRequest{
+			_, err = client.UpdatePolicy(ctx, &pb.UpdatePolicyRequest{
 				Id:     policyID,
 				Policy: policyProto,
 			})

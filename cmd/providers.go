@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	v1 "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
@@ -30,18 +29,14 @@ func listProvidersCommand(c *config) *cobra.Command {
 		Use:   "list",
 		Short: "list providers",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
-			res, err := client.ListProviders(requestTimeoutCtx, &pb.ListProvidersRequest{})
+			res, err := client.ListProviders(ctx, &pb.ListProvidersRequest{})
 			if err != nil {
 				return err
 			}
@@ -76,18 +71,14 @@ func createProviderCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 				return err
 			}
 
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
-			res, err := client.CreateProvider(requestTimeoutCtx, &pb.CreateProviderRequest{
+			res, err := client.CreateProvider(ctx, &pb.CreateProviderRequest{
 				Config: configProto,
 			})
 			if err != nil {
@@ -123,18 +114,14 @@ func updateProviderCommand(c *config, adapter v1.ProtoAdapter) *cobra.Command {
 				return err
 			}
 
-			dialTimeoutCtx, dialCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer dialCancel()
-			conn, err := createConnection(dialTimeoutCtx, c.Host)
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			client := pb.NewGuardianServiceClient(conn)
+			defer cancel()
 
-			requestTimeoutCtx, requestTimeoutCtxCancel := context.WithTimeout(context.Background(), time.Second*2)
-			defer requestTimeoutCtxCancel()
-			_, err = client.UpdateProvider(requestTimeoutCtx, &pb.UpdateProviderRequest{
+			_, err = client.UpdateProvider(ctx, &pb.UpdateProviderRequest{
 				Id:     uint32(id),
 				Config: configProto,
 			})
