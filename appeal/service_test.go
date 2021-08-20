@@ -854,12 +854,14 @@ func (s *ServiceTestSuite) TestMakeAction() {
 			expectedApprovalAction domain.ApprovalAction
 			expectedAppealDetails  *domain.Appeal
 			expectedResult         *domain.Appeal
+			expectedNotifications  []domain.Notification
 		}{
 			{
 				name:                   "approve",
 				expectedApprovalAction: validApprovalActionParam,
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
+					User:       "user@email.com",
 					ResourceID: 1,
 					Resource: &domain.Resource{
 						ID:  1,
@@ -880,6 +882,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
+					User:       "user@email.com",
 					ResourceID: 1,
 					Resource: &domain.Resource{
 						ID:  1,
@@ -900,6 +903,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 						},
 					},
 				},
+				expectedNotifications: []domain.Notification{
+					{
+						User:    "user@email.com",
+						Message: "Your appeal to urn has been approved",
+					},
+				},
 			},
 			{
 				name: "reject",
@@ -907,10 +916,11 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					AppealID:     1,
 					ApprovalName: "approval_1",
 					Actor:        "user@email.com",
-					Action:       "reject",
+					Action:       domain.AppealActionNameReject,
 				},
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
+					User:       "user@email.com",
 					ResourceID: 1,
 					Resource: &domain.Resource{
 						ID:  1,
@@ -931,6 +941,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
+					User:       "user@email.com",
 					ResourceID: 1,
 					Resource: &domain.Resource{
 						ID:  1,
@@ -951,6 +962,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 						},
 					},
 				},
+				expectedNotifications: []domain.Notification{
+					{
+						User:    "user@email.com",
+						Message: "Your appeal to urn is rejected",
+					},
+				},
 			},
 			{
 				name: "reject in the middle step",
@@ -958,10 +975,11 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					AppealID:     1,
 					ApprovalName: "approval_1",
 					Actor:        user,
-					Action:       "reject",
+					Action:       domain.AppealActionNameReject,
 				},
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
+					User:       "user@email.com",
 					ResourceID: 1,
 					Resource: &domain.Resource{
 						ID:  1,
@@ -986,6 +1004,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
+					User:       "user@email.com",
 					ResourceID: 1,
 					Resource: &domain.Resource{
 						ID:  1,
@@ -1011,6 +1030,83 @@ func (s *ServiceTestSuite) TestMakeAction() {
 						},
 					},
 				},
+				expectedNotifications: []domain.Notification{
+					{
+						User:    "user@email.com",
+						Message: "Your appeal to urn is rejected",
+					},
+				},
+			},
+			{
+				name: "should notify the next approvers if there's still manual approvals remaining ahead after approved",
+				expectedApprovalAction: domain.ApprovalAction{
+					AppealID:     validApprovalActionParam.AppealID,
+					ApprovalName: "approval_0",
+					Actor:        user,
+					Action:       domain.AppealActionNameApprove,
+				},
+				expectedAppealDetails: &domain.Appeal{
+					ID:         validApprovalActionParam.AppealID,
+					User:       "user@email.com",
+					ResourceID: 1,
+					Resource: &domain.Resource{
+						ID:  1,
+						URN: "urn",
+					},
+					Status: domain.AppealStatusPending,
+					Approvals: []*domain.Approval{
+						{
+							Name:      "approval_0",
+							Status:    domain.ApprovalStatusPending,
+							Approvers: []string{user},
+						},
+						{
+							Name:   "approval_1",
+							Status: domain.ApprovalStatusPending,
+							Approvers: []string{
+								"nextapprover1@email.com",
+								"nextapprover2@email.com",
+							},
+						},
+					},
+				},
+				expectedResult: &domain.Appeal{
+					ID:         validApprovalActionParam.AppealID,
+					User:       "user@email.com",
+					ResourceID: 1,
+					Resource: &domain.Resource{
+						ID:  1,
+						URN: "urn",
+					},
+					Status: domain.AppealStatusPending,
+					Approvals: []*domain.Approval{
+						{
+							Name:      "approval_0",
+							Status:    domain.ApprovalStatusApproved,
+							Approvers: []string{user},
+							Actor:     &user,
+							UpdatedAt: timeNow,
+						},
+						{
+							Name:   "approval_1",
+							Status: domain.ApprovalStatusPending,
+							Approvers: []string{
+								"nextapprover1@email.com",
+								"nextapprover2@email.com",
+							},
+						},
+					},
+				},
+				expectedNotifications: []domain.Notification{
+					{
+						User:    "nextapprover1@email.com",
+						Message: "You have an appeal from user@email.com to access urn",
+					},
+					{
+						User:    "nextapprover2@email.com",
+						Message: "You have an appeal from user@email.com to access urn",
+					},
+				},
 			},
 		}
 		for _, tc := range testCases {
@@ -1026,7 +1122,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				s.mockRepository.On("Update", mock.Anything).
 					Return(nil).
 					Once()
-				s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
+				s.mockNotifier.On("Notify", tc.expectedNotifications).Return(nil).Once()
 
 				actualResult, actualError := s.service.MakeAction(tc.expectedApprovalAction)
 

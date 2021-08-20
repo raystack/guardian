@@ -12,11 +12,12 @@ import (
 )
 
 type findFilters struct {
-	User                   string    `mapstructure:"user" validate:"omitempty,required"`
-	ResourceID             uint      `mapstructure:"resource_id" validate:"omitempty,required"`
-	Role                   string    `mapstructure:"role" validate:"omitempty,required"`
-	Statuses               []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
-	ExpirationDateLessThan time.Time `mapstructure:"expiration_date_lt" validate:"omitempty,required"`
+	User                      string    `mapstructure:"user" validate:"omitempty,required"`
+	ResourceID                uint      `mapstructure:"resource_id" validate:"omitempty,required"`
+	Role                      string    `mapstructure:"role" validate:"omitempty,required"`
+	Statuses                  []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
+	ExpirationDateLessThan    time.Time `mapstructure:"expiration_date_lt" validate:"omitempty,required"`
+	ExpirationDateGreaterThan time.Time `mapstructure:"expiration_date_gt" validate:"omitempty,required"`
 }
 
 // Repository talks to the store to read or insert data
@@ -78,6 +79,9 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Appeal, err
 	}
 	if !conditions.ExpirationDateLessThan.IsZero() {
 		db = db.Where(`"options" -> 'expiration_date' < ?`, conditions.ExpirationDateLessThan)
+	}
+	if !conditions.ExpirationDateGreaterThan.IsZero() {
+		db = db.Where(`"options" -> 'expiration_date' > ?`, conditions.ExpirationDateGreaterThan)
 	}
 
 	var models []*model.Appeal
