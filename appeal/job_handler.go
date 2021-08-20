@@ -83,6 +83,7 @@ func (h *JobHandler) NotifyAboutToExpireAccess() error {
 		appeals, err := h.appealService.Find(filters)
 		if err != nil {
 			h.logger.Error(err.Error())
+			continue
 		}
 
 		// TODO: group notifications by username
