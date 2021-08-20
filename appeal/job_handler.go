@@ -69,6 +69,8 @@ func (h *JobHandler) RevokeExpiredAccess() error {
 func (h *JobHandler) NotifyAboutToExpireAccess() error {
 	daysBeforeExpired := []int{7, 3, 1}
 	for _, d := range daysBeforeExpired {
+		h.logger.Info(fmt.Sprintf("collecting access that will expire in %v day(s)", d))
+
 		now := time.Now().AddDate(0, 0, d)
 		year, month, day := now.Date()
 		from := time.Date(year, month, day, 0, 0, 0, 0, now.Location())
@@ -82,7 +84,7 @@ func (h *JobHandler) NotifyAboutToExpireAccess() error {
 
 		appeals, err := h.appealService.Find(filters)
 		if err != nil {
-			h.logger.Error(err.Error())
+			h.logger.Error(fmt.Sprintf("unable to list appeals: %v", err))
 			continue
 		}
 
@@ -97,7 +99,7 @@ func (h *JobHandler) NotifyAboutToExpireAccess() error {
 		}
 
 		if err := h.notifier.Notify(notifications); err != nil {
-			h.logger.Error(err.Error())
+			h.logger.Error(fmt.Sprintf("unable to send notifications: %v", err))
 		}
 	}
 
