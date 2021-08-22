@@ -85,12 +85,12 @@ The create command is used to create a new policy. For this we have to define ou
 For instance, we can create a policy file `policy.yaml` as shown below.
 
 ```
-id: policy_01
+id: policy_x
 steps:
-  - name: owner_approval
-    approvers: $resource.details.owner
-  - name: owner_approval2
-    approvers: $resource.details.owner2
+  - name: manager_approval
+    approvers: $resource.details.manager
+  - name: head_approval
+    approvers: $resource.details.head
 ```
 
 Now, we can create a policy using the `create` command as demonstrated here.
@@ -102,7 +102,7 @@ $ guardian policies create --file policy.yaml
 ```
 The output is the following:
 ```
-policy created with id: policy_01  
+policy created with id: policy_x  
 ```
 
 - ### list command
@@ -116,10 +116,8 @@ $ guardian policies list
 ```
 The output is the following:
 ```
-  ID             VERSION  DESCRIPTION  STEPS                                            
-  policy_10      1                     owner_approval                  
-  policy_20      1                     owner_approval                  
-  policy_01      1                     owner_approval,owner_approval2 
+  ID             VERSION  DESCRIPTION                             STEPS                 
+  policy_x       1        two step policy for tableau workbooks   manager_approval,head_approval
 ```
 
 - ### update command
@@ -129,12 +127,12 @@ To update an existing policy present in the Guardian' database, use the `update`
 For this first we update our `policy.yaml` file.
 
 ```
-id: policy_01
+id: policy_x
 steps:
-  - name: owner_approval
-    approvers: $resource.details.owner
-  - name: admin_approval2
-    approvers: $resource.details.admin
+  - name: supervisor_approval
+    approvers: $resource.details.supervisor
+  - name: head_approval
+    approvers: $resource.details.head
 ```
 
 Enter the following code into the terminal:
@@ -150,10 +148,8 @@ policy updated
 Note that on update of a policy it's version is also updated. We can verify this by listing all the policies.
 
 ```
-  ID             VERSION  DESCRIPTION  STEPS                                            
-  policy_10      1                     owner_approval                  
-  policy_20      1                     owner_approval                  
-  policy_01      2                     owner_approval,admin_approval 
+  ID             VERSION  DESCRIPTION                                       STEPS                 
+  policy_01      2        two step policy for tableau workbooks             supervisor_approval,head_approval 
 ```
 
 ## Providers command
@@ -253,9 +249,10 @@ Enter the following code into the terminal:
 $ guardian providers update --file provider.yaml --id 26
 ```
 The output is the following:
+
 ```
 provider updated
-``
+```
 
 ## Resources command
 
@@ -346,9 +343,7 @@ $ guardian appeals list
 ```
 The output is the following:
 ```
-  ID  USER                  RESOURCE ID  ROLE   STATUS      
-  11  ishanarya0@gmail.com  3807         write  pending     
-  12  ishanarya0@gmail.com  5624         write  terminated  
+  ID  USER                  RESOURCE ID  ROLE   STATUS
   13  test-user@email.com   5624         write  pending                                                                
 ```
 

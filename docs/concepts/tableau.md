@@ -38,4 +38,8 @@ credentials:
 ...
 ```
 
+# Access Management
+
+In Guardian, user access can be given at the workbook, views, metrics, data sources or flow level.
+
 
