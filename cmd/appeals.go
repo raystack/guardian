@@ -19,6 +19,7 @@ func appealsCommand(c *app.CLIConfig) *cobra.Command {
 
 	cmd.AddCommand(listAppealsCommand(c))
 	cmd.AddCommand(createAppealCommand(c))
+	cmd.AddCommand(revokeAppealCommand(c))
 	cmd.AddCommand(approveApprovalStepCommand(c))
 	cmd.AddCommand(rejectApprovalStepCommand(c))
 
@@ -112,6 +113,44 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 	cmd.Flags().StringVarP(&role, "role", "r", "", "role")
 	cmd.MarkFlagRequired("role")
 	cmd.Flags().StringVar(&optionsDuration, "options.duration", "", "access duration")
+
+	return cmd
+}
+
+func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
+	var id uint
+	var reason string
+
+	cmd := &cobra.Command{
+		Use:   "revoke",
+		Short: "revoke an active access/appeal",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			_, err = client.RevokeAppeal(ctx, &pb.RevokeAppealRequest{
+				Id: uint32(id),
+				Reason: &pb.RevokeAppealRequest_Reason{
+					Reason: reason,
+				},
+			})
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("appeal with id %v revoked successfully", id)
+
+			return nil
+		},
+	}
+
+	cmd.Flags().UintVar(&id, "id", 0, "appeal id")
+	cmd.MarkFlagRequired("id")
+	cmd.Flags().StringVarP(&reason, "reason", "r", "", "rejection reason")
 
 	return cmd
 }
