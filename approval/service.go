@@ -21,8 +21,8 @@ func NewService(
 	return &service{ar, ps}
 }
 
-func (s *service) GetPendingApprovals(user string) ([]*domain.Approval, error) {
-	return s.repo.GetPendingApprovals(user)
+func (s *service) ListApprovals(filters map[string]interface{}) ([]*domain.Approval, error) {
+	return s.repo.ListApprovals(filters)
 }
 
 func (s *service) BulkInsert(approvals []*domain.Approval) error {

@@ -1,10 +1,17 @@
 package approval
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/model"
+	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
 )
+
+type listFilters struct {
+	User     string   `mapstructure:"user" validate:"omitempty,required"`
+	Statuses []string `mapstructure:"statuses" validate:"omitempty,min=1"`
+}
 
 type repository struct {
 	db *gorm.DB
@@ -14,9 +21,22 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) GetPendingApprovals(approverEmail string) ([]*domain.Approval, error) {
+func (r *repository) ListApprovals(filters map[string]interface{}) ([]*domain.Approval, error) {
+	var conditions listFilters
+	if err := mapstructure.Decode(filters, &conditions); err != nil {
+		return nil, err
+	}
+	if err := utils.ValidateStruct(conditions); err != nil {
+		return nil, err
+	}
+
+	db := r.db
+	if conditions.User != "" {
+		db = db.Where("email = ?", conditions.User)
+	}
+
 	var approverModels []*model.Approver
-	if err := r.db.Find(&approverModels, "email = ?", approverEmail).Error; err != nil {
+	if err := db.Find(&approverModels).Error; err != nil {
 		return nil, err
 	}
 
@@ -25,15 +45,13 @@ func (r *repository) GetPendingApprovals(approverEmail string) ([]*domain.Approv
 		approvalIDs = append(approvalIDs, a.ApprovalID)
 	}
 
-	earliestPendingApprovalQuery := r.db.Model(&model.Approval{}).
-		Select(`appeal_id, min("index")`).
-		Where("status = ?", domain.ApprovalStatusPending).
-		Group("appeal_id")
+	db = r.db.Joins("Appeal")
+	if conditions.Statuses != nil {
+		db = db.Where(`"approvals"."status" IN ?`, conditions.Statuses)
+	}
+
 	var models []*model.Approval
-	if err := r.db.
-		Joins("Appeal").
-		Where(`("appeal_id","index") IN (?)`, earliestPendingApprovalQuery).
-		Where(`"Appeal"."status" = ?`, domain.AppealStatusPending).
+	if err := db.
 		Find(&models, approvalIDs).
 		Error; err != nil {
 		return nil, err

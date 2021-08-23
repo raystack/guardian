@@ -1137,18 +1137,6 @@ func (s *ServiceTestSuite) TestMakeAction() {
 // 	s.Run("should return error from")
 // }
 
-func (s *ServiceTestSuite) TestGetPendingApprovals() {
-	s.Run("should return error if got error from repository", func() {
-		expectedError := errors.New("repository error")
-		s.mockApprovalService.On("GetPendingApprovals", mock.Anything).Return(nil, expectedError).Once()
-
-		actualResult, actualError := s.service.GetPendingApprovals("user@email.com")
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
-	})
-}
-
 func (s *ServiceTestSuite) TestRevoke() {
 	s.Run("should return error if got any while getting appeal details", func() {
 		expectedError := errors.New("repository error")

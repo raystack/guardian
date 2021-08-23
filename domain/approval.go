@@ -32,11 +32,11 @@ func (a *Approval) IsManualApproval() bool {
 
 type ApprovalRepository interface {
 	BulkInsert([]*Approval) error
-	GetPendingApprovals(user string) ([]*Approval, error)
+	ListApprovals(map[string]interface{}) ([]*Approval, error)
 }
 
 type ApprovalService interface {
 	BulkInsert([]*Approval) error
-	GetPendingApprovals(user string) ([]*Approval, error)
+	ListApprovals(map[string]interface{}) ([]*Approval, error)
 	AdvanceApproval(appeal *Appeal) error
 }

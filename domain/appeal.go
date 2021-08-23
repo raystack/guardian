@@ -71,7 +71,6 @@ type AppealService interface {
 	Create([]*Appeal) error
 	Find(map[string]interface{}) ([]*Appeal, error)
 	GetByID(uint) (*Appeal, error)
-	GetPendingApprovals(user string) ([]*Approval, error)
 	MakeAction(ApprovalAction) (*Appeal, error)
 	Cancel(uint) (*Appeal, error)
 	Revoke(id uint, actor string) (*Appeal, error)

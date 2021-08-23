@@ -295,10 +295,6 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 	return nil, ErrApprovalNameNotFound
 }
 
-func (s *Service) GetPendingApprovals(user string) ([]*domain.Approval, error) {
-	return s.approvalService.GetPendingApprovals(user)
-}
-
 func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 	appeal, err := s.GetByID(id)
 	if err != nil {
