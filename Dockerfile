@@ -1,6 +1,6 @@
 FROM alpine:3.13
 
-COPY guardian /usr/bin/guardian
+COPY guardian .
 
 EXPOSE 8080
-CMD ["guardian"]
+ENTRYPOINT ["./guardian"]
