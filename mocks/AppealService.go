@@ -118,13 +118,13 @@ func (_m *AppealService) MakeAction(_a0 domain.ApprovalAction) (*domain.Appeal, 
 	return r0, r1
 }
 
-// Revoke provides a mock function with given fields: id, actor
-func (_m *AppealService) Revoke(id uint, actor string) (*domain.Appeal, error) {
-	ret := _m.Called(id, actor)
+// Revoke provides a mock function with given fields: id, actor, reason
+func (_m *AppealService) Revoke(id uint, actor string, reason string) (*domain.Appeal, error) {
+	ret := _m.Called(id, actor, reason)
 
 	var r0 *domain.Appeal
-	if rf, ok := ret.Get(0).(func(uint, string) *domain.Appeal); ok {
-		r0 = rf(id, actor)
+	if rf, ok := ret.Get(0).(func(uint, string, string) *domain.Appeal); ok {
+		r0 = rf(id, actor, reason)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Appeal)
@@ -132,8 +132,8 @@ func (_m *AppealService) Revoke(id uint, actor string) (*domain.Appeal, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint, string) error); ok {
-		r1 = rf(id, actor)
+	if rf, ok := ret.Get(1).(func(uint, string, string) error); ok {
+		r1 = rf(id, actor, reason)
 	} else {
 		r1 = ret.Error(1)
 	}

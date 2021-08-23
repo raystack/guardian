@@ -24,6 +24,7 @@ type ServiceTestSuite struct {
 	mockNotifier        *mocks.Notifier
 
 	service *appeal.Service
+	now     time.Time
 }
 
 func (s *ServiceTestSuite) SetupTest() {
@@ -34,8 +35,9 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockPolicyService = new(mocks.PolicyService)
 	s.mockIAMService = new(mocks.IAMService)
 	s.mockNotifier = new(mocks.Notifier)
+	s.now = time.Now()
 
-	s.service = appeal.NewService(
+	service := appeal.NewService(
 		s.mockRepository,
 		s.mockApprovalService,
 		s.mockResourceService,
@@ -45,6 +47,11 @@ func (s *ServiceTestSuite) SetupTest() {
 		s.mockNotifier,
 		&zap.Logger{},
 	)
+	service.TimeNow = func() time.Time {
+		return s.now
+	}
+
+	s.service = service
 }
 
 func (s *ServiceTestSuite) TestGetByID() {
@@ -1142,7 +1149,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 		expectedError := errors.New("repository error")
 		s.mockRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Revoke(0, "")
+		actualResult, actualError := s.service.Revoke(0, "", "")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -1152,7 +1159,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 		s.mockRepository.On("GetByID", mock.Anything).Return(nil, nil).Once()
 		expectedError := appeal.ErrAppealNotFound
 
-		actualResult, actualError := s.service.Revoke(0, "")
+		actualResult, actualError := s.service.Revoke(0, "", "")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -1160,6 +1167,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 
 	appealID := uint(1)
 	actor := "user@email.com"
+	reason := "test-reason"
 
 	appealDetails := &domain.Appeal{
 		ID:         appealID,
@@ -1175,7 +1183,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 		expectedError := errors.New("repository error")
 		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
 
-		actualResult, actualError := s.service.Revoke(appealID, actor)
+		actualResult, actualError := s.service.Revoke(appealID, actor, reason)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -1188,7 +1196,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 		s.mockProviderService.On("RevokeAccess", mock.Anything).Return(expectedError).Once()
 		s.mockRepository.On("Update", appealDetails).Return(nil).Once()
 
-		actualResult, actualError := s.service.Revoke(appealID, actor)
+		actualResult, actualError := s.service.Revoke(appealID, actor, reason)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -1199,11 +1207,14 @@ func (s *ServiceTestSuite) TestRevoke() {
 		expectedAppeal := &domain.Appeal{}
 		*expectedAppeal = *appealDetails
 		expectedAppeal.Status = domain.AppealStatusTerminated
+		expectedAppeal.RevokedAt = s.now
+		expectedAppeal.RevokedBy = actor
+		expectedAppeal.RevokeReason = reason
 		s.mockRepository.On("Update", expectedAppeal).Return(nil).Once()
 		s.mockProviderService.On("RevokeAccess", appealDetails).Return(nil).Once()
 		s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 
-		actualResult, actualError := s.service.Revoke(appealID, actor)
+		actualResult, actualError := s.service.Revoke(appealID, actor, reason)
 
 		s.Equal(expectedAppeal, actualResult)
 		s.Nil(actualError)

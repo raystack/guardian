@@ -333,7 +333,7 @@ func (s *RepositoryTestSuite) TestFind() {
 }
 
 func (s *RepositoryTestSuite) TestBulkInsert() {
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","user","role","options","labels","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING "id"`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","user","role","options","labels","revoked_by","revoked_at","revoke_reason","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14),($15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28) RETURNING "id"`)
 
 	appeals := []*domain.Appeal{
 		{
@@ -360,6 +360,9 @@ func (s *RepositoryTestSuite) TestBulkInsert() {
 			a.Role,
 			"null",
 			"null",
+			a.RevokedBy,
+			utils.AnyTime{},
+			a.RevokeReason,
 			utils.AnyTime{},
 			utils.AnyTime{},
 			gorm.DeletedAt{},
@@ -414,7 +417,7 @@ func (s *RepositoryTestSuite) TestUpdate() {
 	})
 
 	expectedUpdateApprovalsQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","policy_id","policy_version","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) ON CONFLICT ("id") DO UPDATE SET "name"="excluded"."name","index"="excluded"."index","appeal_id"="excluded"."appeal_id","status"="excluded"."status","actor"="excluded"."actor","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","created_at"="excluded"."created_at","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
-	expectedUpdateAppealQuery := regexp.QuoteMeta(`UPDATE "appeals" SET "resource_id"=$1,"policy_id"=$2,"policy_version"=$3,"status"=$4,"user"=$5,"role"=$6,"options"=$7,"labels"=$8,"created_at"=$9,"updated_at"=$10,"deleted_at"=$11 WHERE "id" = $12`)
+	expectedUpdateAppealQuery := regexp.QuoteMeta(`UPDATE "appeals" SET "resource_id"=$1,"policy_id"=$2,"policy_version"=$3,"status"=$4,"user"=$5,"role"=$6,"options"=$7,"labels"=$8,"revoked_by"=$9,"revoked_at"=$10,"revoke_reason"=$11,"created_at"=$12,"updated_at"=$13,"deleted_at"=$14 WHERE "id" = $15`)
 	s.Run("should return nil on success", func() {
 		expectedID := uint(1)
 		appeal := &domain.Appeal{

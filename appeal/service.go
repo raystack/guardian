@@ -37,6 +37,7 @@ type Service struct {
 	logger          *zap.Logger
 
 	validator *validator.Validate
+	TimeNow   func() time.Time
 }
 
 // NewService returns service struct
@@ -60,6 +61,7 @@ func NewService(
 		notifier:        notifier,
 		validator:       validator.New(),
 		logger:          logger,
+		TimeNow:         time.Now,
 	}
 }
 
@@ -318,7 +320,7 @@ func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 	return appeal, nil
 }
 
-func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
+func (s *Service) Revoke(id uint, actor, reason string) (*domain.Appeal, error) {
 	appeal, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -330,8 +332,9 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 	revokedAppeal := &domain.Appeal{}
 	*revokedAppeal = *appeal
 	revokedAppeal.Status = domain.AppealStatusTerminated
-
-	// TODO: add revoked_by field in the appeal and assign `actor` as the value
+	revokedAppeal.RevokedAt = s.TimeNow()
+	revokedAppeal.RevokedBy = actor
+	revokedAppeal.RevokeReason = reason
 
 	if err := s.repo.Update(revokedAppeal); err != nil {
 		return nil, err
