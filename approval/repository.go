@@ -7,11 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type listFilters struct {
-	User     string   `mapstructure:"user" validate:"omitempty,required"`
-	Statuses []string `mapstructure:"statuses" validate:"omitempty,min=1"`
-}
-
 type repository struct {
 	db *gorm.DB
 }
