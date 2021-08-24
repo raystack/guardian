@@ -2,7 +2,7 @@
 
 The following is a set of guidelines for contributing to Guardian. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request. Here are some important resources:
 
-* [Concepts](contribution.md) section will explain you about Guardian architecture,
+* [Concepts](https://odpf.gitbook.io/guardian/concepts/architecture) section will explain you about Guardian architecture,
 * Our [roadmap](https://github.com/odpf/guardian#readme) is the 10k foot view of where we're going, and
 * Github [issues](https://github.com/odpf/guardian/issues) track the ongoing and reported issues.
 
@@ -10,10 +10,7 @@ The following is a set of guidelines for contributing to Guardian. These are mos
 
 We use RFCS and GitHub issues to communicate ideas.
 
-* You can report a bug or suggest a feature enhancement or can just ask questions. Reach out on Github discussions for
-
-  this purpose.
-
+* You can report a bug or suggest a feature enhancement or can just ask questions. Reach out on Github discussions for this purpose.
 * You are also welcome to improve error reporting and logging and improve code quality.
 * You can help with documenting new features or improve existing documentation.
 * You can also review and accept other contributions if you are a maintainer.
@@ -24,33 +21,18 @@ Please submit a PR to the main branch of the Guardian repository once you are re
 
 We are always interested in adding new maintainers. What we look for is a series of contributions, good taste, and an ongoing interest in the project.
 
-* maintainers will have write access to the Guardian repository.
-* There is no strict protocol for becoming a maintainer. Candidates for new maintainers are typically
-
-  people that are active contributors and community members.
-
+* Maintainers will have write access to the Guardian repository.
+* There is no strict protocol for becoming a maintainer. Candidates for new maintainers are typically people that are active contributors and community members.
 * Candidates for new maintainers can also be suggested by current maintainers.
-* If you would like to become a maintainer, you should start contributing to Guardian in any of the ways mentioned. You
-
-  might also want to talk to other maintainers and ask for their advice and guidance.
+* If you would like to become a maintainer, you should start contributing to Guardian in any of the ways mentioned. Youc might also want to talk to other maintainers and ask for their advice and guidance.
 
 ## Guidelines
 
 Please follow these practices for you change to get merged fast and smoothly:
 
 * Contributions can only be accepted if they contain appropriate testing \(Unit and Integration Tests\).
-* If you are introducing a completely new feature or making any major changes in an existing one, we recommend to start
-
-  with an RFC and get consensus on the basic design first.
-
+* If you are introducing a completely new feature or making any major changes in an existing one, we recommend to start with an RFC and get consensus on the basic design first.
 * Make sure your local build is running with all the tests and checkstyle passing.
-* If your change is related to user-facing protocols / configurations, you need to make the corresponding change in the
-
-  documentation as well.
-
-* Docs live in the code repo
-
-  under [`docs`](https://github.com/odpf/guardian/tree/main/docs) so
-
-  that changes to that can be done in the same PR as changes to the code.
+* If your change is related to user-facing protocols / configurations, you need to make the corresponding change in the documentation as well.
+* Docs live in the code repo under [`docs`](https://github.com/odpf/guardian/tree/main/docs) so that changes to that can be done in the same PR as changes to the code.
 
