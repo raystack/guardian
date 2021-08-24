@@ -418,9 +418,9 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealReque
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to get metadata: actor")
 	}
-	revoke := req.GetReason().GetReason()
+	reason := req.GetReason().GetReason()
 
-	a, err := s.appealService.Revoke(uint(id), actor, revoke)
+	a, err := s.appealService.Revoke(uint(id), actor, reason)
 	if err != nil {
 		switch err {
 		case appeal.ErrAppealNotFound:
