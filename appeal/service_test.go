@@ -863,9 +863,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					User:       "user@email.com",
 					ResourceID: 1,
+					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:  1,
-						URN: "urn",
+						ID:           1,
+						URN:          "urn",
+						Name:         "test-resource-name",
+						ProviderType: "test-provider",
 					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
@@ -884,9 +887,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					User:       "user@email.com",
 					ResourceID: 1,
+					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:  1,
-						URN: "urn",
+						ID:           1,
+						URN:          "urn",
+						Name:         "test-resource-name",
+						ProviderType: "test-provider",
 					},
 					Status: domain.AppealStatusActive,
 					Approvals: []*domain.Approval{
@@ -905,8 +911,14 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedNotifications: []domain.Notification{
 					{
-						User:    "user@email.com",
-						Message: "Your appeal to urn has been approved",
+						User: "user@email.com",
+						Message: domain.NotificationMessage{
+							Type: domain.NotificationTypeAppealApproved,
+							Variables: domain.NotificationVariables{
+								ResourceName: "test-resource-name (test-provider: urn)",
+								Role:         "test-role",
+							},
+						},
 					},
 				},
 			},
@@ -922,9 +934,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					User:       "user@email.com",
 					ResourceID: 1,
+					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:  1,
-						URN: "urn",
+						ID:           1,
+						URN:          "urn",
+						Name:         "test-resource-name",
+						ProviderType: "test-provider",
 					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
@@ -943,9 +958,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					User:       "user@email.com",
 					ResourceID: 1,
+					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:  1,
-						URN: "urn",
+						ID:           1,
+						URN:          "urn",
+						Name:         "test-resource-name",
+						ProviderType: "test-provider",
 					},
 					Status: domain.AppealStatusRejected,
 					Approvals: []*domain.Approval{
@@ -964,8 +982,14 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedNotifications: []domain.Notification{
 					{
-						User:    "user@email.com",
-						Message: "Your appeal to urn is rejected",
+						User: "user@email.com",
+						Message: domain.NotificationMessage{
+							Type: domain.NotificationTypeAppealRejected,
+							Variables: domain.NotificationVariables{
+								ResourceName: "test-resource-name (test-provider: urn)",
+								Role:         "test-role",
+							},
+						},
 					},
 				},
 			},
@@ -981,9 +1005,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					User:       "user@email.com",
 					ResourceID: 1,
+					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:  1,
-						URN: "urn",
+						ID:           1,
+						URN:          "urn",
+						Name:         "test-resource-name",
+						ProviderType: "test-provider",
 					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
@@ -1006,9 +1033,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					User:       "user@email.com",
 					ResourceID: 1,
+					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:  1,
-						URN: "urn",
+						ID:           1,
+						URN:          "urn",
+						Name:         "test-resource-name",
+						ProviderType: "test-provider",
 					},
 					Status: domain.AppealStatusRejected,
 					Approvals: []*domain.Approval{
@@ -1032,8 +1062,14 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedNotifications: []domain.Notification{
 					{
-						User:    "user@email.com",
-						Message: "Your appeal to urn is rejected",
+						User: "user@email.com",
+						Message: domain.NotificationMessage{
+							Type: domain.NotificationTypeAppealRejected,
+							Variables: domain.NotificationVariables{
+								ResourceName: "test-resource-name (test-provider: urn)",
+								Role:         "test-role",
+							},
+						},
 					},
 				},
 			},
@@ -1049,9 +1085,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					User:       "user@email.com",
 					ResourceID: 1,
+					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:  1,
-						URN: "urn",
+						ID:           1,
+						URN:          "urn",
+						Name:         "test-resource-name",
+						ProviderType: "test-provider",
 					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
@@ -1074,9 +1113,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					User:       "user@email.com",
 					ResourceID: 1,
+					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:  1,
-						URN: "urn",
+						ID:           1,
+						URN:          "urn",
+						Name:         "test-resource-name",
+						ProviderType: "test-provider",
 					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
@@ -1099,12 +1141,28 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedNotifications: []domain.Notification{
 					{
-						User:    "nextapprover1@email.com",
-						Message: "You have an appeal from user@email.com to access urn",
+						User: "nextapprover1@email.com",
+						Message: domain.NotificationMessage{
+							Type: domain.NotificationTypeApproverNotification,
+							Variables: domain.NotificationVariables{
+								ResourceName: "test-resource-name (test-provider: urn)",
+								Role:         "test-role",
+								Requestor:    "user@email.com",
+								AppealID:     validApprovalActionParam.AppealID,
+							},
+						},
 					},
 					{
-						User:    "nextapprover2@email.com",
-						Message: "You have an appeal from user@email.com to access urn",
+						User: "nextapprover2@email.com",
+						Message: domain.NotificationMessage{
+							Type: domain.NotificationTypeApproverNotification,
+							Variables: domain.NotificationVariables{
+								ResourceName: "test-resource-name (test-provider: urn)",
+								Role:         "test-role",
+								Requestor:    "user@email.com",
+								AppealID:     validApprovalActionParam.AppealID,
+							},
+						},
 					},
 				},
 			},

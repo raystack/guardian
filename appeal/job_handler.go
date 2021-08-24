@@ -93,8 +93,15 @@ func (h *JobHandler) NotifyAboutToExpireAccess() error {
 		var notifications []domain.Notification
 		for _, a := range appeals {
 			notifications = append(notifications, domain.Notification{
-				User:    a.User,
-				Message: fmt.Sprintf("Access to %s %s is going to be expired at %s. You can extend the access if it's still needed.", a.Resource.ProviderType, a.Resource.Name, a.Options.ExpirationDate),
+				User: a.User,
+				Message: domain.NotificationMessage{
+					Type: domain.NotificationTypeExpirationReminder,
+					Variables: domain.NotificationVariables{
+						ResourceName:   fmt.Sprintf("%s (%s: %s)", a.Resource.Name, a.Resource.ProviderType, a.Resource.URN),
+						Role:           a.Role,
+						ExpirationDate: *a.Options.ExpirationDate,
+					},
+				},
 			})
 		}
 

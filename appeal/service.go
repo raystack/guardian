@@ -271,13 +271,25 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 			notifications := []domain.Notification{}
 			if appeal.Status == domain.AppealStatusActive {
 				notifications = append(notifications, domain.Notification{
-					User:    appeal.User,
-					Message: fmt.Sprintf("Your appeal to %s has been approved", appeal.Resource.URN),
+					User: appeal.User,
+					Message: domain.NotificationMessage{
+						Type: domain.NotificationTypeAppealApproved,
+						Variables: domain.NotificationVariables{
+							ResourceName: fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+							Role:         appeal.Role,
+						},
+					},
 				})
 			} else if appeal.Status == domain.AppealStatusRejected {
 				notifications = append(notifications, domain.Notification{
-					User:    appeal.User,
-					Message: fmt.Sprintf("Your appeal to %s is rejected", appeal.Resource.URN),
+					User: appeal.User,
+					Message: domain.NotificationMessage{
+						Type: domain.NotificationTypeAppealRejected,
+						Variables: domain.NotificationVariables{
+							ResourceName: fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+							Role:         appeal.Role,
+						},
+					},
 				})
 			} else {
 				notifications = append(notifications, getApprovalNotifications(appeal)...)
@@ -354,8 +366,14 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 	}
 
 	if err := s.notifier.Notify([]domain.Notification{{
-		User:    appeal.User,
-		Message: fmt.Sprintf("Your access to %s has been revoked", appeal.Resource.URN),
+		User: appeal.User,
+		Message: domain.NotificationMessage{
+			Type: domain.NotificationTypeAccessRevoked,
+			Variables: domain.NotificationVariables{
+				ResourceName: fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+				Role:         appeal.Role,
+			},
+		},
 	}}); err != nil {
 		s.logger.Error(err.Error())
 	}
@@ -508,8 +526,16 @@ func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 	if approval != nil {
 		for _, approver := range approval.Approvers {
 			notifications = append(notifications, domain.Notification{
-				User:    approver,
-				Message: fmt.Sprintf("You have an appeal from %s to access %s", appeal.User, appeal.Resource.URN),
+				User: approver,
+				Message: domain.NotificationMessage{
+					Type: domain.NotificationTypeApproverNotification,
+					Variables: domain.NotificationVariables{
+						ResourceName: fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+						Role:         appeal.Role,
+						Requestor:    appeal.User,
+						AppealID:     appeal.ID,
+					},
+				},
 			})
 		}
 	}
