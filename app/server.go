@@ -146,6 +146,7 @@ func RunServer(c *ServiceConfig) error {
 		providerService,
 		policyService,
 		appealService,
+		approvalService,
 		protoAdapter,
 	))
 

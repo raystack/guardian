@@ -34,6 +34,10 @@ type Appeal struct {
 	Options       *AppealOptions    `json:"options"`
 	Labels        map[string]string `json:"labels"`
 
+	RevokedBy    string    `json:"revoked_by"`
+	RevokedAt    time.Time `json:"revoked_at"`
+	RevokeReason string    `json:"revoke_reason"`
+
 	Policy    *Policy     `json:"-"`
 	Resource  *Resource   `json:"resource,omitempty"`
 	Approvals []*Approval `json:"approvals,omitempty"`
@@ -61,7 +65,7 @@ type ApprovalAction struct {
 // AppealRepository interface
 type AppealRepository interface {
 	BulkInsert([]*Appeal) error
-	Find(map[string]interface{}) ([]*Appeal, error)
+	Find(map[string]interface{}) ([]*Appeal, error) // TODO: create ListAppealsFilter as the filter param type
 	GetByID(uint) (*Appeal, error)
 	Update(*Appeal) error
 }
@@ -71,8 +75,7 @@ type AppealService interface {
 	Create([]*Appeal) error
 	Find(map[string]interface{}) ([]*Appeal, error)
 	GetByID(uint) (*Appeal, error)
-	GetPendingApprovals(user string) ([]*Approval, error)
 	MakeAction(ApprovalAction) (*Appeal, error)
 	Cancel(uint) (*Appeal, error)
-	Revoke(id uint, actor string) (*Appeal, error)
+	Revoke(id uint, actor, reason string) (*Appeal, error)
 }

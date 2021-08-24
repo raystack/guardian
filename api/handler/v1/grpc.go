@@ -38,6 +38,7 @@ type GRPCServer struct {
 	providerService domain.ProviderService
 	policyService   domain.PolicyService
 	appealService   domain.AppealService
+	approvalService domain.ApprovalService
 	adapter         ProtoAdapter
 
 	Now func() time.Time
@@ -50,6 +51,7 @@ func NewGRPCServer(
 	providerService domain.ProviderService,
 	policyService domain.PolicyService,
 	appealService domain.AppealService,
+	approvalService domain.ApprovalService,
 	adapter ProtoAdapter,
 ) *GRPCServer {
 	return &GRPCServer{
@@ -57,6 +59,7 @@ func NewGRPCServer(
 		providerService: providerService,
 		policyService:   policyService,
 		appealService:   appealService,
+		approvalService: approvalService,
 		adapter:         adapter,
 	}
 }
@@ -294,7 +297,10 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealReque
 }
 
 func (s *GRPCServer) ListApprovals(ctx context.Context, req *pb.ListApprovalsRequest) (*pb.ListApprovalsResponse, error) {
-	approvals, err := s.appealService.GetPendingApprovals(req.GetUser())
+	approvals, err := s.approvalService.ListApprovals(&domain.ListApprovalsFilter{
+		User:     req.GetUser(),
+		Statuses: req.GetStatuses(),
+	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s: failed to get approval list", err)
 	}
@@ -412,12 +418,11 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealReque
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to get metadata: actor")
 	}
+	reason := req.GetReason().GetReason()
 
-	a, err := s.appealService.Revoke(uint(id), actor)
+	a, err := s.appealService.Revoke(uint(id), actor, reason)
 	if err != nil {
 		switch err {
-		case appeal.ErrRevokeAppealForbidden:
-			return nil, status.Error(codes.PermissionDenied, "permission denied")
 		case appeal.ErrAppealNotFound:
 			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
 		default:

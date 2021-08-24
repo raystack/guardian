@@ -37,6 +37,7 @@ type Service struct {
 	logger          *zap.Logger
 
 	validator *validator.Validate
+	TimeNow   func() time.Time
 }
 
 // NewService returns service struct
@@ -60,6 +61,7 @@ func NewService(
 		notifier:        notifier,
 		validator:       validator.New(),
 		logger:          logger,
+		TimeNow:         time.Now,
 	}
 }
 
@@ -295,10 +297,6 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 	return nil, ErrApprovalNameNotFound
 }
 
-func (s *Service) GetPendingApprovals(user string) ([]*domain.Approval, error) {
-	return s.approvalService.GetPendingApprovals(user)
-}
-
 func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 	appeal, err := s.GetByID(id)
 	if err != nil {
@@ -322,7 +320,7 @@ func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 	return appeal, nil
 }
 
-func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
+func (s *Service) Revoke(id uint, actor, reason string) (*domain.Appeal, error) {
 	appeal, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -331,16 +329,12 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 		return nil, ErrAppealNotFound
 	}
 
-	if actor != domain.SystemActorName {
-		lastApprovalStep := appeal.Approvals[len(appeal.Approvals)-1]
-		if !utils.ContainsString(lastApprovalStep.Approvers, actor) {
-			return nil, ErrRevokeAppealForbidden
-		}
-	}
-
 	revokedAppeal := &domain.Appeal{}
 	*revokedAppeal = *appeal
 	revokedAppeal.Status = domain.AppealStatusTerminated
+	revokedAppeal.RevokedAt = s.TimeNow()
+	revokedAppeal.RevokedBy = actor
+	revokedAppeal.RevokeReason = reason
 
 	if err := s.repo.Update(revokedAppeal); err != nil {
 		return nil, err

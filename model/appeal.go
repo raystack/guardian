@@ -21,6 +21,10 @@ type Appeal struct {
 	Options       datatypes.JSON
 	Labels        datatypes.JSON
 
+	RevokedBy    string
+	RevokedAt    time.Time
+	RevokeReason string
+
 	Resource  *Resource `gorm:"ForeignKey:ResourceID;References:ID"`
 	Policy    Policy    `gorm:"ForeignKey:PolicyID,PolicyVersion;References:ID,Version"`
 	Approvals []*Approval
