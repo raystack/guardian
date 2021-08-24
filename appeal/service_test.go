@@ -629,13 +629,13 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	s.Run("should return nil and nil error if appeal not found", func() {
+	s.Run("should return nil and error if appeal not found", func() {
 		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(nil, nil).Once()
 
 		actualResult, actualError := s.service.MakeAction(validApprovalActionParam)
 
 		s.Nil(actualResult)
-		s.Nil(actualError)
+		s.EqualError(actualError, appeal.ErrAppealNotFound.Error())
 	})
 
 	s.Run("should return error based on statuses conditions", func() {

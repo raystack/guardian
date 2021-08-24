@@ -385,6 +385,8 @@ func (s *GRPCServer) CancelAppeal(ctx context.Context, req *pb.CancelAppealReque
 	a, err := s.appealService.Cancel(uint(id))
 	if err != nil {
 		switch err {
+		case appeal.ErrAppealNotFound:
+			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
 		case appeal.ErrAppealStatusCanceled,
 			appeal.ErrAppealStatusApproved,
 			appeal.ErrAppealStatusRejected,

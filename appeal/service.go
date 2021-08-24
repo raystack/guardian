@@ -204,7 +204,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 		return nil, err
 	}
 	if appeal == nil {
-		return nil, nil
+		return nil, ErrAppealNotFound
 	}
 
 	if err := checkIfAppealStatusStillPending(appeal.Status); err != nil {

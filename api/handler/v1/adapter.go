@@ -317,7 +317,7 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 
 func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 	var expirationDate *timestamppb.Timestamp
-	if appeal.Options.ExpirationDate != nil {
+	if appeal.Options != nil && appeal.Options.ExpirationDate != nil {
 		expirationDate = timestamppb.New(*appeal.Options.ExpirationDate)
 	}
 	options := &pb.Appeal_AppealOptions{
