@@ -297,9 +297,9 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealReque
 }
 
 func (s *GRPCServer) ListApprovals(ctx context.Context, req *pb.ListApprovalsRequest) (*pb.ListApprovalsResponse, error) {
-	approvals, err := s.approvalService.ListApprovals(map[string]interface{}{
-		"user":     req.GetUser(),
-		"statuses": req.GetStatuses(),
+	approvals, err := s.approvalService.ListApprovals(&domain.ListApprovalsFilter{
+		User:     req.GetUser(),
+		Statuses: req.GetStatuses(),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s: failed to get approval list", err)

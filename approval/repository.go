@@ -1,7 +1,6 @@
 package approval
 
 import (
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/utils"
@@ -21,11 +20,7 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) ListApprovals(filters map[string]interface{}) ([]*domain.Approval, error) {
-	var conditions listFilters
-	if err := mapstructure.Decode(filters, &conditions); err != nil {
-		return nil, err
-	}
+func (r *repository) ListApprovals(conditions *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
 	if err := utils.ValidateStruct(conditions); err != nil {
 		return nil, err
 	}

@@ -30,13 +30,18 @@ func (a *Approval) IsManualApproval() bool {
 	return len(a.Approvers) > 0
 }
 
+type ListApprovalsFilter struct {
+	User     string   `mapstructure:"user" validate:"omitempty,required"`
+	Statuses []string `mapstructure:"statuses" validate:"omitempty,min=1"`
+}
+
 type ApprovalRepository interface {
 	BulkInsert([]*Approval) error
-	ListApprovals(map[string]interface{}) ([]*Approval, error)
+	ListApprovals(*ListApprovalsFilter) ([]*Approval, error)
 }
 
 type ApprovalService interface {
 	BulkInsert([]*Approval) error
-	ListApprovals(map[string]interface{}) ([]*Approval, error)
+	ListApprovals(*ListApprovalsFilter) ([]*Approval, error)
 	AdvanceApproval(appeal *Appeal) error
 }

@@ -41,11 +41,11 @@ func (_m *ApprovalService) BulkInsert(_a0 []*domain.Approval) error {
 }
 
 // ListApprovals provides a mock function with given fields: _a0
-func (_m *ApprovalService) ListApprovals(_a0 map[string]interface{}) ([]*domain.Approval, error) {
+func (_m *ApprovalService) ListApprovals(_a0 *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
 	ret := _m.Called(_a0)
 
 	var r0 []*domain.Approval
-	if rf, ok := ret.Get(0).(func(map[string]interface{}) []*domain.Approval); ok {
+	if rf, ok := ret.Get(0).(func(*domain.ListApprovalsFilter) []*domain.Approval); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
@@ -54,7 +54,7 @@ func (_m *ApprovalService) ListApprovals(_a0 map[string]interface{}) ([]*domain.
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(map[string]interface{}) error); ok {
+	if rf, ok := ret.Get(1).(func(*domain.ListApprovalsFilter) error); ok {
 		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)

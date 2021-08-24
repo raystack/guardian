@@ -65,7 +65,7 @@ type ApprovalAction struct {
 // AppealRepository interface
 type AppealRepository interface {
 	BulkInsert([]*Appeal) error
-	Find(map[string]interface{}) ([]*Appeal, error)
+	Find(map[string]interface{}) ([]*Appeal, error) // TODO: create ListAppealsFilter as the filter param type
 	GetByID(uint) (*Appeal, error)
 	Update(*Appeal) error
 }

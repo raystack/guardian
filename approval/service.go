@@ -21,7 +21,7 @@ func NewService(
 	return &service{ar, ps}
 }
 
-func (s *service) ListApprovals(filters map[string]interface{}) ([]*domain.Approval, error) {
+func (s *service) ListApprovals(filters *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
 	return s.repo.ListApprovals(filters)
 }
 
