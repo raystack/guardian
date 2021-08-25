@@ -12,11 +12,13 @@ import (
 )
 
 type iamClient struct {
+	projectID                   string
+	orgID                       string
 	cloudResourceManagerService *cloudresourcemanager.Service
 	iamService                  *iam.Service
 }
 
-func newCloudResourceManagerClient(credentialsJSON []byte) (*iamClient, error) {
+func newCloudResourceManagerClient(credentialsJSON []byte, projectID, orgID string) (*iamClient, error) {
 	ctx := context.Background()
 	creds, err := google.CredentialsFromJSON(ctx, credentialsJSON, cloudresourcemanager.CloudPlatformScope)
 	if err != nil {
@@ -35,6 +37,8 @@ func newCloudResourceManagerClient(credentialsJSON []byte) (*iamClient, error) {
 	}
 
 	return &iamClient{
+		projectID:                   projectID,
+		orgID:                       orgID,
 		cloudResourceManagerService: cloudResourceManagerService,
 		iamService:                  iamService,
 	}, nil
@@ -63,15 +67,35 @@ func (c *iamClient) GetRoles(ctx context.Context, orgID string) ([]*Role, error)
 	req := c.iamService.Roles.List()
 	if err := req.Pages(ctx, func(page *iam.ListRolesResponse) error {
 		for _, role := range page.Roles {
-			roles = append(roles, &Role{
-				Name:        role.Name,
-				Title:       role.Title,
-				Description: role.Description,
-			})
+			roles = append(roles, c.fromIamRole(role))
 		}
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+
+	parentProject := fmt.Sprintf("projects/%s", c.projectID)
+	projectRolesReq := c.iamService.Projects.Roles.List(parentProject)
+	if err := projectRolesReq.Pages(ctx, func(page *iam.ListRolesResponse) error {
+		for _, role := range page.Roles {
+			roles = append(roles, c.fromIamRole(role))
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	if c.orgID != "" {
+		parentOrg := fmt.Sprintf("organizations/%s", c.orgID)
+		orgRolesReq := c.iamService.Organizations.Roles.List(parentOrg)
+		if err := orgRolesReq.Pages(ctx, func(page *iam.ListRolesResponse) error {
+			for _, role := range page.Roles {
+				roles = append(roles, c.fromIamRole(role))
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
 	}
 
 	return roles, nil
@@ -140,6 +164,14 @@ func (c *iamClient) RevokeAccess(ctx context.Context, projectID, user, role stri
 	}
 	_, err = c.cloudResourceManagerService.Projects.SetIamPolicy(projectID, setIamPolicyRequest).Context(ctx).Do()
 	return err
+}
+
+func (c *iamClient) fromIamRole(r *iam.Role) *Role {
+	return &Role{
+		Name:        r.Name,
+		Title:       r.Title,
+		Description: r.Description,
+	}
 }
 
 func containsString(arr []string, v string) bool {
