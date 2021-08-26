@@ -11,8 +11,8 @@ import (
 
 type GcloudIamClient interface {
 	GetRoles(orgID string) ([]*Role, error)
-	GrantAccess(resource *Role, user string) error
-	RevokeAccess(resource *Role, user string) error
+	GrantAccess(user, role string) error
+	RevokeAccess(user, role string) error
 }
 
 type iamClient struct {
@@ -83,7 +83,7 @@ func (c *iamClient) GetRoles(orgID string) ([]*Role, error) {
 	return roles, nil
 }
 
-func (c *iamClient) GrantAccess(r *Role, user string) error {
+func (c *iamClient) GrantAccess(user, role string) error {
 	policy, err := c.cloudResourceManagerService.Projects.GetIamPolicy(c.projectID, &cloudresourcemanager.GetIamPolicyRequest{}).Do()
 	if err != nil {
 		return err
@@ -92,7 +92,7 @@ func (c *iamClient) GrantAccess(r *Role, user string) error {
 	member := fmt.Sprintf("user:%s", user)
 	roleExists := false
 	for _, b := range policy.Bindings {
-		if b.Role == r.Name {
+		if b.Role == role {
 			roleExists = true
 			if containsString(b.Members, member) {
 				return ErrPermissionAlreadyExists
@@ -102,7 +102,7 @@ func (c *iamClient) GrantAccess(r *Role, user string) error {
 	}
 	if !roleExists {
 		policy.Bindings = append(policy.Bindings, &cloudresourcemanager.Binding{
-			Role:    r.Name,
+			Role:    role,
 			Members: []string{member},
 		})
 	}
@@ -114,7 +114,7 @@ func (c *iamClient) GrantAccess(r *Role, user string) error {
 	return err
 }
 
-func (c *iamClient) RevokeAccess(r *Role, user string) error {
+func (c *iamClient) RevokeAccess(user, role string) error {
 	policy, err := c.cloudResourceManagerService.Projects.GetIamPolicy(c.projectID, &cloudresourcemanager.GetIamPolicyRequest{}).Do()
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func (c *iamClient) RevokeAccess(r *Role, user string) error {
 	member := fmt.Sprintf("user:%s", user)
 	for _, b := range policy.Bindings {
 
-		if b.Role == r.Name {
+		if b.Role == role {
 			var removeIndex int
 			for i, m := range b.Members {
 				if m == member {

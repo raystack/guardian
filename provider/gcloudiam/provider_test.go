@@ -125,97 +125,83 @@ func TestGrantAccess(t *testing.T) {
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
 
-	t.Run("given database resource", func(t *testing.T) {
-		t.Run("should return error if there is an error in granting the access", func(t *testing.T) {
-			providerURN := "test-provider-urn"
-			expectedError := errors.New("client error")
-			crypto := new(mocks.Crypto)
-			client := new(mocks.GcloudIamClient)
-			p := gcloudiam.NewProvider("", crypto)
-			p.Clients = map[string]gcloudiam.GcloudIamClient{
-				providerURN: client,
-			}
-			client.On("GrantAccess", mock.Anything, mock.Anything).Return(expectedError).Once()
+	t.Run("should return error if there is an error in granting the access", func(t *testing.T) {
+		providerURN := "test-provider-urn"
+		expectedError := errors.New("client error")
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GcloudIamClient)
+		p := gcloudiam.NewProvider("", crypto)
+		p.Clients = map[string]gcloudiam.GcloudIamClient{
+			providerURN: client,
+		}
+		client.On("GrantAccess", mock.Anything, mock.Anything).Return(expectedError).Once()
 
-			pc := &domain.ProviderConfig{
-				Resources: []*domain.ResourceConfig{
-					{
-						Type: gcloudiam.ResourceTypeRole,
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									gcloudiam.PermissionConfig{
-										Name: "test-permission-config",
-									},
+		pc := &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: gcloudiam.ResourceTypeGcloudIam,
+					Roles: []*domain.Role{
+						{
+							ID: "test-role",
+							Permissions: []interface{}{
+								gcloudiam.PermissionConfig{
+									Name: "test-permission-config",
 								},
 							},
 						},
 					},
 				},
-				URN: providerURN,
-			}
-			a := &domain.Appeal{
-				Resource: &domain.Resource{
-					Type: gcloudiam.ResourceTypeRole,
-					URN:  "999",
-					Name: "test-role",
-				},
-				Role: "test-role",
-			}
-
-			actualError := p.GrantAccess(pc, a)
-
-			assert.EqualError(t, actualError, expectedError.Error())
-		})
-
-		t.Run("should return nil error if granting access is successful", func(t *testing.T) {
-			providerURN := "test-provider-urn"
-			crypto := new(mocks.Crypto)
-			client := new(mocks.GcloudIamClient)
-			expectedResource := &gcloudiam.Role{
+			},
+			URN: providerURN,
+		}
+		a := &domain.Appeal{
+			Resource: &domain.Resource{
+				Type: gcloudiam.ResourceTypeGcloudIam,
+				URN:  "999",
 				Name: "test-role",
-			}
-			expectedUser := "test@email.com"
-			p := gcloudiam.NewProvider("", crypto)
-			p.Clients = map[string]gcloudiam.GcloudIamClient{
-				providerURN: client,
-			}
-			client.On("GrantAccess", expectedResource, expectedUser).Return(nil).Once()
+			},
+			Role: "test-role",
+		}
 
-			pc := &domain.ProviderConfig{
-				Resources: []*domain.ResourceConfig{
-					{
-						Type: gcloudiam.ResourceTypeRole,
-						Roles: []*domain.Role{
-							{
-								ID: "allow",
-								Permissions: []interface{}{
-									gcloudiam.PermissionConfig{
-										Name: "allow",
-									},
-								},
-							},
-						},
-					},
+		actualError := p.GrantAccess(pc, a)
+
+		assert.EqualError(t, actualError, expectedError.Error())
+	})
+
+	t.Run("should return nil error if granting access is successful", func(t *testing.T) {
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GcloudIamClient)
+		expectedRole := "test-role"
+		expectedUser := "test@email.com"
+		p := gcloudiam.NewProvider("", crypto)
+		p.Clients = map[string]gcloudiam.GcloudIamClient{
+			providerURN: client,
+		}
+		client.On("GrantAccess", expectedUser, expectedRole).Return(nil).Once()
+
+		pc := &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: gcloudiam.ResourceTypeGcloudIam,
 				},
-				URN: providerURN,
-			}
-			a := &domain.Appeal{
-				Resource: &domain.Resource{
-					Type: gcloudiam.ResourceTypeRole,
-					URN:  "test-role",
-				},
-				Role:       "viewer",
-				User:       expectedUser,
-				ResourceID: 999,
-				ID:         999,
-			}
+			},
+			URN: providerURN,
+		}
+		a := &domain.Appeal{
+			Resource: &domain.Resource{
+				Type: gcloudiam.ResourceTypeGcloudIam,
+				URN:  "test-role",
+			},
+			Role:       expectedRole,
+			User:       expectedUser,
+			ResourceID: 999,
+			ID:         999,
+		}
 
-			actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, a)
 
-			assert.Nil(t, actualError)
-		})
+		assert.Nil(t, actualError)
 	})
 }
 
@@ -260,96 +246,82 @@ func TestRevokeAccess(t *testing.T) {
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
 
-	t.Run("given database resource", func(t *testing.T) {
-		t.Run("should return error if there is an error in granting the access", func(t *testing.T) {
-			providerURN := "test-provider-urn"
-			expectedError := errors.New("client error")
-			crypto := new(mocks.Crypto)
-			client := new(mocks.GcloudIamClient)
-			p := gcloudiam.NewProvider("", crypto)
-			p.Clients = map[string]gcloudiam.GcloudIamClient{
-				providerURN: client,
-			}
-			client.On("RevokeAccess", mock.Anything, mock.Anything).Return(expectedError).Once()
+	t.Run("should return error if there is an error in granting the access", func(t *testing.T) {
+		providerURN := "test-provider-urn"
+		expectedError := errors.New("client error")
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GcloudIamClient)
+		p := gcloudiam.NewProvider("", crypto)
+		p.Clients = map[string]gcloudiam.GcloudIamClient{
+			providerURN: client,
+		}
+		client.On("RevokeAccess", mock.Anything, mock.Anything).Return(expectedError).Once()
 
-			pc := &domain.ProviderConfig{
-				Resources: []*domain.ResourceConfig{
-					{
-						Type: gcloudiam.ResourceTypeRole,
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									gcloudiam.PermissionConfig{
-										Name: "test-permission-config",
-									},
+		pc := &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: gcloudiam.ResourceTypeGcloudIam,
+					Roles: []*domain.Role{
+						{
+							ID: "test-role",
+							Permissions: []interface{}{
+								gcloudiam.PermissionConfig{
+									Name: "test-permission-config",
 								},
 							},
 						},
 					},
 				},
-				URN: providerURN,
-			}
-			a := &domain.Appeal{
-				Resource: &domain.Resource{
-					Type: gcloudiam.ResourceTypeRole,
-					URN:  "999",
-					Name: "test-role",
-				},
-				Role: "test-role",
-			}
-
-			actualError := p.RevokeAccess(pc, a)
-
-			assert.EqualError(t, actualError, expectedError.Error())
-		})
-
-		t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
-			providerURN := "test-provider-urn"
-			crypto := new(mocks.Crypto)
-			client := new(mocks.GcloudIamClient)
-			expectedResource := &gcloudiam.Role{
+			},
+			URN: providerURN,
+		}
+		a := &domain.Appeal{
+			Resource: &domain.Resource{
+				Type: gcloudiam.ResourceTypeGcloudIam,
+				URN:  "999",
 				Name: "test-role",
-			}
-			expectedUser := "test@email.com"
-			p := gcloudiam.NewProvider("", crypto)
-			p.Clients = map[string]gcloudiam.GcloudIamClient{
-				providerURN: client,
-			}
-			client.On("RevokeAccess", expectedResource, expectedUser).Return(nil).Once()
+			},
+			Role: "test-role",
+		}
 
-			pc := &domain.ProviderConfig{
-				Resources: []*domain.ResourceConfig{
-					{
-						Type: gcloudiam.ResourceTypeRole,
-						Roles: []*domain.Role{
-							{
-								ID: "allow",
-								Permissions: []interface{}{
-									gcloudiam.PermissionConfig{
-										Name: "allow",
-									},
-								},
-							},
-						},
-					},
+		actualError := p.RevokeAccess(pc, a)
+
+		assert.EqualError(t, actualError, expectedError.Error())
+	})
+
+	t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GcloudIamClient)
+		expectedRole := "test-role"
+		expectedUser := "test@email.com"
+		p := gcloudiam.NewProvider("", crypto)
+		p.Clients = map[string]gcloudiam.GcloudIamClient{
+			providerURN: client,
+		}
+		client.On("RevokeAccess", expectedUser, expectedRole).Return(nil).Once()
+
+		pc := &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: gcloudiam.ResourceTypeGcloudIam,
 				},
-				URN: providerURN,
-			}
-			a := &domain.Appeal{
-				Resource: &domain.Resource{
-					Type: gcloudiam.ResourceTypeRole,
-					URN:  "test-role",
-				},
-				Role:       "viewer",
-				User:       expectedUser,
-				ResourceID: 999,
-				ID:         999,
-			}
+			},
+			URN: providerURN,
+		}
+		a := &domain.Appeal{
+			Resource: &domain.Resource{
+				Type: gcloudiam.ResourceTypeGcloudIam,
+				URN:  "test-role",
+			},
+			Role:       expectedRole,
+			User:       expectedUser,
+			ResourceID: 999,
+			ID:         999,
+		}
 
-			actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(pc, a)
 
-			assert.Nil(t, actualError)
-		})
+		assert.Nil(t, actualError)
 	})
 }

@@ -35,13 +35,13 @@ func (_m *GcloudIamClient) GetRoles(orgID string) ([]*gcloudiam.Role, error) {
 	return r0, r1
 }
 
-// GrantAccess provides a mock function with given fields: resource, user
-func (_m *GcloudIamClient) GrantAccess(resource *gcloudiam.Role, user string) error {
-	ret := _m.Called(resource, user)
+// GrantAccess provides a mock function with given fields: user, role
+func (_m *GcloudIamClient) GrantAccess(user string, role string) error {
+	ret := _m.Called(user, role)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*gcloudiam.Role, string) error); ok {
-		r0 = rf(resource, user)
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(user, role)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -49,13 +49,13 @@ func (_m *GcloudIamClient) GrantAccess(resource *gcloudiam.Role, user string) er
 	return r0
 }
 
-// RevokeAccess provides a mock function with given fields: resource, user
-func (_m *GcloudIamClient) RevokeAccess(resource *gcloudiam.Role, user string) error {
-	ret := _m.Called(resource, user)
+// RevokeAccess provides a mock function with given fields: user, role
+func (_m *GcloudIamClient) RevokeAccess(user string, role string) error {
+	ret := _m.Called(user, role)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*gcloudiam.Role, string) error); ok {
-		r0 = rf(resource, user)
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(user, role)
 	} else {
 		r0 = ret.Error(0)
 	}

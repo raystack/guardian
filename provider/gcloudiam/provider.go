@@ -60,13 +60,8 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return err
 	}
 
-	if a.Resource.Type == ResourceTypeRole {
-		r := new(Role)
-		if err := r.fromDomain(a.Resource); err != nil {
-			return err
-		}
-
-		if err := client.GrantAccess(r, a.User); err != nil {
+	if a.Resource.Type == ResourceTypeGcloudIam {
+		if err := client.GrantAccess(a.User, a.Role); err != nil {
 			return err
 		}
 
@@ -87,13 +82,8 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return err
 	}
 
-	if a.Resource.Type == ResourceTypeRole {
-		r := new(Role)
-		if err := r.fromDomain(a.Resource); err != nil {
-			return err
-		}
-
-		if err := client.RevokeAccess(r, a.User); err != nil {
+	if a.Resource.Type == ResourceTypeGcloudIam {
+		if err := client.RevokeAccess(a.User, a.Role); err != nil {
 			return err
 		}
 
