@@ -104,6 +104,10 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 }
 
 func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {
+	if resourceType != ResourceTypeGcloudIam {
+		return nil, ErrInvalidResourceType
+	}
+
 	client, err := p.getIamClient(pc)
 	if err != nil {
 		return nil, err

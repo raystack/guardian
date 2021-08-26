@@ -112,6 +112,19 @@ func (s *Service) FetchResources() error {
 	return s.resourceService.BulkUpsert(resources)
 }
 
+func (s *Service) GetRoles(id uint, resourceType string) ([]*domain.Role, error) {
+	p, err := s.providerRepository.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if p == nil {
+		return nil, ErrRecordNotFound
+	}
+
+	provider := s.getProvider(p.Type)
+	return provider.GetRoles(p.Config, resourceType)
+}
+
 func (s *Service) GrantAccess(a *domain.Appeal) error {
 	if err := s.validateAppealParam(a); err != nil {
 		return err

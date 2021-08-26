@@ -21,6 +21,7 @@ type GuardianServiceClient interface {
 	ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error)
 	CreateProvider(ctx context.Context, in *CreateProviderRequest, opts ...grpc.CallOption) (*CreateProviderResponse, error)
 	UpdateProvider(ctx context.Context, in *UpdateProviderRequest, opts ...grpc.CallOption) (*UpdateProviderResponse, error)
+	ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error)
 	ListPolicies(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (*ListPoliciesResponse, error)
 	CreatePolicy(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error)
 	UpdatePolicy(ctx context.Context, in *UpdatePolicyRequest, opts ...grpc.CallOption) (*UpdatePolicyResponse, error)
@@ -64,6 +65,15 @@ func (c *guardianServiceClient) CreateProvider(ctx context.Context, in *CreatePr
 func (c *guardianServiceClient) UpdateProvider(ctx context.Context, in *UpdateProviderRequest, opts ...grpc.CallOption) (*UpdateProviderResponse, error) {
 	out := new(UpdateProviderResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.GuardianService/UpdateProvider", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error) {
+	out := new(ListRolesResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.GuardianService/ListRoles", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -185,6 +195,7 @@ type GuardianServiceServer interface {
 	ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error)
 	CreateProvider(context.Context, *CreateProviderRequest) (*CreateProviderResponse, error)
 	UpdateProvider(context.Context, *UpdateProviderRequest) (*UpdateProviderResponse, error)
+	ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error)
 	ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error)
 	CreatePolicy(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error)
 	UpdatePolicy(context.Context, *UpdatePolicyRequest) (*UpdatePolicyResponse, error)
@@ -212,6 +223,9 @@ func (UnimplementedGuardianServiceServer) CreateProvider(context.Context, *Creat
 }
 func (UnimplementedGuardianServiceServer) UpdateProvider(context.Context, *UpdateProviderRequest) (*UpdateProviderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateProvider not implemented")
+}
+func (UnimplementedGuardianServiceServer) ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRoles not implemented")
 }
 func (UnimplementedGuardianServiceServer) ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPolicies not implemented")
@@ -312,6 +326,24 @@ func _GuardianService_UpdateProvider_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GuardianServiceServer).UpdateProvider(ctx, req.(*UpdateProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_ListRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRolesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).ListRoles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.GuardianService/ListRoles",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).ListRoles(ctx, req.(*ListRolesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -550,6 +582,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateProvider",
 			Handler:    _GuardianService_UpdateProvider_Handler,
+		},
+		{
+			MethodName: "ListRoles",
+			Handler:    _GuardianService_ListRoles_Handler,
 		},
 		{
 			MethodName: "ListPolicies",

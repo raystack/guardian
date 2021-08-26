@@ -80,6 +80,7 @@ type ProviderService interface {
 	Find() ([]*Provider, error)
 	Update(*Provider) error
 	FetchResources() error
+	GetRoles(id uint, resourceType string) ([]*Role, error)
 	GrantAccess(*Appeal) error
 	RevokeAccess(*Appeal) error
 }
