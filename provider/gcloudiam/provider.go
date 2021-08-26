@@ -6,16 +6,16 @@ import (
 )
 
 type Provider struct {
-	typeName   string
-	iamClients map[string]*iamClient
-	crypto     domain.Crypto
+	typeName string
+	Clients  map[string]GcloudIamClient
+	crypto   domain.Crypto
 }
 
 func NewProvider(typeName string, crypto domain.Crypto) *Provider {
 	return &Provider{
-		typeName:   typeName,
-		iamClients: map[string]*iamClient{},
-		crypto:     crypto,
+		typeName: typeName,
+		Clients:  map[string]GcloudIamClient{},
+		crypto:   crypto,
 	}
 }
 
@@ -39,7 +39,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
-	client, err := p.getIamClient(pc.URN, creds)
+	client, err := p.getIamClient(pc)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return err
 	}
 
-	client, err := p.getIamClient(pc.URN, creds)
+	client, err := p.getIamClient(pc)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return err
 	}
 
-	client, err := p.getIamClient(pc.URN, creds)
+	client, err := p.getIamClient(pc)
 	if err != nil {
 		return err
 	}
@@ -116,9 +116,15 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	return ErrInvalidResourceType
 }
 
-func (p *Provider) getIamClient(providerURN string, credentials Credentials) (*iamClient, error) {
-	if p.iamClients[providerURN] != nil {
-		return p.iamClients[providerURN], nil
+func (p *Provider) getIamClient(pc *domain.ProviderConfig) (GcloudIamClient, error) {
+	var credentials Credentials
+	if err := mapstructure.Decode(pc.Credentials, &credentials); err != nil {
+		return nil, err
+	}
+	providerURN := pc.URN
+
+	if p.Clients[providerURN] != nil {
+		return p.Clients[providerURN], nil
 	}
 
 	credentials.Decrypt(p.crypto)
@@ -127,6 +133,6 @@ func (p *Provider) getIamClient(providerURN string, credentials Credentials) (*i
 		return nil, err
 	}
 
-	p.iamClients[providerURN] = client
+	p.Clients[providerURN] = client
 	return client, nil
 }

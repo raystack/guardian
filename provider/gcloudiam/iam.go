@@ -9,6 +9,12 @@ import (
 	"google.golang.org/api/option"
 )
 
+type GcloudIamClient interface {
+	GetRoles(orgID string) ([]*Role, error)
+	GrantAccess(resource *Role, user string) error
+	RevokeAccess(resource *Role, user string) error
+}
+
 type iamClient struct {
 	projectID                   string
 	orgID                       string
