@@ -2,6 +2,7 @@ package gcloudiam_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/odpf/guardian/domain"
@@ -24,72 +25,21 @@ func TestGetType(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
-	t.Run("should return error if credentials is invalid", func(t *testing.T) {
+	t.Run("should return one item of resource", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := gcloudiam.NewProvider("", crypto)
-
 		pc := &domain.ProviderConfig{
-			Credentials: "invalid-creds",
+			Type: domain.ProviderTypeGCloudIAM,
+			URN:  "test-project-id",
 		}
 
-		actualResources, actualError := p.GetResources(pc)
-
-		assert.Nil(t, actualResources)
-		assert.Error(t, actualError)
-	})
-
-	t.Run("should return error if got any on getting role resources", func(t *testing.T) {
-		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
-		client := new(mocks.GcloudIamClient)
-		p := gcloudiam.NewProvider("", crypto)
-		p.Clients = map[string]gcloudiam.GcloudIamClient{
-			providerURN: client,
-		}
-
-		pc := &domain.ProviderConfig{
-			URN:         providerURN,
-			Credentials: map[string]interface{}{},
-		}
-		expectedError := errors.New("client error")
-		client.On("GetRoles", mock.Anything).Return(nil, expectedError).Once()
-
-		actualResources, actualError := p.GetResources(pc)
-
-		assert.Nil(t, actualResources)
-		assert.EqualError(t, actualError, expectedError.Error())
-	})
-
-	t.Run("should return list of resources and nil error on success", func(t *testing.T) {
-		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
-		client := new(mocks.GcloudIamClient)
-		p := gcloudiam.NewProvider("", crypto)
-		p.Clients = map[string]gcloudiam.GcloudIamClient{
-			providerURN: client,
-		}
-
-		pc := &domain.ProviderConfig{
-			URN:         providerURN,
-			Credentials: map[string]interface{}{},
-		}
-		expectedDatabases := []*gcloudiam.Role{
-			{
-				Name:        "role",
-				Title:       "Role Title",
-				Description: "test description",
-			},
-		}
-		client.On("GetRoles", mock.Anything).Return(expectedDatabases, nil).Once()
 		expectedResources := []*domain.Resource{
 			{
-				Type:        gcloudiam.ResourceTypeRole,
-				URN:         "role",
-				ProviderURN: providerURN,
-				Name:        "Role Title",
-				Details: map[string]interface{}{
-					"description": "test description",
-				},
+				ProviderType: pc.Type,
+				ProviderURN:  pc.URN,
+				Type:         gcloudiam.ResourceTypeGcloudIam,
+				URN:          pc.URN,
+				Name:         fmt.Sprintf("%s - GCP IAM", pc.URN),
 			},
 		}
 

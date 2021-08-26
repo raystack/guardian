@@ -1,6 +1,8 @@
 package gcloudiam
 
 import (
+	"fmt"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 )
@@ -34,30 +36,15 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 }
 
 func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
-	var creds Credentials
-	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
-		return nil, err
-	}
-
-	client, err := p.getIamClient(pc)
-	if err != nil {
-		return nil, err
-	}
-
-	resources := []*domain.Resource{}
-
-	roles, err := client.GetRoles(creds.OrganizationID)
-	if err != nil {
-		return nil, err
-	}
-	for _, r := range roles {
-		role := r.toDomain()
-		role.ProviderType = pc.Type
-		role.ProviderURN = pc.URN
-		resources = append(resources, role)
-	}
-
-	return resources, nil
+	return []*domain.Resource{
+		{
+			ProviderType: pc.Type,
+			ProviderURN:  pc.URN,
+			Type:         ResourceTypeGcloudIam,
+			URN:          pc.URN,
+			Name:         fmt.Sprintf("%s - GCP IAM", pc.URN),
+		},
+	}, nil
 }
 
 func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
