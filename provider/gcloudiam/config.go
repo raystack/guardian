@@ -44,10 +44,6 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 	return nil
 }
 
-type PermissionConfig struct {
-	Name string `json:"name" mapstructure:"name" validate:"required,eq=allow"`
-}
-
 type Config struct {
 	ProviderConfig *domain.ProviderConfig
 	valid          bool
@@ -99,10 +95,12 @@ func (c *Config) parseAndValidate() error {
 		c.ProviderConfig.Credentials = credentials
 	}
 
-	for _, r := range c.ProviderConfig.Resources {
-		if err := c.validateResourceConfig(r); err != nil {
-			validationErrors = append(validationErrors, err)
-		}
+	if len(c.ProviderConfig.Resources) != 1 {
+		return ErrShouldHaveOneResource
+	}
+	r := c.ProviderConfig.Resources[0]
+	if err := c.validateResourceConfig(r); err != nil {
+		validationErrors = append(validationErrors, err)
 	}
 
 	if len(validationErrors) > 0 {
@@ -143,35 +141,9 @@ func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
 		return err
 	}
 
-	for _, role := range resource.Roles {
-		for i, permission := range role.Permissions {
-			if permissionConfig, err := c.validatePermission(resource.Type, permission); err != nil {
-				return err
-			} else {
-				role.Permissions[i] = permissionConfig
-			}
-		}
+	if resource.Roles != nil || len(resource.Roles) != 0 {
+		return ErrShouldHaveEmptyRoles
 	}
 
 	return nil
-}
-
-func (c *Config) validatePermission(resourceType string, value interface{}) (*PermissionConfig, error) {
-	permissionConfig, ok := value.(map[string]interface{})
-	if !ok {
-		return nil, ErrInvalidPermissionConfig
-	}
-
-	var pc PermissionConfig
-	if err := mapstructure.Decode(permissionConfig, &pc); err != nil {
-		return nil, err
-	}
-
-	nameValidation := "eq=allow"
-
-	if err := c.validator.Var(pc.Name, nameValidation); err != nil {
-		return nil, err
-	}
-
-	return &pc, nil
 }
