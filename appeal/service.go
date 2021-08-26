@@ -177,12 +177,14 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return err
 		}
 		a.Policy = nil
-
-		notifications = append(notifications, getApprovalNotifications(a)...)
 	}
 
 	if err := s.repo.BulkInsert(appeals); err != nil {
 		return err
+	}
+
+	for _, a := range appeals {
+		notifications = append(notifications, getApprovalNotifications(a)...)
 	}
 
 	if len(notifications) > 0 {
