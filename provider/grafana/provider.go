@@ -3,6 +3,7 @@ package grafana
 import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
+	pv "github.com/odpf/guardian/provider"
 )
 
 type provider struct {
@@ -130,6 +131,10 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	}
 
 	return ErrInvalidResourceType
+}
+
+func (p *provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {
+	return pv.GetRoles(pc, resourceType)
 }
 
 func (p *provider) getClient(providerURN string, credentials Credentials) (GrafanaClient, error) {

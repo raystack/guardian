@@ -103,6 +103,34 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	return ErrInvalidResourceType
 }
 
+func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {
+	client, err := p.getIamClient(pc)
+	if err != nil {
+		return nil, err
+	}
+
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return nil, err
+	}
+
+	iamRoles, err := client.GetRoles(creds.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	var roles []*domain.Role
+	for _, r := range iamRoles {
+		roles = append(roles, &domain.Role{
+			ID:          r.Name,
+			Name:        r.Title,
+			Description: r.Description,
+		})
+	}
+
+	return roles, nil
+}
+
 func (p *Provider) getIamClient(pc *domain.ProviderConfig) (GcloudIamClient, error) {
 	var credentials Credentials
 	if err := mapstructure.Decode(pc.Credentials, &credentials); err != nil {

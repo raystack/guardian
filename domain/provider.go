@@ -89,6 +89,7 @@ type ProviderInterface interface {
 	GetType() string
 	CreateConfig(*ProviderConfig) error
 	GetResources(pc *ProviderConfig) ([]*Resource, error)
+	GetRoles(pc *ProviderConfig, resourceType string) ([]*Role, error)
 	GrantAccess(*ProviderConfig, *Appeal) error
 	RevokeAccess(*ProviderConfig, *Appeal) error
 }

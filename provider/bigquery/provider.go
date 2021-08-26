@@ -5,6 +5,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/provider"
 )
 
 // Provider for bigquery
@@ -201,6 +202,10 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	}
 
 	return ErrInvalidResourceType
+}
+
+func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {
+	return provider.GetRoles(pc, resourceType)
 }
 
 func (p *Provider) getBigQueryClient(projectID string, credentials Credentials) (*bigQueryClient, error) {
