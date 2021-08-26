@@ -9,4 +9,6 @@ var (
 	ErrInvalidCredentials            = errors.New("invalid credentials type")
 	ErrPermissionAlreadyExists       = errors.New("permission already exists")
 	ErrPermissionNotFound            = errors.New("permission not found")
+	ErrInvalidResourceType           = errors.New("invalid resource type")
+	ErrInvalidRole                   = errors.New("invalid role")
 )

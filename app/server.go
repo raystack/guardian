@@ -22,6 +22,7 @@ import (
 	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/provider"
 	"github.com/odpf/guardian/provider/bigquery"
+	"github.com/odpf/guardian/provider/gcloudiam"
 	"github.com/odpf/guardian/provider/grafana"
 	"github.com/odpf/guardian/provider/metabase"
 	"github.com/odpf/guardian/provider/tableau"
@@ -91,6 +92,7 @@ func RunServer(c *ServiceConfig) error {
 		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
 		grafana.NewProvider(domain.ProviderTypeGrafana, crypto),
 		tableau.NewProvider(domain.ProviderTypeTableau, crypto),
+		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, crypto),
 	}
 
 	notifier := notifier.NewSlackNotifier(c.SlackAccessToken)
