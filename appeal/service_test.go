@@ -185,7 +185,7 @@ func (s *ServiceTestSuite) TestCreate() {
 							ID:      "policy_id",
 							Version: 1,
 						},
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "role_1",
 							},
@@ -403,7 +403,7 @@ func (s *ServiceTestSuite) TestCreate() {
 							ID:      "policy_1",
 							Version: 1,
 						},
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "role_id",
 							},

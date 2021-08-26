@@ -17,8 +17,8 @@ const (
 	ProviderTypeGCloudIAM = "gcloud_iam"
 )
 
-// RoleConfig is the configuration to define a role and mapping the permissions in the provider
-type RoleConfig struct {
+// Role is the configuration to define a role and mapping the permissions in the provider
+type Role struct {
 	ID          string        `json:"id" yaml:"id" validate:"required"`
 	Name        string        `json:"name" yaml:"name" validate:"required"`
 	Description string        `json:"description,omitempty" yaml:"description"`
@@ -35,7 +35,7 @@ type PolicyConfig struct {
 type ResourceConfig struct {
 	Type   string        `json:"type" yaml:"type" validate:"required"`
 	Policy *PolicyConfig `json:"policy" yaml:"policy"`
-	Roles  []*RoleConfig `json:"roles" yaml:"roles" validate:"required"`
+	Roles  []*Role       `json:"roles" yaml:"roles" validate:"required"`
 }
 
 // AppealConfig is the policy configuration of the appeal

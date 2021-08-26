@@ -32,9 +32,9 @@ Field ||
 -|-
 `type` | `string` <br> Required. <br><br> Possible values: <br> - BigQuery: [`string(BigQueryResourceType)`](bigquery-provider.md#bigqueryresourcetype) <br> - Metabase: [`string(MetabaseResourceType)`](metabase-provider.md#metabaseresourcetype)
 `policy` | `object(id: string, version: int)` <br> Required. Approval policy config that want to be applied to this resource config. Example: `id: approval_policy_x, version: 1`
-`roles[]` | [`object(RoleConfig)`](#roleconfig) <br> Required. List of resource permissions mapping
+`roles[]` | [`object(Role)`](#role) <br> Required. List of resource permissions mapping
 
-### `RoleConfig`
+### `Role`
 
 Fields ||
 -|-

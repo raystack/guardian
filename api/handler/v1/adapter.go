@@ -46,14 +46,14 @@ func (a *adapter) FromProviderConfigProto(pc *pb.ProviderConfig) (*domain.Provid
 			Version: int(policyProto.GetVersion()),
 		}
 
-		roles := []*domain.RoleConfig{}
+		roles := []*domain.Role{}
 		for _, role := range r.GetRoles() {
 			permissions := []interface{}{}
 			for _, p := range role.GetPermissions() {
 				permissions = append(permissions, p.AsInterface())
 			}
 
-			roles = append(roles, &domain.RoleConfig{
+			roles = append(roles, &domain.Role{
 				ID:          role.GetId(),
 				Name:        role.GetName(),
 				Description: role.GetDescription(),
@@ -118,7 +118,7 @@ func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*pb.Provider
 			Version: int32(rc.Policy.Version),
 		}
 
-		roles := []*pb.ProviderConfig_ResourceConfig_RoleConfig{}
+		roles := []*pb.ProviderConfig_ResourceConfig_Role{}
 		for _, role := range rc.Roles {
 			permissions := []*structpb.Value{}
 			for _, p := range role.Permissions {
@@ -129,7 +129,7 @@ func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*pb.Provider
 				permissions = append(permissions, permission)
 			}
 
-			roles = append(roles, &pb.ProviderConfig_ResourceConfig_RoleConfig{
+			roles = append(roles, &pb.ProviderConfig_ResourceConfig_Role{
 				Id:          role.ID,
 				Name:        role.Name,
 				Description: role.Description,

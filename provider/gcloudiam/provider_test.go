@@ -60,7 +60,7 @@ func TestGrantAccess(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: "test-type",
-					Roles: []*domain.RoleConfig{
+					Roles: []*domain.Role{
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
@@ -100,7 +100,7 @@ func TestGrantAccess(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: "test-type",
-					Roles: []*domain.RoleConfig{
+					Roles: []*domain.Role{
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
@@ -141,7 +141,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: gcloudiam.ResourceTypeRole,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
@@ -187,7 +187,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: gcloudiam.ResourceTypeRole,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "allow",
 								Permissions: []interface{}{
@@ -235,7 +235,7 @@ func TestRevokeAccess(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: "test-type",
-					Roles: []*domain.RoleConfig{
+					Roles: []*domain.Role{
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
@@ -276,7 +276,7 @@ func TestRevokeAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: gcloudiam.ResourceTypeRole,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
@@ -322,7 +322,7 @@ func TestRevokeAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: gcloudiam.ResourceTypeRole,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "allow",
 								Permissions: []interface{}{

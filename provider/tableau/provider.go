@@ -367,18 +367,18 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 		return nil, ErrInvalidResourceType
 	}
 
-	var roleConfig *domain.RoleConfig
-	for _, rc := range resourceConfig.Roles {
-		if rc.ID == a.Role {
-			roleConfig = rc
+	var role *domain.Role
+	for _, r := range resourceConfig.Roles {
+		if r.ID == a.Role {
+			role = r
 		}
 	}
-	if roleConfig == nil {
+	if role == nil {
 		return nil, ErrInvalidRole
 	}
 
 	var permissions []PermissionConfig
-	for _, p := range roleConfig.Permissions {
+	for _, p := range role.Permissions {
 		var permission PermissionConfig
 		if err := mapstructure.Decode(p, &permission); err != nil {
 			return nil, err
