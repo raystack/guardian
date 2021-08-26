@@ -1,8 +1,6 @@
 package gcloudiam
 
 import (
-	"context"
-
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 )
@@ -48,8 +46,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 
 	resources := []*domain.Resource{}
 
-	ctx := context.Background()
-	roles, err := client.GetRoles(ctx, creds.OrganizationID)
+	roles, err := client.GetRoles(creds.OrganizationID)
 	if err != nil {
 		return nil, err
 	}

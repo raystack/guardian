@@ -36,9 +36,10 @@ func newIamClient(credentialsJSON []byte, projectID, orgID string) (*iamClient, 
 	}, nil
 }
 
-func (c *iamClient) GetRoles(ctx context.Context, orgID string) ([]*Role, error) {
+func (c *iamClient) GetRoles(orgID string) ([]*Role, error) {
 	var roles []*Role
 
+	ctx := context.Background()
 	req := c.iamService.Roles.List()
 	if err := req.Pages(ctx, func(page *iam.ListRolesResponse) error {
 		for _, role := range page.Roles {
