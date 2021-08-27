@@ -12,8 +12,8 @@ import (
 )
 
 type Credentials struct {
-	ServiceAccountKey string `mapstructure:"service_account_key" json:"service_account_key" validator:"required,base64"`
-	OrganizationID    string `mapstructure:"organization_id" json:"organization_id"`
+	ServiceAccountKey string `mapstructure:"service_account_key" json:"service_account_key" validate:"required,base64"`
+	ResourceName      string `mapstructure:"resource_name" json:"resource_name" validate:"startswith=projects/|startswith=organizations/"`
 }
 
 func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
@@ -141,9 +141,9 @@ func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
 		return err
 	}
 
-	if resource.Roles != nil || len(resource.Roles) != 0 {
-		return ErrShouldHaveEmptyRoles
+	if resource.Roles == nil || len(resource.Roles) == 0 {
+		return nil
 	}
 
-	return nil
+	return ErrShouldHaveEmptyRoles
 }

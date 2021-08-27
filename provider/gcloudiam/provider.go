@@ -103,12 +103,7 @@ func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*
 		return nil, err
 	}
 
-	var creds Credentials
-	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
-		return nil, err
-	}
-
-	iamRoles, err := client.GetRoles(creds.OrganizationID)
+	iamRoles, err := client.GetRoles()
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +132,7 @@ func (p *Provider) getIamClient(pc *domain.ProviderConfig) (GcloudIamClient, err
 	}
 
 	credentials.Decrypt(p.crypto)
-	client, err := newIamClient([]byte(credentials.ServiceAccountKey), providerURN, credentials.OrganizationID)
+	client, err := newIamClient([]byte(credentials.ServiceAccountKey), credentials.ResourceName)
 	if err != nil {
 		return nil, err
 	}

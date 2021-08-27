@@ -3,26 +3,31 @@ package gcloudiam
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
 )
 
+const (
+	ResourceNameOrganizationPrefix = "organizations/"
+	ResourceNameProjectPrefix      = "projects/"
+)
+
 type GcloudIamClient interface {
-	GetRoles(orgID string) ([]*Role, error)
+	GetRoles() ([]*Role, error)
 	GrantAccess(user, role string) error
 	RevokeAccess(user, role string) error
 }
 
 type iamClient struct {
-	projectID                   string
-	orgID                       string
+	resourceName                string
 	cloudResourceManagerService *cloudresourcemanager.Service
 	iamService                  *iam.Service
 }
 
-func newIamClient(credentialsJSON []byte, projectID, orgID string) (*iamClient, error) {
+func newIamClient(credentialsJSON []byte, resourceName string) (*iamClient, error) {
 	ctx := context.Background()
 	cloudResourceManagerService, err := cloudresourcemanager.NewService(ctx, option.WithCredentialsJSON(credentialsJSON))
 	if err != nil {
@@ -35,14 +40,13 @@ func newIamClient(credentialsJSON []byte, projectID, orgID string) (*iamClient, 
 	}
 
 	return &iamClient{
-		projectID:                   projectID,
-		orgID:                       orgID,
+		resourceName:                resourceName,
 		cloudResourceManagerService: cloudResourceManagerService,
 		iamService:                  iamService,
 	}, nil
 }
 
-func (c *iamClient) GetRoles(orgID string) ([]*Role, error) {
+func (c *iamClient) GetRoles() ([]*Role, error) {
 	var roles []*Role
 
 	ctx := context.Background()
@@ -56,20 +60,18 @@ func (c *iamClient) GetRoles(orgID string) ([]*Role, error) {
 		return nil, err
 	}
 
-	parentProject := fmt.Sprintf("projects/%s", c.projectID)
-	projectRolesReq := c.iamService.Projects.Roles.List(parentProject)
-	if err := projectRolesReq.Pages(ctx, func(page *iam.ListRolesResponse) error {
-		for _, role := range page.Roles {
-			roles = append(roles, c.fromIamRole(role))
+	if strings.HasPrefix(c.resourceName, ResourceNameProjectPrefix) {
+		projectRolesReq := c.iamService.Projects.Roles.List(c.resourceName)
+		if err := projectRolesReq.Pages(ctx, func(page *iam.ListRolesResponse) error {
+			for _, role := range page.Roles {
+				roles = append(roles, c.fromIamRole(role))
+			}
+			return nil
+		}); err != nil {
+			return nil, err
 		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	if c.orgID != "" {
-		parentOrg := fmt.Sprintf("organizations/%s", c.orgID)
-		orgRolesReq := c.iamService.Organizations.Roles.List(parentOrg)
+	} else if strings.HasPrefix(c.resourceName, ResourceNameOrganizationPrefix) {
+		orgRolesReq := c.iamService.Organizations.Roles.List(c.resourceName)
 		if err := orgRolesReq.Pages(ctx, func(page *iam.ListRolesResponse) error {
 			for _, role := range page.Roles {
 				roles = append(roles, c.fromIamRole(role))
@@ -78,13 +80,15 @@ func (c *iamClient) GetRoles(orgID string) ([]*Role, error) {
 		}); err != nil {
 			return nil, err
 		}
+	} else {
+		return nil, ErrInvalidResourceName
 	}
 
 	return roles, nil
 }
 
 func (c *iamClient) GrantAccess(user, role string) error {
-	policy, err := c.cloudResourceManagerService.Projects.GetIamPolicy(c.projectID, &cloudresourcemanager.GetIamPolicyRequest{}).Do()
+	policy, err := c.getIamPolicy()
 	if err != nil {
 		return err
 	}
@@ -107,15 +111,12 @@ func (c *iamClient) GrantAccess(user, role string) error {
 		})
 	}
 
-	setIamPolicyRequest := &cloudresourcemanager.SetIamPolicyRequest{
-		Policy: policy,
-	}
-	_, err = c.cloudResourceManagerService.Projects.SetIamPolicy(c.projectID, setIamPolicyRequest).Do()
+	_, err = c.setIamPolicy(policy)
 	return err
 }
 
 func (c *iamClient) RevokeAccess(user, role string) error {
-	policy, err := c.cloudResourceManagerService.Projects.GetIamPolicy(c.projectID, &cloudresourcemanager.GetIamPolicyRequest{}).Do()
+	policy, err := c.getIamPolicy()
 	if err != nil {
 		return err
 	}
@@ -137,11 +138,42 @@ func (c *iamClient) RevokeAccess(user, role string) error {
 		}
 	}
 
+	c.setIamPolicy(policy)
+	return err
+}
+
+func (c *iamClient) getIamPolicy() (*cloudresourcemanager.Policy, error) {
+	if strings.HasPrefix(c.resourceName, ResourceNameProjectPrefix) {
+		projectID := strings.Replace(c.resourceName, ResourceNameProjectPrefix, "", 1)
+		return c.cloudResourceManagerService.Projects.
+			GetIamPolicy(projectID, &cloudresourcemanager.GetIamPolicyRequest{}).
+			Do()
+	} else if strings.HasPrefix(c.resourceName, ResourceNameOrganizationPrefix) {
+		orgID := strings.Replace(c.resourceName, ResourceNameOrganizationPrefix, "", 1)
+		return c.cloudResourceManagerService.Organizations.
+			GetIamPolicy(orgID, &cloudresourcemanager.GetIamPolicyRequest{}).
+			Do()
+	}
+	return nil, ErrInvalidResourceName
+}
+
+func (c *iamClient) setIamPolicy(policy *cloudresourcemanager.Policy) (*cloudresourcemanager.Policy, error) {
 	setIamPolicyRequest := &cloudresourcemanager.SetIamPolicyRequest{
 		Policy: policy,
 	}
-	_, err = c.cloudResourceManagerService.Projects.SetIamPolicy(c.projectID, setIamPolicyRequest).Do()
-	return err
+	if strings.HasPrefix(c.resourceName, ResourceNameProjectPrefix) {
+		projectID := strings.Replace(c.resourceName, ResourceNameProjectPrefix, "", 1)
+		return c.cloudResourceManagerService.Projects.
+			SetIamPolicy(projectID, setIamPolicyRequest).
+			Do()
+	} else if strings.HasPrefix(c.resourceName, ResourceNameOrganizationPrefix) {
+		orgID := strings.Replace(c.resourceName, ResourceNameOrganizationPrefix, "", 1)
+		return c.cloudResourceManagerService.Organizations.
+			SetIamPolicy(orgID, setIamPolicyRequest).
+			Do()
+	}
+	return nil, ErrInvalidResourceName
+
 }
 
 func (c *iamClient) fromIamRole(r *iam.Role) *Role {
