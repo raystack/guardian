@@ -136,7 +136,7 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 }
 
 func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
-	resourceTypeValidation := fmt.Sprintf("eq=%s", ResourceTypeGcloudIam)
+	resourceTypeValidation := fmt.Sprintf("oneof=%s %s", ResourceTypeProject, ResourceTypeOrganization)
 	if err := c.validator.Var(resource.Type, resourceTypeValidation); err != nil {
 		return err
 	}

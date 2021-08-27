@@ -31,7 +31,7 @@ func TestGetResources(t *testing.T) {
 			Type: domain.ProviderTypeGCloudIAM,
 			URN:  "test-project-id",
 			Credentials: map[string]interface{}{
-				"resource_name": "test-resource-name",
+				"resource_name": "project/test-resource-name",
 			},
 		}
 
@@ -39,9 +39,9 @@ func TestGetResources(t *testing.T) {
 			{
 				ProviderType: pc.Type,
 				ProviderURN:  pc.URN,
-				Type:         gcloudiam.ResourceTypeGcloudIam,
-				URN:          "test-resource-name",
-				Name:         "test-resource-name - GCP IAM",
+				Type:         gcloudiam.ResourceTypeProject,
+				URN:          "project/test-resource-name",
+				Name:         "project/test-resource-name - GCP IAM",
 			},
 		}
 
@@ -121,14 +121,14 @@ func TestGrantAccess(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: gcloudiam.ResourceTypeGcloudIam,
+					Type: gcloudiam.ResourceTypeProject,
 				},
 			},
 			URN: providerURN,
 		}
 		a := &domain.Appeal{
 			Resource: &domain.Resource{
-				Type: gcloudiam.ResourceTypeGcloudIam,
+				Type: gcloudiam.ResourceTypeProject,
 				URN:  "999",
 				Name: "test-role",
 			},
@@ -155,14 +155,14 @@ func TestGrantAccess(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: gcloudiam.ResourceTypeGcloudIam,
+					Type: gcloudiam.ResourceTypeProject,
 				},
 			},
 			URN: providerURN,
 		}
 		a := &domain.Appeal{
 			Resource: &domain.Resource{
-				Type: gcloudiam.ResourceTypeGcloudIam,
+				Type: gcloudiam.ResourceTypeProject,
 				URN:  "test-role",
 			},
 			Role:       expectedRole,
@@ -222,14 +222,14 @@ func TestRevokeAccess(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: gcloudiam.ResourceTypeGcloudIam,
+					Type: gcloudiam.ResourceTypeProject,
 				},
 			},
 			URN: providerURN,
 		}
 		a := &domain.Appeal{
 			Resource: &domain.Resource{
-				Type: gcloudiam.ResourceTypeGcloudIam,
+				Type: gcloudiam.ResourceTypeProject,
 				URN:  "999",
 				Name: "test-role",
 			},
@@ -256,14 +256,14 @@ func TestRevokeAccess(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: gcloudiam.ResourceTypeGcloudIam,
+					Type: gcloudiam.ResourceTypeProject,
 				},
 			},
 			URN: providerURN,
 		}
 		a := &domain.Appeal{
 			Resource: &domain.Resource{
-				Type: gcloudiam.ResourceTypeGcloudIam,
+				Type: gcloudiam.ResourceTypeProject,
 				URN:  "test-role",
 			},
 			Role:       expectedRole,

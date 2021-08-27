@@ -2,6 +2,7 @@ package gcloudiam
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
@@ -41,11 +42,18 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
+	var t string
+	if strings.HasPrefix(creds.ResourceName, "project") {
+		t = ResourceTypeProject
+	} else if strings.HasPrefix(creds.ResourceName, "organization") {
+		t = ResourceTypeOrganization
+	}
+
 	return []*domain.Resource{
 		{
 			ProviderType: pc.Type,
 			ProviderURN:  pc.URN,
-			Type:         ResourceTypeGcloudIam,
+			Type:         t,
 			URN:          creds.ResourceName,
 			Name:         fmt.Sprintf("%s - GCP IAM", creds.ResourceName),
 		},
@@ -65,12 +73,8 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return err
 	}
 
-	if a.Resource.Type == ResourceTypeGcloudIam {
-		if err := client.GrantAccess(a.User, a.Role); err != nil {
-			return err
-		}
-
-		return nil
+	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
+		return client.GrantAccess(a.User, a.Role)
 	}
 
 	return ErrInvalidResourceType
@@ -87,19 +91,15 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return err
 	}
 
-	if a.Resource.Type == ResourceTypeGcloudIam {
-		if err := client.RevokeAccess(a.User, a.Role); err != nil {
-			return err
-		}
-
-		return nil
+	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
+		return client.RevokeAccess(a.User, a.Role)
 	}
 
 	return ErrInvalidResourceType
 }
 
 func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {
-	if resourceType != ResourceTypeGcloudIam {
+	if resourceType != ResourceTypeProject && resourceType != ResourceTypeOrganization {
 		return nil, ErrInvalidResourceType
 	}
 
