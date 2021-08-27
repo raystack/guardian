@@ -36,13 +36,18 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 }
 
 func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return nil, err
+	}
+
 	return []*domain.Resource{
 		{
 			ProviderType: pc.Type,
 			ProviderURN:  pc.URN,
 			Type:         ResourceTypeGcloudIam,
-			URN:          pc.URN,
-			Name:         fmt.Sprintf("%s - GCP IAM", pc.URN),
+			URN:          creds.ResourceName,
+			Name:         fmt.Sprintf("%s - GCP IAM", creds.ResourceName),
 		},
 	}, nil
 }

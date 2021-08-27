@@ -2,7 +2,6 @@ package gcloudiam_test
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/odpf/guardian/domain"
@@ -31,6 +30,9 @@ func TestGetResources(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			Type: domain.ProviderTypeGCloudIAM,
 			URN:  "test-project-id",
+			Credentials: map[string]interface{}{
+				"resource_name": "test-resource-name",
+			},
 		}
 
 		expectedResources := []*domain.Resource{
@@ -38,8 +40,8 @@ func TestGetResources(t *testing.T) {
 				ProviderType: pc.Type,
 				ProviderURN:  pc.URN,
 				Type:         gcloudiam.ResourceTypeGcloudIam,
-				URN:          pc.URN,
-				Name:         fmt.Sprintf("%s - GCP IAM", pc.URN),
+				URN:          "test-resource-name",
+				Name:         "test-resource-name - GCP IAM",
 			},
 		}
 
