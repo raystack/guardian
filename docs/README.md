@@ -1,10 +1,10 @@
 # Introduction
 
-Guardian is a data access management tool. It allows you to manage secure and compliant self-service data access for multiple resources with multiple stakeholders. 
+Guardian is a data access management tool. It allows you to manage secure and compliant self-service data access for multiple resources with multiple stakeholders.
 
-![](.gitbook/assets/overview.svg)
+![](.gitbook/assets/overview%20%281%29.svg)
 
-## How does it work? 
+## How does it work?
 
 Resource administrators needs to register a data provider on Guardian along with a access policy. The policy defines all the steps that a request needs to pass though before access is granted for a resource. A step can be a person approving the user request or an automated check before passing it to the next step of the policy.
 
