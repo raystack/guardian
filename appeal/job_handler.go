@@ -7,16 +7,16 @@ import (
 	"time"
 
 	"github.com/odpf/guardian/domain"
-	"go.uber.org/zap"
+	saltLog "github.com/odpf/salt/log"
 )
 
 type JobHandler struct {
-	logger        *zap.Logger
+	logger        saltLog.Logger
 	appealService domain.AppealService
 	notifier      domain.Notifier
 }
 
-func NewJobHandler(logger *zap.Logger, as domain.AppealService, notifier domain.Notifier) *JobHandler {
+func NewJobHandler(logger saltLog.Logger, as domain.AppealService, notifier domain.Notifier) *JobHandler {
 	return &JobHandler{
 		logger,
 		as,

@@ -65,12 +65,9 @@ func RunServer(c *ServiceConfig) error {
 		return err
 	}
 
-	logger, err := logger.New(&logger.Config{
+	logger := logger.New(&logger.Config{
 		Level: c.Log.Level,
 	})
-	if err != nil {
-		return err
-	}
 
 	crypto := crypto.NewAES(c.EncryptionSecretKeyKey)
 
