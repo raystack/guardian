@@ -3,20 +3,19 @@ package appeal
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/odpf/guardian/domain"
-	saltLog "github.com/odpf/salt/log"
+	"github.com/odpf/salt/log"
 )
 
 type JobHandler struct {
-	logger        saltLog.Logger
+	logger        log.Logger
 	appealService domain.AppealService
 	notifier      domain.Notifier
 }
 
-func NewJobHandler(logger saltLog.Logger, as domain.AppealService, notifier domain.Notifier) *JobHandler {
+func NewJobHandler(logger log.Logger, as domain.AppealService, notifier domain.Notifier) *JobHandler {
 	return &JobHandler{
 		logger,
 		as,
@@ -30,25 +29,25 @@ func (h *JobHandler) RevokeExpiredAccess() error {
 		"expiration_date_lt": time.Now(),
 	}
 
-	log.Println("retrieving access...")
+	h.logger.Info("retrieving access...")
 	appeals, err := h.appealService.Find(filters)
 	if err != nil {
 		return err
 	}
-	log.Printf("found %d access that should be expired\n", len(appeals))
+	h.logger.Info(fmt.Sprintf("found %d access that should be expired\n", len(appeals)))
 
 	successRevoke := []uint{}
 	failedRevoke := []map[string]interface{}{}
 	for _, a := range appeals {
-		log.Printf("revoking access with appeal id: %d\n", a.ID)
+		h.logger.Info(fmt.Sprintf("revoking access with appeal id: %d\n", a.ID))
 		if _, err := h.appealService.Revoke(a.ID, domain.SystemActorName, ""); err != nil {
-			log.Printf("failed to revoke access %d, error: %s\n", a.ID, err.Error())
+			h.logger.Info(fmt.Sprintf("failed to revoke access %d, error: %s\n", a.ID, err.Error()))
 			failedRevoke = append(failedRevoke, map[string]interface{}{
 				"id":    a.ID,
 				"error": err.Error(),
 			})
 		} else {
-			log.Panicf("access %d revoked successfully\n", a.ID)
+			h.logger.Fatal(fmt.Sprintf("access %d revoked successfully\n", a.ID))
 			successRevoke = append(successRevoke, a.ID)
 		}
 	}
@@ -61,8 +60,8 @@ func (h *JobHandler) RevokeExpiredAccess() error {
 		return err
 	}
 
-	log.Println("done!")
-	log.Println(string(result))
+	h.logger.Info("done!")
+	h.logger.Info(string(result))
 	return nil
 }
 
