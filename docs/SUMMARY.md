@@ -14,24 +14,22 @@
 * [Managing resources](guides/managing-resources.md)
 * [Managing appeals](guides/managing-appeals.md)
 
+## Providers
+
+* [Big Query](providers/bigquery.md)
+* [Tableau](providers/tableau.md)
+* [Metabase](providers/metabase.md)
+* [Grafana](providers/grafana.md)
+
 ## Concepts
 
 * [Architecture](concepts/architecture.md)
-* [Big Query](concepts/bigquery.md)
-* [Grafana](concepts/grafana.md)
-* [Metabase](concepts/metabase.md)
-* [Tableau](concepts/tableau.md)
 
 ## Reference
 
+* [Glossary](reference/glossary.md)
 * [Policy Configurations](reference/policy-config.md)
 * [Provider Configurations](reference/provider-config.md)
-* [Big Query](reference/bigquery-provider.md)
-* [Grafana](reference/grafana-provider.md)
-* [Metabase](reference/metabase-provider.md)
-* [Tableau](reference/tableau-provider.md)
-* [Glossary](reference/glossary.md)
-
 
 ## Contribute
 
