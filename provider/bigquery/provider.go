@@ -9,19 +9,17 @@ import (
 
 // Provider for bigquery
 type Provider struct {
-	typeName   string
-	bqClients  map[string]*bigQueryClient
-	iamClients map[string]*iamClient
-	crypto     domain.Crypto
+	typeName  string
+	bqClients map[string]*bigQueryClient
+	crypto    domain.Crypto
 }
 
 // NewProvider returns bigquery provider
 func NewProvider(typeName string, crypto domain.Crypto) *Provider {
 	return &Provider{
-		typeName:   typeName,
-		bqClients:  map[string]*bigQueryClient{},
-		iamClients: map[string]*iamClient{},
-		crypto:     crypto,
+		typeName:  typeName,
+		bqClients: map[string]*bigQueryClient{},
+		crypto:    crypto,
 	}
 }
 
@@ -43,7 +41,12 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 
 // GetResources returns BigQuery dataset and table resources
 func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
-	client, err := p.getBigQueryClient(pc.URN, Credentials(pc.Credentials.(string)))
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return nil, err
+	}
+
+	client, err := p.getBigQueryClient(pc.URN, creds)
 	if err != nil {
 		return nil, err
 	}
@@ -85,12 +88,11 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return err
 	}
 
-	bqClient, err := p.getBigQueryClient(pc.URN, Credentials(pc.Credentials.(string)))
-	if err != nil {
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
 	}
-
-	iamClient, err := p.getIamClient(pc.URN, Credentials(pc.Credentials.(string)))
+	bqClient, err := p.getBigQueryClient(pc.URN, creds)
 	if err != nil {
 		return err
 	}
@@ -103,15 +105,10 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 
 		for _, p := range permissions {
-			if p.Target == "" {
-				if err := bqClient.GrantDatasetAccess(ctx, d, a.User, p.Name); err != nil {
-					return err
-				}
-			} else {
-				if err := iamClient.GrantAccess(ctx, p.Target, a.User, p.Name); err != nil {
-					return err
-				}
+			if err := bqClient.GrantDatasetAccess(ctx, d, a.User, string(p)); err != nil {
+				return err
 			}
+
 		}
 
 		return nil
@@ -122,14 +119,8 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 
 		for _, p := range permissions {
-			if p.Target == "" {
-				if err := bqClient.GrantTableAccess(ctx, t, a.User, p.Name); err != nil {
-					return err
-				}
-			} else {
-				if err := iamClient.GrantAccess(ctx, p.Target, a.User, p.Name); err != nil {
-					return err
-				}
+			if err := bqClient.GrantTableAccess(ctx, t, a.User, string(p)); err != nil {
+				return err
 			}
 		}
 
@@ -149,12 +140,11 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return err
 	}
 
-	bqClient, err := p.getBigQueryClient(pc.URN, Credentials(pc.Credentials.(string)))
-	if err != nil {
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
 	}
-
-	iamClient, err := p.getIamClient(pc.URN, Credentials(pc.Credentials.(string)))
+	bqClient, err := p.getBigQueryClient(pc.URN, creds)
 	if err != nil {
 		return err
 	}
@@ -167,14 +157,8 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		}
 
 		for _, p := range permissions {
-			if p.Target == "" {
-				if err := bqClient.RevokeDatasetAccess(ctx, d, a.User, p.Name); err != nil {
-					return err
-				}
-			} else {
-				if err := iamClient.RevokeAccess(ctx, p.Target, a.User, p.Name); err != nil {
-					return err
-				}
+			if err := bqClient.RevokeDatasetAccess(ctx, d, a.User, string(p)); err != nil {
+				return err
 			}
 		}
 
@@ -186,14 +170,8 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		}
 
 		for _, p := range permissions {
-			if p.Target == "" {
-				if err := bqClient.RevokeTableAccess(ctx, t, a.User, p.Name); err != nil {
-					return err
-				}
-			} else {
-				if err := iamClient.RevokeAccess(ctx, p.Target, a.User, p.Name); err != nil {
-					return err
-				}
+			if err := bqClient.RevokeTableAccess(ctx, t, a.User, string(p)); err != nil {
+				return err
 			}
 		}
 
@@ -209,27 +187,12 @@ func (p *Provider) getBigQueryClient(projectID string, credentials Credentials) 
 	}
 
 	credentials.Decrypt(p.crypto)
-	client, err := newBigQueryClient(projectID, []byte(credentials))
+	client, err := newBigQueryClient(projectID, []byte(credentials.ServiceAccountKey), credentials.ResourceName)
 	if err != nil {
 		return nil, err
 	}
 
 	p.bqClients[projectID] = client
-	return client, nil
-}
-
-func (p *Provider) getIamClient(projectID string, credentials Credentials) (*iamClient, error) {
-	if p.iamClients[projectID] != nil {
-		return p.iamClients[projectID], nil
-	}
-
-	credentials.Decrypt(p.crypto)
-	client, err := newCloudResourceManagerClient([]byte(credentials))
-	if err != nil {
-		return nil, err
-	}
-
-	p.iamClients[projectID] = client
 	return client, nil
 }
 

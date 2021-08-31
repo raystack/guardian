@@ -18,7 +18,10 @@ const (
 )
 
 // Credentials is the authentication configuration used by the bigquery client
-type Credentials string
+type Credentials struct {
+	ServiceAccountKey string `mapstructure:"service_account_key" json:"service_account_key" validate:"required,base64"`
+	ResourceName      string `mapstructure:"resource_name" json:"resource_name" validate:"startswith=projects/"`
+}
 
 // Encrypt encrypts BigQuery credentials
 func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
@@ -26,12 +29,12 @@ func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
 		return ErrUnableToEncryptNilCredentials
 	}
 
-	encryptedCredentials, err := encryptor.Encrypt(string(*c))
+	encryptedCredentials, err := encryptor.Encrypt(string(c.ServiceAccountKey))
 	if err != nil {
 		return err
 	}
 
-	*c = Credentials(encryptedCredentials)
+	c.ServiceAccountKey = encryptedCredentials
 	return nil
 }
 
@@ -41,20 +44,17 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 		return ErrUnableToDecryptNilCredentials
 	}
 
-	decryptedCredentials, err := decryptor.Decrypt(string(*c))
+	decryptedCredentials, err := decryptor.Decrypt(string(c.ServiceAccountKey))
 	if err != nil {
 		return err
 	}
 
-	*c = Credentials(decryptedCredentials)
+	c.ServiceAccountKey = decryptedCredentials
 	return nil
 }
 
 // PermissionConfig is for mapping role into bigquery permissions
-type PermissionConfig struct {
-	Name   string `json:"name" mapstructure:"name" validate:"required"`
-	Target string `json:"target,omitempty" mapstructure:"target"`
-}
+type PermissionConfig string
 
 // Config for bigquery provider
 type Config struct {
@@ -136,22 +136,23 @@ func (c *Config) parseAndValidate() error {
 }
 
 func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
-	credentials, ok := value.(string)
-	if !ok {
-		return nil, ErrInvalidCredentials
-	}
-
-	if err := c.validator.Var(credentials, "required,base64"); err != nil {
+	var credentials Credentials
+	if err := mapstructure.Decode(value, &credentials); err != nil {
 		return nil, err
 	}
 
-	bqCreds, err := base64.StdEncoding.DecodeString(credentials)
+	if err := c.validator.Struct(credentials); err != nil {
+		return nil, err
+	}
+
+	saKeyJson, err := base64.StdEncoding.DecodeString(credentials.ServiceAccountKey)
 	if err != nil {
 		return nil, err
 	}
 
-	configValue := Credentials(bqCreds)
-	return &configValue, nil
+	credentials.ServiceAccountKey = string(saKeyJson)
+
+	return &credentials, nil
 }
 
 func (c *Config) validatePermission(value interface{}) (*PermissionConfig, error) {

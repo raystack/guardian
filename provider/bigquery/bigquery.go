@@ -11,12 +11,13 @@ import (
 )
 
 type bigQueryClient struct {
-	projectID string
-	client    *bq.Client
-	apiClient *bqApi.Service
+	projectID    string
+	resourceName string
+	client       *bq.Client
+	apiClient    *bqApi.Service
 }
 
-func newBigQueryClient(projectID string, credentialsJSON []byte) (*bigQueryClient, error) {
+func newBigQueryClient(projectID string, credentialsJSON []byte, resourceName string) (*bigQueryClient, error) {
 	ctx := context.Background()
 	client, err := bq.NewClient(ctx, projectID, option.WithCredentialsJSON(credentialsJSON))
 	if err != nil {
@@ -29,9 +30,10 @@ func newBigQueryClient(projectID string, credentialsJSON []byte) (*bigQueryClien
 	}
 
 	return &bigQueryClient{
-		projectID: projectID,
-		client:    client,
-		apiClient: apiClient,
+		projectID:    projectID,
+		resourceName: resourceName,
+		client:       client,
+		apiClient:    apiClient,
 	}, nil
 }
 

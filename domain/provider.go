@@ -6,7 +6,7 @@ import (
 
 const (
 	// ProviderTypeBigQuery is the type name for BigQuery provider
-	ProviderTypeBigQuery = "google_bigquery"
+	ProviderTypeBigQuery = "bigquery"
 	// ProviderTypeMetabase is the type name for Metabase provider
 	ProviderTypeMetabase = "metabase"
 	// ProviderTypeGrafana is the type name for Grafana provider
@@ -44,7 +44,7 @@ type AppealConfig struct {
 
 // ProviderConfig is the configuration for a data provider
 type ProviderConfig struct {
-	Type        string            `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana tableau"`
+	Type        string            `json:"type" yaml:"type" validate:"required,oneof=bigquery metabase grafana tableau"`
 	URN         string            `json:"urn" yaml:"urn" validate:"required"`
 	Labels      map[string]string `json:"labels" yaml:"labels"`
 	Credentials interface{}       `json:"credentials,omitempty" yaml:"credentials" validate:"required"`
