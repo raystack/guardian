@@ -96,10 +96,10 @@ func (h *JobHandler) NotifyAboutToExpireAccess() error {
 				User: a.User,
 				Message: domain.NotificationMessage{
 					Type: domain.NotificationTypeExpirationReminder,
-					Variables: domain.NotificationVariables{
-						ResourceName:   fmt.Sprintf("%s (%s: %s)", a.Resource.Name, a.Resource.ProviderType, a.Resource.URN),
-						Role:           a.Role,
-						ExpirationDate: *a.Options.ExpirationDate,
+					Variables: map[string]interface{}{
+						"resource_name":   fmt.Sprintf("%s (%s: %s)", a.Resource.Name, a.Resource.ProviderType, a.Resource.URN),
+						"role":            a.Role,
+						"expiration_date": *a.Options.ExpirationDate,
 					},
 				},
 			})

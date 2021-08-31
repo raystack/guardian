@@ -52,7 +52,12 @@ func (n *slackNotifier) Notify(items []domain.Notification) error {
 			return err
 		}
 
-		if err := n.sendMessage(slackID, parseMessage(item.Message, n.Messages)); err != nil {
+		msg, err := parseMessage(item.Message, n.Messages)
+		if err != nil {
+			return err
+		}
+
+		if err := n.sendMessage(slackID, msg); err != nil {
 			return err
 		}
 	}

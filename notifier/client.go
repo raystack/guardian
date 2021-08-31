@@ -1,9 +1,9 @@
 package notifier
 
 import (
+	"bytes"
 	"errors"
-	"fmt"
-	"strings"
+	"text/template"
 
 	"github.com/odpf/guardian/domain"
 )
@@ -33,26 +33,30 @@ func NewClient(config *ClientConfig) (domain.Notifier, error) {
 	return nil, errors.New("invalid notifier provider type")
 }
 
-func parseMessage(message domain.NotificationMessage, templates domain.NotificationMessages) string {
-	var result string
+func parseMessage(message domain.NotificationMessage, templates domain.NotificationMessages) (string, error) {
+	var text string
 	switch message.Type {
 	case domain.NotificationTypeAccessRevoked:
-		result = templates.AccessRevoked
+		text = templates.AccessRevoked
 	case domain.NotificationTypeAppealApproved:
-		result = templates.AppealApproved
+		text = templates.AppealApproved
 	case domain.NotificationTypeAppealRejected:
-		result = templates.AppealRejected
+		text = templates.AppealRejected
 	case domain.NotificationTypeApproverNotification:
-		result = templates.ApproverNotification
+		text = templates.ApproverNotification
 	case domain.NotificationTypeExpirationReminder:
-		result = templates.ExpirationReminder
+		text = templates.ExpirationReminder
 	}
 
-	result = strings.Replace(result, "{{resource_name}}", message.Variables.ResourceName, -1)
-	result = strings.Replace(result, "{{role}}", message.Variables.Role, -1)
-	result = strings.Replace(result, "{{expiration_date}}", message.Variables.ExpirationDate.String(), -1)
-	result = strings.Replace(result, "{{requestor}}", message.Variables.Requestor, -1)
-	result = strings.Replace(result, "{{appeal_id}}", fmt.Sprintf("%v", message.Variables.AppealID), -1)
+	t, err := template.New("notification_messages").Parse(text)
+	if err != nil {
+		return "", err
+	}
 
-	return result
+	var buff bytes.Buffer
+	if err := t.Execute(&buff, message.Variables); err != nil {
+		return "", err
+	}
+
+	return buff.String(), nil
 }

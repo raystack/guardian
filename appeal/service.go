@@ -276,9 +276,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 					User: appeal.User,
 					Message: domain.NotificationMessage{
 						Type: domain.NotificationTypeAppealApproved,
-						Variables: domain.NotificationVariables{
-							ResourceName: fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
-							Role:         appeal.Role,
+						Variables: map[string]interface{}{
+							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+							"role":          appeal.Role,
 						},
 					},
 				})
@@ -287,9 +287,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 					User: appeal.User,
 					Message: domain.NotificationMessage{
 						Type: domain.NotificationTypeAppealRejected,
-						Variables: domain.NotificationVariables{
-							ResourceName: fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
-							Role:         appeal.Role,
+						Variables: map[string]interface{}{
+							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+							"role":          appeal.Role,
 						},
 					},
 				})
@@ -371,9 +371,9 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 		User: appeal.User,
 		Message: domain.NotificationMessage{
 			Type: domain.NotificationTypeAccessRevoked,
-			Variables: domain.NotificationVariables{
-				ResourceName: fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
-				Role:         appeal.Role,
+			Variables: map[string]interface{}{
+				"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+				"role":          appeal.Role,
 			},
 		},
 	}}); err != nil {
@@ -531,11 +531,11 @@ func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 				User: approver,
 				Message: domain.NotificationMessage{
 					Type: domain.NotificationTypeApproverNotification,
-					Variables: domain.NotificationVariables{
-						ResourceName: fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
-						Role:         appeal.Role,
-						Requestor:    appeal.User,
-						AppealID:     appeal.ID,
+					Variables: map[string]interface{}{
+						"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+						"role":          appeal.Role,
+						"requestor":     appeal.User,
+						"appeal_id":     appeal.ID,
 					},
 				},
 			})

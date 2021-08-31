@@ -914,9 +914,9 @@ func (s *ServiceTestSuite) TestMakeAction() {
 						User: "user@email.com",
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealApproved,
-							Variables: domain.NotificationVariables{
-								ResourceName: "test-resource-name (test-provider: urn)",
-								Role:         "test-role",
+							Variables: map[string]interface{}{
+								"resource_name": "test-resource-name (test-provider: urn)",
+								"role":          "test-role",
 							},
 						},
 					},
@@ -985,9 +985,9 @@ func (s *ServiceTestSuite) TestMakeAction() {
 						User: "user@email.com",
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealRejected,
-							Variables: domain.NotificationVariables{
-								ResourceName: "test-resource-name (test-provider: urn)",
-								Role:         "test-role",
+							Variables: map[string]interface{}{
+								"resource_name": "test-resource-name (test-provider: urn)",
+								"role":          "test-role",
 							},
 						},
 					},
@@ -1065,9 +1065,9 @@ func (s *ServiceTestSuite) TestMakeAction() {
 						User: "user@email.com",
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealRejected,
-							Variables: domain.NotificationVariables{
-								ResourceName: "test-resource-name (test-provider: urn)",
-								Role:         "test-role",
+							Variables: map[string]interface{}{
+								"resource_name": "test-resource-name (test-provider: urn)",
+								"role":          "test-role",
 							},
 						},
 					},
@@ -1144,11 +1144,11 @@ func (s *ServiceTestSuite) TestMakeAction() {
 						User: "nextapprover1@email.com",
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeApproverNotification,
-							Variables: domain.NotificationVariables{
-								ResourceName: "test-resource-name (test-provider: urn)",
-								Role:         "test-role",
-								Requestor:    "user@email.com",
-								AppealID:     validApprovalActionParam.AppealID,
+							Variables: map[string]interface{}{
+								"resource_name": "test-resource-name (test-provider: urn)",
+								"role":          "test-role",
+								"requestor":     "user@email.com",
+								"appeal_id":     validApprovalActionParam.AppealID,
 							},
 						},
 					},
@@ -1156,11 +1156,11 @@ func (s *ServiceTestSuite) TestMakeAction() {
 						User: "nextapprover2@email.com",
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeApproverNotification,
-							Variables: domain.NotificationVariables{
-								ResourceName: "test-resource-name (test-provider: urn)",
-								Role:         "test-role",
-								Requestor:    "user@email.com",
-								AppealID:     validApprovalActionParam.AppealID,
+							Variables: map[string]interface{}{
+								"resource_name": "test-resource-name (test-provider: urn)",
+								"role":          "test-role",
+								"requestor":     "user@email.com",
+								"appeal_id":     validApprovalActionParam.AppealID,
 							},
 						},
 					},
