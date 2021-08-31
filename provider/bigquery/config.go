@@ -8,7 +8,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/utils"
 )
 
 const (
@@ -20,7 +19,7 @@ const (
 // Credentials is the authentication configuration used by the bigquery client
 type Credentials struct {
 	ServiceAccountKey string `mapstructure:"service_account_key" json:"service_account_key" validate:"required,base64"`
-	ResourceName      string `mapstructure:"resource_name" json:"resource_name" validate:"startswith=projects/"`
+	ResourceName      string `mapstructure:"resource_name" json:"resource_name" validate:"startswith=project/"`
 }
 
 // Encrypt encrypts BigQuery credentials
@@ -156,15 +155,11 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 }
 
 func (c *Config) validatePermission(value interface{}) (*PermissionConfig, error) {
-	permissionConfig, ok := value.(map[string]interface{})
+	permissionConfig, ok := value.(string)
 	if !ok {
 		return nil, ErrInvalidPermissionConfig
 	}
 
-	var pc PermissionConfig
-	if err := mapstructure.Decode(permissionConfig, &pc); err != nil {
-		return nil, err
-	}
-
-	return &pc, utils.ValidateStruct(pc)
+	configValue := PermissionConfig(permissionConfig)
+	return &configValue, nil
 }

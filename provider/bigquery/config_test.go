@@ -27,10 +27,11 @@ func TestNewConfig(t *testing.T) {
 
 func TestValidate(t *testing.T) {
 	mockCrypto := new(mocks.Crypto)
-	validCredentials := base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
-	validPermissionConfig := map[string]interface{}{
-		"name": "roleName",
+	validCredentials := bigquery.Credentials{
+		ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+		ResourceName:      "project/resource-name",
 	}
+	validPermissionConfig := "permission-name"
 
 	t.Run("error validations", func(t *testing.T) {
 		testCases := []struct {
@@ -41,7 +42,7 @@ func TestValidate(t *testing.T) {
 			{
 				name:             "should return error if credentials is not a base64 string",
 				credentials:      "non-base64-value",
-				permissionConfig: validPermissionConfig,
+				permissionConfig: "permission-name",
 			},
 			{
 				name:             "should return error if permission type is invalid",
@@ -49,11 +50,11 @@ func TestValidate(t *testing.T) {
 				permissionConfig: 0,
 			},
 			{
-				name:        "should return error if permission config does not contain name field",
-				credentials: validCredentials,
-				permissionConfig: map[string]interface{}{
-					"target": "target_value",
+				name: "should return error if credentials config does not contain resource name field",
+				credentials: map[string]interface{}{
+					"service_account_key": base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
 				},
+				permissionConfig: "permission-name",
 			},
 		}
 
