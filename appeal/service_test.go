@@ -8,9 +8,9 @@ import (
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/salt/log"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap"
 )
 
 type ServiceTestSuite struct {
@@ -45,7 +45,7 @@ func (s *ServiceTestSuite) SetupTest() {
 		s.mockPolicyService,
 		s.mockIAMService,
 		s.mockNotifier,
-		&zap.Logger{},
+		log.NewNoop(),
 	)
 	service.TimeNow = func() time.Time {
 		return s.now

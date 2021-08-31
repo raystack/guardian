@@ -10,7 +10,7 @@ import (
 	"github.com/mcuadros/go-lookup"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/utils"
-	"go.uber.org/zap"
+	"github.com/odpf/salt/log"
 )
 
 var TimeNow = time.Now
@@ -34,7 +34,7 @@ type Service struct {
 	policyService   domain.PolicyService
 	iamService      domain.IAMService
 	notifier        domain.Notifier
-	logger          *zap.Logger
+	logger          log.Logger
 
 	validator *validator.Validate
 	TimeNow   func() time.Time
@@ -49,7 +49,7 @@ func NewService(
 	policyService domain.PolicyService,
 	iamService domain.IAMService,
 	notifier domain.Notifier,
-	logger *zap.Logger,
+	logger log.Logger,
 ) *Service {
 	return &Service{
 		repo:            appealRepository,

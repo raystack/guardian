@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -16,7 +15,6 @@ import (
 	"github.com/odpf/guardian/crypto"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/iam"
-	"github.com/odpf/guardian/logger"
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/notifier"
 	"github.com/odpf/guardian/policy"
@@ -28,6 +26,7 @@ import (
 	"github.com/odpf/guardian/resource"
 	"github.com/odpf/guardian/scheduler"
 	"github.com/odpf/guardian/store"
+	"github.com/odpf/salt/log"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
@@ -44,7 +43,7 @@ type ServiceConfig struct {
 	EncryptionSecretKeyKey string           `mapstructure:"encryption_secret_key"`
 	SlackAccessToken       string           `mapstructure:"slack_access_token"`
 	IAM                    iam.ClientConfig `mapstructure:"iam"`
-	Log                    logger.Config    `mapstructure:"log"`
+	LogLevel               string           `mapstructure:"log_level" default:"info"`
 	DB                     store.Config     `mapstructure:"db"`
 }
 
@@ -65,13 +64,7 @@ func RunServer(c *ServiceConfig) error {
 		return err
 	}
 
-	logger, err := logger.New(&logger.Config{
-		Level: c.Log.Level,
-	})
-	if err != nil {
-		return err
-	}
-
+	logger := log.NewLogrus(log.LogrusWithLevel(c.LogLevel))
 	crypto := crypto.NewAES(c.EncryptionSecretKeyKey)
 
 	providerRepository := provider.NewRepository(db)
@@ -185,7 +178,7 @@ func RunServer(c *ServiceConfig) error {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	log.Println("server running on port:", c.Port)
+	logger.Info(fmt.Sprintf("server running on port: %d", c.Port))
 	if err := server.ListenAndServe(); err != nil {
 		if err != http.ErrServerClosed {
 			return err
