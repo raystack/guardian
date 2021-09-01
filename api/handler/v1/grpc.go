@@ -267,28 +267,37 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *pb.UpdateResourceR
 	}, nil
 }
 
+func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *pb.ListUserAppealsRequest) (*pb.ListUserAppealsResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	filters := map[string]interface{}{
+		"user": user,
+	}
+	appeals, err := s.listAppeals(filters)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ListUserAppealsResponse{
+		Appeals: appeals,
+	}, nil
+}
+
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *pb.ListAppealsRequest) (*pb.ListAppealsResponse, error) {
 	filters := map[string]interface{}{}
 	if req.GetUser() != "" {
 		filters["user"] = req.GetUser()
 	}
-
-	appeals, err := s.appealService.Find(filters)
+	appeals, err := s.listAppeals(filters)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to get appeal list", err)
-	}
-
-	appealProtos := []*pb.Appeal{}
-	for _, a := range appeals {
-		appealProto, err := s.adapter.ToAppealProto(a)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
-		}
-		appealProtos = append(appealProtos, appealProto)
+		return nil, err
 	}
 
 	return &pb.ListAppealsResponse{
-		Appeals: appealProtos,
+		Appeals: appeals,
 	}, nil
 }
 
@@ -461,6 +470,24 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealReque
 	return &pb.RevokeAppealResponse{
 		Appeal: appealProto,
 	}, nil
+}
+
+func (s *GRPCServer) listAppeals(filters map[string]interface{}) ([]*pb.Appeal, error) {
+	appeals, err := s.appealService.Find(filters)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get appeal list: %s", err)
+	}
+
+	appealProtos := []*pb.Appeal{}
+	for _, a := range appeals {
+		appealProto, err := s.adapter.ToAppealProto(a)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse appeal: %s", err)
+		}
+		appealProtos = append(appealProtos, appealProto)
+	}
+
+	return appealProtos, nil
 }
 
 func (s *GRPCServer) getUser(ctx context.Context) (string, error) {

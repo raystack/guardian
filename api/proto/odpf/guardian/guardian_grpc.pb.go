@@ -27,6 +27,7 @@ type GuardianServiceClient interface {
 	UpdatePolicy(ctx context.Context, in *UpdatePolicyRequest, opts ...grpc.CallOption) (*UpdatePolicyResponse, error)
 	ListResources(ctx context.Context, in *ListResourcesRequest, opts ...grpc.CallOption) (*ListResourcesResponse, error)
 	UpdateResource(ctx context.Context, in *UpdateResourceRequest, opts ...grpc.CallOption) (*UpdateResourceResponse, error)
+	ListUserAppeals(ctx context.Context, in *ListUserAppealsRequest, opts ...grpc.CallOption) (*ListUserAppealsResponse, error)
 	ListAppeals(ctx context.Context, in *ListAppealsRequest, opts ...grpc.CallOption) (*ListAppealsResponse, error)
 	GetAppeal(ctx context.Context, in *GetAppealRequest, opts ...grpc.CallOption) (*GetAppealResponse, error)
 	CancelAppeal(ctx context.Context, in *CancelAppealRequest, opts ...grpc.CallOption) (*CancelAppealResponse, error)
@@ -125,6 +126,15 @@ func (c *guardianServiceClient) UpdateResource(ctx context.Context, in *UpdateRe
 	return out, nil
 }
 
+func (c *guardianServiceClient) ListUserAppeals(ctx context.Context, in *ListUserAppealsRequest, opts ...grpc.CallOption) (*ListUserAppealsResponse, error) {
+	out := new(ListUserAppealsResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.GuardianService/ListUserAppeals", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *guardianServiceClient) ListAppeals(ctx context.Context, in *ListAppealsRequest, opts ...grpc.CallOption) (*ListAppealsResponse, error) {
 	out := new(ListAppealsResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.GuardianService/ListAppeals", in, out, opts...)
@@ -201,6 +211,7 @@ type GuardianServiceServer interface {
 	UpdatePolicy(context.Context, *UpdatePolicyRequest) (*UpdatePolicyResponse, error)
 	ListResources(context.Context, *ListResourcesRequest) (*ListResourcesResponse, error)
 	UpdateResource(context.Context, *UpdateResourceRequest) (*UpdateResourceResponse, error)
+	ListUserAppeals(context.Context, *ListUserAppealsRequest) (*ListUserAppealsResponse, error)
 	ListAppeals(context.Context, *ListAppealsRequest) (*ListAppealsResponse, error)
 	GetAppeal(context.Context, *GetAppealRequest) (*GetAppealResponse, error)
 	CancelAppeal(context.Context, *CancelAppealRequest) (*CancelAppealResponse, error)
@@ -241,6 +252,9 @@ func (UnimplementedGuardianServiceServer) ListResources(context.Context, *ListRe
 }
 func (UnimplementedGuardianServiceServer) UpdateResource(context.Context, *UpdateResourceRequest) (*UpdateResourceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateResource not implemented")
+}
+func (UnimplementedGuardianServiceServer) ListUserAppeals(context.Context, *ListUserAppealsRequest) (*ListUserAppealsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUserAppeals not implemented")
 }
 func (UnimplementedGuardianServiceServer) ListAppeals(context.Context, *ListAppealsRequest) (*ListAppealsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAppeals not implemented")
@@ -438,6 +452,24 @@ func _GuardianService_UpdateResource_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GuardianService_ListUserAppeals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserAppealsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).ListUserAppeals(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.GuardianService/ListUserAppeals",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).ListUserAppeals(ctx, req.(*ListUserAppealsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _GuardianService_ListAppeals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListAppealsRequest)
 	if err := dec(in); err != nil {
@@ -606,6 +638,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateResource",
 			Handler:    _GuardianService_UpdateResource_Handler,
+		},
+		{
+			MethodName: "ListUserAppeals",
+			Handler:    _GuardianService_ListUserAppeals_Handler,
 		},
 		{
 			MethodName: "ListAppeals",
