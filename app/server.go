@@ -41,12 +41,13 @@ var (
 )
 
 type ServiceConfig struct {
-	Port                   int              `mapstructure:"port" default:"8080"`
-	EncryptionSecretKeyKey string           `mapstructure:"encryption_secret_key"`
-	SlackAccessToken       string           `mapstructure:"slack_access_token"`
-	IAM                    iam.ClientConfig `mapstructure:"iam"`
-	LogLevel               string           `mapstructure:"log_level" default:"info"`
-	DB                     store.Config     `mapstructure:"db"`
+	Port                       int              `mapstructure:"port" default:"8080"`
+	EncryptionSecretKeyKey     string           `mapstructure:"encryption_secret_key"`
+	SlackAccessToken           string           `mapstructure:"slack_access_token"`
+	IAM                        iam.ClientConfig `mapstructure:"iam"`
+	LogLevel                   string           `mapstructure:"log_level" default:"info"`
+	DB                         store.Config     `mapstructure:"db"`
+	AuthenticatedUserHeaderKey string           `mapstructure:"authenticated_user_header_key"`
 }
 
 // LoadServiceConfig returns service configuration
@@ -145,12 +146,14 @@ func RunServer(c *ServiceConfig) error {
 		appealService,
 		approvalService,
 		protoAdapter,
+		c.AuthenticatedUserHeaderKey,
 	))
 
 	// init http proxy
 	timeoutGrpcDialCtx, grpcDialCancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer grpcDialCancel()
 
+	headerMatcher := makeHeaderMatcher(c)
 	gwmux := runtime.NewServeMux(
 		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
 		runtime.WithIncomingHeaderMatcher(headerMatcher),
@@ -236,11 +239,13 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 	}), &http2.Server{})
 }
 
-func headerMatcher(key string) (string, bool) {
-	switch key {
-	case "X-Goog-Authenticated-User-Email":
-		return key, true
-	default:
-		return runtime.DefaultHeaderMatcher(key)
+func makeHeaderMatcher(c *ServiceConfig) func(key string) (string, bool) {
+	return func(key string) (string, bool) {
+		switch key {
+		case c.AuthenticatedUserHeaderKey:
+			return key, true
+		default:
+			return runtime.DefaultHeaderMatcher(key)
+		}
 	}
 }

@@ -3,7 +3,6 @@ package v1
 import (
 	"context"
 	"errors"
-	"time"
 
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/appeal"
@@ -42,7 +41,7 @@ type GRPCServer struct {
 	approvalService domain.ApprovalService
 	adapter         ProtoAdapter
 
-	Now func() time.Time
+	authenticatedUserHeaderKey string
 
 	pb.UnimplementedGuardianServiceServer
 }
@@ -54,14 +53,16 @@ func NewGRPCServer(
 	appealService domain.AppealService,
 	approvalService domain.ApprovalService,
 	adapter ProtoAdapter,
+	authenticatedUserHeaderKey string,
 ) *GRPCServer {
 	return &GRPCServer{
-		resourceService: resourceService,
-		providerService: providerService,
-		policyService:   policyService,
-		appealService:   appealService,
-		approvalService: approvalService,
-		adapter:         adapter,
+		resourceService:            resourceService,
+		providerService:            providerService,
+		policyService:              policyService,
+		appealService:              appealService,
+		approvalService:            approvalService,
+		adapter:                    adapter,
+		authenticatedUserHeaderKey: authenticatedUserHeaderKey,
 	}
 }
 
@@ -362,7 +363,7 @@ func (s *GRPCServer) GetAppeal(ctx context.Context, req *pb.GetAppealRequest) (*
 }
 
 func (s *GRPCServer) UpdateApproval(ctx context.Context, req *pb.UpdateApprovalRequest) (*pb.UpdateApprovalResponse, error) {
-	actor, err := s.getActor(ctx)
+	actor, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -436,7 +437,7 @@ func (s *GRPCServer) CancelAppeal(ctx context.Context, req *pb.CancelAppealReque
 
 func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealRequest) (*pb.RevokeAppealResponse, error) {
 	id := req.GetId()
-	actor, err := s.getActor(ctx)
+	actor, err := s.getUser(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to get metadata: actor")
 	}
@@ -462,12 +463,13 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealReque
 	}, nil
 }
 
-func (s *GRPCServer) getActor(ctx context.Context) (string, error) {
+func (s *GRPCServer) getUser(ctx context.Context) (string, error) {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if userEmail, ok := md["x-goog-authenticated-user-email"]; ok {
-			return userEmail[0], nil
+		users := md.Get(s.authenticatedUserHeaderKey)
+		if len(users) > 0 {
+			return users[0], nil
 		}
 	}
 
-	return "", status.Error(codes.Internal, "failed to get request metadata")
+	return "", status.Error(codes.Unauthenticated, "user email not found")
 }
