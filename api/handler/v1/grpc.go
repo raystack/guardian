@@ -328,26 +328,36 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealReque
 	}, nil
 }
 
+func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *pb.ListUserApprovalsRequest) (*pb.ListUserApprovalsResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
+		User:     user,
+		Statuses: req.GetStatuses(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ListUserApprovalsResponse{
+		Approvals: approvals,
+	}, nil
+}
+
 func (s *GRPCServer) ListApprovals(ctx context.Context, req *pb.ListApprovalsRequest) (*pb.ListApprovalsResponse, error) {
-	approvals, err := s.approvalService.ListApprovals(&domain.ListApprovalsFilter{
+	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
 		User:     req.GetUser(),
 		Statuses: req.GetStatuses(),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to get approval list", err)
-	}
-
-	approvalProtos := []*pb.Approval{}
-	for _, a := range approvals {
-		approvalProto, err := s.adapter.ToApprovalProto(a)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "%s: failed to parse approval: %v", err, a.ID)
-		}
-		approvalProtos = append(approvalProtos, approvalProto)
+		return nil, err
 	}
 
 	return &pb.ListApprovalsResponse{
-		Approvals: approvalProtos,
+		Approvals: approvals,
 	}, nil
 }
 
@@ -488,6 +498,24 @@ func (s *GRPCServer) listAppeals(filters map[string]interface{}) ([]*pb.Appeal, 
 	}
 
 	return appealProtos, nil
+}
+
+func (s *GRPCServer) listApprovals(filters *domain.ListApprovalsFilter) ([]*pb.Approval, error) {
+	approvals, err := s.approvalService.ListApprovals(filters)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get approval list: %s", err)
+	}
+
+	approvalProtos := []*pb.Approval{}
+	for _, a := range approvals {
+		approvalProto, err := s.adapter.ToApprovalProto(a)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse approval: %v: %s", a.ID, err)
+		}
+		approvalProtos = append(approvalProtos, approvalProto)
+	}
+
+	return approvalProtos, nil
 }
 
 func (s *GRPCServer) getUser(ctx context.Context) (string, error) {

@@ -33,6 +33,7 @@ type GuardianServiceClient interface {
 	CancelAppeal(ctx context.Context, in *CancelAppealRequest, opts ...grpc.CallOption) (*CancelAppealResponse, error)
 	RevokeAppeal(ctx context.Context, in *RevokeAppealRequest, opts ...grpc.CallOption) (*RevokeAppealResponse, error)
 	CreateAppeal(ctx context.Context, in *CreateAppealRequest, opts ...grpc.CallOption) (*CreateAppealResponse, error)
+	ListUserApprovals(ctx context.Context, in *ListUserApprovalsRequest, opts ...grpc.CallOption) (*ListUserApprovalsResponse, error)
 	ListApprovals(ctx context.Context, in *ListApprovalsRequest, opts ...grpc.CallOption) (*ListApprovalsResponse, error)
 	UpdateApproval(ctx context.Context, in *UpdateApprovalRequest, opts ...grpc.CallOption) (*UpdateApprovalResponse, error)
 }
@@ -180,6 +181,15 @@ func (c *guardianServiceClient) CreateAppeal(ctx context.Context, in *CreateAppe
 	return out, nil
 }
 
+func (c *guardianServiceClient) ListUserApprovals(ctx context.Context, in *ListUserApprovalsRequest, opts ...grpc.CallOption) (*ListUserApprovalsResponse, error) {
+	out := new(ListUserApprovalsResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.GuardianService/ListUserApprovals", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *guardianServiceClient) ListApprovals(ctx context.Context, in *ListApprovalsRequest, opts ...grpc.CallOption) (*ListApprovalsResponse, error) {
 	out := new(ListApprovalsResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.GuardianService/ListApprovals", in, out, opts...)
@@ -217,6 +227,7 @@ type GuardianServiceServer interface {
 	CancelAppeal(context.Context, *CancelAppealRequest) (*CancelAppealResponse, error)
 	RevokeAppeal(context.Context, *RevokeAppealRequest) (*RevokeAppealResponse, error)
 	CreateAppeal(context.Context, *CreateAppealRequest) (*CreateAppealResponse, error)
+	ListUserApprovals(context.Context, *ListUserApprovalsRequest) (*ListUserApprovalsResponse, error)
 	ListApprovals(context.Context, *ListApprovalsRequest) (*ListApprovalsResponse, error)
 	UpdateApproval(context.Context, *UpdateApprovalRequest) (*UpdateApprovalResponse, error)
 	mustEmbedUnimplementedGuardianServiceServer()
@@ -270,6 +281,9 @@ func (UnimplementedGuardianServiceServer) RevokeAppeal(context.Context, *RevokeA
 }
 func (UnimplementedGuardianServiceServer) CreateAppeal(context.Context, *CreateAppealRequest) (*CreateAppealResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateAppeal not implemented")
+}
+func (UnimplementedGuardianServiceServer) ListUserApprovals(context.Context, *ListUserApprovalsRequest) (*ListUserApprovalsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUserApprovals not implemented")
 }
 func (UnimplementedGuardianServiceServer) ListApprovals(context.Context, *ListApprovalsRequest) (*ListApprovalsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListApprovals not implemented")
@@ -560,6 +574,24 @@ func _GuardianService_CreateAppeal_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GuardianService_ListUserApprovals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserApprovalsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).ListUserApprovals(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.GuardianService/ListUserApprovals",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).ListUserApprovals(ctx, req.(*ListUserApprovalsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _GuardianService_ListApprovals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListApprovalsRequest)
 	if err := dec(in); err != nil {
@@ -662,6 +694,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateAppeal",
 			Handler:    _GuardianService_CreateAppeal_Handler,
+		},
+		{
+			MethodName: "ListUserApprovals",
+			Handler:    _GuardianService_ListUserApprovals_Handler,
 		},
 		{
 			MethodName: "ListApprovals",
