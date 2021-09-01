@@ -10,7 +10,7 @@ import (
 	"github.com/mcuadros/go-lookup"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/utils"
-	"go.uber.org/zap"
+	"github.com/odpf/salt/log"
 )
 
 var TimeNow = time.Now
@@ -34,9 +34,10 @@ type Service struct {
 	policyService   domain.PolicyService
 	iamService      domain.IAMService
 	notifier        domain.Notifier
-	logger          *zap.Logger
+	logger          log.Logger
 
 	validator *validator.Validate
+	TimeNow   func() time.Time
 }
 
 // NewService returns service struct
@@ -48,7 +49,7 @@ func NewService(
 	policyService domain.PolicyService,
 	iamService domain.IAMService,
 	notifier domain.Notifier,
-	logger *zap.Logger,
+	logger log.Logger,
 ) *Service {
 	return &Service{
 		repo:            appealRepository,
@@ -60,6 +61,7 @@ func NewService(
 		notifier:        notifier,
 		validator:       validator.New(),
 		logger:          logger,
+		TimeNow:         time.Now,
 	}
 }
 
@@ -135,8 +137,9 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			}
 		}
 
+		// TODO: do validation in providerService.ValidateRole()
 		resourceConfig := providerConfig.resources[a.Resource.Type]
-		if !utils.ContainsString(resourceConfig.availableRoleIDs, a.Role) {
+		if len(resourceConfig.availableRoleIDs) > 0 && !utils.ContainsString(resourceConfig.availableRoleIDs, a.Role) {
 			return ErrInvalidRole
 		}
 
@@ -309,10 +312,6 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 	return nil, ErrApprovalNameNotFound
 }
 
-func (s *Service) GetPendingApprovals(user string) ([]*domain.Approval, error) {
-	return s.approvalService.GetPendingApprovals(user)
-}
-
 func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 	appeal, err := s.GetByID(id)
 	if err != nil {
@@ -336,7 +335,7 @@ func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 	return appeal, nil
 }
 
-func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
+func (s *Service) Revoke(id uint, actor, reason string) (*domain.Appeal, error) {
 	appeal, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -345,16 +344,12 @@ func (s *Service) Revoke(id uint, actor string) (*domain.Appeal, error) {
 		return nil, ErrAppealNotFound
 	}
 
-	if actor != domain.SystemActorName {
-		lastApprovalStep := appeal.Approvals[len(appeal.Approvals)-1]
-		if !utils.ContainsString(lastApprovalStep.Approvers, actor) {
-			return nil, ErrRevokeAppealForbidden
-		}
-	}
-
 	revokedAppeal := &domain.Appeal{}
 	*revokedAppeal = *appeal
 	revokedAppeal.Status = domain.AppealStatusTerminated
+	revokedAppeal.RevokedAt = s.TimeNow()
+	revokedAppeal.RevokedBy = actor
+	revokedAppeal.RevokeReason = reason
 
 	if err := s.repo.Update(revokedAppeal); err != nil {
 		return nil, err

@@ -8,9 +8,9 @@ import (
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/salt/log"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap"
 )
 
 type ServiceTestSuite struct {
@@ -24,6 +24,7 @@ type ServiceTestSuite struct {
 	mockNotifier        *mocks.Notifier
 
 	service *appeal.Service
+	now     time.Time
 }
 
 func (s *ServiceTestSuite) SetupTest() {
@@ -34,8 +35,9 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockPolicyService = new(mocks.PolicyService)
 	s.mockIAMService = new(mocks.IAMService)
 	s.mockNotifier = new(mocks.Notifier)
+	s.now = time.Now()
 
-	s.service = appeal.NewService(
+	service := appeal.NewService(
 		s.mockRepository,
 		s.mockApprovalService,
 		s.mockResourceService,
@@ -43,8 +45,13 @@ func (s *ServiceTestSuite) SetupTest() {
 		s.mockPolicyService,
 		s.mockIAMService,
 		s.mockNotifier,
-		&zap.Logger{},
+		log.NewNoop(),
 	)
+	service.TimeNow = func() time.Time {
+		return s.now
+	}
+
+	s.service = service
 }
 
 func (s *ServiceTestSuite) TestGetByID() {
@@ -178,7 +185,7 @@ func (s *ServiceTestSuite) TestCreate() {
 							ID:      "policy_id",
 							Version: 1,
 						},
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "role_1",
 							},
@@ -396,7 +403,7 @@ func (s *ServiceTestSuite) TestCreate() {
 							ID:      "policy_1",
 							Version: 1,
 						},
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "role_id",
 							},
@@ -1195,24 +1202,12 @@ func (s *ServiceTestSuite) TestMakeAction() {
 // 	s.Run("should return error from")
 // }
 
-func (s *ServiceTestSuite) TestGetPendingApprovals() {
-	s.Run("should return error if got error from repository", func() {
-		expectedError := errors.New("repository error")
-		s.mockApprovalService.On("GetPendingApprovals", mock.Anything).Return(nil, expectedError).Once()
-
-		actualResult, actualError := s.service.GetPendingApprovals("user@email.com")
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
-	})
-}
-
 func (s *ServiceTestSuite) TestRevoke() {
 	s.Run("should return error if got any while getting appeal details", func() {
 		expectedError := errors.New("repository error")
 		s.mockRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Revoke(0, "")
+		actualResult, actualError := s.service.Revoke(0, "", "")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -1222,7 +1217,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 		s.mockRepository.On("GetByID", mock.Anything).Return(nil, nil).Once()
 		expectedError := appeal.ErrAppealNotFound
 
-		actualResult, actualError := s.service.Revoke(0, "")
+		actualResult, actualError := s.service.Revoke(0, "", "")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -1230,24 +1225,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 
 	appealID := uint(1)
 	actor := "user@email.com"
-
-	s.Run("should return error if actor doesn't have permission to revoke", func() {
-		expectedAppeal := &domain.Appeal{
-			ID: appealID,
-			Approvals: []*domain.Approval{
-				{
-					Approvers: []string{"approver@email.com"},
-				},
-			},
-		}
-		s.mockRepository.On("GetByID", appealID).Return(expectedAppeal, nil).Once()
-		expectedError := appeal.ErrRevokeAppealForbidden
-
-		actualResult, actualError := s.service.Revoke(appealID, actor)
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
-	})
+	reason := "test-reason"
 
 	appealDetails := &domain.Appeal{
 		ID:         appealID,
@@ -1256,11 +1234,6 @@ func (s *ServiceTestSuite) TestRevoke() {
 			ID:  1,
 			URN: "urn",
 		},
-		Approvals: []*domain.Approval{
-			{
-				Approvers: []string{actor},
-			},
-		},
 	}
 
 	s.Run("should return error if got any while updating appeal", func() {
@@ -1268,7 +1241,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 		expectedError := errors.New("repository error")
 		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
 
-		actualResult, actualError := s.service.Revoke(appealID, actor)
+		actualResult, actualError := s.service.Revoke(appealID, actor, reason)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -1281,7 +1254,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 		s.mockProviderService.On("RevokeAccess", mock.Anything).Return(expectedError).Once()
 		s.mockRepository.On("Update", appealDetails).Return(nil).Once()
 
-		actualResult, actualError := s.service.Revoke(appealID, actor)
+		actualResult, actualError := s.service.Revoke(appealID, actor, reason)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -1292,11 +1265,14 @@ func (s *ServiceTestSuite) TestRevoke() {
 		expectedAppeal := &domain.Appeal{}
 		*expectedAppeal = *appealDetails
 		expectedAppeal.Status = domain.AppealStatusTerminated
+		expectedAppeal.RevokedAt = s.now
+		expectedAppeal.RevokedBy = actor
+		expectedAppeal.RevokeReason = reason
 		s.mockRepository.On("Update", expectedAppeal).Return(nil).Once()
 		s.mockProviderService.On("RevokeAccess", appealDetails).Return(nil).Once()
 		s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 
-		actualResult, actualError := s.service.Revoke(appealID, actor)
+		actualResult, actualError := s.service.Revoke(appealID, actor, reason)
 
 		s.Equal(expectedAppeal, actualResult)
 		s.Nil(actualError)

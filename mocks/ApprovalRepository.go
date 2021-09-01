@@ -26,13 +26,13 @@ func (_m *ApprovalRepository) BulkInsert(_a0 []*domain.Approval) error {
 	return r0
 }
 
-// GetPendingApprovals provides a mock function with given fields: user
-func (_m *ApprovalRepository) GetPendingApprovals(user string) ([]*domain.Approval, error) {
-	ret := _m.Called(user)
+// ListApprovals provides a mock function with given fields: _a0
+func (_m *ApprovalRepository) ListApprovals(_a0 *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
+	ret := _m.Called(_a0)
 
 	var r0 []*domain.Approval
-	if rf, ok := ret.Get(0).(func(string) []*domain.Approval); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(*domain.ListApprovalsFilter) []*domain.Approval); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*domain.Approval)
@@ -40,8 +40,8 @@ func (_m *ApprovalRepository) GetPendingApprovals(user string) ([]*domain.Approv
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(user)
+	if rf, ok := ret.Get(1).(func(*domain.ListApprovalsFilter) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
