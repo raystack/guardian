@@ -5,12 +5,12 @@ import (
 
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
-	"go.uber.org/zap"
+	"github.com/odpf/salt/log"
 )
 
 // Service handling the business logics
 type Service struct {
-	logger             *zap.Logger
+	logger             *log.Logrus
 	providerRepository domain.ProviderRepository
 	resourceService    domain.ResourceService
 
@@ -18,7 +18,7 @@ type Service struct {
 }
 
 // NewService returns service struct
-func NewService(logger *zap.Logger, pr domain.ProviderRepository, rs domain.ResourceService, providers []domain.ProviderInterface) *Service {
+func NewService(logger *log.Logrus, pr domain.ProviderRepository, rs domain.ResourceService, providers []domain.ProviderInterface) *Service {
 	mapProviders := make(map[string]domain.ProviderInterface)
 	for _, p := range providers {
 		mapProviders[p.GetType()] = p

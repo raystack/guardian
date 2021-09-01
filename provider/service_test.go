@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/logger"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/provider"
+	"github.com/odpf/salt/log"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -25,7 +25,7 @@ type ServiceTestSuite struct {
 }
 
 func (s *ServiceTestSuite) SetupTest() {
-	logger, _ := logger.New(&logger.Config{})
+	logger := log.NewLogrus(log.LogrusWithLevel("info"))
 	s.mockProviderRepository = new(mocks.ProviderRepository)
 	s.mockResourceService = new(mocks.ResourceService)
 	s.mockProvider = new(mocks.ProviderInterface)
