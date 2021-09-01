@@ -183,7 +183,7 @@ func TestGrantAccess(t *testing.T) {
 				resourceConfigs: []*domain.ResourceConfig{
 					{
 						Type: "test-type",
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "not-test-role",
 							},
@@ -202,7 +202,7 @@ func TestGrantAccess(t *testing.T) {
 				resourceConfigs: []*domain.ResourceConfig{
 					{
 						Type: "test-type",
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
@@ -244,7 +244,7 @@ func TestGrantAccess(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: "test-type",
-					Roles: []*domain.RoleConfig{
+					Roles: []*domain.Role{
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
@@ -284,7 +284,7 @@ func TestGrantAccess(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: "test-type",
-					Roles: []*domain.RoleConfig{
+					Roles: []*domain.Role{
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
@@ -325,7 +325,7 @@ func TestGrantAccess(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: "test-type",
-					Roles: []*domain.RoleConfig{
+					Roles: []*domain.Role{
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
@@ -372,7 +372,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: metabase.ResourceTypeDatabase,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
@@ -425,7 +425,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: metabase.ResourceTypeDatabase,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "viewer",
 								Permissions: []interface{}{
@@ -478,7 +478,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: metabase.ResourceTypeCollection,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
@@ -532,7 +532,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: metabase.ResourceTypeCollection,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "viewer",
 								Permissions: []interface{}{

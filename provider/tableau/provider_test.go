@@ -343,7 +343,7 @@ func TestGrantAccess(t *testing.T) {
 				resourceConfigs: []*domain.ResourceConfig{
 					{
 						Type: "test-type",
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "not-test-role",
 							},
@@ -362,7 +362,7 @@ func TestGrantAccess(t *testing.T) {
 				resourceConfigs: []*domain.ResourceConfig{
 					{
 						Type: "test-type",
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
@@ -404,7 +404,7 @@ func TestGrantAccess(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: "test-type",
-					Roles: []*domain.RoleConfig{
+					Roles: []*domain.Role{
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
@@ -445,7 +445,7 @@ func TestGrantAccess(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: "test-type",
-					Roles: []*domain.RoleConfig{
+					Roles: []*domain.Role{
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
@@ -487,7 +487,7 @@ func TestGrantAccess(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: "test-type",
-					Roles: []*domain.RoleConfig{
+					Roles: []*domain.Role{
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
@@ -535,7 +535,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: tableau.ResourceTypeWorkbook,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
@@ -589,7 +589,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: tableau.ResourceTypeWorkbook,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "viewer",
 								Permissions: []interface{}{
@@ -643,7 +643,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: tableau.ResourceTypeFlow,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
@@ -697,7 +697,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: tableau.ResourceTypeFlow,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "viewer",
 								Permissions: []interface{}{
@@ -751,7 +751,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: tableau.ResourceTypeView,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
@@ -805,7 +805,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: tableau.ResourceTypeView,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "viewer",
 								Permissions: []interface{}{
@@ -859,7 +859,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: tableau.ResourceTypeMetric,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
@@ -913,7 +913,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: tableau.ResourceTypeMetric,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "viewer",
 								Permissions: []interface{}{
@@ -967,7 +967,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: tableau.ResourceTypeDataSource,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
@@ -1021,7 +1021,7 @@ func TestGrantAccess(t *testing.T) {
 				Resources: []*domain.ResourceConfig{
 					{
 						Type: tableau.ResourceTypeDataSource,
-						Roles: []*domain.RoleConfig{
+						Roles: []*domain.Role{
 							{
 								ID: "viewer",
 								Permissions: []interface{}{

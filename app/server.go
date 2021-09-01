@@ -20,6 +20,7 @@ import (
 	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/provider"
 	"github.com/odpf/guardian/provider/bigquery"
+	"github.com/odpf/guardian/provider/gcloudiam"
 	"github.com/odpf/guardian/provider/grafana"
 	"github.com/odpf/guardian/provider/metabase"
 	"github.com/odpf/guardian/provider/tableau"
@@ -30,6 +31,7 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/gorm"
 )
 
@@ -84,6 +86,7 @@ func RunServer(c *ServiceConfig) error {
 		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
 		grafana.NewProvider(domain.ProviderTypeGrafana, crypto),
 		tableau.NewProvider(domain.ProviderTypeTableau, crypto),
+		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, crypto),
 	}
 
 	notifier := notifier.NewSlackNotifier(c.SlackAccessToken)
@@ -91,6 +94,7 @@ func RunServer(c *ServiceConfig) error {
 	resourceService := resource.NewService(resourceRepository)
 	policyService := policy.NewService(policyRepository)
 	providerService := provider.NewService(
+		logger,
 		providerRepository,
 		resourceService,
 		providers,
@@ -150,6 +154,11 @@ func RunServer(c *ServiceConfig) error {
 	gwmux := runtime.NewServeMux(
 		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
 		runtime.WithIncomingHeaderMatcher(headerMatcher),
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			MarshalOptions: protojson.MarshalOptions{
+				UseProtoNames: true,
+			},
+		}),
 	)
 	address := fmt.Sprintf(":%d", c.Port)
 	grpcConn, err := grpc.DialContext(timeoutGrpcDialCtx, address, grpc.WithInsecure())

@@ -137,8 +137,9 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			}
 		}
 
+		// TODO: do validation in providerService.ValidateRole()
 		resourceConfig := providerConfig.resources[a.Resource.Type]
-		if !utils.ContainsString(resourceConfig.availableRoleIDs, a.Role) {
+		if len(resourceConfig.availableRoleIDs) > 0 && !utils.ContainsString(resourceConfig.availableRoleIDs, a.Role) {
 			return ErrInvalidRole
 		}
 

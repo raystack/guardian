@@ -20,6 +20,7 @@ type ProtoAdapter interface {
 	FromProviderConfigProto(*pb.ProviderConfig) (*domain.ProviderConfig, error)
 	ToProviderProto(*domain.Provider) (*pb.Provider, error)
 	ToProviderConfigProto(*domain.ProviderConfig) (*pb.ProviderConfig, error)
+	ToRole(*domain.Role) (*pb.Role, error)
 
 	FromPolicyProto(*pb.Policy) (*domain.Policy, error)
 	ToPolicyProto(*domain.Policy) (*pb.Policy, error)
@@ -133,6 +134,27 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *pb.UpdateProviderR
 
 	return &pb.UpdateProviderResponse{
 		Provider: providerProto,
+	}, nil
+}
+
+func (s *GRPCServer) ListRoles(ctx context.Context, req *pb.ListRolesRequest) (*pb.ListRolesResponse, error) {
+	roles, err := s.providerService.GetRoles(uint(req.GetId()), req.GetResourceType())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list roles: %s", err.Error())
+	}
+
+	roleProtos := []*pb.Role{}
+	for _, r := range roles {
+		role, err := s.adapter.ToRole(r)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse proto: %s", err.Error())
+		}
+
+		roleProtos = append(roleProtos, role)
+	}
+
+	return &pb.ListRolesResponse{
+		Roles: roleProtos,
 	}, nil
 }
 

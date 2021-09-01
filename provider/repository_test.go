@@ -147,7 +147,7 @@ func (s *RepositoryTestSuite) TestGetByID() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "providers" WHERE "providers"."deleted_at" IS NULL LIMIT 1`)
+	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "providers" WHERE id = $1 AND "providers"."deleted_at" IS NULL ORDER BY "providers"."id" LIMIT 1`)
 	s.Run("should return record and nil error on success", func() {
 		expectedID := uint(10)
 		timeNow := time.Now()
