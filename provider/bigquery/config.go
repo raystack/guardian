@@ -43,7 +43,7 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 		return ErrUnableToDecryptNilCredentials
 	}
 
-	decryptedCredentials, err := decryptor.Decrypt(string(c.ServiceAccountKey))
+	decryptedCredentials, err := decryptor.Decrypt(c.ServiceAccountKey)
 	if err != nil {
 		return err
 	}
