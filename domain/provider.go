@@ -81,6 +81,7 @@ type ProviderService interface {
 	Update(*Provider) error
 	FetchResources() error
 	GetRoles(id uint, resourceType string) ([]*Role, error)
+	ValidateAppeal(*Appeal, *Provider) error
 	GrantAccess(*Appeal) error
 	RevokeAccess(*Appeal) error
 }

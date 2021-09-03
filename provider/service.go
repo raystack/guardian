@@ -125,6 +125,40 @@ func (s *Service) GetRoles(id uint, resourceType string) ([]*domain.Role, error)
 	return provider.GetRoles(p.Config, resourceType)
 }
 
+func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
+	if err := s.validateAppealParam(a); err != nil {
+		return err
+	}
+
+	resourceType := a.Resource.Type
+	provider := s.getProvider(p.Type)
+	roles, err := provider.GetRoles(p.Config, resourceType)
+	if err != nil {
+		return err
+	}
+
+	isRoleExists := false
+	for _, role := range roles {
+		if a.Role == role.Name {
+			isRoleExists = true
+		}
+	}
+
+	if !isRoleExists {
+		return ErrInvalidRole
+	}
+
+	if !p.Config.Appeal.AllowPermanentAccess {
+		if a.Options == nil || a.Options.ExpirationDate == nil {
+			return ErrOptionsExpirationDateOptionNotFound
+		} else if a.Options.ExpirationDate.IsZero() {
+			return ErrExpirationDateIsRequired
+		}
+	}
+
+	return nil
+}
+
 func (s *Service) GrantAccess(a *domain.Appeal) error {
 	if err := s.validateAppealParam(a); err != nil {
 		return err
@@ -170,6 +204,8 @@ func (s *Service) validateAppealParam(a *domain.Appeal) error {
 	if a.Resource == nil {
 		return ErrNilResource
 	}
+	//TO-DO
+	//Make sure the user and role is required
 	return nil
 }
 

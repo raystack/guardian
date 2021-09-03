@@ -128,15 +128,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return ErrResourceTypeNotFound
 		}
 
-		appealConfig := providerConfig.appeal
-		if !appealConfig.AllowPermanentAccess {
-			if a.Options == nil || a.Options.ExpirationDate == nil {
-				return ErrOptionsExpirationDateOptionNotFound
-			} else if a.Options.ExpirationDate.IsZero() {
-				return ErrExpirationDateIsRequired
-			}
-		}
-
+		// move this to providerService.ValidateAppeal
 		// TODO: do validation in providerService.ValidateRole()
 		resourceConfig := providerConfig.resources[a.Resource.Type]
 		if len(resourceConfig.availableRoleIDs) > 0 && !utils.ContainsString(resourceConfig.availableRoleIDs, a.Role) {
