@@ -7,6 +7,7 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/provider"
+	"github.com/odpf/salt/log"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -24,12 +25,13 @@ type ServiceTestSuite struct {
 }
 
 func (s *ServiceTestSuite) SetupTest() {
+	logger := log.NewLogrus(log.LogrusWithLevel("info"))
 	s.mockProviderRepository = new(mocks.ProviderRepository)
 	s.mockResourceService = new(mocks.ResourceService)
 	s.mockProvider = new(mocks.ProviderInterface)
 	s.mockProvider.On("GetType").Return(mockProviderType).Once()
 
-	s.service = provider.NewService(s.mockProviderRepository, s.mockResourceService, []domain.ProviderInterface{s.mockProvider})
+	s.service = provider.NewService(logger, s.mockProviderRepository, s.mockResourceService, []domain.ProviderInterface{s.mockProvider})
 }
 
 func (s *ServiceTestSuite) TestCreate() {
@@ -208,16 +210,6 @@ func (s *ServiceTestSuite) TestFetchResources() {
 			Config: &domain.ProviderConfig{},
 		},
 	}
-
-	s.Run("should return error if got any from provider's GetResources", func() {
-		s.mockProviderRepository.On("Find").Return(providers, nil).Once()
-		expectedError := errors.New("any error")
-		s.mockProvider.On("GetResources", mock.Anything).Return(nil, expectedError).Once()
-
-		actualError := s.service.FetchResources()
-
-		s.EqualError(actualError, expectedError.Error())
-	})
 
 	s.Run("should return error if got any from resource service", func() {
 		s.mockProviderRepository.On("Find").Return(providers, nil).Once()

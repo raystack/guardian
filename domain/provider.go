@@ -13,10 +13,12 @@ const (
 	ProviderTypeGrafana = "grafana"
 	// ProviderTypeTableau is the type name for Tableau provider
 	ProviderTypeTableau = "tableau"
+	// ProviderTypeGCloudIAM is the type name for Google Cloud IAM provider
+	ProviderTypeGCloudIAM = "gcloud_iam"
 )
 
-// RoleConfig is the configuration to define a role and mapping the permissions in the provider
-type RoleConfig struct {
+// Role is the configuration to define a role and mapping the permissions in the provider
+type Role struct {
 	ID          string        `json:"id" yaml:"id" validate:"required"`
 	Name        string        `json:"name" yaml:"name" validate:"required"`
 	Description string        `json:"description,omitempty" yaml:"description"`
@@ -33,7 +35,7 @@ type PolicyConfig struct {
 type ResourceConfig struct {
 	Type   string        `json:"type" yaml:"type" validate:"required"`
 	Policy *PolicyConfig `json:"policy" yaml:"policy"`
-	Roles  []*RoleConfig `json:"roles" yaml:"roles" validate:"required"`
+	Roles  []*Role       `json:"roles" yaml:"roles" validate:"required"`
 }
 
 // AppealConfig is the policy configuration of the appeal
@@ -44,7 +46,7 @@ type AppealConfig struct {
 
 // ProviderConfig is the configuration for a data provider
 type ProviderConfig struct {
-	Type        string            `json:"type" yaml:"type" validate:"required,oneof=bigquery metabase grafana tableau"`
+	Type        string            `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana tableau gcloud_iam"`
 	URN         string            `json:"urn" yaml:"urn" validate:"required"`
 	Labels      map[string]string `json:"labels" yaml:"labels"`
 	Credentials interface{}       `json:"credentials,omitempty" yaml:"credentials" validate:"required"`
@@ -78,6 +80,7 @@ type ProviderService interface {
 	Find() ([]*Provider, error)
 	Update(*Provider) error
 	FetchResources() error
+	GetRoles(id uint, resourceType string) ([]*Role, error)
 	GrantAccess(*Appeal) error
 	RevokeAccess(*Appeal) error
 }
@@ -87,6 +90,7 @@ type ProviderInterface interface {
 	GetType() string
 	CreateConfig(*ProviderConfig) error
 	GetResources(pc *ProviderConfig) ([]*Resource, error)
+	GetRoles(pc *ProviderConfig, resourceType string) ([]*Role, error)
 	GrantAccess(*ProviderConfig, *Appeal) error
 	RevokeAccess(*ProviderConfig, *Appeal) error
 }

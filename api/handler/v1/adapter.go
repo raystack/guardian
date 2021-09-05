@@ -46,14 +46,14 @@ func (a *adapter) FromProviderConfigProto(pc *pb.ProviderConfig) (*domain.Provid
 			Version: int(policyProto.GetVersion()),
 		}
 
-		roles := []*domain.RoleConfig{}
+		roles := []*domain.Role{}
 		for _, role := range r.GetRoles() {
 			permissions := []interface{}{}
 			for _, p := range role.GetPermissions() {
 				permissions = append(permissions, p.AsInterface())
 			}
 
-			roles = append(roles, &domain.RoleConfig{
+			roles = append(roles, &domain.Role{
 				ID:          role.GetId(),
 				Name:        role.GetName(),
 				Description: role.GetDescription(),
@@ -118,23 +118,13 @@ func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*pb.Provider
 			Version: int32(rc.Policy.Version),
 		}
 
-		roles := []*pb.ProviderConfig_ResourceConfig_RoleConfig{}
+		roles := []*pb.Role{}
 		for _, role := range rc.Roles {
-			permissions := []*structpb.Value{}
-			for _, p := range role.Permissions {
-				permission, err := structpb.NewValue(p)
-				if err != nil {
-					return nil, err
-				}
-				permissions = append(permissions, permission)
+			roleProto, err := a.ToRole(role)
+			if err != nil {
+				return nil, err
 			}
-
-			roles = append(roles, &pb.ProviderConfig_ResourceConfig_RoleConfig{
-				Id:          role.ID,
-				Name:        role.Name,
-				Description: role.Description,
-				Permissions: permissions,
-			})
+			roles = append(roles, roleProto)
 		}
 
 		resources = append(resources, &pb.ProviderConfig_ResourceConfig{
@@ -151,6 +141,24 @@ func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*pb.Provider
 		Credentials: credentials,
 		Appeal:      appeal,
 		Resources:   resources,
+	}, nil
+}
+
+func (a *adapter) ToRole(role *domain.Role) (*pb.Role, error) {
+	permissions := []*structpb.Value{}
+	for _, p := range role.Permissions {
+		permission, err := structpb.NewValue(p)
+		if err != nil {
+			return nil, err
+		}
+		permissions = append(permissions, permission)
+	}
+
+	return &pb.Role{
+		Id:          role.ID,
+		Name:        role.Name,
+		Description: role.Description,
+		Permissions: permissions,
 	}, nil
 }
 
@@ -320,7 +328,7 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 
 func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 	var expirationDate *timestamppb.Timestamp
-	if appeal.Options.ExpirationDate != nil {
+	if appeal.Options != nil && appeal.Options.ExpirationDate != nil {
 		expirationDate = timestamppb.New(*appeal.Options.ExpirationDate)
 	}
 	options := &pb.Appeal_AppealOptions{

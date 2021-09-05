@@ -6,6 +6,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/provider"
 )
 
 // Provider for bigquery
@@ -182,6 +183,10 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	return ErrInvalidResourceType
 }
 
+func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {
+	return provider.GetRoles(pc, resourceType)
+}
+
 func (p *Provider) getBigQueryClient(credentials Credentials) (*bigQueryClient, error) {
 	projectID := strings.Replace(credentials.ResourceName, "projects/", "", 1)
 	if p.bqClients[projectID] != nil {
@@ -228,18 +233,18 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 		return nil, ErrInvalidResourceType
 	}
 
-	var roleConfig *domain.RoleConfig
-	for _, rc := range resourceConfig.Roles {
-		if rc.ID == a.Role {
-			roleConfig = rc
+	var role *domain.Role
+	for _, r := range resourceConfig.Roles {
+		if r.ID == a.Role {
+			role = r
 		}
 	}
-	if roleConfig == nil {
+	if role == nil {
 		return nil, ErrInvalidRole
 	}
 
 	var permissions []PermissionConfig
-	for _, p := range roleConfig.Permissions {
+	for _, p := range role.Permissions {
 		var permission PermissionConfig
 		if err := mapstructure.Decode(p, &permission); err != nil {
 			return nil, err

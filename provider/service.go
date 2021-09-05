@@ -1,12 +1,16 @@
 package provider
 
 import (
+	"fmt"
+
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/salt/log"
 )
 
 // Service handling the business logics
 type Service struct {
+	logger             *log.Logrus
 	providerRepository domain.ProviderRepository
 	resourceService    domain.ResourceService
 
@@ -14,13 +18,14 @@ type Service struct {
 }
 
 // NewService returns service struct
-func NewService(pr domain.ProviderRepository, rs domain.ResourceService, providers []domain.ProviderInterface) *Service {
+func NewService(logger *log.Logrus, pr domain.ProviderRepository, rs domain.ResourceService, providers []domain.ProviderInterface) *Service {
 	mapProviders := make(map[string]domain.ProviderInterface)
 	for _, p := range providers {
 		mapProviders[p.GetType()] = p
 	}
 
 	return &Service{
+		logger:             logger,
 		providerRepository: pr,
 		resourceService:    rs,
 		providers:          mapProviders,
@@ -91,18 +96,33 @@ func (s *Service) FetchResources() error {
 	for _, p := range providers {
 		provider := s.getProvider(p.Type)
 		if provider == nil {
-			return ErrInvalidProviderType
+			s.logger.Error(fmt.Sprintf("%v: %v", ErrInvalidProviderType, p.Type))
+			continue
 		}
 
 		res, err := provider.GetResources(p.Config)
 		if err != nil {
-			return err
+			s.logger.Error(fmt.Sprintf("error fetching resources for %v: %v", p.ID, err))
+			continue
 		}
 
 		resources = append(resources, res...)
 	}
 
 	return s.resourceService.BulkUpsert(resources)
+}
+
+func (s *Service) GetRoles(id uint, resourceType string) ([]*domain.Role, error) {
+	p, err := s.providerRepository.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if p == nil {
+		return nil, ErrRecordNotFound
+	}
+
+	provider := s.getProvider(p.Type)
+	return provider.GetRoles(p.Config, resourceType)
 }
 
 func (s *Service) GrantAccess(a *domain.Appeal) error {

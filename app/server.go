@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -16,21 +15,23 @@ import (
 	"github.com/odpf/guardian/crypto"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/iam"
-	"github.com/odpf/guardian/logger"
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/notifier"
 	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/provider"
 	"github.com/odpf/guardian/provider/bigquery"
+	"github.com/odpf/guardian/provider/gcloudiam"
 	"github.com/odpf/guardian/provider/grafana"
 	"github.com/odpf/guardian/provider/metabase"
 	"github.com/odpf/guardian/provider/tableau"
 	"github.com/odpf/guardian/resource"
 	"github.com/odpf/guardian/scheduler"
 	"github.com/odpf/guardian/store"
+	"github.com/odpf/salt/log"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/gorm"
 )
 
@@ -40,12 +41,12 @@ var (
 )
 
 type ServiceConfig struct {
-	Port                   int              `mapstructure:"port" default:"8080"`
-	EncryptionSecretKeyKey string           `mapstructure:"encryption_secret_key"`
-	SlackAccessToken       string           `mapstructure:"slack_access_token"`
-	IAM                    iam.ClientConfig `mapstructure:"iam"`
-	Log                    logger.Config    `mapstructure:"log"`
-	DB                     store.Config     `mapstructure:"db"`
+	Port                   int                   `mapstructure:"port" default:"8080"`
+	EncryptionSecretKeyKey string                `mapstructure:"encryption_secret_key"`
+	Notifier               notifier.ClientConfig `mapstructure:"notifier"`
+	IAM                    iam.ClientConfig      `mapstructure:"iam"`
+	LogLevel               string                `mapstructure:"log_level" default:"info"`
+	DB                     store.Config          `mapstructure:"db"`
 }
 
 // LoadServiceConfig returns service configuration
@@ -65,13 +66,7 @@ func RunServer(c *ServiceConfig) error {
 		return err
 	}
 
-	logger, err := logger.New(&logger.Config{
-		Level: c.Log.Level,
-	})
-	if err != nil {
-		return err
-	}
-
+	logger := log.NewLogrus(log.LogrusWithLevel(c.LogLevel))
 	crypto := crypto.NewAES(c.EncryptionSecretKeyKey)
 
 	providerRepository := provider.NewRepository(db)
@@ -91,13 +86,18 @@ func RunServer(c *ServiceConfig) error {
 		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
 		grafana.NewProvider(domain.ProviderTypeGrafana, crypto),
 		tableau.NewProvider(domain.ProviderTypeTableau, crypto),
+		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, crypto),
 	}
 
-	notifier := notifier.NewSlackNotifier(c.SlackAccessToken)
+	notifier, err := notifier.NewClient(&c.Notifier)
+	if err != nil {
+		return err
+	}
 
 	resourceService := resource.NewService(resourceRepository)
 	policyService := policy.NewService(policyRepository)
 	providerService := provider.NewService(
+		logger,
 		providerRepository,
 		resourceService,
 		providers,
@@ -157,6 +157,11 @@ func RunServer(c *ServiceConfig) error {
 	gwmux := runtime.NewServeMux(
 		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
 		runtime.WithIncomingHeaderMatcher(headerMatcher),
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			MarshalOptions: protojson.MarshalOptions{
+				UseProtoNames: true,
+			},
+		}),
 	)
 	address := fmt.Sprintf(":%d", c.Port)
 	grpcConn, err := grpc.DialContext(timeoutGrpcDialCtx, address, grpc.WithInsecure())
@@ -185,7 +190,7 @@ func RunServer(c *ServiceConfig) error {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	log.Println("server running on port:", c.Port)
+	logger.Info(fmt.Sprintf("server running on port: %d", c.Port))
 	if err := server.ListenAndServe(); err != nil {
 		if err != http.ErrServerClosed {
 			return err

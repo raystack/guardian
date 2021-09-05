@@ -64,7 +64,7 @@ func TestValidate(t *testing.T) {
 					Credentials: tc.credentials,
 					Resources: []*domain.ResourceConfig{
 						{
-							Roles: []*domain.RoleConfig{
+							Roles: []*domain.Role{
 								{
 									Permissions: []interface{}{tc.permissionConfig},
 								},
@@ -85,7 +85,7 @@ func TestValidate(t *testing.T) {
 			Credentials: validCredentials,
 			Resources: []*domain.ResourceConfig{
 				{
-					Roles: []*domain.RoleConfig{
+					Roles: []*domain.Role{
 						{
 							Permissions: []interface{}{validPermissionConfig},
 						},
