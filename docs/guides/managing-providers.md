@@ -8,8 +8,10 @@ Provider config example:
 
 ```yaml
 type: google_bigquery
-urn: gcp-project-id
-credentials: {base64 service account key json}
+urn: bg-resource-urn
+credentials: 
+  - service_account_key: {base64 encoded service account key json}
+  - resource_name: projects/gcp-project-id
 appeal:
   allow_active_access_extension_in: 7d
 resources:
@@ -53,8 +55,10 @@ Accept: application/json
 
 Request Body:
 type: google_bigquery
-urn: gcp-project-id
-credentials: {base64 service account key json}
+urn: bg-resource-urn
+credentials: 
+  - service_account_key: {base64 encoded service account key json}
+  - resource_name: projects/gcp-project-id
 appeal:
   allow_active_access_extension_in: 7d
 resources:
@@ -174,8 +178,10 @@ Accept: application/json
 
 Request Body:
 type: google_bigquery
-urn: gcp-project-id
-credentials: {base64 service account key json}
+urn: bg-resource-urn
+credentials: 
+  - service_account_key: {base64 encoded service account key json}
+  - resource_name: projects/gcp-project-id
 appeal:
   allow_active_access_extension_in: 7d
 resources:

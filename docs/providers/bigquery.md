@@ -31,8 +31,10 @@ In Guardian, user access can be given at the dataset or table level. To give mor
 
 ```yaml
 type: google_bigquery
-urn: gcp-project-id
-credentials: <base64 encoded service account key json>
+urn: bg-resource-urn
+credentials: 
+  - service_account_key: <base64 encoded service account key json>
+  - resource_name: projects/gcp-project-id
 appeal:
   allow_active_access_extension_in: '7d'
 resources:
@@ -66,7 +68,7 @@ resources:
 
 ### `BigQueryCredentials`
 
-`string`. BigQuery credentials is a **base64 encoded** service account key json.
+`string`. BigQuery credentials is a struct containing **base64 encoded** service account key json and resource name which should be having a **projects/** prefix followed by the gcp project id.
 
 ### `BigQueryResourceType`
 
