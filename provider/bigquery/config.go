@@ -28,7 +28,7 @@ func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
 		return ErrUnableToEncryptNilCredentials
 	}
 
-	encryptedCredentials, err := encryptor.Encrypt(string(c.ServiceAccountKey))
+	encryptedCredentials, err := encryptor.Encrypt(c.ServiceAccountKey)
 	if err != nil {
 		return err
 	}
