@@ -10,7 +10,7 @@ Example resource object:
 {
   "id": 1,
   "provider_type": "google_bigquery",
-  "provider_urn": "gcp-project-id",
+  "provider_urn": "resource-urn",
   "type": "table",
   "urn": "gcp-project-id:dataset_name.table_name",
   "name": "table_name",
@@ -36,7 +36,7 @@ Response:
   {
     "id": 1,
     "provider_type": "google_bigquery",
-    "provider_urn": "gcp-project-id",
+    "provider_urn": "resource-urn",
     "type": "table",
     "urn": "gcp-project-id:dataset_name.table_name",
     "name": "table_name",
@@ -79,7 +79,7 @@ Response:
 {
   "id": 1,
   "provider_type": "google_bigquery",
-  "provider_urn": "gcp-project-id",
+  "provider_urn": "resource-urn",
   "type": "table",
   "urn": "gcp-project-id:dataset_name.table_name",
   "name": "table_name",
