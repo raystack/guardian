@@ -8,6 +8,7 @@ import (
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/guardian/provider"
 	"github.com/odpf/salt/log"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -170,7 +171,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	})
 
 	s.Run("should return error for invalid appeals", func() {
-		provider := &domain.Provider{
+		testProvider := &domain.Provider{
 			ID:   1,
 			Type: "provider_type",
 			URN:  "provider_urn",
@@ -196,13 +197,15 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		timeNow := time.Now()
 		testCases := []struct {
-			name           string
-			resources      []*domain.Resource
-			providers      []*domain.Provider
-			policies       []*domain.Policy
-			pendingAppeals []*domain.Appeal
-			appeals        []*domain.Appeal
-			expectedError  error
+			name                          string
+			resources                     []*domain.Resource
+			providers                     []*domain.Provider
+			policies                      []*domain.Policy
+			pendingAppeals                []*domain.Appeal
+			callValidateAppeal            bool
+			expectedAppealValidationError error
+			appeals                       []*domain.Appeal
+			expectedError                 error
 		}{
 			{
 				name: "duplciate appeal",
@@ -225,7 +228,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderType: "invalid_provider_type",
 					ProviderURN:  "provider_urn",
 				}},
-				providers:     []*domain.Provider{provider},
+				providers:     []*domain.Provider{testProvider},
 				appeals:       []*domain.Appeal{{ResourceID: 1}},
 				expectedError: appeal.ErrProviderTypeNotFound,
 			},
@@ -236,7 +239,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderType: "provider_type",
 					ProviderURN:  "invalid_provider_urn",
 				}},
-				providers:     []*domain.Provider{provider},
+				providers:     []*domain.Provider{testProvider},
 				appeals:       []*domain.Appeal{{ResourceID: 1}},
 				expectedError: appeal.ErrProviderURNNotFound,
 			},
@@ -248,7 +251,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "invalid_resource_type",
 				}},
-				providers:     []*domain.Provider{provider},
+				providers:     []*domain.Provider{testProvider},
 				appeals:       []*domain.Appeal{{ResourceID: 1}},
 				expectedError: appeal.ErrResourceTypeNotFound,
 			},
@@ -260,7 +263,9 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
-				providers: []*domain.Provider{provider},
+				providers:                     []*domain.Provider{testProvider},
+				callValidateAppeal:            true,
+				expectedAppealValidationError: provider.ErrOptionsExpirationDateOptionNotFound,
 				appeals: []*domain.Appeal{{
 					ResourceID: 1,
 				}},
@@ -274,7 +279,9 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
-				providers: []*domain.Provider{provider},
+				providers:                     []*domain.Provider{testProvider},
+				callValidateAppeal:            true,
+				expectedAppealValidationError: provider.ErrExpirationDateIsRequired,
 				appeals: []*domain.Appeal{{
 					ResourceID: 1,
 					Options: &domain.AppealOptions{
@@ -291,7 +298,9 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
-				providers: []*domain.Provider{provider},
+				providers:                     []*domain.Provider{testProvider},
+				callValidateAppeal:            true,
+				expectedAppealValidationError: provider.ErrInvalidRole,
 				appeals: []*domain.Appeal{{
 					ResourceID: 1,
 					Role:       "invalid_role",
@@ -309,7 +318,8 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
-				providers: []*domain.Provider{provider},
+				providers:          []*domain.Provider{testProvider},
+				callValidateAppeal: true,
 				appeals: []*domain.Appeal{{
 					ResourceID: 1,
 					Role:       "role_1",
@@ -327,7 +337,8 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
-				providers: []*domain.Provider{provider},
+				callValidateAppeal: true,
+				providers:          []*domain.Provider{testProvider},
 				policies: []*domain.Policy{{
 					ID: "policy_id",
 				}},
@@ -348,6 +359,9 @@ func (s *ServiceTestSuite) TestCreate() {
 				s.mockProviderService.On("Find").Return(tc.providers, nil).Once()
 				s.mockPolicyService.On("Find").Return(tc.policies, nil).Once()
 				s.mockRepository.On("Find", mock.Anything).Return(tc.pendingAppeals, nil).Once()
+				if tc.callValidateAppeal {
+					s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(tc.expectedAppealValidationError).Once()
+				}
 
 				actualError := s.service.Create(tc.appeals)
 
@@ -531,6 +545,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			"statuses": []string{domain.AppealStatusPending},
 		}
 		s.mockRepository.On("Find", expectedPendingAppealsFilters).Return([]*domain.Appeal{}, nil).Once()
+		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(nil)
 		expectedUserApprovers := []string{"user.approver@email.com"}
 		s.mockIAMService.On("GetUserApproverEmails", user).Return(expectedUserApprovers, nil)
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
