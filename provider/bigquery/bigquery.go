@@ -151,21 +151,19 @@ func (c *bigQueryClient) RevokeDatasetAccess(ctx context.Context, d *Dataset, us
 		return err
 	}
 
-	isAccessFound := false
-	newAccessEntries := []*bq.AccessEntry{}
+	remainingAccessEntries := []*bq.AccessEntry{}
 	for _, a := range metadata.Access {
 		if a.Entity == user && a.Role == bqRole {
-			isAccessFound = true
 			continue
 		}
-		newAccessEntries = append(newAccessEntries, a)
+		remainingAccessEntries = append(remainingAccessEntries, a)
 	}
-	if !isAccessFound {
+	if len(remainingAccessEntries) == len(metadata.Access) {
 		return ErrPermissionNotFound
 	}
 
 	update := bq.DatasetMetadataToUpdate{
-		Access: newAccessEntries,
+		Access: remainingAccessEntries,
 	}
 
 	_, err = dataset.Update(ctx, update, metadata.ETag)

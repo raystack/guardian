@@ -8,7 +8,7 @@ Provider config example:
 
 ```yaml
 type: google_bigquery
-urn: bg-resource-urn
+urn: bq-resource-urn
 credentials: 
   - service_account_key: {base64 encoded service account key json}
   - resource_name: projects/gcp-project-id
