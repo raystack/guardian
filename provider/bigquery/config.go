@@ -19,7 +19,7 @@ const (
 // Credentials is the authentication configuration used by the bigquery client
 type Credentials struct {
 	ServiceAccountKey string `mapstructure:"service_account_key" json:"service_account_key" validate:"required,base64"`
-	ResourceName      string `mapstructure:"resource_name" json:"resource_name" validate:"startswith=project/"`
+	ResourceName      string `mapstructure:"resource_name" json:"resource_name" validate:"startswith=projects/"`
 }
 
 // Encrypt encrypts BigQuery credentials
