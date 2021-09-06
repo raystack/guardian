@@ -33,10 +33,16 @@ type slackNotifier struct {
 	accessToken string
 
 	slackIDCache map[string]string
+	Messages     domain.NotificationMessages
 }
 
-func NewSlackNotifier(accessToken string) *slackNotifier {
-	return &slackNotifier{accessToken, map[string]string{}}
+type SlackConfig struct {
+	AccessToken string `mapstructure:"access_token"`
+	Messages    domain.NotificationMessages
+}
+
+func NewSlackNotifier(config *SlackConfig) *slackNotifier {
+	return &slackNotifier{config.AccessToken, map[string]string{}, config.Messages}
 }
 
 func (n *slackNotifier) Notify(items []domain.Notification) error {
@@ -46,7 +52,12 @@ func (n *slackNotifier) Notify(items []domain.Notification) error {
 			return err
 		}
 
-		if err := n.sendMessage(slackID, item.Message); err != nil {
+		msg, err := parseMessage(item.Message, n.Messages)
+		if err != nil {
+			return err
+		}
+
+		if err := n.sendMessage(slackID, msg); err != nil {
 			return err
 		}
 	}

@@ -180,12 +180,14 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return err
 		}
 		a.Policy = nil
-
-		notifications = append(notifications, getApprovalNotifications(a)...)
 	}
 
 	if err := s.repo.BulkInsert(appeals); err != nil {
 		return err
+	}
+
+	for _, a := range appeals {
+		notifications = append(notifications, getApprovalNotifications(a)...)
 	}
 
 	if len(notifications) > 0 {
@@ -207,7 +209,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 		return nil, err
 	}
 	if appeal == nil {
-		return nil, nil
+		return nil, ErrAppealNotFound
 	}
 
 	if err := checkIfAppealStatusStillPending(appeal.Status); err != nil {
@@ -274,13 +276,25 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 			notifications := []domain.Notification{}
 			if appeal.Status == domain.AppealStatusActive {
 				notifications = append(notifications, domain.Notification{
-					User:    appeal.User,
-					Message: fmt.Sprintf("Your appeal to %s has been approved", appeal.Resource.URN),
+					User: appeal.User,
+					Message: domain.NotificationMessage{
+						Type: domain.NotificationTypeAppealApproved,
+						Variables: map[string]interface{}{
+							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+							"role":          appeal.Role,
+						},
+					},
 				})
 			} else if appeal.Status == domain.AppealStatusRejected {
 				notifications = append(notifications, domain.Notification{
-					User:    appeal.User,
-					Message: fmt.Sprintf("Your appeal to %s is rejected", appeal.Resource.URN),
+					User: appeal.User,
+					Message: domain.NotificationMessage{
+						Type: domain.NotificationTypeAppealRejected,
+						Variables: map[string]interface{}{
+							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+							"role":          appeal.Role,
+						},
+					},
 				})
 			} else {
 				notifications = append(notifications, getApprovalNotifications(appeal)...)
@@ -349,8 +363,14 @@ func (s *Service) Revoke(id uint, actor, reason string) (*domain.Appeal, error) 
 	}
 
 	if err := s.notifier.Notify([]domain.Notification{{
-		User:    appeal.User,
-		Message: fmt.Sprintf("Your access to %s has been revoked", appeal.Resource.URN),
+		User: appeal.User,
+		Message: domain.NotificationMessage{
+			Type: domain.NotificationTypeAccessRevoked,
+			Variables: map[string]interface{}{
+				"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+				"role":          appeal.Role,
+			},
+		},
 	}}); err != nil {
 		s.logger.Error(err.Error())
 	}
@@ -503,8 +523,16 @@ func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 	if approval != nil {
 		for _, approver := range approval.Approvers {
 			notifications = append(notifications, domain.Notification{
-				User:    approver,
-				Message: fmt.Sprintf("You have an appeal from %s to access %s", appeal.User, appeal.Resource.URN),
+				User: approver,
+				Message: domain.NotificationMessage{
+					Type: domain.NotificationTypeApproverNotification,
+					Variables: map[string]interface{}{
+						"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+						"role":          appeal.Role,
+						"requestor":     appeal.User,
+						"appeal_id":     appeal.ID,
+					},
+				},
 			})
 		}
 	}

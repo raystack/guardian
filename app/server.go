@@ -41,13 +41,13 @@ var (
 )
 
 type ServiceConfig struct {
-	Port                       int              `mapstructure:"port" default:"8080"`
-	EncryptionSecretKeyKey     string           `mapstructure:"encryption_secret_key"`
-	SlackAccessToken           string           `mapstructure:"slack_access_token"`
-	IAM                        iam.ClientConfig `mapstructure:"iam"`
-	LogLevel                   string           `mapstructure:"log_level" default:"info"`
-	DB                         store.Config     `mapstructure:"db"`
-	AuthenticatedUserHeaderKey string           `mapstructure:"authenticated_user_header_key"`
+	Port                       int                   `mapstructure:"port" default:"8080"`
+	EncryptionSecretKeyKey     string                `mapstructure:"encryption_secret_key"`
+	Notifier                   notifier.ClientConfig `mapstructure:"notifier"`
+	IAM                        iam.ClientConfig      `mapstructure:"iam"`
+	LogLevel                   string                `mapstructure:"log_level" default:"info"`
+	DB                         store.Config          `mapstructure:"db"`
+	AuthenticatedUserHeaderKey string                `mapstructure:"authenticated_user_header_key"`
 }
 
 // LoadServiceConfig returns service configuration
@@ -90,7 +90,10 @@ func RunServer(c *ServiceConfig) error {
 		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, crypto),
 	}
 
-	notifier := notifier.NewSlackNotifier(c.SlackAccessToken)
+	notifier, err := notifier.NewClient(&c.Notifier)
+	if err != nil {
+		return err
+	}
 
 	resourceService := resource.NewService(resourceRepository)
 	policyService := policy.NewService(policyRepository)
