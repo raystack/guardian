@@ -29,7 +29,7 @@ func TestValidate(t *testing.T) {
 	mockCrypto := new(mocks.Crypto)
 	validCredentials := bigquery.Credentials{
 		ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
-		ResourceName:      "project/resource-name",
+		ResourceName:      "projects/resource-name",
 	}
 	validPermissionConfig := "permission-name"
 
