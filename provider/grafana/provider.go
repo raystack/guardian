@@ -89,7 +89,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 
 		for _, p := range permissions {
-			if err := client.GrantDashboardAccess(d, a.User, p.Name); err != nil {
+			if err := client.GrantDashboardAccess(d, a.User, string(p)); err != nil {
 				return err
 			}
 		}
@@ -122,7 +122,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		}
 
 		for _, p := range permissions {
-			if err := client.RevokeDashboardAccess(d, a.User, p.Name); err != nil {
+			if err := client.RevokeDashboardAccess(d, a.User, string(p)); err != nil {
 				return err
 			}
 		}
