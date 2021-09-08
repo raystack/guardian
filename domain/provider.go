@@ -6,7 +6,7 @@ import (
 
 const (
 	// ProviderTypeBigQuery is the type name for BigQuery provider
-	ProviderTypeBigQuery = "google_bigquery"
+	ProviderTypeBigQuery = "bigquery"
 	// ProviderTypeMetabase is the type name for Metabase provider
 	ProviderTypeMetabase = "metabase"
 	// ProviderTypeGrafana is the type name for Grafana provider
