@@ -146,24 +146,24 @@ func (c *bigQueryClient) RevokeDatasetAccess(ctx context.Context, d *Dataset, us
 	if err != nil {
 		return err
 	}
-
 	bqRole, err := c.ResolveDatasetRole(role)
 	if err != nil {
 		return err
 	}
-	var removeIndex int
-	for i, a := range metadata.Access {
+
+	remainingAccessEntries := []*bq.AccessEntry{}
+	for _, a := range metadata.Access {
 		if a.Entity == user && a.Role == bqRole {
-			removeIndex = i
-			break
+			continue
 		}
+		remainingAccessEntries = append(remainingAccessEntries, a)
 	}
-	if removeIndex == 0 {
+	if len(remainingAccessEntries) == len(metadata.Access) {
 		return ErrPermissionNotFound
 	}
 
 	update := bq.DatasetMetadataToUpdate{
-		Access: append(metadata.Access[:removeIndex], metadata.Access[removeIndex+1:]...),
+		Access: remainingAccessEntries,
 	}
 
 	_, err = dataset.Update(ctx, update, metadata.ETag)
@@ -222,23 +222,28 @@ func (c *bigQueryClient) RevokeTableAccess(ctx context.Context, t *Table, user, 
 	if err != nil {
 		return err
 	}
-	var accessRemoved bool
+
+	isRoleFound := false
 	for _, b := range policy.Bindings {
 		if b.Role == role {
-			var removeIndex int
-			for i, m := range b.Members {
+			isRoleFound = true
+			isMemberFound := false
+			updatedMembers := []string{}
+			for _, m := range b.Members {
 				if m == member {
-					removeIndex = i
+					isMemberFound = true
+					continue
 				}
+				updatedMembers = append(updatedMembers, m)
 			}
-			if removeIndex == 0 {
+			if !isMemberFound {
 				return ErrPermissionNotFound
 			}
-			b.Members = append(b.Members[:removeIndex], b.Members[removeIndex+1:]...)
-			accessRemoved = true
+			b.Members = updatedMembers
+			break
 		}
 	}
-	if accessRemoved {
+	if !isRoleFound {
 		return ErrPermissionNotFound
 	}
 
