@@ -163,7 +163,7 @@ func TestGetResources(t *testing.T) {
 func TestGrantAccess(t *testing.T) {
 	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
 		var permission metabase.PermissionConfig
-		invalidPermissionConfig := "invalid-permisiion-config"
+		invalidPermissionConfig := map[string]interface{}{}
 		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
 
 		testcases := []struct {
@@ -246,12 +246,8 @@ func TestGrantAccess(t *testing.T) {
 					Type: "test-type",
 					Roles: []*domain.Role{
 						{
-							ID: "test-role",
-							Permissions: []interface{}{
-								metabase.PermissionConfig{
-									Name: "test-permission-config",
-								},
-							},
+							ID:          "test-role",
+							Permissions: []interface{}{"test-permission-config"},
 						},
 					},
 				},
@@ -286,12 +282,8 @@ func TestGrantAccess(t *testing.T) {
 					Type: "test-type",
 					Roles: []*domain.Role{
 						{
-							ID: "test-role",
-							Permissions: []interface{}{
-								metabase.PermissionConfig{
-									Name: "test-permission-config",
-								},
-							},
+							ID:          "test-role",
+							Permissions: []interface{}{"test-permission-config"},
 						},
 					},
 				},
@@ -327,12 +319,8 @@ func TestGrantAccess(t *testing.T) {
 					Type: "test-type",
 					Roles: []*domain.Role{
 						{
-							ID: "test-role",
-							Permissions: []interface{}{
-								metabase.PermissionConfig{
-									Name: "test-permission-config",
-								},
-							},
+							ID:          "test-role",
+							Permissions: []interface{}{"test-permission-config"},
 						},
 					},
 				},
@@ -374,12 +362,8 @@ func TestGrantAccess(t *testing.T) {
 						Type: metabase.ResourceTypeDatabase,
 						Roles: []*domain.Role{
 							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									metabase.PermissionConfig{
-										Name: "test-permission-config",
-									},
-								},
+								ID:          "test-role",
+								Permissions: []interface{}{"test-permission-config"},
 							},
 						},
 					},
@@ -427,12 +411,8 @@ func TestGrantAccess(t *testing.T) {
 						Type: metabase.ResourceTypeDatabase,
 						Roles: []*domain.Role{
 							{
-								ID: "viewer",
-								Permissions: []interface{}{
-									metabase.PermissionConfig{
-										Name: expectedRole,
-									},
-								},
+								ID:          "viewer",
+								Permissions: []interface{}{expectedRole},
 							},
 						},
 					},
@@ -480,12 +460,8 @@ func TestGrantAccess(t *testing.T) {
 						Type: metabase.ResourceTypeCollection,
 						Roles: []*domain.Role{
 							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									metabase.PermissionConfig{
-										Name: "test-permission-config",
-									},
-								},
+								ID:          "test-role",
+								Permissions: []interface{}{"test-permission-config"},
 							},
 						},
 					},
@@ -534,12 +510,8 @@ func TestGrantAccess(t *testing.T) {
 						Type: metabase.ResourceTypeCollection,
 						Roles: []*domain.Role{
 							{
-								ID: "viewer",
-								Permissions: []interface{}{
-									metabase.PermissionConfig{
-										Name: expectedRole,
-									},
-								},
+								ID:          "viewer",
+								Permissions: []interface{}{expectedRole},
 							},
 						},
 					},
