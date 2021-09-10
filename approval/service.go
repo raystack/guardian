@@ -48,7 +48,7 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 		stepNameIndex[s.Name] = i
 	}
 
-	for _, approval := range appeal.Approvals {
+	for i, approval := range appeal.Approvals {
 		if approval.Status == domain.ApprovalStatusRejected {
 			break
 		} else if approval.Status == domain.ApprovalStatusPending {
@@ -86,6 +86,9 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 
 				if passed {
 					approval.Status = domain.ApprovalStatusApproved
+					if i+1 <= len(appeal.Approvals)-1 {
+						appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
+					}
 				} else {
 					if stepConfig.AllowFailed {
 						approval.Status = domain.ApprovalStatusSkipped

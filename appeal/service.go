@@ -161,14 +161,25 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 				}
 			}
 
-			approvals = append(approvals, &domain.Approval{
-				Name:          step.Name,
-				Index:         i,
-				Status:        domain.ApprovalStatusPending,
-				PolicyID:      policyConfig.ID,
-				PolicyVersion: uint(policyConfig.Version),
-				Approvers:     approvers,
-			})
+			if i > 0 {
+				approvals = append(approvals, &domain.Approval{
+					Name:          step.Name,
+					Index:         i,
+					Status:        domain.ApprovalStatusBlocked,
+					PolicyID:      policyConfig.ID,
+					PolicyVersion: uint(policyConfig.Version),
+					Approvers:     approvers,
+				})
+			} else {
+				approvals = append(approvals, &domain.Approval{
+					Name:          step.Name,
+					Index:         i,
+					Status:        domain.ApprovalStatusPending,
+					PolicyID:      policyConfig.ID,
+					PolicyVersion: uint(policyConfig.Version),
+					Approvers:     approvers,
+				})
+			}
 		}
 
 		a.PolicyID = policyConfig.ID
@@ -238,6 +249,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 
 			if approvalAction.Action == domain.AppealActionNameApprove {
 				approval.Status = domain.ApprovalStatusApproved
+				if i+1 <= len(appeal.Approvals)-1 {
+					appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
+				}
 				if err := s.approvalService.AdvanceApproval(appeal); err != nil {
 					return nil, err
 				}
@@ -566,6 +580,8 @@ func checkPreviousApprovalStatus(status string) error {
 	case domain.ApprovalStatusApproved,
 		domain.ApprovalStatusSkipped:
 		err = nil
+	case domain.ApprovalStatusBlocked:
+		err = ErrApprovalDependencyIsBlocked
 	case domain.ApprovalStatusPending:
 		err = ErrApprovalDependencyIsPending
 	case domain.ApprovalStatusRejected:
