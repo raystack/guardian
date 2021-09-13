@@ -161,7 +161,7 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Grafa
 	return client, nil
 }
 
-func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) ([]PermissionConfig, error) {
+func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) ([]Permission, error) {
 	var resourceConfig *domain.ResourceConfig
 	for _, rc := range resourceConfigs {
 		if rc.Type == a.Resource.Type {
@@ -182,9 +182,9 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 		return nil, ErrInvalidRole
 	}
 
-	var permissions []PermissionConfig
+	var permissions []Permission
 	for _, p := range role.Permissions {
-		var permission PermissionConfig
+		var permission Permission
 		if err := mapstructure.Decode(p, &permission); err != nil {
 			return nil, err
 		}

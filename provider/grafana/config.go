@@ -56,7 +56,7 @@ var permissionCodes = map[string]int{
 	"admin": 4,
 }
 
-type PermissionConfig string
+type Permission string
 
 type Config struct {
 	ProviderConfig *domain.ProviderConfig
@@ -159,13 +159,13 @@ func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
 	return nil
 }
 
-func (c *Config) validatePermission(resourceType string, value interface{}) (*PermissionConfig, error) {
+func (c *Config) validatePermission(resourceType string, value interface{}) (*Permission, error) {
 	permissionConfig, ok := value.(string)
 	if !ok {
 		return nil, ErrInvalidPermissionConfig
 	}
 
-	var pc PermissionConfig
+	var pc Permission
 	if err := mapstructure.Decode(permissionConfig, &pc); err != nil {
 		return nil, err
 	}

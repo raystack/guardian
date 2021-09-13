@@ -154,7 +154,7 @@ func TestGetResources(t *testing.T) {
 
 func TestGrantAccess(t *testing.T) {
 	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission grafana.PermissionConfig
+		var permission grafana.Permission
 		invalidPermissionConfig := map[string]interface{}{}
 		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
 

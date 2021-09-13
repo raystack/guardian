@@ -54,8 +54,8 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 	return nil
 }
 
-// PermissionConfig is for mapping role into bigquery permissions
-type PermissionConfig string
+// Permission is for mapping role into bigquery permissions
+type Permission string
 
 // Config for bigquery provider
 type Config struct {
@@ -163,7 +163,7 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 	return &credentials, nil
 }
 
-func (c *Config) validatePermission(value interface{}, resourceType string, client *bigQueryClient) (*PermissionConfig, error) {
+func (c *Config) validatePermission(value interface{}, resourceType string, client *bigQueryClient) (*Permission, error) {
 	permision, ok := value.(string)
 	if !ok {
 		return nil, ErrInvalidPermissionConfig
@@ -189,6 +189,6 @@ func (c *Config) validatePermission(value interface{}, resourceType string, clie
 		return nil, ErrInvalidResourceType
 	}
 
-	configValue := PermissionConfig(permision)
+	configValue := Permission(permision)
 	return &configValue, nil
 }
