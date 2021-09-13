@@ -9,6 +9,7 @@ var (
 	ErrAppealStatusApproved     = errors.New("appeal already approved")
 	ErrAppealStatusRejected     = errors.New("appeal already rejected")
 	ErrAppealStatusTerminated   = errors.New("appeal already terminated")
+	ErrAppealStatusBlocked      = errors.New("approval is blocked")
 	ErrAppealStatusUnrecognized = errors.New("unrecognized appeal status")
 	ErrAppealDuplicate          = errors.New("appeal with the same resource and role already exists")
 

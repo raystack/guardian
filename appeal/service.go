@@ -589,6 +589,8 @@ func checkPreviousApprovalStatus(status string) error {
 func checkApprovalStatus(status string) error {
 	var err error
 	switch status {
+	case domain.ApprovalStatusBlocked:
+		err = ErrAppealStatusBlocked
 	case domain.ApprovalStatusApproved:
 		err = ErrApprovalStatusApproved
 	case domain.ApprovalStatusRejected:
