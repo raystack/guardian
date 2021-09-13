@@ -92,6 +92,9 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 				} else {
 					if stepConfig.AllowFailed {
 						approval.Status = domain.ApprovalStatusSkipped
+						if i+1 <= len(appeal.Approvals)-1 {
+							appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
+						}
 					} else {
 						approval.Status = domain.ApprovalStatusRejected
 						appeal.Status = domain.AppealStatusRejected

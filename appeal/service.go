@@ -161,25 +161,19 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 				}
 			}
 
+			status := domain.ApprovalStatusPending
 			if i > 0 {
-				approvals = append(approvals, &domain.Approval{
-					Name:          step.Name,
-					Index:         i,
-					Status:        domain.ApprovalStatusBlocked,
-					PolicyID:      policyConfig.ID,
-					PolicyVersion: uint(policyConfig.Version),
-					Approvers:     approvers,
-				})
-			} else {
-				approvals = append(approvals, &domain.Approval{
-					Name:          step.Name,
-					Index:         i,
-					Status:        domain.ApprovalStatusPending,
-					PolicyID:      policyConfig.ID,
-					PolicyVersion: uint(policyConfig.Version),
-					Approvers:     approvers,
-				})
+				status = domain.ApprovalStatusBlocked
 			}
+
+			approvals = append(approvals, &domain.Approval{
+				Name:          step.Name,
+				Index:         i,
+				Status:        status,
+				PolicyID:      policyConfig.ID,
+				PolicyVersion: uint(policyConfig.Version),
+				Approvers:     approvers,
+			})
 		}
 
 		a.PolicyID = policyConfig.ID
