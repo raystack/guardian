@@ -4,6 +4,7 @@ import "time"
 
 const (
 	ApprovalStatusPending  = "pending"
+	ApprovalStatusBlocked  = "blocked"
 	ApprovalStatusSkipped  = "skipped"
 	ApprovalStatusApproved = "approved"
 	ApprovalStatusRejected = "rejected"
