@@ -6,14 +6,16 @@ import (
 
 	bq "cloud.google.com/go/bigquery"
 	bqApi "google.golang.org/api/bigquery/v2"
+	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
 type bigQueryClient struct {
-	projectID string
-	client    *bq.Client
-	apiClient *bqApi.Service
+	projectID  string
+	client     *bq.Client
+	iamService *iam.Service
+	apiClient  *bqApi.Service
 }
 
 func newBigQueryClient(projectID string, credentialsJSON []byte) (*bigQueryClient, error) {
@@ -28,10 +30,16 @@ func newBigQueryClient(projectID string, credentialsJSON []byte) (*bigQueryClien
 		return nil, err
 	}
 
+	iamService, err := iam.NewService(ctx, option.WithCredentialsJSON(credentialsJSON))
+	if err != nil {
+		return nil, err
+	}
+
 	return &bigQueryClient{
-		projectID: projectID,
-		client:    client,
-		apiClient: apiClient,
+		projectID:  projectID,
+		client:     client,
+		iamService: iamService,
+		apiClient:  apiClient,
 	}, nil
 }
 
@@ -252,6 +260,58 @@ func (c *bigQueryClient) RevokeTableAccess(ctx context.Context, t *Table, user, 
 	}
 	_, err = tableService.SetIamPolicy(resourceName, setIamPolicyRequest).Do()
 	return err
+}
+
+func (c *bigQueryClient) getGrantableRolesForTables() ([]string, error) {
+	var resourceName string
+	ctx := context.Background()
+	datasetIterator := c.client.Datasets(ctx)
+	for {
+		dataset, err := datasetIterator.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		tableIterator := c.client.Dataset(dataset.DatasetID).Tables(ctx)
+		for {
+			table, err := tableIterator.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				return nil, err
+			}
+
+			resourceName = fmt.Sprintf("//bigquery.googleapis.com/projects/%v/datasets/%v/tables/%v", table.ProjectID, table.DatasetID, table.TableID)
+			break
+		}
+		if resourceName != "" {
+			break
+		}
+	}
+
+	if resourceName == "" {
+		return nil, ErrEmptyResource
+	}
+
+	request := &iam.QueryGrantableRolesRequest{
+		FullResourceName: resourceName,
+	}
+	response, err := c.iamService.Roles.QueryGrantableRoles(request).Do()
+	if err != nil {
+		return nil, err
+	}
+
+	var roles []string
+	for _, role := range response.Roles {
+		roles = append(roles, role.Name)
+	}
+
+	return roles, nil
+
 }
 
 func containsString(arr []string, v string) bool {

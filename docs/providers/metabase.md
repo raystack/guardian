@@ -60,12 +60,12 @@ resources:
       - id: read
         name: Read
         permissions:
-          - name: schemas:all
+          - schemas:all
       - id: query
         name: SQL Query
         permissions:
-          - name: schemas:all
-          - name: native:write
+          - schemas:all
+          - native:write
   - type: collection
     policy:
       id: policy_id
@@ -74,11 +74,11 @@ resources:
       - id: viewer
         name: Viewer
         permissions:
-          - name: read
+          - read
       - id: editor
         name: Editor
         permissions:
-          - name: write
+          - write
 ```
 
 ### `MetabaseCredentials`
@@ -96,7 +96,7 @@ resources:
 
 ### `MetabaseResourcePermission`
 
-| Fields |  |
+| Type | Details |
 | :--- | :--- |
-| `name` | `string`   Required. Metabase permission mapping    **Possible values:**   - `database`: `schemas:all` \(read table\), `native:write` \(run SQL query\)   **Note**: Metabase requires `schemas:all` permission for `native:write` to be able to work   - `collection`: `read`, `write` |
+| Required. `string` |    Metabase permission mapping    **Possible values:**   - `database`: `schemas:all` \(read table\), `native:write` \(run SQL query\)   **Note**: Metabase requires `schemas:all` permission for `native:write` to be able to work   - `collection`: `read`, `write` |
 

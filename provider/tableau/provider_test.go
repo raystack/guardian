@@ -322,7 +322,7 @@ func TestGetResources(t *testing.T) {
 
 func TestGrantAccess(t *testing.T) {
 	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission tableau.PermissionConfig
+		var permission tableau.Permission
 		invalidPermissionConfig := "invalid-permisiion-config"
 		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
 
@@ -408,7 +408,7 @@ func TestGrantAccess(t *testing.T) {
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
-								tableau.PermissionConfig{
+								tableau.Permission{
 									Name: "test-permission-config",
 								},
 							},
@@ -449,7 +449,7 @@ func TestGrantAccess(t *testing.T) {
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
-								tableau.PermissionConfig{
+								tableau.Permission{
 									Name: "test-permission-config",
 								},
 							},
@@ -491,7 +491,7 @@ func TestGrantAccess(t *testing.T) {
 						{
 							ID: "test-role",
 							Permissions: []interface{}{
-								tableau.PermissionConfig{
+								tableau.Permission{
 									Name: "test-permission-config",
 								},
 							},
@@ -539,7 +539,7 @@ func TestGrantAccess(t *testing.T) {
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
-									tableau.PermissionConfig{
+									tableau.Permission{
 										Name: "test-permission-config",
 									},
 								},
@@ -593,7 +593,7 @@ func TestGrantAccess(t *testing.T) {
 							{
 								ID: "viewer",
 								Permissions: []interface{}{
-									tableau.PermissionConfig{
+									tableau.Permission{
 										Name: expectedRole,
 									},
 								},
@@ -647,7 +647,7 @@ func TestGrantAccess(t *testing.T) {
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
-									tableau.PermissionConfig{
+									tableau.Permission{
 										Name: "test-permission-config",
 									},
 								},
@@ -701,7 +701,7 @@ func TestGrantAccess(t *testing.T) {
 							{
 								ID: "viewer",
 								Permissions: []interface{}{
-									tableau.PermissionConfig{
+									tableau.Permission{
 										Name: expectedRole,
 									},
 								},
@@ -755,7 +755,7 @@ func TestGrantAccess(t *testing.T) {
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
-									tableau.PermissionConfig{
+									tableau.Permission{
 										Name: "test-permission-config",
 									},
 								},
@@ -809,7 +809,7 @@ func TestGrantAccess(t *testing.T) {
 							{
 								ID: "viewer",
 								Permissions: []interface{}{
-									tableau.PermissionConfig{
+									tableau.Permission{
 										Name: expectedRole,
 									},
 								},
@@ -863,7 +863,7 @@ func TestGrantAccess(t *testing.T) {
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
-									tableau.PermissionConfig{
+									tableau.Permission{
 										Name: "test-permission-config",
 									},
 								},
@@ -917,7 +917,7 @@ func TestGrantAccess(t *testing.T) {
 							{
 								ID: "viewer",
 								Permissions: []interface{}{
-									tableau.PermissionConfig{
+									tableau.Permission{
 										Name: expectedRole,
 									},
 								},
@@ -971,7 +971,7 @@ func TestGrantAccess(t *testing.T) {
 							{
 								ID: "test-role",
 								Permissions: []interface{}{
-									tableau.PermissionConfig{
+									tableau.Permission{
 										Name: "test-permission-config",
 									},
 								},
@@ -1025,7 +1025,7 @@ func TestGrantAccess(t *testing.T) {
 							{
 								ID: "viewer",
 								Permissions: []interface{}{
-									tableau.PermissionConfig{
+									tableau.Permission{
 										Name: expectedRole,
 									},
 								},

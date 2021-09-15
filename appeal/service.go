@@ -15,15 +15,6 @@ import (
 
 var TimeNow = time.Now
 
-type resourceConfig struct {
-	policy           *domain.PolicyConfig
-	availableRoleIDs []string
-}
-type providerConfig struct {
-	appeal    *domain.AppealConfig
-	resources map[string]*resourceConfig
-}
-
 // Service handling the business logics
 type Service struct {
 	repo domain.AppealRepository
@@ -85,15 +76,15 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	for _, a := range appeals {
 		resourceIDs = append(resourceIDs, a.ResourceID)
 	}
-	resources, err := s.getResourceMap(resourceIDs)
+	resources, err := s.getResourcesMap(resourceIDs)
 	if err != nil {
 		return err
 	}
-	providerConfigs, err := s.getProviderConfigs()
+	providers, err := s.getProvidersMap()
 	if err != nil {
 		return err
 	}
-	policies, err := s.getPolicies()
+	policies, err := s.getPoliciesMap()
 	if err != nil {
 		return err
 	}
@@ -117,33 +108,29 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 		a.Resource = r
 
-		if providerConfigs[a.Resource.ProviderType] == nil {
+		if providers[a.Resource.ProviderType] == nil {
 			return ErrProviderTypeNotFound
-		} else if providerConfigs[a.Resource.ProviderType][a.Resource.ProviderURN] == nil {
+		} else if providers[a.Resource.ProviderType][a.Resource.ProviderURN] == nil {
 			return ErrProviderURNNotFound
 		}
-		providerConfig := providerConfigs[a.Resource.ProviderType][a.Resource.ProviderURN]
+		p := providers[a.Resource.ProviderType][a.Resource.ProviderURN]
 
-		if providerConfig.resources[a.Resource.Type] == nil {
+		var resourceConfig *domain.ResourceConfig
+		for _, rc := range p.Config.Resources {
+			if rc.Type == a.Resource.Type {
+				resourceConfig = rc
+				break
+			}
+		}
+		if resourceConfig == nil {
 			return ErrResourceTypeNotFound
 		}
 
-		appealConfig := providerConfig.appeal
-		if !appealConfig.AllowPermanentAccess {
-			if a.Options == nil || a.Options.ExpirationDate == nil {
-				return ErrOptionsExpirationDateOptionNotFound
-			} else if a.Options.ExpirationDate.IsZero() {
-				return ErrExpirationDateIsRequired
-			}
+		if err := s.providerService.ValidateAppeal(a, p); err != nil {
+			return err
 		}
 
-		// TODO: do validation in providerService.ValidateRole()
-		resourceConfig := providerConfig.resources[a.Resource.Type]
-		if len(resourceConfig.availableRoleIDs) > 0 && !utils.ContainsString(resourceConfig.availableRoleIDs, a.Role) {
-			return ErrInvalidRole
-		}
-
-		policyConfig := resourceConfig.policy
+		policyConfig := resourceConfig.Policy
 		if policies[policyConfig.ID] == nil {
 			return ErrPolicyIDNotFound
 		} else if policies[policyConfig.ID][uint(policyConfig.Version)] == nil {
@@ -400,7 +387,7 @@ func (s *Service) getPendingAppeals() (map[string]map[uint]map[string]*domain.Ap
 	return appealsMap, nil
 }
 
-func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) {
+func (s *Service) getResourcesMap(ids []uint) (map[uint]*domain.Resource, error) {
 	filters := map[string]interface{}{"ids": ids}
 	resources, err := s.resourceService.Find(filters)
 	if err != nil {
@@ -415,43 +402,28 @@ func (s *Service) getResourceMap(ids []uint) (map[uint]*domain.Resource, error) 
 	return result, nil
 }
 
-func (s *Service) getProviderConfigs() (map[string]map[string]*providerConfig, error) {
+func (s *Service) getProvidersMap() (map[string]map[string]*domain.Provider, error) {
 	providers, err := s.providerService.Find()
 	if err != nil {
 		return nil, err
 	}
 
-	providerConfigs := map[string]map[string]*providerConfig{}
+	providersMap := map[string]map[string]*domain.Provider{}
 	for _, p := range providers {
 		providerType := p.Type
 		providerURN := p.URN
-		if providerConfigs[providerType] == nil {
-			providerConfigs[providerType] = map[string]*providerConfig{}
+		if providersMap[providerType] == nil {
+			providersMap[providerType] = map[string]*domain.Provider{}
 		}
-		if providerConfigs[providerType][providerURN] == nil {
-			providerConfigs[providerType][providerURN] = &providerConfig{
-				appeal:    p.Config.Appeal,
-				resources: map[string]*resourceConfig{},
-			}
-		}
-		for _, r := range p.Config.Resources {
-			resourceType := r.Type
-
-			availableRoleIDs := []string{}
-			for _, role := range r.Roles {
-				availableRoleIDs = append(availableRoleIDs, role.ID)
-			}
-			providerConfigs[providerType][providerURN].resources[resourceType] = &resourceConfig{
-				policy:           r.Policy,
-				availableRoleIDs: availableRoleIDs,
-			}
+		if providersMap[providerType][providerURN] == nil {
+			providersMap[providerType][providerURN] = p
 		}
 	}
 
-	return providerConfigs, nil
+	return providersMap, nil
 }
 
-func (s *Service) getPolicies() (map[string]map[uint]*domain.Policy, error) {
+func (s *Service) getPoliciesMap() (map[string]map[uint]*domain.Policy, error) {
 	policies, err := s.policyService.Find()
 	if err != nil {
 		return nil, err

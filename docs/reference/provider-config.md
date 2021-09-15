@@ -41,7 +41,7 @@ resources: []object
 | :--- | :--- |
 | `id` | `string`   Required. Role identifier |
 | `name` | `string`   Display name for role |
-| `permissions[]` | `object`   Required. Set of permissions that will be granted to the requested resource    Possible values:   - BigQuery: [`object(BigQueryResourcePermission)`]()   - Metabase: [`object(MetabaseResourcePermission)`]() |
+| `permissions[]` | `object or string`   Required. Set of permissions that will be granted to the requested resource    Possible values:   - BigQuery: [`object(BigQueryResourcePermission)`]()   - Metabase: [`object(MetabaseResourcePermission)`]() - Grafana: [`object(GrafanaResourcePermission)`]() - Tableau: [`object(TableauResourcePermission)`]() |
 
 ## Providers
 

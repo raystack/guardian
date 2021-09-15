@@ -59,7 +59,7 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 	return nil
 }
 
-type PermissionConfig struct {
+type Permission struct {
 	Name string `json:"name" mapstructure:"name" validate:"required"`
 	Type string `json:"type,omitempty" mapstructure:"type"`
 }
@@ -182,13 +182,13 @@ func (c *Config) getValidationString(permissionFor string) string {
 	return validation
 }
 
-func (c *Config) validatePermission(resourceType string, value interface{}) (*PermissionConfig, error) {
+func (c *Config) validatePermission(resourceType string, value interface{}) (*Permission, error) {
 	permissionConfig, ok := value.(map[string]interface{})
 	if !ok {
 		return nil, ErrInvalidPermissionConfig
 	}
 
-	var pc PermissionConfig
+	var pc Permission
 	if err := mapstructure.Decode(permissionConfig, &pc); err != nil {
 		return nil, err
 	}
