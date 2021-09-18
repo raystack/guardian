@@ -429,6 +429,24 @@ func local_request_GuardianService_UpdateResource_0(ctx context.Context, marshal
 
 }
 
+func request_GuardianService_ListUserAppeals_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListUserAppealsRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.ListUserAppeals(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_GuardianService_ListUserAppeals_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListUserAppealsRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := server.ListUserAppeals(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 var (
 	filter_GuardianService_ListAppeals_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
@@ -667,6 +685,42 @@ func local_request_GuardianService_CreateAppeal_0(ctx context.Context, marshaler
 	}
 
 	msg, err := server.CreateAppeal(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+var (
+	filter_GuardianService_ListUserApprovals_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_GuardianService_ListUserApprovals_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListUserApprovalsRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GuardianService_ListUserApprovals_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ListUserApprovals(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_GuardianService_ListUserApprovals_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListUserApprovalsRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GuardianService_ListUserApprovals_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ListUserApprovals(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -1008,6 +1062,29 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 
 	})
 
+	mux.Handle("GET", pattern_GuardianService_ListUserAppeals_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListUserAppeals", runtime.WithHTTPPathPattern("/me/appeals"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_GuardianService_ListUserAppeals_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_ListUserAppeals_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_GuardianService_ListAppeals_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -1123,13 +1200,36 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 
 	})
 
+	mux.Handle("GET", pattern_GuardianService_ListUserApprovals_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListUserApprovals", runtime.WithHTTPPathPattern("/me/approvals"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_GuardianService_ListUserApprovals_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_ListUserApprovals_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_GuardianService_ListApprovals_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListApprovals", runtime.WithHTTPPathPattern("/appeals/approvals"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListApprovals", runtime.WithHTTPPathPattern("/approvals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1390,6 +1490,26 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 
 	})
 
+	mux.Handle("GET", pattern_GuardianService_ListUserAppeals_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListUserAppeals", runtime.WithHTTPPathPattern("/me/appeals"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_GuardianService_ListUserAppeals_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_ListUserAppeals_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_GuardianService_ListAppeals_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -1490,11 +1610,31 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 
 	})
 
+	mux.Handle("GET", pattern_GuardianService_ListUserApprovals_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListUserApprovals", runtime.WithHTTPPathPattern("/me/approvals"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_GuardianService_ListUserApprovals_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_ListUserApprovals_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_GuardianService_ListApprovals_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListApprovals", runtime.WithHTTPPathPattern("/appeals/approvals"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListApprovals", runtime.WithHTTPPathPattern("/approvals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1552,6 +1692,8 @@ var (
 
 	pattern_GuardianService_UpdateResource_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"resources", "id"}, ""))
 
+	pattern_GuardianService_ListUserAppeals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"me", "appeals"}, ""))
+
 	pattern_GuardianService_ListAppeals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"appeals"}, ""))
 
 	pattern_GuardianService_GetAppeal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"appeals", "id"}, ""))
@@ -1562,7 +1704,9 @@ var (
 
 	pattern_GuardianService_CreateAppeal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"appeals"}, ""))
 
-	pattern_GuardianService_ListApprovals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"appeals", "approvals"}, ""))
+	pattern_GuardianService_ListUserApprovals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"me", "approvals"}, ""))
+
+	pattern_GuardianService_ListApprovals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"approvals"}, ""))
 
 	pattern_GuardianService_UpdateApproval_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"appeals", "id", "approvals", "approval_name"}, ""))
 )
@@ -1586,6 +1730,8 @@ var (
 
 	forward_GuardianService_UpdateResource_0 = runtime.ForwardResponseMessage
 
+	forward_GuardianService_ListUserAppeals_0 = runtime.ForwardResponseMessage
+
 	forward_GuardianService_ListAppeals_0 = runtime.ForwardResponseMessage
 
 	forward_GuardianService_GetAppeal_0 = runtime.ForwardResponseMessage
@@ -1595,6 +1741,8 @@ var (
 	forward_GuardianService_RevokeAppeal_0 = runtime.ForwardResponseMessage
 
 	forward_GuardianService_CreateAppeal_0 = runtime.ForwardResponseMessage
+
+	forward_GuardianService_ListUserApprovals_0 = runtime.ForwardResponseMessage
 
 	forward_GuardianService_ListApprovals_0 = runtime.ForwardResponseMessage
 
