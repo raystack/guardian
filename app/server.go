@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
@@ -68,6 +69,7 @@ func RunServer(c *ServiceConfig) error {
 
 	logger := log.NewLogrus(log.LogrusWithLevel(c.LogLevel))
 	crypto := crypto.NewAES(c.EncryptionSecretKeyKey)
+	v := validator.New()
 
 	providerRepository := provider.NewRepository(db)
 	policyRepository := policy.NewRepository(db)
@@ -95,7 +97,7 @@ func RunServer(c *ServiceConfig) error {
 	}
 
 	resourceService := resource.NewService(resourceRepository)
-	policyService := policy.NewService(policyRepository)
+	policyService := policy.NewService(v, policyRepository)
 	providerService := provider.NewService(
 		logger,
 		providerRepository,

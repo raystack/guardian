@@ -163,9 +163,9 @@ func (a *adapter) ToRole(role *domain.Role) (*pb.Role, error) {
 }
 
 func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
-	steps := []*domain.Step{}
+	var steps []*domain.Step
 	for _, s := range p.GetSteps() {
-		conditions := []*domain.Condition{}
+		var conditions []*domain.Condition
 		for _, c := range s.Conditions {
 			match := &domain.MatchCondition{
 				Eq: c.GetMatch().GetEq().AsInterface(),
