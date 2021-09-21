@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
@@ -39,6 +40,12 @@ func (s *Service) Create(p *domain.Provider) error {
 		return ErrInvalidProviderType
 	}
 
+	if p.Config.Appeal != nil {
+		if err := s.validateAppealConfig(p.Config.Appeal); err != nil {
+			return err
+		}
+	}
+
 	if err := provider.CreateConfig(p.Config); err != nil {
 		return err
 	}
@@ -72,6 +79,12 @@ func (s *Service) Update(p *domain.Provider) error {
 
 	if err := mergo.Merge(p, currentProvider); err != nil {
 		return err
+	}
+
+	if p.Config.Appeal != nil {
+		if err := s.validateAppealConfig(p.Config.Appeal); err != nil {
+			return err
+		}
 	}
 
 	provider := s.getProvider(p.Type)
@@ -223,4 +236,14 @@ func (s *Service) getProviderConfig(pType, urn string) (*domain.Provider, error)
 		return nil, ErrProviderNotFound
 	}
 	return p, nil
+}
+
+func (s *Service) validateAppealConfig(a *domain.AppealConfig) error {
+	if a.AllowActiveAccessExtensionIn != "" {
+		if _, err := time.ParseDuration(a.AllowActiveAccessExtensionIn); err != nil {
+			return fmt.Errorf("parsing appeal extension duration: %v", err)
+		}
+	}
+
+	return nil
 }
