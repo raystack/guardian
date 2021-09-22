@@ -9,6 +9,7 @@ import (
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type findFilters struct {
@@ -114,7 +115,10 @@ func (r *Repository) BulkInsert(appeals []*domain.Appeal) error {
 	}
 
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(models).Error; err != nil {
+		if err := tx.
+			Clauses(clause.OnConflict{UpdateAll: true}).
+			Create(models).
+			Error; err != nil {
 			return err
 		}
 

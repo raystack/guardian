@@ -55,6 +55,10 @@ func (a *Appeal) GetNextPendingApproval() *Approval {
 	return nil
 }
 
+func (a *Appeal) Terminate() {
+	a.Status = AppealStatusTerminated
+}
+
 type ApprovalAction struct {
 	AppealID     uint   `validate:"required"`
 	ApprovalName string `validate:"required"`

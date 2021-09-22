@@ -122,6 +122,10 @@ func (s *ServiceTestSuite) TestFind() {
 }
 
 func (s *ServiceTestSuite) TestCreate() {
+	timeNow := time.Now()
+	appeal.TimeNow = func() time.Time {
+		return timeNow
+	}
 	s.Run("should return error if got error from resource service", func() {
 		expectedError := errors.New("resource service error")
 		s.mockResourceService.On("Find", mock.Anything).Return(nil, expectedError).Once()
@@ -196,23 +200,25 @@ func (s *ServiceTestSuite) TestCreate() {
 			},
 		}
 		timeNow := time.Now()
+		expDate := timeNow.Add(24 * time.Hour)
 		testCases := []struct {
 			name                          string
 			resources                     []*domain.Resource
 			providers                     []*domain.Provider
 			policies                      []*domain.Policy
-			pendingAppeals                []*domain.Appeal
+			existingAppeals               []*domain.Appeal
 			callValidateAppeal            bool
 			expectedAppealValidationError error
 			appeals                       []*domain.Appeal
 			expectedError                 error
 		}{
 			{
-				name: "duplciate appeal",
-				pendingAppeals: []*domain.Appeal{{
+				name: "duplicate appeal",
+				existingAppeals: []*domain.Appeal{{
 					User:       "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
+					Status:     domain.AppealStatusPending,
 				}},
 				appeals: []*domain.Appeal{{
 					User:       "test-user",
@@ -220,6 +226,18 @@ func (s *ServiceTestSuite) TestCreate() {
 					Role:       "test-role",
 				}},
 				expectedError: appeal.ErrAppealDuplicate,
+			},
+			{
+				name: "resource not found",
+				resources: []*domain.Resource{{
+					ID: 1,
+				}},
+				appeals: []*domain.Appeal{{
+					User:       "test-user",
+					ResourceID: 2,
+					Role:       "test-role",
+				}},
+				expectedError: appeal.ErrResourceNotFound,
 			},
 			{
 				name: "provider type not found",
@@ -231,6 +249,90 @@ func (s *ServiceTestSuite) TestCreate() {
 				providers:     []*domain.Provider{testProvider},
 				appeals:       []*domain.Appeal{{ResourceID: 1}},
 				expectedError: appeal.ErrProviderTypeNotFound,
+			},
+			{
+				name: "user still have active access",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: testProvider.Type,
+					ProviderURN:  testProvider.URN,
+				}},
+				existingAppeals: []*domain.Appeal{{
+					User:       "test-user",
+					ResourceID: 1,
+					Role:       "test-role",
+					Status:     domain.AppealStatusActive,
+				}},
+				appeals: []*domain.Appeal{{
+					User:       "test-user",
+					ResourceID: 1,
+					Role:       "test-role",
+				}},
+				providers:     []*domain.Provider{testProvider},
+				expectedError: appeal.ErrAppealFoundActiveAccess,
+			},
+			{
+				name: "invalid extension duration",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: testProvider.Type,
+					ProviderURN:  testProvider.URN,
+				}},
+				existingAppeals: []*domain.Appeal{{
+					User:       "test-user",
+					ResourceID: 1,
+					Role:       "test-role",
+					Status:     domain.AppealStatusActive,
+				}},
+				appeals: []*domain.Appeal{{
+					User:       "test-user",
+					ResourceID: 1,
+					Role:       "test-role",
+				}},
+				providers: []*domain.Provider{{
+					ID:   1,
+					Type: testProvider.Type,
+					URN:  testProvider.URN,
+					Config: &domain.ProviderConfig{
+						Appeal: &domain.AppealConfig{
+							AllowActiveAccessExtensionIn: "invalid",
+						},
+					},
+				}},
+				expectedError: appeal.ErrAppealInvalidExtensionDuration,
+			},
+			{
+				name: "extension not eligible",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: testProvider.Type,
+					ProviderURN:  testProvider.URN,
+				}},
+				existingAppeals: []*domain.Appeal{{
+					User:       "test-user",
+					ResourceID: 1,
+					Role:       "test-role",
+					Status:     domain.AppealStatusActive,
+					Options: &domain.AppealOptions{
+						ExpirationDate: &expDate,
+					},
+				}},
+				appeals: []*domain.Appeal{{
+					User:       "test-user",
+					ResourceID: 1,
+					Role:       "test-role",
+				}},
+				providers: []*domain.Provider{{
+					ID:   1,
+					Type: testProvider.Type,
+					URN:  testProvider.URN,
+					Config: &domain.ProviderConfig{
+						Appeal: &domain.AppealConfig{
+							AllowActiveAccessExtensionIn: "23h",
+						},
+					},
+				}},
+				expectedError: appeal.ErrAppealNotEligibleForExtension,
 			},
 			{
 				name: "provider urn not found",
@@ -358,14 +460,14 @@ func (s *ServiceTestSuite) TestCreate() {
 				s.mockResourceService.On("Find", mock.Anything).Return(tc.resources, nil).Once()
 				s.mockProviderService.On("Find").Return(tc.providers, nil).Once()
 				s.mockPolicyService.On("Find").Return(tc.policies, nil).Once()
-				s.mockRepository.On("Find", mock.Anything).Return(tc.pendingAppeals, nil).Once()
+				s.mockRepository.On("Find", mock.Anything).Return(tc.existingAppeals, nil).Once()
 				if tc.callValidateAppeal {
 					s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(tc.expectedAppealValidationError).Once()
 				}
 
 				actualError := s.service.Create(tc.appeals)
 
-				s.EqualError(actualError, tc.expectedError.Error())
+				s.Contains(actualError.Error(), tc.expectedError.Error())
 			})
 		}
 	})
@@ -408,7 +510,8 @@ func (s *ServiceTestSuite) TestCreate() {
 			URN:  "provider1",
 			Config: &domain.ProviderConfig{
 				Appeal: &domain.AppealConfig{
-					AllowPermanentAccess: true,
+					AllowPermanentAccess:         true,
+					AllowActiveAccessExtensionIn: "24h",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -427,6 +530,22 @@ func (s *ServiceTestSuite) TestCreate() {
 			},
 		},
 	}
+	expDate := timeNow.Add(23 * time.Hour)
+	currentActiveAppeal := &domain.Appeal{
+		ID:         99,
+		User:       user,
+		ResourceID: 2,
+		Resource: &domain.Resource{
+			ID:  2,
+			URN: "urn",
+		},
+		Role:   "role_id",
+		Status: domain.AppealStatusActive,
+		Options: &domain.AppealOptions{
+			ExpirationDate: &expDate,
+		},
+	}
+	expectedExistingAppeals := []*domain.Appeal{currentActiveAppeal}
 	policies := []*domain.Policy{
 		{
 			ID:      "policy_1",
@@ -473,6 +592,10 @@ func (s *ServiceTestSuite) TestCreate() {
 			},
 		})
 	}
+	insertionParamExpiredAppeal := &domain.Appeal{}
+	*insertionParamExpiredAppeal = *currentActiveAppeal
+	insertionParamExpiredAppeal.Status = domain.AppealStatusTerminated
+	expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, insertionParamExpiredAppeal)
 	expectedResult := []*domain.Appeal{
 		{
 			ID:            1,
@@ -541,10 +664,13 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockResourceService.On("Find", expectedResourceFilters).Return(resources, nil).Once()
 		s.mockProviderService.On("Find").Return(providers, nil).Once()
 		s.mockPolicyService.On("Find").Return(policies, nil).Once()
-		expectedPendingAppealsFilters := map[string]interface{}{
-			"statuses": []string{domain.AppealStatusPending},
+		expectedExistingAppealsFilters := map[string]interface{}{
+			"statuses": []string{
+				domain.AppealStatusPending,
+				domain.AppealStatusActive,
+			},
 		}
-		s.mockRepository.On("Find", expectedPendingAppealsFilters).Return([]*domain.Appeal{}, nil).Once()
+		s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(nil)
 		expectedUserApprovers := []string{"user.approver@email.com"}
 		s.mockIAMService.On("GetUserApproverEmails", user).Return(expectedUserApprovers, nil)
@@ -554,7 +680,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			Return(nil).
 			Run(func(args mock.Arguments) {
 				appeals := args.Get(0).([]*domain.Appeal)
-				for i, a := range appeals {
+				for i, a := range appeals[0 : len(appeals)-1] {
 					a.ID = expectedResult[i].ID
 					for j, approval := range a.Approvals {
 						approval.ID = expectedResult[i].Approvals[j].ID
