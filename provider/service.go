@@ -145,6 +145,10 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 
 	resourceType := a.Resource.Type
 	provider := s.getProvider(p.Type)
+	if provider == nil {
+		return ErrInvalidProviderType
+	}
+
 	roles, err := provider.GetRoles(p.Config, resourceType)
 	if err != nil {
 		return err
