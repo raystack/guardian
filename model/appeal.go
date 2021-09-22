@@ -20,6 +20,7 @@ type Appeal struct {
 	Role          string
 	Options       datatypes.JSON
 	Labels        datatypes.JSON
+	Details       datatypes.JSON
 
 	RevokedBy    string
 	RevokedAt    time.Time
@@ -42,6 +43,11 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	}
 
 	options, err := json.Marshal(a.Options)
+	if err != nil {
+		return err
+	}
+
+	details, err := json.Marshal(a.Details)
 	if err != nil {
 		return err
 	}
@@ -74,6 +80,7 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	m.Role = a.Role
 	m.Options = datatypes.JSON(options)
 	m.Labels = datatypes.JSON(labels)
+	m.Details = datatypes.JSON(details)
 	m.Approvals = approvals
 	m.CreatedAt = a.CreatedAt
 	m.UpdatedAt = a.UpdatedAt
@@ -91,6 +98,13 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 	var options *domain.AppealOptions
 	if m.Options != nil {
 		if err := json.Unmarshal(m.Options, &options); err != nil {
+			return nil, err
+		}
+	}
+
+	var details map[string]interface{}
+	if m.Details != nil {
+		if err := json.Unmarshal(m.Details, &details); err != nil {
 			return nil, err
 		}
 	}
@@ -126,6 +140,7 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		User:          m.User,
 		Role:          m.Role,
 		Options:       options,
+		Details:       details,
 		Labels:        labels,
 		Approvals:     approvals,
 		Resource:      resource,
