@@ -207,7 +207,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			providers                     []*domain.Provider
 			policies                      []*domain.Policy
 			existingAppeals               []*domain.Appeal
-			callValidateAppeal            bool
+			callMockValidateAppeal        bool
 			expectedAppealValidationError error
 			appeals                       []*domain.Appeal
 			expectedError                 error
@@ -358,7 +358,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				expectedError: appeal.ErrResourceTypeNotFound,
 			},
 			{
-				name: "expiration date nil or not found when the appeal config disallow permanent access",
+				name: "duration not found when the appeal config prevents permanent access",
 				resources: []*domain.Resource{{
 					ID:           1,
 					ProviderType: "provider_type",
@@ -366,15 +366,15 @@ func (s *ServiceTestSuite) TestCreate() {
 					Type:         "resource_type",
 				}},
 				providers:                     []*domain.Provider{testProvider},
-				callValidateAppeal:            true,
-				expectedAppealValidationError: provider.ErrOptionsExpirationDateOptionNotFound,
+				callMockValidateAppeal:        true,
+				expectedAppealValidationError: provider.ErrOptionsDurationNotFound,
 				appeals: []*domain.Appeal{{
 					ResourceID: 1,
 				}},
-				expectedError: appeal.ErrOptionsExpirationDateOptionNotFound,
+				expectedError: appeal.ErrOptionsDurationNotFound,
 			},
 			{
-				name: "expiration date not set when the appeal config disallow permanent access",
+				name: "empty duration option",
 				resources: []*domain.Resource{{
 					ID:           1,
 					ProviderType: "provider_type",
@@ -382,15 +382,15 @@ func (s *ServiceTestSuite) TestCreate() {
 					Type:         "resource_type",
 				}},
 				providers:                     []*domain.Provider{testProvider},
-				callValidateAppeal:            true,
-				expectedAppealValidationError: provider.ErrExpirationDateIsRequired,
+				callMockValidateAppeal:        true,
+				expectedAppealValidationError: provider.ErrDurationIsRequired,
 				appeals: []*domain.Appeal{{
 					ResourceID: 1,
 					Options: &domain.AppealOptions{
-						ExpirationDate: &time.Time{},
+						Duration: "",
 					},
 				}},
-				expectedError: appeal.ErrExpirationDateIsRequired,
+				expectedError: appeal.ErrDurationIsRequired,
 			},
 			{
 				name: "invalid role",
@@ -401,7 +401,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Type:         "resource_type",
 				}},
 				providers:                     []*domain.Provider{testProvider},
-				callValidateAppeal:            true,
+				callMockValidateAppeal:        true,
 				expectedAppealValidationError: provider.ErrInvalidRole,
 				appeals: []*domain.Appeal{{
 					ResourceID: 1,
@@ -420,8 +420,8 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
-				providers:          []*domain.Provider{testProvider},
-				callValidateAppeal: true,
+				providers:              []*domain.Provider{testProvider},
+				callMockValidateAppeal: true,
 				appeals: []*domain.Appeal{{
 					ResourceID: 1,
 					Role:       "role_1",
@@ -439,8 +439,8 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
-				callValidateAppeal: true,
-				providers:          []*domain.Provider{testProvider},
+				callMockValidateAppeal: true,
+				providers:              []*domain.Provider{testProvider},
 				policies: []*domain.Policy{{
 					ID: "policy_id",
 				}},
@@ -461,7 +461,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				s.mockProviderService.On("Find").Return(tc.providers, nil).Once()
 				s.mockPolicyService.On("Find").Return(tc.policies, nil).Once()
 				s.mockRepository.On("Find", mock.Anything).Return(tc.existingAppeals, nil).Once()
-				if tc.callValidateAppeal {
+				if tc.callMockValidateAppeal {
 					s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(tc.expectedAppealValidationError).Once()
 				}
 

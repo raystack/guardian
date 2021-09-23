@@ -1,18 +1,12 @@
 package v1
 
 import (
-	"time"
-
 	"github.com/mitchellh/mapstructure"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/domain"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-type resourceOptions struct {
-	Duration string `json:"duration"`
-}
 
 type adapter struct{}
 
@@ -282,9 +276,16 @@ func (a *adapter) ToResourceProto(r *domain.Resource) (*pb.Resource, error) {
 }
 
 func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
-	expirationDate := appeal.GetOptions().GetExpirationDate().AsTime()
-	options := &domain.AppealOptions{
-		ExpirationDate: &expirationDate,
+	var options *domain.AppealOptions
+	if appeal.GetOptions() != nil {
+		options = &domain.AppealOptions{
+			Duration: appeal.GetOptions().GetDuration(),
+		}
+
+		if appeal.GetOptions().GetExpirationDate() != nil {
+			expirationDate := appeal.GetOptions().GetExpirationDate().AsTime()
+			options.ExpirationDate = &expirationDate
+		}
 	}
 
 	resource := a.FromResourceProto(appeal.GetResource())
@@ -333,12 +334,16 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 }
 
 func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
-	var expirationDate *timestamppb.Timestamp
-	if appeal.Options != nil && appeal.Options.ExpirationDate != nil {
-		expirationDate = timestamppb.New(*appeal.Options.ExpirationDate)
-	}
-	options := &pb.Appeal_AppealOptions{
-		ExpirationDate: expirationDate,
+	var options *pb.Appeal_AppealOptions
+
+	if appeal.Options != nil {
+		options = &pb.Appeal_AppealOptions{
+			Duration: appeal.Options.Duration,
+		}
+
+		if appeal.Options.ExpirationDate != nil {
+			options.ExpirationDate = timestamppb.New(*appeal.Options.ExpirationDate)
+		}
 	}
 
 	var resource *pb.Resource
@@ -391,33 +396,21 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 }
 
 func (a *adapter) FromCreateAppealProto(ca *pb.CreateAppealRequest) ([]*domain.Appeal, error) {
-	appeals := []*domain.Appeal{}
+	var appeals []*domain.Appeal
 
 	for _, r := range ca.GetResources() {
-		var options domain.AppealOptions
-
-		var resOptions resourceOptions
-		if err := mapstructure.Decode(r.GetOptions().AsMap(), &resOptions); err != nil {
-			return nil, err
-		}
-
-		var expirationDate time.Time
+		var options *domain.AppealOptions
 		if r.GetOptions() != nil {
-			if resOptions.Duration != "" {
-				duration, err := time.ParseDuration(resOptions.Duration)
-				if err != nil {
-					return nil, err
-				}
-				expirationDate = time.Now().Add(duration)
+			if err := mapstructure.Decode(r.GetOptions().AsMap(), options); err != nil {
+				return nil, err
 			}
 		}
-		options.ExpirationDate = &expirationDate
 
 		appeals = append(appeals, &domain.Appeal{
 			User:       ca.GetUser(),
 			ResourceID: uint(r.GetId()),
 			Role:       r.GetRole(),
-			Options:    &options,
+			Options:    options,
 			Details:    r.GetDetails().AsMap(),
 		})
 	}

@@ -20,6 +20,7 @@ const (
 // AppealOptions
 type AppealOptions struct {
 	ExpirationDate *time.Time `json:"expiration_date,omitempty"`
+	Duration       string     `json:"duration"`
 }
 
 // Appeal struct

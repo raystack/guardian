@@ -167,10 +167,16 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 	}
 
 	if !p.Config.Appeal.AllowPermanentAccess {
-		if a.Options == nil || a.Options.ExpirationDate == nil {
-			return ErrOptionsExpirationDateOptionNotFound
-		} else if a.Options.ExpirationDate.IsZero() {
-			return ErrExpirationDateIsRequired
+		if a.Options == nil {
+			return ErrOptionsDurationNotFound
+		}
+
+		if a.Options.Duration == "" {
+			return ErrDurationIsRequired
+		}
+
+		if err := validateDuration(a.Options.Duration); err != nil {
+			return fmt.Errorf("invalid duration: %v", err)
 		}
 	}
 
@@ -244,10 +250,17 @@ func (s *Service) getProviderConfig(pType, urn string) (*domain.Provider, error)
 
 func (s *Service) validateAppealConfig(a *domain.AppealConfig) error {
 	if a.AllowActiveAccessExtensionIn != "" {
-		if _, err := time.ParseDuration(a.AllowActiveAccessExtensionIn); err != nil {
-			return fmt.Errorf("parsing appeal extension duration: %v", err)
+		if err := validateDuration(a.AllowActiveAccessExtensionIn); err != nil {
+			return fmt.Errorf("invalid appeal extension policy: %v", err)
 		}
 	}
 
+	return nil
+}
+
+func validateDuration(d string) error {
+	if _, err := time.ParseDuration(d); err != nil {
+		return fmt.Errorf("parsing duration: %v", err)
+	}
 	return nil
 }
