@@ -272,7 +272,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 						return nil, err
 					}
 
-					appeal.Status = domain.AppealStatusActive
+					if err := appeal.Activate(); err != nil {
+						return nil, fmt.Errorf("activating appeal: %v", err)
+					}
 				}
 
 			} else if approvalAction.Action == domain.AppealActionNameReject {

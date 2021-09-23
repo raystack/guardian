@@ -61,6 +61,22 @@ func (a *Appeal) Terminate() {
 	a.Status = AppealStatusTerminated
 }
 
+func (a *Appeal) Activate() error {
+	a.Status = AppealStatusActive
+
+	if a.Options != nil && a.Options.Duration != "" {
+		duration, err := time.ParseDuration(a.Options.Duration)
+		if err != nil {
+			return err
+		}
+
+		expirationDate := time.Now().Add(duration)
+		a.Options.ExpirationDate = &expirationDate
+	}
+
+	return nil
+}
+
 type ApprovalAction struct {
 	AppealID     uint   `validate:"required"`
 	ApprovalName string `validate:"required"`
