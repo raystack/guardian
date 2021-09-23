@@ -472,7 +472,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 	})
 
-	s.Run("should return error if got error from repository on bulk insert", func() {
+	s.Run("should return error if got error from repository on bulk upsert", func() {
 		expectedResources := []*domain.Resource{}
 		expectedProviders := []*domain.Provider{}
 		expectedPolicies := []*domain.Policy{}
@@ -482,7 +482,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockPolicyService.On("Find").Return(expectedPolicies, nil).Once()
 		s.mockRepository.On("Find", mock.Anything).Return(expectedPendingAppeals, nil).Once()
 		expectedError := errors.New("repository error")
-		s.mockRepository.On("BulkInsert", mock.Anything).Return(expectedError).Once()
+		s.mockRepository.On("BulkUpsert", mock.Anything).Return(expectedError).Once()
 
 		actualError := s.service.Create([]*domain.Appeal{})
 
@@ -676,7 +676,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockIAMService.On("GetUserApproverEmails", user).Return(expectedUserApprovers, nil)
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 		s.mockRepository.
-			On("BulkInsert", expectedAppealsInsertionParam).
+			On("BulkUpsert", expectedAppealsInsertionParam).
 			Return(nil).
 			Run(func(args mock.Arguments) {
 				appeals := args.Get(0).([]*domain.Appeal)

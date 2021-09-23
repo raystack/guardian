@@ -103,8 +103,8 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Appeal, err
 	return records, nil
 }
 
-// Create new record to database
-func (r *Repository) BulkInsert(appeals []*domain.Appeal) error {
+// BulkUpsert new record to database
+func (r *Repository) BulkUpsert(appeals []*domain.Appeal) error {
 	models := []*model.Appeal{}
 	for _, a := range appeals {
 		m := new(model.Appeal)

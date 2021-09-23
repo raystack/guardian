@@ -202,7 +202,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	}
 
 	allAppeals := append(appeals, expiredAppeals...)
-	if err := s.repo.BulkInsert(allAppeals); err != nil {
+	if err := s.repo.BulkUpsert(allAppeals); err != nil {
 		return err
 	}
 

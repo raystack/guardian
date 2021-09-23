@@ -335,7 +335,7 @@ func (s *RepositoryTestSuite) TestFind() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestBulkInsert() {
+func (s *RepositoryTestSuite) TestBulkUpsert() {
 	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","user","role","options","labels","details","revoked_by","revoked_at","revoke_reason","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15),($16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30) ON CONFLICT ("id") DO UPDATE SET "resource_id"="excluded"."resource_id","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","status"="excluded"."status","user"="excluded"."user","role"="excluded"."role","options"="excluded"."options","labels"="excluded"."labels","details"="excluded"."details","revoked_by"="excluded"."revoked_by","revoked_at"="excluded"."revoked_at","revoke_reason"="excluded"."revoke_reason","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
 
 	appeals := []*domain.Appeal{
@@ -380,7 +380,7 @@ func (s *RepositoryTestSuite) TestBulkInsert() {
 			WillReturnError(expectedError)
 		s.dbmock.ExpectRollback()
 
-		actualError := s.repository.BulkInsert(appeals)
+		actualError := s.repository.BulkUpsert(appeals)
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -398,7 +398,7 @@ func (s *RepositoryTestSuite) TestBulkInsert() {
 			WillReturnRows(expectedRows)
 		s.dbmock.ExpectCommit()
 
-		actualError := s.repository.BulkInsert(appeals)
+		actualError := s.repository.BulkUpsert(appeals)
 
 		s.Nil(actualError)
 		for i, a := range appeals {
