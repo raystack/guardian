@@ -53,7 +53,7 @@ func New() *cobra.Command {
 	cmd.AddCommand(configCommand())
 	cmd.AddCommand(resourcesCommand(cliConfig))
 	cmd.AddCommand(providersCommand(cliConfig, protoAdapter))
-	cmd.AddCommand(policiesCommand(cliConfig, protoAdapter))
+	cmd.AddCommand(PolicyCmd(cliConfig, protoAdapter))
 	cmd.AddCommand(appealsCommand(cliConfig))
 
 	return cmd
