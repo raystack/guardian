@@ -43,7 +43,7 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 			Policies are used to define governance rules of the data access.
 		`),
 		Example: heredoc.Doc(`
-			$ guardian list policies
+			$ guardian policy list
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -94,7 +94,7 @@ func createPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 		Use:   "create",
 		Short: "Create a new policy",
 		Example: heredoc.Doc(`
-			$ guardian create -f policy.yaml
+			$ guardian policy create -f policy.yaml
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -124,7 +124,7 @@ func createPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 				return err
 			}
 
-			fmt.Printf("policy created with id: %v", res.GetPolicy().GetId())
+			fmt.Printf("Policy created with id: %v\n", res.GetPolicy().GetId())
 
 			return nil
 		},
@@ -143,7 +143,7 @@ func updatePolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 		Use:   "update",
 		Short: "Update an existing policy",
 		Example: heredoc.Doc(`
-			$ guardian update -f policy.yaml
+			$ guardian policy update -f policy.yaml
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -178,7 +178,7 @@ func updatePolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 				return err
 			}
 
-			fmt.Println("policy updated")
+			fmt.Println("Successfully updated policy")
 
 			return nil
 		},
