@@ -6,28 +6,43 @@ import (
 	"os"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/app"
+	"github.com/odpf/salt/printer"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func resourcesCommand(c *app.CLIConfig) *cobra.Command {
+func ResourceCmd(c *app.CLIConfig) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "resources",
-		Short: "manage resources",
+		Use:   "resource",
+		Short: "Manage resources",
+		Example: heredoc.Doc(`
+			$ guardian resource list
+			$ guardian resource metadata --id=1
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 	}
 
-	cmd.AddCommand(listResourcesCommand(c))
-	cmd.AddCommand(metadataCommand(c))
+	cmd.AddCommand(listResourcesCmd(c))
+	cmd.AddCommand(metadataCmd(c))
 
 	return cmd
 }
 
-func listResourcesCommand(c *app.CLIConfig) *cobra.Command {
+func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "list resources",
+		Short: "List resources",
+		Example: heredoc.Doc(`
+			$ guardian resource list
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -41,9 +56,14 @@ func listResourcesCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			t := getTablePrinter(os.Stdout, []string{"ID", "PROVIDER", "TYPE", "URN", "NAME"})
-			for _, r := range res.GetResources() {
-				t.Append([]string{
+			report := [][]string{}
+
+			resources := res.GetResources()
+			fmt.Printf(" \nShowing %d of %d policies\n \n", len(resources), len(resources))
+
+			report = append(report, []string{"ID", "PROVIDER", "TYPE", "URN", "NAME"})
+			for _, r := range resources {
+				report = append(report, []string{
 					fmt.Sprintf("%v", r.GetId()),
 					fmt.Sprintf("%s\n%s", r.GetProviderType(), r.GetProviderUrn()),
 					r.GetType(),
@@ -51,24 +71,30 @@ func listResourcesCommand(c *app.CLIConfig) *cobra.Command {
 					r.GetName(),
 				})
 			}
-			t.Render()
+			printer.Table(os.Stdout, report)
 			return nil
 		},
 	}
 }
 
-func metadataCommand(c *app.CLIConfig) *cobra.Command {
+func metadataCmd(c *app.CLIConfig) *cobra.Command {
 	var id uint
 	var values []string
 
 	cmd := &cobra.Command{
 		Use:   "metadata",
-		Short: "manage resource's metadata",
+		Short: "Manage resource's metadata",
 	}
 
 	setCmd := &cobra.Command{
 		Use:   "set",
-		Short: "store new metadata",
+		Short: "Store new metadata",
+		Example: heredoc.Doc(`
+			$ guardian resource metadata set values foo=bar
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			metadata := map[string]interface{}{}
 			for _, a := range values {
@@ -102,7 +128,7 @@ func metadataCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			fmt.Println("metadata updated")
+			fmt.Println("Successfully updated metadata")
 
 			return nil
 		},
