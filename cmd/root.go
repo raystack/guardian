@@ -1,18 +1,42 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
+	"github.com/MakeNowJust/heredoc"
 	v1 "github.com/odpf/guardian/api/handler/v1"
 	"github.com/odpf/guardian/app"
+	"github.com/odpf/salt/cmdx"
 	"github.com/spf13/cobra"
 )
 
-// Execute runs the command line interface
-func Execute() {
-	var rootCmd = &cobra.Command{
-		Use: "guardian",
+//New  create a root command
+func New() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "guardian <command> <subcommand> [flags]",
+		Short: "Universal data access control",
+		Long: heredoc.Doc(`
+			Universal data access control.
+
+			Guardian is a tool for extensible and universal data access with 
+			automated access workflows and security controls across data stores, 
+			analytical systems, and cloud products.`),
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		Example: heredoc.Doc(`
+			$ guardian policies list
+			$ guardian providers list
+			$ guardian resources list
+			$ guardian policies create --file policy.yaml
+			`),
+		Annotations: map[string]string{
+			"group:core": "true",
+			"help:learn": heredoc.Doc(`
+				Use 'guardian <command> <subcommand> --help' for more information about a command.
+				Read the manual at https://odpf.gitbook.io/guardian/
+			`),
+			"help:feedback": heredoc.Doc(`
+				Open an issue here https://github.com/odpf/guardian/issues
+			`),
+		},
 	}
 
 	protoAdapter := v1.NewAdapter()
@@ -22,16 +46,15 @@ func Execute() {
 		panic(err)
 	}
 
-	rootCmd.AddCommand(serveCommand())
-	rootCmd.AddCommand(migrateCommand())
-	rootCmd.AddCommand(configCommand())
-	rootCmd.AddCommand(resourcesCommand(cliConfig))
-	rootCmd.AddCommand(providersCommand(cliConfig, protoAdapter))
-	rootCmd.AddCommand(policiesCommand(cliConfig, protoAdapter))
-	rootCmd.AddCommand(appealsCommand(cliConfig))
+	cmdx.SetHelp(cmd)
 
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	cmd.AddCommand(serveCommand())
+	cmd.AddCommand(migrateCommand())
+	cmd.AddCommand(configCommand())
+	cmd.AddCommand(resourcesCommand(cliConfig))
+	cmd.AddCommand(providersCommand(cliConfig, protoAdapter))
+	cmd.AddCommand(policiesCommand(cliConfig, protoAdapter))
+	cmd.AddCommand(appealsCommand(cliConfig))
+
+	return cmd
 }
