@@ -92,6 +92,8 @@ func (s *Service) FetchResources() error {
 		return err
 	}
 
+	existingResources, err := s.resourceService.Find(map[string]interface{}{})
+
 	resources := []*domain.Resource{}
 	for _, p := range providers {
 		provider := s.getProvider(p.Type)
@@ -106,9 +108,33 @@ func (s *Service) FetchResources() error {
 			continue
 		}
 
-		resources = append(resources, res...)
+		for _, er := range existingResources {
+			isFound := false
+			for _, r := range res {
+				if er.URN == r.URN {
+					resources = append(resources, r)
+					isFound = true
+					break
+				}
+			}
+			if !isFound {
+				er.IsDeleted = true
+				resources = append(resources, er)
+			}
+		}
+		for _, r := range res {
+			isAdded := false
+			for _, rr := range resources {
+				if r.URN == rr.URN {
+					isAdded = true
+					break
+				}
+			}
+			if !isAdded {
+				resources = append(resources, r)
+			}
+		}
 	}
-
 	return s.resourceService.BulkUpsert(resources)
 }
 
