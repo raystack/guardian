@@ -108,6 +108,10 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 		a.Resource = r
 
+		if a.Resource.IsDeleted {
+			return ErrResourceIsDeleted
+		}
+
 		if providers[a.Resource.ProviderType] == nil {
 			return ErrProviderTypeNotFound
 		} else if providers[a.Resource.ProviderType][a.Resource.ProviderURN] == nil {
