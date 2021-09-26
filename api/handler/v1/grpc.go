@@ -9,6 +9,7 @@ import (
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/policy"
+	"github.com/odpf/guardian/provider"
 	"github.com/odpf/guardian/resource"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -83,6 +84,25 @@ func (s *GRPCServer) ListProviders(ctx context.Context, req *pb.ListProvidersReq
 	return &pb.ListProvidersResponse{
 		Providers: providerProtos,
 	}, nil
+}
+
+func (s *GRPCServer) GetProvider(ctx context.Context, req *pb.GetProviderRequest) (*pb.Provider, error) {
+	p, err := s.providerService.GetByID(uint(req.GetId()))
+	if err != nil {
+		switch err {
+		case provider.ErrRecordNotFound:
+			return nil, status.Error(codes.NotFound, "provider not found")
+		default:
+			return nil, status.Errorf(codes.Internal, "failed to retrieve provider: %v", err)
+		}
+	}
+
+	providerProto, err := s.adapter.ToProviderProto(p)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to parse provider %s: %v", p.URN, err)
+	}
+
+	return providerProto, nil
 }
 
 func (s *GRPCServer) CreateProvider(ctx context.Context, req *pb.CreateProviderRequest) (*pb.CreateProviderResponse, error) {

@@ -60,14 +60,23 @@ func (s *Service) Find() ([]*domain.Provider, error) {
 	return providers, nil
 }
 
+func (s *Service) GetByID(id uint) (*domain.Provider, error) {
+	p, err := s.providerRepository.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if p == nil {
+		return nil, ErrRecordNotFound
+	}
+
+	return p, nil
+}
+
 // Update updates the non-zero value(s) only
 func (s *Service) Update(p *domain.Provider) error {
-	currentProvider, err := s.providerRepository.GetByID(p.ID)
+	currentProvider, err := s.GetByID(p.ID)
 	if err != nil {
 		return err
-	}
-	if currentProvider == nil {
-		return ErrRecordNotFound
 	}
 
 	if err := mergo.Merge(p, currentProvider); err != nil {
@@ -113,12 +122,9 @@ func (s *Service) FetchResources() error {
 }
 
 func (s *Service) GetRoles(id uint, resourceType string) ([]*domain.Role, error) {
-	p, err := s.providerRepository.GetByID(id)
+	p, err := s.GetByID(id)
 	if err != nil {
 		return nil, err
-	}
-	if p == nil {
-		return nil, ErrRecordNotFound
 	}
 
 	provider := s.getProvider(p.Type)

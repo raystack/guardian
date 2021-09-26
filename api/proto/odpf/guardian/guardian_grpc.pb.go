@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GuardianServiceClient interface {
 	ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error)
+	GetProvider(ctx context.Context, in *GetProviderRequest, opts ...grpc.CallOption) (*Provider, error)
 	CreateProvider(ctx context.Context, in *CreateProviderRequest, opts ...grpc.CallOption) (*CreateProviderResponse, error)
 	UpdateProvider(ctx context.Context, in *UpdateProviderRequest, opts ...grpc.CallOption) (*UpdateProviderResponse, error)
 	ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error)
@@ -49,6 +50,15 @@ func NewGuardianServiceClient(cc grpc.ClientConnInterface) GuardianServiceClient
 func (c *guardianServiceClient) ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error) {
 	out := new(ListProvidersResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.GuardianService/ListProviders", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) GetProvider(ctx context.Context, in *GetProviderRequest, opts ...grpc.CallOption) (*Provider, error) {
+	out := new(Provider)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.GuardianService/GetProvider", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -213,6 +223,7 @@ func (c *guardianServiceClient) UpdateApproval(ctx context.Context, in *UpdateAp
 // for forward compatibility
 type GuardianServiceServer interface {
 	ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error)
+	GetProvider(context.Context, *GetProviderRequest) (*Provider, error)
 	CreateProvider(context.Context, *CreateProviderRequest) (*CreateProviderResponse, error)
 	UpdateProvider(context.Context, *UpdateProviderRequest) (*UpdateProviderResponse, error)
 	ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error)
@@ -239,6 +250,9 @@ type UnimplementedGuardianServiceServer struct {
 
 func (UnimplementedGuardianServiceServer) ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProviders not implemented")
+}
+func (UnimplementedGuardianServiceServer) GetProvider(context.Context, *GetProviderRequest) (*Provider, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProvider not implemented")
 }
 func (UnimplementedGuardianServiceServer) CreateProvider(context.Context, *CreateProviderRequest) (*CreateProviderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProvider not implemented")
@@ -318,6 +332,24 @@ func _GuardianService_ListProviders_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GuardianServiceServer).ListProviders(ctx, req.(*ListProvidersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_GetProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).GetProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.GuardianService/GetProvider",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).GetProvider(ctx, req.(*GetProviderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -638,6 +670,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListProviders",
 			Handler:    _GuardianService_ListProviders_Handler,
+		},
+		{
+			MethodName: "GetProvider",
+			Handler:    _GuardianService_GetProvider_Handler,
 		},
 		{
 			MethodName: "CreateProvider",
