@@ -254,6 +254,7 @@ func (a *adapter) FromResourceProto(r *pb.Resource) *domain.Resource {
 		Labels:       r.GetLabels(),
 		CreatedAt:    r.GetCreatedAt().AsTime(),
 		UpdatedAt:    r.GetUpdatedAt().AsTime(),
+		IsDeleted:    r.GetIsDeleted(),
 	}
 }
 
@@ -278,6 +279,7 @@ func (a *adapter) ToResourceProto(r *domain.Resource) (*pb.Resource, error) {
 		Labels:       r.Labels,
 		CreatedAt:    timestamppb.New(r.CreatedAt),
 		UpdatedAt:    timestamppb.New(r.UpdatedAt),
+		IsDeleted:    r.IsDeleted,
 	}, nil
 }
 
