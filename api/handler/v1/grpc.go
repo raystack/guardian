@@ -198,6 +198,25 @@ func (s *GRPCServer) ListPolicies(ctx context.Context, req *pb.ListPoliciesReque
 	}, nil
 }
 
+func (s *GRPCServer) GetPolicy(ctx context.Context, req *pb.GetPolicyRequest) (*pb.Policy, error) {
+	p, err := s.policyService.GetOne(req.GetId(), uint(req.GetVersion()))
+	if err != nil {
+		switch err {
+		case policy.ErrPolicyNotFound:
+			return nil, status.Error(codes.NotFound, "policy not found")
+		default:
+			return nil, status.Errorf(codes.Internal, "failed to retrieve policy: %v", err)
+		}
+	}
+
+	policyProto, err := s.adapter.ToPolicyProto(p)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to parse policy: %v", err)
+	}
+
+	return policyProto, nil
+}
+
 func (s *GRPCServer) CreatePolicy(ctx context.Context, req *pb.CreatePolicyRequest) (*pb.CreatePolicyResponse, error) {
 	policy, err := s.adapter.FromPolicyProto(req.GetPolicy())
 	if err != nil {
@@ -226,8 +245,8 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyReque
 
 	p.ID = req.GetId()
 	if err := s.policyService.Update(p); err != nil {
-		if errors.Is(err, policy.ErrPolicyDoesNotExists) {
-			return nil, status.Error(codes.NotFound, "policy id not found")
+		if errors.Is(err, policy.ErrPolicyNotFound) {
+			return nil, status.Error(codes.NotFound, "policy not found")
 		} else if errors.Is(err, policy.ErrEmptyIDParam) {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}

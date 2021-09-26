@@ -38,7 +38,15 @@ func (s *Service) Find() ([]*domain.Policy, error) {
 
 // GetOne record
 func (s *Service) GetOne(id string, version uint) (*domain.Policy, error) {
-	return s.policyRepository.GetOne(id, version)
+	p, err := s.policyRepository.GetOne(id, version)
+	if err != nil {
+		return nil, err
+	}
+	if p == nil {
+		return nil, ErrPolicyNotFound
+	}
+
+	return p, nil
 }
 
 // Update a record
@@ -51,12 +59,9 @@ func (s *Service) Update(p *domain.Policy) error {
 		return fmt.Errorf("policy validation: %v", err)
 	}
 
-	latestPolicy, err := s.policyRepository.GetOne(p.ID, p.Version)
+	latestPolicy, err := s.GetOne(p.ID, p.Version)
 	if err != nil {
 		return err
-	}
-	if latestPolicy == nil {
-		return ErrPolicyDoesNotExists
 	}
 
 	p.Version = latestPolicy.Version + 1
