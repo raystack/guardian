@@ -93,6 +93,9 @@ func (s *Service) FetchResources() error {
 	}
 
 	existingResources, err := s.resourceService.Find(map[string]interface{}{})
+	if err != nil {
+		return err
+	}
 
 	resources := []*domain.Resource{}
 	for _, p := range providers {
