@@ -347,6 +347,23 @@ func request_GuardianService_ListResources_0(ctx context.Context, marshaler runt
 	var protoReq ListResourcesRequest
 	var metadata runtime.ServerMetadata
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["is_deleted"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "is_deleted")
+	}
+
+	protoReq.IsDeleted, err = runtime.Bool(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "is_deleted", err)
+	}
+
 	msg, err := client.ListResources(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -355,6 +372,23 @@ func request_GuardianService_ListResources_0(ctx context.Context, marshaler runt
 func local_request_GuardianService_ListResources_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListResourcesRequest
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["is_deleted"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "is_deleted")
+	}
+
+	protoReq.IsDeleted, err = runtime.Bool(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "is_deleted", err)
+	}
 
 	msg, err := server.ListResources(ctx, &protoReq)
 	return msg, metadata, err
@@ -1022,7 +1056,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListResources", runtime.WithHTTPPathPattern("/resources"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListResources", runtime.WithHTTPPathPattern("/resources/{is_deleted}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1454,7 +1488,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListResources", runtime.WithHTTPPathPattern("/resources"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.GuardianService/ListResources", runtime.WithHTTPPathPattern("/resources/{is_deleted}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1688,7 +1722,7 @@ var (
 
 	pattern_GuardianService_UpdatePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"policies", "id"}, ""))
 
-	pattern_GuardianService_ListResources_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"resources"}, ""))
+	pattern_GuardianService_ListResources_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"resources", "is_deleted"}, ""))
 
 	pattern_GuardianService_UpdateResource_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"resources", "id"}, ""))
 
