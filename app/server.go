@@ -48,6 +48,13 @@ type ServiceConfig struct {
 	IAM                    iam.ClientConfig      `mapstructure:"iam"`
 	LogLevel               string                `mapstructure:"log_level" default:"info"`
 	DB                     store.Config          `mapstructure:"db"`
+	Jobs                   Jobs                  `mapstructure:"jobs"`
+}
+
+type Jobs struct {
+	FetchResourcesInterval             string `mapstructure:"fetch_resources_interval" default:"0 */2 * * *"`
+	RevokeExpiredAccessInterval        string `mapstructure:"revoke_expired_access_interval" default:"*/20 * * * *"`
+	ExpiringAccessNotificationInterval string `mapstructure:"expiring_access_notification_interval" default:"0 9 * * *"`
 }
 
 // LoadServiceConfig returns service configuration
@@ -122,15 +129,15 @@ func RunServer(c *ServiceConfig) error {
 	// init scheduler
 	tasks := []*scheduler.Task{
 		{
-			CronTab: "0 */2 * * *",
+			CronTab: c.Jobs.FetchResourcesInterval,
 			Func:    providerJobHandler.GetResources,
 		},
 		{
-			CronTab: "0/20 * * * *",
+			CronTab: c.Jobs.RevokeExpiredAccessInterval,
 			Func:    appealJobHandler.RevokeExpiredAccess,
 		},
 		{
-			CronTab: "0 9 * * *", // at 09.00
+			CronTab: c.Jobs.ExpiringAccessNotificationInterval,
 			Func:    appealJobHandler.NotifyAboutToExpireAccess,
 		},
 	}
