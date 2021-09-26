@@ -34,6 +34,7 @@ var (
 	ErrPolicyVersionNotFound               = errors.New("unable to find approval policy for specified version")
 	ErrResourceNotFound                    = errors.New("resource not found")
 	ErrAppealNotFound                      = errors.New("appeal not found")
+	ErrResourceIsDeleted                   = errors.New("resource is deleted")
 
 	ErrApproverKeyNotRecognized = errors.New("unrecognized approvers key")
 	ErrApproverInvalidType      = errors.New("invalid approver type, expected an email or array of email")
