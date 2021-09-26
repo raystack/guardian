@@ -284,6 +284,25 @@ func (s *GRPCServer) ListResources(ctx context.Context, req *pb.ListResourcesReq
 	}, nil
 }
 
+func (s *GRPCServer) GetResource(ctx context.Context, req *pb.GetResourceRequest) (*pb.Resource, error) {
+	r, err := s.resourceService.GetOne(uint(req.GetId()))
+	if err != nil {
+		switch err {
+		case resource.ErrRecordNotFound:
+			return nil, status.Error(codes.NotFound, "resource not found")
+		default:
+			return nil, status.Errorf(codes.Internal, "failed to retrieve resource: %v", err)
+		}
+	}
+
+	resourceProto, err := s.adapter.ToResourceProto(r)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to parse resource: %v", err)
+	}
+
+	return resourceProto, nil
+}
+
 func (s *GRPCServer) UpdateResource(ctx context.Context, req *pb.UpdateResourceRequest) (*pb.UpdateResourceResponse, error) {
 	r := s.adapter.FromResourceProto(req.GetResource())
 	r.ID = uint(req.GetId())
