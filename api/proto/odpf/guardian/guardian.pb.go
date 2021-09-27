@@ -3068,6 +3068,7 @@ type Appeal_AppealOptions struct {
 	unknownFields protoimpl.UnknownFields
 
 	ExpirationDate *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=expiration_date,json=expirationDate,proto3" json:"expiration_date,omitempty"` // optional
+	Duration       string                 `protobuf:"bytes,2,opt,name=duration,proto3" json:"duration,omitempty"`
 }
 
 func (x *Appeal_AppealOptions) Reset() {
@@ -3107,6 +3108,13 @@ func (x *Appeal_AppealOptions) GetExpirationDate() *timestamppb.Timestamp {
 		return x.ExpirationDate
 	}
 	return nil
+}
+
+func (x *Appeal_AppealOptions) GetDuration() string {
+	if x != nil {
+		return x.Duration
+	}
+	return ""
 }
 
 var File_odpf_guardian_guardian_proto protoreflect.FileDescriptor

@@ -88,13 +88,14 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	if err != nil {
 		return err
 	}
-	pendingAppeals, err := s.getPendingAppeals()
+	pendingAppeals, activeAppeals, err := s.getExistingAppealsMap()
 	if err != nil {
 		return err
 	}
 
 	notifications := []domain.Notification{}
 
+	expiredAppeals := []*domain.Appeal{}
 	for _, a := range appeals {
 		if pendingAppeals[a.User] != nil &&
 			pendingAppeals[a.User][a.ResourceID] != nil &&
@@ -118,6 +119,32 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return ErrProviderURNNotFound
 		}
 		p := providers[a.Resource.ProviderType][a.Resource.ProviderURN]
+
+		if activeAppeals[a.User] != nil &&
+			activeAppeals[a.User][a.ResourceID] != nil &&
+			activeAppeals[a.User][a.ResourceID][a.Role] != nil {
+
+			if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
+				return ErrAppealFoundActiveAccess
+			}
+
+			duration, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
+			if err != nil {
+				return fmt.Errorf("%v: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
+			}
+
+			now := s.TimeNow()
+			activeAppealExpDate := activeAppeals[a.User][a.ResourceID][a.Role].Options.ExpirationDate
+			isEligibleForExtension := activeAppealExpDate.Sub(now) <= duration
+			if isEligibleForExtension {
+				oldAppeal := &domain.Appeal{}
+				*oldAppeal = *activeAppeals[a.User][a.ResourceID][a.Role]
+				oldAppeal.Terminate()
+				expiredAppeals = append(expiredAppeals, oldAppeal)
+			} else {
+				return fmt.Errorf("%v: the extension policy for this resource is %v before current access expiration", ErrAppealNotEligibleForExtension, duration)
+			}
+		}
 
 		var resourceConfig *domain.ResourceConfig
 		for _, rc := range p.Config.Resources {
@@ -178,7 +205,8 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		a.Policy = nil
 	}
 
-	if err := s.repo.BulkInsert(appeals); err != nil {
+	allAppeals := append(appeals, expiredAppeals...)
+	if err := s.repo.BulkUpsert(allAppeals); err != nil {
 		return err
 	}
 
@@ -248,7 +276,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 						return nil, err
 					}
 
-					appeal.Status = domain.AppealStatusActive
+					if err := appeal.Activate(); err != nil {
+						return nil, fmt.Errorf("activating appeal: %v", err)
+					}
 				}
 
 			} else if approvalAction.Action == domain.AppealActionNameReject {
@@ -377,26 +407,37 @@ func (s *Service) Revoke(id uint, actor, reason string) (*domain.Appeal, error) 
 	return revokedAppeal, nil
 }
 
-func (s *Service) getPendingAppeals() (map[string]map[uint]map[string]*domain.Appeal, error) {
+func (s *Service) getExistingAppealsMap() (map[string]map[uint]map[string]*domain.Appeal, map[string]map[uint]map[string]*domain.Appeal, error) {
 	appeals, err := s.repo.Find(map[string]interface{}{
-		"statuses": []string{domain.AppealStatusPending},
+		"statuses": []string{domain.AppealStatusPending, domain.AppealStatusActive},
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	appealsMap := map[string]map[uint]map[string]*domain.Appeal{}
+	pendingAppealsMap := map[string]map[uint]map[string]*domain.Appeal{}
+	activeAppealsMap := map[string]map[uint]map[string]*domain.Appeal{}
 	for _, a := range appeals {
-		if appealsMap[a.User] == nil {
-			appealsMap[a.User] = map[uint]map[string]*domain.Appeal{}
+		if a.Status == domain.AppealStatusPending {
+			if pendingAppealsMap[a.User] == nil {
+				pendingAppealsMap[a.User] = map[uint]map[string]*domain.Appeal{}
+			}
+			if pendingAppealsMap[a.User][a.ResourceID] == nil {
+				pendingAppealsMap[a.User][a.ResourceID] = map[string]*domain.Appeal{}
+			}
+			pendingAppealsMap[a.User][a.ResourceID][a.Role] = a
+		} else if a.Status == domain.AppealStatusActive {
+			if activeAppealsMap[a.User] == nil {
+				activeAppealsMap[a.User] = map[uint]map[string]*domain.Appeal{}
+			}
+			if activeAppealsMap[a.User][a.ResourceID] == nil {
+				activeAppealsMap[a.User][a.ResourceID] = map[string]*domain.Appeal{}
+			}
+			activeAppealsMap[a.User][a.ResourceID][a.Role] = a
 		}
-		if appealsMap[a.User][a.ResourceID] == nil {
-			appealsMap[a.User][a.ResourceID] = map[string]*domain.Appeal{}
-		}
-		appealsMap[a.User][a.ResourceID][a.Role] = a
 	}
 
-	return appealsMap, nil
+	return pendingAppealsMap, activeAppealsMap, nil
 }
 
 func (s *Service) getResourcesMap(ids []uint) (map[uint]*domain.Resource, error) {
@@ -456,6 +497,7 @@ func (s *Service) getPoliciesMap() (map[string]map[uint]*domain.Policy, error) {
 func (s *Service) resolveApprovers(user string, resource *domain.Resource, approversKey string) ([]string, error) {
 	var approvers []string
 
+	// TODO: validate from policyService.Validate(policy)
 	if strings.HasPrefix(approversKey, domain.ApproversKeyResource) {
 		mapResource, err := structToMap(resource)
 		if err != nil {

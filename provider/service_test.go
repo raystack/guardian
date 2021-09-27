@@ -51,13 +51,29 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	s.Run("should return error if got error from the provider config validation", func() {
-		expectedError := errors.New("provider config validation error")
-		s.mockProvider.On("CreateConfig", mock.Anything).Return(expectedError).Once()
+	s.Run("error validation", func() {
+		s.Run("should return error if appeal config is invalid", func() {
+			p := &domain.Provider{
+				Config: &domain.ProviderConfig{
+					Appeal: &domain.AppealConfig{
+						AllowActiveAccessExtensionIn: "invalid-duration",
+					},
+				},
+			}
 
-		actualError := s.service.Create(p)
+			actualError := s.service.Create(p)
 
-		s.EqualError(actualError, expectedError.Error())
+			s.Error(actualError)
+		})
+
+		s.Run("should return error if got error from the provider config validation", func() {
+			expectedError := errors.New("provider config validation error")
+			s.mockProvider.On("CreateConfig", mock.Anything).Return(expectedError).Once()
+
+			actualError := s.service.Create(p)
+
+			s.EqualError(actualError, expectedError.Error())
+		})
 	})
 
 	s.Run("should return error if got error from the provider repository", func() {
@@ -105,6 +121,23 @@ func (s *ServiceTestSuite) TestFind() {
 }
 
 func (s *ServiceTestSuite) TestUpdate() {
+	s.Run("should return error if appeal config is invalid", func() {
+		p := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				Appeal: &domain.AppealConfig{
+					AllowActiveAccessExtensionIn: "invalid-duration",
+				},
+			},
+		}
+
+		s.mockProviderRepository.On("GetByID", mock.Anything).
+			Return(&domain.Provider{}, nil).
+			Once()
+		actualError := s.service.Update(p)
+
+		s.Error(actualError)
+	})
+
 	s.Run("should return error if got error getting existing record", func() {
 		testCases := []struct {
 			expectedExistingProvider *domain.Provider
@@ -157,7 +190,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 					Config: &domain.ProviderConfig{
 						Appeal: &domain.AppealConfig{
 							AllowPermanentAccess:         true,
-							AllowActiveAccessExtensionIn: "1d",
+							AllowActiveAccessExtensionIn: "1h",
 						},
 						Type: mockProviderType,
 						URN:  "urn",
@@ -169,7 +202,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 					Config: &domain.ProviderConfig{
 						Appeal: &domain.AppealConfig{
 							AllowPermanentAccess:         true,
-							AllowActiveAccessExtensionIn: "1d",
+							AllowActiveAccessExtensionIn: "1h",
 						},
 						Labels: map[string]string{
 							"foo": "bar",
