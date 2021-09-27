@@ -12,8 +12,8 @@ type AppealRepository struct {
 	mock.Mock
 }
 
-// BulkInsert provides a mock function with given fields: _a0
-func (_m *AppealRepository) BulkInsert(_a0 []*domain.Appeal) error {
+// BulkUpsert provides a mock function with given fields: _a0
+func (_m *AppealRepository) BulkUpsert(_a0 []*domain.Appeal) error {
 	ret := _m.Called(_a0)
 
 	var r0 error
