@@ -206,7 +206,7 @@ func (s *RepositoryTestSuite) TestBulkUpsert() {
 			},
 		}
 
-		expectedQuery := regexp.QuoteMeta(`INSERT INTO "resources" ("provider_type","provider_urn","type","urn","name","details","labels","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10),($11,$12,$13,$14,$15,$16,$17,$18,$19,$20) ON CONFLICT ("provider_type","provider_urn","type","urn") DO UPDATE SET "name"="excluded"."name","updated_at"="excluded"."updated_at" RETURNING "id"`)
+		expectedQuery := regexp.QuoteMeta(`INSERT INTO "resources" ("provider_type","provider_urn","type","urn","name","details","labels","created_at","updated_at","deleted_at","is_deleted") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) ON CONFLICT ("provider_type","provider_urn","type","urn") DO UPDATE SET "name"="excluded"."name","updated_at"="excluded"."updated_at","is_deleted"="excluded"."is_deleted" RETURNING "id"`)
 		expectedArgs := []driver.Value{}
 		for _, r := range resources {
 			expectedArgs = append(expectedArgs,
@@ -220,6 +220,7 @@ func (s *RepositoryTestSuite) TestBulkUpsert() {
 				utils.AnyTime{},
 				utils.AnyTime{},
 				gorm.DeletedAt{},
+				false,
 			)
 		}
 		expectedIDs := []uint{1, 2}
