@@ -9,9 +9,11 @@ var (
 	ErrAppealStatusApproved     = errors.New("appeal already approved")
 	ErrAppealStatusRejected     = errors.New("appeal already rejected")
 	ErrAppealStatusTerminated   = errors.New("appeal already terminated")
+	ErrAppealStatusBlocked      = errors.New("approval is blocked")
 	ErrAppealStatusUnrecognized = errors.New("unrecognized appeal status")
 	ErrAppealDuplicate          = errors.New("appeal with the same resource and role already exists")
 
+	ErrApprovalDependencyIsBlocked = errors.New("found previous approval step that is still in blocked")
 	ErrApprovalDependencyIsPending = errors.New("found previous approval step that is still in pending")
 	ErrApprovalStatusApproved      = errors.New("approval already approved")
 	ErrApprovalStatusRejected      = errors.New("approval already rejected")

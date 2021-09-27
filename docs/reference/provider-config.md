@@ -41,17 +41,17 @@ resources: []object
 | :--- | :--- |
 | `id` | `string`   Required. Role identifier |
 | `name` | `string`   Display name for role |
-| `permissions[]` | `object`   Required. Set of permissions that will be granted to the requested resource    Possible values:   - BigQuery: [`object(BigQueryResourcePermission)`]()   - Metabase: [`object(MetabaseResourcePermission)`]() |
+| `permissions[]` | `object or string`   Required. Set of permissions that will be granted to the requested resource    Possible values:   - BigQuery: [`object(BigQueryResourcePermission)`]()   - Metabase: [`object(MetabaseResourcePermission)`]() - Grafana: [`object(GrafanaResourcePermission)`]() - Tableau: [`object(TableauResourcePermission)`]() |
 
 ## Providers
 
 Here are the available providers in Guardian. Currently we only have Google BigQuery, but we will ad more soon.
 
-|  | Google BigQuery |
+| Google BigQuery |  |
 | :--- | :--- |
-
-
-Provider type \| `google_bigquery` Credentials value \| Base64 encrypted value of a service account key JSON Available resource types \| `dataset`, `table`
+| Provider type | `google_bigquery` |
+| Credentials value | 1) service_account_key - Base64 encrypted value of a service account key JSON 2) resource_name - Name of bigquery project appended with "projects/" |
+| Available resource types | `dataset`, `table`|
 
 ## Examples
 

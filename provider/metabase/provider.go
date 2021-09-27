@@ -96,7 +96,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 
 		for _, p := range permissions {
-			if err := client.GrantDatabaseAccess(d, a.User, p.Name); err != nil {
+			if err := client.GrantDatabaseAccess(d, a.User, string(p)); err != nil {
 				return err
 			}
 		}
@@ -109,7 +109,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 
 		for _, p := range permissions {
-			if err := client.GrantCollectionAccess(c, a.User, p.Name); err != nil {
+			if err := client.GrantCollectionAccess(c, a.User, string(p)); err != nil {
 				return err
 			}
 		}
@@ -142,7 +142,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		}
 
 		for _, p := range permissions {
-			if err := client.RevokeDatabaseAccess(d, a.User, p.Name); err != nil {
+			if err := client.RevokeDatabaseAccess(d, a.User, string(p)); err != nil {
 				return err
 			}
 		}
@@ -155,7 +155,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		}
 
 		for _, p := range permissions {
-			if err := client.RevokeCollectionAccess(c, a.User, p.Name); err != nil {
+			if err := client.RevokeCollectionAccess(c, a.User, string(p)); err != nil {
 				return err
 			}
 		}
@@ -191,7 +191,7 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Metab
 	return client, nil
 }
 
-func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) ([]PermissionConfig, error) {
+func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) ([]Permission, error) {
 	var resourceConfig *domain.ResourceConfig
 	for _, rc := range resourceConfigs {
 		if rc.Type == a.Resource.Type {
@@ -212,9 +212,9 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 		return nil, ErrInvalidRole
 	}
 
-	var permissions []PermissionConfig
+	var permissions []Permission
 	for _, p := range role.Permissions {
-		var permission PermissionConfig
+		var permission Permission
 		if err := mapstructure.Decode(p, &permission); err != nil {
 			return nil, err
 		}

@@ -154,8 +154,8 @@ func TestGetResources(t *testing.T) {
 
 func TestGrantAccess(t *testing.T) {
 	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission grafana.PermissionConfig
-		invalidPermissionConfig := "invalid-permisiion-config"
+		var permission grafana.Permission
+		invalidPermissionConfig := map[string]interface{}{}
 		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
 
 		testcases := []struct {
@@ -238,12 +238,8 @@ func TestGrantAccess(t *testing.T) {
 					Type: "test-type",
 					Roles: []*domain.Role{
 						{
-							ID: "test-role",
-							Permissions: []interface{}{
-								grafana.PermissionConfig{
-									Name: "test-permission-config",
-								},
-							},
+							ID:          "test-role",
+							Permissions: []interface{}{"test-permission-config"},
 						},
 					},
 				},
@@ -279,12 +275,8 @@ func TestGrantAccess(t *testing.T) {
 					Type: "test-type",
 					Roles: []*domain.Role{
 						{
-							ID: "test-role",
-							Permissions: []interface{}{
-								grafana.PermissionConfig{
-									Name: "test-permission-config",
-								},
-							},
+							ID:          "test-role",
+							Permissions: []interface{}{"test-permission-config"},
 						},
 					},
 				},
@@ -321,12 +313,8 @@ func TestGrantAccess(t *testing.T) {
 					Type: "test-type",
 					Roles: []*domain.Role{
 						{
-							ID: "test-role",
-							Permissions: []interface{}{
-								grafana.PermissionConfig{
-									Name: "test-permission-config",
-								},
-							},
+							ID:          "test-role",
+							Permissions: []interface{}{"test-permission-config"},
 						},
 					},
 				},
@@ -368,12 +356,8 @@ func TestGrantAccess(t *testing.T) {
 						Type: grafana.ResourceTypeDashboard,
 						Roles: []*domain.Role{
 							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									grafana.PermissionConfig{
-										Name: "test-permission-config",
-									},
-								},
+								ID:          "test-role",
+								Permissions: []interface{}{"test-permission-config"},
 							},
 						},
 					},
@@ -421,12 +405,8 @@ func TestGrantAccess(t *testing.T) {
 						Type: grafana.ResourceTypeDashboard,
 						Roles: []*domain.Role{
 							{
-								ID: "viewer",
-								Permissions: []interface{}{
-									grafana.PermissionConfig{
-										Name: expectedRole,
-									},
-								},
+								ID:          "viewer",
+								Permissions: []interface{}{"view"},
 							},
 						},
 					},

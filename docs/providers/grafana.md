@@ -72,15 +72,15 @@ resources:
       - id: viewer
         name: Viewer
         permissions:
-          - name: view
+          - view
       - id: editor
         name: Editor
         permissions:
-          - name: edit
+          - edit
       - id: admin
         name: Admin
         permissions:
-          - name: admin
+          - admin
 ```
 
 ### `GrafanaCredentials`
@@ -98,11 +98,9 @@ resources:
 
 ### `GrafanaResourcePermission`
 
-| Fields |  |
+| Type | Details |
 | :--- | :--- |
-| `urn` | `int`   Required.   Grafana Organisation Id. |
-| `resources: type` | `string`   Required.   Must be `dashboard`. |
-| `resources: roles` | `string`   Required.   Must have id one of `viewer`, `editor` or `admin`.   Must have name one of `Viewer`, `Editor` or `Admin`.   Must have permissions one of `view`, `edit` or `admin`. |
+| Required. `string` |  Must have id one of `viewer`, `editor` or `admin`.   Must have name one of `Viewer`, `Editor` or `Admin`.   Must have permissions one of `view`, `edit` or `admin`. |
 
 ## Grafana Access Creation
 

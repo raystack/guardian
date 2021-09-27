@@ -76,7 +76,7 @@ func (s *GRPCServer) ListProviders(ctx context.Context, req *pb.ListProvidersReq
 	for _, p := range providers {
 		providerProto, err := s.adapter.ToProviderProto(p)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "%s: failed to parse provider %s", err.Error(), p.URN)
+			return nil, status.Errorf(codes.Internal, "failed to parse provider %s: %v", p.URN, err)
 		}
 		providerProtos = append(providerProtos, providerProto)
 	}
@@ -89,7 +89,7 @@ func (s *GRPCServer) ListProviders(ctx context.Context, req *pb.ListProvidersReq
 func (s *GRPCServer) CreateProvider(ctx context.Context, req *pb.CreateProviderRequest) (*pb.CreateProviderResponse, error) {
 	providerConfig, err := s.adapter.FromProviderConfigProto(req.GetConfig())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: cannot deserialize provider config", err)
+		return nil, status.Errorf(codes.Internal, "cannot deserialize provider config: %v", err)
 	}
 
 	p := &domain.Provider{
@@ -98,12 +98,12 @@ func (s *GRPCServer) CreateProvider(ctx context.Context, req *pb.CreateProviderR
 		Config: providerConfig,
 	}
 	if err := s.providerService.Create(p); err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to create provider", err)
+		return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
 	}
 
 	providerProto, err := s.adapter.ToProviderProto(p)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to parse provider", err)
+		return nil, status.Errorf(codes.Internal, "failed to parse provider: %v", err)
 	}
 
 	return &pb.CreateProviderResponse{
@@ -115,7 +115,7 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *pb.UpdateProviderR
 	id := req.GetId()
 	providerConfig, err := s.adapter.FromProviderConfigProto(req.GetConfig())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: cannot deserialize provider config", err)
+		return nil, status.Errorf(codes.Internal, "cannot deserialize provider config: %v", err)
 	}
 
 	p := &domain.Provider{
@@ -125,12 +125,12 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *pb.UpdateProviderR
 		Config: providerConfig,
 	}
 	if err := s.providerService.Update(p); err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to update provider", err)
+		return nil, status.Errorf(codes.Internal, "failed to update provider: %v", err)
 	}
 
 	providerProto, err := s.adapter.ToProviderProto(p)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to parse provider", err)
+		return nil, status.Errorf(codes.Internal, "failed to parse provider: %v", err)
 	}
 
 	return &pb.UpdateProviderResponse{
@@ -141,14 +141,14 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *pb.UpdateProviderR
 func (s *GRPCServer) ListRoles(ctx context.Context, req *pb.ListRolesRequest) (*pb.ListRolesResponse, error) {
 	roles, err := s.providerService.GetRoles(uint(req.GetId()), req.GetResourceType())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list roles: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "failed to list roles: %v", err)
 	}
 
 	roleProtos := []*pb.Role{}
 	for _, r := range roles {
 		role, err := s.adapter.ToRole(r)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse proto: %s", err.Error())
+			return nil, status.Errorf(codes.Internal, "failed to parse proto: %v", err)
 		}
 
 		roleProtos = append(roleProtos, role)
@@ -162,14 +162,14 @@ func (s *GRPCServer) ListRoles(ctx context.Context, req *pb.ListRolesRequest) (*
 func (s *GRPCServer) ListPolicies(ctx context.Context, req *pb.ListPoliciesRequest) (*pb.ListPoliciesResponse, error) {
 	policies, err := s.policyService.Find()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to get policy list", err)
+		return nil, status.Errorf(codes.Internal, "failed to get policy list: %v", err)
 	}
 
 	policyProtos := []*pb.Policy{}
 	for _, p := range policies {
 		policyProto, err := s.adapter.ToPolicyProto(p)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "%s: failed to parse policy %s", err.Error(), p.ID)
+			return nil, status.Errorf(codes.Internal, "failed to parse policy %v: %v", p.ID, err)
 		}
 		policyProtos = append(policyProtos, policyProto)
 	}
@@ -182,16 +182,16 @@ func (s *GRPCServer) ListPolicies(ctx context.Context, req *pb.ListPoliciesReque
 func (s *GRPCServer) CreatePolicy(ctx context.Context, req *pb.CreatePolicyRequest) (*pb.CreatePolicyResponse, error) {
 	policy, err := s.adapter.FromPolicyProto(req.GetPolicy())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: cannot deserialize policy", err)
+		return nil, status.Errorf(codes.Internal, "cannot deserialize policy: %v", err)
 	}
 
 	if err := s.policyService.Create(policy); err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to create policy", err)
+		return nil, status.Errorf(codes.Internal, "failed to create policy: %v", err)
 	}
 
 	policyProto, err := s.adapter.ToPolicyProto(policy)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to parse policy", err)
+		return nil, status.Errorf(codes.Internal, "failed to parse policy: %v", err)
 	}
 
 	return &pb.CreatePolicyResponse{
@@ -202,7 +202,7 @@ func (s *GRPCServer) CreatePolicy(ctx context.Context, req *pb.CreatePolicyReque
 func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyRequest) (*pb.UpdatePolicyResponse, error) {
 	p, err := s.adapter.FromPolicyProto(req.GetPolicy())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: cannot deserialize policy", err)
+		return nil, status.Errorf(codes.Internal, "cannot deserialize policy: %v", err)
 	}
 
 	p.ID = req.GetId()
@@ -213,12 +213,12 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyReque
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 
-		return nil, status.Errorf(codes.Internal, "%s: failed to update policy", err)
+		return nil, status.Errorf(codes.Internal, "failed to update policy: %v", err)
 	}
 
 	policyProto, err := s.adapter.ToPolicyProto(p)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to parse policy", err)
+		return nil, status.Errorf(codes.Internal, "failed to parse policy: %v", err)
 	}
 
 	return &pb.UpdatePolicyResponse{
@@ -229,14 +229,14 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyReque
 func (s *GRPCServer) ListResources(ctx context.Context, req *pb.ListResourcesRequest) (*pb.ListResourcesResponse, error) {
 	resources, err := s.resourceService.Find(map[string]interface{}{})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to get resource list", err)
+		return nil, status.Errorf(codes.Internal, "failed to get resource list: %v", err)
 	}
 
 	resourceProtos := []*pb.Resource{}
 	for _, r := range resources {
 		resourceProto, err := s.adapter.ToResourceProto(r)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "%s: failed to parse resource %s", err.Error(), r.Name)
+			return nil, status.Errorf(codes.Internal, "failed to parse resource %v: %v", r.Name, err)
 		}
 		resourceProtos = append(resourceProtos, resourceProto)
 	}
@@ -251,7 +251,7 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *pb.UpdateResourceR
 	r.ID = uint(req.GetId())
 
 	if err := s.resourceService.Update(r); err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to update resource", err)
+		return nil, status.Errorf(codes.Internal, "failed to update resource: %v", err)
 	}
 
 	resourceProto, err := s.adapter.ToResourceProto(r)
@@ -259,7 +259,7 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *pb.UpdateResourceR
 		if errors.Is(err, resource.ErrRecordNotFound) {
 			return nil, status.Error(codes.NotFound, "resource not found")
 		}
-		return nil, status.Errorf(codes.Internal, "%s: failed to parse resource", err)
+		return nil, status.Errorf(codes.Internal, "failed to parse resource: %v", err)
 	}
 
 	return &pb.UpdateResourceResponse{
@@ -304,21 +304,21 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *pb.ListAppealsRequest
 func (s *GRPCServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealRequest) (*pb.CreateAppealResponse, error) {
 	appeals, err := s.adapter.FromCreateAppealProto(req)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: cannot deserialize payload", err)
+		return nil, status.Errorf(codes.Internal, "cannot deserialize payload: %v", err)
 	}
 
 	if err := s.appealService.Create(appeals); err != nil {
 		if errors.Is(err, appeal.ErrAppealDuplicate) {
-			return nil, status.Errorf(codes.AlreadyExists, "%s: appeal already exists", err)
+			return nil, status.Errorf(codes.AlreadyExists, "appeal already exists: %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "%s: failed to create appeal", err)
+		return nil, status.Errorf(codes.Internal, "failed to create appeal: %v", err)
 	}
 
 	appealProtos := []*pb.Appeal{}
 	for _, appeal := range appeals {
 		appealProto, err := s.adapter.ToAppealProto(appeal)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
+			return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
 		}
 		appealProtos = append(appealProtos, appealProto)
 	}
@@ -365,7 +365,7 @@ func (s *GRPCServer) GetAppeal(ctx context.Context, req *pb.GetAppealRequest) (*
 	id := req.GetId()
 	appeal, err := s.appealService.GetByID(uint(id))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to retrieve appeal", err)
+		return nil, status.Errorf(codes.Internal, "failed to retrieve appeal: %v", err)
 	}
 	if appeal == nil {
 		return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
@@ -373,7 +373,7 @@ func (s *GRPCServer) GetAppeal(ctx context.Context, req *pb.GetAppealRequest) (*
 
 	appealProto, err := s.adapter.ToAppealProto(appeal)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
+		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
 	}
 
 	return &pb.GetAppealResponse{
@@ -408,19 +408,19 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *pb.UpdateApprovalR
 			appeal.ErrApprovalStatusRejected,
 			appeal.ErrApprovalStatusSkipped,
 			appeal.ErrActionInvalidValue:
-			return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %s", err)
+			return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %v", err)
 		case appeal.ErrActionForbidden:
 			return nil, status.Error(codes.PermissionDenied, "permission denied")
 		case appeal.ErrApprovalNameNotFound:
 			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
 		default:
-			return nil, status.Errorf(codes.Internal, "%s: failed to update approval", err)
+			return nil, status.Errorf(codes.Internal, "failed to update approval: %v", err)
 		}
 	}
 
 	appealProto, err := s.adapter.ToAppealProto(a)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
+		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
 	}
 
 	return &pb.UpdateApprovalResponse{
@@ -440,15 +440,15 @@ func (s *GRPCServer) CancelAppeal(ctx context.Context, req *pb.CancelAppealReque
 			appeal.ErrAppealStatusRejected,
 			appeal.ErrAppealStatusTerminated,
 			appeal.ErrAppealStatusUnrecognized:
-			return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %s", err)
+			return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %v", err)
 		default:
-			return nil, status.Errorf(codes.Internal, "%s: failed to cancel appeal", err)
+			return nil, status.Errorf(codes.Internal, "failed to cancel appeal: %v", err)
 		}
 	}
 
 	appealProto, err := s.adapter.ToAppealProto(a)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
+		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
 	}
 
 	return &pb.CancelAppealResponse{
@@ -470,13 +470,13 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealReque
 		case appeal.ErrAppealNotFound:
 			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
 		default:
-			return nil, status.Errorf(codes.Internal, "%s: failed to cancel appeal", err)
+			return nil, status.Errorf(codes.Internal, "failed to cancel appeal: %v", err)
 		}
 	}
 
 	appealProto, err := s.adapter.ToAppealProto(a)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s: failed to parse appeal", err)
+		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
 	}
 
 	return &pb.RevokeAppealResponse{

@@ -163,9 +163,9 @@ func (a *adapter) ToRole(role *domain.Role) (*pb.Role, error) {
 }
 
 func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
-	steps := []*domain.Step{}
+	var steps []*domain.Step
 	for _, s := range p.GetSteps() {
-		conditions := []*domain.Condition{}
+		var conditions []*domain.Condition
 		for _, c := range s.Conditions {
 			match := &domain.MatchCondition{
 				Eq: c.GetMatch().GetEq().AsInterface(),
@@ -306,6 +306,11 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 		})
 	}
 
+	details := map[string]interface{}{}
+	if appeal.GetDetails() != nil {
+		details = appeal.GetDetails().AsMap()
+	}
+
 	return &domain.Appeal{
 		ID:            uint(appeal.GetId()),
 		ResourceID:    uint(appeal.GetResourceId()),
@@ -323,6 +328,7 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 		Approvals:     approvals,
 		CreatedAt:     appeal.GetCreatedAt().AsTime(),
 		UpdatedAt:     appeal.GetUpdatedAt().AsTime(),
+		Details:       details,
 	}, nil
 }
 
@@ -354,6 +360,15 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		approvals = append(approvals, approvalProto)
 	}
 
+	var detailsProto *structpb.Struct
+	if appeal.Details != nil {
+		details, err := structpb.NewStruct(appeal.Details)
+		if err != nil {
+			return nil, err
+		}
+		detailsProto = details
+	}
+
 	return &pb.Appeal{
 		Id:            uint32(appeal.ID),
 		ResourceId:    uint32(appeal.ResourceID),
@@ -371,6 +386,7 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		Approvals:     approvals,
 		CreatedAt:     timestamppb.New(appeal.CreatedAt),
 		UpdatedAt:     timestamppb.New(appeal.UpdatedAt),
+		Details:       detailsProto,
 	}, nil
 }
 
@@ -402,6 +418,7 @@ func (a *adapter) FromCreateAppealProto(ca *pb.CreateAppealRequest) ([]*domain.A
 			ResourceID: uint(r.GetId()),
 			Role:       r.GetRole(),
 			Options:    &options,
+			Details:    r.GetDetails().AsMap(),
 		})
 	}
 
