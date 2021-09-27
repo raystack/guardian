@@ -9,6 +9,7 @@ import (
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type findFilters struct {
@@ -102,8 +103,8 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Appeal, err
 	return records, nil
 }
 
-// Create new record to database
-func (r *Repository) BulkInsert(appeals []*domain.Appeal) error {
+// BulkUpsert new record to database
+func (r *Repository) BulkUpsert(appeals []*domain.Appeal) error {
 	models := []*model.Appeal{}
 	for _, a := range appeals {
 		m := new(model.Appeal)
@@ -114,7 +115,10 @@ func (r *Repository) BulkInsert(appeals []*domain.Appeal) error {
 	}
 
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(models).Error; err != nil {
+		if err := tx.
+			Clauses(clause.OnConflict{UpdateAll: true}).
+			Create(models).
+			Error; err != nil {
 			return err
 		}
 

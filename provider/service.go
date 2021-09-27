@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
@@ -39,6 +40,12 @@ func (s *Service) Create(p *domain.Provider) error {
 		return ErrInvalidProviderType
 	}
 
+	if p.Config.Appeal != nil {
+		if err := s.validateAppealConfig(p.Config.Appeal); err != nil {
+			return err
+		}
+	}
+
 	if err := provider.CreateConfig(p.Config); err != nil {
 		return err
 	}
@@ -72,6 +79,12 @@ func (s *Service) Update(p *domain.Provider) error {
 
 	if err := mergo.Merge(p, currentProvider); err != nil {
 		return err
+	}
+
+	if p.Config.Appeal != nil {
+		if err := s.validateAppealConfig(p.Config.Appeal); err != nil {
+			return err
+		}
 	}
 
 	provider := s.getProvider(p.Type)
@@ -132,6 +145,10 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 
 	resourceType := a.Resource.Type
 	provider := s.getProvider(p.Type)
+	if provider == nil {
+		return ErrInvalidProviderType
+	}
+
 	roles, err := provider.GetRoles(p.Config, resourceType)
 	if err != nil {
 		return err
@@ -139,7 +156,7 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 
 	isRoleExists := false
 	for _, role := range roles {
-		if a.Role == role.Name {
+		if a.Role == role.ID {
 			isRoleExists = true
 			break
 		}
@@ -150,10 +167,16 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 	}
 
 	if !p.Config.Appeal.AllowPermanentAccess {
-		if a.Options == nil || a.Options.ExpirationDate == nil {
-			return ErrOptionsExpirationDateOptionNotFound
-		} else if a.Options.ExpirationDate.IsZero() {
-			return ErrExpirationDateIsRequired
+		if a.Options == nil {
+			return ErrOptionsDurationNotFound
+		}
+
+		if a.Options.Duration == "" {
+			return ErrDurationIsRequired
+		}
+
+		if err := validateDuration(a.Options.Duration); err != nil {
+			return fmt.Errorf("invalid duration: %v", err)
 		}
 	}
 
@@ -223,4 +246,21 @@ func (s *Service) getProviderConfig(pType, urn string) (*domain.Provider, error)
 		return nil, ErrProviderNotFound
 	}
 	return p, nil
+}
+
+func (s *Service) validateAppealConfig(a *domain.AppealConfig) error {
+	if a.AllowActiveAccessExtensionIn != "" {
+		if err := validateDuration(a.AllowActiveAccessExtensionIn); err != nil {
+			return fmt.Errorf("invalid appeal extension policy: %v", err)
+		}
+	}
+
+	return nil
+}
+
+func validateDuration(d string) error {
+	if _, err := time.ParseDuration(d); err != nil {
+		return fmt.Errorf("parsing duration: %v", err)
+	}
+	return nil
 }
