@@ -43,4 +43,4 @@ tmp
 guardian
 
 # vscode
-!.vscode/launch.json
+.vscode
