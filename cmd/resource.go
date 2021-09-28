@@ -21,7 +21,7 @@ func ResourceCmd(c *app.CLIConfig) *cobra.Command {
 		Short:   "Manage resources",
 		Example: heredoc.Doc(`
 			$ guardian resource list
-			$ guardian resource metadata --id=1
+			$ guardian resource metadata set --id=1 key=value
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -60,7 +60,7 @@ func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
 			report := [][]string{}
 
 			resources := res.GetResources()
-			fmt.Printf(" \nShowing %d of %d policies\n \n", len(resources), len(resources))
+			fmt.Printf(" \nShowing %d of %d resources\n \n", len(resources), len(resources))
 
 			report = append(report, []string{"ID", "PROVIDER", "TYPE", "URN", "NAME"})
 			for _, r := range resources {
