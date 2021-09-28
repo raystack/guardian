@@ -18,8 +18,9 @@ import (
 //  PolicyCmd is the root command for the policies subcommand.
 func PolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "policy",
-		Short: "Manage policies",
+		Use:     "policy",
+		Aliases: []string{"policies"},
+		Short:   "Manage policies",
 		Annotations: map[string]string{
 			"group:core": "true",
 		},

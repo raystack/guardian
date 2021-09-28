@@ -16,8 +16,9 @@ import (
 
 func ResourceCmd(c *app.CLIConfig) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "resource",
-		Short: "Manage resources",
+		Use:     "resource",
+		Aliases: []string{"resources"},
+		Short:   "Manage resources",
 		Example: heredoc.Doc(`
 			$ guardian resource list
 			$ guardian resource metadata --id=1
