@@ -101,7 +101,7 @@ func getProviderCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 				return fmt.Errorf("failed to format provider: %v", err)
 			}
 
-			fmt.Print(string(formattedResult))
+			fmt.Println(formattedResult)
 			return nil
 		},
 	}

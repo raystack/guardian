@@ -119,7 +119,7 @@ func getResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 				return fmt.Errorf("failed to parse resource: %v", err)
 			}
 
-			fmt.Print(string(formattedResult))
+			fmt.Println(formattedResult)
 			return nil
 		},
 	}
