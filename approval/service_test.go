@@ -13,8 +13,9 @@ import (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockRepository    *mocks.ApprovalRepository
-	mockPolicyService *mocks.PolicyService
+	mockRepository      *mocks.ApprovalRepository
+	mockPolicyService   *mocks.PolicyService
+	mockApprovalService *mocks.ApprovalService
 
 	service domain.ApprovalService
 }
@@ -38,7 +39,88 @@ func (s *ServiceTestSuite) TestBulkInsert() {
 }
 
 func (s *ServiceTestSuite) TestAdvanceApproval() {
-	// TODO: test
+	s.Run("should return error if got error on finding policies", func() {
+		testappeal := domain.Appeal{
+			PolicyID:      "test-id",
+			PolicyVersion: 1,
+		}
+		expectedError := errors.New("policy error")
+		s.mockPolicyService.On("GetOne", mock.Anything, mock.Anything).Return(nil, expectedError).Once()
+		actualError := s.service.AdvanceApproval(&testappeal)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should resolve multiple automatic approval steps", func() {
+		testappeal := domain.Appeal{
+			PolicyID:      "test-id",
+			PolicyVersion: 1,
+			Resource: &domain.Resource{
+				Name: "grafana",
+				Details: map[string]interface{}{
+					"owner": "test-owner",
+				},
+			},
+			Policy: &domain.Policy{
+				ID:      "test-id",
+				Version: 1,
+				Steps: []*domain.Step{
+					{
+						Name: "step-1",
+						Conditions: []*domain.Condition{
+							{
+								Field: "$resource.details.owner",
+								Match: &domain.MatchCondition{
+									Eq: "test-owner",
+								},
+							},
+						},
+						Dependencies: []string{},
+					},
+					{
+						Name: "step-2",
+						Conditions: []*domain.Condition{
+							{
+								Field: "$resource.details.owner",
+								Match: &domain.MatchCondition{
+									Eq: "test-owner",
+								},
+							},
+						},
+						Dependencies: []string{},
+					},
+					{
+						Name: "step-3",
+						Conditions: []*domain.Condition{
+							{
+								Field: "$resource.details.owner",
+								Match: &domain.MatchCondition{
+									Eq: "test-owner",
+								},
+							},
+						},
+						Dependencies: []string{},
+					},
+				},
+			},
+			Approvals: []*domain.Approval{
+				{
+					Status: "pending",
+					Index:  0,
+				},
+				{
+					Status: "blocked",
+					Index:  1,
+				},
+				{
+					Status: "blocked",
+					Index:  2,
+				},
+			},
+		}
+
+		actualError := s.service.AdvanceApproval(&testappeal)
+		s.Nil(actualError)
+	})
 }
 
 func TestService(t *testing.T) {
