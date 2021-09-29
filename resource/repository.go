@@ -11,7 +11,7 @@ import (
 
 type findFilters struct {
 	IDs       []uint `mapstructure:"ids" validate:"omitempty,min=1"`
-	IsDeleted bool   `mapstructure:"isdeleted" validate:"omitempty"`
+	IsDeleted bool   `mapstructure:"is_deleted" validate:"omitempty"`
 }
 
 // Repository talks to the store/database to read/insert data
