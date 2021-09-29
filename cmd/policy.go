@@ -29,7 +29,7 @@ func PolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	}
 
 	cmd.AddCommand(listPoliciesCmd(c))
-	cmd.AddCommand(getPolicyCmd(c))
+	cmd.AddCommand(getPolicyCmd(c, adapter))
 	cmd.AddCommand(createPolicyCmd(c, adapter))
 	cmd.AddCommand(updatePolicyCmd(c, adapter))
 
@@ -92,7 +92,7 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 	}
 }
 
-func getPolicyCmd(c *app.CLIConfig) *cobra.Command {
+func getPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var format string
 	cmd := &cobra.Command{
 		Use:   "get",
@@ -131,9 +131,14 @@ func getPolicyCmd(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			formattedResult, err := outputFormat(res, format)
+			p, err := adapter.FromPolicyProto(res)
 			if err != nil {
 				return fmt.Errorf("failed to parse policy: %v", err)
+			}
+
+			formattedResult, err := outputFormat(p, format)
+			if err != nil {
+				return fmt.Errorf("failed to format policy: %v", err)
 			}
 
 			fmt.Print(string(formattedResult))

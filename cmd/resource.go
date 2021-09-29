@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
+	v1 "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/salt/printer"
@@ -15,7 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func ResourceCmd(c *app.CLIConfig) *cobra.Command {
+func ResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "resource",
 		Aliases: []string{"resources"},
@@ -30,7 +31,7 @@ func ResourceCmd(c *app.CLIConfig) *cobra.Command {
 	}
 
 	cmd.AddCommand(listResourcesCmd(c))
-	cmd.AddCommand(getResourceCmd(c))
+	cmd.AddCommand(getResourceCmd(c, adapter))
 	cmd.AddCommand(metadataCmd(c))
 
 	return cmd
@@ -80,7 +81,7 @@ func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
 	}
 }
 
-func getResourceCmd(c *app.CLIConfig) *cobra.Command {
+func getResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var format string
 	cmd := &cobra.Command{
 		Use:   "get",
@@ -112,7 +113,8 @@ func getResourceCmd(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			formattedResult, err := outputFormat(res, format)
+			r := adapter.FromResourceProto(res)
+			formattedResult, err := outputFormat(r, format)
 			if err != nil {
 				return fmt.Errorf("failed to parse resource: %v", err)
 			}
