@@ -15,7 +15,6 @@ type ServiceTestSuite struct {
 	suite.Suite
 	mockRepository      *mocks.ApprovalRepository
 	mockPolicyService   *mocks.PolicyService
-	mockApprovalService *mocks.ApprovalService
 
 	service domain.ApprovalService
 }
