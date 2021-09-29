@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -12,6 +13,7 @@ import (
 	"github.com/odpf/salt/printer"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
+	"gopkg.in/yaml.v3"
 )
 
 func ResourceCmd(c *app.CLIConfig) *cobra.Command {
@@ -29,6 +31,7 @@ func ResourceCmd(c *app.CLIConfig) *cobra.Command {
 	}
 
 	cmd.AddCommand(listResourcesCmd(c))
+	cmd.AddCommand(getResourceCmd(c))
 	cmd.AddCommand(metadataCmd(c))
 
 	return cmd
@@ -73,6 +76,48 @@ func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
 				})
 			}
 			printer.Table(os.Stdout, report)
+			return nil
+		},
+	}
+}
+
+func getResourceCmd(c *app.CLIConfig) *cobra.Command {
+	return &cobra.Command{
+		Use:   "get",
+		Short: "Get a resource details",
+		Example: heredoc.Doc(`
+			$ guardian resource get 1
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			id, err := strconv.ParseUint(args[0], 10, 32)
+			if err != nil {
+				return fmt.Errorf("invalid resource id: %v", err)
+			}
+
+			res, err := client.GetResource(ctx, &pb.GetResourceRequest{
+				Id: uint32(id),
+			})
+			if err != nil {
+				return err
+			}
+
+			yamlRes, err := yaml.Marshal(res)
+			if err != nil {
+				return fmt.Errorf("failed to parse resource: %v", err)
+			}
+
+			fmt.Print(string(yamlRes))
 			return nil
 		},
 	}
