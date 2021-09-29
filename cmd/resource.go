@@ -13,7 +13,6 @@ import (
 	"github.com/odpf/salt/printer"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
-	"gopkg.in/yaml.v3"
 )
 
 func ResourceCmd(c *app.CLIConfig) *cobra.Command {
@@ -82,7 +81,8 @@ func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
 }
 
 func getResourceCmd(c *app.CLIConfig) *cobra.Command {
-	return &cobra.Command{
+	var format string
+	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get a resource details",
 		Example: heredoc.Doc(`
@@ -112,15 +112,19 @@ func getResourceCmd(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			yamlRes, err := yaml.Marshal(res)
+			formattedResult, err := outputFormat(res, format)
 			if err != nil {
 				return fmt.Errorf("failed to parse resource: %v", err)
 			}
 
-			fmt.Print(string(yamlRes))
+			fmt.Print(string(formattedResult))
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVar(&format, "format", "yaml", "Print output with the selected format")
+
+	return cmd
 }
 
 func metadataCmd(c *app.CLIConfig) *cobra.Command {
