@@ -4,33 +4,54 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	v1 "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/salt/printer"
+	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 )
 
-func policiesCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
+//  PolicyCmd is the root command for the policies subcommand.
+func PolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "policies",
-		Short: "manage policies",
+		Use:     "policy",
+		Aliases: []string{"policies"},
+		Short:   "Manage policies",
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 	}
 
-	cmd.AddCommand(listPoliciesCommand(c))
-	cmd.AddCommand(createPolicyCommand(c, adapter))
-	cmd.AddCommand(updatePolicyCommand(c, adapter))
+	cmd.AddCommand(listPoliciesCmd(c))
+	cmd.AddCommand(createPolicyCmd(c, adapter))
+	cmd.AddCommand(updatePolicyCmd(c, adapter))
 
 	return cmd
 }
 
-func listPoliciesCommand(c *app.CLIConfig) *cobra.Command {
+func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "list policies",
+		Short: "List and filter access policies.",
+		Long: heredoc.Doc(`
+			List and filter access policies.
+
+			This command lists and filter all available access policies. 
+			Policies are used to define governance rules of the data access.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian policy list
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cs := term.NewColorScheme()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -43,30 +64,42 @@ func listPoliciesCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			t := getTablePrinter(os.Stdout, []string{"ID", "VERSION", "DESCRIPTION", "STEPS"})
-			for _, p := range res.GetPolicies() {
-				var stepNames []string
-				for _, s := range p.GetSteps() {
-					stepNames = append(stepNames, s.GetName())
-				}
-				t.Append([]string{
+			report := [][]string{}
+			index := 0
+
+			policies := res.GetPolicies()
+			fmt.Printf(" \nShowing %d of %d policies\n \n", len(policies), len(policies))
+
+			report = append(report, []string{"ID", "NAME", "DESCRIPTION", "VERSION", "STEPS"})
+			for _, p := range policies {
+				report = append(report, []string{
+					cs.Greenf("%02d", index),
 					fmt.Sprintf("%v", p.GetId()),
-					fmt.Sprintf("%v", p.GetVersion()),
 					p.GetDescription(),
-					strings.Join(stepNames, ","),
+					fmt.Sprintf("%v", p.GetVersion()),
+					fmt.Sprintf("%v", len(p.GetSteps())),
 				})
+				index++
 			}
-			t.Render()
+			printer.Table(os.Stdout, report)
+
+			// fmt.Println("\nFor details on a policy, try: guardian policy view <policy-id>")
 			return nil
 		},
 	}
 }
 
-func createPolicyCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
+func createPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "create policy",
+		Short: "Create a new policy",
+		Example: heredoc.Doc(`
+			$ guardian policy create -f policy.yaml
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var policy domain.Policy
 			if err := parseFile(filePath, &policy); err != nil {
@@ -92,7 +125,7 @@ func createPolicyCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Comma
 				return err
 			}
 
-			fmt.Printf("policy created with id: %v", res.GetPolicy().GetId())
+			fmt.Printf("Policy created with id: %v\n", res.GetPolicy().GetId())
 
 			return nil
 		},
@@ -104,12 +137,18 @@ func createPolicyCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Comma
 	return cmd
 }
 
-func updatePolicyCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
+func updatePolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var id string
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "update policy",
+		Short: "Update an existing policy",
+		Example: heredoc.Doc(`
+			$ guardian policy update -f policy.yaml
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var policy domain.Policy
 			if err := parseFile(filePath, &policy); err != nil {
@@ -140,7 +179,7 @@ func updatePolicyCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Comma
 				return err
 			}
 
-			fmt.Println("policy updated")
+			fmt.Println("Successfully updated policy")
 
 			return nil
 		},

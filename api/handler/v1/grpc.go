@@ -3,7 +3,6 @@ package v1
 import (
 	"context"
 	"errors"
-	"time"
 
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/appeal"
@@ -43,7 +42,7 @@ type GRPCServer struct {
 	approvalService domain.ApprovalService
 	adapter         ProtoAdapter
 
-	Now func() time.Time
+	authenticatedUserHeaderKey string
 
 	pb.UnimplementedGuardianServiceServer
 }
@@ -55,14 +54,16 @@ func NewGRPCServer(
 	appealService domain.AppealService,
 	approvalService domain.ApprovalService,
 	adapter ProtoAdapter,
+	authenticatedUserHeaderKey string,
 ) *GRPCServer {
 	return &GRPCServer{
-		resourceService: resourceService,
-		providerService: providerService,
-		policyService:   policyService,
-		appealService:   appealService,
-		approvalService: approvalService,
-		adapter:         adapter,
+		resourceService:            resourceService,
+		providerService:            providerService,
+		policyService:              policyService,
+		appealService:              appealService,
+		approvalService:            approvalService,
+		adapter:                    adapter,
+		authenticatedUserHeaderKey: authenticatedUserHeaderKey,
 	}
 }
 
@@ -324,28 +325,37 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *pb.UpdateResourceR
 	}, nil
 }
 
+func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *pb.ListUserAppealsRequest) (*pb.ListUserAppealsResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	filters := map[string]interface{}{
+		"user": user,
+	}
+	appeals, err := s.listAppeals(filters)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ListUserAppealsResponse{
+		Appeals: appeals,
+	}, nil
+}
+
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *pb.ListAppealsRequest) (*pb.ListAppealsResponse, error) {
 	filters := map[string]interface{}{}
 	if req.GetUser() != "" {
 		filters["user"] = req.GetUser()
 	}
-
-	appeals, err := s.appealService.Find(filters)
+	appeals, err := s.listAppeals(filters)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get appeal list: %v", err)
-	}
-
-	appealProtos := []*pb.Appeal{}
-	for _, a := range appeals {
-		appealProto, err := s.adapter.ToAppealProto(a)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
-		}
-		appealProtos = append(appealProtos, appealProto)
+		return nil, err
 	}
 
 	return &pb.ListAppealsResponse{
-		Appeals: appealProtos,
+		Appeals: appeals,
 	}, nil
 }
 
@@ -376,26 +386,36 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealReque
 	}, nil
 }
 
+func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *pb.ListUserApprovalsRequest) (*pb.ListUserApprovalsResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
+		User:     user,
+		Statuses: req.GetStatuses(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ListUserApprovalsResponse{
+		Approvals: approvals,
+	}, nil
+}
+
 func (s *GRPCServer) ListApprovals(ctx context.Context, req *pb.ListApprovalsRequest) (*pb.ListApprovalsResponse, error) {
-	approvals, err := s.approvalService.ListApprovals(&domain.ListApprovalsFilter{
+	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
 		User:     req.GetUser(),
 		Statuses: req.GetStatuses(),
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get approval list: %v", err)
-	}
-
-	approvalProtos := []*pb.Approval{}
-	for _, a := range approvals {
-		approvalProto, err := s.adapter.ToApprovalProto(a)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse approval %v: %v", a.ID, err)
-		}
-		approvalProtos = append(approvalProtos, approvalProto)
+		return nil, err
 	}
 
 	return &pb.ListApprovalsResponse{
-		Approvals: approvalProtos,
+		Approvals: approvals,
 	}, nil
 }
 
@@ -420,7 +440,7 @@ func (s *GRPCServer) GetAppeal(ctx context.Context, req *pb.GetAppealRequest) (*
 }
 
 func (s *GRPCServer) UpdateApproval(ctx context.Context, req *pb.UpdateApprovalRequest) (*pb.UpdateApprovalResponse, error) {
-	actor, err := s.getActor(ctx)
+	actor, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -496,7 +516,7 @@ func (s *GRPCServer) CancelAppeal(ctx context.Context, req *pb.CancelAppealReque
 
 func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealRequest) (*pb.RevokeAppealResponse, error) {
 	id := req.GetId()
-	actor, err := s.getActor(ctx)
+	actor, err := s.getUser(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to get metadata: actor")
 	}
@@ -522,12 +542,49 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealReque
 	}, nil
 }
 
-func (s *GRPCServer) getActor(ctx context.Context) (string, error) {
+func (s *GRPCServer) listAppeals(filters map[string]interface{}) ([]*pb.Appeal, error) {
+	appeals, err := s.appealService.Find(filters)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get appeal list: %s", err)
+	}
+
+	appealProtos := []*pb.Appeal{}
+	for _, a := range appeals {
+		appealProto, err := s.adapter.ToAppealProto(a)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse appeal: %s", err)
+		}
+		appealProtos = append(appealProtos, appealProto)
+	}
+
+	return appealProtos, nil
+}
+
+func (s *GRPCServer) listApprovals(filters *domain.ListApprovalsFilter) ([]*pb.Approval, error) {
+	approvals, err := s.approvalService.ListApprovals(filters)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get approval list: %s", err)
+	}
+
+	approvalProtos := []*pb.Approval{}
+	for _, a := range approvals {
+		approvalProto, err := s.adapter.ToApprovalProto(a)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse approval: %v: %s", a.ID, err)
+		}
+		approvalProtos = append(approvalProtos, approvalProto)
+	}
+
+	return approvalProtos, nil
+}
+
+func (s *GRPCServer) getUser(ctx context.Context) (string, error) {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if userEmail, ok := md["x-goog-authenticated-user-email"]; ok {
-			return userEmail[0], nil
+		users := md.Get(s.authenticatedUserHeaderKey)
+		if len(users) > 0 {
+			return users[0], nil
 		}
 	}
 
-	return "", status.Error(codes.Internal, "failed to get request metadata")
+	return "", status.Error(codes.Unauthenticated, "user email not found")
 }
