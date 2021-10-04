@@ -43,7 +43,7 @@ func (r *Repository) GetByID(id uint) (*domain.Appeal, error) {
 		First(&m, id).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil, ErrAppealNotFound
 		}
 		return nil, err
 	}

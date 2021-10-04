@@ -13,7 +13,6 @@ var (
 	ErrEmptyProviderURN        = errors.New("provider urn can't be nil")
 	ErrNilAppeal               = errors.New("appeal can't be nil")
 	ErrNilResource             = errors.New("resource can't be nil")
-	ErrProviderNotFound        = errors.New("provider config not found")
 	ErrInvalidResourceType     = errors.New("invalid resource type")
 	ErrInvalidRole             = errors.New("invalid role")
 	ErrDurationIsRequired      = errors.New("having permanent access to this resource is not allowed, access duration is required")

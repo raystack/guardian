@@ -66,7 +66,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 		}{
 			{
 				expectedExistingResource: nil,
-				expectedRepositoryError:  nil,
+				expectedRepositoryError:  resource.ErrRecordNotFound,
 				expectedError:            resource.ErrRecordNotFound,
 			},
 			{

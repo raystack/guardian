@@ -74,7 +74,7 @@ func (r *Repository) GetOne(id string, version uint) (*domain.Policy, error) {
 	conds := append([]interface{}{condition}, args...)
 	if err := r.db.Order("version desc").First(m, conds...).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return nil, ErrPolicyNotFound
 		}
 		return nil, err
 	}
