@@ -105,17 +105,20 @@ func (s *Service) FetchResources() error {
 		return err
 	}
 
-	existingResources, err := s.resourceService.Find(map[string]interface{}{})
-	if err != nil {
-		return err
-	}
-
 	resources := []*domain.Resource{}
 	for _, p := range providers {
 		provider := s.getProvider(p.Type)
 		if provider == nil {
 			s.logger.Error(fmt.Sprintf("%v: %v", ErrInvalidProviderType, p.Type))
 			continue
+		}
+
+		existingResources, err := s.resourceService.Find(map[string]interface{}{
+			"provider_type": p.Type,
+			"provider_urn":  p.URN,
+		})
+		if err != nil {
+			return err
 		}
 
 		res, err := provider.GetResources(p.Config)
