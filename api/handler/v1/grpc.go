@@ -268,7 +268,7 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyReque
 func (s *GRPCServer) ListResources(ctx context.Context, req *pb.ListResourcesRequest) (*pb.ListResourcesResponse, error) {
 	isDeleted := req.GetIsDeleted()
 	resources, err := s.resourceService.Find(map[string]interface{}{
-		"isDeleted": isDeleted,
+		"is_deleted": isDeleted,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get resource list: %v", err)

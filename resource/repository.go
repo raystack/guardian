@@ -11,7 +11,7 @@ import (
 
 type findFilters struct {
 	IDs       []uint `mapstructure:"ids" validate:"omitempty,min=1"`
-	IsDeleted bool   `mapstructure:"isdeleted" validate:"omitempty"`
+	IsDeleted bool   `mapstructure:"is_deleted" validate:"omitempty"`
 }
 
 // Repository talks to the store/database to read/insert data
@@ -39,7 +39,7 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Resource, e
 		db = db.Where(conditions.IDs)
 	}
 
-	if filters["isDeleted"] != nil {
+	if filters["is_deleted"] != nil {
 		db = db.Where(`"is_deleted" = ?`, conditions.IsDeleted)
 	}
 
