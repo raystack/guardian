@@ -10,7 +10,8 @@ import (
 )
 
 type findFilters struct {
-	IDs []uint `mapstructure:"ids" validate:"omitempty,min=1"`
+	IDs       []uint `mapstructure:"ids" validate:"omitempty,min=1"`
+	IsDeleted bool   `mapstructure:"is_deleted" validate:"omitempty"`
 }
 
 // Repository talks to the store/database to read/insert data
@@ -37,6 +38,11 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Resource, e
 	if conditions.IDs != nil {
 		db = db.Where(conditions.IDs)
 	}
+
+	if filters["is_deleted"] != nil {
+		db = db.Where(`"is_deleted" = ?`, conditions.IsDeleted)
+	}
+
 	var models []*model.Resource
 	if err := db.Find(&models).Error; err != nil {
 		return nil, err
@@ -97,7 +103,7 @@ func (r *Repository) BulkUpsert(resources []*domain.Resource) error {
 				{Name: "type"},
 				{Name: "urn"},
 			},
-			DoUpdates: clause.AssignmentColumns([]string{"name", "updated_at"}),
+			DoUpdates: clause.AssignmentColumns([]string{"name", "updated_at", "is_deleted"}),
 		}
 		if err := r.db.Clauses(upsertClause).Create(models).Error; err != nil {
 			return err

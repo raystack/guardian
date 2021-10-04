@@ -14,6 +14,7 @@ type Resource struct {
 	Labels       map[string]string      `json:"labels"`
 	CreatedAt    time.Time              `json:"created_at"`
 	UpdatedAt    time.Time              `json:"updated_at"`
+	IsDeleted    bool                   `json:"is_deleted"`
 }
 
 // ResourceRepository interface

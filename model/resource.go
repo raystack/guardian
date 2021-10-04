@@ -25,6 +25,7 @@ type Resource struct {
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+	IsDeleted bool
 }
 
 // TableName overrides the table name
@@ -54,7 +55,7 @@ func (m *Resource) FromDomain(r *domain.Resource) error {
 	m.Labels = datatypes.JSON(labels)
 	m.CreatedAt = r.CreatedAt
 	m.UpdatedAt = r.UpdatedAt
-
+	m.IsDeleted = r.IsDeleted
 	return nil
 }
 
@@ -81,5 +82,6 @@ func (m *Resource) ToDomain() (*domain.Resource, error) {
 		Labels:       labels,
 		CreatedAt:    m.CreatedAt,
 		UpdatedAt:    m.UpdatedAt,
+		IsDeleted:    m.IsDeleted,
 	}, nil
 }

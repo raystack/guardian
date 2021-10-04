@@ -251,7 +251,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 		}
 		expectedError := errors.New("any error")
 		s.mockResourceService.On("BulkUpsert", mock.Anything).Return(expectedError).Once()
-
+		s.mockResourceService.On("Find", mock.Anything).Return([]*domain.Resource{}, nil).Once()
 		actualError := s.service.FetchResources()
 
 		s.EqualError(actualError, expectedError.Error())
@@ -271,7 +271,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 			expectedResources = append(expectedResources, resources...)
 		}
 		s.mockResourceService.On("BulkUpsert", expectedResources).Return(nil).Once()
-
+		s.mockResourceService.On("Find", mock.Anything).Return([]*domain.Resource{}, nil).Once()
 		actualError := s.service.FetchResources()
 
 		s.Nil(actualError)
