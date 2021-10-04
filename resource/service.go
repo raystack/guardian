@@ -25,9 +25,6 @@ func (s *Service) GetOne(id uint) (*domain.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	if r == nil {
-		return nil, ErrRecordNotFound
-	}
 
 	return r, nil
 }

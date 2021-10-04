@@ -228,9 +228,6 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 	if err != nil {
 		return nil, err
 	}
-	if appeal == nil {
-		return nil, ErrAppealNotFound
-	}
 
 	if err := checkIfAppealStatusStillPending(appeal.Status); err != nil {
 		return nil, err
@@ -342,9 +339,6 @@ func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 	if err != nil {
 		return nil, err
 	}
-	if appeal == nil {
-		return nil, nil
-	}
 
 	// TODO: check only appeal creator who is allowed to cancel the appeal
 
@@ -364,9 +358,6 @@ func (s *Service) Revoke(id uint, actor, reason string) (*domain.Appeal, error) 
 	appeal, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, err
-	}
-	if appeal == nil {
-		return nil, ErrAppealNotFound
 	}
 
 	revokedAppeal := &domain.Appeal{}

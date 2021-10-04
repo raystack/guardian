@@ -150,15 +150,16 @@ func (s *RepositoryTestSuite) TestFind() {
 }
 
 func (s *RepositoryTestSuite) TestGetOne() {
-	s.Run("should return nil policy and nil error if record not found", func() {
-		expectedError := gorm.ErrRecordNotFound
+	s.Run("should return error if record not found", func() {
+		expectedDBError := gorm.ErrRecordNotFound
 		s.dbmock.ExpectQuery(".*").
-			WillReturnError(expectedError)
+			WillReturnError(expectedDBError)
+		expectedError := policy.ErrPolicyNotFound
 
 		actualResult, actualError := s.repository.GetOne("", 0)
 
 		s.Nil(actualResult)
-		s.Nil(actualError)
+		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should return error if got error from db", func() {

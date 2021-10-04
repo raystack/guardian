@@ -64,7 +64,7 @@ func (r *Repository) GetOne(id uint) (*domain.Resource, error) {
 	var m model.Resource
 	if err := r.db.Where("id = ?", id).Take(&m).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return nil, ErrRecordNotFound
 		}
 		return nil, err
 	}

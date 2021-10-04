@@ -72,9 +72,6 @@ func (s *Service) GetByID(id uint) (*domain.Provider, error) {
 	if err != nil {
 		return nil, err
 	}
-	if p == nil {
-		return nil, ErrRecordNotFound
-	}
 
 	return p, nil
 }
@@ -247,9 +244,6 @@ func (s *Service) getProviderConfig(pType, urn string) (*domain.Provider, error)
 	p, err := s.providerRepository.GetOne(pType, urn)
 	if err != nil {
 		return nil, err
-	}
-	if p == nil {
-		return nil, ErrProviderNotFound
 	}
 	return p, nil
 }

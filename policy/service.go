@@ -42,9 +42,6 @@ func (s *Service) GetOne(id string, version uint) (*domain.Policy, error) {
 	if err != nil {
 		return nil, err
 	}
-	if p == nil {
-		return nil, ErrPolicyNotFound
-	}
 
 	return p, nil
 }

@@ -777,8 +777,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	s.Run("should return nil and error if appeal not found", func() {
-		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(nil, nil).Once()
+	s.Run("should return error if appeal not found", func() {
+		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(nil, appeal.ErrAppealNotFound).Once()
 
 		actualResult, actualError := s.service.MakeAction(validApprovalActionParam)
 
@@ -1355,7 +1355,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 	})
 
 	s.Run("should return error if appeal not found", func() {
-		s.mockRepository.On("GetByID", mock.Anything).Return(nil, nil).Once()
+		s.mockRepository.On("GetByID", mock.Anything).Return(nil, appeal.ErrAppealNotFound).Once()
 		expectedError := appeal.ErrAppealNotFound
 
 		actualResult, actualError := s.service.Revoke(0, "", "")
