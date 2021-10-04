@@ -17,12 +17,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//  PolicyCmd is the root command for the policies subcommand.
+// PolicyCmd is the root command for the policies subcommand.
 func PolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "policy",
 		Aliases: []string{"policies"},
 		Short:   "Manage policies",
+		Long: heredoc.Doc(`
+			Work with policies.
+
+			Policies are used to define governance rules of the data access.
+	`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -39,12 +44,9 @@ func PolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "List and filter access policies.",
+		Short: "List and filter access policies",
 		Long: heredoc.Doc(`
-			List and filter access policies.
-
-			This command lists and filter all available access policies. 
-			Policies are used to define governance rules of the data access.
+			List and filter all available access policies.
 		`),
 		Example: heredoc.Doc(`
 			$ guardian policy list
@@ -86,7 +88,7 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 			}
 			printer.Table(os.Stdout, report)
 
-			// fmt.Println("\nFor details on a policy, try: guardian policy view <policy-id>")
+			fmt.Println("\nFor details on a policy, try: guardian policy view <id@version>")
 			return nil
 		},
 	}
@@ -95,10 +97,15 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 func getPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var format string
 	cmd := &cobra.Command{
-		Use:   "get",
-		Short: "Get a policy details",
+		Use:   "view",
+		Short: "View a policy",
+		Long: heredoc.Doc(`
+			View a policy.
+
+			Display the ID, name, and other information about a policy.
+		`),
 		Example: heredoc.Doc(`
-			$ guardian policy get my_policy@1
+			$ guardian policy view my_policy@1
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -156,6 +163,9 @@ func createPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new policy",
+		Long: heredoc.Doc(`
+			Create a new policy from a file.
+		`),
 		Example: heredoc.Doc(`
 			$ guardian policy create -f policy.yaml
 		`),
@@ -203,11 +213,15 @@ func updatePolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var id string
 	var filePath string
 	cmd := &cobra.Command{
-		Use:   "update",
-		Short: "Update an existing policy",
+		Use:   "edit",
+		Short: "Edit a policy",
+		Long: heredoc.Doc(`
+			Edit an existing policy with a file.
+		`),
 		Example: heredoc.Doc(`
 			$ guardian policy update -f policy.yaml
 		`),
+
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
