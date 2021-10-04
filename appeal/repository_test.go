@@ -89,18 +89,19 @@ func (s *RepositoryTestSuite) TestGetByID() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	s.Run("should return nil result and nil error if record not found", func() {
+	s.Run("should return error if record not found", func() {
 		expectedID := uint(1)
-		expectedError := gorm.ErrRecordNotFound
+		expectedDBError := gorm.ErrRecordNotFound
 		s.dbmock.
 			ExpectQuery(expectedQuery).
 			WithArgs(expectedID).
-			WillReturnError(expectedError)
+			WillReturnError(expectedDBError)
+		expectedError := appeal.ErrAppealNotFound
 
 		actualResult, actualError := s.repository.GetByID(expectedID)
 
 		s.Nil(actualResult)
-		s.Nil(actualError)
+		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should return records on success", func() {

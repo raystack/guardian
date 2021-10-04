@@ -51,9 +51,9 @@ func New() *cobra.Command {
 	cmd.AddCommand(serveCommand())
 	cmd.AddCommand(migrateCommand())
 	cmd.AddCommand(configCommand())
-	cmd.AddCommand(resourcesCommand(cliConfig))
+	cmd.AddCommand(ResourceCmd(cliConfig, protoAdapter))
 	cmd.AddCommand(providersCommand(cliConfig, protoAdapter))
-	cmd.AddCommand(policiesCommand(cliConfig, protoAdapter))
+	cmd.AddCommand(PolicyCmd(cliConfig, protoAdapter))
 	cmd.AddCommand(appealsCommand(cliConfig))
 
 	return cmd

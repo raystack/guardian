@@ -70,7 +70,7 @@ func (r *Repository) GetByID(id uint) (*domain.Provider, error) {
 	var m model.Provider
 	if err := r.db.First(&m, "id = ?", id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return nil, ErrRecordNotFound
 		}
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (r *Repository) GetOne(pType, urn string) (*domain.Provider, error) {
 	}
 	if err := r.db.Take(m).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil, ErrRecordNotFound
 		}
 		return nil, err
 	}

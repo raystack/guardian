@@ -146,7 +146,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 		}{
 			{
 				expectedExistingProvider: nil,
-				expectedRepositoryError:  nil,
+				expectedRepositoryError:  provider.ErrRecordNotFound,
 				expectedError:            provider.ErrRecordNotFound,
 			},
 			{
@@ -330,9 +330,9 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 
 	s.Run("should return error if provider not found", func() {
 		s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
-			Return(nil, nil).
+			Return(nil, provider.ErrRecordNotFound).
 			Once()
-		expectedError := provider.ErrProviderNotFound
+		expectedError := provider.ErrRecordNotFound
 
 		actualError := s.service.GrantAccess(validAppeal)
 
@@ -428,9 +428,9 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 
 	s.Run("should return error if provider not found", func() {
 		s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
-			Return(nil, nil).
+			Return(nil, provider.ErrRecordNotFound).
 			Once()
-		expectedError := provider.ErrProviderNotFound
+		expectedError := provider.ErrRecordNotFound
 
 		actualError := s.service.RevokeAccess(validAppeal)
 
