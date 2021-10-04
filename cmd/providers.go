@@ -11,27 +11,40 @@ import (
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/salt/printer"
 	"github.com/spf13/cobra"
 )
 
-func providersCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
+func ProviderCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "providers",
-		Short: "manage providers",
+		Use:     "provider",
+		Aliases: []string{"providers"},
+		Short:   "Manage providers",
+		Long: heredoc.Doc(`
+			Work with providers.
+			
+			Providers are the system for which we intend to mange access.
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 	}
 
-	cmd.AddCommand(listProvidersCommand(c))
+	cmd.AddCommand(listProvidersCmd(c))
 	cmd.AddCommand(getProviderCmd(c, adapter))
-	cmd.AddCommand(createProviderCommand(c, adapter))
-	cmd.AddCommand(updateProviderCommand(c, adapter))
+	cmd.AddCommand(createProviderCmd(c, adapter))
+	cmd.AddCommand(updateProviderCmd(c, adapter))
 
 	return cmd
 }
 
-func listProvidersCommand(c *app.CLIConfig) *cobra.Command {
+func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "list providers",
+		Short: "List and filter providers",
+		Long: heredoc.Doc(`
+			List and filter all registered providers.
+		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -45,15 +58,23 @@ func listProvidersCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			t := getTablePrinter(os.Stdout, []string{"ID", "TYPE", "URN"})
-			for _, p := range res.GetProviders() {
-				t.Append([]string{
+			report := [][]string{}
+
+			providers := res.GetProviders()
+			fmt.Printf(" \nShowing %d of %d providers\n \n", len(providers), len(providers))
+
+			report = append(report, []string{"ID", "TYPE", "URN"})
+
+			for _, p := range providers {
+				report = append(report, []string{
 					fmt.Sprintf("%v", p.GetId()),
 					p.GetType(),
 					p.GetUrn(),
 				})
 			}
-			t.Render()
+			printer.Table(os.Stdout, report)
+
+			fmt.Println("\nFor details on a provider, try: guardian provider view <id>")
 			return nil
 		},
 	}
@@ -62,10 +83,15 @@ func listProvidersCommand(c *app.CLIConfig) *cobra.Command {
 func getProviderCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var format string
 	cmd := &cobra.Command{
-		Use:   "get",
-		Short: "Get a provider details",
+		Use:   "view",
+		Short: "View a provider details",
+		Long: heredoc.Doc(`
+			View a provider.
+
+			Display the ID, name, and other information about a provider.
+		`),
 		Example: heredoc.Doc(`
-			$ guardian provider get 1
+			$ guardian provider view 1
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -111,11 +137,14 @@ func getProviderCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	return cmd
 }
 
-func createProviderCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
+func createProviderCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "register provider configuration",
+		Short: "Register a new provider",
+		Long: heredoc.Doc(`
+			Register a new provider.
+		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var providerConfig domain.ProviderConfig
 			if err := parseFile(filePath, &providerConfig); err != nil {
@@ -141,24 +170,27 @@ func createProviderCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Com
 				return err
 			}
 
-			fmt.Printf("provider created with id: %v", res.GetProvider().GetId())
+			fmt.Printf("Provider created with id: %v", res.GetProvider().GetId())
 
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVarP(&filePath, "file", "f", "", "path to the provider config")
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
 	cmd.MarkFlagRequired("file")
 
 	return cmd
 }
 
-func updateProviderCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
+func updateProviderCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var id uint
 	var filePath string
 	cmd := &cobra.Command{
-		Use:   "update",
-		Short: "update provider configuration",
+		Use:   "edit",
+		Short: "Edit a provider",
+		Long: heredoc.Doc(`
+			Edit an existing provider.
+		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var providerConfig domain.ProviderConfig
 			if err := parseFile(filePath, &providerConfig); err != nil {
@@ -185,7 +217,7 @@ func updateProviderCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Com
 				return err
 			}
 
-			fmt.Println("provider updated")
+			fmt.Println("Successfully updated provider")
 
 			return nil
 		},
@@ -193,7 +225,7 @@ func updateProviderCommand(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Com
 
 	cmd.Flags().UintVar(&id, "id", 0, "provider id")
 	cmd.MarkFlagRequired("id")
-	cmd.Flags().StringVarP(&filePath, "file", "f", "", "path to the provider config")
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
 	cmd.MarkFlagRequired("file")
 
 	return cmd

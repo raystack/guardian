@@ -27,7 +27,7 @@ func PolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 			Work with policies.
 
 			Policies are used to define governance rules of the data access.
-	`),
+		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -203,7 +203,7 @@ func createPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&filePath, "file", "f", "", "path to the policy config")
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the policy config")
 	cmd.MarkFlagRequired("file")
 
 	return cmd
@@ -262,7 +262,7 @@ func updatePolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&id, "id", "", "policy id")
-	cmd.Flags().StringVarP(&filePath, "file", "f", "", "path to the policy config")
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the policy config")
 	cmd.MarkFlagRequired("file")
 
 	return cmd
