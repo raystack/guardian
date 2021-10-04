@@ -44,7 +44,7 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Resource, e
 		db = db.Where(conditions.IDs)
 	}
 
-	if filters["is_deleted"] != nil {
+	if !conditions.IsDeleted {
 		db = db.Where(`"is_deleted" = ?`, conditions.IsDeleted)
 	}
 	if conditions.ResourceType != "" {
