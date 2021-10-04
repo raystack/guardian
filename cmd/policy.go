@@ -143,12 +143,9 @@ func getPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 				return fmt.Errorf("failed to parse policy: %v", err)
 			}
 
-			formattedResult, err := outputFormat(p, format)
-			if err != nil {
+			if err := printer.Text(p, format); err != nil {
 				return fmt.Errorf("failed to format policy: %v", err)
 			}
-
-			fmt.Println(formattedResult)
 			return nil
 		},
 	}

@@ -7,6 +7,8 @@ import (
 
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/app"
+	"github.com/odpf/salt/printer"
+	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -31,6 +33,8 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 		Use:   "list",
 		Short: "list appeals",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cs := term.NewColorScheme()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -43,17 +47,22 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			t := getTablePrinter(os.Stdout, []string{"ID", "USER", "RESOURCE ID", "ROLE", "STATUS"})
-			for _, a := range res.GetAppeals() {
-				t.Append([]string{
-					fmt.Sprintf("%v", a.GetId()),
+			report := [][]string{}
+
+			appeals := res.GetAppeals()
+			fmt.Printf(" \nShowing %d of %d policies\n \n", len(appeals), len(appeals))
+
+			report = append(report, []string{"ID", "USER", "RESOURCE ID", "ROLE", "STATUS"})
+			for _, a := range appeals {
+				report = append(report, []string{
+					cs.Greenf("%v", a.GetId()),
 					a.GetUser(),
 					fmt.Sprintf("%v", a.GetResourceId()),
 					a.GetRole(),
 					a.GetStatus(),
 				})
 			}
-			t.Render()
+			printer.Table(os.Stdout, report)
 			return nil
 		},
 	}

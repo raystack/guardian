@@ -45,6 +45,9 @@ func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 		Long: heredoc.Doc(`
 			List and filter all registered providers.
 		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -122,12 +125,9 @@ func getProviderCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 				return fmt.Errorf("failed to parse provider: %v", err)
 			}
 
-			formattedResult, err := outputFormat(p, format)
-			if err != nil {
+			if err := printer.Text(p, format); err != nil {
 				return fmt.Errorf("failed to format provider: %v", err)
 			}
-
-			fmt.Println(formattedResult)
 			return nil
 		},
 	}
@@ -145,6 +145,9 @@ func createProviderCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command
 		Long: heredoc.Doc(`
 			Register a new provider.
 		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var providerConfig domain.ProviderConfig
 			if err := parseFile(filePath, &providerConfig); err != nil {
@@ -191,6 +194,9 @@ func updateProviderCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command
 		Long: heredoc.Doc(`
 			Edit an existing provider.
 		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var providerConfig domain.ProviderConfig
 			if err := parseFile(filePath, &providerConfig); err != nil {
