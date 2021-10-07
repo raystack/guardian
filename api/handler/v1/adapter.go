@@ -403,7 +403,7 @@ func (a *adapter) FromCreateAppealProto(ca *pb.CreateAppealRequest) ([]*domain.A
 	for _, r := range ca.GetResources() {
 		var options *domain.AppealOptions
 		if r.GetOptions() != nil {
-			if err := mapstructure.Decode(r.GetOptions().AsMap(), options); err != nil {
+			if err := mapstructure.Decode(r.GetOptions().AsMap(), &options); err != nil {
 				return nil, err
 			}
 		}
