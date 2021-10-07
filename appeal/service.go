@@ -489,43 +489,47 @@ func (s *Service) resolveApprovers(user string, resource *domain.Resource, appro
 	var approvers []string
 
 	// TODO: validate from policyService.Validate(policy)
-	if strings.HasPrefix(approversKey, domain.ApproversKeyResource) {
-		mapResource, err := structToMap(resource)
-		if err != nil {
-			return nil, err
-		}
-
-		path := strings.TrimPrefix(approversKey, fmt.Sprintf("%s.", domain.ApproversKeyResource))
-		approversReflectValue, err := lookup.LookupString(mapResource, path)
-		if err != nil {
-			return nil, err
-		}
-
-		email, ok := approversReflectValue.Interface().(string)
-		if !ok {
-			emails, ok := approversReflectValue.Interface().([]interface{})
-			if !ok {
-				return nil, ErrApproverInvalidType
+	if strings.HasPrefix(approversKey, "$") {
+		if strings.HasPrefix(approversKey, domain.ApproversKeyResource) {
+			mapResource, err := structToMap(resource)
+			if err != nil {
+				return nil, err
 			}
 
-			for _, e := range emails {
-				emailString, ok := e.(string)
+			path := strings.TrimPrefix(approversKey, fmt.Sprintf("%s.", domain.ApproversKeyResource))
+			approversReflectValue, err := lookup.LookupString(mapResource, path)
+			if err != nil {
+				return nil, err
+			}
+
+			email, ok := approversReflectValue.Interface().(string)
+			if !ok {
+				emails, ok := approversReflectValue.Interface().([]interface{})
 				if !ok {
 					return nil, ErrApproverInvalidType
 				}
-				approvers = append(approvers, emailString)
+
+				for _, e := range emails {
+					emailString, ok := e.(string)
+					if !ok {
+						return nil, ErrApproverInvalidType
+					}
+					approvers = append(approvers, emailString)
+				}
+			} else {
+				approvers = append(approvers, email)
 			}
+		} else if strings.HasPrefix(approversKey, domain.ApproversKeyUserApprovers) {
+			approverEmails, err := s.iamService.GetUserApproverEmails(user)
+			if err != nil {
+				return nil, err
+			}
+			approvers = approverEmails
 		} else {
-			approvers = append(approvers, email)
+			return nil, ErrApproverKeyNotRecognized
 		}
-	} else if strings.HasPrefix(approversKey, domain.ApproversKeyUserApprovers) {
-		approverEmails, err := s.iamService.GetUserApproverEmails(user)
-		if err != nil {
-			return nil, err
-		}
-		approvers = approverEmails
 	} else {
-		return nil, ErrApproverKeyNotRecognized
+		approvers = append(approvers, approversKey)
 	}
 
 	if err := s.validator.Var(approvers, "dive,email"); err != nil {
