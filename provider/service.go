@@ -60,10 +60,6 @@ func (s *Service) Find() ([]*domain.Provider, error) {
 		return nil, err
 	}
 
-	for _, p := range providers {
-		p.Config.Credentials = nil
-	}
-
 	return providers, nil
 }
 

@@ -75,6 +75,7 @@ func (s *GRPCServer) ListProviders(ctx context.Context, req *pb.ListProvidersReq
 
 	providerProtos := []*pb.Provider{}
 	for _, p := range providers {
+		p.Config.Credentials = nil
 		providerProto, err := s.adapter.ToProviderProto(p)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to parse provider %s: %v", p.URN, err)
