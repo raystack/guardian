@@ -58,14 +58,15 @@ func (s *RepositoryTestSuite) TestFind() {
 		}{
 			{
 				filters:       map[string]interface{}{},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."deleted_at" IS NULL`),
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{false},
 			},
 			{
 				filters: map[string]interface{}{
 					"ids": []uint{1, 2, 3},
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."id" IN ($1,$2,$3) AND "resources"."deleted_at" IS NULL`),
-				expectedArgs:  []driver.Value{1, 2, 3},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."id" IN ($1,$2,$3) AND "is_deleted" = $4 AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{1, 2, 3, false},
 			},
 		}
 
@@ -79,12 +80,12 @@ func (s *RepositoryTestSuite) TestFind() {
 		}
 	})
 
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."deleted_at" IS NULL`)
-
+	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "resources"."deleted_at" IS NULL`)
+	expectedArgs := []driver.Value{false}
 	s.Run("should return error if db returns error", func() {
 		expectedError := errors.New("unexpected error")
 
-		s.dbmock.ExpectQuery(expectedQuery).
+		s.dbmock.ExpectQuery(expectedQuery).WithArgs(expectedArgs...).
 			WillReturnError(expectedError)
 
 		actualRecords, actualError := s.repository.Find(map[string]interface{}{})

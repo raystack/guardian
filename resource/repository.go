@@ -10,8 +10,13 @@ import (
 )
 
 type findFilters struct {
-	IDs       []uint `mapstructure:"ids" validate:"omitempty,min=1"`
-	IsDeleted bool   `mapstructure:"is_deleted" validate:"omitempty"`
+	IDs          []uint `mapstructure:"ids" validate:"omitempty,min=1"`
+	IsDeleted    bool   `mapstructure:"is_deleted" validate:"omitempty"`
+	ProviderType string `mapstructure:"provider_type" validate:"omitempty"`
+	ProviderURN  string `mapstructure:"provider_urn" validate:"omitempty"`
+	Name         string `mapstructure:"name" validate:"omitempty"`
+	ResourceURN  string `mapstructure:"urn" validate:"omitempty"`
+	ResourceType string `mapstructure:"type" validate:"omitempty"`
 }
 
 // Repository talks to the store/database to read/insert data
@@ -39,8 +44,27 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Resource, e
 		db = db.Where(conditions.IDs)
 	}
 
-	if filters["is_deleted"] != nil {
+	if !conditions.IsDeleted {
 		db = db.Where(`"is_deleted" = ?`, conditions.IsDeleted)
+	}
+	if conditions.ResourceType != "" {
+		db = db.Where(`"type" = ?`, conditions.ResourceType)
+	}
+
+	if conditions.Name != "" {
+		db = db.Where(`"name" = ?`, conditions.Name)
+	}
+
+	if conditions.ProviderType != "" {
+		db = db.Where(`"provider_type" = ?`, conditions.ProviderType)
+	}
+
+	if conditions.ProviderURN != "" {
+		db = db.Where(`"provider_urn" = ?`, conditions.ProviderURN)
+	}
+
+	if conditions.ResourceURN != "" {
+		db = db.Where(`"urn" = ?`, conditions.ResourceURN)
 	}
 
 	var models []*model.Resource
