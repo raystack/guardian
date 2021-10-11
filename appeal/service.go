@@ -282,10 +282,16 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 							}
 
 							for _, aa := range r.Appeals {
+								// TODO: populate resource data from policyService
+								resource, err := s.resourceService.Get(aa.Resource)
+								if err != nil {
+									return nil, fmt.Errorf("retrieving resource: %v", err)
+								}
+
 								additionalAppeal := &domain.Appeal{
-									User: appeal.User,
-									Role: aa.Role,
-									// TODO: get resource id
+									User:       appeal.User,
+									Role:       aa.Role,
+									ResourceID: resource.ID,
 								}
 								if aa.Options != nil {
 									additionalAppeal.Options = aa.Options
