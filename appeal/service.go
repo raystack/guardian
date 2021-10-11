@@ -106,12 +106,10 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		r := resources[a.ResourceID]
 		if r == nil {
 			return ErrResourceNotFound
-		}
-		a.Resource = r
-
-		if a.Resource.IsDeleted {
+		} else if r.IsDeleted {
 			return ErrResourceIsDeleted
 		}
+		a.Resource = r
 
 		if providers[a.Resource.ProviderType] == nil {
 			return ErrProviderTypeNotFound
@@ -266,9 +264,46 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 					return nil, err
 				}
 
-				// TODO: decide if appeal status should be marked as active by checking
-				// through all approval step statuses
 				if i == len(appeal.Approvals)-1 {
+					policy, err := s.policyService.GetOne(appeal.PolicyID, appeal.PolicyVersion)
+					if err != nil {
+						return nil, fmt.Errorf("retrieving appeal: %v", err)
+					}
+
+					additionalAppeals := []*domain.Appeal{}
+					if policy.Requirements != nil && len(policy.Requirements) > 0 {
+						for reqIndex, r := range policy.Requirements {
+							isAppealMatchesRequirement, err := r.On.IsMatch(appeal)
+							if err != nil {
+								return nil, fmt.Errorf("evaluating requirements[%v]: %v", reqIndex, err)
+							}
+							if !isAppealMatchesRequirement {
+								continue
+							}
+
+							for _, aa := range r.Appeals {
+								additionalAppeal := &domain.Appeal{
+									User: appeal.User,
+									Role: aa.Role,
+									// TODO: get resource id
+								}
+								if aa.Options != nil {
+									additionalAppeal.Options = aa.Options
+								}
+								if aa.Policy != nil {
+									additionalAppeal.PolicyID = aa.Policy.ID
+									additionalAppeal.PolicyVersion = uint(aa.Policy.Version)
+								}
+								additionalAppeals = append(additionalAppeals, additionalAppeal)
+							}
+						}
+					}
+					if len(additionalAppeals) > 0 {
+						if err := s.Create(additionalAppeals); err != nil {
+							return nil, fmt.Errorf("creating additional appeals: %v", err)
+						}
+					}
+
 					if err := s.providerService.GrantAccess(appeal); err != nil {
 						return nil, err
 					}
