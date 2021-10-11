@@ -105,13 +105,13 @@ func RunServer(c *ServiceConfig) error {
 	}
 
 	resourceService := resource.NewService(resourceRepository)
-	policyService := policy.NewService(v, policyRepository)
 	providerService := provider.NewService(
 		logger,
 		providerRepository,
 		resourceService,
 		providers,
 	)
+	policyService := policy.NewService(v, policyRepository, resourceService, providerService)
 	approvalService := approval.NewService(approvalRepository, policyService)
 	appealService := appeal.NewService(
 		appealRepository,

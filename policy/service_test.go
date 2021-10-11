@@ -15,12 +15,16 @@ import (
 type ServiceTestSuite struct {
 	suite.Suite
 	mockPolicyRepository *mocks.PolicyRepository
+	mockResourceService  *mocks.ResourceService
+	mockProviderService  *mocks.ProviderService
 	service              *policy.Service
 }
 
 func (s *ServiceTestSuite) SetupTest() {
 	s.mockPolicyRepository = new(mocks.PolicyRepository)
-	s.service = policy.NewService(validator.New(), s.mockPolicyRepository)
+	s.mockResourceService = new(mocks.ResourceService)
+	s.mockProviderService = new(mocks.ProviderService)
+	s.service = policy.NewService(validator.New(), s.mockPolicyRepository, s.mockResourceService, s.mockProviderService)
 }
 
 func (s *ServiceTestSuite) TestCreate() {

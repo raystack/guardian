@@ -1,6 +1,7 @@
 package policy
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -13,11 +14,13 @@ import (
 type Service struct {
 	validator        *validator.Validate
 	policyRepository domain.PolicyRepository
+	resourceService  domain.ResourceService
+	providerService  domain.ProviderService
 }
 
 // NewService returns service struct
-func NewService(v *validator.Validate, pr domain.PolicyRepository) *Service {
-	return &Service{v, pr}
+func NewService(v *validator.Validate, pr domain.PolicyRepository, rs domain.ResourceService, ps domain.ProviderService) *Service {
+	return &Service{v, pr, rs, ps}
 }
 
 // Create record
@@ -78,6 +81,36 @@ func (s *Service) validatePolicy(p *domain.Policy, excludedFields ...string) err
 		return err
 	}
 
+	if err := s.validateRequirements(p.Requirements); err != nil {
+		return fmt.Errorf("invalid requirements: %v", err)
+	}
+
+	return nil
+}
+
+func (s *Service) validateRequirements(requirements []*domain.Requirement) error {
+	for i, r := range requirements {
+		for j, aa := range r.Appeals {
+			resource, err := s.getResource(aa.Resource)
+			if err != nil {
+				return fmt.Errorf("requirement[%v].appeals[%v].resource: %v", i, j, err)
+			}
+			provider, err := s.providerService.GetOne(resource.ProviderType, resource.ProviderURN)
+			if err != nil {
+				return fmt.Errorf("requirement[%v].appeals[%v].resource: retrieving provider: %v", i, j, err)
+			}
+
+			appeal := &domain.Appeal{
+				ResourceID: resource.ID,
+				Resource:   resource,
+				Role:       aa.Role,
+				Options:    aa.Options,
+			}
+			if err := s.providerService.ValidateAppeal(appeal, provider); err != nil {
+				return fmt.Errorf("requirement[%v].appeals[%v]: %v", i, j, err)
+			}
+		}
+	}
 	return nil
 }
 
@@ -124,6 +157,33 @@ func (s *Service) validateSteps(steps []*domain.Step) error {
 	}
 
 	return nil
+}
+
+func (s *Service) getResource(ri *domain.ResourceIdentifier) (*domain.Resource, error) {
+	var resource *domain.Resource
+	if ri.ID != 0 {
+		if r, err := s.resourceService.GetOne(ri.ID); err != nil {
+			return nil, err
+		} else {
+			resource = r
+		}
+	} else {
+		if resources, err := s.resourceService.Find(map[string]interface{}{
+			"provider_type": ri.ProviderType,
+			"provider_urn":  ri.ProviderURN,
+			"type":          ri.Type,
+			"urn":           ri.URN,
+		}); err != nil {
+			return nil, err
+		} else {
+			if len(resources) == 0 {
+				return nil, errors.New("resource not found")
+			} else {
+				resource = resources[0]
+			}
+		}
+	}
+	return resource, nil
 }
 
 func containsWhitespaces(s string) bool {
