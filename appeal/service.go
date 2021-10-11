@@ -267,7 +267,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				if i == len(appeal.Approvals)-1 {
 					policy, err := s.policyService.GetOne(appeal.PolicyID, appeal.PolicyVersion)
 					if err != nil {
-						return nil, fmt.Errorf("retrieving appeal: %v", err)
+						return nil, fmt.Errorf("retrieving policy: %v", err)
 					}
 
 					additionalAppeals := []*domain.Appeal{}

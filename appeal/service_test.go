@@ -966,6 +966,44 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		}
 	})
 
+	expectedAppeal := &domain.Appeal{
+		ID:     validApprovalActionParam.AppealID,
+		Status: domain.AppealStatusPending,
+		Approvals: []*domain.Approval{
+			{
+				Name:   "approval_0",
+				Status: domain.ApprovalStatusApproved,
+			},
+			{
+				Name:      "approval_1",
+				Status:    domain.ApprovalStatusPending,
+				Approvers: []string{"user@email.com"},
+			},
+		},
+		PolicyID:      "policy-test",
+		PolicyVersion: 1,
+	}
+
+	s.Run("should return error if got any from policy service", func() {
+		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
+		s.mockApprovalService.On("AdvanceApproval", expectedAppeal).Return(nil).Once()
+		expectedError := errors.New("policy service error")
+		s.mockPolicyService.
+			On("GetOne", expectedAppeal.PolicyID, expectedAppeal.PolicyVersion).
+			Return(nil, expectedError).
+			Once()
+
+		actualResult, actualError := s.service.MakeAction(validApprovalActionParam)
+
+		s.Nil(actualResult)
+		s.Contains(actualError.Error(), expectedError.Error())
+	})
+
+	expectedPolicy := &domain.Policy{
+		ID:      expectedAppeal.PolicyID,
+		Version: expectedAppeal.PolicyVersion,
+	}
+
 	s.Run("should return error if got any from repository while updating appeal", func() {
 		expectedAppeal := &domain.Appeal{
 			ID:     validApprovalActionParam.AppealID,
@@ -981,10 +1019,17 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					Approvers: []string{"user@email.com"},
 				},
 			},
+			PolicyID:      "policy-test",
+			PolicyVersion: 1,
 		}
+
 		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
 		expectedError := errors.New("repository error")
 		s.mockApprovalService.On("AdvanceApproval", expectedAppeal).Return(nil).Once()
+		s.mockPolicyService.
+			On("GetOne", expectedAppeal.PolicyID, expectedAppeal.PolicyVersion).
+			Return(expectedPolicy, nil).
+			Once()
 		s.mockProviderService.On("GrantAccess", expectedAppeal).Return(nil).Once()
 		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
 		s.mockProviderService.On("RevokeAccess", expectedAppeal).Return(nil).Once()
@@ -1322,6 +1367,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					Once()
 				s.mockApprovalService.On("AdvanceApproval", tc.expectedAppealDetails).
 					Return(nil).Once()
+				s.mockPolicyService.
+					On("GetOne", tc.expectedAppealDetails.PolicyID, tc.expectedAppealDetails.PolicyVersion).
+					Return(expectedPolicy, nil).
+					Once()
 				s.mockProviderService.On("GrantAccess", tc.expectedAppealDetails).
 					Return(nil).
 					Once()
