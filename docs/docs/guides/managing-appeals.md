@@ -6,22 +6,22 @@ This is the main use case of Guardian, to manage access approval for user to a p
 
 ### Appeal Lifecycle
 
-![](../.gitbook/assets/appeal-lifecycle.png)
+![](/assets/appeal-lifecycle.png)
 
 #### Request statuses
 
-* Pending \(initial status\): During this state, the appeal will evaluate approval steps one by one. The result from the approval steps evaluation will determine whether the appeal will be approved or rejected.
-* Rejected: The appeal has at least one failed approval step.
-* Active: The appeal has been approved. As long as the appeal is in this status, the user will have the access to the designated resource.
-* Terminated: An active access can be revoked by any authorized user at any time, or, if the appeal already exceeds the lifetime limit then it will automatically get revoked.
+- Pending \(initial status\): During this state, the appeal will evaluate approval steps one by one. The result from the approval steps evaluation will determine whether the appeal will be approved or rejected.
+- Rejected: The appeal has at least one failed approval step.
+- Active: The appeal has been approved. As long as the appeal is in this status, the user will have the access to the designated resource.
+- Terminated: An active access can be revoked by any authorized user at any time, or, if the appeal already exceeds the lifetime limit then it will automatically get revoked.
 
 #### Actions
 
-* Approve: Called when all the approval steps are passed/approved.
-* Reject: Called when there is one approval step that is rejected.
-* Revoke: A manual action that is called by an authorized user intentionally to revoke an active access.
-* Expire: If the appeal specifies the expiration policy then it will automatically get expired when it is already passed the lifetime limit.
-* Recreate: Possible for appeals that are currently still active, rejected, or terminated. This action will create a new appeal based on the previous one. For the appeal coming from active status, there is a policy related to access extension.
+- Approve: Called when all the approval steps are passed/approved.
+- Reject: Called when there is one approval step that is rejected.
+- Revoke: A manual action that is called by an authorized user intentionally to revoke an active access.
+- Expire: If the appeal specifies the expiration policy then it will automatically get expired when it is already passed the lifetime limit.
+- Recreate: Possible for appeals that are currently still active, rejected, or terminated. This action will create a new appeal based on the previous one. For the appeal coming from active status, there is a policy related to access extension.
 
 To create an appeal, you can use this endpoint:
 
@@ -99,7 +99,7 @@ Response:
 
 ## Approving/Rejecting appeal
 
-![](../.gitbook/assets/approval-flow.png)
+![](/assets/approval-flow.png)
 
 Completing an appeal to gain the access to the designated resource could consist of multiple approvals, depending on the [approval policy](../reference/policy-config.md) applied to the designated resource. In Guardian, it called approval steps. Approval steps are determined during the appeal creation. For approval step without approvers, Guardian will evaluate it and resolve the status immediately. But for one with approvers, an action is required to approve/reject that particular approval step.
 
@@ -169,4 +169,3 @@ Response:
   ]
 }
 ```
-

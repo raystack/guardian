@@ -1,14 +1,12 @@
 # Architecture
 
-## Architecture
-
 Basic building blocks of Guardian are
 
-* Guardian CLI
-* Guardian Service
-* Guardian Database
-* Guardian Providers
-* Scheduler
+- Guardian CLI
+- Guardian Service
+- Guardian Database
+- Guardian Providers
+- Scheduler
 
 #### Guardian CLI
 
@@ -30,10 +28,10 @@ Provider once registered needs to be stored somewhere as a source of truth. Guar
 
 Guardian itself doesn't govern how a appeal will be executed. It only provides the building blocks. A provider for any resource type needs to be build and integrated with Guardian in order to support it's access flow. Any provider has 4 components
 
-* Config - This defines the permisions and credential configuartion of a resource.
-* Client - This defines the client configuartions and methods.
-* Provider - This deals with the interaction with a provider.
-* Resource - This defines all the resources and functions associated with them.
+- Config - This defines the permisions and credential configuartion of a resource.
+- Client - This defines the client configuartions and methods.
+- Provider - This deals with the interaction with a provider.
+- Resource - This defines all the resources and functions associated with them.
 
 ## Providers Supported
 
@@ -44,4 +42,3 @@ Guardian itself doesn't govern how a appeal will be executed. It only provides t
 ### 3. Bigquery Provider
 
 ### 4. Tableau Provider
-

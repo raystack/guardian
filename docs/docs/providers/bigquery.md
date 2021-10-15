@@ -1,7 +1,5 @@
 # Big Query
 
-## BigQuery
-
 BigQuery is an enterprise data warehouse tool for storing and querying massive datasets with super-fast SQL queries using the processing power of Google's infrastructure.
 
 BigQuery has **datasets** that each one contains multiple **tables** which are used for storing the data. User also can run queries to read or even transform those data.
@@ -16,14 +14,12 @@ In Guardian, user access can be given at the dataset or table level. To give mor
 
 ### BigQuery Resources
 
-* [Dataset Access Control](https://cloud.google.com/bigquery/docs/dataset-access-controls)
-* [Table Access Control](https://cloud.google.com/bigquery/docs/table-access-controls-intro)
+- [Dataset Access Control](https://cloud.google.com/bigquery/docs/dataset-access-controls)
+- [Table Access Control](https://cloud.google.com/bigquery/docs/table-access-controls-intro)
 
 ### GCP IAM
 
-* [IAM Permission](https://cloud.google.com/iam/docs/granting-changing-revoking-access)
-
-
+- [IAM Permission](https://cloud.google.com/iam/docs/granting-changing-revoking-access)
 
 ## 1. Config
 
@@ -32,11 +28,11 @@ In Guardian, user access can be given at the dataset or table level. To give mor
 ```yaml
 type: google_bigquery
 urn: bg-resource-urn
-credentials: 
+credentials:
   - service_account_key: <base64 encoded service account key json>
   - resource_name: projects/gcp-project-id
 appeal:
-  allow_active_access_extension_in: '7d'
+  allow_active_access_extension_in: "7d"
 resources:
   - type: dataset
     policy:
@@ -70,13 +66,12 @@ resources:
 
 ### `BigQueryResourceType`
 
-* `dataset`
-* `table`
+- `dataset`
+- `table`
 
 ### `BigQueryResourcePermission`
 
-| Fields |  |
-| :--- | :--- |
-| `target` | `string`   Target GCP project ID. If this field presents, the specified role in the `name` field will get applied to this GCP project ID |
-| `name` | `string`   Required. GCP role name    **Note:** for `dataset` resource type, we are using legacy roles \(`READER`, `WRITER`, or `OWNER`\). [Read more...](https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets#:~:text=Required.%20An%20IAM,back%20as%20%22OWNER%22.) |
-
+| Fields   |                                                                                                                                                                                                                                                                               |
+| :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `target` | `string` Target GCP project ID. If this field presents, the specified role in the `name` field will get applied to this GCP project ID                                                                                                                                        |
+| `name`   | `string` Required. GCP role name **Note:** for `dataset` resource type, we are using legacy roles \(`READER`, `WRITER`, or `OWNER`\). [Read more...](https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets#:~:text=Required.%20An%20IAM,back%20as%20%22OWNER%22.) |
