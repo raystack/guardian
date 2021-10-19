@@ -571,6 +571,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
 			AccountID:     accountID,
+			AccountType:   domain.DefaultAppealAccountType,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -605,6 +606,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
 			AccountID:     accountID,
+			AccountType:   domain.DefaultAppealAccountType,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -635,6 +637,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
 			AccountID:     accountID,
+			AccountType:   domain.DefaultAppealAccountType,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{

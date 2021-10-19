@@ -180,6 +180,8 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 		return ErrInvalidProviderType
 	}
 
+	// TODO: validate account type
+
 	roles, err := provider.GetRoles(p.Config, resourceType)
 	if err != nil {
 		return err

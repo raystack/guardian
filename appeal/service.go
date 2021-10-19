@@ -157,6 +157,9 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return ErrResourceTypeNotFound
 		}
 
+		if a.AccountType == "" {
+			a.AccountType = domain.DefaultAppealAccountType
+		}
 		if err := s.providerService.ValidateAppeal(a, p); err != nil {
 			return err
 		}
