@@ -610,7 +610,7 @@ func TestGrantAccess(t *testing.T) {
 					Name: "test-workbook",
 				},
 				Role:       "viewer",
-				User:       expectedUser,
+				AccountID:  expectedUser,
 				ResourceID: 999,
 				ID:         999,
 			}
@@ -718,7 +718,7 @@ func TestGrantAccess(t *testing.T) {
 					Name: "test-flow",
 				},
 				Role:       "viewer",
-				User:       expectedUser,
+				AccountID:  expectedUser,
 				ResourceID: 999,
 				ID:         999,
 			}
@@ -826,7 +826,7 @@ func TestGrantAccess(t *testing.T) {
 					Name: "test-view",
 				},
 				Role:       "viewer",
-				User:       expectedUser,
+				AccountID:  expectedUser,
 				ResourceID: 99,
 				ID:         99,
 			}
@@ -934,7 +934,7 @@ func TestGrantAccess(t *testing.T) {
 					Name: "test-metric",
 				},
 				Role:       "viewer",
-				User:       expectedUser,
+				AccountID:  expectedUser,
 				ResourceID: 99,
 				ID:         99,
 			}
@@ -1042,7 +1042,7 @@ func TestGrantAccess(t *testing.T) {
 					Name: "test-datasource",
 				},
 				Role:       "viewer",
-				User:       expectedUser,
+				AccountID:  expectedUser,
 				ResourceID: 99,
 				ID:         99,
 			}

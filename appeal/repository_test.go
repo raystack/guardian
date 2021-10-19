@@ -40,7 +40,7 @@ func (s *RepositoryTestSuite) SetupTest() {
 		"policy_id",
 		"policy_version",
 		"status",
-		"user",
+		"account_id",
 		"role",
 		"options",
 		"labels",
@@ -152,7 +152,7 @@ func (s *RepositoryTestSuite) TestGetByID() {
 					tc.expectedRecord.PolicyID,
 					tc.expectedRecord.PolicyVersion,
 					tc.expectedRecord.Status,
-					tc.expectedRecord.User,
+					tc.expectedRecord.AccountID,
 					tc.expectedRecord.Role,
 					"null",
 					"null",
@@ -238,9 +238,9 @@ func (s *RepositoryTestSuite) TestFind() {
 			},
 			{
 				filters: map[string]interface{}{
-					"user": "user@email.com",
+					"account_id": "user@email.com",
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "user" = $1 AND "appeals"."deleted_at" IS NULL`),
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "account_id" = $1 AND "appeals"."deleted_at" IS NULL`),
 				expectedArgs:  []driver.Value{"user@email.com"},
 			},
 			{
@@ -295,7 +295,7 @@ func (s *RepositoryTestSuite) TestFind() {
 				PolicyID:      "policy_1",
 				PolicyVersion: 1,
 				Status:        domain.AppealStatusPending,
-				User:          "user@email.com",
+				AccountID:     "user@email.com",
 				Role:          "role_name",
 			},
 			{
@@ -304,7 +304,7 @@ func (s *RepositoryTestSuite) TestFind() {
 				PolicyID:      "policy_1",
 				PolicyVersion: 1,
 				Status:        domain.AppealStatusPending,
-				User:          "user@email.com",
+				AccountID:     "user@email.com",
 				Role:          "role_name",
 			},
 		}
@@ -316,7 +316,7 @@ func (s *RepositoryTestSuite) TestFind() {
 				r.PolicyID,
 				r.PolicyVersion,
 				r.Status,
-				r.User,
+				r.AccountID,
 				r.Role,
 				"null",
 				"null",
@@ -337,16 +337,16 @@ func (s *RepositoryTestSuite) TestFind() {
 }
 
 func (s *RepositoryTestSuite) TestBulkUpsert() {
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","user","role","options","labels","details","revoked_by","revoked_at","revoke_reason","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15),($16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30) ON CONFLICT ("id") DO UPDATE SET "resource_id"="excluded"."resource_id","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","status"="excluded"."status","user"="excluded"."user","role"="excluded"."role","options"="excluded"."options","labels"="excluded"."labels","details"="excluded"."details","revoked_by"="excluded"."revoked_by","revoked_at"="excluded"."revoked_at","revoke_reason"="excluded"."revoke_reason","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","account_id","role","options","labels","details","revoked_by","revoked_at","revoke_reason","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15),($16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30) ON CONFLICT ("id") DO UPDATE SET "resource_id"="excluded"."resource_id","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","status"="excluded"."status","account_id"="excluded"."account_id","role"="excluded"."role","options"="excluded"."options","labels"="excluded"."labels","details"="excluded"."details","revoked_by"="excluded"."revoked_by","revoked_at"="excluded"."revoked_at","revoke_reason"="excluded"."revoke_reason","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
 
 	appeals := []*domain.Appeal{
 		{
-			User:       "test@email.com",
+			AccountID:  "test@email.com",
 			Role:       "role_name",
 			ResourceID: 1,
 		},
 		{
-			User:       "test2@email.com",
+			AccountID:  "test2@email.com",
 			Role:       "role_name",
 			ResourceID: 3,
 		},
@@ -360,7 +360,7 @@ func (s *RepositoryTestSuite) TestBulkUpsert() {
 			a.PolicyID,
 			a.PolicyVersion,
 			a.Status,
-			a.User,
+			a.AccountID,
 			a.Role,
 			"null",
 			"null",
@@ -422,7 +422,7 @@ func (s *RepositoryTestSuite) TestUpdate() {
 	})
 
 	expectedUpdateApprovalsQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","policy_id","policy_version","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) ON CONFLICT ("id") DO UPDATE SET "name"="excluded"."name","index"="excluded"."index","appeal_id"="excluded"."appeal_id","status"="excluded"."status","actor"="excluded"."actor","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","created_at"="excluded"."created_at","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
-	expectedUpdateAppealQuery := regexp.QuoteMeta(`UPDATE "appeals" SET "resource_id"=$1,"policy_id"=$2,"policy_version"=$3,"status"=$4,"user"=$5,"role"=$6,"options"=$7,"labels"=$8,"details"=$9,"revoked_by"=$10,"revoked_at"=$11,"revoke_reason"=$12,"created_at"=$13,"updated_at"=$14,"deleted_at"=$15 WHERE "id" = $16`)
+	expectedUpdateAppealQuery := regexp.QuoteMeta(`UPDATE "appeals" SET "resource_id"=$1,"policy_id"=$2,"policy_version"=$3,"status"=$4,"account_id"=$5,"role"=$6,"options"=$7,"labels"=$8,"details"=$9,"revoked_by"=$10,"revoked_at"=$11,"revoke_reason"=$12,"created_at"=$13,"updated_at"=$14,"deleted_at"=$15 WHERE "id" = $16`)
 	s.Run("should return nil on success", func() {
 		expectedID := uint(1)
 		appeal := &domain.Appeal{

@@ -347,7 +347,7 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *pb.ListUserAppeal
 	}
 
 	filters := map[string]interface{}{
-		"user": user,
+		"account_id": user,
 	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
@@ -361,8 +361,8 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *pb.ListUserAppeal
 
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *pb.ListAppealsRequest) (*pb.ListAppealsResponse, error) {
 	filters := map[string]interface{}{}
-	if req.GetUser() != "" {
-		filters["user"] = req.GetUser()
+	if req.GetAccountId() != "" {
+		filters["account_id"] = req.GetAccountId()
 	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
@@ -408,8 +408,8 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *pb.ListUserAppr
 	}
 
 	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
-		User:     user,
-		Statuses: req.GetStatuses(),
+		AccountID: user,
+		Statuses:  req.GetStatuses(),
 	})
 	if err != nil {
 		return nil, err
@@ -422,8 +422,8 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *pb.ListUserAppr
 
 func (s *GRPCServer) ListApprovals(ctx context.Context, req *pb.ListApprovalsRequest) (*pb.ListApprovalsResponse, error) {
 	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
-		User:     req.GetUser(),
-		Statuses: req.GetStatuses(),
+		AccountID: req.GetAccountId(),
+		Statuses:  req.GetStatuses(),
 	})
 	if err != nil {
 		return nil, err

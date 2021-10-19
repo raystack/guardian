@@ -32,8 +32,8 @@ func (a *Approval) IsManualApproval() bool {
 }
 
 type ListApprovalsFilter struct {
-	User     string   `mapstructure:"user" validate:"omitempty,required"`
-	Statuses []string `mapstructure:"statuses" validate:"omitempty,min=1"`
+	AccountID string   `mapstructure:"account_id" validate:"omitempty,required"`
+	Statuses  []string `mapstructure:"statuses" validate:"omitempty,min=1"`
 }
 
 type ApprovalRepository interface {

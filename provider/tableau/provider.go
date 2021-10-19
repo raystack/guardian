@@ -129,11 +129,11 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 
 		for _, p := range permissions {
 			if p.Type == "" {
-				if err := client.GrantWorkbookAccess(w, a.User, p.Name); err != nil {
+				if err := client.GrantWorkbookAccess(w, a.AccountID, p.Name); err != nil {
 					return err
 				}
 			} else {
-				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+				if err := client.UpdateSiteRole(a.AccountID, p.Name); err != nil {
 					return err
 				}
 			}
@@ -148,11 +148,11 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 
 		for _, p := range permissions {
 			if p.Type == "" {
-				if err := client.GrantFlowAccess(f, a.User, p.Name); err != nil {
+				if err := client.GrantFlowAccess(f, a.AccountID, p.Name); err != nil {
 					return err
 				}
 			} else {
-				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+				if err := client.UpdateSiteRole(a.AccountID, p.Name); err != nil {
 					return err
 				}
 			}
@@ -167,11 +167,11 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 
 		for _, p := range permissions {
 			if p.Type == "" {
-				if err := client.GrantDataSourceAccess(d, a.User, p.Name); err != nil {
+				if err := client.GrantDataSourceAccess(d, a.AccountID, p.Name); err != nil {
 					return err
 				}
 			} else {
-				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+				if err := client.UpdateSiteRole(a.AccountID, p.Name); err != nil {
 					return err
 				}
 			}
@@ -186,11 +186,11 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 
 		for _, p := range permissions {
 			if p.Type == "" {
-				if err := client.GrantViewAccess(v, a.User, p.Name); err != nil {
+				if err := client.GrantViewAccess(v, a.AccountID, p.Name); err != nil {
 					return err
 				}
 			} else {
-				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+				if err := client.UpdateSiteRole(a.AccountID, p.Name); err != nil {
 					return err
 				}
 			}
@@ -205,11 +205,11 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 
 		for _, p := range permissions {
 			if p.Type == "" {
-				if err := client.GrantMetricAccess(m, a.User, p.Name); err != nil {
+				if err := client.GrantMetricAccess(m, a.AccountID, p.Name); err != nil {
 					return err
 				}
 			} else {
-				if err := client.UpdateSiteRole(a.User, p.Name); err != nil {
+				if err := client.UpdateSiteRole(a.AccountID, p.Name); err != nil {
 					return err
 				}
 			}
@@ -246,13 +246,13 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 
 		for _, p := range permissions {
 			if p.Type == "" {
-				if err := client.RevokeWorkbookAccess(w, a.User, p.Name); err != nil {
+				if err := client.RevokeWorkbookAccess(w, a.AccountID, p.Name); err != nil {
 					return err
 				}
 			}
 		}
 
-		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+		if err := client.UpdateSiteRole(a.AccountID, "Unlicensed"); err != nil {
 			return err
 		}
 		return nil
@@ -264,13 +264,13 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 
 		for _, p := range permissions {
 			if p.Type == "" {
-				if err := client.RevokeFlowAccess(f, a.User, p.Name); err != nil {
+				if err := client.RevokeFlowAccess(f, a.AccountID, p.Name); err != nil {
 					return err
 				}
 			}
 		}
 
-		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+		if err := client.UpdateSiteRole(a.AccountID, "Unlicensed"); err != nil {
 			return err
 		}
 		return nil
@@ -282,13 +282,13 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 
 		for _, p := range permissions {
 			if p.Type == "" {
-				if err := client.RevokeDataSourceAccess(d, a.User, p.Name); err != nil {
+				if err := client.RevokeDataSourceAccess(d, a.AccountID, p.Name); err != nil {
 					return err
 				}
 			}
 		}
 
-		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+		if err := client.UpdateSiteRole(a.AccountID, "Unlicensed"); err != nil {
 			return err
 		}
 		return nil
@@ -300,13 +300,13 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 
 		for _, p := range permissions {
 			if p.Type == "" {
-				if err := client.RevokeViewAccess(v, a.User, p.Name); err != nil {
+				if err := client.RevokeViewAccess(v, a.AccountID, p.Name); err != nil {
 					return err
 				}
 			}
 		}
 
-		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+		if err := client.UpdateSiteRole(a.AccountID, "Unlicensed"); err != nil {
 			return err
 		}
 		return nil
@@ -318,13 +318,13 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 
 		for _, p := range permissions {
 			if p.Type == "" {
-				if err := client.RevokeMetricAccess(m, a.User, p.Name); err != nil {
+				if err := client.RevokeMetricAccess(m, a.AccountID, p.Name); err != nil {
 					return err
 				}
 			}
 		}
 
-		if err := client.UpdateSiteRole(a.User, "Unlicensed"); err != nil {
+		if err := client.UpdateSiteRole(a.AccountID, "Unlicensed"); err != nil {
 			return err
 		}
 		return nil

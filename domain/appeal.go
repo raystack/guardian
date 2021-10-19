@@ -30,7 +30,7 @@ type Appeal struct {
 	PolicyID      string                 `json:"policy_id"`
 	PolicyVersion uint                   `json:"policy_version"`
 	Status        string                 `json:"status"`
-	User          string                 `json:"user"`
+	AccountID     string                 `json:"account_id"`
 	Role          string                 `json:"role"`
 	Options       *AppealOptions         `json:"options"`
 	Details       map[string]interface{} `json:"details"`

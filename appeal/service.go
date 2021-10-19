@@ -97,9 +97,9 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 	expiredAppeals := []*domain.Appeal{}
 	for _, a := range appeals {
-		if pendingAppeals[a.User] != nil &&
-			pendingAppeals[a.User][a.ResourceID] != nil &&
-			pendingAppeals[a.User][a.ResourceID][a.Role] != nil {
+		if pendingAppeals[a.AccountID] != nil &&
+			pendingAppeals[a.AccountID][a.ResourceID] != nil &&
+			pendingAppeals[a.AccountID][a.ResourceID][a.Role] != nil {
 			return ErrAppealDuplicate
 		}
 
@@ -120,9 +120,9 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 		p := providers[a.Resource.ProviderType][a.Resource.ProviderURN]
 
-		if activeAppeals[a.User] != nil &&
-			activeAppeals[a.User][a.ResourceID] != nil &&
-			activeAppeals[a.User][a.ResourceID][a.Role] != nil {
+		if activeAppeals[a.AccountID] != nil &&
+			activeAppeals[a.AccountID][a.ResourceID] != nil &&
+			activeAppeals[a.AccountID][a.ResourceID][a.Role] != nil {
 
 			if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
 				return ErrAppealFoundActiveAccess
@@ -134,11 +134,11 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			}
 
 			now := s.TimeNow()
-			activeAppealExpDate := activeAppeals[a.User][a.ResourceID][a.Role].Options.ExpirationDate
+			activeAppealExpDate := activeAppeals[a.AccountID][a.ResourceID][a.Role].Options.ExpirationDate
 			isEligibleForExtension := activeAppealExpDate.Sub(now) <= duration
 			if isEligibleForExtension {
 				oldAppeal := &domain.Appeal{}
-				*oldAppeal = *activeAppeals[a.User][a.ResourceID][a.Role]
+				*oldAppeal = *activeAppeals[a.AccountID][a.ResourceID][a.Role]
 				oldAppeal.Terminate()
 				expiredAppeals = append(expiredAppeals, oldAppeal)
 			} else {
@@ -173,7 +173,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService
 			var approvers []string
 			if step.Approvers != "" {
-				approvers, err = s.resolveApprovers(a.User, a.Resource, step.Approvers)
+				approvers, err = s.resolveApprovers(a.AccountID, a.Resource, step.Approvers)
 				if err != nil {
 					return err
 				}
@@ -302,7 +302,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 			notifications := []domain.Notification{}
 			if appeal.Status == domain.AppealStatusActive {
 				notifications = append(notifications, domain.Notification{
-					User: appeal.User,
+					User: appeal.AccountID,
 					Message: domain.NotificationMessage{
 						Type: domain.NotificationTypeAppealApproved,
 						Variables: map[string]interface{}{
@@ -313,7 +313,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				})
 			} else if appeal.Status == domain.AppealStatusRejected {
 				notifications = append(notifications, domain.Notification{
-					User: appeal.User,
+					User: appeal.AccountID,
 					Message: domain.NotificationMessage{
 						Type: domain.NotificationTypeAppealRejected,
 						Variables: map[string]interface{}{
@@ -383,7 +383,7 @@ func (s *Service) Revoke(id uint, actor, reason string) (*domain.Appeal, error) 
 	}
 
 	if err := s.notifier.Notify([]domain.Notification{{
-		User: appeal.User,
+		User: appeal.AccountID,
 		Message: domain.NotificationMessage{
 			Type: domain.NotificationTypeAccessRevoked,
 			Variables: map[string]interface{}{
@@ -410,21 +410,21 @@ func (s *Service) getExistingAppealsMap() (map[string]map[uint]map[string]*domai
 	activeAppealsMap := map[string]map[uint]map[string]*domain.Appeal{}
 	for _, a := range appeals {
 		if a.Status == domain.AppealStatusPending {
-			if pendingAppealsMap[a.User] == nil {
-				pendingAppealsMap[a.User] = map[uint]map[string]*domain.Appeal{}
+			if pendingAppealsMap[a.AccountID] == nil {
+				pendingAppealsMap[a.AccountID] = map[uint]map[string]*domain.Appeal{}
 			}
-			if pendingAppealsMap[a.User][a.ResourceID] == nil {
-				pendingAppealsMap[a.User][a.ResourceID] = map[string]*domain.Appeal{}
+			if pendingAppealsMap[a.AccountID][a.ResourceID] == nil {
+				pendingAppealsMap[a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
 			}
-			pendingAppealsMap[a.User][a.ResourceID][a.Role] = a
+			pendingAppealsMap[a.AccountID][a.ResourceID][a.Role] = a
 		} else if a.Status == domain.AppealStatusActive {
-			if activeAppealsMap[a.User] == nil {
-				activeAppealsMap[a.User] = map[uint]map[string]*domain.Appeal{}
+			if activeAppealsMap[a.AccountID] == nil {
+				activeAppealsMap[a.AccountID] = map[uint]map[string]*domain.Appeal{}
 			}
-			if activeAppealsMap[a.User][a.ResourceID] == nil {
-				activeAppealsMap[a.User][a.ResourceID] = map[string]*domain.Appeal{}
+			if activeAppealsMap[a.AccountID][a.ResourceID] == nil {
+				activeAppealsMap[a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
 			}
-			activeAppealsMap[a.User][a.ResourceID][a.Role] = a
+			activeAppealsMap[a.AccountID][a.ResourceID][a.Role] = a
 		}
 	}
 
@@ -550,7 +550,7 @@ func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 					Variables: map[string]interface{}{
 						"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
 						"role":          appeal.Role,
-						"requestor":     appeal.User,
+						"requestor":     appeal.AccountID,
 						"appeal_id":     appeal.ID,
 					},
 				},

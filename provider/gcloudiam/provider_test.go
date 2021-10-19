@@ -166,7 +166,7 @@ func TestGrantAccess(t *testing.T) {
 				URN:  "test-role",
 			},
 			Role:       expectedRole,
-			User:       expectedUser,
+			AccountID:  expectedUser,
 			ResourceID: 999,
 			ID:         999,
 		}
@@ -267,7 +267,7 @@ func TestRevokeAccess(t *testing.T) {
 				URN:  "test-role",
 			},
 			Role:       expectedRole,
-			User:       expectedUser,
+			AccountID:  expectedUser,
 			ResourceID: 999,
 			ID:         999,
 		}

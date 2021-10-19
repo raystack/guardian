@@ -108,7 +108,7 @@ func (s *ServiceTestSuite) TestFind() {
 			{
 				ID:         1,
 				ResourceID: 1,
-				User:       "user@email.com",
+				AccountID:  "user@email.com",
 				Role:       "viewer",
 			},
 		}
@@ -215,13 +215,13 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "duplicate appeal",
 				existingAppeals: []*domain.Appeal{{
-					User:       "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 					Status:     domain.AppealStatusPending,
 				}},
 				appeals: []*domain.Appeal{{
-					User:       "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 				}},
@@ -233,7 +233,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ID: 1,
 				}},
 				appeals: []*domain.Appeal{{
-					User:       "test-user",
+					AccountID:  "test-user",
 					ResourceID: 2,
 					Role:       "test-role",
 				}},
@@ -258,13 +258,13 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
-					User:       "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 					Status:     domain.AppealStatusActive,
 				}},
 				appeals: []*domain.Appeal{{
-					User:       "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 				}},
@@ -279,13 +279,13 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
-					User:       "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 					Status:     domain.AppealStatusActive,
 				}},
 				appeals: []*domain.Appeal{{
-					User:       "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 				}},
@@ -309,7 +309,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
-					User:       "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 					Status:     domain.AppealStatusActive,
@@ -318,7 +318,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					},
 				}},
 				appeals: []*domain.Appeal{{
-					User:       "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 				}},
@@ -489,7 +489,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	user := "test@email.com"
+	accountID := "test@email.com"
 	resourceIDs := []uint{1, 2}
 	resources := []*domain.Resource{}
 	for _, id := range resourceIDs {
@@ -533,7 +533,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	expDate := timeNow.Add(23 * time.Hour)
 	currentActiveAppeal := &domain.Appeal{
 		ID:         99,
-		User:       user,
+		AccountID:  accountID,
 		ResourceID: 2,
 		Resource: &domain.Resource{
 			ID:  2,
@@ -570,7 +570,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
-			User:          user,
+			AccountID:     accountID,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -604,7 +604,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
-			User:          user,
+			AccountID:     accountID,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -634,7 +634,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
-			User:          user,
+			AccountID:     accountID,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -673,7 +673,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(nil)
 		expectedUserApprovers := []string{"user.approver@email.com"}
-		s.mockIAMService.On("GetUserApproverEmails", user).Return(expectedUserApprovers, nil)
+		s.mockIAMService.On("GetUserApproverEmails", accountID).Return(expectedUserApprovers, nil)
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 		s.mockRepository.
 			On("BulkUpsert", expectedAppealsInsertionParam).
@@ -692,7 +692,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		appeals := []*domain.Appeal{
 			{
-				User:       user,
+				AccountID:  accountID,
 				ResourceID: 1,
 				Resource: &domain.Resource{
 					ID:  1,
@@ -701,7 +701,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				Role: "role_id",
 			},
 			{
-				User:       user,
+				AccountID:  accountID,
 				ResourceID: 2,
 				Resource: &domain.Resource{
 					ID:  2,
@@ -1009,7 +1009,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				expectedApprovalAction: validApprovalActionParam,
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1033,7 +1033,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1080,7 +1080,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1104,7 +1104,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1151,7 +1151,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1179,7 +1179,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1231,7 +1231,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1259,7 +1259,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{

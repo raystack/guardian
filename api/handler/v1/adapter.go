@@ -320,7 +320,7 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 		PolicyID:      appeal.GetPolicyId(),
 		PolicyVersion: uint(appeal.GetPolicyVersion()),
 		Status:        appeal.GetStatus(),
-		User:          appeal.GetUser(),
+		AccountID:     appeal.GetAccountId(),
 		Role:          appeal.GetRole(),
 		Options:       options,
 		Labels:        appeal.GetLabels(),
@@ -382,7 +382,7 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		PolicyId:      appeal.PolicyID,
 		PolicyVersion: uint32(appeal.PolicyVersion),
 		Status:        appeal.Status,
-		User:          appeal.User,
+		AccountId:     appeal.AccountID,
 		Role:          appeal.Role,
 		Options:       options,
 		Labels:        appeal.Labels,
@@ -409,7 +409,7 @@ func (a *adapter) FromCreateAppealProto(ca *pb.CreateAppealRequest) ([]*domain.A
 		}
 
 		appeals = append(appeals, &domain.Appeal{
-			User:       ca.GetUser(),
+			AccountID:  ca.GetAccountId(),
 			ResourceID: uint(r.GetId()),
 			Role:       r.GetRole(),
 			Options:    options,
