@@ -8,6 +8,8 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/policy"
+	"github.com/odpf/guardian/provider"
+	"github.com/odpf/guardian/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -15,12 +17,16 @@ import (
 type ServiceTestSuite struct {
 	suite.Suite
 	mockPolicyRepository *mocks.PolicyRepository
+	mockResourceService  *mocks.ResourceService
+	mockProviderService  *mocks.ProviderService
 	service              *policy.Service
 }
 
 func (s *ServiceTestSuite) SetupTest() {
 	s.mockPolicyRepository = new(mocks.PolicyRepository)
-	s.service = policy.NewService(validator.New(), s.mockPolicyRepository)
+	s.mockResourceService = new(mocks.ResourceService)
+	s.mockProviderService = new(mocks.ProviderService)
+	s.service = policy.NewService(validator.New(), s.mockPolicyRepository, s.mockResourceService, s.mockProviderService)
 }
 
 func (s *ServiceTestSuite) TestCreate() {
@@ -208,6 +214,128 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		s.Nil(actualError)
 		s.mockPolicyRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *ServiceTestSuite) TestPolicyRequirements() {
+
+	s.Run("validations", func() {
+		testCases := []struct {
+			name         string
+			requirements []*domain.Requirement
+
+			expectedResource                *domain.Resource
+			expectedResourceServiceGetError error
+
+			expectedProvider                   *domain.Provider
+			expectedProviderServiceGetOneError error
+
+			expectedProviderServiceValidateAppealError error
+		}{
+			{
+				name: "target resource doesn't exist",
+				requirements: []*domain.Requirement{
+					{
+						Appeals: []*domain.AdditionalAppeal{
+							{
+								Resource: &domain.ResourceIdentifier{
+									ID: 1,
+								},
+							},
+						},
+					},
+				},
+				expectedResource:                nil,
+				expectedResourceServiceGetError: resource.ErrRecordNotFound,
+			},
+			{
+				name: "provider not found/deleted",
+				requirements: []*domain.Requirement{
+					{
+						Appeals: []*domain.AdditionalAppeal{
+							{
+								Resource: &domain.ResourceIdentifier{
+									ID: 1,
+								},
+							},
+						},
+					},
+				},
+				expectedResource: &domain.Resource{
+					ProviderType: "test-provider-type",
+					ProviderURN:  "test-provider-urn",
+				},
+				expectedProvider:                   nil,
+				expectedProviderServiceGetOneError: provider.ErrRecordNotFound,
+			},
+			{
+				name: "provider invalidates appeal",
+				requirements: []*domain.Requirement{
+					{
+						Appeals: []*domain.AdditionalAppeal{
+							{
+								Resource: &domain.ResourceIdentifier{
+									ID: 1,
+								},
+							},
+						},
+					},
+				},
+				expectedResource: &domain.Resource{
+					ProviderType: "test-provider-type",
+					ProviderURN:  "test-provider-urn",
+				},
+				expectedProvider: &domain.Provider{},
+				expectedProviderServiceValidateAppealError: errors.New("test invalid appeal"),
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				policy := &domain.Policy{
+					ID:      "policy-tes",
+					Version: 1,
+					Steps: []*domain.Step{
+						{
+							Name:      "step-test",
+							Approvers: "user@email.com",
+						},
+					},
+					Requirements: tc.requirements,
+				}
+
+				for _, r := range tc.requirements {
+					for _, aa := range r.Appeals {
+						s.mockResourceService.
+							On("Get", &domain.ResourceIdentifier{}).
+							Return(tc.expectedResource, tc.expectedResourceServiceGetError).
+							Once()
+						if tc.expectedResource != nil {
+							s.mockProviderService.
+								On("GetOne", tc.expectedResource.ProviderType, tc.expectedResource.ProviderURN).
+								Return(tc.expectedProvider, tc.expectedProviderServiceGetOneError).
+								Once()
+							if tc.expectedProviderServiceGetOneError == nil {
+								expectedAppeal := &domain.Appeal{
+									ResourceID: tc.expectedResource.ID,
+									Resource:   tc.expectedResource,
+									Role:       aa.Role,
+									Options:    aa.Options,
+								}
+								s.mockProviderService.
+									On("ValidateAppeal", expectedAppeal, tc.expectedProvider).
+									Return(tc.expectedProviderServiceValidateAppealError).
+									Once()
+							}
+						}
+					}
+				}
+
+				actualError := s.service.Create(policy)
+
+				s.Error(actualError)
+			})
+		}
 	})
 }
 

@@ -57,3 +57,30 @@ func (s *Service) Update(r *domain.Resource) error {
 	r.UpdatedAt = res.UpdatedAt
 	return nil
 }
+
+func (s *Service) Get(ri *domain.ResourceIdentifier) (*domain.Resource, error) {
+	var resource *domain.Resource
+	if ri.ID != 0 {
+		if r, err := s.GetOne(ri.ID); err != nil {
+			return nil, err
+		} else {
+			resource = r
+		}
+	} else {
+		if resources, err := s.Find(map[string]interface{}{
+			"provider_type": ri.ProviderType,
+			"provider_urn":  ri.ProviderURN,
+			"type":          ri.Type,
+			"urn":           ri.URN,
+		}); err != nil {
+			return nil, err
+		} else {
+			if len(resources) == 0 {
+				return nil, ErrRecordNotFound
+			} else {
+				resource = resources[0]
+			}
+		}
+	}
+	return resource, nil
+}

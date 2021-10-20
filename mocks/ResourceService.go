@@ -49,6 +49,29 @@ func (_m *ResourceService) Find(filters map[string]interface{}) ([]*domain.Resou
 	return r0, r1
 }
 
+// Get provides a mock function with given fields: _a0
+func (_m *ResourceService) Get(_a0 *domain.ResourceIdentifier) (*domain.Resource, error) {
+	ret := _m.Called(_a0)
+
+	var r0 *domain.Resource
+	if rf, ok := ret.Get(0).(func(*domain.ResourceIdentifier) *domain.Resource); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.Resource)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*domain.ResourceIdentifier) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetOne provides a mock function with given fields: _a0
 func (_m *ResourceService) GetOne(_a0 uint) (*domain.Resource, error) {
 	ret := _m.Called(_a0)

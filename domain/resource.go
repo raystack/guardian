@@ -29,6 +29,7 @@ type ResourceRepository interface {
 type ResourceService interface {
 	Find(filters map[string]interface{}) ([]*Resource, error)
 	GetOne(uint) (*Resource, error)
+	Get(*ResourceIdentifier) (*Resource, error)
 	BulkUpsert([]*Resource) error
 	Update(*Resource) error
 }

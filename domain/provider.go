@@ -79,6 +79,7 @@ type ProviderService interface {
 	Create(*Provider) error
 	Find() ([]*Provider, error)
 	GetByID(uint) (*Provider, error)
+	GetOne(pType, urn string) (*Provider, error)
 	Update(*Provider) error
 	FetchResources() error
 	GetRoles(id uint, resourceType string) ([]*Role, error)
