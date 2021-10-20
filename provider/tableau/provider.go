@@ -337,6 +337,12 @@ func (p *provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*
 	return pv.GetRoles(pc, resourceType)
 }
 
+func (p *provider) GetAccountTypes() []string {
+	return []string{
+		AccountTypeUser,
+	}
+}
+
 func (p *provider) getClient(providerURN string, credentials Credentials) (TableauClient, error) {
 	if p.Clients[providerURN] != nil {
 		return p.Clients[providerURN], nil

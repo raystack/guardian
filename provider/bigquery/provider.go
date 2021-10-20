@@ -187,6 +187,13 @@ func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*
 	return provider.GetRoles(pc, resourceType)
 }
 
+func (p *Provider) GetAccountTypes() []string {
+	return []string{
+		AccountTypeUser,
+		AccountTypeServiceAccount,
+	}
+}
+
 func (p *Provider) getBigQueryClient(credentials Credentials) (*bigQueryClient, error) {
 	projectID := strings.Replace(credentials.ResourceName, "projects/", "", 1)
 	if p.bqClients[projectID] != nil {

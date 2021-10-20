@@ -108,6 +108,7 @@ func RunServer(c *ServiceConfig) error {
 	policyService := policy.NewService(v, policyRepository)
 	providerService := provider.NewService(
 		logger,
+		v,
 		providerRepository,
 		resourceService,
 		providers,

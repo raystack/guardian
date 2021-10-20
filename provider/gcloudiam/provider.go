@@ -125,6 +125,13 @@ func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*
 	return roles, nil
 }
 
+func (p *Provider) GetAccountTypes() []string {
+	return []string{
+		AccountTypeUser,
+		AccountTypeServiceAccount,
+	}
+}
+
 func (p *Provider) getIamClient(pc *domain.ProviderConfig) (GcloudIamClient, error) {
 	var credentials Credentials
 	if err := mapstructure.Decode(pc.Credentials, &credentials); err != nil {
