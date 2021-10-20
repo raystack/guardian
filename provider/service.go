@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
 
@@ -195,7 +196,10 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 		return ErrInvalidProviderType
 	}
 
-	// TODO: validate account type
+	if !utils.ContainsString(p.Config.AllowedAccountTypes, a.AccountType) {
+		allowedAccountTypesStr := strings.Join(p.Config.AllowedAccountTypes, ", ")
+		return fmt.Errorf("invalid account type: %v. allowed account types for %v: %v", a.AccountType, p.Type, allowedAccountTypesStr)
+	}
 
 	roles, err := provider.GetRoles(p.Config, resourceType)
 	if err != nil {
