@@ -116,7 +116,7 @@ func TestGrantAccess(t *testing.T) {
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
-		client.On("GrantAccess", mock.Anything, mock.Anything).Return(expectedError).Once()
+		client.On("GrantAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
@@ -145,12 +145,13 @@ func TestGrantAccess(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcloudIamClient)
 		expectedRole := "test-role"
-		expectedUser := "test@email.com"
+		expectedAccountType := "user"
+		expectedAccountID := "test@email.com"
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
-		client.On("GrantAccess", expectedUser, expectedRole).Return(nil).Once()
+		client.On("GrantAccess", expectedAccountType, expectedAccountID, expectedRole).Return(nil).Once()
 
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
@@ -165,10 +166,11 @@ func TestGrantAccess(t *testing.T) {
 				Type: gcloudiam.ResourceTypeProject,
 				URN:  "test-role",
 			},
-			Role:       expectedRole,
-			AccountID:  expectedUser,
-			ResourceID: 999,
-			ID:         999,
+			Role:        expectedRole,
+			AccountType: expectedAccountType,
+			AccountID:   expectedAccountID,
+			ResourceID:  999,
+			ID:          999,
 		}
 
 		actualError := p.GrantAccess(pc, a)
@@ -217,7 +219,7 @@ func TestRevokeAccess(t *testing.T) {
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
-		client.On("RevokeAccess", mock.Anything, mock.Anything).Return(expectedError).Once()
+		client.On("RevokeAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
@@ -246,12 +248,13 @@ func TestRevokeAccess(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcloudIamClient)
 		expectedRole := "test-role"
-		expectedUser := "test@email.com"
+		expectedAccountType := "user"
+		expectedAccountID := "test@email.com"
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
-		client.On("RevokeAccess", expectedUser, expectedRole).Return(nil).Once()
+		client.On("RevokeAccess", expectedAccountType, expectedAccountID, expectedRole).Return(nil).Once()
 
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
@@ -266,10 +269,11 @@ func TestRevokeAccess(t *testing.T) {
 				Type: gcloudiam.ResourceTypeProject,
 				URN:  "test-role",
 			},
-			Role:       expectedRole,
-			AccountID:  expectedUser,
-			ResourceID: 999,
-			ID:         999,
+			Role:        expectedRole,
+			AccountType: expectedAccountType,
+			AccountID:   expectedAccountID,
+			ResourceID:  999,
+			ID:          999,
 		}
 
 		actualError := p.RevokeAccess(pc, a)

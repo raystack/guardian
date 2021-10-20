@@ -74,7 +74,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	}
 
 	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
-		return client.GrantAccess(a.AccountID, a.Role)
+		return client.GrantAccess(a.AccountType, a.AccountID, a.Role)
 	}
 
 	return ErrInvalidResourceType
@@ -92,7 +92,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	}
 
 	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
-		return client.RevokeAccess(a.AccountID, a.Role)
+		return client.RevokeAccess(a.AccountType, a.AccountID, a.Role)
 	}
 
 	return ErrInvalidResourceType
