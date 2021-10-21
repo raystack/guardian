@@ -33,7 +33,7 @@ export default function Home() {
   return (
     <Layout
       title={siteConfig.tagline}
-      description="Meteor is an easy-to-use, plugin-driven metadata collection framework to extract data from different sources and sink to any data catalog or store.">
+      description="Guardian is a tool for extensible and universal data access with automated access workflows and security controls across data stores, analytical systems, and cloud products.">
       <Hero />
       <main>
         <Container className="textSection wrapper" background="light">
