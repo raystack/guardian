@@ -74,12 +74,11 @@ func (s *Service) Find() ([]*domain.Provider, error) {
 }
 
 func (s *Service) GetByID(id uint) (*domain.Provider, error) {
-	p, err := s.providerRepository.GetByID(id)
-	if err != nil {
-		return nil, err
-	}
+	return s.providerRepository.GetByID(id)
+}
 
-	return p, nil
+func (s *Service) GetOne(pType, urn string) (*domain.Provider, error) {
+	return s.providerRepository.GetOne(pType, urn)
 }
 
 // Update updates the non-zero value(s) only
@@ -290,7 +289,7 @@ func (s *Service) getProvider(pType string) domain.ProviderInterface {
 }
 
 func (s *Service) getProviderConfig(pType, urn string) (*domain.Provider, error) {
-	p, err := s.providerRepository.GetOne(pType, urn)
+	p, err := s.GetOne(pType, urn)
 	if err != nil {
 		return nil, err
 	}

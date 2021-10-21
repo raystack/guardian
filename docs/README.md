@@ -1,29 +1,33 @@
-# Introduction
+# Website
 
-Guardian is a data access management tool. It allows you to manage secure and compliant self-service data access for multiple resources with multiple stakeholders.
+This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
 
-![](.gitbook/assets/overview%20%281%29.svg)
+### Installation
 
-## How does it work?
+```
+$ yarn
+```
 
-Resource administrators needs to register a data provider on Guardian along with a access policy. The policy defines all the steps that a request needs to pass though before access is granted for a resource. A step can be a person approving the user request or an automated check before passing it to the next step of the policy.
+### Local Development
 
-Users are required to raise an appeal in order to gain access to a particular resource. The appeal will go through all the approvals/steps defined for that particular resource before it gets approved and the access is granted to the user.
+```
+$ yarn start
+```
 
-## Key Features
+This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
 
-* **Provider Management**: Support various providers \(currently only BigQuery, Metabase, Grafana and Tableau, with more coming up!\) and multiple instances for each provider type.
-* **Resource Management**: Resources from a provider are managed in Guardian's database. There is also an API to update resource's metadata to add additional information.
-* **Appeal-based access**: Users are expected to create an appeal for accessing data from registered providers. The appeal will get reviewed by the configured approvers before it gives the access to the user.
-* **Configurable approval flow**: Approval flow configures what are needed for an appeal to get approved and who are eligible to approve/reject. It can be configured and linked to a provider so that every appeal created to their resources will follow the procedure in order to get approved.
-* **External Identity Manager**: This gives the flexibility to use any third-party identity manager. User properties.
+### Build
 
-## Usage
+```
+$ yarn build
+```
 
-Explore the following resoruces to get started with Guardian:
+This command generates static content into the `build` directory and can be served using any static contents hosting service.
 
-* [Guides](https://odpf.gitbook.io/guardian/guides/overview) provides guidance on usage.
-* [Concepts](https://odpf.gitbook.io/guardian/concepts/architecture) describes all important Guardian concepts including system architecture.
-* [Reference](https://odpf.gitbook.io/guardian/reference/overview) contains details about configurations and other aspects of Guardian.
-* [Contribute](https://odpf.gitbook.io/guardian/contribute/contribution) contains resources for anyone who wants to contribute to Guardian.
+### Deployment
 
+```
+$ GIT_USER=<Your GitHub username> USE_SSH=true yarn deploy
+```
+
+If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.

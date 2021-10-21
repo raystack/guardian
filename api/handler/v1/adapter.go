@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"time"
+
 	"github.com/mitchellh/mapstructure"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/domain"
@@ -34,12 +36,6 @@ func (a *adapter) FromProviderConfigProto(pc *pb.ProviderConfig) (*domain.Provid
 	appeal := pc.GetAppeal()
 	resources := []*domain.ResourceConfig{}
 	for _, r := range pc.GetResources() {
-		policyProto := r.GetPolicy()
-		policy := &domain.PolicyConfig{
-			ID:      policyProto.GetId(),
-			Version: int(policyProto.GetVersion()),
-		}
-
 		roles := []*domain.Role{}
 		for _, role := range r.GetRoles() {
 			permissions := []interface{}{}
@@ -57,7 +53,7 @@ func (a *adapter) FromProviderConfigProto(pc *pb.ProviderConfig) (*domain.Provid
 
 		resources = append(resources, &domain.ResourceConfig{
 			Type:   r.GetType(),
-			Policy: policy,
+			Policy: a.fromPolicyConfigProto(r.GetPolicy()),
 			Roles:  roles,
 		})
 	}
@@ -107,11 +103,6 @@ func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*pb.Provider
 
 	resources := []*pb.ProviderConfig_ResourceConfig{}
 	for _, rc := range pc.Resources {
-		policy := &pb.ProviderConfig_ResourceConfig_PolicyConfig{
-			Id:      rc.Policy.ID,
-			Version: int32(rc.Policy.Version),
-		}
-
 		roles := []*pb.Role{}
 		for _, role := range rc.Roles {
 			roleProto, err := a.ToRole(role)
@@ -123,7 +114,7 @@ func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*pb.Provider
 
 		resources = append(resources, &pb.ProviderConfig_ResourceConfig{
 			Type:   rc.Type,
-			Policy: policy,
+			Policy: a.toPolicyConfigProto(rc.Policy),
 			Roles:  roles,
 		})
 	}
@@ -158,77 +149,181 @@ func (a *adapter) ToRole(role *domain.Role) (*pb.Role, error) {
 
 func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
 	var steps []*domain.Step
-	for _, s := range p.GetSteps() {
-		var conditions []*domain.Condition
-		for _, c := range s.Conditions {
-			match := &domain.MatchCondition{
-				Eq: c.GetMatch().GetEq().AsInterface(),
+	if p.GetSteps() != nil {
+		for _, s := range p.GetSteps() {
+			var conditions []*domain.Condition
+			if s.GetConditions() != nil {
+				for _, c := range s.GetConditions() {
+					conditions = append(conditions, a.fromConditionProto(c))
+				}
 			}
 
-			conditions = append(conditions, &domain.Condition{
-				Field: c.GetField(),
-				Match: match,
+			steps = append(steps, &domain.Step{
+				Name:         s.GetName(),
+				Description:  s.GetDescription(),
+				Conditions:   conditions,
+				AllowFailed:  s.GetAllowFailed(),
+				Dependencies: s.GetDependencies(),
+				Approvers:    s.GetApprovers(),
 			})
 		}
+	}
 
-		steps = append(steps, &domain.Step{
-			Name:         s.GetName(),
-			Description:  s.GetDescription(),
-			Conditions:   conditions,
-			AllowFailed:  s.GetAllowFailed(),
-			Dependencies: s.GetDependencies(),
-			Approvers:    s.GetApprovers(),
-		})
+	var requirements []*domain.Requirement
+	if p.GetRequirements() != nil {
+		for _, r := range p.GetRequirements() {
+			var on *domain.RequirementTrigger
+			if r.GetOn() != nil {
+				var conditions []*domain.Condition
+				if r.GetOn().GetConditions() != nil {
+					for _, c := range r.GetOn().GetConditions() {
+						conditions = append(conditions, a.fromConditionProto(c))
+					}
+				}
+
+				on = &domain.RequirementTrigger{
+					ProviderType: r.GetOn().GetProviderType(),
+					ProviderURN:  r.GetOn().GetProviderUrn(),
+					ResourceType: r.GetOn().GetResourceType(),
+					ResourceURN:  r.GetOn().GetResourceUrn(),
+					Role:         r.GetOn().GetRole(),
+					Conditions:   conditions,
+				}
+			}
+
+			var additionalAppeals []*domain.AdditionalAppeal
+			if r.GetAppeals() != nil {
+				for _, aa := range r.GetAppeals() {
+					var resource *domain.ResourceIdentifier
+					if aa.GetResource() != nil {
+						resource = &domain.ResourceIdentifier{
+							ProviderType: aa.GetResource().GetProviderType(),
+							ProviderURN:  aa.GetResource().GetProviderUrn(),
+							Type:         aa.GetResource().GetType(),
+							URN:          aa.GetResource().GetUrn(),
+							ID:           uint(aa.GetResource().GetId()),
+						}
+					}
+
+					additionalAppeals = append(additionalAppeals, &domain.AdditionalAppeal{
+						Resource: resource,
+						Role:     aa.GetRole(),
+						Options:  a.fromAppealOptionsProto(aa.GetOptions()),
+						Policy:   a.fromPolicyConfigProto(aa.GetPolicy()),
+					})
+				}
+			}
+
+			requirements = append(requirements, &domain.Requirement{
+				On:      on,
+				Appeals: additionalAppeals,
+			})
+		}
 	}
 
 	return &domain.Policy{
-		ID:          p.GetId(),
-		Version:     uint(p.GetVersion()),
-		Description: p.GetDescription(),
-		Steps:       steps,
-		Labels:      p.GetLabels(),
-		CreatedAt:   p.GetCreatedAt().AsTime(),
-		UpdatedAt:   p.GetUpdatedAt().AsTime(),
+		ID:           p.GetId(),
+		Version:      uint(p.GetVersion()),
+		Description:  p.GetDescription(),
+		Steps:        steps,
+		Requirements: requirements,
+		Labels:       p.GetLabels(),
+		CreatedAt:    p.GetCreatedAt().AsTime(),
+		UpdatedAt:    p.GetUpdatedAt().AsTime(),
 	}, nil
 }
 
 func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
-	approvalSteps := []*pb.Policy_ApprovalStep{}
-	for _, s := range p.Steps {
-		conditions := []*pb.Policy_ApprovalStep_Condition{}
-		for _, c := range s.Conditions {
-			eqCondition, err := structpb.NewValue(c.Match.Eq)
-			if err != nil {
-				return nil, err
+	var steps []*pb.Policy_ApprovalStep
+	if p.Steps != nil {
+		for _, s := range p.Steps {
+			var conditions []*pb.Condition
+			if s.Conditions != nil {
+				for _, c := range s.Conditions {
+					condition, err := a.toConditionProto(c)
+					if err != nil {
+						return nil, err
+					}
+					conditions = append(conditions, condition)
+				}
 			}
 
-			match := &pb.Policy_ApprovalStep_Condition_MatchCondition{
-				Eq: eqCondition,
-			}
-			conditions = append(conditions, &pb.Policy_ApprovalStep_Condition{
-				Field: c.Field,
-				Match: match,
+			steps = append(steps, &pb.Policy_ApprovalStep{
+				Name:         s.Name,
+				Description:  s.Description,
+				Conditions:   conditions,
+				AllowFailed:  s.AllowFailed,
+				Dependencies: s.Dependencies,
+				Approvers:    s.Approvers,
 			})
 		}
+	}
 
-		approvalSteps = append(approvalSteps, &pb.Policy_ApprovalStep{
-			Name:         s.Name,
-			Description:  s.Description,
-			Conditions:   conditions,
-			AllowFailed:  s.AllowFailed,
-			Dependencies: s.Dependencies,
-			Approvers:    s.Approvers,
-		})
+	var requirements []*pb.Policy_Requirement
+	if p.Requirements != nil {
+		for _, r := range p.Requirements {
+			var on *pb.Policy_Requirement_RequirementTrigger
+			if r.On != nil {
+				var conditions []*pb.Condition
+				if r.On.Conditions != nil {
+					for _, c := range r.On.Conditions {
+						condition, err := a.toConditionProto(c)
+						if err != nil {
+							return nil, err
+						}
+						conditions = append(conditions, condition)
+					}
+				}
+
+				on = &pb.Policy_Requirement_RequirementTrigger{
+					ProviderType: r.On.ProviderType,
+					ProviderUrn:  r.On.ProviderURN,
+					ResourceType: r.On.ResourceType,
+					ResourceUrn:  r.On.ResourceURN,
+					Role:         r.On.Role,
+					Conditions:   conditions,
+				}
+			}
+
+			var additionalAppeals []*pb.Policy_Requirement_AdditionalAppeal
+			if r.Appeals != nil {
+				for _, aa := range r.Appeals {
+					var resource *pb.Policy_Requirement_AdditionalAppeal_ResourceIdentifier
+					if aa.Resource != nil {
+						resource = &pb.Policy_Requirement_AdditionalAppeal_ResourceIdentifier{
+							ProviderType: aa.Resource.ProviderType,
+							ProviderUrn:  aa.Resource.ProviderURN,
+							Type:         aa.Resource.Type,
+							Urn:          aa.Resource.URN,
+							Id:           uint32(aa.Resource.ID),
+						}
+					}
+
+					additionalAppeals = append(additionalAppeals, &pb.Policy_Requirement_AdditionalAppeal{
+						Resource: resource,
+						Role:     aa.Role,
+						Options:  a.toAppealOptionsProto(aa.Options),
+						Policy:   a.toPolicyConfigProto(aa.Policy),
+					})
+				}
+			}
+
+			requirements = append(requirements, &pb.Policy_Requirement{
+				On:      on,
+				Appeals: additionalAppeals,
+			})
+		}
 	}
 
 	return &pb.Policy{
-		Id:          p.ID,
-		Version:     uint32(p.Version),
-		Description: p.Description,
-		Steps:       approvalSteps,
-		Labels:      p.Labels,
-		CreatedAt:   timestamppb.New(p.CreatedAt),
-		UpdatedAt:   timestamppb.New(p.UpdatedAt),
+		Id:           p.ID,
+		Version:      uint32(p.Version),
+		Description:  p.Description,
+		Steps:        steps,
+		Requirements: requirements,
+		Labels:       p.Labels,
+		CreatedAt:    timestamppb.New(p.CreatedAt),
+		UpdatedAt:    timestamppb.New(p.UpdatedAt),
 	}, nil
 }
 
@@ -278,18 +373,6 @@ func (a *adapter) ToResourceProto(r *domain.Resource) (*pb.Resource, error) {
 }
 
 func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
-	var options *domain.AppealOptions
-	if appeal.GetOptions() != nil {
-		options = &domain.AppealOptions{
-			Duration: appeal.GetOptions().GetDuration(),
-		}
-
-		if appeal.GetOptions().GetExpirationDate() != nil {
-			expirationDate := appeal.GetOptions().GetExpirationDate().AsTime()
-			options.ExpirationDate = &expirationDate
-		}
-	}
-
 	resource := a.FromResourceProto(appeal.GetResource())
 
 	approvals := []*domain.Approval{}
@@ -324,7 +407,7 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 		AccountType:   appeal.GetAccountType(),
 		CreatedBy:     appeal.GetCreatedBy(),
 		Role:          appeal.GetRole(),
-		Options:       options,
+		Options:       a.fromAppealOptionsProto(appeal.GetOptions()),
 		Labels:        appeal.GetLabels(),
 		RevokedBy:     appeal.GetRevokedBy(),
 		RevokedAt:     appeal.GetRevokedAt().AsTime(),
@@ -338,18 +421,6 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 }
 
 func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
-	var options *pb.Appeal_AppealOptions
-
-	if appeal.Options != nil {
-		options = &pb.Appeal_AppealOptions{
-			Duration: appeal.Options.Duration,
-		}
-
-		if appeal.Options.ExpirationDate != nil {
-			options.ExpirationDate = timestamppb.New(*appeal.Options.ExpirationDate)
-		}
-	}
-
 	var resource *pb.Resource
 	if appeal.Resource != nil {
 		r, err := a.ToResourceProto(appeal.Resource)
@@ -388,7 +459,7 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		AccountType:   appeal.AccountType,
 		CreatedBy:     appeal.CreatedBy,
 		Role:          appeal.Role,
-		Options:       options,
+		Options:       a.toAppealOptionsProto(appeal.Options),
 		Labels:        appeal.Labels,
 		RevokedBy:     appeal.RevokedBy,
 		RevokedAt:     timestamppb.New(appeal.RevokedAt),
@@ -454,4 +525,99 @@ func (a *adapter) ToApprovalProto(approval *domain.Approval) (*pb.Approval, erro
 		CreatedAt:     timestamppb.New(approval.CreatedAt),
 		UpdatedAt:     timestamppb.New(approval.UpdatedAt),
 	}, nil
+}
+
+func (a *adapter) fromConditionProto(c *pb.Condition) *domain.Condition {
+	if c == nil {
+		return nil
+	}
+
+	var match *domain.MatchCondition
+	if c.GetMatch() != nil {
+		match = &domain.MatchCondition{
+			Eq: c.GetMatch().GetEq(),
+		}
+	}
+
+	return &domain.Condition{
+		Field: c.GetField(),
+		Match: match,
+	}
+}
+
+func (a *adapter) toConditionProto(c *domain.Condition) (*pb.Condition, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	var match *pb.Condition_MatchCondition
+	if c.Match != nil {
+		eq, err := structpb.NewValue(c.Match.Eq)
+		if err != nil {
+			return nil, err
+		}
+
+		match = &pb.Condition_MatchCondition{
+			Eq: eq,
+		}
+	}
+
+	return &pb.Condition{
+		Field: c.Field,
+		Match: match,
+	}, nil
+}
+
+func (a *adapter) fromAppealOptionsProto(o *pb.AppealOptions) *domain.AppealOptions {
+	if o == nil {
+		return nil
+	}
+
+	var expirationDate time.Time
+	if o.GetExpirationDate() != nil {
+		expirationDate = o.GetExpirationDate().AsTime()
+	}
+
+	return &domain.AppealOptions{
+		Duration:       o.GetDuration(),
+		ExpirationDate: &expirationDate,
+	}
+}
+
+func (a *adapter) toAppealOptionsProto(o *domain.AppealOptions) *pb.AppealOptions {
+	if o == nil {
+		return nil
+	}
+
+	var expirationDate *timestamppb.Timestamp
+	if o.ExpirationDate != nil {
+		expirationDate = timestamppb.New(*o.ExpirationDate)
+	}
+
+	return &pb.AppealOptions{
+		Duration:       o.Duration,
+		ExpirationDate: expirationDate,
+	}
+}
+
+func (a *adapter) fromPolicyConfigProto(c *pb.PolicyConfig) *domain.PolicyConfig {
+	if c == nil {
+		return nil
+	}
+
+	return &domain.PolicyConfig{
+		ID:      c.GetId(),
+		Version: int(c.GetVersion()),
+	}
+}
+
+func (a *adapter) toPolicyConfigProto(c *domain.PolicyConfig) *pb.PolicyConfig {
+	if c == nil {
+		return nil
+	}
+
+	return &pb.PolicyConfig{
+		Id:      c.ID,
+		Version: int32(c.Version),
+	}
 }

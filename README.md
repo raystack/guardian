@@ -6,7 +6,7 @@
 
 Guardian is a data access management tool. It manages resources from various data providers along with the users’ access. Users required to raise an appeal in order to gain access to a particular resource. The appeal will go through several approvals before it is getting approved and granted the access to the user.
 
-<p align="center"><img src="./docs/assets/overview.svg" /></p>
+<p align="center"><img src="./docs/static/assets/overview.svg" /></p>
 
 ## Key Features
 
@@ -19,15 +19,17 @@ Guardian is a data access management tool. It manages resources from various dat
 ## Usage
 
 Explore the following resoruces to get started with Guardian:
-- [Guides](docs/guides) provides guidance on usage.
-- [Concepts](docs/concepts) describes all important Guardian concepts including system architecture.
-- [Reference](docs/reference) contains details about configurations and other aspects of Guardian.
-- [Contribute](docs/contribute/contribution.md) contains resources for anyone who wants to contribute to Guardian.
+
+- [Guides](https://odpf.github.io/guardian/docs/guides/cli) provides guidance on usage.
+- [Concepts](https://odpf.github.io/guardian/docs/concepts/architecture) describes all important Guardian concepts including system architecture.
+- [Reference](https://odpf.github.io/guardian/docs/reference/glossary) contains details about configurations and other aspects of Guardian.
+- [Contribute](https://odpf.github.io/guardian/docs/contribute/contribution) contains resources for anyone who wants to contribute to Guardian.
 
 ## Running locally
 
 Dependencies:
-- Git 
+
+- Git
 - Go 1.15 or above
 - PostgreSQL 13.2 or above
 
@@ -49,7 +51,7 @@ $ make test
 Development of Guardian happens in the open on GitHub, and we are grateful to the community for contributing bugfixes and
 improvements. Read below to learn how you can take part in improving Guardian.
 
-Read our [contributing guide](docs/contribute/contribution.md) to learn about our development process, how to propose
+Read our [contributing guide](https://odpf.github.io/guardian/docs/contribute/contribution) to learn about our development process, how to propose
 bugfixes and improvements, and how to build and test your changes to Guardian.
 
 To help you get your feet wet and get you familiar with our contribution process, we have a list of

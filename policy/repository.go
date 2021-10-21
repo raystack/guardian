@@ -44,8 +44,7 @@ func (r *Repository) Find() ([]*domain.Policy, error) {
 	policies := []*domain.Policy{}
 
 	var models []*model.Policy
-	latestPoliciesQuery := r.db.Model(&model.Policy{}).Select("id, max(version)").Group("id")
-	if err := r.db.Where("(id,version) IN (?)", latestPoliciesQuery).Find(&models).Error; err != nil {
+	if err := r.db.Find(&models).Error; err != nil {
 		return nil, err
 	}
 	for _, m := range models {

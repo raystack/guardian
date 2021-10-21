@@ -86,6 +86,29 @@ func (_m *ProviderService) GetByID(_a0 uint) (*domain.Provider, error) {
 	return r0, r1
 }
 
+// GetOne provides a mock function with given fields: pType, urn
+func (_m *ProviderService) GetOne(pType string, urn string) (*domain.Provider, error) {
+	ret := _m.Called(pType, urn)
+
+	var r0 *domain.Provider
+	if rf, ok := ret.Get(0).(func(string, string) *domain.Provider); ok {
+		r0 = rf(pType, urn)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.Provider)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(pType, urn)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetRoles provides a mock function with given fields: id, resourceType
 func (_m *ProviderService) GetRoles(id uint, resourceType string) ([]*domain.Role, error) {
 	ret := _m.Called(id, resourceType)
