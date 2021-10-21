@@ -51,8 +51,8 @@ export default function Home() {
                 content: (
                   <div>
                     Guardian uses a hybrid approach of role-based and data-centric access
-                    control centered around the type of data being accessed. RBAC is used
-                    for authorizing people who can approve requests.
+                    control centered around the type of resource being accessed. It also provides
+                    time-limited access to ensuring security and compliance.
                   </div>
                 ),
               },
@@ -68,7 +68,7 @@ export default function Home() {
                 ),
               },
               {
-                title: 'Auditing for accountability',
+                title: 'Auditing',
                 content: (
                   <div>
                     Automatically produce and maintain complete, interpretable records of
@@ -79,12 +79,12 @@ export default function Home() {
                 ),
               },
               {
-                title: 'Access Control',
+                title: 'Management',
                 content: (
                   <div>
-                    Guardian provides a security framework through Data Platform IAM. It ensures
-                    all users are authenticated with their credentials and are authorized to request,
-                    approve, or perform any action on Guardian.
+                    Guardian comes with CLI and APIs which allows you to interact with access
+                    workflows effectively. You can manage resources, providers, appeals, and policies
+                    and more.
                   </div>
                 ),
               },
@@ -92,8 +92,8 @@ export default function Home() {
                 title: 'Proven',
                 content: (
                   <div>
-                    Battle tested at large scale across multiple companies. Largest deployment manages
-                    access from thousands of data sources.
+                    Guardian is battle tested at large scale across multiple companies. Largest
+                    deployment manages access for thousands of resources across different providers.
                   </div>
                 ),
               },
@@ -101,9 +101,9 @@ export default function Home() {
                 title: 'Analytics',
                 content: (
                   <div>
-                    Guardian provides continuous and real-time visibility by analyzing data usage by users,
-                    groups, volume, tags, locations, and more. It allows users to generate reports about
-                    instances of data access and related operations.
+                    Guardian provides continuous and real-time visibility by analyzing access usage by users,
+                    groups, and more. It generates reports about instances of data
+                    access and related operations.
                   </div>
                 ),
               },
@@ -111,7 +111,7 @@ export default function Home() {
           />
         </Container>
         <Container className="textSection wrapper" background="dark">
-          <h1>Framework</h1>
+          <h1>Key Features</h1>
           <p>
             Meteor agent uses recipes as a set of instructions which are configured by user.
             Recipes contains configurations about the source from which the metadata will be
@@ -121,36 +121,33 @@ export default function Home() {
           <GridBlock
             layout="threeColumn"
             contents={[
+
               {
-                title: 'Extraction',
+                title: 'Appeal-based access',
                 content: (
                   <div>
-                    Extraction is the process of extracting data from a source and
-                    transforming it into a format that can be consumed by the agent.
-                    Extractors are the set of plugins that are source of our
-                    metadata and include databases, dashboards, users, etc.
+                    Users are expected to create an appeal for accessing data from registered
+                    providers. The appeal will get reviewed by the configured approvers before
+                    it gives the access to the user.
                   </div>
                 ),
               },
               {
-                title: 'Processing',
+                title: 'Configurable approval flow',
                 content: (
                   <div>
-                    Processing is the process of transforming the extracted data
-                    into a format that can be consumed by the agent.
-                    Processors are the set of plugins that perform the enrichment
-                    or data processing for the metadata after extraction..
+                    Approval flow configures what are needed for an appeal to get approved
+                    and who are eligible to approve/reject. It can be configured and linked
+                    to a provider so that every appeal created to their resources will follow
+                    the procedure in order to get approved.
                   </div>
                 ),
               },
               {
-                title: 'Sink',
+                title: 'External Identity Manager',
                 content: (
                   <div>
-                    Sink is the process of sending the processed data to a single or
-                    multiple destinations as defined in recipes.
-                    Sinks are the set of plugins that act as the destination of our metadata
-                    after extraction and processing is done by agent.
+                    Guardian gives the flexibility to use any third-party identity manager for user properties.
                   </div>
                 ),
               },
@@ -173,31 +170,29 @@ export default function Home() {
               <GridBlock
                 contents={[
                   {
-                    title: 'Extractors',
+                    title: 'Providers',
                     content: (
                       <div>
-                        Meteor supports source plugins to extract metadata from a variety of
-                        datastores services, and message queues, including BigQuery,
-                        InfluxDB, Kafka, Metabase, and many others.
+                        Support various providers like Big Query, Metabase, Tableau,
+                        and multiple instances for each provider type.
                       </div>
                     ),
                   },
                   {
-                    title: 'Processors',
+                    title: 'Resources',
                     content: (
                       <div>
-                        Meteor has in-built processors inlcuding enrichment and others.
-                        It is easy to add your own processors as well using custom plugins.
+                        Resources from a provider are managed in Guardian's database.
+                        There is also an API to update resource's metadata to add additional information.
                       </div>
                     ),
                   },
                   {
-                    title: 'Sinks',
+                    title: 'Appeals',
                     content: (
                       <div>
-                        Meteor supports sink plugins to send metadata to a variety of
-                        third party APIs and catalog services, including Columbus, HTTP, BigQuery,
-                        Kafka, and many others.
+                        Appeal is created by a user with specifying which resource they want
+                        to access along with some other appeal options.
                       </div>
                     ),
                   },
