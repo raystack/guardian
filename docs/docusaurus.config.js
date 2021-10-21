@@ -105,7 +105,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         darkTheme: darkCodeTheme,
       },
       gtag: {
-        trackingID: 'G-ZTPBZN6VK7',
+        trackingID: 'G-EPXDLH6V72',
       },
       announcementBar: {
         id: 'star-repo',
