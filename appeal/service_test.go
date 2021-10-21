@@ -999,6 +999,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 	})
 
 	s.Run("should return updated appeal on success", func() {
+		creator := "creator@email.com"
 		user := "user@email.com"
 		testCases := []struct {
 			name                   string
@@ -1013,6 +1014,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1037,6 +1039,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1062,7 +1065,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedNotifications: []domain.Notification{
 					{
-						User: "user@email.com",
+						User: creator,
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealApproved,
 							Variables: map[string]interface{}{
@@ -1084,6 +1087,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1108,6 +1112,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1133,7 +1138,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedNotifications: []domain.Notification{
 					{
-						User: "user@email.com",
+						User: creator,
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealRejected,
 							Variables: map[string]interface{}{
@@ -1155,6 +1160,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1183,6 +1189,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1213,7 +1220,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedNotifications: []domain.Notification{
 					{
-						User: "user@email.com",
+						User: creator,
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealRejected,
 							Variables: map[string]interface{}{
@@ -1235,6 +1242,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1263,6 +1271,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1298,7 +1307,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 							Variables: map[string]interface{}{
 								"resource_name": "test-resource-name (test-provider: urn)",
 								"role":          "test-role",
-								"requestor":     "user@email.com",
+								"requestor":     creator,
 								"appeal_id":     validApprovalActionParam.AppealID,
 							},
 						},
@@ -1310,7 +1319,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 							Variables: map[string]interface{}{
 								"resource_name": "test-resource-name (test-provider: urn)",
 								"role":          "test-role",
-								"requestor":     "user@email.com",
+								"requestor":     creator,
 								"appeal_id":     validApprovalActionParam.AppealID,
 							},
 						},
