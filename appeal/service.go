@@ -97,6 +97,13 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 	expiredAppeals := []*domain.Appeal{}
 	for _, a := range appeals {
+		if a.AccountType == "" {
+			a.AccountType = domain.DefaultAppealAccountType
+		}
+		if a.AccountType == domain.DefaultAppealAccountType && a.AccountID != a.CreatedBy {
+			return ErrCannotCreateAppealForOtherUser
+		}
+
 		if pendingAppeals[a.AccountID] != nil &&
 			pendingAppeals[a.AccountID][a.ResourceID] != nil &&
 			pendingAppeals[a.AccountID][a.ResourceID][a.Role] != nil {
@@ -157,9 +164,6 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return ErrResourceTypeNotFound
 		}
 
-		if a.AccountType == "" {
-			a.AccountType = domain.DefaultAppealAccountType
-		}
 		if err := s.providerService.ValidateAppeal(a, p); err != nil {
 			return err
 		}

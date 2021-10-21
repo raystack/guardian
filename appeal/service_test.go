@@ -213,14 +213,26 @@ func (s *ServiceTestSuite) TestCreate() {
 			expectedError                 error
 		}{
 			{
+				name: "creating appeal for other normal user",
+				appeals: []*domain.Appeal{{
+					CreatedBy:  "test-user",
+					AccountID:  "test-user-2",
+					ResourceID: 1,
+					Role:       "test-role",
+				}},
+				expectedError: appeal.ErrCannotCreateAppealForOtherUser,
+			},
+			{
 				name: "duplicate appeal",
 				existingAppeals: []*domain.Appeal{{
+					CreatedBy:  "test-user",
 					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 					Status:     domain.AppealStatusPending,
 				}},
 				appeals: []*domain.Appeal{{
+					CreatedBy:  "test-user",
 					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
@@ -233,6 +245,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ID: 1,
 				}},
 				appeals: []*domain.Appeal{{
+					CreatedBy:  "test-user",
 					AccountID:  "test-user",
 					ResourceID: 2,
 					Role:       "test-role",
@@ -258,12 +271,14 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
+					CreatedBy:  "test-user",
 					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 					Status:     domain.AppealStatusActive,
 				}},
 				appeals: []*domain.Appeal{{
+					CreatedBy:  "test-user",
 					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
@@ -279,12 +294,14 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
+					CreatedBy:  "test-user",
 					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 					Status:     domain.AppealStatusActive,
 				}},
 				appeals: []*domain.Appeal{{
+					CreatedBy:  "test-user",
 					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
@@ -309,6 +326,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
+					CreatedBy:  "test-user",
 					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
@@ -318,6 +336,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					},
 				}},
 				appeals: []*domain.Appeal{{
+					CreatedBy:  "test-user",
 					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
@@ -572,6 +591,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			Status:        domain.AppealStatusPending,
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
+			CreatedBy:     accountID,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -607,6 +627,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			Status:        domain.AppealStatusPending,
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
+			CreatedBy:     accountID,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -638,6 +659,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			Status:        domain.AppealStatusPending,
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
+			CreatedBy:     accountID,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -695,6 +717,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		appeals := []*domain.Appeal{
 			{
+				CreatedBy:  accountID,
 				AccountID:  accountID,
 				ResourceID: 1,
 				Resource: &domain.Resource{
@@ -704,6 +727,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				Role: "role_id",
 			},
 			{
+				CreatedBy:  accountID,
 				AccountID:  accountID,
 				ResourceID: 2,
 				Resource: &domain.Resource{
