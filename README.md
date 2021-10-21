@@ -6,7 +6,7 @@
 
 Guardian is a data access management tool. It manages resources from various data providers along with the users’ access. Users required to raise an appeal in order to gain access to a particular resource. The appeal will go through several approvals before it is getting approved and granted the access to the user.
 
-<p align="center"><img src="./docs/assets/overview.svg" /></p>
+<p align="center"><img src="./docs/static/assets/overview.svg" /></p>
 
 ## Key Features
 
