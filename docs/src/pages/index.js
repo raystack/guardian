@@ -113,10 +113,11 @@ export default function Home() {
         <Container className="textSection wrapper" background="dark">
           <h1>Key Features</h1>
           <p>
-            Meteor agent uses recipes as a set of instructions which are configured by user.
-            Recipes contains configurations about the source from which the metadata will be
-            fetched, information about metadata processors and the destination to where
-            the metadata will be sent.
+            Guardian is a data access management tool. It manages resources from
+            various data providers along with the users’ access. Users required
+            to raise an appeal in order to gain access to a particular resource.
+            The appeal will go through several approvals before it is getting
+            approved and granted the access to the user.
           </p>
           <GridBlock
             layout="threeColumn"
@@ -159,10 +160,8 @@ export default function Home() {
         <Container className="textSection wrapper" background="light">
           <h1>Ecosystem</h1>
           <p>
-            Meteor’s plugin system allows new plugins to be easily added.
-            With 50+ plugins and many more coming soon to extract and sink metadata,
-            it is easy to start collecting metadata from various sources and
-            sink to any data catalog or store.
+            Guardian's extensible system allows new providers to be easily added.
+            Mmultiple providers are supported, including: Metabase, BigQuery, Tableau and more.
           </p>
           <div className="row">
             <div className="col col--4">
