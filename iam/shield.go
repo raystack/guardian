@@ -37,6 +37,8 @@ type user struct {
 	ID       string            `json:"id"`
 	Username string            `json:"username"`
 	Metadata map[string]string `json:"metadata"`
+
+	TeamLeads []string `json:"team_leads"`
 }
 
 type shieldClient struct {
@@ -65,7 +67,7 @@ func NewShieldClient(config *ShieldClientConfig) (*shieldClient, error) {
 	}, nil
 }
 
-func (c *shieldClient) GetManagerEmails(userEmail string) ([]string, error) {
+func (c *shieldClient) GetUser(userEmail string) (interface{}, error) {
 	c.userEmail = userEmail
 
 	if c.teamAdminRoleID == "" {
@@ -97,8 +99,13 @@ func (c *shieldClient) GetManagerEmails(userEmail string) ([]string, error) {
 	if c.users == nil {
 		c.users = map[string]user{}
 	}
+
+	var userDetails user
 	for _, u := range users {
 		c.users[u.ID] = u
+		if u.Metadata["email"] == c.userEmail {
+			userDetails = u
+		}
 	}
 
 	var teamLeadEmails []string
@@ -112,7 +119,18 @@ func (c *shieldClient) GetManagerEmails(userEmail string) ([]string, error) {
 		}
 	}
 
-	return teamLeadEmails, nil
+	userDetails.TeamLeads = teamLeadEmails
+
+	jsonBytes, err := json.Marshal(userDetails)
+	if err != nil {
+		return nil, err
+	}
+	var result map[string]interface{}
+	if err := json.Unmarshal(jsonBytes, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (c *shieldClient) getRoles() ([]role, error) {

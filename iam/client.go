@@ -18,8 +18,8 @@ type ClientConfig struct {
 	Host string `mapstructure:"host" validate:"required_if=Provider shield"`
 
 	// http config
-	GetManagersURL string          `mapstructure:"get_managers_url" validate:"required_if=Provider http"`
-	Auth           *HTTPAuthConfig `mapstructure:"auth" valdiate:"omitempty,dive"`
+	URL  string          `mapstructure:"url" validate:"required_if=Provider http"`
+	Auth *HTTPAuthConfig `mapstructure:"auth" validate:"omitempty,dive"`
 }
 
 func NewClient(config *ClientConfig) (domain.IAMClient, error) {
@@ -29,8 +29,8 @@ func NewClient(config *ClientConfig) (domain.IAMClient, error) {
 		})
 	} else if config.Provider == IAMProviderHTTP {
 		return NewHTTPClient(&HTTPClientConfig{
-			GetManagersURL: config.GetManagersURL,
-			Auth:           config.Auth,
+			URL:  config.URL,
+			Auth: config.Auth,
 		})
 	}
 

@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	ApproversKeyResource      = "$resource"
-	ApproversKeyUserApprovers = "$user_approvers"
+	ApproversKeyResource = "$resource"
+	ApproversKeyCreator  = "$creator"
 )
 
 var (

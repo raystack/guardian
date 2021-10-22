@@ -5,7 +5,6 @@ import (
 
 	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/mocks"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -20,31 +19,21 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.service = iam.NewService(s.mockClient)
 }
 
-func (s *ServiceTestSuite) TestGetUserApproverEmails() {
-	s.Run("should return error if email param is empty", func() {
-		actualResult, actualError := s.service.GetUserApproverEmails("")
+func (s *ServiceTestSuite) TestGetUser() {
+	s.Run("should return error if id param is empty", func() {
+		actualResult, actualError := s.service.GetUser("")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, iam.ErrEmptyUserEmailParam.Error())
 	})
 
-	s.Run("should pass user as the query string to client", func() {
+	s.Run("should pass user id as to the client", func() {
 		user := "test@email.com"
-		s.mockClient.On("GetManagerEmails", user).Return(nil, nil).Once()
+		s.mockClient.On("GetUser", user).Return(nil, nil).Once()
 
-		s.service.GetUserApproverEmails(user)
+		s.service.GetUser(user)
 
 		s.mockClient.AssertExpectations(s.T())
-	})
-
-	s.Run("should return error if approver emails are empty", func() {
-		user := "test@email.com"
-		s.mockClient.On("GetManagerEmails", mock.Anything).Return([]string{}, nil).Once()
-
-		actualResult, actualError := s.service.GetUserApproverEmails(user)
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, iam.ErrEmptyApprovers.Error())
 	})
 }
 

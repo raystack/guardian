@@ -25,21 +25,17 @@ type HTTPAuthConfig struct {
 
 // HTTPClientConfig is the configuration required by iam.Client
 type HTTPClientConfig struct {
-	GetManagersURL string `validate:"required,url" mapstructure:"get_managers_url"`
-	HTTPClient     *http.Client
+	HTTPClient *http.Client
 
+	URL  string          `mapstructure:"url" validate:"required,url"`
 	Auth *HTTPAuthConfig `mapstructure:"auth" validate:"omitempty,dive"`
-}
-
-type managerEmailsResponse struct {
-	Emails []string `json:"emails"`
 }
 
 // HTTPClient wraps the http client for external approver resolver service
 type HTTPClient struct {
-	getManagersURL string
-	httpClient     *http.Client
-	auth           *HTTPAuthConfig
+	url        string
+	httpClient *http.Client
+	auth       *HTTPAuthConfig
 }
 
 // NewHTTPClient returns *iam.Client
@@ -52,15 +48,15 @@ func NewHTTPClient(config *HTTPClientConfig) (*HTTPClient, error) {
 		httpClient = http.DefaultClient
 	}
 	return &HTTPClient{
-		getManagersURL: config.GetManagersURL,
-		httpClient:     httpClient,
-		auth:           config.Auth,
+		url:        config.URL,
+		httpClient: httpClient,
+		auth:       config.Auth,
 	}, nil
 }
 
-// GetManagerEmails fetches to external approver resolver service and returns approver emails
-func (c *HTTPClient) GetManagerEmails(user string) ([]string, error) {
-	req, err := http.NewRequest(http.MethodGet, c.getManagersURL, nil)
+// GetUser fetches to external approver resolver service and returns approver emails
+func (c *HTTPClient) GetUser(user string) (interface{}, error) {
+	req, err := http.NewRequest(http.MethodGet, c.url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -69,12 +65,12 @@ func (c *HTTPClient) GetManagerEmails(user string) ([]string, error) {
 	q.Add("user", user)
 	req.URL.RawQuery = q.Encode()
 
-	var approvers managerEmailsResponse
-	if err := c.sendRequest(req, &approvers); err != nil {
+	var res map[string]interface{}
+	if err := c.sendRequest(req, &res); err != nil {
 		return nil, err
 	}
 
-	return approvers.Emails, nil
+	return res, nil
 }
 
 func (c *HTTPClient) sendRequest(req *http.Request, v interface{}) error {
