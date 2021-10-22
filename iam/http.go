@@ -5,7 +5,13 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/mcuadros/go-defaults"
 )
+
+type Parameter struct {
+	Key string `mapstructure:"key" default:"user"`
+	In  string `mapstructure:"in" validate:"omitempty,oneof=query header" default:"query"`
+}
 
 type HTTPAuthConfig struct {
 	Type string `mapstructure:"type" validate:"required,oneof=basic api_key bearer"`
@@ -27,19 +33,22 @@ type HTTPAuthConfig struct {
 type HTTPClientConfig struct {
 	HTTPClient *http.Client
 
-	URL  string          `mapstructure:"url" validate:"required,url"`
-	Auth *HTTPAuthConfig `mapstructure:"auth" validate:"omitempty,dive"`
+	URL         string          `mapstructure:"url" validate:"required,url"`
+	IDParameter Parameter       `mapstructure:"id_parameter"`
+	Auth        *HTTPAuthConfig `mapstructure:"auth" validate:"omitempty,dive"`
 }
 
 // HTTPClient wraps the http client for external approver resolver service
 type HTTPClient struct {
-	url        string
 	httpClient *http.Client
+	url        string
+	idParam    Parameter
 	auth       *HTTPAuthConfig
 }
 
 // NewHTTPClient returns *iam.Client
 func NewHTTPClient(config *HTTPClientConfig) (*HTTPClient, error) {
+	defaults.SetDefaults(config)
 	if err := validator.New().Struct(config); err != nil {
 		return nil, err
 	}
@@ -47,9 +56,11 @@ func NewHTTPClient(config *HTTPClientConfig) (*HTTPClient, error) {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
+
 	return &HTTPClient{
-		url:        config.URL,
 		httpClient: httpClient,
+		url:        config.URL,
+		idParam:    config.IDParameter,
 		auth:       config.Auth,
 	}, nil
 }
@@ -61,9 +72,7 @@ func (c *HTTPClient) GetUser(user string) (interface{}, error) {
 		return nil, err
 	}
 
-	q := req.URL.Query()
-	q.Add("user", user)
-	req.URL.RawQuery = q.Encode()
+	c.setIDParam(req, user)
 
 	var res map[string]interface{}
 	if err := c.sendRequest(req, &res); err != nil {
@@ -87,6 +96,18 @@ func (c *HTTPClient) sendRequest(req *http.Request, v interface{}) error {
 	}
 
 	return nil
+}
+
+func (c *HTTPClient) setIDParam(req *http.Request, id string) {
+	switch c.idParam.In {
+	case "query":
+		q := req.URL.Query()
+		q.Add(c.idParam.Key, id)
+		req.URL.RawQuery = q.Encode()
+	case "header":
+		req.Header.Add(c.idParam.Key, id)
+	default:
+	}
 }
 
 func (c *HTTPClient) setAuth(req *http.Request) {

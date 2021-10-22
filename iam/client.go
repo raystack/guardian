@@ -18,8 +18,9 @@ type ClientConfig struct {
 	Host string `mapstructure:"host" validate:"required_if=Provider shield"`
 
 	// http config
-	URL  string          `mapstructure:"url" validate:"required_if=Provider http"`
-	Auth *HTTPAuthConfig `mapstructure:"auth" validate:"omitempty,dive"`
+	URL         string          `mapstructure:"url" validate:"required_if=Provider http"`
+	IDParameter Parameter       `mapstructure:"id_parameter"`
+	Auth        *HTTPAuthConfig `mapstructure:"auth" validate:"omitempty,dive"`
 }
 
 func NewClient(config *ClientConfig) (domain.IAMClient, error) {
