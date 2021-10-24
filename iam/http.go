@@ -2,7 +2,9 @@ package iam
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-defaults"
@@ -10,7 +12,7 @@ import (
 
 type Parameter struct {
 	Key string `mapstructure:"key" default:"user"`
-	In  string `mapstructure:"in" validate:"omitempty,oneof=query header" default:"query"`
+	In  string `mapstructure:"in" validate:"omitempty,oneof=query header param" default:"query"`
 }
 
 type HTTPAuthConfig struct {
@@ -41,6 +43,7 @@ type HTTPClientConfig struct {
 // HTTPClient wraps the http client for external approver resolver service
 type HTTPClient struct {
 	httpClient *http.Client
+	rawURL     string
 	url        string
 	idParam    Parameter
 	auth       *HTTPAuthConfig
@@ -59,6 +62,7 @@ func NewHTTPClient(config *HTTPClientConfig) (*HTTPClient, error) {
 
 	return &HTTPClient{
 		httpClient: httpClient,
+		rawURL:     config.URL,
 		url:        config.URL,
 		idParam:    config.IDParameter,
 		auth:       config.Auth,
@@ -106,6 +110,9 @@ func (c *HTTPClient) setIDParam(req *http.Request, id string) {
 		req.URL.RawQuery = q.Encode()
 	case "header":
 		req.Header.Add(c.idParam.Key, id)
+	case "param":
+		paramKey := fmt.Sprintf("{{%s}}", c.idParam.Key)
+		c.url = strings.Replace(c.rawURL, paramKey, id, 1)
 	default:
 	}
 }
