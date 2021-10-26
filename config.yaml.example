@@ -12,7 +12,7 @@ DB:
   SSLMODE: disable
 IAM:
   PROVIDER: http
-  GET_MANAGERS_URL: http://localhost:3001
+  URL: http://localhost:3001
 NOTIFIER:
   PROVIDER: slack
   ACCESS_TOKEN:

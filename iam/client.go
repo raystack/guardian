@@ -6,29 +6,35 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
+type ProviderType string
+
 const (
-	IAMProviderShield = "shield"
-	IAMProviderHTTP   = "http"
+	ProviderTypeShield ProviderType = "shield"
+	ProviderTypeHTTP   ProviderType = "http"
 )
 
 type ClientConfig struct {
-	Provider string `mapstructure:"provider"`
+	Provider ProviderType `mapstructure:"provider"`
 
 	// shield config
-	Host string `mapstructure:"host"`
+	Host string `mapstructure:"host" validate:"required_if=Provider shield"`
 
 	// http config
-	GetManagersURL string `mapstructure:"get_managers_url"`
+	URL     string            `mapstructure:"url" validate:"required_if=Provider http"`
+	Headers map[string]string `mapstructure:"headers"`
+	Auth    *HTTPAuthConfig   `mapstructure:"auth" validate:"omitempty,dive"`
 }
 
 func NewClient(config *ClientConfig) (domain.IAMClient, error) {
-	if config.Provider == IAMProviderShield {
+	if config.Provider == ProviderTypeShield {
 		return NewShieldClient(&ShieldClientConfig{
 			Host: config.Host,
 		})
-	} else if config.Provider == IAMProviderHTTP {
+	} else if config.Provider == ProviderTypeHTTP {
 		return NewHTTPClient(&HTTPClientConfig{
-			GetManagersURL: config.GetManagersURL,
+			URL:     config.URL,
+			Auth:    config.Auth,
+			Headers: config.Headers,
 		})
 	}
 

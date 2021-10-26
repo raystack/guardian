@@ -12,19 +12,11 @@ func NewService(client domain.IAMClient) *Service {
 	return &Service{client}
 }
 
-// GetUserApproverEmails returns array of approver emails or error if any
-func (s *Service) GetUserApproverEmails(user string) ([]string, error) {
-	if user == "" {
+// GetUser fetches user details from external IAM
+func (s *Service) GetUser(id string) (interface{}, error) {
+	if id == "" {
 		return nil, ErrEmptyUserEmailParam
 	}
 
-	approverEmails, err := s.client.GetManagerEmails(user)
-	if err != nil {
-		return nil, err
-	}
-	if len(approverEmails) == 0 {
-		return nil, ErrEmptyApprovers
-	}
-
-	return approverEmails, nil
+	return s.client.GetUser(id)
 }
