@@ -116,7 +116,7 @@ func (s *Service) validateRequirements(requirements []*domain.Requirement) error
 func (s *Service) validateSteps(steps []*domain.Step) error {
 	validVariables := []string{
 		domain.ApproversKeyResource,
-		domain.ApproversKeyUserApprovers,
+		domain.ApproversKeyCreator,
 	}
 
 	for i, step := range steps {
