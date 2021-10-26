@@ -66,7 +66,7 @@ func NewHTTPClient(config *HTTPClientConfig) (*HTTPClient, error) {
 	}, nil
 }
 
-// GetUser fetches to external approver resolver service and returns approver emails
+// GetUser fetches user details to external
 func (c *HTTPClient) GetUser(userID string) (interface{}, error) {
 	req, err := c.createRequest(userID)
 	if err != nil {
