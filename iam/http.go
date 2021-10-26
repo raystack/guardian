@@ -2,7 +2,6 @@ package iam
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -10,10 +9,7 @@ import (
 	"github.com/mcuadros/go-defaults"
 )
 
-type Parameter struct {
-	Key string `mapstructure:"key" default:"user"`
-	In  string `mapstructure:"in" validate:"omitempty,oneof=query header param" default:"query"`
-}
+const UserIDWildcard = "{user_id}"
 
 type HTTPAuthConfig struct {
 	Type string `mapstructure:"type" validate:"required,oneof=basic api_key bearer"`
@@ -35,18 +31,17 @@ type HTTPAuthConfig struct {
 type HTTPClientConfig struct {
 	HTTPClient *http.Client
 
-	URL         string          `mapstructure:"url" validate:"required,url"`
-	IDParameter Parameter       `mapstructure:"id_parameter"`
-	Auth        *HTTPAuthConfig `mapstructure:"auth" validate:"omitempty,dive"`
+	URL     string            `mapstructure:"url" validate:"required,url"`
+	Headers map[string]string `mapstructure:"headers"`
+	Auth    *HTTPAuthConfig   `mapstructure:"auth" validate:"omitempty,dive"`
 }
 
 // HTTPClient wraps the http client for external approver resolver service
 type HTTPClient struct {
 	httpClient *http.Client
-	rawURL     string
-	url        string
-	idParam    Parameter
-	auth       *HTTPAuthConfig
+	config     *HTTPClientConfig
+
+	url string
 }
 
 // NewHTTPClient returns *iam.Client
@@ -62,21 +57,17 @@ func NewHTTPClient(config *HTTPClientConfig) (*HTTPClient, error) {
 
 	return &HTTPClient{
 		httpClient: httpClient,
-		rawURL:     config.URL,
+		config:     config,
 		url:        config.URL,
-		idParam:    config.IDParameter,
-		auth:       config.Auth,
 	}, nil
 }
 
 // GetUser fetches to external approver resolver service and returns approver emails
-func (c *HTTPClient) GetUser(user string) (interface{}, error) {
-	req, err := http.NewRequest(http.MethodGet, c.url, nil)
+func (c *HTTPClient) GetUser(userID string) (interface{}, error) {
+	req, err := c.createRequest(userID)
 	if err != nil {
 		return nil, err
 	}
-
-	c.setIDParam(req, user)
 
 	var res map[string]interface{}
 	if err := c.sendRequest(req, &res); err != nil {
@@ -86,10 +77,28 @@ func (c *HTTPClient) GetUser(user string) (interface{}, error) {
 	return res, nil
 }
 
-func (c *HTTPClient) sendRequest(req *http.Request, v interface{}) error {
-	c.setAuth(req)
-	req.Header.Set("Accept", "application/json")
+func (c *HTTPClient) createRequest(userID string) (*http.Request, error) {
+	url := strings.Replace(c.config.URL, UserIDWildcard, userID, -1)
 
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range c.config.Headers {
+		if strings.Contains(v, UserIDWildcard) {
+			req.Header.Set(k, strings.Replace(v, UserIDWildcard, userID, -1))
+		} else {
+			req.Header.Set(k, v)
+		}
+	}
+	c.setAuth(req)
+
+	req.Header.Set("Accept", "application/json")
+	return req, nil
+}
+
+func (c *HTTPClient) sendRequest(req *http.Request, v interface{}) error {
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -102,38 +111,23 @@ func (c *HTTPClient) sendRequest(req *http.Request, v interface{}) error {
 	return nil
 }
 
-func (c *HTTPClient) setIDParam(req *http.Request, id string) {
-	switch c.idParam.In {
-	case "query":
-		q := req.URL.Query()
-		q.Add(c.idParam.Key, id)
-		req.URL.RawQuery = q.Encode()
-	case "header":
-		req.Header.Add(c.idParam.Key, id)
-	case "param":
-		paramKey := fmt.Sprintf("{{%s}}", c.idParam.Key)
-		c.url = strings.Replace(c.rawURL, paramKey, id, 1)
-	default:
-	}
-}
-
 func (c *HTTPClient) setAuth(req *http.Request) {
-	if c.auth != nil {
-		switch c.auth.Type {
+	if c.config.Auth != nil {
+		switch c.config.Auth.Type {
 		case "basic":
-			req.SetBasicAuth(c.auth.Username, c.auth.Password)
+			req.SetBasicAuth(c.config.Auth.Username, c.config.Auth.Password)
 		case "api_key":
-			switch c.auth.In {
+			switch c.config.Auth.In {
 			case "query":
 				q := req.URL.Query()
-				q.Add(c.auth.Key, c.auth.Value)
+				q.Add(c.config.Auth.Key, c.config.Auth.Value)
 				req.URL.RawQuery = q.Encode()
 			case "header":
-				req.Header.Add(c.auth.Key, c.auth.Value)
+				req.Header.Add(c.config.Auth.Key, c.config.Auth.Value)
 			default:
 			}
 		case "bearer":
-			req.Header.Add("Authorization", "Bearer "+c.auth.Token)
+			req.Header.Add("Authorization", "Bearer "+c.config.Auth.Token)
 		default:
 		}
 	}
