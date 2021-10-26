@@ -173,7 +173,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			if step.Approvers != "" {
 				approvers, err = s.resolveApprovers(a.User, a.Resource, step.Approvers)
 				if err != nil {
-					return err
+					return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
 				}
 			}
 
@@ -540,19 +540,19 @@ func (s *Service) resolveApprovers(user string, resource *domain.Resource, appro
 			path := strings.TrimPrefix(approversKey, fmt.Sprintf("%s.", domain.ApproversKeyResource))
 			approverEmails, err := getApproverEmails(mapResource, path)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("getting approver email(s) from resource: %w", err)
 			}
 			approvers = approverEmails
 		} else if strings.HasPrefix(approversKey, domain.ApproversKeyCreator) {
 			userDetails, err := s.iamService.GetUser(user)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("fetching creator's iam: %w", err)
 			}
 
 			path := strings.TrimPrefix(approversKey, fmt.Sprintf("%s.", domain.ApproversKeyCreator))
 			approverEmails, err := getApproverEmails(userDetails, path)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("getting approver email(s) from creator's iam: %w", err)
 			}
 			approvers = approverEmails
 		} else {
