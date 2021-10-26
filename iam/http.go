@@ -2,12 +2,16 @@ package iam
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-defaults"
 )
+
+var ErrFailedRequest = errors.New("request failed")
 
 const UserIDWildcard = "{user_id}"
 
@@ -104,11 +108,11 @@ func (c *HTTPClient) sendRequest(req *http.Request, v interface{}) error {
 		return err
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(v); err != nil {
-		return err
+	if res.StatusCode >= 200 && res.StatusCode < 300 {
+		return json.NewDecoder(res.Body).Decode(v)
 	}
 
-	return nil
+	return fmt.Errorf("%w: %s", ErrFailedRequest, res.Status)
 }
 
 func (c *HTTPClient) setAuth(req *http.Request) {
