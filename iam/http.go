@@ -69,7 +69,7 @@ func (c *HTTPClient) GetUser(userID string) (interface{}, error) {
 		return nil, err
 	}
 
-	var res map[string]interface{}
+	var res interface{}
 	if err := c.sendRequest(req, &res); err != nil {
 		return nil, err
 	}
