@@ -57,10 +57,24 @@ func (c *Condition) IsMatch(a *Appeal) (bool, error) {
 
 // Step is an individual process within an approval flow
 type Step struct {
-	Name        string       `json:"name" yaml:"name" validate:"required"`
+	// Name used as the step identifier
+	Name string `json:"name" yaml:"name" validate:"required"`
+
+	// Description tells more details about the step
 	Description string       `json:"description" yaml:"description"`
 	Conditions  []*Condition `json:"conditions" yaml:"conditions" validate:"required_without=Approvers,omitempty,min=1,dive"`
-	AllowFailed bool         `json:"allow_failed" yaml:"allow_failed"`
+
+	// AllowFailed lets the approval flow continue to the next step even the current step is rejected.
+	// If the last step has AllowFailed equal to true, and it's getting rejected,
+	// the appeal status will resolve as approved or success.
+	AllowFailed bool `json:"allow_failed" yaml:"allow_failed"`
+
+	// RunIf is expression determines whether the step should be evaluated or it can be skipped at the beginning.
+	// If it evaluates to be falsy, the step will automatically skipped. Otherwise, step become pending/blocked (normal).
+	//
+	// Accessible parameters:
+	// $appeal = Appeal object
+	RunIf *Expression `json:"expression" yaml:"expression"`
 
 	Dependencies []string `json:"dependencies" yaml:"dependencies"`
 	Approvers    string   `json:"approvers" yaml:"approvers" validate:"required_without=Conditions"`

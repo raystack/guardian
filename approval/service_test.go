@@ -13,8 +13,8 @@ import (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockRepository      *mocks.ApprovalRepository
-	mockPolicyService   *mocks.PolicyService
+	mockRepository    *mocks.ApprovalRepository
+	mockPolicyService *mocks.PolicyService
 
 	service domain.ApprovalService
 }
@@ -119,6 +119,91 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 
 		actualError := s.service.AdvanceApproval(&testappeal)
 		s.Nil(actualError)
+	})
+
+	s.Run("should update approval statuses", func() {
+		exp := domain.Expression("$appeal.resource.details.flag == true")
+		resourceFlagStep := &domain.Step{
+			Name:      "resourceFlagStep",
+			RunIf:     &exp,
+			Approvers: "user@email.com",
+		}
+		humanApprovalStep := &domain.Step{
+			Name:      "humanApprovalStep",
+			Approvers: "human@email.com",
+		}
+
+		testCases := []struct {
+			name                     string
+			appeal                   *domain.Appeal
+			steps                    []*domain.Step
+			existingApprovalStatuses []string
+			expectedApprovalStatuses []string
+		}{
+			{
+				name: "initial process, RunIf on the first step",
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Details: map[string]interface{}{
+							"flag": false,
+						},
+					},
+				},
+				steps: []*domain.Step{
+					resourceFlagStep,
+					humanApprovalStep,
+				},
+				existingApprovalStatuses: []string{
+					domain.ApprovalStatusPending,
+					domain.ApprovalStatusBlocked,
+				},
+				expectedApprovalStatuses: []string{
+					domain.ApprovalStatusSkipped,
+					domain.ApprovalStatusPending,
+				},
+			},
+			{
+				name: "RunIf expression fulfilled",
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Details: map[string]interface{}{
+							"flag": true,
+						},
+					},
+				},
+				steps: []*domain.Step{
+					humanApprovalStep,
+					resourceFlagStep,
+					humanApprovalStep,
+				},
+				existingApprovalStatuses: []string{
+					domain.ApprovalStatusApproved,
+					domain.ApprovalStatusPending,
+					domain.ApprovalStatusBlocked,
+				},
+				expectedApprovalStatuses: []string{
+					domain.ApprovalStatusApproved,
+					domain.ApprovalStatusPending,
+					domain.ApprovalStatusBlocked,
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				appeal := *tc.appeal
+				for _, s := range tc.existingApprovalStatuses {
+					appeal.Approvals = append(appeal.Approvals, &domain.Approval{
+						Status: s,
+					})
+				}
+				appeal.Policy = &domain.Policy{
+					Steps: tc.steps,
+				}
+				actualError := s.service.AdvanceApproval(&appeal)
+				s.Nil(actualError)
+			})
+		}
 	})
 }
 

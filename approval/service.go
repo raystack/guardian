@@ -3,6 +3,7 @@ package approval
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/mcuadros/go-lookup"
@@ -36,10 +37,6 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 		if err != nil {
 			return err
 		}
-		if p == nil {
-			return ErrPolicyNotFound
-		}
-
 		policy = p
 	}
 
@@ -57,6 +54,29 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 			}
 
 			stepConfig := policy.Steps[approval.Index]
+
+			if stepConfig.RunIf != nil {
+				appealMap, err := structToMap(appeal)
+				if err != nil {
+					return fmt.Errorf("parsing appeal struct to map: %w", err)
+				}
+				parameters := map[string]interface{}{
+					"appeal": appealMap,
+				}
+				v, err := stepConfig.RunIf.EvaluateWithVars(parameters)
+				if err != nil {
+					return err
+				}
+
+				isFalsy := reflect.ValueOf(v).IsZero()
+				if isFalsy {
+					approval.Status = domain.ApprovalStatusSkipped
+					if i < len(appeal.Approvals)-1 {
+						appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
+					}
+					break
+				}
+			}
 
 			hasSkippedDependencies := false
 			for _, d := range stepConfig.Dependencies {
