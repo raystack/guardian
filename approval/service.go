@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 
-	"github.com/mcuadros/go-lookup"
 	"github.com/odpf/guardian/domain"
 )
 
@@ -55,15 +53,15 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 
 			stepConfig := policy.Steps[approval.Index]
 
+			appealMap, err := structToMap(appeal)
+			if err != nil {
+				return fmt.Errorf("parsing appeal struct to map: %w", err)
+			}
+
 			if stepConfig.RunIf != nil {
-				appealMap, err := structToMap(appeal)
-				if err != nil {
-					return fmt.Errorf("parsing appeal struct to map: %w", err)
-				}
-				parameters := map[string]interface{}{
+				v, err := stepConfig.RunIf.EvaluateWithVars(map[string]interface{}{
 					"appeal": appealMap,
-				}
-				v, err := stepConfig.RunIf.EvaluateWithVars(parameters)
+				})
 				if err != nil {
 					return err
 				}
@@ -78,38 +76,16 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 				}
 			}
 
-			hasSkippedDependencies := false
-			for _, d := range stepConfig.Dependencies {
-				dependencyApprovalStep := appeal.Approvals[stepNameIndex[d]]
-				if dependencyApprovalStep == nil {
-					return ErrDependencyApprovalStepNotFound
-				}
-
-				if dependencyApprovalStep.Status == domain.ApprovalStatusSkipped {
-					hasSkippedDependencies = true
-				}
-			}
-			if hasSkippedDependencies {
-				approval.Status = domain.ApprovalStatusSkipped
-				break
-			}
-
-			for _, c := range stepConfig.Conditions {
-				if c == nil {
-					return ErrApprovalStepConditionNotFound
-				}
-
-				passed, err := s.evalCondition(appeal, c)
+			if stepConfig.Conditions != nil {
+				v, err := stepConfig.Conditions.EvaluateWithVars(map[string]interface{}{
+					"appeal": appealMap,
+				})
 				if err != nil {
 					return err
 				}
 
-				if passed {
-					approval.Status = domain.ApprovalStatusApproved
-					if i+1 <= len(appeal.Approvals)-1 {
-						appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
-					}
-				} else {
+				isFalsy := reflect.ValueOf(v).IsZero()
+				if isFalsy {
 					if stepConfig.AllowFailed {
 						approval.Status = domain.ApprovalStatusSkipped
 						if i+1 <= len(appeal.Approvals)-1 {
@@ -119,35 +95,17 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 						approval.Status = domain.ApprovalStatusRejected
 						appeal.Status = domain.AppealStatusRejected
 					}
+				} else {
+					approval.Status = domain.ApprovalStatusApproved
+					if i+1 <= len(appeal.Approvals)-1 {
+						appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
+					}
 				}
 			}
 		}
 	}
 
 	return nil
-}
-
-func (s *service) evalCondition(a *domain.Appeal, c *domain.Condition) (bool, error) {
-	if strings.HasPrefix(c.Field, domain.ApproversKeyResource) {
-		if a.Resource == nil {
-			return false, ErrNilResourceInAppeal
-		}
-		resourceMap, err := structToMap(a.Resource)
-		if err != nil {
-			return false, err
-		}
-
-		path := strings.TrimPrefix(c.Field, fmt.Sprintf("%s.", domain.ApproversKeyResource))
-		value, err := lookup.LookupString(resourceMap, path)
-		if err != nil {
-			return false, err
-		}
-
-		expectedValue := c.Match.Eq
-		return value.Interface() == expectedValue, nil
-	}
-
-	return false, ErrInvalidConditionField
 }
 
 func structToMap(item interface{}) (map[string]interface{}, error) {

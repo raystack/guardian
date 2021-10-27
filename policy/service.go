@@ -119,7 +119,7 @@ func (s *Service) validateSteps(steps []*domain.Step) error {
 		domain.ApproversKeyCreator,
 	}
 
-	for i, step := range steps {
+	for _, step := range steps {
 		if containsWhitespaces(step.Name) {
 			return ErrStepNameContainsWhitespaces
 		}
@@ -136,21 +136,6 @@ func (s *Service) validateSteps(steps []*domain.Step) error {
 
 			if !isValidVariable {
 				return fmt.Errorf("%v: %v", ErrInvalidApprovers, step.Approvers)
-			}
-		}
-
-		// validate dependencies
-		for _, d := range step.Dependencies {
-			isDependencyExists := false
-			for j := 0; j < i; j++ {
-				if steps[j].Name == d {
-					isDependencyExists = true
-					break
-				}
-			}
-
-			if !isDependencyExists {
-				return fmt.Errorf("%v: %v", ErrStepDependencyDoesNotExists, d)
 			}
 		}
 	}

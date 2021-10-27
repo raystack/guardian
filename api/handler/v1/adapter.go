@@ -151,20 +151,17 @@ func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
 	var steps []*domain.Step
 	if p.GetSteps() != nil {
 		for _, s := range p.GetSteps() {
-			var conditions []*domain.Condition
-			if s.GetConditions() != nil {
-				for _, c := range s.GetConditions() {
-					conditions = append(conditions, a.fromConditionProto(c))
-				}
+			var conditions domain.Expression
+			if s.GetConditions() != "" {
+				conditions = domain.Expression(s.GetConditions())
 			}
 
 			steps = append(steps, &domain.Step{
-				Name:         s.GetName(),
-				Description:  s.GetDescription(),
-				Conditions:   conditions,
-				AllowFailed:  s.GetAllowFailed(),
-				Dependencies: s.GetDependencies(),
-				Approvers:    s.GetApprovers(),
+				Name:        s.GetName(),
+				Description: s.GetDescription(),
+				Conditions:  &conditions,
+				AllowFailed: s.GetAllowFailed(),
+				Approvers:   s.GetApprovers(),
 			})
 		}
 	}
@@ -237,24 +234,12 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 	var steps []*pb.Policy_ApprovalStep
 	if p.Steps != nil {
 		for _, s := range p.Steps {
-			var conditions []*pb.Condition
-			if s.Conditions != nil {
-				for _, c := range s.Conditions {
-					condition, err := a.toConditionProto(c)
-					if err != nil {
-						return nil, err
-					}
-					conditions = append(conditions, condition)
-				}
-			}
-
 			steps = append(steps, &pb.Policy_ApprovalStep{
-				Name:         s.Name,
-				Description:  s.Description,
-				Conditions:   conditions,
-				AllowFailed:  s.AllowFailed,
-				Dependencies: s.Dependencies,
-				Approvers:    s.Approvers,
+				Name:        s.Name,
+				Description: s.Description,
+				Conditions:  string(*s.Conditions),
+				AllowFailed: s.AllowFailed,
+				Approvers:   s.Approvers,
 			})
 		}
 	}

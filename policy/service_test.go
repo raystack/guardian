@@ -93,7 +93,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Steps: []*domain.Step{
 						{
 							Name:       "step-1",
-							Conditions: []*domain.Condition{},
+							Conditions: nil,
 						},
 					},
 				},
@@ -137,25 +137,6 @@ func (s *ServiceTestSuite) TestCreate() {
 					},
 				},
 				expectedError: policy.ErrInvalidApprovers,
-			},
-			{
-				name: "step: dependency doesn't exists",
-				policy: &domain.Policy{
-					ID:      "test-id",
-					Version: 1,
-					Steps: []*domain.Step{
-						{
-							Name:      "step-1",
-							Approvers: "$resource.field",
-						},
-						{
-							Name:         "step-2",
-							Approvers:    "$resource.field",
-							Dependencies: []string{"step-x"},
-						},
-					},
-				},
-				expectedError: policy.ErrStepDependencyDoesNotExists,
 			},
 		}
 

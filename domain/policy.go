@@ -61,8 +61,7 @@ type Step struct {
 	Name string `json:"name" yaml:"name" validate:"required"`
 
 	// Description tells more details about the step
-	Description string       `json:"description" yaml:"description"`
-	Conditions  []*Condition `json:"conditions" yaml:"conditions" validate:"required_without=Approvers,omitempty,min=1,dive"`
+	Description string `json:"description" yaml:"description"`
 
 	// AllowFailed lets the approval flow continue to the next step even the current step is rejected.
 	// If the last step has AllowFailed equal to true, and it's getting rejected,
@@ -76,8 +75,8 @@ type Step struct {
 	// $appeal = Appeal object
 	RunIf *Expression `json:"expression" yaml:"expression"`
 
-	Dependencies []string `json:"dependencies" yaml:"dependencies"`
-	Approvers    string   `json:"approvers" yaml:"approvers" validate:"required_without=Conditions"`
+	Approvers  string      `json:"approvers" yaml:"approvers" validate:"required_without=Conditions"`
+	Conditions *Expression `json:"conditions" yaml:"conditions" validate:"required_without=Approvers"`
 }
 
 type RequirementTrigger struct {
