@@ -1,0 +1,33 @@
+# ODPF Guardian Configuration
+#
+#
+# !!WARNING!!
+# This configuration file is for documentation purposes only. Do not use it in production.
+#
+# Guardian can be configured using a configuration file and passing the file location using `--config path/to/config.yaml`.
+# Per default, Guardian will look up and load file ~/config.yaml. All configuration keys can be set using environment
+# variables as well.
+#
+
+PORT: 3000
+ENCRYPTION_SECRET_KEY:
+AUTHENTICATED_USER_HEADER_KEY: X-User-Email
+LOG:
+  LEVEL: info
+DB:
+  HOST: localhost
+  USER:
+  PASSWORD:
+  NAME:
+  PORT: 5432
+  SSLMODE: disable
+IAM:
+  PROVIDER: http
+  URL: http://localhost:3001
+NOTIFIER:
+  PROVIDER: slack
+  ACCESS_TOKEN:
+JOBS:
+  FETCH_RESOURCES_INTERVAL:
+  REVOKE_EXPIRED_ACCESS_INTERVAL:
+  EXPIRING_ACCESS_NOTIFICATION_INTERVAL:

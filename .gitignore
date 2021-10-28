@@ -16,7 +16,7 @@
 # vendor/
 
 # Config
-config.yaml
+/config.yaml
 
 tmp
 
