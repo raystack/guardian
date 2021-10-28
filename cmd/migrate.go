@@ -6,15 +6,24 @@ import (
 )
 
 func migrateCommand() *cobra.Command {
-	return &cobra.Command{
+
+	var configFile string
+
+	cmd := &cobra.Command{
 		Use:   "migrate",
-		Short: "Migrate database schema",
+		Short: "Run database migrations",
+		Annotations: map[string]string{
+			"group:other": "dev",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := app.LoadServiceConfig()
+			cfg, err := app.LoadConfig(configFile)
 			if err != nil {
 				return err
 			}
-			return app.Migrate(c)
+			return app.Migrate(&cfg)
 		},
 	}
+
+	cmd.Flags().StringVarP(&configFile, "config", "c", "./config.yaml", "Config file path")
+	return cmd
 }
