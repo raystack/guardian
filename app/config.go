@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/notifier"
 	"github.com/odpf/guardian/store"
@@ -24,8 +26,11 @@ func LoadConfig(configFile string) (Config, error) {
 	loader := config.NewLoader(config.WithFile(configFile))
 
 	if err := loader.Load(&cfg); err != nil {
+		if _, ok := err.(config.ConfigFileNotFoundError); !ok {
+			fmt.Println(err)
+			return cfg, nil
+		}
 		return Config{}, err
 	}
-
 	return cfg, nil
 }
