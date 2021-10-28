@@ -93,7 +93,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Steps: []*domain.Step{
 						{
 							Name:       "step-1",
-							Conditions: nil,
+							Conditions: "",
 						},
 					},
 				},

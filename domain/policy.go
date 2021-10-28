@@ -73,10 +73,10 @@ type Step struct {
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	RunIf *Expression `json:"expression" yaml:"expression"`
+	RunIf Expression `json:"expression" yaml:"expression"`
 
-	Approvers  string      `json:"approvers" yaml:"approvers" validate:"required_without=Conditions"`
-	Conditions *Expression `json:"conditions" yaml:"conditions" validate:"required_without=Approvers"`
+	Approvers  string     `json:"approvers" yaml:"approvers" validate:"required_without=Conditions"`
+	Conditions Expression `json:"conditions" yaml:"conditions" validate:"required_without=Approvers"`
 }
 
 type RequirementTrigger struct {

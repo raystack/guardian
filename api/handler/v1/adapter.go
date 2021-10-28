@@ -151,15 +151,10 @@ func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
 	var steps []*domain.Step
 	if p.GetSteps() != nil {
 		for _, s := range p.GetSteps() {
-			var conditions domain.Expression
-			if s.GetConditions() != "" {
-				conditions = domain.Expression(s.GetConditions())
-			}
-
 			steps = append(steps, &domain.Step{
 				Name:        s.GetName(),
 				Description: s.GetDescription(),
-				Conditions:  &conditions,
+				Conditions:  domain.Expression(s.GetConditions()),
 				AllowFailed: s.GetAllowFailed(),
 				Approvers:   s.GetApprovers(),
 			})
@@ -237,7 +232,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 			steps = append(steps, &pb.Policy_ApprovalStep{
 				Name:        s.Name,
 				Description: s.Description,
-				Conditions:  string(*s.Conditions),
+				Conditions:  string(s.Conditions),
 				AllowFailed: s.AllowFailed,
 				Approvers:   s.Approvers,
 			})

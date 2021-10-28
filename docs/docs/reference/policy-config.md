@@ -68,19 +68,11 @@
 ```yaml
 id: bigquery_approval
 steps:
-  - name: check_if_dataset_is_pii
-    description: pii dataset needs additional approval from the team lead
-    conditions:
-    - field: $resource.details.is_pii
-      match:
-        eq: true
-    allow_failed: true
   - name: supervisor_approval
     description: 'only will get evaluated if check_if_dataset_is_pii return true'
-    dependencies: [check_if_dataset_is_pii]
-    approvers: $user.profile.team_leads.[].email
+    run_if: $appeal.resource.details.is_pii
+    approvers: $creator.userManager
   - name: admin_approval
-    description: ...
-    approvers: $resource.details.owner
+    description: approval from dataset admin/owner
+    approvers: $appeal.resource.details.owner
 ```
-

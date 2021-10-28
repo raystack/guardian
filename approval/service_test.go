@@ -50,7 +50,6 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 	})
 
 	s.Run("should resolve multiple automatic approval steps", func() {
-		condition := domain.Expression(`$appeal.resource.details.owner == "test-owner"`)
 		testappeal := domain.Appeal{
 			PolicyID:      "test-id",
 			PolicyVersion: 1,
@@ -66,15 +65,15 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				Steps: []*domain.Step{
 					{
 						Name:       "step-1",
-						Conditions: &condition,
+						Conditions: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
 					},
 					{
 						Name:       "step-2",
-						Conditions: &condition,
+						Conditions: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
 					},
 					{
 						Name:       "step-3",
-						Conditions: &condition,
+						Conditions: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
 					},
 				},
 			},
@@ -99,10 +98,9 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 	})
 
 	s.Run("should update approval statuses", func() {
-		exp := domain.Expression("$appeal.resource.details.flag == true")
 		resourceFlagStep := &domain.Step{
 			Name:      "resourceFlagStep",
-			RunIf:     &exp,
+			RunIf:     domain.Expression("$appeal.resource.details.flag == true"),
 			Approvers: "user@email.com",
 		}
 		humanApprovalStep := &domain.Step{
