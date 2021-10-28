@@ -75,7 +75,7 @@ type Step struct {
 	// $appeal = Appeal object
 	RunIf Expression `json:"expression" yaml:"expression"`
 
-	// Approvers is an Expression that if evaluated returns string or []string that contains email address of the approvers.
+	// Approvers is an Expression that if the evaluation returns string or []string that contains email address of the approvers.
 	// If human approval (manual) is required, use this field.
 	//
 	// Accessible parameters:
