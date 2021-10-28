@@ -553,7 +553,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			Steps: []*domain.Step{
 				{
 					Name:      "step_1",
-					Approvers: "$resource.details.owner",
+					Approvers: "$appeal.resource.details.owner",
 				},
 				{
 					Name:      "step_2",

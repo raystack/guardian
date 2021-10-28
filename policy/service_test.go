@@ -136,7 +136,6 @@ func (s *ServiceTestSuite) TestCreate() {
 						},
 					},
 				},
-				expectedError: policy.ErrInvalidApprovers,
 			},
 		}
 
@@ -146,7 +145,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 				s.Error(actualError)
 				if tc.expectedError != nil {
-					s.Contains(actualError.Error(), tc.expectedError.Error())
+					s.ErrorIs(actualError, tc.expectedError)
 				}
 			})
 		}

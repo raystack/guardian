@@ -42,5 +42,5 @@ var (
 	ErrDurationIsRequired                  = errors.New("having permanent access to this resource is not allowed, access duration is required")
 
 	ErrApproverKeyNotRecognized = errors.New("unrecognized approvers key")
-	ErrApproverInvalidType      = errors.New("invalid approver type, expected an email or array of email")
+	ErrApproverInvalidType      = errors.New("invalid approver type, expected an email string or array of email string")
 )
