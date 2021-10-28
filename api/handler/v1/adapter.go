@@ -154,6 +154,7 @@ func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
 			steps = append(steps, &domain.Step{
 				Name:        s.GetName(),
 				Description: s.GetDescription(),
+				RunIf:       domain.Expression(s.GetRunIf()),
 				Conditions:  domain.Expression(s.GetConditions()),
 				AllowFailed: s.GetAllowFailed(),
 				Approvers:   domain.Expression(s.GetApprovers()),
@@ -232,6 +233,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 			steps = append(steps, &pb.Policy_ApprovalStep{
 				Name:        s.Name,
 				Description: s.Description,
+				RunIf:       s.RunIf.String(),
 				Conditions:  s.Conditions.String(),
 				AllowFailed: s.AllowFailed,
 				Approvers:   s.Approvers.String(),
