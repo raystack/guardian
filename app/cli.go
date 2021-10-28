@@ -1,6 +1,9 @@
 package app
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/odpf/salt/config"
 )
 
@@ -17,6 +20,10 @@ func LoadCLIConfig(configFile string) (*CLIConfig, error) {
 	loader := config.NewLoader(config.WithFile(configFile))
 
 	if err := loader.Load(&cfg); err != nil {
+		if errors.As(err, &config.ConfigFileNotFoundError{}) {
+			fmt.Println(err)
+			return &cfg, nil
+		}
 		return &CLIConfig{}, err
 	}
 	return &cfg, nil

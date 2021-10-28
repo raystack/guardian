@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/odpf/guardian/iam"
@@ -26,7 +27,7 @@ func LoadConfig(configFile string) (Config, error) {
 	loader := config.NewLoader(config.WithFile(configFile))
 
 	if err := loader.Load(&cfg); err != nil {
-		if _, ok := err.(config.ConfigFileNotFoundError); !ok {
+		if errors.As(err, &config.ConfigFileNotFoundError{}) {
 			fmt.Println(err)
 			return cfg, nil
 		}
