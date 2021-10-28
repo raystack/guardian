@@ -37,20 +37,8 @@ import (
 )
 
 var (
-	ServiceConfigFileName      = "config"
-	ServiceConfigFileExtension = "yaml"
+	ConfigFileName = "config"
 )
-
-type ServiceConfig struct {
-	Port                       int                   `mapstructure:"port" default:"8080"`
-	EncryptionSecretKeyKey     string                `mapstructure:"encryption_secret_key"`
-	Notifier                   notifier.ClientConfig `mapstructure:"notifier"`
-	IAM                        iam.ClientConfig      `mapstructure:"iam"`
-	LogLevel                   string                `mapstructure:"log_level" default:"info"`
-	DB                         store.Config          `mapstructure:"db"`
-	AuthenticatedUserHeaderKey string                `mapstructure:"authenticated_user_header_key"`
-	Jobs                       Jobs                  `mapstructure:"jobs"`
-}
 
 type Jobs struct {
 	FetchResourcesInterval             string `mapstructure:"fetch_resources_interval" default:"0 */2 * * *"`
@@ -58,18 +46,8 @@ type Jobs struct {
 	ExpiringAccessNotificationInterval string `mapstructure:"expiring_access_notification_interval" default:"0 9 * * *"`
 }
 
-// LoadServiceConfig returns service configuration
-func LoadServiceConfig() (*ServiceConfig, error) {
-	var config ServiceConfig
-	if err := loadConfig(ServiceConfigFileName, ServiceConfigFileExtension, &config); err != nil {
-		return nil, err
-	}
-
-	return &config, nil
-}
-
 // RunServer runs the application server
-func RunServer(c *ServiceConfig) error {
+func RunServer(c *Config) error {
 	db, err := getDB(c)
 	if err != nil {
 		return err
@@ -213,7 +191,7 @@ func RunServer(c *ServiceConfig) error {
 }
 
 // Migrate runs the schema migration scripts
-func Migrate(c *ServiceConfig) error {
+func Migrate(c *Config) error {
 	db, err := getDB(c)
 	if err != nil {
 		return err
@@ -230,7 +208,7 @@ func Migrate(c *ServiceConfig) error {
 	return store.Migrate(db, models...)
 }
 
-func getDB(c *ServiceConfig) (*gorm.DB, error) {
+func getDB(c *Config) (*gorm.DB, error) {
 	return store.New(&c.DB)
 }
 
@@ -251,7 +229,7 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 	}), &http2.Server{})
 }
 
-func makeHeaderMatcher(c *ServiceConfig) func(key string) (string, bool) {
+func makeHeaderMatcher(c *Config) func(key string) (string, bool) {
 	return func(key string) (string, bool) {
 		switch key {
 		case c.AuthenticatedUserHeaderKey:

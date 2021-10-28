@@ -1,69 +1,31 @@
 package app
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/jeremywohl/flatten"
-	"github.com/mcuadros/go-defaults"
-	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/viper"
+	"github.com/odpf/guardian/iam"
+	"github.com/odpf/guardian/notifier"
+	"github.com/odpf/guardian/store"
+	"github.com/odpf/salt/config"
 )
 
-func loadConfig(fileName, fileExtension string, v interface{}) error {
-	viper.SetConfigName(fileName)
-	viper.SetConfigType(fileExtension)
-	viper.AddConfigPath("./")
-	viper.AddConfigPath("../")
-	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			fmt.Println("config file was not found. Env vars and defaults will be used. If you are using guardian CLI, make sure you have run \"guardian config init\" once")
-		} else {
-			return fmt.Errorf("fatal error reading config: %s", err)
-		}
-	}
-
-	configKeys, err := getFlattenedStructKeys(v)
-	if err != nil {
-		return err
-	}
-
-	// Bind each conf fields to environment vars
-	for key := range configKeys {
-		err := viper.BindEnv(configKeys[key])
-		if err != nil {
-			return err
-		}
-	}
-
-	defaults.SetDefaults(v)
-
-	if err := viper.Unmarshal(v); err != nil {
-		return fmt.Errorf("unable to unmarshal config to struct: %v", err)
-	}
-
-	return nil
+type Config struct {
+	Port                       int                   `mapstructure:"port" default:"8080"`
+	EncryptionSecretKeyKey     string                `mapstructure:"encryption_secret_key"`
+	Notifier                   notifier.ClientConfig `mapstructure:"notifier"`
+	IAM                        iam.ClientConfig      `mapstructure:"iam"`
+	LogLevel                   string                `mapstructure:"log_level" default:"info"`
+	DB                         store.Config          `mapstructure:"db"`
+	AuthenticatedUserHeaderKey string                `mapstructure:"authenticated_user_header_key"`
+	Jobs                       Jobs                  `mapstructure:"jobs"`
 }
 
-func getFlattenedStructKeys(v interface{}) ([]string, error) {
-	var structMap map[string]interface{}
-	err := mapstructure.Decode(v, &structMap)
-	if err != nil {
-		return nil, err
+//  LoadConfig the configuration from the given path.
+func LoadConfig(configFile string) (Config, error) {
+	var cfg Config
+	loader := config.NewLoader(config.WithFile(configFile))
+
+	if err := loader.Load(&cfg); err != nil {
+		return Config{}, err
 	}
 
-	flat, err := flatten.Flatten(structMap, "", flatten.DotStyle)
-	if err != nil {
-		return nil, err
-	}
-
-	keys := make([]string, 0, len(flat))
-	for k := range flat {
-		keys = append(keys, k)
-	}
-
-	return keys, nil
+	return cfg, nil
 }
