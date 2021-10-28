@@ -61,7 +61,7 @@ dockers:
 brews:
   - name: guardian
     homepage: "https://github.com/odpf/guardian"
-    description: "Metadata collection tool."
+    description: "Universal data access tool."
     tap:
       owner: odpf
       name: homebrew-taps
