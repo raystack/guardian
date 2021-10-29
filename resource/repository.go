@@ -1,6 +1,8 @@
 package resource
 
 import (
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/model"
@@ -10,13 +12,14 @@ import (
 )
 
 type findFilters struct {
-	IDs          []uint `mapstructure:"ids" validate:"omitempty,min=1"`
-	IsDeleted    bool   `mapstructure:"is_deleted" validate:"omitempty"`
-	ProviderType string `mapstructure:"provider_type" validate:"omitempty"`
-	ProviderURN  string `mapstructure:"provider_urn" validate:"omitempty"`
-	Name         string `mapstructure:"name" validate:"omitempty"`
-	ResourceURN  string `mapstructure:"urn" validate:"omitempty"`
-	ResourceType string `mapstructure:"type" validate:"omitempty"`
+	IDs          []uint            `mapstructure:"ids" validate:"omitempty,min=1"`
+	IsDeleted    bool              `mapstructure:"is_deleted" validate:"omitempty"`
+	ProviderType string            `mapstructure:"provider_type" validate:"omitempty"`
+	ProviderURN  string            `mapstructure:"provider_urn" validate:"omitempty"`
+	Name         string            `mapstructure:"name" validate:"omitempty"`
+	ResourceURN  string            `mapstructure:"urn" validate:"omitempty"`
+	ResourceType string            `mapstructure:"type" validate:"omitempty"`
+	Details      map[string]string `mapstructure:"details"`
 }
 
 // Repository talks to the store/database to read/insert data
@@ -43,28 +46,27 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Resource, e
 	if conditions.IDs != nil {
 		db = db.Where(conditions.IDs)
 	}
-
 	if !conditions.IsDeleted {
 		db = db.Where(`"is_deleted" = ?`, conditions.IsDeleted)
 	}
 	if conditions.ResourceType != "" {
 		db = db.Where(`"type" = ?`, conditions.ResourceType)
 	}
-
 	if conditions.Name != "" {
 		db = db.Where(`"name" = ?`, conditions.Name)
 	}
-
 	if conditions.ProviderType != "" {
 		db = db.Where(`"provider_type" = ?`, conditions.ProviderType)
 	}
-
 	if conditions.ProviderURN != "" {
 		db = db.Where(`"provider_urn" = ?`, conditions.ProviderURN)
 	}
-
 	if conditions.ResourceURN != "" {
 		db = db.Where(`"urn" = ?`, conditions.ResourceURN)
+	}
+	for path, v := range conditions.Details {
+		pathArr := "{" + strings.Join(strings.Split(path, "."), ",") + "}"
+		db = db.Where(`"details" #>> ? = ?`, pathArr, v)
 	}
 
 	var models []*model.Resource

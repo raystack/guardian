@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/appeal"
@@ -267,20 +268,24 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyReque
 }
 
 func (s *GRPCServer) ListResources(ctx context.Context, req *pb.ListResourcesRequest) (*pb.ListResourcesResponse, error) {
-	name := req.GetName()
-	providerURN := req.GetProviderUrn()
-	resourceType := req.GetType()
-	resourceURN := req.GetUrn()
-	providerType := req.GetProviderType()
-	isDeleted := req.GetIsDeleted()
-
+	var details map[string]string
+	fmt.Printf("req.GetDetailsPaths(): %v\n", req.GetDetailsPaths())
+	fmt.Printf("req.GetDetailsValues(): %v\n", req.GetDetailsValues())
+	if len(req.GetDetailsPaths()) == len(req.GetDetailsValues()) {
+		details = map[string]string{}
+		paths := req.GetDetailsPaths()
+		for i, v := range req.GetDetailsValues() {
+			details[paths[i]] = v
+		}
+	}
 	resources, err := s.resourceService.Find(map[string]interface{}{
-		"is_deleted":    isDeleted,
-		"type":          resourceType,
-		"urn":           resourceURN,
-		"provider_type": providerType,
-		"provider_urn":  providerURN,
-		"name":          name,
+		"is_deleted":    req.GetIsDeleted(),
+		"type":          req.GetType(),
+		"urn":           req.GetUrn(),
+		"provider_type": req.GetProviderType(),
+		"provider_urn":  req.GetProviderUrn(),
+		"name":          req.GetName(),
+		"details":       details,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get resource list: %v", err)
