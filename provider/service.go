@@ -2,16 +2,20 @@ package provider
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
 
 // Service handling the business logics
 type Service struct {
 	logger             *log.Logrus
+	validator          *validator.Validate
 	providerRepository domain.ProviderRepository
 	resourceService    domain.ResourceService
 
@@ -19,7 +23,7 @@ type Service struct {
 }
 
 // NewService returns service struct
-func NewService(logger *log.Logrus, pr domain.ProviderRepository, rs domain.ResourceService, providers []domain.ProviderInterface) *Service {
+func NewService(logger *log.Logrus, validator *validator.Validate, pr domain.ProviderRepository, rs domain.ResourceService, providers []domain.ProviderInterface) *Service {
 	mapProviders := make(map[string]domain.ProviderInterface)
 	for _, p := range providers {
 		mapProviders[p.GetType()] = p
@@ -27,6 +31,7 @@ func NewService(logger *log.Logrus, pr domain.ProviderRepository, rs domain.Reso
 
 	return &Service{
 		logger:             logger,
+		validator:          validator,
 		providerRepository: pr,
 		resourceService:    rs,
 		providers:          mapProviders,
@@ -38,6 +43,11 @@ func (s *Service) Create(p *domain.Provider) error {
 	provider := s.getProvider(p.Type)
 	if provider == nil {
 		return ErrInvalidProviderType
+	}
+
+	accountTypes := provider.GetAccountTypes()
+	if err := s.validateAccountTypes(p.Config, accountTypes); err != nil {
+		return err
 	}
 
 	if p.Config.Appeal != nil {
@@ -82,16 +92,22 @@ func (s *Service) Update(p *domain.Provider) error {
 		return err
 	}
 
+	provider := s.getProvider(p.Type)
+	if provider == nil {
+		return ErrInvalidProviderType
+	}
+
+	accountTypes := provider.GetAccountTypes()
+	if err := s.validateAccountTypes(p.Config, accountTypes); err != nil {
+		return err
+	}
+
 	if p.Config.Appeal != nil {
 		if err := s.validateAppealConfig(p.Config.Appeal); err != nil {
 			return err
 		}
 	}
 
-	provider := s.getProvider(p.Type)
-	if provider == nil {
-		return ErrInvalidProviderType
-	}
 	if err := provider.CreateConfig(p.Config); err != nil {
 		return err
 	}
@@ -177,6 +193,11 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 	provider := s.getProvider(p.Type)
 	if provider == nil {
 		return ErrInvalidProviderType
+	}
+
+	if !utils.ContainsString(p.Config.AllowedAccountTypes, a.AccountType) {
+		allowedAccountTypesStr := strings.Join(p.Config.AllowedAccountTypes, ", ")
+		return fmt.Errorf("invalid account type: %v. allowed account types for %v: %v", a.AccountType, p.Type, allowedAccountTypesStr)
 	}
 
 	roles, err := provider.GetRoles(p.Config, resourceType)
@@ -273,6 +294,25 @@ func (s *Service) getProviderConfig(pType, urn string) (*domain.Provider, error)
 		return nil, err
 	}
 	return p, nil
+}
+
+func (s *Service) validateAccountTypes(pc *domain.ProviderConfig, accountTypes []string) error {
+	if pc.AllowedAccountTypes == nil {
+		pc.AllowedAccountTypes = accountTypes
+	} else {
+		if err := s.validator.Var(pc.AllowedAccountTypes, "min=1,unique"); err != nil {
+			return err
+		}
+
+		for _, at := range pc.AllowedAccountTypes {
+			accountTypesStr := strings.Join(accountTypes, " ")
+			if err := s.validator.Var(at, fmt.Sprintf("oneof=%v", accountTypesStr)); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) validateAppealConfig(a *domain.AppealConfig) error {

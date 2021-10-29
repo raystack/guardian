@@ -16,6 +16,9 @@ const (
 	DatasetRoleReader = "READER"
 	DatasetRoleWriter = "WRITER"
 	DatasetRoleOwner  = "OWNER"
+
+	AccountTypeUser           = "user"
+	AccountTypeServiceAccount = "serviceAccount"
 )
 
 // Credentials is the authentication configuration used by the bigquery client

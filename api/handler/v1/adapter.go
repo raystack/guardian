@@ -403,7 +403,9 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 		PolicyID:      appeal.GetPolicyId(),
 		PolicyVersion: uint(appeal.GetPolicyVersion()),
 		Status:        appeal.GetStatus(),
-		User:          appeal.GetUser(),
+		AccountID:     appeal.GetAccountId(),
+		AccountType:   appeal.GetAccountType(),
+		CreatedBy:     appeal.GetCreatedBy(),
 		Role:          appeal.GetRole(),
 		Options:       a.fromAppealOptionsProto(appeal.GetOptions()),
 		Labels:        appeal.GetLabels(),
@@ -453,7 +455,9 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		PolicyId:      appeal.PolicyID,
 		PolicyVersion: uint32(appeal.PolicyVersion),
 		Status:        appeal.Status,
-		User:          appeal.User,
+		AccountId:     appeal.AccountID,
+		AccountType:   appeal.AccountType,
+		CreatedBy:     appeal.CreatedBy,
 		Role:          appeal.Role,
 		Options:       a.toAppealOptionsProto(appeal.Options),
 		Labels:        appeal.Labels,
@@ -468,7 +472,7 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 	}, nil
 }
 
-func (a *adapter) FromCreateAppealProto(ca *pb.CreateAppealRequest) ([]*domain.Appeal, error) {
+func (a *adapter) FromCreateAppealProto(ca *pb.CreateAppealRequest, authenticatedUser string) ([]*domain.Appeal, error) {
 	var appeals []*domain.Appeal
 
 	for _, r := range ca.GetResources() {
@@ -480,11 +484,13 @@ func (a *adapter) FromCreateAppealProto(ca *pb.CreateAppealRequest) ([]*domain.A
 		}
 
 		appeals = append(appeals, &domain.Appeal{
-			User:       ca.GetUser(),
-			ResourceID: uint(r.GetId()),
-			Role:       r.GetRole(),
-			Options:    options,
-			Details:    r.GetDetails().AsMap(),
+			AccountID:   ca.GetAccountId(),
+			AccountType: ca.GetAccountType(),
+			CreatedBy:   authenticatedUser,
+			ResourceID:  uint(r.GetId()),
+			Role:        r.GetRole(),
+			Options:     options,
+			Details:     r.GetDetails().AsMap(),
 		})
 	}
 

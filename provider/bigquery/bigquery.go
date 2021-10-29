@@ -178,9 +178,9 @@ func (c *bigQueryClient) RevokeDatasetAccess(ctx context.Context, d *Dataset, us
 	return err
 }
 
-func (c *bigQueryClient) GrantTableAccess(ctx context.Context, t *Table, user, role string) error {
+func (c *bigQueryClient) GrantTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error {
 	resourceName := fmt.Sprintf("projects/%s/datasets/%s/tables/%s", c.projectID, t.DatasetID, t.TableID)
-	member := fmt.Sprintf("user:%s", user)
+	member := fmt.Sprintf("%s:%s", accountType, accountID)
 
 	tableService := c.apiClient.Tables
 	getIamPolicyRequest := &bqApi.GetIamPolicyRequest{
@@ -216,9 +216,9 @@ func (c *bigQueryClient) GrantTableAccess(ctx context.Context, t *Table, user, r
 	return err
 }
 
-func (c *bigQueryClient) RevokeTableAccess(ctx context.Context, t *Table, user, role string) error {
+func (c *bigQueryClient) RevokeTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error {
 	resourceName := fmt.Sprintf("projects/%s/datasets/%s/tables/%s", c.projectID, t.DatasetID, t.TableID)
-	member := fmt.Sprintf("user:%s", user)
+	member := fmt.Sprintf("%s:%s", accountType, accountID)
 
 	tableService := c.apiClient.Tables
 	getIamPolicyRequest := &bqApi.GetIamPolicyRequest{

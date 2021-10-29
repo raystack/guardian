@@ -14,6 +14,8 @@ const (
 	DashboardRoleViewer = "view"
 	DashboardRoleEditor = "edit"
 	DashboardRoleAdmin  = "admin"
+
+	AccountTypeUser = "user"
 )
 
 type Credentials struct {

@@ -11,6 +11,11 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
+const (
+	AccountTypeUser           = "user"
+	AccountTypeServiceAccount = "serviceAccount"
+)
+
 type Credentials struct {
 	ServiceAccountKey string `mapstructure:"service_account_key" json:"service_account_key" validate:"required,base64"`
 	ResourceName      string `mapstructure:"resource_name" json:"resource_name" validate:"startswith=projects/|startswith=organizations/"`

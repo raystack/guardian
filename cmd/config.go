@@ -32,7 +32,7 @@ func configInitCommand() *cobra.Command {
 				return err
 			}
 
-			filepath := fmt.Sprintf("%v.%v", app.CLIConfigFileName, app.CLIConfigFileExtension)
+			filepath := fmt.Sprintf("%v", app.CLIConfigFile)
 			if err := ioutil.WriteFile(filepath, b, 0655); err != nil {
 				return err
 			}

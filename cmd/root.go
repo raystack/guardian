@@ -41,7 +41,7 @@ func New() *cobra.Command {
 
 	protoAdapter := v1.NewAdapter()
 
-	cliConfig, err := app.LoadCLIConfig()
+	cliConfig, err := app.LoadCLIConfig(app.CLIConfigFile)
 	if err != nil {
 		panic(err)
 	}

@@ -13,7 +13,7 @@ import (
 )
 
 type findFilters struct {
-	User                      string    `mapstructure:"user" validate:"omitempty,required"`
+	AccountID                 string    `mapstructure:"account_id" validate:"omitempty,required"`
 	ResourceID                uint      `mapstructure:"resource_id" validate:"omitempty,required"`
 	Role                      string    `mapstructure:"role" validate:"omitempty,required"`
 	Statuses                  []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
@@ -66,8 +66,8 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Appeal, err
 	}
 
 	db := r.db
-	if conditions.User != "" {
-		db = db.Where(`"user" = ?`, conditions.User)
+	if conditions.AccountID != "" {
+		db = db.Where(`"account_id" = ?`, conditions.AccountID)
 	}
 	if conditions.Statuses != nil {
 		db = db.Where(`"status" IN ?`, conditions.Statuses)

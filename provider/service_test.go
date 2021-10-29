@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/provider"
@@ -26,12 +27,13 @@ type ServiceTestSuite struct {
 
 func (s *ServiceTestSuite) SetupTest() {
 	logger := log.NewLogrus(log.LogrusWithLevel("info"))
+	validator := validator.New()
 	s.mockProviderRepository = new(mocks.ProviderRepository)
 	s.mockResourceService = new(mocks.ResourceService)
 	s.mockProvider = new(mocks.ProviderInterface)
 	s.mockProvider.On("GetType").Return(mockProviderType).Once()
 
-	s.service = provider.NewService(logger, s.mockProviderRepository, s.mockResourceService, []domain.ProviderInterface{s.mockProvider})
+	s.service = provider.NewService(logger, validator, s.mockProviderRepository, s.mockResourceService, []domain.ProviderInterface{s.mockProvider})
 }
 
 func (s *ServiceTestSuite) TestCreate() {
@@ -66,8 +68,25 @@ func (s *ServiceTestSuite) TestCreate() {
 			s.Error(actualError)
 		})
 
+		s.Run("should return error if got error from account types validation", func() {
+			p := &domain.Provider{
+				Type: mockProviderType,
+				Config: &domain.ProviderConfig{
+					AllowedAccountTypes: []string{"invalid-type"},
+				},
+			}
+
+			expectedAccountTypes := []string{"non-user-only"}
+			s.mockProvider.On("GetAccountTypes").Return(expectedAccountTypes).Once()
+
+			actualError := s.service.Create(p)
+
+			s.Error(actualError)
+		})
+
 		s.Run("should return error if got error from the provider config validation", func() {
 			expectedError := errors.New("provider config validation error")
+			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 			s.mockProvider.On("CreateConfig", mock.Anything).Return(expectedError).Once()
 
 			actualError := s.service.Create(p)
@@ -78,6 +97,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 	s.Run("should return error if got error from the provider repository", func() {
 		expectedError := errors.New("error from repository")
+		s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 		s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 		s.mockProviderRepository.On("Create", mock.Anything).Return(expectedError).Once()
 
@@ -87,6 +107,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	})
 
 	s.Run("should pass the model from the param", func() {
+		s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 		s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 		s.mockProviderRepository.On("Create", p).Return(nil).Once()
 
@@ -121,21 +142,42 @@ func (s *ServiceTestSuite) TestFind() {
 }
 
 func (s *ServiceTestSuite) TestUpdate() {
-	s.Run("should return error if appeal config is invalid", func() {
-		p := &domain.Provider{
-			Config: &domain.ProviderConfig{
-				Appeal: &domain.AppealConfig{
-					AllowActiveAccessExtensionIn: "invalid-duration",
+	s.Run("validation", func() {
+		s.Run("should return error if got error on account types validation", func() {
+			p := &domain.Provider{
+				Type: mockProviderType,
+				Config: &domain.ProviderConfig{
+					AllowedAccountTypes: []string{"invalid-type"},
 				},
-			},
-		}
+			}
 
-		s.mockProviderRepository.On("GetByID", mock.Anything).
-			Return(&domain.Provider{}, nil).
-			Once()
-		actualError := s.service.Update(p)
+			s.mockProviderRepository.On("GetByID", mock.Anything).
+				Return(&domain.Provider{}, nil).
+				Once()
+			s.mockProvider.On("GetAccountTypes").Return([]string{"non-user-only"}).Once()
+			actualError := s.service.Update(p)
 
-		s.Error(actualError)
+			s.Error(actualError)
+		})
+
+		s.Run("should return error if appeal config is invalid", func() {
+			p := &domain.Provider{
+				Type: mockProviderType,
+				Config: &domain.ProviderConfig{
+					Appeal: &domain.AppealConfig{
+						AllowActiveAccessExtensionIn: "invalid-duration",
+					},
+				},
+			}
+
+			s.mockProviderRepository.On("GetByID", mock.Anything).
+				Return(&domain.Provider{}, nil).
+				Once()
+			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
+			actualError := s.service.Update(p)
+
+			s.Error(actualError)
+		})
 	})
 
 	s.Run("should return error if got error getting existing record", func() {
@@ -204,6 +246,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 							AllowPermanentAccess:         true,
 							AllowActiveAccessExtensionIn: "1h",
 						},
+						AllowedAccountTypes: []string{"user"},
 						Labels: map[string]string{
 							"foo": "bar",
 						},
@@ -216,6 +259,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 
 		for _, tc := range testCases {
 			s.mockProviderRepository.On("GetByID", tc.updatePayload.ID).Return(tc.existingProvider, nil).Once()
+			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 			s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 			s.mockProviderRepository.On("Update", tc.expectedNewProvider).Return(nil)
 

@@ -16,7 +16,9 @@ type Appeal struct {
 	PolicyID      string
 	PolicyVersion uint
 	Status        string
-	User          string
+	AccountID     string
+	AccountType   string
+	CreatedBy     string
 	Role          string
 	Options       datatypes.JSON
 	Labels        datatypes.JSON
@@ -76,7 +78,9 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	m.PolicyID = a.PolicyID
 	m.PolicyVersion = a.PolicyVersion
 	m.Status = a.Status
-	m.User = a.User
+	m.AccountID = a.AccountID
+	m.AccountType = a.AccountType
+	m.CreatedBy = a.CreatedBy
 	m.Role = a.Role
 	m.Options = datatypes.JSON(options)
 	m.Labels = datatypes.JSON(labels)
@@ -137,7 +141,9 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		PolicyID:      m.PolicyID,
 		PolicyVersion: m.PolicyVersion,
 		Status:        m.Status,
-		User:          m.User,
+		AccountID:     m.AccountID,
+		AccountType:   m.AccountType,
+		CreatedBy:     m.CreatedBy,
 		Role:          m.Role,
 		Options:       options,
 		Details:       details,

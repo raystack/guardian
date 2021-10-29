@@ -13,6 +13,8 @@ import (
 const (
 	DatabaseRoleViewer = "schemas:all"
 	DatabaseRoleEditor = "native:write"
+
+	AccountTypeUser = "user"
 )
 
 type Credentials struct {
