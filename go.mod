@@ -10,14 +10,12 @@ require (
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/imdario/mergo v0.3.11
-	github.com/jeremywohl/flatten v1.0.1
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mcuadros/go-lookup v0.0.0-20200831155250-80f87a4fa5ee
 	github.com/mitchellh/mapstructure v1.4.1
-	github.com/odpf/salt v0.0.0-20211004150433-dd7b2c03c11d
+	github.com/odpf/salt v0.0.0-20211028100023-de463ef825e1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.2.1
-	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 	google.golang.org/api v0.44.0

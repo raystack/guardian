@@ -92,7 +92,7 @@ func (h *JobHandler) NotifyAboutToExpireAccess() error {
 		var notifications []domain.Notification
 		for _, a := range appeals {
 			notifications = append(notifications, domain.Notification{
-				User: a.User,
+				User: a.AccountID,
 				Message: domain.NotificationMessage{
 					Type: domain.NotificationTypeExpirationReminder,
 					Variables: map[string]interface{}{

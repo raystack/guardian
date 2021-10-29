@@ -56,7 +56,7 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 			for _, a := range appeals {
 				report = append(report, []string{
 					cs.Greenf("%v", a.GetId()),
-					a.GetUser(),
+					a.GetAccountId(),
 					fmt.Sprintf("%v", a.GetResourceId()),
 					a.GetRole(),
 					a.GetStatus(),
@@ -69,7 +69,7 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func createAppealCommand(c *app.CLIConfig) *cobra.Command {
-	var user string
+	var accountID string
 	var resourceID uint
 	var role string
 	var optionsDuration string
@@ -95,7 +95,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			res, err := client.CreateAppeal(ctx, &pb.CreateAppealRequest{
-				User: user,
+				AccountId: accountID,
 				Resources: []*pb.CreateAppealRequest_Resource{
 					{
 						Id:      uint32(resourceID),
@@ -115,8 +115,8 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&user, "user", "u", "", "user email")
-	cmd.MarkFlagRequired("user")
+	cmd.Flags().StringVar(&accountID, "account-id", "", "user email")
+	cmd.MarkFlagRequired("account-id")
 	cmd.Flags().UintVar(&resourceID, "resource-id", 0, "resource id")
 	cmd.MarkFlagRequired("resource-id")
 	cmd.Flags().StringVarP(&role, "role", "r", "", "role")

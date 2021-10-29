@@ -17,8 +17,8 @@ const (
 
 type GcloudIamClient interface {
 	GetRoles() ([]*Role, error)
-	GrantAccess(user, role string) error
-	RevokeAccess(user, role string) error
+	GrantAccess(accountType, accountID, role string) error
+	RevokeAccess(accountType, accountID, role string) error
 }
 
 type iamClient struct {
@@ -87,13 +87,13 @@ func (c *iamClient) GetRoles() ([]*Role, error) {
 	return roles, nil
 }
 
-func (c *iamClient) GrantAccess(user, role string) error {
+func (c *iamClient) GrantAccess(accountType, accountID, role string) error {
 	policy, err := c.getIamPolicy()
 	if err != nil {
 		return err
 	}
 
-	member := fmt.Sprintf("user:%s", user)
+	member := fmt.Sprintf("%s:%s", accountType, accountID)
 	roleExists := false
 	for _, b := range policy.Bindings {
 		if b.Role == role {
@@ -115,13 +115,13 @@ func (c *iamClient) GrantAccess(user, role string) error {
 	return err
 }
 
-func (c *iamClient) RevokeAccess(user, role string) error {
+func (c *iamClient) RevokeAccess(accountType, accountID, role string) error {
 	policy, err := c.getIamPolicy()
 	if err != nil {
 		return err
 	}
 
-	member := fmt.Sprintf("user:%s", user)
+	member := fmt.Sprintf("%s:%s", accountType, accountID)
 	for _, b := range policy.Bindings {
 
 		if b.Role == role {

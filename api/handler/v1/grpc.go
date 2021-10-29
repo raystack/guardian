@@ -30,7 +30,7 @@ type ProtoAdapter interface {
 
 	FromAppealProto(*pb.Appeal) (*domain.Appeal, error)
 	ToAppealProto(*domain.Appeal) (*pb.Appeal, error)
-	FromCreateAppealProto(*pb.CreateAppealRequest) ([]*domain.Appeal, error)
+	FromCreateAppealProto(*pb.CreateAppealRequest, string) ([]*domain.Appeal, error)
 	ToApprovalProto(*domain.Approval) (*pb.Approval, error)
 }
 
@@ -347,7 +347,7 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *pb.ListUserAppeal
 	}
 
 	filters := map[string]interface{}{
-		"user": user,
+		"account_id": user,
 	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
@@ -361,8 +361,8 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *pb.ListUserAppeal
 
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *pb.ListAppealsRequest) (*pb.ListAppealsResponse, error) {
 	filters := map[string]interface{}{}
-	if req.GetUser() != "" {
-		filters["user"] = req.GetUser()
+	if req.GetAccountId() != "" {
+		filters["account_id"] = req.GetAccountId()
 	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
@@ -375,7 +375,12 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *pb.ListAppealsRequest
 }
 
 func (s *GRPCServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealRequest) (*pb.CreateAppealResponse, error) {
-	appeals, err := s.adapter.FromCreateAppealProto(req)
+	authenticatedUser, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	appeals, err := s.adapter.FromCreateAppealProto(req, authenticatedUser)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot deserialize payload: %v", err)
 	}
@@ -408,8 +413,8 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *pb.ListUserAppr
 	}
 
 	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
-		User:     user,
-		Statuses: req.GetStatuses(),
+		AccountID: user,
+		Statuses:  req.GetStatuses(),
 	})
 	if err != nil {
 		return nil, err
@@ -422,8 +427,8 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *pb.ListUserAppr
 
 func (s *GRPCServer) ListApprovals(ctx context.Context, req *pb.ListApprovalsRequest) (*pb.ListApprovalsResponse, error) {
 	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
-		User:     req.GetUser(),
-		Statuses: req.GetStatuses(),
+		AccountID: req.GetAccountId(),
+		Statuses:  req.GetStatuses(),
 	})
 	if err != nil {
 		return nil, err

@@ -10,6 +10,10 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
+const (
+	AccountTypeUser = "user"
+)
+
 type Credentials struct {
 	Host       string `json:"host" mapstructure:"host" validate:"required,url"`
 	Username   string `json:"username" mapstructure:"username" validate:"required"`
