@@ -38,11 +38,17 @@ func ResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 }
 
 func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
-	return &cobra.Command{
+	var providerType, providerURN, resourceType, resourceURN, name string
+	var isDeleted bool
+	var detailsPaths, detailsValues []string
+
+	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List resources",
 		Example: heredoc.Doc(`
 			$ guardian resource list
+			$ guardian resource list --provider-type=bigquery --type=dataset
+			$ guardian resource list --details-paths=foo.bar --details-values=123 
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -55,7 +61,17 @@ func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.ListResources(ctx, &pb.ListResourcesRequest{})
+			req := &pb.ListResourcesRequest{
+				ProviderType:  providerType,
+				ProviderUrn:   providerURN,
+				Type:          resourceType,
+				Urn:           resourceURN,
+				Name:          name,
+				IsDeleted:     isDeleted,
+				DetailsPaths:  detailsPaths,
+				DetailsValues: detailsValues,
+			}
+			res, err := client.ListResources(ctx, req)
 			if err != nil {
 				return err
 			}
@@ -79,6 +95,17 @@ func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVar(&providerType, "provider-type", "", "filter resources by provider type")
+	cmd.Flags().StringVar(&providerURN, "provider-urn", "", "filter resources by provider urn")
+	cmd.Flags().StringVar(&resourceType, "type", "", "filter resources by type")
+	cmd.Flags().StringVar(&resourceURN, "urn", "", "filter resources by urn")
+	cmd.Flags().StringVar(&name, "name", "", "filter resources by name")
+	cmd.Flags().BoolVar(&isDeleted, "show-deleted", false, "show deleted resources")
+	cmd.Flags().StringArrayVar(&detailsPaths, "details-paths", nil, "")
+	cmd.Flags().StringArrayVar(&detailsValues, "details-values", nil, "")
+
+	return cmd
 }
 
 func getResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
