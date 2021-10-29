@@ -21,8 +21,8 @@ func (r *repository) ListApprovals(conditions *domain.ListApprovalsFilter) ([]*d
 	}
 
 	db := r.db
-	if conditions.User != "" {
-		db = db.Where("email = ?", conditions.User)
+	if conditions.AccountID != "" {
+		db = db.Where("email = ?", conditions.AccountID)
 	}
 
 	var approverModels []*model.Approver

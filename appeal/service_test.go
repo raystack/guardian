@@ -108,7 +108,7 @@ func (s *ServiceTestSuite) TestFind() {
 			{
 				ID:         1,
 				ResourceID: 1,
-				User:       "user@email.com",
+				AccountID:  "user@email.com",
 				Role:       "viewer",
 			},
 		}
@@ -213,15 +213,27 @@ func (s *ServiceTestSuite) TestCreate() {
 			expectedError                 error
 		}{
 			{
+				name: "creating appeal for other normal user",
+				appeals: []*domain.Appeal{{
+					CreatedBy:  "test-user",
+					AccountID:  "test-user-2",
+					ResourceID: 1,
+					Role:       "test-role",
+				}},
+				expectedError: appeal.ErrCannotCreateAppealForOtherUser,
+			},
+			{
 				name: "duplicate appeal",
 				existingAppeals: []*domain.Appeal{{
-					User:       "test-user",
+					CreatedBy:  "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 					Status:     domain.AppealStatusPending,
 				}},
 				appeals: []*domain.Appeal{{
-					User:       "test-user",
+					CreatedBy:  "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 				}},
@@ -233,7 +245,8 @@ func (s *ServiceTestSuite) TestCreate() {
 					ID: 1,
 				}},
 				appeals: []*domain.Appeal{{
-					User:       "test-user",
+					CreatedBy:  "test-user",
+					AccountID:  "test-user",
 					ResourceID: 2,
 					Role:       "test-role",
 				}},
@@ -258,13 +271,15 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
-					User:       "test-user",
+					CreatedBy:  "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 					Status:     domain.AppealStatusActive,
 				}},
 				appeals: []*domain.Appeal{{
-					User:       "test-user",
+					CreatedBy:  "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 				}},
@@ -279,13 +294,15 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
-					User:       "test-user",
+					CreatedBy:  "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 					Status:     domain.AppealStatusActive,
 				}},
 				appeals: []*domain.Appeal{{
-					User:       "test-user",
+					CreatedBy:  "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 				}},
@@ -309,7 +326,8 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
-					User:       "test-user",
+					CreatedBy:  "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 					Status:     domain.AppealStatusActive,
@@ -318,7 +336,8 @@ func (s *ServiceTestSuite) TestCreate() {
 					},
 				}},
 				appeals: []*domain.Appeal{{
-					User:       "test-user",
+					CreatedBy:  "test-user",
+					AccountID:  "test-user",
 					ResourceID: 1,
 					Role:       "test-role",
 				}},
@@ -489,7 +508,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	user := "test@email.com"
+	accountID := "test@email.com"
 	resourceIDs := []uint{1, 2}
 	resources := []*domain.Resource{}
 	for _, id := range resourceIDs {
@@ -533,7 +552,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	expDate := timeNow.Add(23 * time.Hour)
 	currentActiveAppeal := &domain.Appeal{
 		ID:         99,
-		User:       user,
+		AccountID:  accountID,
 		ResourceID: 2,
 		Resource: &domain.Resource{
 			ID:  2,
@@ -570,7 +589,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
-			User:          user,
+			AccountID:     accountID,
+			AccountType:   domain.DefaultAppealAccountType,
+			CreatedBy:     accountID,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -604,7 +625,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
-			User:          user,
+			AccountID:     accountID,
+			AccountType:   domain.DefaultAppealAccountType,
+			CreatedBy:     accountID,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -634,7 +657,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
 			Status:        domain.AppealStatusPending,
-			User:          user,
+			AccountID:     accountID,
+			AccountType:   domain.DefaultAppealAccountType,
+			CreatedBy:     accountID,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -675,7 +700,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		expectedUserDetails := map[string]interface{}{
 			"managers": []interface{}{"user.approver@email.com"},
 		}
-		s.mockIAMService.On("GetUser", user).Return(expectedUserDetails, nil)
+		s.mockIAMService.On("GetUser", accountID).Return(expectedUserDetails, nil)
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 		s.mockRepository.
 			On("BulkUpsert", expectedAppealsInsertionParam).
@@ -694,7 +719,8 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		appeals := []*domain.Appeal{
 			{
-				User:       user,
+				CreatedBy:  accountID,
+				AccountID:  accountID,
 				ResourceID: 1,
 				Resource: &domain.Resource{
 					ID:  1,
@@ -703,7 +729,8 @@ func (s *ServiceTestSuite) TestCreate() {
 				Role: "role_id",
 			},
 			{
-				User:       user,
+				CreatedBy:  accountID,
+				AccountID:  accountID,
 				ResourceID: 2,
 				Resource: &domain.Resource{
 					ID:  2,
@@ -1043,6 +1070,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 	})
 
 	s.Run("should return updated appeal on success", func() {
+		creator := "creator@email.com"
 		user := "user@email.com"
 		testCases := []struct {
 			name                   string
@@ -1056,7 +1084,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				expectedApprovalAction: validApprovalActionParam,
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1080,7 +1109,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1106,7 +1136,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedNotifications: []domain.Notification{
 					{
-						User: "user@email.com",
+						User: creator,
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealApproved,
 							Variables: map[string]interface{}{
@@ -1127,7 +1157,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1151,7 +1182,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1177,7 +1209,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedNotifications: []domain.Notification{
 					{
-						User: "user@email.com",
+						User: creator,
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealRejected,
 							Variables: map[string]interface{}{
@@ -1198,7 +1230,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1226,7 +1259,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1257,7 +1291,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedNotifications: []domain.Notification{
 					{
-						User: "user@email.com",
+						User: creator,
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealRejected,
 							Variables: map[string]interface{}{
@@ -1278,7 +1312,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1306,7 +1341,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				},
 				expectedResult: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
-					User:       "user@email.com",
+					AccountID:  "user@email.com",
+					CreatedBy:  creator,
 					ResourceID: 1,
 					Role:       "test-role",
 					Resource: &domain.Resource{
@@ -1342,7 +1378,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 							Variables: map[string]interface{}{
 								"resource_name": "test-resource-name (test-provider: urn)",
 								"role":          "test-role",
-								"requestor":     "user@email.com",
+								"requestor":     creator,
 								"appeal_id":     validApprovalActionParam.AppealID,
 							},
 						},
@@ -1354,7 +1390,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 							Variables: map[string]interface{}{
 								"resource_name": "test-resource-name (test-provider: urn)",
 								"role":          "test-role",
-								"requestor":     "user@email.com",
+								"requestor":     creator,
 								"appeal_id":     validApprovalActionParam.AppealID,
 							},
 						},

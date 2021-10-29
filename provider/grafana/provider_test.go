@@ -420,7 +420,7 @@ func TestGrantAccess(t *testing.T) {
 					Name: "test-dashboard",
 				},
 				Role:       "viewer",
-				User:       expectedUser,
+				AccountID:  expectedUser,
 				ResourceID: 999,
 				ID:         999,
 			}

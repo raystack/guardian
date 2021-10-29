@@ -46,12 +46,13 @@ type AppealConfig struct {
 
 // ProviderConfig is the configuration for a data provider
 type ProviderConfig struct {
-	Type        string            `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana tableau gcloud_iam"`
-	URN         string            `json:"urn" yaml:"urn" validate:"required"`
-	Labels      map[string]string `json:"labels" yaml:"labels"`
-	Credentials interface{}       `json:"credentials,omitempty" yaml:"credentials" validate:"required"`
-	Appeal      *AppealConfig     `json:"appeal" yaml:"appeal" validate:"required"`
-	Resources   []*ResourceConfig `json:"resources" yaml:"resources" validate:"required"`
+	Type                string            `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana tableau gcloud_iam"`
+	URN                 string            `json:"urn" yaml:"urn" validate:"required"`
+	AllowedAccountTypes []string          `json:"allowed_account_types" yaml:"allowed_account_types" validate:"omitempty,min=1"`
+	Labels              map[string]string `json:"labels" yaml:"labels"`
+	Credentials         interface{}       `json:"credentials,omitempty" yaml:"credentials" validate:"required"`
+	Appeal              *AppealConfig     `json:"appeal" yaml:"appeal" validate:"required"`
+	Resources           []*ResourceConfig `json:"resources" yaml:"resources" validate:"required"`
 }
 
 // Provider domain structure
@@ -93,7 +94,9 @@ type ProviderInterface interface {
 	GetType() string
 	CreateConfig(*ProviderConfig) error
 	GetResources(pc *ProviderConfig) ([]*Resource, error)
-	GetRoles(pc *ProviderConfig, resourceType string) ([]*Role, error)
 	GrantAccess(*ProviderConfig, *Appeal) error
 	RevokeAccess(*ProviderConfig, *Appeal) error
+
+	GetRoles(pc *ProviderConfig, resourceType string) ([]*Role, error)
+	GetAccountTypes() []string
 }

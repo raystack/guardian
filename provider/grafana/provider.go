@@ -89,7 +89,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 
 		for _, p := range permissions {
-			if err := client.GrantDashboardAccess(d, a.User, string(p)); err != nil {
+			if err := client.GrantDashboardAccess(d, a.AccountID, string(p)); err != nil {
 				return err
 			}
 		}
@@ -122,7 +122,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		}
 
 		for _, p := range permissions {
-			if err := client.RevokeDashboardAccess(d, a.User, string(p)); err != nil {
+			if err := client.RevokeDashboardAccess(d, a.AccountID, string(p)); err != nil {
 				return err
 			}
 		}
@@ -135,6 +135,12 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 
 func (p *provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {
 	return pv.GetRoles(pc, resourceType)
+}
+
+func (p *provider) GetAccountTypes() []string {
+	return []string{
+		AccountTypeUser,
+	}
 }
 
 func (p *provider) getClient(providerURN string, credentials Credentials) (GrafanaClient, error) {

@@ -85,6 +85,7 @@ func RunServer(c *Config) error {
 	resourceService := resource.NewService(resourceRepository)
 	providerService := provider.NewService(
 		logger,
+		v,
 		providerRepository,
 		resourceService,
 		providers,

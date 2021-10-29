@@ -426,7 +426,7 @@ func TestGrantAccess(t *testing.T) {
 					Name: "test-database",
 				},
 				Role:       "viewer",
-				User:       expectedUser,
+				AccountID:  expectedUser,
 				ResourceID: 999,
 				ID:         999,
 			}
@@ -525,7 +525,7 @@ func TestGrantAccess(t *testing.T) {
 					Name: "test-collection",
 				},
 				Role:       "viewer",
-				User:       expectedUser,
+				AccountID:  expectedUser,
 				ResourceID: 999,
 				ID:         999,
 			}
