@@ -576,7 +576,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				},
 				{
 					Name:      "step_2",
-					Approvers: "$user_approvers",
+					Approvers: "$creator.managers",
 				},
 			},
 		},
@@ -697,8 +697,10 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(nil)
-		expectedUserApprovers := []string{"user.approver@email.com"}
-		s.mockIAMService.On("GetUserApproverEmails", accountID).Return(expectedUserApprovers, nil)
+		expectedUserDetails := map[string]interface{}{
+			"managers": []interface{}{"user.approver@email.com"},
+		}
+		s.mockIAMService.On("GetUser", accountID).Return(expectedUserDetails, nil)
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 		s.mockRepository.
 			On("BulkUpsert", expectedAppealsInsertionParam).

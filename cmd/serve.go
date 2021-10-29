@@ -5,16 +5,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// serveCommand start new guardian server
 func serveCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "serve",
-		Short: "Run server",
+	var configFile string
+
+	cmd := &cobra.Command{
+		Use:     "serve",
+		Aliases: []string{"s"},
+		Short:   "Run guardian server",
+		Annotations: map[string]string{
+			"group:other": "dev",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := app.LoadServiceConfig()
+			cfg, err := app.LoadConfig(configFile)
 			if err != nil {
 				return err
 			}
-			return app.RunServer(c)
+			return app.RunServer(&cfg)
 		},
 	}
+
+	cmd.Flags().StringVarP(&configFile, "config", "c", "./config.yaml", "Config file path")
+	return cmd
 }

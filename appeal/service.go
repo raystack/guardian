@@ -180,7 +180,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			if step.Approvers != "" {
 				approvers, err = s.resolveApprovers(a.AccountID, a.Resource, step.Approvers)
 				if err != nil {
-					return err
+					return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
 				}
 			}
 
@@ -547,32 +547,21 @@ func (s *Service) resolveApprovers(user string, resource *domain.Resource, appro
 			}
 
 			path := strings.TrimPrefix(approversKey, fmt.Sprintf("%s.", domain.ApproversKeyResource))
-			approversReflectValue, err := lookup.LookupString(mapResource, path)
+			approverEmails, err := getApproverEmails(mapResource, path)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("getting approver email(s) from resource: %w", err)
+			}
+			approvers = approverEmails
+		} else if strings.HasPrefix(approversKey, domain.ApproversKeyCreator) {
+			userDetails, err := s.iamService.GetUser(user)
+			if err != nil {
+				return nil, fmt.Errorf("fetching creator's iam: %w", err)
 			}
 
-			email, ok := approversReflectValue.Interface().(string)
-			if !ok {
-				emails, ok := approversReflectValue.Interface().([]interface{})
-				if !ok {
-					return nil, ErrApproverInvalidType
-				}
-
-				for _, e := range emails {
-					emailString, ok := e.(string)
-					if !ok {
-						return nil, ErrApproverInvalidType
-					}
-					approvers = append(approvers, emailString)
-				}
-			} else {
-				approvers = append(approvers, email)
-			}
-		} else if strings.HasPrefix(approversKey, domain.ApproversKeyUserApprovers) {
-			approverEmails, err := s.iamService.GetUserApproverEmails(user)
+			path := strings.TrimPrefix(approversKey, fmt.Sprintf("%s.", domain.ApproversKeyCreator))
+			approverEmails, err := getApproverEmails(userDetails, path)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("getting approver email(s) from creator's iam: %w", err)
 			}
 			approvers = approverEmails
 		} else {
@@ -586,6 +575,33 @@ func (s *Service) resolveApprovers(user string, resource *domain.Resource, appro
 		return nil, err
 	}
 	return approvers, nil
+}
+
+func getApproverEmails(v interface{}, path string) ([]string, error) {
+	approversReflectValue, err := lookup.LookupString(v, path)
+	if err != nil {
+		return nil, err
+	}
+
+	var approverEmails []string
+	email, ok := approversReflectValue.Interface().(string)
+	if !ok {
+		emails, ok := approversReflectValue.Interface().([]interface{})
+		if !ok {
+			return nil, ErrApproverInvalidType
+		}
+
+		for _, e := range emails {
+			emailString, ok := e.(string)
+			if !ok {
+				return nil, ErrApproverInvalidType
+			}
+			approverEmails = append(approverEmails, emailString)
+		}
+	} else {
+		approverEmails = append(approverEmails, email)
+	}
+	return approverEmails, nil
 }
 
 func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {

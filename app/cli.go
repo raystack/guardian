@@ -1,19 +1,30 @@
 package app
 
+import (
+	"errors"
+	"fmt"
+
+	"github.com/odpf/salt/config"
+)
+
 var (
-	CLIConfigFileName      = ".guardian"
-	CLIConfigFileExtension = "yaml"
+	CLIConfigFile = "./.guardian.yaml"
 )
 
 type CLIConfig struct {
 	Host string `mapstructure:"host" default:"localhost"`
 }
 
-func LoadCLIConfig() (*CLIConfig, error) {
-	var config CLIConfig
-	if err := loadConfig(CLIConfigFileName, CLIConfigFileExtension, &config); err != nil {
-		return nil, err
-	}
+func LoadCLIConfig(configFile string) (*CLIConfig, error) {
+	var cfg CLIConfig
+	loader := config.NewLoader(config.WithFile(configFile))
 
-	return &config, nil
+	if err := loader.Load(&cfg); err != nil {
+		if errors.As(err, &config.ConfigFileNotFoundError{}) {
+			fmt.Println(err)
+			return &cfg, nil
+		}
+		return &CLIConfig{}, err
+	}
+	return &cfg, nil
 }
