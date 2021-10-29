@@ -24,6 +24,7 @@ func ResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 		Short:   "Manage resources",
 		Example: heredoc.Doc(`
 			$ guardian resource list
+			$ guardian resource view 1
 			$ guardian resource metadata set --id=1 key=value
 		`),
 		Annotations: map[string]string{
@@ -124,10 +125,10 @@ func listResourcesCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command 
 
 func getResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	return &cobra.Command{
-		Use:   "get",
-		Short: "Get a resource details",
+		Use:   "view",
+		Short: "View a resource details",
 		Example: heredoc.Doc(`
-			$ guardian resource get 1
+			$ guardian resource view 1
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
