@@ -35,6 +35,7 @@ type Appeal struct {
 	AccountID     string                 `json:"account_id"`
 	AccountType   string                 `json:"account_type" default:"user"`
 	CreatedBy     string                 `json:"created_by"`
+	CreatorUser   interface{}            `json:"creator_user"`
 	Role          string                 `json:"role"`
 	Options       *AppealOptions         `json:"options"`
 	Details       map[string]interface{} `json:"details"`
