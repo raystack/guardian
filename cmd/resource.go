@@ -11,6 +11,7 @@ import (
 	v1 "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/app"
+	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -30,14 +31,15 @@ func ResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(listResourcesCmd(c))
+	cmd.AddCommand(listResourcesCmd(c, adapter))
 	cmd.AddCommand(getResourceCmd(c, adapter))
 	cmd.AddCommand(metadataCmd(c))
+	cmd.PersistentFlags().String("format", "", "Print output with specified format (yaml,json,prettyjson)")
 
 	return cmd
 }
 
-func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
+func listResourcesCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var providerType, providerURN, resourceType, resourceURN, name string
 	var isDeleted bool
 	var detailsPaths, detailsValues []string
@@ -76,6 +78,18 @@ func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
+			format := cmd.Flag("format").Value.String()
+			if format != "" {
+				var resources []*domain.Resource
+				for _, r := range res.GetResources() {
+					resources = append(resources, adapter.FromResourceProto(r))
+				}
+				if err := printer.Text(resources, format); err != nil {
+					return fmt.Errorf("failed to parse resources: %v", err)
+				}
+				return nil
+			}
+
 			report := [][]string{}
 
 			resources := res.GetResources()
@@ -96,21 +110,20 @@ func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&providerType, "provider-type", "", "filter resources by provider type")
-	cmd.Flags().StringVar(&providerURN, "provider-urn", "", "filter resources by provider urn")
-	cmd.Flags().StringVar(&resourceType, "type", "", "filter resources by type")
-	cmd.Flags().StringVar(&resourceURN, "urn", "", "filter resources by urn")
-	cmd.Flags().StringVar(&name, "name", "", "filter resources by name")
-	cmd.Flags().BoolVar(&isDeleted, "show-deleted", false, "show deleted resources")
-	cmd.Flags().StringArrayVar(&detailsPaths, "details-paths", nil, "")
-	cmd.Flags().StringArrayVar(&detailsValues, "details-values", nil, "")
+	cmd.Flags().StringVar(&providerType, "provider-type", "", "Filter resources by provider type")
+	cmd.Flags().StringVar(&providerURN, "provider-urn", "", "Filter resources by provider urn")
+	cmd.Flags().StringVar(&resourceType, "type", "", "Filter resources by type")
+	cmd.Flags().StringVar(&resourceURN, "urn", "", "Filter resources by urn")
+	cmd.Flags().StringVar(&name, "name", "", "Filter resources by name")
+	cmd.Flags().StringArrayVar(&detailsPaths, "details-paths", nil, "Object paths to filter resources by details")
+	cmd.Flags().StringArrayVar(&detailsValues, "details-values", nil, "Values for --details-paths to filter resources by values")
+	cmd.Flags().BoolVar(&isDeleted, "show-deleted", false, "Show deleted resources")
 
 	return cmd
 }
 
 func getResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
-	var format string
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "get",
 		Short: "Get a resource details",
 		Example: heredoc.Doc(`
@@ -141,16 +154,13 @@ func getResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 			}
 
 			r := adapter.FromResourceProto(res)
+			format := cmd.Flag("format").Value.String()
 			if err := printer.Text(r, format); err != nil {
 				return fmt.Errorf("failed to parse resource: %v", err)
 			}
 			return nil
 		},
 	}
-
-	cmd.Flags().StringVar(&format, "format", "yaml", "Print output with the selected format")
-
-	return cmd
 }
 
 func metadataCmd(c *app.CLIConfig) *cobra.Command {
