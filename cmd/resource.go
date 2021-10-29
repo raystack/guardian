@@ -43,7 +43,7 @@ func ResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 func listResourcesCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	var providerType, providerURN, resourceType, resourceURN, name string
 	var isDeleted bool
-	var detailsPaths, detailsValues []string
+	var details []string
 
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -51,7 +51,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command 
 		Example: heredoc.Doc(`
 			$ guardian resource list
 			$ guardian resource list --provider-type=bigquery --type=dataset
-			$ guardian resource list --details-paths=foo.bar --details-values=123 
+			$ guardian resource list --details=key1.key2:value --details=key1.key3:value
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -65,14 +65,13 @@ func listResourcesCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command 
 			defer cancel()
 
 			req := &pb.ListResourcesRequest{
-				ProviderType:  providerType,
-				ProviderUrn:   providerURN,
-				Type:          resourceType,
-				Urn:           resourceURN,
-				Name:          name,
-				IsDeleted:     isDeleted,
-				DetailsPaths:  detailsPaths,
-				DetailsValues: detailsValues,
+				ProviderType: providerType,
+				ProviderUrn:  providerURN,
+				Type:         resourceType,
+				Urn:          resourceURN,
+				Name:         name,
+				IsDeleted:    isDeleted,
+				Details:      details,
 			}
 			res, err := client.ListResources(ctx, req)
 			if err != nil {
@@ -111,13 +110,12 @@ func listResourcesCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command 
 		},
 	}
 
-	cmd.Flags().StringVar(&providerType, "provider-type", "", "Filter resources by provider type")
-	cmd.Flags().StringVar(&providerURN, "provider-urn", "", "Filter resources by provider urn")
-	cmd.Flags().StringVar(&resourceType, "type", "", "Filter resources by type")
-	cmd.Flags().StringVar(&resourceURN, "urn", "", "Filter resources by urn")
-	cmd.Flags().StringVar(&name, "name", "", "Filter resources by name")
-	cmd.Flags().StringArrayVar(&detailsPaths, "details-paths", nil, "Object paths to filter resources by details")
-	cmd.Flags().StringArrayVar(&detailsValues, "details-values", nil, "Values for --details-paths to filter resources by values")
+	cmd.Flags().StringVar(&providerType, "provider-type", "", "Filter by provider type")
+	cmd.Flags().StringVar(&providerURN, "provider-urn", "", "Filter by provider urn")
+	cmd.Flags().StringVar(&resourceType, "type", "", "Filter by type")
+	cmd.Flags().StringVar(&resourceURN, "urn", "", "Filter by urn")
+	cmd.Flags().StringVar(&name, "name", "", "Filter by name")
+	cmd.Flags().StringArrayVar(&details, "details", nil, "Filter by details object values. Example: --details=key1.key2:value")
 	cmd.Flags().BoolVar(&isDeleted, "show-deleted", false, "Show deleted resources")
 
 	return cmd

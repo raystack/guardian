@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"errors"
+	"strings"
 
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/appeal"
@@ -268,11 +269,15 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyReque
 
 func (s *GRPCServer) ListResources(ctx context.Context, req *pb.ListResourcesRequest) (*pb.ListResourcesResponse, error) {
 	var details map[string]string
-	if len(req.GetDetailsPaths()) == len(req.GetDetailsValues()) {
+	if req.GetDetails() != nil {
 		details = map[string]string{}
-		paths := req.GetDetailsPaths()
-		for i, v := range req.GetDetailsValues() {
-			details[paths[i]] = v
+		for _, d := range req.GetDetails() {
+			filter := strings.Split(d, ":")
+			if len(filter) == 2 {
+				path := filter[0]
+				value := filter[1]
+				details[path] = value
+			}
 		}
 	}
 	resources, err := s.resourceService.Find(map[string]interface{}{
