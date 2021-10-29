@@ -13,7 +13,6 @@ import (
 
 const (
 	ApproversKeyResource = "$resource"
-	ApproversKeyCreator  = "$creator"
 )
 
 var (
@@ -80,7 +79,6 @@ type Step struct {
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	// $creator = Creator user object
 	Approvers Expression `json:"approvers" yaml:"approvers" validate:"required_without=Conditions"`
 
 	// Conditions is an Expression to determines the resolution of the step. If automatic approval is needed for the step,

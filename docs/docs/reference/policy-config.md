@@ -7,13 +7,13 @@
 | name | `string` |Step name | YES | - |
 | description | `string` | Step description | NO | - |
 | run\_if | `Expression` | Determines whether the step should be evaluated or it can be skipped. If it evaluates to be falsy, the step will automatically skipped. Otherwise, step become pending/blocked (normal). Accessible vars: `$appeal` | NO | -
-| approvers | `Expression` | Determines approvers for manual approval. The evaluation should return string or []string that contains email address of the approvers. Accessible vars: `$appeal`, `$creator` | NO | - |
+| approvers | `Expression` | Determines approvers for manual approval. The evaluation should return string or []string that contains email address of the approvers. Accessible vars: `$appeal` | NO | - |
 | conditions | `Expression` | Expression to determines the resolution of the step if `approvers` field is not present. Accessible vars: `$appeal` | YES if `approvers` is empty | - |
 | allow\_failed | `boolean` | If `true` and the step got rejected, it will mark the appeal status as skipped instead of rejected | NO | `false` |
 
 ### Variables
 
-#### 1. `$appeal`
+#### `$appeal`
    * Appeal object example:
 
      ```json
@@ -43,7 +43,16 @@
         "policy_id": "test-policy",
         "policy_version": 1,
         "status": "pending",
-        "user": "rahmat.hd@gojek.com",
+        "account_id": "user@email.com",
+        "account_type": "user",
+        "created_by": "user@email.com",
+        "creator_user": {
+          "id": 1,
+          "email": "user@email.com",
+          "full_name": "John Doe",
+          "manager_email": "manager@email.com",
+          ...
+        },
         "role": "roles/viewer",
         "options": {
           "duration": "24h"
@@ -61,24 +70,7 @@
      * `$appeal.resource.id` =&gt; `1`
      * `$appeal.resource.details.owners` =&gt; `["owner@email.com", "another.owner@email.com"]`
      * `$appeal.resource.labels.key` =&gt; `"value"`
-
-#### 2. `$creator`: fetch appeal creator's profile to external IAM service
-   * Usage example
-     * appeal creator: `user@email.com`
-     * configured external IAM service URL: `http://localhost:5000/users/{user_id}`
-       * response:
-       ```json
-       {
-         "id": 1,
-         "email": "user@email.com",
-         "full_name": "John Doe",
-         "manager_email": "manager@email.com",
-         ...
-       }
-       ```
-     * approvers: `$creator.manager_email` =&gt; `"manager@email.com"`
-
-     Guardian will fetch to `http://localhost:5000/users/user@email.com` and put the response json as the `$creator` field's value
+     * `$appeal.creator_user.manager_email` =&gt; `"manager@email.com"`
 
 ## Example
 

@@ -576,10 +576,13 @@ func (s *ServiceTestSuite) TestCreate() {
 				},
 				{
 					Name:      "step_2",
-					Approvers: "$creator.managers",
+					Approvers: "$appeal.creator_user.managers",
 				},
 			},
 		},
+	}
+	expectedCreatorUser := map[string]interface{}{
+		"managers": []interface{}{"user.approver@email.com"},
 	}
 	expectedAppealsInsertionParam := []*domain.Appeal{}
 	for i, r := range resourceIDs {
@@ -592,6 +595,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
+			CreatorUser:   expectedCreatorUser,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -628,6 +632,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
+			CreatorUser:   expectedCreatorUser,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -660,6 +665,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
+			CreatorUser:   expectedCreatorUser,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -697,10 +703,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(nil)
-		expectedUserDetails := map[string]interface{}{
-			"managers": []interface{}{"user.approver@email.com"},
-		}
-		s.mockIAMService.On("GetUser", accountID).Return(expectedUserDetails, nil)
+		s.mockIAMService.On("GetUser", accountID).Return(expectedCreatorUser, nil)
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 		s.mockRepository.
 			On("BulkUpsert", expectedAppealsInsertionParam).
