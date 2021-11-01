@@ -100,7 +100,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 	s.Run("should update approval statuses", func() {
 		resourceFlagStep := &domain.Step{
 			Name:      "resourceFlagStep",
-			RunIf:     domain.Expression("$appeal.resource.details.flag == true"),
+			When:      domain.Expression("$appeal.resource.details.flag == true"),
 			Approvers: "user@email.com",
 		}
 		humanApprovalStep := &domain.Step{
@@ -116,7 +116,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 			expectedApprovalStatuses []string
 		}{
 			{
-				name: "initial process, RunIf on the first step",
+				name: "initial process, When on the first step",
 				appeal: &domain.Appeal{
 					Resource: &domain.Resource{
 						Details: map[string]interface{}{
@@ -138,7 +138,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				},
 			},
 			{
-				name: "RunIf expression fulfilled",
+				name: "When expression fulfilled",
 				appeal: &domain.Appeal{
 					Resource: &domain.Resource{
 						Details: map[string]interface{}{

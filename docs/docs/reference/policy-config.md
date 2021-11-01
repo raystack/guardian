@@ -87,7 +87,7 @@ id: bigquery_approval
 steps:
   - name: supervisor_approval
     description: 'only will get evaluated if check_if_dataset_is_pii return true'
-    run_if: $appeal.resource.details.is_pii
+    when: $appeal.resource.details.is_pii
     approvers: $creator.userManager
   - name: admin_approval
     description: approval from dataset admin/owner

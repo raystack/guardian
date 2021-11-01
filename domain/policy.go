@@ -68,12 +68,12 @@ type Step struct {
 	// the appeal status will resolve as approved or success.
 	AllowFailed bool `json:"allow_failed" yaml:"allow_failed"`
 
-	// RunIf is an Expression that determines whether the step should be evaluated or it can be skipped at the beginning.
+	// When is an Expression that determines whether the step should be evaluated or it can be skipped at the beginning.
 	// If it evaluates to be falsy, the step will automatically skipped. Otherwise, step become pending/blocked (normal).
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	RunIf Expression `json:"expression" yaml:"expression"`
+	When Expression `json:"expression" yaml:"expression"`
 
 	// Approvers is an Expression that if the evaluation returns string or []string that contains email address of the approvers.
 	// If human approval (manual) is required, use this field.

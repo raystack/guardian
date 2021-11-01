@@ -58,8 +58,8 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 				return fmt.Errorf("parsing appeal struct to map: %w", err)
 			}
 
-			if stepConfig.RunIf.String() != "" {
-				v, err := stepConfig.RunIf.EvaluateWithVars(map[string]interface{}{
+			if stepConfig.When.String() != "" {
+				v, err := stepConfig.When.EvaluateWithVars(map[string]interface{}{
 					"appeal": appealMap,
 				})
 				if err != nil {
