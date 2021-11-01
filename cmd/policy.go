@@ -207,7 +207,6 @@ func createPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 }
 
 func updatePolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
-	var id string
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "edit",
@@ -216,7 +215,7 @@ func updatePolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 			Edit an existing policy with a file.
 		`),
 		Example: heredoc.Doc(`
-			$ guardian policy update -f policy.yaml
+			$ guardian policy edit -f policy.yaml
 		`),
 
 		Annotations: map[string]string{
@@ -240,10 +239,7 @@ func updatePolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 			}
 			defer cancel()
 
-			policyID := id
-			if policyID == "" {
-				policyID = policyProto.GetId()
-			}
+			policyID := policyProto.GetId()
 			_, err = client.UpdatePolicy(ctx, &pb.UpdatePolicyRequest{
 				Id:     policyID,
 				Policy: policyProto,
@@ -258,7 +254,6 @@ func updatePolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&id, "id", "", "policy id")
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the policy config")
 	cmd.MarkFlagRequired("file")
 
