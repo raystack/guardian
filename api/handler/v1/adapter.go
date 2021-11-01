@@ -388,7 +388,7 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 		AccountID:     appeal.GetAccountId(),
 		AccountType:   appeal.GetAccountType(),
 		CreatedBy:     appeal.GetCreatedBy(),
-		CreatorUser:   appeal.GetCreatorUser().AsInterface(),
+		Creator:       appeal.GetCreator().AsInterface(),
 		Role:          appeal.GetRole(),
 		Options:       a.fromAppealOptionsProto(appeal.GetOptions()),
 		Labels:        appeal.GetLabels(),
@@ -413,7 +413,7 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		resource = r
 	}
 
-	creatorUser, err := structpb.NewValue(appeal.CreatorUser)
+	creator, err := structpb.NewValue(appeal.Creator)
 	if err != nil {
 		return nil, err
 	}
@@ -446,7 +446,7 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		AccountId:     appeal.AccountID,
 		AccountType:   appeal.AccountType,
 		CreatedBy:     appeal.CreatedBy,
-		CreatorUser:   creatorUser,
+		Creator:       creator,
 		Role:          appeal.Role,
 		Options:       a.toAppealOptionsProto(appeal.Options),
 		Labels:        appeal.Labels,

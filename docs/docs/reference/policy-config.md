@@ -46,7 +46,7 @@
         "account_id": "user@email.com",
         "account_type": "user",
         "created_by": "user@email.com",
-        "creator_user": {
+        "creator": {
           "id": 1,
           "email": "user@email.com",
           "full_name": "John Doe",
@@ -70,7 +70,7 @@
      * `$appeal.resource.id` =&gt; `1`
      * `$appeal.resource.details.owners` =&gt; `["owner@email.com", "another.owner@email.com"]`
      * `$appeal.resource.labels.key` =&gt; `"value"`
-     * `$appeal.creator_user.manager_email` =&gt; `"manager@email.com"`
+     * `$appeal.creator.manager_email` =&gt; `"manager@email.com"`
 
 ## Example
 

@@ -43,7 +43,7 @@ func (s *RepositoryTestSuite) SetupTest() {
 		"account_id",
 		"account_type",
 		"created_by",
-		"creator_user",
+		"creator",
 		"role",
 		"options",
 		"labels",
@@ -346,7 +346,7 @@ func (s *RepositoryTestSuite) TestFind() {
 }
 
 func (s *RepositoryTestSuite) TestBulkUpsert() {
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","account_id","account_type","created_by","creator_user","role","options","labels","details","revoked_by","revoked_at","revoke_reason","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18),($19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) ON CONFLICT ("id") DO UPDATE SET "resource_id"="excluded"."resource_id","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","status"="excluded"."status","account_id"="excluded"."account_id","account_type"="excluded"."account_type","created_by"="excluded"."created_by","creator_user"="excluded"."creator_user","role"="excluded"."role","options"="excluded"."options","labels"="excluded"."labels","details"="excluded"."details","revoked_by"="excluded"."revoked_by","revoked_at"="excluded"."revoked_at","revoke_reason"="excluded"."revoke_reason","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","account_id","account_type","created_by","creator","role","options","labels","details","revoked_by","revoked_at","revoke_reason","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18),($19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) ON CONFLICT ("id") DO UPDATE SET "resource_id"="excluded"."resource_id","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","status"="excluded"."status","account_id"="excluded"."account_id","account_type"="excluded"."account_type","created_by"="excluded"."created_by","creator"="excluded"."creator","role"="excluded"."role","options"="excluded"."options","labels"="excluded"."labels","details"="excluded"."details","revoked_by"="excluded"."revoked_by","revoked_at"="excluded"."revoked_at","revoke_reason"="excluded"."revoke_reason","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
 
 	appeals := []*domain.Appeal{
 		{
@@ -434,7 +434,7 @@ func (s *RepositoryTestSuite) TestUpdate() {
 	})
 
 	expectedUpdateApprovalsQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","policy_id","policy_version","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) ON CONFLICT ("id") DO UPDATE SET "name"="excluded"."name","index"="excluded"."index","appeal_id"="excluded"."appeal_id","status"="excluded"."status","actor"="excluded"."actor","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","created_at"="excluded"."created_at","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
-	expectedUpdateAppealQuery := regexp.QuoteMeta(`UPDATE "appeals" SET "resource_id"=$1,"policy_id"=$2,"policy_version"=$3,"status"=$4,"account_id"=$5,"account_type"=$6,"created_by"=$7,"creator_user"=$8,"role"=$9,"options"=$10,"labels"=$11,"details"=$12,"revoked_by"=$13,"revoked_at"=$14,"revoke_reason"=$15,"created_at"=$16,"updated_at"=$17,"deleted_at"=$18 WHERE "id" = $19`)
+	expectedUpdateAppealQuery := regexp.QuoteMeta(`UPDATE "appeals" SET "resource_id"=$1,"policy_id"=$2,"policy_version"=$3,"status"=$4,"account_id"=$5,"account_type"=$6,"created_by"=$7,"creator"=$8,"role"=$9,"options"=$10,"labels"=$11,"details"=$12,"revoked_by"=$13,"revoked_at"=$14,"revoke_reason"=$15,"created_at"=$16,"updated_at"=$17,"deleted_at"=$18 WHERE "id" = $19`)
 	s.Run("should return nil on success", func() {
 		expectedID := uint(1)
 		appeal := &domain.Appeal{

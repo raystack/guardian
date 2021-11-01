@@ -576,7 +576,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				},
 				{
 					Name:      "step_2",
-					Approvers: "$appeal.creator_user.managers",
+					Approvers: "$appeal.creator.managers",
 				},
 			},
 		},
@@ -595,7 +595,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
-			CreatorUser:   expectedCreatorUser,
+			Creator:       expectedCreatorUser,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -632,7 +632,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
-			CreatorUser:   expectedCreatorUser,
+			Creator:       expectedCreatorUser,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -665,7 +665,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
-			CreatorUser:   expectedCreatorUser,
+			Creator:       expectedCreatorUser,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{

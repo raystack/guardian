@@ -173,11 +173,11 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 		a.Policy = policies[policyConfig.ID][uint(policyConfig.Version)]
 
-		creatorUserDetails, err := s.iamService.GetUser(a.CreatedBy)
+		creatorDetails, err := s.iamService.GetUser(a.CreatedBy)
 		if err != nil {
 			return fmt.Errorf("fetching creator's user iam: %w", err)
 		}
-		a.CreatorUser = creatorUserDetails
+		a.Creator = creatorDetails
 
 		approvals := []*domain.Approval{}
 		for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService
