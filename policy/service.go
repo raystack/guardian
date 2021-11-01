@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/evaluator"
 )
 
 // Service handling the business logics
@@ -117,19 +119,29 @@ func (s *Service) validateRequirements(requirements []*domain.Requirement) error
 func (s *Service) validateSteps(steps []*domain.Step) error {
 	for _, step := range steps {
 		if containsWhitespaces(step.Name) {
-			return ErrStepNameContainsWhitespaces
+			return fmt.Errorf(`%w: "%s"`, ErrStepNameContainsWhitespaces, step.Name)
 		}
 
-		if err := s.validateApprovers(step.Approvers); err != nil {
-			return fmt.Errorf("validating approvers: %w", err)
+		if step.Approvers != nil {
+			for _, approver := range step.Approvers {
+				if err := s.validateApprover(approver); err != nil {
+					return fmt.Errorf(`validating approver "%s": %w`, approver, err)
+				}
+			}
 		}
 	}
 
 	return nil
 }
 
-func (s *Service) validateApprovers(e domain.Expression) error {
-	if err := s.validator.Var(e.String(), "email"); err == nil {
+func (s *Service) validateApprover(expr string) error {
+	if err := s.validator.Var(expr, "email"); err == nil {
+		return nil
+	}
+
+	// skip validation if expression is accessing arbitrary value
+	if strings.Contains(expr, "$appeal.resource.details") ||
+		strings.Contains(expr, "$appeal.creator") {
 		return nil
 	}
 
@@ -140,11 +152,11 @@ func (s *Service) validateApprovers(e domain.Expression) error {
 	if err != nil {
 		return fmt.Errorf("parsing appeal to map: %w", err)
 	}
-	approvers, err := e.EvaluateWithVars(map[string]interface{}{
+	approvers, err := evaluator.Expression(expr).EvaluateWithVars(map[string]interface{}{
 		"appeal": dummyAppealMap,
 	})
 	if err != nil {
-		return fmt.Errorf("evaluating step.approvers: %w", err)
+		return fmt.Errorf("evaluating expression: %w", err)
 	}
 
 	// value type should be string or []string
@@ -162,7 +174,7 @@ func (s *Service) validateApprovers(e domain.Expression) error {
 		}
 	}
 
-	return fmt.Errorf(`invalid value type: "%s"`, e.String())
+	return fmt.Errorf(`invalid value type: "%s"`, expr)
 }
 
 func containsWhitespaces(s string) bool {

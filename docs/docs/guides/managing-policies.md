@@ -13,7 +13,7 @@ id: bigquery_dataset
 steps:
   - name: check_if_dataset_is_pii
     description: pii dataset needs additional approval from the team lead
-    conditions:
+    approve_if:
     - field: $resource.details.is_pii
       match:
         eq: true
@@ -40,7 +40,7 @@ id: bigquery_dataset
 steps:
   - name: check_if_dataset_is_pii
     description: pii dataset needs additional approval from the team lead
-    conditions:
+    approve_if:
     - field: $resource.details.is_pii
       match:
         eq: true
@@ -62,7 +62,7 @@ Response:
     {
       "name": "check_if_dataset_is_pii",
       "description": "pii dataset needs additional approval from the team lead",
-      "conditions": [
+      "approve_if": [
         {
           "field": "$resource.details.is_pii",
           "match": {
@@ -77,7 +77,7 @@ Response:
     {
       "name": "supervisor_approval",
       "description": "only will get evaluated if check_if_dataset_is_pii return true",
-      "conditions": null,
+      "approve_if": null,
       "allow_failed": false,
       "dependencies": [
         "check_if_dataset_is_pii"
@@ -87,7 +87,7 @@ Response:
     {
       "name": "admin_approval",
       "description": "...",
-      "conditions": null,
+      "approve_if": null,
       "allow_failed": false,
       "dependencies": null,
       "approvers": "$resource.details.owner"
@@ -116,7 +116,7 @@ id: bigquery_dataset
 steps:
   - name: check_if_dataset_is_pii
     description: pii dataset needs additional approval from the team lead
-    conditions:
+    approve_if:
     - field: $resource.details.is_pii
       match:
         eq: true
@@ -139,7 +139,7 @@ Response:
     {
       "name": "check_if_dataset_is_pii",
       "description": "pii dataset needs additional approval from the team lead",
-      "conditions": [
+      "approve_if": [
         {
           "field": "$resource.details.is_pii",
           "match": {
@@ -154,7 +154,7 @@ Response:
     {
       "name": "supervisor_approval",
       "description": "only will get evaluated if check_if_dataset_is_pii return true",
-      "conditions": null,
+      "approve_if": null,
       "allow_failed": false,
       "dependencies": [
         "check_if_dataset_is_pii"
@@ -164,7 +164,7 @@ Response:
     {
       "name": "admin_approval",
       "description": "...",
-      "conditions": null,
+      "approve_if": null,
       "allow_failed": false,
       "dependencies": null,
       "approvers": "$resource.details.owners"

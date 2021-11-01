@@ -7,8 +7,9 @@
 | name | `string` |Step name | YES | - |
 | description | `string` | Step description | NO | - |
 | run\_if | `Expression` | Determines whether the step should be evaluated or it can be skipped. If it evaluates to be falsy, the step will automatically skipped. Otherwise, step become pending/blocked (normal). Accessible vars: `$appeal` | NO | -
-| approvers | `Expression` | Determines approvers for manual approval. The evaluation should return string or []string that contains email address of the approvers. Accessible vars: `$appeal` | NO | - |
-| conditions | `Expression` | Expression to determines the resolution of the step if `approvers` field is not present. Accessible vars: `$appeal` | YES if `approvers` is empty | - |
+| strategy | `string` | `auto` or `manual`. Determines if approval step is manual or automatic approval | YES | - |
+| approvers | `string` | Determines approvers for manual approval. The evaluation should return string or []string that contains email address of the approvers. Accessible vars: `$appeal` | NO | - |
+| approve_if | `string` | Expression to determines the resolution of the step if `approvers` field is not present. Accessible vars: `$appeal` | YES if `approvers` is empty | - |
 | allow\_failed | `boolean` | If `true` and the step got rejected, it will mark the appeal status as skipped instead of rejected | NO | `false` |
 
 ### Variables
@@ -79,9 +80,13 @@ id: bigquery_approval
 steps:
   - name: supervisor_approval
     description: 'only will get evaluated if check_if_dataset_is_pii return true'
-    run_if: $appeal.resource.details.is_pii
-    approvers: $creator.userManager
+    when: $appeal.resource.details.is_pii
+    strategy: manual
+    approvers:
+    - $creator.userManager
   - name: admin_approval
     description: approval from dataset admin/owner
-    approvers: $appeal.resource.details.owner
+    strategy: manual
+    approvers:
+    - $appeal.resource.details.owner
 ```

@@ -1,4 +1,4 @@
-package domain
+package evaluator
 
 import (
 	"errors"
@@ -41,7 +41,7 @@ func (e Expression) EvaluateWithVars(params map[string]interface{}) (interface{}
 
 	result, err := expr.Run(program, env)
 	if err != nil {
-		return false, fmt.Errorf("evaluating expression `%s`: %w", e, err)
+		return false, fmt.Errorf(`evaluating expression "%s": %w`, e, err)
 	}
 	return result, nil
 }

@@ -64,16 +64,16 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				Version: 1,
 				Steps: []*domain.Step{
 					{
-						Name:       "step-1",
-						Conditions: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
+						Name:      "step-1",
+						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
 					},
 					{
-						Name:       "step-2",
-						Conditions: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
+						Name:      "step-2",
+						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
 					},
 					{
-						Name:       "step-3",
-						Conditions: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
+						Name:      "step-3",
+						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
 					},
 				},
 			},
@@ -99,13 +99,17 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 
 	s.Run("should update approval statuses", func() {
 		resourceFlagStep := &domain.Step{
-			Name:      "resourceFlagStep",
-			RunIf:     domain.Expression("$appeal.resource.details.flag == true"),
-			Approvers: "user@email.com",
+			Name: "resourceFlagStep",
+			When: "$appeal.resource.details.flag == true",
+			Approvers: []string{
+				"user@email.com",
+			},
 		}
 		humanApprovalStep := &domain.Step{
-			Name:      "humanApprovalStep",
-			Approvers: "human@email.com",
+			Name: "humanApprovalStep",
+			Approvers: []string{
+				"human@email.com",
+			},
 		}
 
 		testCases := []struct {
@@ -116,7 +120,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 			expectedApprovalStatuses []string
 		}{
 			{
-				name: "initial process, RunIf on the first step",
+				name: "initial process, When on the first step",
 				appeal: &domain.Appeal{
 					Resource: &domain.Resource{
 						Details: map[string]interface{}{
@@ -138,7 +142,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				},
 			},
 			{
-				name: "RunIf expression fulfilled",
+				name: "When expression fulfilled",
 				appeal: &domain.Appeal{
 					Resource: &domain.Resource{
 						Details: map[string]interface{}{

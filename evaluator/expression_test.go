@@ -1,9 +1,9 @@
-package domain_test
+package evaluator_test
 
 import (
 	"testing"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/evaluator"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,14 +32,14 @@ func TestEvaluate(t *testing.T) {
 		},
 		{
 			expression:    "$x",
-			expectedError: domain.ErrExperssionParameterNotFound,
+			expectedError: evaluator.ErrExperssionParameterNotFound,
 		},
 		{
 			expression: "$y",
 			params: map[string]interface{}{
 				"x": 1,
 			},
-			expectedError: domain.ErrExperssionParameterNotFound,
+			expectedError: evaluator.ErrExperssionParameterNotFound,
 		},
 		{
 			expression: "$x > 1",
@@ -59,7 +59,7 @@ func TestEvaluate(t *testing.T) {
 			expectedResult: false,
 		},
 		{
-			expression: `$foo == "bar" || ($x == 1 && $y > $x)`,
+			expression: `$foo == "bar" && ($x == 1 && $y > $x)`,
 			params: map[string]interface{}{
 				"foo": "bar",
 				"x":   1,
@@ -80,7 +80,7 @@ func TestEvaluate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.expression, func(t *testing.T) {
-			e := domain.Expression(tc.expression)
+			e := evaluator.Expression(tc.expression)
 
 			actualResult, actualError := e.EvaluateWithVars(tc.params)
 
