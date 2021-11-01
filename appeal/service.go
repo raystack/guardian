@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/evaluator"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
@@ -558,7 +559,7 @@ func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) 
 				params["creator"] = userDetails
 			}
 
-			approversValue, err := domain.Expression(expr).EvaluateWithVars(params)
+			approversValue, err := evaluator.Expression(expr).EvaluateWithVars(params)
 			if err != nil {
 				return nil, fmt.Errorf("evaluating aprrovers expression: %w", err)
 			}

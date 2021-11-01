@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/evaluator"
 )
 
 type service struct {
@@ -59,7 +60,7 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 			}
 
 			if stepConfig.When != "" {
-				v, err := domain.Expression(stepConfig.When).EvaluateWithVars(map[string]interface{}{
+				v, err := evaluator.Expression(stepConfig.When).EvaluateWithVars(map[string]interface{}{
 					"appeal": appealMap,
 				})
 				if err != nil {
@@ -77,7 +78,7 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 			}
 
 			if stepConfig.Strategy == "auto" {
-				v, err := domain.Expression(stepConfig.ApproveIf).EvaluateWithVars(map[string]interface{}{
+				v, err := evaluator.Expression(stepConfig.ApproveIf).EvaluateWithVars(map[string]interface{}{
 					"appeal": appealMap,
 				})
 				if err != nil {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/evaluator"
 )
 
 // Service handling the business logics
@@ -150,7 +151,7 @@ func (s *Service) validateApprover(expr string) error {
 	if err != nil {
 		return fmt.Errorf("parsing appeal to map: %w", err)
 	}
-	approvers, err := domain.Expression(expr).EvaluateWithVars(map[string]interface{}{
+	approvers, err := evaluator.Expression(expr).EvaluateWithVars(map[string]interface{}{
 		"appeal": dummyAppealMap,
 	})
 	if err != nil {
