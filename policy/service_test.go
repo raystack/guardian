@@ -99,15 +99,15 @@ func (s *ServiceTestSuite) TestCreate() {
 				},
 			},
 			{
-				name: "step: empty conditions",
+				name: "step: empty ApproveIf",
 				policy: &domain.Policy{
 					ID:      "test-id",
 					Version: 1,
 					Steps: []*domain.Step{
 						{
-							Name:       "step-1",
-							Strategy:   "auto",
-							Conditions: "",
+							Name:      "step-1",
+							Strategy:  "auto",
+							ApproveIf: "",
 						},
 					},
 				},
@@ -127,7 +127,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				},
 			},
 			{
-				name: "step: step with strategy:auto doesn't contain Conditions",
+				name: "step: step with strategy:auto doesn't contain ApproveIf",
 				policy: &domain.Policy{
 					ID:      "test-id",
 					Version: 1,
@@ -147,9 +147,9 @@ func (s *ServiceTestSuite) TestCreate() {
 					Version: 1,
 					Steps: []*domain.Step{
 						{
-							Name:       "step-1",
-							Strategy:   "manual",
-							Conditions: "true",
+							Name:      "step-1",
+							Strategy:  "manual",
+							ApproveIf: "true",
 						},
 					},
 				},

@@ -64,16 +64,16 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				Version: 1,
 				Steps: []*domain.Step{
 					{
-						Name:       "step-1",
-						Conditions: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
+						Name:      "step-1",
+						ApproveIf: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
 					},
 					{
-						Name:       "step-2",
-						Conditions: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
+						Name:      "step-2",
+						ApproveIf: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
 					},
 					{
-						Name:       "step-3",
-						Conditions: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
+						Name:      "step-3",
+						ApproveIf: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
 					},
 				},
 			},

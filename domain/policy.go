@@ -86,12 +86,12 @@ type Step struct {
 	// $creator = Creator user object
 	Approvers Expression `json:"approvers" yaml:"approvers" validate:"required_if=Strategy manual"`
 
-	// Conditions is an Expression to determines the resolution of the step. If automatic approval is needed for the step,
+	// ApproveIf is an Expression to determines the resolution of the step. If automatic approval is needed for the step,
 	// use this field.
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	Conditions Expression `json:"conditions" yaml:"conditions" validate:"required_if=Strategy auto"`
+	ApproveIf Expression `json:"approve_if" yaml:"approve_if" validate:"required_if=Strategy auto"`
 }
 
 type RequirementTrigger struct {
