@@ -21,7 +21,7 @@ type ServiceTestSuite struct {
 	mockResourceService *mocks.ResourceService
 	mockProviderService *mocks.ProviderService
 	mockPolicyService   *mocks.PolicyService
-	mockIAMService      *mocks.IAMService
+	mockIAMClient       *mocks.IAMClient
 	mockNotifier        *mocks.Notifier
 
 	service *appeal.Service
@@ -34,7 +34,7 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockResourceService = new(mocks.ResourceService)
 	s.mockProviderService = new(mocks.ProviderService)
 	s.mockPolicyService = new(mocks.PolicyService)
-	s.mockIAMService = new(mocks.IAMService)
+	s.mockIAMClient = new(mocks.IAMClient)
 	s.mockNotifier = new(mocks.Notifier)
 	s.now = time.Now()
 
@@ -44,7 +44,7 @@ func (s *ServiceTestSuite) SetupTest() {
 		s.mockResourceService,
 		s.mockProviderService,
 		s.mockPolicyService,
-		s.mockIAMService,
+		s.mockIAMClient,
 		s.mockNotifier,
 		log.NewNoop(),
 	)
@@ -706,7 +706,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		expectedUserDetails := map[string]interface{}{
 			"managers": []interface{}{"user.approver@email.com"},
 		}
-		s.mockIAMService.On("GetUser", accountID).Return(expectedUserDetails, nil)
+		s.mockIAMClient.On("GetUser", accountID).Return(expectedUserDetails, nil)
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 		s.mockRepository.
 			On("BulkUpsert", expectedAppealsInsertionParam).

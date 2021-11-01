@@ -67,7 +67,6 @@ func RunServer(c *Config) error {
 	if err != nil {
 		return err
 	}
-	iamService := iam.NewService(iamClient)
 
 	providers := []domain.ProviderInterface{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
@@ -98,7 +97,7 @@ func RunServer(c *Config) error {
 		resourceService,
 		providerService,
 		policyService,
-		iamService,
+		iamClient,
 		notifier,
 		logger,
 	)

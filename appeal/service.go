@@ -24,7 +24,7 @@ type Service struct {
 	resourceService domain.ResourceService
 	providerService domain.ProviderService
 	policyService   domain.PolicyService
-	iamService      domain.IAMService
+	iamClient       domain.IAMClient
 	notifier        domain.Notifier
 	logger          log.Logger
 
@@ -39,7 +39,7 @@ func NewService(
 	resourceService domain.ResourceService,
 	providerService domain.ProviderService,
 	policyService domain.PolicyService,
-	iamService domain.IAMService,
+	iamClient domain.IAMClient,
 	notifier domain.Notifier,
 	logger log.Logger,
 ) *Service {
@@ -49,7 +49,7 @@ func NewService(
 		resourceService: resourceService,
 		providerService: providerService,
 		policyService:   policyService,
-		iamService:      iamService,
+		iamClient:       iamClient,
 		notifier:        notifier,
 		validator:       validator.New(),
 		logger:          logger,
@@ -552,7 +552,7 @@ func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) 
 				"appeal": appealMap,
 			}
 			if strings.Contains(expr, domain.ApproversKeyCreator) {
-				userDetails, err := s.iamService.GetUser(appeal.CreatedBy)
+				userDetails, err := s.iamClient.GetUser(appeal.CreatedBy)
 				if err != nil {
 					return nil, fmt.Errorf("fetching creator's user iam: %w", err)
 				}
