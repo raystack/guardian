@@ -75,20 +75,23 @@ type Step struct {
 	// $appeal = Appeal object
 	When Expression `json:"expression" yaml:"expression"`
 
+	// Strategy defines if the step requires manual approval or not
+	Strategy string `json:"strategy" yaml:"approvers" validate:"required,oneof=auto manual"`
+
 	// Approvers is an Expression that if the evaluation returns string or []string that contains email address of the approvers.
 	// If human approval (manual) is required, use this field.
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
 	// $creator = Creator user object
-	Approvers Expression `json:"approvers" yaml:"approvers" validate:"required_without=Conditions"`
+	Approvers Expression `json:"approvers" yaml:"approvers" validate:"required_if=Strategy manual"`
 
 	// Conditions is an Expression to determines the resolution of the step. If automatic approval is needed for the step,
 	// use this field.
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	Conditions Expression `json:"conditions" yaml:"conditions" validate:"required_without=Approvers"`
+	Conditions Expression `json:"conditions" yaml:"conditions" validate:"required_if=Strategy auto"`
 }
 
 type RequirementTrigger struct {

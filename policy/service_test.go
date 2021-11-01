@@ -86,6 +86,19 @@ func (s *ServiceTestSuite) TestCreate() {
 				},
 			},
 			{
+				name: "step: with empty strategy",
+				policy: &domain.Policy{
+					ID:      "test-id",
+					Version: 1,
+					Steps: []*domain.Step{
+						{
+							Name:     "step-1",
+							Strategy: "",
+						},
+					},
+				},
+			},
+			{
 				name: "step: empty conditions",
 				policy: &domain.Policy{
 					ID:      "test-id",
@@ -93,19 +106,64 @@ func (s *ServiceTestSuite) TestCreate() {
 					Steps: []*domain.Step{
 						{
 							Name:       "step-1",
+							Strategy:   "auto",
 							Conditions: "",
 						},
 					},
 				},
 			},
 			{
-				name: "step: without approvers/conditions",
+				name: "step: empty approvers",
 				policy: &domain.Policy{
 					ID:      "test-id",
 					Version: 1,
 					Steps: []*domain.Step{
 						{
-							Name: "step-1",
+							Name:      "step-1",
+							Strategy:  "manual",
+							Approvers: "",
+						},
+					},
+				},
+			},
+			{
+				name: "step: step with strategy:auto doesn't contain Conditions",
+				policy: &domain.Policy{
+					ID:      "test-id",
+					Version: 1,
+					Steps: []*domain.Step{
+						{
+							Name:      "step-1",
+							Strategy:  "auto",
+							Approvers: "$resource.field",
+						},
+					},
+				},
+			},
+			{
+				name: "step: step with strategy:manual doesn't contain Approvers",
+				policy: &domain.Policy{
+					ID:      "test-id",
+					Version: 1,
+					Steps: []*domain.Step{
+						{
+							Name:       "step-1",
+							Strategy:   "manual",
+							Conditions: "true",
+						},
+					},
+				},
+			},
+			{
+				name: "step: invalid strategy",
+				policy: &domain.Policy{
+					ID:      "test-id",
+					Version: 1,
+					Steps: []*domain.Step{
+						{
+							Name:      "step-1",
+							Strategy:  "invalid-strategy",
+							Approvers: "$resource.field",
 						},
 					},
 				},
@@ -118,7 +176,8 @@ func (s *ServiceTestSuite) TestCreate() {
 					Steps: []*domain.Step{
 						{
 							Name:      "a a",
-							Approvers: "$resource.field",
+							Strategy:  "manual",
+							Approvers: "$appeal.field",
 						},
 					},
 				},
@@ -132,6 +191,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Steps: []*domain.Step{
 						{
 							Name:      "step-1",
+							Strategy:  "manual",
 							Approvers: "$x",
 						},
 					},
@@ -157,6 +217,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		Steps: []*domain.Step{
 			{
 				Name:      "test",
+				Strategy:  "manual",
 				Approvers: "user@email.com",
 			},
 		},
@@ -381,6 +442,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 			Steps: []*domain.Step{
 				{
 					Name:      "test",
+					Strategy:  "manual",
 					Approvers: "user@email.com",
 				},
 			},

@@ -7,6 +7,7 @@
 | name | `string` |Step name | YES | - |
 | description | `string` | Step description | NO | - |
 | run\_if | `Expression` | Determines whether the step should be evaluated or it can be skipped. If it evaluates to be falsy, the step will automatically skipped. Otherwise, step become pending/blocked (normal). Accessible vars: `$appeal` | NO | -
+| strategy | `string` | `auto` or `manual`. Determines if approval step is manual or automatic approval | YES | - |
 | approvers | `Expression` | Determines approvers for manual approval. The evaluation should return string or []string that contains email address of the approvers. Accessible vars: `$appeal`, `$creator` | NO | - |
 | conditions | `Expression` | Expression to determines the resolution of the step if `approvers` field is not present. Accessible vars: `$appeal` | YES if `approvers` is empty | - |
 | allow\_failed | `boolean` | If `true` and the step got rejected, it will mark the appeal status as skipped instead of rejected | NO | `false` |

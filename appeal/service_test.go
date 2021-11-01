@@ -572,10 +572,12 @@ func (s *ServiceTestSuite) TestCreate() {
 			Steps: []*domain.Step{
 				{
 					Name:      "step_1",
+					Strategy:  "manual",
 					Approvers: "$appeal.resource.details.owner",
 				},
 				{
 					Name:      "step_2",
+					Strategy:  "manual",
 					Approvers: "$creator.managers",
 				},
 			},

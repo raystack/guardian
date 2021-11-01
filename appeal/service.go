@@ -177,7 +177,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		approvals := []*domain.Approval{}
 		for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService
 			var approvers []string
-			if step.Approvers != "" {
+			if step.Strategy == "manual" {
 				approvers, err = s.resolveApprovers(step.Approvers, a)
 				if err != nil {
 					return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
