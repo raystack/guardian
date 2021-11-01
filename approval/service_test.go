@@ -99,13 +99,17 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 
 	s.Run("should update approval statuses", func() {
 		resourceFlagStep := &domain.Step{
-			Name:      "resourceFlagStep",
-			When:      domain.Expression("$appeal.resource.details.flag == true"),
-			Approvers: "user@email.com",
+			Name: "resourceFlagStep",
+			When: domain.Expression("$appeal.resource.details.flag == true"),
+			Approvers: []string{
+				"user@email.com",
+			},
 		}
 		humanApprovalStep := &domain.Step{
-			Name:      "humanApprovalStep",
-			Approvers: "human@email.com",
+			Name: "humanApprovalStep",
+			Approvers: []string{
+				"human@email.com",
+			},
 		}
 
 		testCases := []struct {

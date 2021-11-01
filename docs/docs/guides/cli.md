@@ -98,9 +98,13 @@ For instance, we can create a policy file `policy.yaml` as shown below.
 id: policy_x
 steps:
   - name: manager_approval
-    approvers: $resource.details.manager
+    strategy: manual
+    approvers:
+    - $appeal.resource.details.manager
   - name: head_approval
-    approvers: $resource.details.head
+    strategy: manual
+    approvers:
+    - $appeal.resource.details.head
 ```
 
 Now, we can create a policy using the `create` command as demonstrated here.
@@ -144,9 +148,13 @@ For this first we update our `policy.yaml` file.
 id: policy_x
 steps:
   - name: supervisor_approval
-    approvers: $resource.details.supervisor
+    strategy: manual
+    approvers:
+    - $appeal.resource.details.supervisor
   - name: head_approval
-    approvers: $resource.details.head
+    strategy: manual
+    approvers:
+    - $appeal.resource.details.head
 ```
 
 Enter the following code into the terminal:

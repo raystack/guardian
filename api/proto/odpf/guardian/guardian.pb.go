@@ -3256,13 +3256,13 @@ type Policy_ApprovalStep struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name        string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	AllowFailed bool   `protobuf:"varint,3,opt,name=allow_failed,json=allowFailed,proto3" json:"allow_failed,omitempty"`
-	When        string `protobuf:"bytes,4,opt,name=when,proto3" json:"when,omitempty"`
-	Strategy    string `protobuf:"bytes,5,opt,name=strategy,proto3" json:"strategy,omitempty"`
-	ApproveIf   string `protobuf:"bytes,6,opt,name=approve_if,json=approveIf,proto3" json:"approve_if,omitempty"`
-	Approvers   string `protobuf:"bytes,7,opt,name=approvers,proto3" json:"approvers,omitempty"`
+	Name        string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description string   `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	AllowFailed bool     `protobuf:"varint,3,opt,name=allow_failed,json=allowFailed,proto3" json:"allow_failed,omitempty"`
+	When        string   `protobuf:"bytes,4,opt,name=when,proto3" json:"when,omitempty"`
+	Strategy    string   `protobuf:"bytes,5,opt,name=strategy,proto3" json:"strategy,omitempty"`
+	ApproveIf   string   `protobuf:"bytes,6,opt,name=approve_if,json=approveIf,proto3" json:"approve_if,omitempty"`
+	Approvers   []string `protobuf:"bytes,7,rep,name=approvers,proto3" json:"approvers,omitempty"`
 }
 
 func (x *Policy_ApprovalStep) Reset() {
@@ -3339,11 +3339,11 @@ func (x *Policy_ApprovalStep) GetApproveIf() string {
 	return ""
 }
 
-func (x *Policy_ApprovalStep) GetApprovers() string {
+func (x *Policy_ApprovalStep) GetApprovers() []string {
 	if x != nil {
 		return x.Approvers
 	}
-	return ""
+	return nil
 }
 
 type Policy_Requirement struct {
@@ -3964,7 +3964,7 @@ var file_odpf_guardian_guardian_proto_rawDesc = []byte{
 	0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x67, 0x79,
 	0x12, 0x1d, 0x0a, 0x0a, 0x61, 0x70, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x5f, 0x69, 0x66, 0x18, 0x06,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x61, 0x70, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x49, 0x66, 0x12,
-	0x1c, 0x0a, 0x09, 0x61, 0x70, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x72, 0x73, 0x18, 0x07, 0x20, 0x01,
+	0x1c, 0x0a, 0x09, 0x61, 0x70, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x72, 0x73, 0x18, 0x07, 0x20, 0x03,
 	0x28, 0x09, 0x52, 0x09, 0x61, 0x70, 0x70, 0x72, 0x6f, 0x76, 0x65, 0x72, 0x73, 0x1a, 0x39, 0x0a,
 	0x0b, 0x4c, 0x61, 0x62, 0x65, 0x6c, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03,
 	0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14,

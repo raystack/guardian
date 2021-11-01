@@ -158,7 +158,7 @@ func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
 				Strategy:    s.GetStrategy(),
 				ApproveIf:   domain.Expression(s.GetApproveIf()),
 				AllowFailed: s.GetAllowFailed(),
-				Approvers:   domain.Expression(s.GetApprovers()),
+				Approvers:   s.GetApprovers(),
 			})
 		}
 	}
@@ -238,7 +238,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 				Strategy:    s.Strategy,
 				ApproveIf:   s.ApproveIf.String(),
 				AllowFailed: s.AllowFailed,
-				Approvers:   s.Approvers.String(),
+				Approvers:   s.Approvers,
 			})
 		}
 	}

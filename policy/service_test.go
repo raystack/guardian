@@ -121,7 +121,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						{
 							Name:      "step-1",
 							Strategy:  "manual",
-							Approvers: "",
+							Approvers: []string{},
 						},
 					},
 				},
@@ -133,9 +133,11 @@ func (s *ServiceTestSuite) TestCreate() {
 					Version: 1,
 					Steps: []*domain.Step{
 						{
-							Name:      "step-1",
-							Strategy:  "auto",
-							Approvers: "$resource.field",
+							Name:     "step-1",
+							Strategy: "auto",
+							Approvers: []string{
+								"$resource.field",
+							},
 						},
 					},
 				},
@@ -161,9 +163,11 @@ func (s *ServiceTestSuite) TestCreate() {
 					Version: 1,
 					Steps: []*domain.Step{
 						{
-							Name:      "step-1",
-							Strategy:  "invalid-strategy",
-							Approvers: "$resource.field",
+							Name:     "step-1",
+							Strategy: "invalid-strategy",
+							Approvers: []string{
+								"$resource.field",
+							},
 						},
 					},
 				},
@@ -175,9 +179,11 @@ func (s *ServiceTestSuite) TestCreate() {
 					Version: 1,
 					Steps: []*domain.Step{
 						{
-							Name:      "a a",
-							Strategy:  "manual",
-							Approvers: "$appeal.field",
+							Name:     "a a",
+							Strategy: "manual",
+							Approvers: []string{
+								"$appeal.field",
+							},
 						},
 					},
 				},
@@ -190,9 +196,11 @@ func (s *ServiceTestSuite) TestCreate() {
 					Version: 1,
 					Steps: []*domain.Step{
 						{
-							Name:      "step-1",
-							Strategy:  "manual",
-							Approvers: "$x",
+							Name:     "step-1",
+							Strategy: "manual",
+							Approvers: []string{
+								"$x",
+							},
 						},
 					},
 				},
@@ -216,9 +224,11 @@ func (s *ServiceTestSuite) TestCreate() {
 		Version: 1,
 		Steps: []*domain.Step{
 			{
-				Name:      "test",
-				Strategy:  "manual",
-				Approvers: "user@email.com",
+				Name:     "test",
+				Strategy: "manual",
+				Approvers: []string{
+					"user@email.com",
+				},
 			},
 		},
 	}
@@ -338,8 +348,10 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 					Version: 1,
 					Steps: []*domain.Step{
 						{
-							Name:      "step-test",
-							Approvers: "user@email.com",
+							Name: "step-test",
+							Approvers: []string{
+								"user@email.com",
+							},
 						},
 					},
 					Requirements: tc.requirements,
@@ -441,9 +453,11 @@ func (s *ServiceTestSuite) TestUpdate() {
 			ID: "id",
 			Steps: []*domain.Step{
 				{
-					Name:      "test",
-					Strategy:  "manual",
-					Approvers: "user@email.com",
+					Name:     "test",
+					Strategy: "manual",
+					Approvers: []string{
+						"user@email.com",
+					},
 				},
 			},
 		}
