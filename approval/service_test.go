@@ -65,15 +65,15 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				Steps: []*domain.Step{
 					{
 						Name:      "step-1",
-						ApproveIf: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
+						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
 					},
 					{
 						Name:      "step-2",
-						ApproveIf: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
+						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
 					},
 					{
 						Name:      "step-3",
-						ApproveIf: domain.Expression(`$appeal.resource.details.owner == "test-owner"`),
+						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
 					},
 				},
 			},
@@ -100,7 +100,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 	s.Run("should update approval statuses", func() {
 		resourceFlagStep := &domain.Step{
 			Name: "resourceFlagStep",
-			When: domain.Expression("$appeal.resource.details.flag == true"),
+			When: "$appeal.resource.details.flag == true",
 			Approvers: []string{
 				"user@email.com",
 			},

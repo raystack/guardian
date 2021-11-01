@@ -73,7 +73,7 @@ type Step struct {
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	When Expression `json:"expression" yaml:"expression"`
+	When string `json:"expression" yaml:"expression"`
 
 	// Strategy defines if the step requires manual approval or not
 	Strategy string `json:"strategy" yaml:"strategy" validate:"required,oneof=auto manual"`
@@ -91,7 +91,7 @@ type Step struct {
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	ApproveIf Expression `json:"approve_if" yaml:"approve_if" validate:"required_if=Strategy auto"`
+	ApproveIf string `json:"approve_if" yaml:"approve_if" validate:"required_if=Strategy auto"`
 }
 
 type RequirementTrigger struct {
