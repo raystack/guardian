@@ -2,85 +2,91 @@
 
 ## Step config
 
-| Field | Description | Required | Default value |
-| :--- | :--- | :--- | :--- |
-| name | Step name | YES | - |
-| description | Step description | NO | - |
-| approvers | Object path from [these variables](policy-config.md#variables), or list of approver emails | NO | - |
-| conditions | List of conditions. An approval step will be considered as successful if all conditions are passed | YES if `approvers` is empty | - |
-| allow\_failed | If `true` and the conditions failed, it will mark the appeal status as skipped instead of rejected | NO | `false` |
-| dependencies | List of dependency step name | NO | - |
+| Field | Type | Description | Required | Default value |
+| :--- | :--- | :--- | :--- | :--- |
+| name | `string` |Step name | YES | - |
+| description | `string` | Step description | NO | - |
+| run\_if | `Expression` | Determines whether the step should be evaluated or it can be skipped. If it evaluates to be falsy, the step will automatically skipped. Otherwise, step become pending/blocked (normal). Accessible vars: `$appeal` | NO | -
+| strategy | `string` | `auto` or `manual`. Determines if approval step is manual or automatic approval | YES | - |
+| approvers | `string` | Determines approvers for manual approval. The evaluation should return string or []string that contains email address of the approvers. Accessible vars: `$appeal` | NO | - |
+| approve_if | `string` | Expression to determines the resolution of the step if `approvers` field is not present. Accessible vars: `$appeal` | YES if `approvers` is empty | - |
+| allow\_failed | `boolean` | If `true` and the step got rejected, it will mark the appeal status as skipped instead of rejected | NO | `false` |
 
 ### Variables
 
-1. `$resource`: the requested resource object
-   * Resource object example:
+#### `$appeal`
+   * Appeal object example:
 
-     ```javascript
+     ```json
      {
-         "id": 1,
-         "provider_type": "google_bigquery",
-         "provider_urn": "gcp-project-id",
-         "type": "dataset",
-         "urn": "gcp-project-id:dataset_name",
-         "name": "dataset_name",
-         "details": {
-             "owners": [
-                 "owner@email.com",
-                 "another.owner@email.com"
-             ],
-             "additional_info": "..."
-         },
-         "labels": {
-             "key": "value"
-         },
-         "created_at": "2021-01-01T00:00:05.36851+07:00",
-         "updated_at": "2021-01-01T00:00:05.36851+07:00"
-     }
+        "id": 1,
+        "resource_id": 1,
+        "resource": {
+          "id": 1,
+          "provider_type": "google_bigquery",
+          "provider_urn": "gcp-project-id",
+          "type": "dataset",
+          "urn": "gcp-project-id:dataset_name",
+          "name": "dataset_name",
+          "details": {
+            "owners": [
+              "owner@email.com",
+              "another.owner@email.com"
+            ],
+            ...
+          },
+          "labels": {
+            "key": "value"
+          },
+          "created_at": "2021-01-01T00:00:05.36851+07:00",
+          "updated_at": "2021-01-01T00:00:05.36851+07:00"
+        },
+        "policy_id": "test-policy",
+        "policy_version": 1,
+        "status": "pending",
+        "account_id": "user@email.com",
+        "account_type": "user",
+        "created_by": "user@email.com",
+        "creator": {
+          "id": 1,
+          "email": "user@email.com",
+          "full_name": "John Doe",
+          "manager_email": "manager@email.com",
+          ...
+        },
+        "role": "roles/viewer",
+        "options": {
+          "duration": "24h"
+        },
+        "created_at": "2021-10-26T09:29:48.838203Z",
+        "updated_at": "2021-10-26T09:29:48.838203Z",
+        "revoked_at": "0001-01-01T00:00:00Z",
+        "details": {
+          ...
+        }
+      }
      ```
 
    * Usage example
-     * `$resource.id` =&gt; `1`
-     * `$resource.details.owners` =&gt; `["owner@email.com", "another.owner@email.com"]`
-     * `$resource.labels.key` =&gt; `"value"`
-2. `$user_approvers`: fetch to third-party service to resolve user's approvers
-   * Usage example
-
-     * appeal creator: `user@email.com`
-     * approvers: `$user_approvers`
-     * configured third-party service URL: `http://localhost:5000/user-approvers`
-
-     Guardian will fetch to `http://localhost:5000/user-approvers?user=user@email.com` and expecting the response body to be like this:
-
-     ```javascript
-     {
-         "emails": [
-           "approver1@email.com",
-           "approver2@email.com"
-         ]
-     }
-     ```
-
-     Given the response, Guardian will set the approvers to `approver1@email.com` and `approver2@email.com` for that particular approval step.
+     * `$appeal.resource.id` =&gt; `1`
+     * `$appeal.resource.details.owners` =&gt; `["owner@email.com", "another.owner@email.com"]`
+     * `$appeal.resource.labels.key` =&gt; `"value"`
+     * `$appeal.creator.manager_email` =&gt; `"manager@email.com"`
 
 ## Example
 
 ```yaml
 id: bigquery_approval
 steps:
-  - name: check_if_dataset_is_pii
-    description: pii dataset needs additional approval from the team lead
-    conditions:
-    - field: $resource.details.is_pii
-      match:
-        eq: true
-    allow_failed: true
   - name: supervisor_approval
     description: 'only will get evaluated if check_if_dataset_is_pii return true'
-    dependencies: [check_if_dataset_is_pii]
-    approvers: $user.profile.team_leads.[].email
+    when: $appeal.resource.details.is_pii
+    strategy: manual
+    approvers:
+    - $creator.userManager
   - name: admin_approval
-    description: ...
-    approvers: $resource.details.owner
+    description: approval from dataset admin/owner
+    strategy: manual
+    approvers:
+    - $appeal.resource.details.owner
 ```
-

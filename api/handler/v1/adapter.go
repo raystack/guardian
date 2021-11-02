@@ -151,20 +151,14 @@ func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
 	var steps []*domain.Step
 	if p.GetSteps() != nil {
 		for _, s := range p.GetSteps() {
-			var conditions []*domain.Condition
-			if s.GetConditions() != nil {
-				for _, c := range s.GetConditions() {
-					conditions = append(conditions, a.fromConditionProto(c))
-				}
-			}
-
 			steps = append(steps, &domain.Step{
-				Name:         s.GetName(),
-				Description:  s.GetDescription(),
-				Conditions:   conditions,
-				AllowFailed:  s.GetAllowFailed(),
-				Dependencies: s.GetDependencies(),
-				Approvers:    s.GetApprovers(),
+				Name:        s.GetName(),
+				Description: s.GetDescription(),
+				When:        s.GetWhen(),
+				Strategy:    domain.ApprovalStepStrategy(s.GetStrategy()),
+				ApproveIf:   s.GetApproveIf(),
+				AllowFailed: s.GetAllowFailed(),
+				Approvers:   s.GetApprovers(),
 			})
 		}
 	}
@@ -237,24 +231,14 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 	var steps []*pb.Policy_ApprovalStep
 	if p.Steps != nil {
 		for _, s := range p.Steps {
-			var conditions []*pb.Condition
-			if s.Conditions != nil {
-				for _, c := range s.Conditions {
-					condition, err := a.toConditionProto(c)
-					if err != nil {
-						return nil, err
-					}
-					conditions = append(conditions, condition)
-				}
-			}
-
 			steps = append(steps, &pb.Policy_ApprovalStep{
-				Name:         s.Name,
-				Description:  s.Description,
-				Conditions:   conditions,
-				AllowFailed:  s.AllowFailed,
-				Dependencies: s.Dependencies,
-				Approvers:    s.Approvers,
+				Name:        s.Name,
+				Description: s.Description,
+				When:        s.When,
+				Strategy:    string(s.Strategy),
+				ApproveIf:   s.ApproveIf,
+				AllowFailed: s.AllowFailed,
+				Approvers:   s.Approvers,
 			})
 		}
 	}
@@ -406,6 +390,7 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 		AccountID:     appeal.GetAccountId(),
 		AccountType:   appeal.GetAccountType(),
 		CreatedBy:     appeal.GetCreatedBy(),
+		Creator:       appeal.GetCreator().AsInterface(),
 		Role:          appeal.GetRole(),
 		Options:       a.fromAppealOptionsProto(appeal.GetOptions()),
 		Labels:        appeal.GetLabels(),
@@ -428,6 +413,11 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 			return nil, err
 		}
 		resource = r
+	}
+
+	creator, err := structpb.NewValue(appeal.Creator)
+	if err != nil {
+		return nil, err
 	}
 
 	approvals := []*pb.Approval{}
@@ -458,6 +448,7 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		AccountId:     appeal.AccountID,
 		AccountType:   appeal.AccountType,
 		CreatedBy:     appeal.CreatedBy,
+		Creator:       creator,
 		Role:          appeal.Role,
 		Options:       a.toAppealOptionsProto(appeal.Options),
 		Labels:        appeal.Labels,

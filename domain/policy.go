@@ -13,11 +13,17 @@ import (
 
 const (
 	ApproversKeyResource = "$resource"
-	ApproversKeyCreator  = "$creator"
 )
 
 var (
 	ErrInvalidConditionField = errors.New("unable to parse condition's field")
+)
+
+type ApprovalStepStrategy string
+
+const (
+	ApprovalStepStrategyAuto   ApprovalStepStrategy = "auto"
+	ApprovalStepStrategyManual ApprovalStepStrategy = "manual"
 )
 
 // MatchCondition is for determining the requirement of the condition
@@ -57,13 +63,40 @@ func (c *Condition) IsMatch(a *Appeal) (bool, error) {
 
 // Step is an individual process within an approval flow
 type Step struct {
-	Name        string       `json:"name" yaml:"name" validate:"required"`
-	Description string       `json:"description" yaml:"description"`
-	Conditions  []*Condition `json:"conditions" yaml:"conditions" validate:"required_without=Approvers,omitempty,min=1,dive"`
-	AllowFailed bool         `json:"allow_failed" yaml:"allow_failed"`
+	// Name used as the step identifier
+	Name string `json:"name" yaml:"name" validate:"required"`
 
-	Dependencies []string `json:"dependencies" yaml:"dependencies"`
-	Approvers    string   `json:"approvers" yaml:"approvers" validate:"required_without=Conditions"`
+	// Description tells more details about the step
+	Description string `json:"description" yaml:"description"`
+
+	// AllowFailed lets the approval flow continue to the next step even the current step is rejected.
+	// If the last step has AllowFailed equal to true, and it's getting rejected,
+	// the appeal status will resolve as approved or success.
+	AllowFailed bool `json:"allow_failed" yaml:"allow_failed"`
+
+	// When is an Expression that determines whether the step should be evaluated or it can be skipped at the beginning.
+	// If it evaluates to be falsy, the step will automatically skipped. Otherwise, step become pending/blocked (normal).
+	//
+	// Accessible parameters:
+	// $appeal = Appeal object
+	When string `json:"expression" yaml:"expression"`
+
+	// Strategy defines if the step requires manual approval or not
+	Strategy ApprovalStepStrategy `json:"strategy" yaml:"strategy" validate:"required,oneof=auto manual"`
+
+	// Approvers is an Expression that if the evaluation returns string or []string that contains email address of the approvers.
+	// If human approval (manual) is required, use this field.
+	//
+	// Accessible parameters:
+	// $appeal = Appeal object
+	Approvers []string `json:"approvers" yaml:"approvers" validate:"required_if=Strategy manual,min=1"`
+
+	// ApproveIf is an Expression to determines the resolution of the step. If automatic approval is needed for the step,
+	// use this field.
+	//
+	// Accessible parameters:
+	// $appeal = Appeal object
+	ApproveIf string `json:"approve_if" yaml:"approve_if" validate:"required_if=Strategy auto"`
 }
 
 type RequirementTrigger struct {

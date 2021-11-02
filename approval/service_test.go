@@ -13,8 +13,8 @@ import (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockRepository      *mocks.ApprovalRepository
-	mockPolicyService   *mocks.PolicyService
+	mockRepository    *mocks.ApprovalRepository
+	mockPolicyService *mocks.PolicyService
 
 	service domain.ApprovalService
 }
@@ -64,40 +64,16 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				Version: 1,
 				Steps: []*domain.Step{
 					{
-						Name: "step-1",
-						Conditions: []*domain.Condition{
-							{
-								Field: "$resource.details.owner",
-								Match: &domain.MatchCondition{
-									Eq: "test-owner",
-								},
-							},
-						},
-						Dependencies: []string{},
+						Name:      "step-1",
+						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
 					},
 					{
-						Name: "step-2",
-						Conditions: []*domain.Condition{
-							{
-								Field: "$resource.details.owner",
-								Match: &domain.MatchCondition{
-									Eq: "test-owner",
-								},
-							},
-						},
-						Dependencies: []string{},
+						Name:      "step-2",
+						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
 					},
 					{
-						Name: "step-3",
-						Conditions: []*domain.Condition{
-							{
-								Field: "$resource.details.owner",
-								Match: &domain.MatchCondition{
-									Eq: "test-owner",
-								},
-							},
-						},
-						Dependencies: []string{},
+						Name:      "step-3",
+						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
 					},
 				},
 			},
@@ -119,6 +95,94 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 
 		actualError := s.service.AdvanceApproval(&testappeal)
 		s.Nil(actualError)
+	})
+
+	s.Run("should update approval statuses", func() {
+		resourceFlagStep := &domain.Step{
+			Name: "resourceFlagStep",
+			When: "$appeal.resource.details.flag == true",
+			Approvers: []string{
+				"user@email.com",
+			},
+		}
+		humanApprovalStep := &domain.Step{
+			Name: "humanApprovalStep",
+			Approvers: []string{
+				"human@email.com",
+			},
+		}
+
+		testCases := []struct {
+			name                     string
+			appeal                   *domain.Appeal
+			steps                    []*domain.Step
+			existingApprovalStatuses []string
+			expectedApprovalStatuses []string
+		}{
+			{
+				name: "initial process, When on the first step",
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Details: map[string]interface{}{
+							"flag": false,
+						},
+					},
+				},
+				steps: []*domain.Step{
+					resourceFlagStep,
+					humanApprovalStep,
+				},
+				existingApprovalStatuses: []string{
+					domain.ApprovalStatusPending,
+					domain.ApprovalStatusBlocked,
+				},
+				expectedApprovalStatuses: []string{
+					domain.ApprovalStatusSkipped,
+					domain.ApprovalStatusPending,
+				},
+			},
+			{
+				name: "When expression fulfilled",
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Details: map[string]interface{}{
+							"flag": true,
+						},
+					},
+				},
+				steps: []*domain.Step{
+					humanApprovalStep,
+					resourceFlagStep,
+					humanApprovalStep,
+				},
+				existingApprovalStatuses: []string{
+					domain.ApprovalStatusApproved,
+					domain.ApprovalStatusPending,
+					domain.ApprovalStatusBlocked,
+				},
+				expectedApprovalStatuses: []string{
+					domain.ApprovalStatusApproved,
+					domain.ApprovalStatusPending,
+					domain.ApprovalStatusBlocked,
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				appeal := *tc.appeal
+				for _, s := range tc.existingApprovalStatuses {
+					appeal.Approvals = append(appeal.Approvals, &domain.Approval{
+						Status: s,
+					})
+				}
+				appeal.Policy = &domain.Policy{
+					Steps: tc.steps,
+				}
+				actualError := s.service.AdvanceApproval(&appeal)
+				s.Nil(actualError)
+			})
+		}
 	})
 }
 

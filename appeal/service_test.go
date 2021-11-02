@@ -571,15 +571,24 @@ func (s *ServiceTestSuite) TestCreate() {
 			Version: 1,
 			Steps: []*domain.Step{
 				{
-					Name:      "step_1",
-					Approvers: "$resource.details.owner",
+					Name:     "step_1",
+					Strategy: "manual",
+					Approvers: []string{
+						"$appeal.resource.details.owner",
+					},
 				},
 				{
-					Name:      "step_2",
-					Approvers: "$creator.managers",
+					Name:     "step_2",
+					Strategy: "manual",
+					Approvers: []string{
+						"$appeal.creator.managers",
+					},
 				},
 			},
 		},
+	}
+	expectedCreatorUser := map[string]interface{}{
+		"managers": []interface{}{"user.approver@email.com"},
 	}
 	expectedAppealsInsertionParam := []*domain.Appeal{}
 	for i, r := range resourceIDs {
@@ -592,6 +601,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
+			Creator:       expectedCreatorUser,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -628,6 +638,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
+			Creator:       expectedCreatorUser,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -660,6 +671,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
+			Creator:       expectedCreatorUser,
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
@@ -697,10 +709,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(nil)
-		expectedUserDetails := map[string]interface{}{
-			"managers": []interface{}{"user.approver@email.com"},
-		}
-		s.mockIAMService.On("GetUser", accountID).Return(expectedUserDetails, nil)
+		s.mockIAMService.On("GetUser", accountID).Return(expectedCreatorUser, nil)
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 		s.mockRepository.
 			On("BulkUpsert", expectedAppealsInsertionParam).
