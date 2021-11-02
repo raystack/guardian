@@ -19,6 +19,7 @@ type Appeal struct {
 	AccountID     string
 	AccountType   string
 	CreatedBy     string
+	Creator       datatypes.JSON
 	Role          string
 	Options       datatypes.JSON
 	Labels        datatypes.JSON
@@ -54,6 +55,11 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 		return err
 	}
 
+	creator, err := json.Marshal(a.Creator)
+	if err != nil {
+		return err
+	}
+
 	var approvals []*Approval
 	if a.Approvals != nil {
 		for _, approval := range a.Approvals {
@@ -81,6 +87,7 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	m.AccountID = a.AccountID
 	m.AccountType = a.AccountType
 	m.CreatedBy = a.CreatedBy
+	m.Creator = datatypes.JSON(creator)
 	m.Role = a.Role
 	m.Options = datatypes.JSON(options)
 	m.Labels = datatypes.JSON(labels)
@@ -109,6 +116,13 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 	var details map[string]interface{}
 	if m.Details != nil {
 		if err := json.Unmarshal(m.Details, &details); err != nil {
+			return nil, err
+		}
+	}
+
+	var creator interface{}
+	if m.Creator != nil {
+		if err := json.Unmarshal(m.Creator, &creator); err != nil {
 			return nil, err
 		}
 	}
@@ -144,6 +158,7 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		AccountID:     m.AccountID,
 		AccountType:   m.AccountType,
 		CreatedBy:     m.CreatedBy,
+		Creator:       creator,
 		Role:          m.Role,
 		Options:       options,
 		Details:       details,
