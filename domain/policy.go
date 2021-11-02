@@ -19,6 +19,13 @@ var (
 	ErrInvalidConditionField = errors.New("unable to parse condition's field")
 )
 
+type ApprovalStepStrategy string
+
+const (
+	ApprovalStepStrategyAuto   ApprovalStepStrategy = "auto"
+	ApprovalStepStrategyManual ApprovalStepStrategy = "manual"
+)
+
 // MatchCondition is for determining the requirement of the condition
 type MatchCondition struct {
 	Eq interface{} `json:"eq" yaml:"eq"`
@@ -75,7 +82,7 @@ type Step struct {
 	When string `json:"expression" yaml:"expression"`
 
 	// Strategy defines if the step requires manual approval or not
-	Strategy string `json:"strategy" yaml:"strategy" validate:"required,oneof=auto manual"`
+	Strategy ApprovalStepStrategy `json:"strategy" yaml:"strategy" validate:"required,oneof=auto manual"`
 
 	// Approvers is an Expression that if the evaluation returns string or []string that contains email address of the approvers.
 	// If human approval (manual) is required, use this field.

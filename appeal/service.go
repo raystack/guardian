@@ -183,7 +183,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		approvals := []*domain.Approval{}
 		for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService
 			var approverEmails []string
-			if step.Strategy == "manual" {
+			if step.Strategy == domain.ApprovalStepStrategyManual {
 				approverEmails, err = s.resolveApprovers(step.Approvers, a)
 				if err != nil {
 					return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
