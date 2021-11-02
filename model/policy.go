@@ -16,6 +16,7 @@ type Policy struct {
 	Description string
 	Steps       datatypes.JSON
 	Labels      datatypes.JSON
+	IAM         datatypes.JSON
 	CreatedAt   time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
@@ -38,11 +39,17 @@ func (m *Policy) FromDomain(p *domain.Policy) error {
 		return err
 	}
 
+	iam, err := json.Marshal(p.IAM)
+	if err != nil {
+		return err
+	}
+
 	m.ID = p.ID
 	m.Version = p.Version
 	m.Description = p.Description
 	m.Steps = datatypes.JSON(steps)
 	m.Labels = datatypes.JSON(labels)
+	m.IAM = datatypes.JSON(iam)
 	m.CreatedAt = p.CreatedAt
 	m.UpdatedAt = p.UpdatedAt
 
@@ -61,12 +68,20 @@ func (m *Policy) ToDomain() (*domain.Policy, error) {
 		return nil, err
 	}
 
+	var iam map[string]interface{}
+	if m.IAM != nil {
+		if err := json.Unmarshal(m.IAM, &iam); err != nil {
+			return nil, err
+		}
+	}
+
 	return &domain.Policy{
 		ID:          m.ID,
 		Version:     m.Version,
 		Description: m.Description,
 		Steps:       steps,
 		Labels:      labels,
+		IAM:         iam,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 	}, nil

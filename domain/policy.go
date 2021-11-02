@@ -179,14 +179,15 @@ type Requirement struct {
 
 // Policy is the approval policy configuration
 type Policy struct {
-	ID           string            `json:"id" yaml:"id" validate:"required"`
-	Version      uint              `json:"version" yaml:"version" validate:"required"`
-	Description  string            `json:"description" yaml:"description"`
-	Steps        []*Step           `json:"steps" yaml:"steps" validate:"required,min=1,dive"`
-	Requirements []*Requirement    `json:"requirements" yaml:"requirements" validate:"omitempty,min=1,dive"`
-	Labels       map[string]string `json:"labels" yaml:"labels"`
-	CreatedAt    time.Time         `json:"created_at"`
-	UpdatedAt    time.Time         `json:"updated_at"`
+	ID           string                 `json:"id" yaml:"id" validate:"required"`
+	Version      uint                   `json:"version" yaml:"version" validate:"required"`
+	Description  string                 `json:"description" yaml:"description"`
+	Steps        []*Step                `json:"steps" yaml:"steps" validate:"required,min=1,dive"`
+	Requirements []*Requirement         `json:"requirements" yaml:"requirements" validate:"omitempty,min=1,dive"`
+	Labels       map[string]string      `json:"labels" yaml:"labels"`
+	IAM          map[string]interface{} `json:"iam" yaml:"iam"`
+	CreatedAt    time.Time              `json:"created_at" yaml:"created_at"`
+	UpdatedAt    time.Time              `json:"updated_at" yaml:"updated_at"`
 }
 
 // PolicyRepository interface

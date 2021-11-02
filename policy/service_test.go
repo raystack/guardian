@@ -205,6 +205,25 @@ func (s *ServiceTestSuite) TestCreate() {
 					},
 				},
 			},
+			{
+				name: "iam: invalid iam provider",
+				policy: &domain.Policy{
+					ID:      "test-id",
+					Version: 1,
+					Steps: []*domain.Step{
+						{
+							Name:     "step-1",
+							Strategy: "manual",
+							Approvers: []string{
+								"approver@email.com",
+							},
+						},
+					},
+					IAM: map[string]interface{}{
+						"provider": "invalid-provider",
+					},
+				},
+			},
 		}
 
 		for _, tc := range testCases {

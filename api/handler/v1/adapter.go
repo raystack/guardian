@@ -222,6 +222,7 @@ func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
 		Steps:        steps,
 		Requirements: requirements,
 		Labels:       p.GetLabels(),
+		IAM:          p.GetIam().AsMap(),
 		CreatedAt:    p.GetCreatedAt().AsTime(),
 		UpdatedAt:    p.GetUpdatedAt().AsTime(),
 	}, nil
@@ -299,6 +300,15 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 		}
 	}
 
+	var iamConfig *structpb.Struct
+	if p.IAM != nil {
+		iam, err := structpb.NewStruct(p.IAM)
+		if err != nil {
+			return nil, err
+		}
+		iamConfig = iam
+	}
+
 	return &pb.Policy{
 		Id:           p.ID,
 		Version:      uint32(p.Version),
@@ -306,6 +316,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 		Steps:        steps,
 		Requirements: requirements,
 		Labels:       p.Labels,
+		Iam:          iamConfig,
 		CreatedAt:    timestamppb.New(p.CreatedAt),
 		UpdatedAt:    timestamppb.New(p.UpdatedAt),
 	}, nil

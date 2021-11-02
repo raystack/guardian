@@ -1,6 +1,8 @@
 package policy
 
 import (
+	"fmt"
+
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/model"
 	"gorm.io/gorm"
@@ -20,7 +22,7 @@ func NewRepository(db *gorm.DB) *Repository {
 func (r *Repository) Create(p *domain.Policy) error {
 	m := new(model.Policy)
 	if err := m.FromDomain(p); err != nil {
-		return err
+		return fmt.Errorf("serializing policy: %w", err)
 	}
 
 	return r.db.Transaction(func(tx *gorm.DB) error {
@@ -30,7 +32,7 @@ func (r *Repository) Create(p *domain.Policy) error {
 
 		newPolicy, err := m.ToDomain()
 		if err != nil {
-			return err
+			return fmt.Errorf("deserializing policy: %w", err)
 		}
 
 		*p = *newPolicy

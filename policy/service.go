@@ -8,8 +8,10 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/evaluator"
+	"github.com/odpf/guardian/iam"
 )
 
 // Service handling the business logics
@@ -87,7 +89,22 @@ func (s *Service) validatePolicy(p *domain.Policy, excludedFields ...string) err
 		return fmt.Errorf("invalid requirements: %w", err)
 	}
 
+	if p.IAM != nil {
+		if err := s.validateIamConfig(p.IAM); err != nil {
+			return fmt.Errorf("invalid iam config: %w", err)
+		}
+	}
+
 	return nil
+}
+
+func (s *Service) validateIamConfig(config map[string]interface{}) error {
+	iamConfig, err := readIamConfig(config)
+	if err != nil {
+		return fmt.Errorf("reading config: %w", err)
+	}
+	fmt.Printf("iamConfig: %+v\n", iamConfig)
+	return s.validator.Struct(iamConfig)
 }
 
 func (s *Service) validateRequirements(requirements []*domain.Requirement) error {
@@ -197,4 +214,12 @@ func structToMap(item interface{}) (map[string]interface{}, error) {
 	}
 
 	return result, nil
+}
+
+func readIamConfig(v interface{}) (*iam.ClientConfig, error) {
+	var clientConfig iam.ClientConfig
+	if err := mapstructure.Decode(v, &clientConfig); err != nil {
+		return nil, err
+	}
+	return &clientConfig, nil
 }

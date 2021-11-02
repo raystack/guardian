@@ -14,7 +14,7 @@ const (
 )
 
 type ClientConfig struct {
-	Provider ProviderType `mapstructure:"provider"`
+	Provider ProviderType `mapstructure:"provider" validate:"oneof=shield http"`
 
 	// shield config
 	Host string `mapstructure:"host" validate:"required_if=Provider shield"`
