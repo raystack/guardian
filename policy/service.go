@@ -139,8 +139,9 @@ func (s *Service) validateApprover(expr string) error {
 		return nil
 	}
 
-	// skip validation if expression is accessing resource details (interface{})
-	if strings.Contains(expr, "$appeal.resource.details") {
+	// skip validation if expression is accessing arbitrary value
+	if strings.Contains(expr, "$appeal.resource.details") ||
+		strings.Contains(expr, "$appeal.creator") {
 		return nil
 	}
 

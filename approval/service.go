@@ -77,7 +77,7 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 				}
 			}
 
-			if stepConfig.Strategy == "auto" {
+			if stepConfig.Strategy == domain.ApprovalStepStrategyAuto {
 				v, err := evaluator.Expression(stepConfig.ApproveIf).EvaluateWithVars(map[string]interface{}{
 					"appeal": appealMap,
 				})

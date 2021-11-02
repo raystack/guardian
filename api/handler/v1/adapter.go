@@ -155,7 +155,7 @@ func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
 				Name:        s.GetName(),
 				Description: s.GetDescription(),
 				When:        s.GetWhen(),
-				Strategy:    s.GetStrategy(),
+				Strategy:    domain.ApprovalStepStrategy(s.GetStrategy()),
 				ApproveIf:   s.GetApproveIf(),
 				AllowFailed: s.GetAllowFailed(),
 				Approvers:   s.GetApprovers(),
@@ -235,7 +235,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 				Name:        s.Name,
 				Description: s.Description,
 				When:        s.When,
-				Strategy:    s.Strategy,
+				Strategy:    string(s.Strategy),
 				ApproveIf:   s.ApproveIf,
 				AllowFailed: s.AllowFailed,
 				Approvers:   s.Approvers,
@@ -390,6 +390,7 @@ func (a *adapter) FromAppealProto(appeal *pb.Appeal) (*domain.Appeal, error) {
 		AccountID:     appeal.GetAccountId(),
 		AccountType:   appeal.GetAccountType(),
 		CreatedBy:     appeal.GetCreatedBy(),
+		Creator:       appeal.GetCreator().AsInterface(),
 		Role:          appeal.GetRole(),
 		Options:       a.fromAppealOptionsProto(appeal.GetOptions()),
 		Labels:        appeal.GetLabels(),
@@ -412,6 +413,11 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 			return nil, err
 		}
 		resource = r
+	}
+
+	creator, err := structpb.NewValue(appeal.Creator)
+	if err != nil {
+		return nil, err
 	}
 
 	approvals := []*pb.Approval{}
@@ -442,6 +448,7 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*pb.Appeal, error) {
 		AccountId:     appeal.AccountID,
 		AccountType:   appeal.AccountType,
 		CreatedBy:     appeal.CreatedBy,
+		Creator:       creator,
 		Role:          appeal.Role,
 		Options:       a.toAppealOptionsProto(appeal.Options),
 		Labels:        appeal.Labels,

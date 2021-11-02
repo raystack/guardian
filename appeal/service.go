@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -175,10 +174,16 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 		a.Policy = policies[policyConfig.ID][uint(policyConfig.Version)]
 
+		creatorDetails, err := s.iamClient.GetUser(a.CreatedBy)
+		if err != nil {
+			return fmt.Errorf("fetching creator's user iam: %w", err)
+		}
+		a.Creator = creatorDetails
+
 		approvals := []*domain.Approval{}
 		for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService
 			var approverEmails []string
-			if step.Strategy == "manual" {
+			if step.Strategy == domain.ApprovalStepStrategyManual {
 				approverEmails, err = s.resolveApprovers(step.Approvers, a)
 				if err != nil {
 					return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
@@ -550,13 +555,6 @@ func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) 
 			}
 			params := map[string]interface{}{
 				"appeal": appealMap,
-			}
-			if strings.Contains(expr, domain.ApproversKeyCreator) {
-				userDetails, err := s.iamClient.GetUser(appeal.CreatedBy)
-				if err != nil {
-					return nil, fmt.Errorf("fetching creator's user iam: %w", err)
-				}
-				params["creator"] = userDetails
 			}
 
 			approversValue, err := evaluator.Expression(expr).EvaluateWithVars(params)
