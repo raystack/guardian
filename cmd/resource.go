@@ -11,6 +11,7 @@ import (
 	v1 "github.com/odpf/guardian/api/handler/v1"
 	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
 	"github.com/odpf/guardian/app"
+	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -23,6 +24,7 @@ func ResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 		Short:   "Manage resources",
 		Example: heredoc.Doc(`
 			$ guardian resource list
+			$ guardian resource view 1
 			$ guardian resource metadata set --id=1 key=value
 		`),
 		Annotations: map[string]string{
@@ -30,19 +32,26 @@ func ResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(listResourcesCmd(c))
+	cmd.AddCommand(listResourcesCmd(c, adapter))
 	cmd.AddCommand(getResourceCmd(c, adapter))
 	cmd.AddCommand(metadataCmd(c))
+	cmd.PersistentFlags().String("format", "", "Print output with specified format (yaml,json,prettyjson)")
 
 	return cmd
 }
 
-func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
-	return &cobra.Command{
+func listResourcesCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
+	var providerType, providerURN, resourceType, resourceURN, name string
+	var isDeleted bool
+	var details []string
+
+	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List resources",
 		Example: heredoc.Doc(`
 			$ guardian resource list
+			$ guardian resource list --provider-type=bigquery --type=dataset
+			$ guardian resource list --details=key1.key2:value --details=key1.key3:value
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -55,9 +64,30 @@ func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.ListResources(ctx, &pb.ListResourcesRequest{})
+			req := &pb.ListResourcesRequest{
+				ProviderType: providerType,
+				ProviderUrn:  providerURN,
+				Type:         resourceType,
+				Urn:          resourceURN,
+				Name:         name,
+				IsDeleted:    isDeleted,
+				Details:      details,
+			}
+			res, err := client.ListResources(ctx, req)
 			if err != nil {
 				return err
+			}
+
+			format := cmd.Flag("format").Value.String()
+			if format != "" {
+				var resources []*domain.Resource
+				for _, r := range res.GetResources() {
+					resources = append(resources, adapter.FromResourceProto(r))
+				}
+				if err := printer.Text(resources, format); err != nil {
+					return fmt.Errorf("failed to parse resources: %v", err)
+				}
+				return nil
 			}
 
 			report := [][]string{}
@@ -79,15 +109,24 @@ func listResourcesCmd(c *app.CLIConfig) *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVar(&providerType, "provider-type", "", "Filter by provider type")
+	cmd.Flags().StringVar(&providerURN, "provider-urn", "", "Filter by provider urn")
+	cmd.Flags().StringVar(&resourceType, "type", "", "Filter by type")
+	cmd.Flags().StringVar(&resourceURN, "urn", "", "Filter by urn")
+	cmd.Flags().StringVar(&name, "name", "", "Filter by name")
+	cmd.Flags().StringArrayVar(&details, "details", nil, "Filter by details object values. Example: --details=key1.key2:value")
+	cmd.Flags().BoolVar(&isDeleted, "show-deleted", false, "Show deleted resources")
+
+	return cmd
 }
 
 func getResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
-	var format string
-	cmd := &cobra.Command{
-		Use:   "get",
-		Short: "Get a resource details",
+	return &cobra.Command{
+		Use:   "view",
+		Short: "View a resource details",
 		Example: heredoc.Doc(`
-			$ guardian resource get 1
+			$ guardian resource view 1
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -114,16 +153,13 @@ func getResourceCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 			}
 
 			r := adapter.FromResourceProto(res)
+			format := cmd.Flag("format").Value.String()
 			if err := printer.Text(r, format); err != nil {
 				return fmt.Errorf("failed to parse resource: %v", err)
 			}
 			return nil
 		},
 	}
-
-	cmd.Flags().StringVar(&format, "format", "yaml", "Print output with the selected format")
-
-	return cmd
 }
 
 func metadataCmd(c *app.CLIConfig) *cobra.Command {
