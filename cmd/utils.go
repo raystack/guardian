@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -18,11 +19,11 @@ func parseFile(filePath string, v interface{}) error {
 	switch filepath.Ext(filePath) {
 	case ".json":
 		if err := json.Unmarshal(b, v); err != nil {
-			return err
+			return fmt.Errorf("invalid json: %w", err)
 		}
 	case ".yaml", ".yml":
 		if err := yaml.Unmarshal(b, v); err != nil {
-			return err
+			return fmt.Errorf("invalid yaml: %w", err)
 		}
 	default:
 		return errors.New("unsupported file type")

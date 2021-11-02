@@ -1,12 +1,15 @@
 package policy
 
 import (
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/evaluator"
 )
 
 // Service handling the business logics
@@ -27,7 +30,7 @@ func (s *Service) Create(p *domain.Policy) error {
 	p.Version = 1
 
 	if err := s.validatePolicy(p); err != nil {
-		return fmt.Errorf("policy validation: %v", err)
+		return fmt.Errorf("policy validation: %w", err)
 	}
 
 	return s.policyRepository.Create(p)
@@ -55,7 +58,7 @@ func (s *Service) Update(p *domain.Policy) error {
 	}
 
 	if err := s.validatePolicy(p, "Version"); err != nil {
-		return fmt.Errorf("policy validation: %v", err)
+		return fmt.Errorf("policy validation: %w", err)
 	}
 
 	latestPolicy, err := s.GetOne(p.ID, p.Version)
@@ -81,7 +84,7 @@ func (s *Service) validatePolicy(p *domain.Policy, excludedFields ...string) err
 	}
 
 	if err := s.validateRequirements(p.Requirements); err != nil {
-		return fmt.Errorf("invalid requirements: %v", err)
+		return fmt.Errorf("invalid requirements: %w", err)
 	}
 
 	return nil
@@ -92,11 +95,11 @@ func (s *Service) validateRequirements(requirements []*domain.Requirement) error
 		for j, aa := range r.Appeals {
 			resource, err := s.resourceService.Get(aa.Resource)
 			if err != nil {
-				return fmt.Errorf("requirement[%v].appeals[%v].resource: %v", i, j, err)
+				return fmt.Errorf("requirement[%v].appeals[%v].resource: %w", i, j, err)
 			}
 			provider, err := s.providerService.GetOne(resource.ProviderType, resource.ProviderURN)
 			if err != nil {
-				return fmt.Errorf("requirement[%v].appeals[%v].resource: retrieving provider: %v", i, j, err)
+				return fmt.Errorf("requirement[%v].appeals[%v].resource: retrieving provider: %w", i, j, err)
 			}
 
 			appeal := &domain.Appeal{
@@ -106,7 +109,7 @@ func (s *Service) validateRequirements(requirements []*domain.Requirement) error
 				Options:    aa.Options,
 			}
 			if err := s.providerService.ValidateAppeal(appeal, provider); err != nil {
-				return fmt.Errorf("requirement[%v].appeals[%v]: %v", i, j, err)
+				return fmt.Errorf("requirement[%v].appeals[%v]: %w", i, j, err)
 			}
 		}
 	}
@@ -114,43 +117,16 @@ func (s *Service) validateRequirements(requirements []*domain.Requirement) error
 }
 
 func (s *Service) validateSteps(steps []*domain.Step) error {
-	validVariables := []string{
-		domain.ApproversKeyResource,
-		domain.ApproversKeyCreator,
-	}
-
-	for i, step := range steps {
+	for _, step := range steps {
 		if containsWhitespaces(step.Name) {
-			return ErrStepNameContainsWhitespaces
+			return fmt.Errorf(`%w: "%s"`, ErrStepNameContainsWhitespaces, step.Name)
 		}
 
-		// validate approvers
-		if strings.HasPrefix(step.Approvers, "$") {
-			isValidVariable := false
-			for _, v := range validVariables {
-				if strings.HasPrefix(step.Approvers, v) {
-					isValidVariable = true
-					break
+		if step.Approvers != nil {
+			for _, approver := range step.Approvers {
+				if err := s.validateApprover(approver); err != nil {
+					return fmt.Errorf(`validating approver "%s": %w`, approver, err)
 				}
-			}
-
-			if !isValidVariable {
-				return fmt.Errorf("%v: %v", ErrInvalidApprovers, step.Approvers)
-			}
-		}
-
-		// validate dependencies
-		for _, d := range step.Dependencies {
-			isDependencyExists := false
-			for j := 0; j < i; j++ {
-				if steps[j].Name == d {
-					isDependencyExists = true
-					break
-				}
-			}
-
-			if !isDependencyExists {
-				return fmt.Errorf("%v: %v", ErrStepDependencyDoesNotExists, d)
 			}
 		}
 	}
@@ -158,7 +134,67 @@ func (s *Service) validateSteps(steps []*domain.Step) error {
 	return nil
 }
 
+func (s *Service) validateApprover(expr string) error {
+	if err := s.validator.Var(expr, "email"); err == nil {
+		return nil
+	}
+
+	// skip validation if expression is accessing arbitrary value
+	if strings.Contains(expr, "$appeal.resource.details") ||
+		strings.Contains(expr, "$appeal.creator") {
+		return nil
+	}
+
+	dummyAppeal := &domain.Appeal{
+		Resource: &domain.Resource{},
+	}
+	dummyAppealMap, err := structToMap(dummyAppeal)
+	if err != nil {
+		return fmt.Errorf("parsing appeal to map: %w", err)
+	}
+	approvers, err := evaluator.Expression(expr).EvaluateWithVars(map[string]interface{}{
+		"appeal": dummyAppealMap,
+	})
+	if err != nil {
+		return fmt.Errorf("evaluating expression: %w", err)
+	}
+
+	// value type should be string or []string
+	value := reflect.ValueOf(approvers)
+	switch value.Type().Kind() {
+	case reflect.String:
+		return nil
+	case reflect.Slice:
+		elem := value.Type().Elem()
+		switch elem.Kind() {
+		case
+			reflect.String,
+			reflect.Interface: // can't determine exact type of interface{} elem
+			return nil
+		}
+	}
+
+	return fmt.Errorf(`invalid value type: "%s"`, expr)
+}
+
 func containsWhitespaces(s string) bool {
 	r, _ := regexp.Compile(`\s`)
 	return r.Match([]byte(s))
+}
+
+func structToMap(item interface{}) (map[string]interface{}, error) {
+	result := map[string]interface{}{}
+
+	if item != nil {
+		jsonString, err := json.Marshal(item)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal(jsonString, &result); err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
 }

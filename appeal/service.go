@@ -3,12 +3,12 @@ package appeal
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
+	"reflect"
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/mcuadros/go-lookup"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/evaluator"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
@@ -174,11 +174,17 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 		a.Policy = policies[policyConfig.ID][uint(policyConfig.Version)]
 
+		creatorDetails, err := s.iamService.GetUser(a.CreatedBy)
+		if err != nil {
+			return fmt.Errorf("fetching creator's user iam: %w", err)
+		}
+		a.Creator = creatorDetails
+
 		approvals := []*domain.Approval{}
 		for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService
-			var approvers []string
-			if step.Approvers != "" {
-				approvers, err = s.resolveApprovers(a.AccountID, a.Resource, step.Approvers)
+			var approverEmails []string
+			if step.Strategy == domain.ApprovalStepStrategyManual {
+				approverEmails, err = s.resolveApprovers(step.Approvers, a)
 				if err != nil {
 					return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
 				}
@@ -195,7 +201,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 				Status:        status,
 				PolicyID:      policyConfig.ID,
 				PolicyVersion: uint(policyConfig.Version),
-				Approvers:     approvers,
+				Approvers:     approverEmails,
 			})
 		}
 
@@ -535,73 +541,51 @@ func (s *Service) getPoliciesMap() (map[string]map[uint]*domain.Policy, error) {
 	return policiesMap, nil
 }
 
-func (s *Service) resolveApprovers(user string, resource *domain.Resource, approversKey string) ([]string, error) {
+func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) ([]string, error) {
 	var approvers []string
 
 	// TODO: validate from policyService.Validate(policy)
-	if strings.HasPrefix(approversKey, "$") {
-		if strings.HasPrefix(approversKey, domain.ApproversKeyResource) {
-			mapResource, err := structToMap(resource)
-			if err != nil {
-				return nil, err
-			}
-
-			path := strings.TrimPrefix(approversKey, fmt.Sprintf("%s.", domain.ApproversKeyResource))
-			approverEmails, err := getApproverEmails(mapResource, path)
-			if err != nil {
-				return nil, fmt.Errorf("getting approver email(s) from resource: %w", err)
-			}
-			approvers = approverEmails
-		} else if strings.HasPrefix(approversKey, domain.ApproversKeyCreator) {
-			userDetails, err := s.iamService.GetUser(user)
-			if err != nil {
-				return nil, fmt.Errorf("fetching creator's iam: %w", err)
-			}
-
-			path := strings.TrimPrefix(approversKey, fmt.Sprintf("%s.", domain.ApproversKeyCreator))
-			approverEmails, err := getApproverEmails(userDetails, path)
-			if err != nil {
-				return nil, fmt.Errorf("getting approver email(s) from creator's iam: %w", err)
-			}
-			approvers = approverEmails
+	for _, expr := range expressions {
+		if err := s.validator.Var(expr, "email"); err == nil {
+			approvers = append(approvers, expr)
 		} else {
-			return nil, ErrApproverKeyNotRecognized
+			appealMap, err := structToMap(appeal)
+			if err != nil {
+				return nil, fmt.Errorf("parsing appeal to map: %w", err)
+			}
+			params := map[string]interface{}{
+				"appeal": appealMap,
+			}
+
+			approversValue, err := evaluator.Expression(expr).EvaluateWithVars(params)
+			if err != nil {
+				return nil, fmt.Errorf("evaluating aprrovers expression: %w", err)
+			}
+
+			value := reflect.ValueOf(approversValue)
+			switch value.Type().Kind() {
+			case reflect.String:
+				approvers = append(approvers, value.String())
+			case reflect.Slice:
+				for i := 0; i < value.Len(); i++ {
+					itemValue := reflect.ValueOf(value.Index(i).Interface())
+					switch itemValue.Type().Kind() {
+					case reflect.String:
+						approvers = append(approvers, itemValue.String())
+					default:
+						return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, itemValue.Type().Kind())
+					}
+				}
+			default:
+				return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, value.Type().Kind())
+			}
 		}
-	} else {
-		approvers = append(approvers, approversKey)
 	}
 
 	if err := s.validator.Var(approvers, "dive,email"); err != nil {
 		return nil, err
 	}
 	return approvers, nil
-}
-
-func getApproverEmails(v interface{}, path string) ([]string, error) {
-	approversReflectValue, err := lookup.LookupString(v, path)
-	if err != nil {
-		return nil, err
-	}
-
-	var approverEmails []string
-	email, ok := approversReflectValue.Interface().(string)
-	if !ok {
-		emails, ok := approversReflectValue.Interface().([]interface{})
-		if !ok {
-			return nil, ErrApproverInvalidType
-		}
-
-		for _, e := range emails {
-			emailString, ok := e.(string)
-			if !ok {
-				return nil, ErrApproverInvalidType
-			}
-			approverEmails = append(approverEmails, emailString)
-		}
-	} else {
-		approverEmails = append(approverEmails, email)
-	}
-	return approverEmails, nil
 }
 
 func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
