@@ -72,6 +72,15 @@ func (s *Service) Update(p *domain.Policy) error {
 	return s.policyRepository.Create(p)
 }
 
+func (s *Service) GetIAMClient(p *domain.Policy) (domain.IAMClient, error) {
+	iamConfig, err := parseIAMConfig(p.IAM)
+	if err != nil {
+		return nil, fmt.Errorf("parsing iam config: %w", err)
+	}
+
+	return iam.NewClient(iamConfig)
+}
+
 func (s *Service) validatePolicy(p *domain.Policy, excludedFields ...string) error {
 	if containsWhitespaces(p.ID) {
 		return ErrIDContainsWhitespaces
@@ -99,11 +108,11 @@ func (s *Service) validatePolicy(p *domain.Policy, excludedFields ...string) err
 }
 
 func (s *Service) validateIamConfig(config map[string]interface{}) error {
-	iamConfig, err := readIamConfig(config)
+	iamConfig, err := parseIAMConfig(config)
 	if err != nil {
-		return fmt.Errorf("reading config: %w", err)
+		return fmt.Errorf("parsing iam config: %w", err)
 	}
-	fmt.Printf("iamConfig: %+v\n", iamConfig)
+
 	return s.validator.Struct(iamConfig)
 }
 
@@ -216,7 +225,7 @@ func structToMap(item interface{}) (map[string]interface{}, error) {
 	return result, nil
 }
 
-func readIamConfig(v interface{}) (*iam.ClientConfig, error) {
+func parseIAMConfig(v interface{}) (*iam.ClientConfig, error) {
 	var clientConfig iam.ClientConfig
 	if err := mapstructure.Decode(v, &clientConfig); err != nil {
 		return nil, err

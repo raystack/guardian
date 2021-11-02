@@ -23,7 +23,6 @@ type Service struct {
 	resourceService domain.ResourceService
 	providerService domain.ProviderService
 	policyService   domain.PolicyService
-	iamClient       domain.IAMClient
 	notifier        domain.Notifier
 	logger          log.Logger
 
@@ -38,7 +37,6 @@ func NewService(
 	resourceService domain.ResourceService,
 	providerService domain.ProviderService,
 	policyService domain.PolicyService,
-	iamClient domain.IAMClient,
 	notifier domain.Notifier,
 	logger log.Logger,
 ) *Service {
@@ -48,7 +46,6 @@ func NewService(
 		resourceService: resourceService,
 		providerService: providerService,
 		policyService:   policyService,
-		iamClient:       iamClient,
 		notifier:        notifier,
 		validator:       validator.New(),
 		logger:          logger,
@@ -174,11 +171,18 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 		a.Policy = policies[policyConfig.ID][uint(policyConfig.Version)]
 
-		creatorDetails, err := s.iamClient.GetUser(a.CreatedBy)
-		if err != nil {
-			return fmt.Errorf("fetching creator's user iam: %w", err)
+		if a.Policy.IAM != nil {
+			iamClient, err := s.policyService.GetIAMClient(a.Policy)
+			if err != nil {
+				return fmt.Errorf("getting iam client: %w", err)
+			}
+
+			creatorDetails, err := iamClient.GetUser(a.CreatedBy)
+			if err != nil {
+				return fmt.Errorf("fetching creator's user iam: %w", err)
+			}
+			a.Creator = creatorDetails
 		}
-		a.Creator = creatorDetails
 
 		approvals := []*domain.Approval{}
 		for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService

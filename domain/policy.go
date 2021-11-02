@@ -203,4 +203,5 @@ type PolicyService interface {
 	Find() ([]*Policy, error)
 	GetOne(id string, version uint) (*Policy, error)
 	Update(*Policy) error
+	GetIAMClient(*Policy) (IAMClient, error)
 }

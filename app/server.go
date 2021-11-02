@@ -15,7 +15,6 @@ import (
 	"github.com/odpf/guardian/approval"
 	"github.com/odpf/guardian/crypto"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/notifier"
 	"github.com/odpf/guardian/policy"
@@ -63,11 +62,6 @@ func RunServer(c *Config) error {
 	appealRepository := appeal.NewRepository(db)
 	approvalRepository := approval.NewRepository(db)
 
-	iamClient, err := iam.NewClient(&c.IAM)
-	if err != nil {
-		return err
-	}
-
 	providers := []domain.ProviderInterface{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
 		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
@@ -97,7 +91,6 @@ func RunServer(c *Config) error {
 		resourceService,
 		providerService,
 		policyService,
-		iamClient,
 		notifier,
 		logger,
 	)
