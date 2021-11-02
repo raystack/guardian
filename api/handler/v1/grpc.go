@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
+	guardianv1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1"
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/policy"
@@ -17,22 +17,22 @@ import (
 )
 
 type ProtoAdapter interface {
-	FromProviderProto(*pb.Provider) (*domain.Provider, error)
-	FromProviderConfigProto(*pb.ProviderConfig) (*domain.ProviderConfig, error)
-	ToProviderProto(*domain.Provider) (*pb.Provider, error)
-	ToProviderConfigProto(*domain.ProviderConfig) (*pb.ProviderConfig, error)
-	ToRole(*domain.Role) (*pb.Role, error)
+	FromProviderProto(*guardianv1.Provider) (*domain.Provider, error)
+	FromProviderConfigProto(*guardianv1.ProviderConfig) (*domain.ProviderConfig, error)
+	ToProviderProto(*domain.Provider) (*guardianv1.Provider, error)
+	ToProviderConfigProto(*domain.ProviderConfig) (*guardianv1.ProviderConfig, error)
+	ToRole(*domain.Role) (*guardianv1.Role, error)
 
-	FromPolicyProto(*pb.Policy) (*domain.Policy, error)
-	ToPolicyProto(*domain.Policy) (*pb.Policy, error)
+	FromPolicyProto(*guardianv1.Policy) (*domain.Policy, error)
+	ToPolicyProto(*domain.Policy) (*guardianv1.Policy, error)
 
-	FromResourceProto(*pb.Resource) *domain.Resource
-	ToResourceProto(*domain.Resource) (*pb.Resource, error)
+	FromResourceProto(*guardianv1.Resource) *domain.Resource
+	ToResourceProto(*domain.Resource) (*guardianv1.Resource, error)
 
-	FromAppealProto(*pb.Appeal) (*domain.Appeal, error)
-	ToAppealProto(*domain.Appeal) (*pb.Appeal, error)
-	FromCreateAppealProto(*pb.CreateAppealRequest, string) ([]*domain.Appeal, error)
-	ToApprovalProto(*domain.Approval) (*pb.Approval, error)
+	FromAppealProto(*guardianv1.Appeal) (*domain.Appeal, error)
+	ToAppealProto(*domain.Appeal) (*guardianv1.Appeal, error)
+	FromCreateAppealProto(*guardianv1.CreateAppealRequest, string) ([]*domain.Appeal, error)
+	ToApprovalProto(*domain.Approval) (*guardianv1.Approval, error)
 }
 
 type GRPCServer struct {
@@ -45,7 +45,7 @@ type GRPCServer struct {
 
 	authenticatedUserHeaderKey string
 
-	pb.UnimplementedGuardianServiceServer
+	guardianv1.UnimplementedGuardianServiceServer
 }
 
 func NewGRPCServer(
@@ -68,13 +68,13 @@ func NewGRPCServer(
 	}
 }
 
-func (s *GRPCServer) ListProviders(ctx context.Context, req *pb.ListProvidersRequest) (*pb.ListProvidersResponse, error) {
+func (s *GRPCServer) ListProviders(ctx context.Context, req *guardianv1.ListProvidersRequest) (*guardianv1.ListProvidersResponse, error) {
 	providers, err := s.providerService.Find()
 	if err != nil {
 		return nil, err
 	}
 
-	providerProtos := []*pb.Provider{}
+	providerProtos := []*guardianv1.Provider{}
 	for _, p := range providers {
 		p.Config.Credentials = nil
 		providerProto, err := s.adapter.ToProviderProto(p)
@@ -84,12 +84,12 @@ func (s *GRPCServer) ListProviders(ctx context.Context, req *pb.ListProvidersReq
 		providerProtos = append(providerProtos, providerProto)
 	}
 
-	return &pb.ListProvidersResponse{
+	return &guardianv1.ListProvidersResponse{
 		Providers: providerProtos,
 	}, nil
 }
 
-func (s *GRPCServer) GetProvider(ctx context.Context, req *pb.GetProviderRequest) (*pb.Provider, error) {
+func (s *GRPCServer) GetProvider(ctx context.Context, req *guardianv1.GetProviderRequest) (*guardianv1.GetProviderResponse, error) {
 	p, err := s.providerService.GetByID(uint(req.GetId()))
 	if err != nil {
 		switch err {
@@ -105,10 +105,12 @@ func (s *GRPCServer) GetProvider(ctx context.Context, req *pb.GetProviderRequest
 		return nil, status.Errorf(codes.Internal, "failed to parse provider %s: %v", p.URN, err)
 	}
 
-	return providerProto, nil
+	return &guardianv1.GetProviderResponse{
+		Provider: providerProto,
+	}, nil
 }
 
-func (s *GRPCServer) CreateProvider(ctx context.Context, req *pb.CreateProviderRequest) (*pb.CreateProviderResponse, error) {
+func (s *GRPCServer) CreateProvider(ctx context.Context, req *guardianv1.CreateProviderRequest) (*guardianv1.CreateProviderResponse, error) {
 	providerConfig, err := s.adapter.FromProviderConfigProto(req.GetConfig())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot deserialize provider config: %v", err)
@@ -128,12 +130,12 @@ func (s *GRPCServer) CreateProvider(ctx context.Context, req *pb.CreateProviderR
 		return nil, status.Errorf(codes.Internal, "failed to parse provider: %v", err)
 	}
 
-	return &pb.CreateProviderResponse{
+	return &guardianv1.CreateProviderResponse{
 		Provider: providerProto,
 	}, nil
 }
 
-func (s *GRPCServer) UpdateProvider(ctx context.Context, req *pb.UpdateProviderRequest) (*pb.UpdateProviderResponse, error) {
+func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1.UpdateProviderRequest) (*guardianv1.UpdateProviderResponse, error) {
 	id := req.GetId()
 	providerConfig, err := s.adapter.FromProviderConfigProto(req.GetConfig())
 	if err != nil {
@@ -155,18 +157,18 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *pb.UpdateProviderR
 		return nil, status.Errorf(codes.Internal, "failed to parse provider: %v", err)
 	}
 
-	return &pb.UpdateProviderResponse{
+	return &guardianv1.UpdateProviderResponse{
 		Provider: providerProto,
 	}, nil
 }
 
-func (s *GRPCServer) ListRoles(ctx context.Context, req *pb.ListRolesRequest) (*pb.ListRolesResponse, error) {
+func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1.ListRolesRequest) (*guardianv1.ListRolesResponse, error) {
 	roles, err := s.providerService.GetRoles(uint(req.GetId()), req.GetResourceType())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list roles: %v", err)
 	}
 
-	roleProtos := []*pb.Role{}
+	roleProtos := []*guardianv1.Role{}
 	for _, r := range roles {
 		role, err := s.adapter.ToRole(r)
 		if err != nil {
@@ -176,18 +178,18 @@ func (s *GRPCServer) ListRoles(ctx context.Context, req *pb.ListRolesRequest) (*
 		roleProtos = append(roleProtos, role)
 	}
 
-	return &pb.ListRolesResponse{
+	return &guardianv1.ListRolesResponse{
 		Roles: roleProtos,
 	}, nil
 }
 
-func (s *GRPCServer) ListPolicies(ctx context.Context, req *pb.ListPoliciesRequest) (*pb.ListPoliciesResponse, error) {
+func (s *GRPCServer) ListPolicies(ctx context.Context, req *guardianv1.ListPoliciesRequest) (*guardianv1.ListPoliciesResponse, error) {
 	policies, err := s.policyService.Find()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get policy list: %v", err)
 	}
 
-	policyProtos := []*pb.Policy{}
+	policyProtos := []*guardianv1.Policy{}
 	for _, p := range policies {
 		policyProto, err := s.adapter.ToPolicyProto(p)
 		if err != nil {
@@ -196,12 +198,12 @@ func (s *GRPCServer) ListPolicies(ctx context.Context, req *pb.ListPoliciesReque
 		policyProtos = append(policyProtos, policyProto)
 	}
 
-	return &pb.ListPoliciesResponse{
+	return &guardianv1.ListPoliciesResponse{
 		Policies: policyProtos,
 	}, nil
 }
 
-func (s *GRPCServer) GetPolicy(ctx context.Context, req *pb.GetPolicyRequest) (*pb.Policy, error) {
+func (s *GRPCServer) GetPolicy(ctx context.Context, req *guardianv1.GetPolicyRequest) (*guardianv1.GetPolicyResponse, error) {
 	p, err := s.policyService.GetOne(req.GetId(), uint(req.GetVersion()))
 	if err != nil {
 		switch err {
@@ -217,10 +219,12 @@ func (s *GRPCServer) GetPolicy(ctx context.Context, req *pb.GetPolicyRequest) (*
 		return nil, status.Errorf(codes.Internal, "failed to parse policy: %v", err)
 	}
 
-	return policyProto, nil
+	return &guardianv1.GetPolicyResponse{
+		Policy: policyProto,
+	}, nil
 }
 
-func (s *GRPCServer) CreatePolicy(ctx context.Context, req *pb.CreatePolicyRequest) (*pb.CreatePolicyResponse, error) {
+func (s *GRPCServer) CreatePolicy(ctx context.Context, req *guardianv1.CreatePolicyRequest) (*guardianv1.CreatePolicyResponse, error) {
 	policy, err := s.adapter.FromPolicyProto(req.GetPolicy())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot deserialize policy: %v", err)
@@ -235,12 +239,12 @@ func (s *GRPCServer) CreatePolicy(ctx context.Context, req *pb.CreatePolicyReque
 		return nil, status.Errorf(codes.Internal, "failed to parse policy: %v", err)
 	}
 
-	return &pb.CreatePolicyResponse{
+	return &guardianv1.CreatePolicyResponse{
 		Policy: policyProto,
 	}, nil
 }
 
-func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyRequest) (*pb.UpdatePolicyResponse, error) {
+func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *guardianv1.UpdatePolicyRequest) (*guardianv1.UpdatePolicyResponse, error) {
 	p, err := s.adapter.FromPolicyProto(req.GetPolicy())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot deserialize policy: %v", err)
@@ -262,12 +266,12 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *pb.UpdatePolicyReque
 		return nil, status.Errorf(codes.Internal, "failed to parse policy: %v", err)
 	}
 
-	return &pb.UpdatePolicyResponse{
+	return &guardianv1.UpdatePolicyResponse{
 		Policy: policyProto,
 	}, nil
 }
 
-func (s *GRPCServer) ListResources(ctx context.Context, req *pb.ListResourcesRequest) (*pb.ListResourcesResponse, error) {
+func (s *GRPCServer) ListResources(ctx context.Context, req *guardianv1.ListResourcesRequest) (*guardianv1.ListResourcesResponse, error) {
 	var details map[string]string
 	if req.GetDetails() != nil {
 		details = map[string]string{}
@@ -293,7 +297,7 @@ func (s *GRPCServer) ListResources(ctx context.Context, req *pb.ListResourcesReq
 		return nil, status.Errorf(codes.Internal, "failed to get resource list: %v", err)
 	}
 
-	resourceProtos := []*pb.Resource{}
+	resourceProtos := []*guardianv1.Resource{}
 	for _, r := range resources {
 		resourceProto, err := s.adapter.ToResourceProto(r)
 		if err != nil {
@@ -302,12 +306,12 @@ func (s *GRPCServer) ListResources(ctx context.Context, req *pb.ListResourcesReq
 		resourceProtos = append(resourceProtos, resourceProto)
 	}
 
-	return &pb.ListResourcesResponse{
+	return &guardianv1.ListResourcesResponse{
 		Resources: resourceProtos,
 	}, nil
 }
 
-func (s *GRPCServer) GetResource(ctx context.Context, req *pb.GetResourceRequest) (*pb.Resource, error) {
+func (s *GRPCServer) GetResource(ctx context.Context, req *guardianv1.GetResourceRequest) (*guardianv1.GetResourceResponse, error) {
 	r, err := s.resourceService.GetOne(uint(req.GetId()))
 	if err != nil {
 		switch err {
@@ -323,10 +327,12 @@ func (s *GRPCServer) GetResource(ctx context.Context, req *pb.GetResourceRequest
 		return nil, status.Errorf(codes.Internal, "failed to parse resource: %v", err)
 	}
 
-	return resourceProto, nil
+	return &guardianv1.GetResourceResponse{
+		Resource: resourceProto,
+	}, nil
 }
 
-func (s *GRPCServer) UpdateResource(ctx context.Context, req *pb.UpdateResourceRequest) (*pb.UpdateResourceResponse, error) {
+func (s *GRPCServer) UpdateResource(ctx context.Context, req *guardianv1.UpdateResourceRequest) (*guardianv1.UpdateResourceResponse, error) {
 	r := s.adapter.FromResourceProto(req.GetResource())
 	r.ID = uint(req.GetId())
 
@@ -342,12 +348,12 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *pb.UpdateResourceR
 		return nil, status.Errorf(codes.Internal, "failed to parse resource: %v", err)
 	}
 
-	return &pb.UpdateResourceResponse{
+	return &guardianv1.UpdateResourceResponse{
 		Resource: resourceProto,
 	}, nil
 }
 
-func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *pb.ListUserAppealsRequest) (*pb.ListUserAppealsResponse, error) {
+func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1.ListUserAppealsRequest) (*guardianv1.ListUserAppealsResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
@@ -361,12 +367,12 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *pb.ListUserAppeal
 		return nil, err
 	}
 
-	return &pb.ListUserAppealsResponse{
+	return &guardianv1.ListUserAppealsResponse{
 		Appeals: appeals,
 	}, nil
 }
 
-func (s *GRPCServer) ListAppeals(ctx context.Context, req *pb.ListAppealsRequest) (*pb.ListAppealsResponse, error) {
+func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1.ListAppealsRequest) (*guardianv1.ListAppealsResponse, error) {
 	filters := map[string]interface{}{}
 	if req.GetAccountId() != "" {
 		filters["account_id"] = req.GetAccountId()
@@ -376,12 +382,12 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *pb.ListAppealsRequest
 		return nil, err
 	}
 
-	return &pb.ListAppealsResponse{
+	return &guardianv1.ListAppealsResponse{
 		Appeals: appeals,
 	}, nil
 }
 
-func (s *GRPCServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealRequest) (*pb.CreateAppealResponse, error) {
+func (s *GRPCServer) CreateAppeal(ctx context.Context, req *guardianv1.CreateAppealRequest) (*guardianv1.CreateAppealResponse, error) {
 	authenticatedUser, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
@@ -399,7 +405,7 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealReque
 		return nil, status.Errorf(codes.Internal, "failed to create appeal: %v", err)
 	}
 
-	appealProtos := []*pb.Appeal{}
+	appealProtos := []*guardianv1.Appeal{}
 	for _, appeal := range appeals {
 		appealProto, err := s.adapter.ToAppealProto(appeal)
 		if err != nil {
@@ -408,12 +414,12 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *pb.CreateAppealReque
 		appealProtos = append(appealProtos, appealProto)
 	}
 
-	return &pb.CreateAppealResponse{
+	return &guardianv1.CreateAppealResponse{
 		Appeals: appealProtos,
 	}, nil
 }
 
-func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *pb.ListUserApprovalsRequest) (*pb.ListUserApprovalsResponse, error) {
+func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1.ListUserApprovalsRequest) (*guardianv1.ListUserApprovalsResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
@@ -427,12 +433,12 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *pb.ListUserAppr
 		return nil, err
 	}
 
-	return &pb.ListUserApprovalsResponse{
+	return &guardianv1.ListUserApprovalsResponse{
 		Approvals: approvals,
 	}, nil
 }
 
-func (s *GRPCServer) ListApprovals(ctx context.Context, req *pb.ListApprovalsRequest) (*pb.ListApprovalsResponse, error) {
+func (s *GRPCServer) ListApprovals(ctx context.Context, req *guardianv1.ListApprovalsRequest) (*guardianv1.ListApprovalsResponse, error) {
 	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
 		AccountID: req.GetAccountId(),
 		Statuses:  req.GetStatuses(),
@@ -441,12 +447,12 @@ func (s *GRPCServer) ListApprovals(ctx context.Context, req *pb.ListApprovalsReq
 		return nil, err
 	}
 
-	return &pb.ListApprovalsResponse{
+	return &guardianv1.ListApprovalsResponse{
 		Approvals: approvals,
 	}, nil
 }
 
-func (s *GRPCServer) GetAppeal(ctx context.Context, req *pb.GetAppealRequest) (*pb.GetAppealResponse, error) {
+func (s *GRPCServer) GetAppeal(ctx context.Context, req *guardianv1.GetAppealRequest) (*guardianv1.GetAppealResponse, error) {
 	id := req.GetId()
 	appeal, err := s.appealService.GetByID(uint(id))
 	if err != nil {
@@ -461,12 +467,12 @@ func (s *GRPCServer) GetAppeal(ctx context.Context, req *pb.GetAppealRequest) (*
 		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
 	}
 
-	return &pb.GetAppealResponse{
+	return &guardianv1.GetAppealResponse{
 		Appeal: appealProto,
 	}, nil
 }
 
-func (s *GRPCServer) UpdateApproval(ctx context.Context, req *pb.UpdateApprovalRequest) (*pb.UpdateApprovalResponse, error) {
+func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1.UpdateApprovalRequest) (*guardianv1.UpdateApprovalResponse, error) {
 	actor, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
@@ -508,12 +514,12 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *pb.UpdateApprovalR
 		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
 	}
 
-	return &pb.UpdateApprovalResponse{
+	return &guardianv1.UpdateApprovalResponse{
 		Appeal: appealProto,
 	}, nil
 }
 
-func (s *GRPCServer) CancelAppeal(ctx context.Context, req *pb.CancelAppealRequest) (*pb.CancelAppealResponse, error) {
+func (s *GRPCServer) CancelAppeal(ctx context.Context, req *guardianv1.CancelAppealRequest) (*guardianv1.CancelAppealResponse, error) {
 	id := req.GetId()
 	a, err := s.appealService.Cancel(uint(id))
 	if err != nil {
@@ -536,12 +542,12 @@ func (s *GRPCServer) CancelAppeal(ctx context.Context, req *pb.CancelAppealReque
 		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
 	}
 
-	return &pb.CancelAppealResponse{
+	return &guardianv1.CancelAppealResponse{
 		Appeal: appealProto,
 	}, nil
 }
 
-func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealRequest) (*pb.RevokeAppealResponse, error) {
+func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1.RevokeAppealRequest) (*guardianv1.RevokeAppealResponse, error) {
 	id := req.GetId()
 	actor, err := s.getUser(ctx)
 	if err != nil {
@@ -564,18 +570,18 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *pb.RevokeAppealReque
 		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
 	}
 
-	return &pb.RevokeAppealResponse{
+	return &guardianv1.RevokeAppealResponse{
 		Appeal: appealProto,
 	}, nil
 }
 
-func (s *GRPCServer) listAppeals(filters map[string]interface{}) ([]*pb.Appeal, error) {
+func (s *GRPCServer) listAppeals(filters map[string]interface{}) ([]*guardianv1.Appeal, error) {
 	appeals, err := s.appealService.Find(filters)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get appeal list: %s", err)
 	}
 
-	appealProtos := []*pb.Appeal{}
+	appealProtos := []*guardianv1.Appeal{}
 	for _, a := range appeals {
 		appealProto, err := s.adapter.ToAppealProto(a)
 		if err != nil {
@@ -587,13 +593,13 @@ func (s *GRPCServer) listAppeals(filters map[string]interface{}) ([]*pb.Appeal, 
 	return appealProtos, nil
 }
 
-func (s *GRPCServer) listApprovals(filters *domain.ListApprovalsFilter) ([]*pb.Approval, error) {
+func (s *GRPCServer) listApprovals(filters *domain.ListApprovalsFilter) ([]*guardianv1.Approval, error) {
 	approvals, err := s.approvalService.ListApprovals(filters)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get approval list: %s", err)
 	}
 
-	approvalProtos := []*pb.Approval{}
+	approvalProtos := []*guardianv1.Approval{}
 	for _, a := range approvals {
 		approvalProto, err := s.adapter.ToApprovalProto(a)
 		if err != nil {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
+	guardianv1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1"
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
@@ -42,7 +42,7 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.ListAppeals(ctx, &pb.ListAppealsRequest{})
+			res, err := client.ListAppeals(ctx, &guardianv1.ListAppealsRequest{})
 			if err != nil {
 				return err
 			}
@@ -94,9 +94,9 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.CreateAppeal(ctx, &pb.CreateAppealRequest{
+			res, err := client.CreateAppeal(ctx, &guardianv1.CreateAppealRequest{
 				AccountId: accountID,
-				Resources: []*pb.CreateAppealRequest_Resource{
+				Resources: []*guardianv1.CreateAppealRequest_Resource{
 					{
 						Id:      uint32(resourceID),
 						Role:    role,
@@ -141,9 +141,9 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			_, err = client.RevokeAppeal(ctx, &pb.RevokeAppealRequest{
+			_, err = client.RevokeAppeal(ctx, &guardianv1.RevokeAppealRequest{
 				Id: uint32(id),
-				Reason: &pb.RevokeAppealRequest_Reason{
+				Reason: &guardianv1.RevokeAppealRequest_Reason{
 					Reason: reason,
 				},
 			})
@@ -179,10 +179,10 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			_, err = client.UpdateApproval(ctx, &pb.UpdateApprovalRequest{
+			_, err = client.UpdateApproval(ctx, &guardianv1.UpdateApprovalRequest{
 				Id:           uint32(id),
 				ApprovalName: approvalName,
-				Action: &pb.UpdateApprovalRequest_Action{
+				Action: &guardianv1.UpdateApprovalRequest_Action{
 					Action: "approve",
 				},
 			})
@@ -220,10 +220,10 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			_, err = client.UpdateApproval(ctx, &pb.UpdateApprovalRequest{
+			_, err = client.UpdateApproval(ctx, &guardianv1.UpdateApprovalRequest{
 				Id:           uint32(id),
 				ApprovalName: approvalName,
-				Action: &pb.UpdateApprovalRequest_Action{
+				Action: &guardianv1.UpdateApprovalRequest_Action{
 					Action: "reject",
 				},
 			})
