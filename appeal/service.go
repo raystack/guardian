@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/evaluator"
+	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
@@ -24,6 +25,7 @@ type Service struct {
 	providerService domain.ProviderService
 	policyService   domain.PolicyService
 	notifier        domain.Notifier
+	IAMClient       domain.IAMClient
 	logger          log.Logger
 
 	validator *validator.Validate
@@ -172,12 +174,18 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		a.Policy = policies[policyConfig.ID][uint(policyConfig.Version)]
 
 		if a.Policy.IAM != nil {
-			iamClient, err := s.policyService.GetIAMClient(a.Policy)
-			if err != nil {
-				return fmt.Errorf("getting iam client: %w", err)
+			if s.IAMClient == nil { // workaround for mocking in test
+				iamClient, err := iam.NewClient(a.Policy.IAM)
+				if err != nil {
+					return fmt.Errorf("getting iam client: %w", err)
+				}
+				s.IAMClient = iamClient
+				defer func() {
+					s.IAMClient = nil
+				}()
 			}
 
-			creatorDetails, err := iamClient.GetUser(a.CreatedBy)
+			creatorDetails, err := s.IAMClient.GetUser(a.CreatedBy)
 			if err != nil {
 				return fmt.Errorf("fetching creator's user iam: %w", err)
 			}

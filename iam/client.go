@@ -2,41 +2,31 @@ package iam
 
 import (
 	"errors"
+	"fmt"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 )
 
-type ProviderType string
-
-const (
-	ProviderTypeShield ProviderType = "shield"
-	ProviderTypeHTTP   ProviderType = "http"
+var (
+	ErrInvalidConfig       = errors.New("invalid client config")
+	ErrUnknownProviderType = errors.New("unknown provider type")
 )
 
-type ClientConfig struct {
-	Provider ProviderType `mapstructure:"provider" validate:"oneof=shield http"`
-
-	// shield config
-	Host string `mapstructure:"host" validate:"required_if=Provider shield"`
-
-	// http config
-	URL     string            `mapstructure:"url" validate:"required_if=Provider http"`
-	Headers map[string]string `mapstructure:"headers"`
-	Auth    *HTTPAuthConfig   `mapstructure:"auth" validate:"omitempty,dive"`
-}
-
-func NewClient(config *ClientConfig) (domain.IAMClient, error) {
-	if config.Provider == ProviderTypeShield {
-		return NewShieldClient(&ShieldClientConfig{
-			Host: config.Host,
-		})
-	} else if config.Provider == ProviderTypeHTTP {
-		return NewHTTPClient(&HTTPClientConfig{
-			URL:     config.URL,
-			Auth:    config.Auth,
-			Headers: config.Headers,
-		})
+func NewClient(config *domain.IAMConfig) (domain.IAMClient, error) {
+	if config.Provider == domain.IAMProviderTypeShield {
+		var clientConfig ShieldClientConfig
+		if err := mapstructure.Decode(config.Config, &clientConfig); err != nil {
+			return nil, fmt.Errorf("%w: %s", ErrInvalidConfig, err)
+		}
+		return NewShieldClient(&clientConfig)
+	} else if config.Provider == domain.IAMProviderTypeHTTP {
+		var clientConfig HTTPClientConfig
+		if err := mapstructure.Decode(config.Config, &clientConfig); err != nil {
+			return nil, fmt.Errorf("%w: %s", ErrInvalidConfig, err)
+		}
+		return NewHTTPClient(&clientConfig)
 	}
 
-	return nil, errors.New("invalid iam provider type")
+	return nil, ErrUnknownProviderType
 }

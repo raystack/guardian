@@ -49,29 +49,6 @@ func (_m *PolicyService) Find() ([]*domain.Policy, error) {
 	return r0, r1
 }
 
-// GetIAMClient provides a mock function with given fields: _a0
-func (_m *PolicyService) GetIAMClient(_a0 *domain.Policy) (domain.IAMClient, error) {
-	ret := _m.Called(_a0)
-
-	var r0 domain.IAMClient
-	if rf, ok := ret.Get(0).(func(*domain.Policy) domain.IAMClient); ok {
-		r0 = rf(_a0)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(domain.IAMClient)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*domain.Policy) error); ok {
-		r1 = rf(_a0)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetOne provides a mock function with given fields: id, version
 func (_m *PolicyService) GetOne(id string, version uint) (*domain.Policy, error) {
 	ret := _m.Called(id, version)

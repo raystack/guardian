@@ -219,8 +219,8 @@ func (s *ServiceTestSuite) TestCreate() {
 							},
 						},
 					},
-					IAM: map[string]interface{}{
-						"provider": "invalid-provider",
+					IAM: &domain.IAMConfig{
+						Provider: "invalid-provider",
 					},
 				},
 			},

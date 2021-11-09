@@ -68,7 +68,7 @@ func (m *Policy) ToDomain() (*domain.Policy, error) {
 		return nil, err
 	}
 
-	var iam map[string]interface{}
+	var iam *domain.IAMConfig
 	if m.IAM != nil {
 		if err := json.Unmarshal(m.IAM, &iam); err != nil {
 			return nil, err

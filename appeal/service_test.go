@@ -47,6 +47,7 @@ func (s *ServiceTestSuite) SetupTest() {
 		s.mockNotifier,
 		log.NewNoop(),
 	)
+	service.IAMClient = s.mockIAMClient
 	service.TimeNow = func() time.Time {
 		return s.now
 	}
@@ -584,8 +585,11 @@ func (s *ServiceTestSuite) TestCreate() {
 					},
 				},
 			},
-			IAM: map[string]interface{}{
-				"provider": "http",
+			IAM: &domain.IAMConfig{
+				Provider: "http",
+				Config: map[string]interface{}{
+					"url": "http://localhost",
+				},
 			},
 		},
 	}
@@ -711,7 +715,6 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(nil)
-		s.mockPolicyService.On("GetIAMClient", mock.Anything).Return(s.mockIAMClient, nil)
 		s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 		s.mockRepository.

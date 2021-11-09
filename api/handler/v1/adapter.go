@@ -215,6 +215,14 @@ func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
 		}
 	}
 
+	var iam domain.IAMConfig
+	if p.GetIam() != nil {
+		iam = domain.IAMConfig{
+			Provider: domain.IAMProviderType(p.GetIam().GetProvider()),
+			Config:   p.GetIam().GetConfig().AsInterface(),
+		}
+	}
+
 	return &domain.Policy{
 		ID:           p.GetId(),
 		Version:      uint(p.GetVersion()),
@@ -222,7 +230,7 @@ func (a *adapter) FromPolicyProto(p *pb.Policy) (*domain.Policy, error) {
 		Steps:        steps,
 		Requirements: requirements,
 		Labels:       p.GetLabels(),
-		IAM:          p.GetIam().AsMap(),
+		IAM:          &iam,
 		CreatedAt:    p.GetCreatedAt().AsTime(),
 		UpdatedAt:    p.GetUpdatedAt().AsTime(),
 	}, nil
@@ -300,13 +308,17 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 		}
 	}
 
-	var iamConfig *structpb.Struct
+	var iam pb.Policy_IAM
 	if p.IAM != nil {
-		iam, err := structpb.NewStruct(p.IAM)
+		config, err := structpb.NewValue(p.IAM.Config)
 		if err != nil {
 			return nil, err
 		}
-		iamConfig = iam
+
+		iam = pb.Policy_IAM{
+			Provider: string(p.IAM.Provider),
+			Config:   config,
+		}
 	}
 
 	return &pb.Policy{
@@ -316,7 +328,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 		Steps:        steps,
 		Requirements: requirements,
 		Labels:       p.Labels,
-		Iam:          iamConfig,
+		Iam:          &iam,
 		CreatedAt:    timestamppb.New(p.CreatedAt),
 		UpdatedAt:    timestamppb.New(p.UpdatedAt),
 	}, nil
