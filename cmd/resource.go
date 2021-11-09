@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	handlerv1 "github.com/odpf/guardian/api/handler/v1"
-	guardianv1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1"
+	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
+	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
@@ -17,7 +17,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func ResourceCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.Command {
+func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "resource",
 		Aliases: []string{"resources"},
@@ -40,7 +40,7 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.Comman
 	return cmd
 }
 
-func listResourcesCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.Command {
+func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var providerType, providerURN, resourceType, resourceURN, name string
 	var isDeleted bool
 	var details []string
@@ -64,7 +64,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.C
 			}
 			defer cancel()
 
-			req := &guardianv1.ListResourcesRequest{
+			req := &guardianv1beta1.ListResourcesRequest{
 				ProviderType: providerType,
 				ProviderUrn:  providerURN,
 				Type:         resourceType,
@@ -121,7 +121,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.C
 	return cmd
 }
 
-func getResourceCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.Command {
+func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	return &cobra.Command{
 		Use:   "view",
 		Short: "View a resource details",
@@ -145,7 +145,7 @@ func getResourceCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.Com
 				return fmt.Errorf("invalid resource id: %v", err)
 			}
 
-			res, err := client.GetResource(ctx, &guardianv1.GetResourceRequest{
+			res, err := client.GetResource(ctx, &guardianv1beta1.GetResourceRequest{
 				Id: uint32(id),
 			})
 			if err != nil {
@@ -203,9 +203,9 @@ func metadataCmd(c *app.CLIConfig) *cobra.Command {
 
 			// TODO: get one resource
 
-			_, err = client.UpdateResource(ctx, &guardianv1.UpdateResourceRequest{
+			_, err = client.UpdateResource(ctx, &guardianv1beta1.UpdateResourceRequest{
 				Id: uint32(id),
-				Resource: &guardianv1.Resource{
+				Resource: &guardianv1beta1.Resource{
 					Details: metadataProto,
 				},
 			})

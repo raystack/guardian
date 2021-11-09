@@ -24,9 +24,9 @@ tmp
 /proton/
 /api/proto/odpf/**/*
 
-!/api/proto/odpf/guardian/v1/
-!/api/proto/odpf/guardian/v1/*
-!/api/proto/odpf/guardian/v1/**/*
+!/api/proto/odpf/guardian/v1beta1/
+!/api/proto/odpf/guardian/v1beta1/*
+!/api/proto/odpf/guardian/v1beta1/**/*
 
 !/api/proto/odpf/third_party/
 !/api/proto/odpf/third_party/googleapis/

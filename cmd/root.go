@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	handlerv1 "github.com/odpf/guardian/api/handler/v1"
+	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/salt/cmdx"
 	"github.com/spf13/cobra"
@@ -39,7 +39,7 @@ func New() *cobra.Command {
 		},
 	}
 
-	protoAdapter := handlerv1.NewAdapter()
+	protoAdapter := handlerv1beta1.NewAdapter()
 
 	cliConfig, err := app.LoadCLIConfig(app.CLIConfigFile)
 	if err != nil {

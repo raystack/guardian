@@ -7,15 +7,15 @@ import (
 	"strconv"
 
 	"github.com/MakeNowJust/heredoc"
-	handlerv1 "github.com/odpf/guardian/api/handler/v1"
-	guardianv1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1"
+	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
+	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
 	"github.com/spf13/cobra"
 )
 
-func ProviderCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.Command {
+func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "provider",
 		Aliases: []string{"providers"},
@@ -56,7 +56,7 @@ func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.ListProviders(ctx, &guardianv1.ListProvidersRequest{})
+			res, err := client.ListProviders(ctx, &guardianv1beta1.ListProvidersRequest{})
 			if err != nil {
 				return err
 			}
@@ -83,7 +83,7 @@ func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 	}
 }
 
-func getProviderCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.Command {
+func getProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var format string
 	cmd := &cobra.Command{
 		Use:   "view",
@@ -113,7 +113,7 @@ func getProviderCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.Com
 				return fmt.Errorf("invalid provider id: %v", err)
 			}
 
-			res, err := client.GetProvider(ctx, &guardianv1.GetProviderRequest{
+			res, err := client.GetProvider(ctx, &guardianv1beta1.GetProviderRequest{
 				Id: uint32(id),
 			})
 			if err != nil {
@@ -137,7 +137,7 @@ func getProviderCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.Com
 	return cmd
 }
 
-func createProviderCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.Command {
+func createProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -166,7 +166,7 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.
 			}
 			defer cancel()
 
-			res, err := client.CreateProvider(ctx, &guardianv1.CreateProviderRequest{
+			res, err := client.CreateProvider(ctx, &guardianv1beta1.CreateProviderRequest{
 				Config: configProto,
 			})
 			if err != nil {
@@ -185,7 +185,7 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.
 	return cmd
 }
 
-func updateProviderCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.Command {
+func updateProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var id uint
 	var filePath string
 	cmd := &cobra.Command{
@@ -215,7 +215,7 @@ func updateProviderCmd(c *app.CLIConfig, adapter handlerv1.ProtoAdapter) *cobra.
 			}
 			defer cancel()
 
-			_, err = client.UpdateProvider(ctx, &guardianv1.UpdateProviderRequest{
+			_, err = client.UpdateProvider(ctx, &guardianv1beta1.UpdateProviderRequest{
 				Id:     uint32(id),
 				Config: configProto,
 			})
