@@ -1055,7 +1055,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListProviders", runtime.WithHTTPPathPattern("/providers"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListProviders", runtime.WithHTTPPathPattern("/v1beta1/providers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1078,7 +1078,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetProvider", runtime.WithHTTPPathPattern("/providers/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1101,7 +1101,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreateProvider", runtime.WithHTTPPathPattern("/providers"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreateProvider", runtime.WithHTTPPathPattern("/v1beta1/providers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1124,7 +1124,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateProvider", runtime.WithHTTPPathPattern("/providers/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1147,7 +1147,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListRoles", runtime.WithHTTPPathPattern("/providers/{id}/resources/{resource_type}/roles"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListRoles", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}/resources/{resource_type}/roles"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1170,7 +1170,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListPolicies", runtime.WithHTTPPathPattern("/policies"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListPolicies", runtime.WithHTTPPathPattern("/v1beta1/policies"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1193,7 +1193,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetPolicy", runtime.WithHTTPPathPattern("/policies/{id}/versions/{version}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetPolicy", runtime.WithHTTPPathPattern("/v1beta1/policies/{id}/versions/{version}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1216,7 +1216,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreatePolicy", runtime.WithHTTPPathPattern("/policies"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreatePolicy", runtime.WithHTTPPathPattern("/v1beta1/policies"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1239,7 +1239,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdatePolicy", runtime.WithHTTPPathPattern("/policies/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdatePolicy", runtime.WithHTTPPathPattern("/v1beta1/policies/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1262,7 +1262,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListResources", runtime.WithHTTPPathPattern("/resources"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListResources", runtime.WithHTTPPathPattern("/v1beta1/resources"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1285,7 +1285,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetResource", runtime.WithHTTPPathPattern("/resources/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetResource", runtime.WithHTTPPathPattern("/v1beta1/resources/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1308,7 +1308,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateResource", runtime.WithHTTPPathPattern("/resources/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateResource", runtime.WithHTTPPathPattern("/v1beta1/resources/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1331,7 +1331,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserAppeals", runtime.WithHTTPPathPattern("/me/appeals"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserAppeals", runtime.WithHTTPPathPattern("/v1beta1/me/appeals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1354,7 +1354,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListAppeals", runtime.WithHTTPPathPattern("/appeals"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListAppeals", runtime.WithHTTPPathPattern("/v1beta1/appeals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1377,7 +1377,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetAppeal", runtime.WithHTTPPathPattern("/appeals/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1400,7 +1400,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CancelAppeal", runtime.WithHTTPPathPattern("/appeals/{id}/cancel"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CancelAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}/cancel"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1423,7 +1423,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeAppeal", runtime.WithHTTPPathPattern("/appeals/{id}/revoke"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}/revoke"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1446,7 +1446,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreateAppeal", runtime.WithHTTPPathPattern("/appeals"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreateAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1469,7 +1469,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserApprovals", runtime.WithHTTPPathPattern("/me/approvals"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserApprovals", runtime.WithHTTPPathPattern("/v1beta1/me/approvals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1492,7 +1492,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListApprovals", runtime.WithHTTPPathPattern("/approvals"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListApprovals", runtime.WithHTTPPathPattern("/v1beta1/approvals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1515,7 +1515,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateApproval", runtime.WithHTTPPathPattern("/appeals/{id}/approvals/{approval_name}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateApproval", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}/approvals/{approval_name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1577,7 +1577,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListProviders", runtime.WithHTTPPathPattern("/providers"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListProviders", runtime.WithHTTPPathPattern("/v1beta1/providers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1597,7 +1597,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetProvider", runtime.WithHTTPPathPattern("/providers/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1617,7 +1617,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreateProvider", runtime.WithHTTPPathPattern("/providers"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreateProvider", runtime.WithHTTPPathPattern("/v1beta1/providers"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1637,7 +1637,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateProvider", runtime.WithHTTPPathPattern("/providers/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1657,7 +1657,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListRoles", runtime.WithHTTPPathPattern("/providers/{id}/resources/{resource_type}/roles"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListRoles", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}/resources/{resource_type}/roles"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1677,7 +1677,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListPolicies", runtime.WithHTTPPathPattern("/policies"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListPolicies", runtime.WithHTTPPathPattern("/v1beta1/policies"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1697,7 +1697,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetPolicy", runtime.WithHTTPPathPattern("/policies/{id}/versions/{version}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetPolicy", runtime.WithHTTPPathPattern("/v1beta1/policies/{id}/versions/{version}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1717,7 +1717,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreatePolicy", runtime.WithHTTPPathPattern("/policies"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreatePolicy", runtime.WithHTTPPathPattern("/v1beta1/policies"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1737,7 +1737,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdatePolicy", runtime.WithHTTPPathPattern("/policies/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdatePolicy", runtime.WithHTTPPathPattern("/v1beta1/policies/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1757,7 +1757,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListResources", runtime.WithHTTPPathPattern("/resources"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListResources", runtime.WithHTTPPathPattern("/v1beta1/resources"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1777,7 +1777,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetResource", runtime.WithHTTPPathPattern("/resources/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetResource", runtime.WithHTTPPathPattern("/v1beta1/resources/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1797,7 +1797,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateResource", runtime.WithHTTPPathPattern("/resources/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateResource", runtime.WithHTTPPathPattern("/v1beta1/resources/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1817,7 +1817,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserAppeals", runtime.WithHTTPPathPattern("/me/appeals"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserAppeals", runtime.WithHTTPPathPattern("/v1beta1/me/appeals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1837,7 +1837,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListAppeals", runtime.WithHTTPPathPattern("/appeals"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListAppeals", runtime.WithHTTPPathPattern("/v1beta1/appeals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1857,7 +1857,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetAppeal", runtime.WithHTTPPathPattern("/appeals/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1877,7 +1877,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CancelAppeal", runtime.WithHTTPPathPattern("/appeals/{id}/cancel"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CancelAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}/cancel"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1897,7 +1897,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeAppeal", runtime.WithHTTPPathPattern("/appeals/{id}/revoke"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}/revoke"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1917,7 +1917,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreateAppeal", runtime.WithHTTPPathPattern("/appeals"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/CreateAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1937,7 +1937,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserApprovals", runtime.WithHTTPPathPattern("/me/approvals"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserApprovals", runtime.WithHTTPPathPattern("/v1beta1/me/approvals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1957,7 +1957,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListApprovals", runtime.WithHTTPPathPattern("/approvals"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListApprovals", runtime.WithHTTPPathPattern("/v1beta1/approvals"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1977,7 +1977,7 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateApproval", runtime.WithHTTPPathPattern("/appeals/{id}/approvals/{approval_name}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/UpdateApproval", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}/approvals/{approval_name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1997,47 +1997,47 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_GuardianService_ListProviders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"providers"}, ""))
+	pattern_GuardianService_ListProviders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "providers"}, ""))
 
-	pattern_GuardianService_GetProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"providers", "id"}, ""))
+	pattern_GuardianService_GetProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1beta1", "providers", "id"}, ""))
 
-	pattern_GuardianService_CreateProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"providers"}, ""))
+	pattern_GuardianService_CreateProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "providers"}, ""))
 
-	pattern_GuardianService_UpdateProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"providers", "id"}, ""))
+	pattern_GuardianService_UpdateProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1beta1", "providers", "id"}, ""))
 
-	pattern_GuardianService_ListRoles_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"providers", "id", "resources", "resource_type", "roles"}, ""))
+	pattern_GuardianService_ListRoles_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"v1beta1", "providers", "id", "resources", "resource_type", "roles"}, ""))
 
-	pattern_GuardianService_ListPolicies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"policies"}, ""))
+	pattern_GuardianService_ListPolicies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "policies"}, ""))
 
-	pattern_GuardianService_GetPolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"policies", "id", "versions", "version"}, ""))
+	pattern_GuardianService_GetPolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v1beta1", "policies", "id", "versions", "version"}, ""))
 
-	pattern_GuardianService_CreatePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"policies"}, ""))
+	pattern_GuardianService_CreatePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "policies"}, ""))
 
-	pattern_GuardianService_UpdatePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"policies", "id"}, ""))
+	pattern_GuardianService_UpdatePolicy_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1beta1", "policies", "id"}, ""))
 
-	pattern_GuardianService_ListResources_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"resources"}, ""))
+	pattern_GuardianService_ListResources_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "resources"}, ""))
 
-	pattern_GuardianService_GetResource_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"resources", "id"}, ""))
+	pattern_GuardianService_GetResource_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1beta1", "resources", "id"}, ""))
 
-	pattern_GuardianService_UpdateResource_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"resources", "id"}, ""))
+	pattern_GuardianService_UpdateResource_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1beta1", "resources", "id"}, ""))
 
-	pattern_GuardianService_ListUserAppeals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"me", "appeals"}, ""))
+	pattern_GuardianService_ListUserAppeals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1beta1", "me", "appeals"}, ""))
 
-	pattern_GuardianService_ListAppeals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"appeals"}, ""))
+	pattern_GuardianService_ListAppeals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "appeals"}, ""))
 
-	pattern_GuardianService_GetAppeal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"appeals", "id"}, ""))
+	pattern_GuardianService_GetAppeal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1beta1", "appeals", "id"}, ""))
 
-	pattern_GuardianService_CancelAppeal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2}, []string{"appeals", "id", "cancel"}, ""))
+	pattern_GuardianService_CancelAppeal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1beta1", "appeals", "id", "cancel"}, ""))
 
-	pattern_GuardianService_RevokeAppeal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2}, []string{"appeals", "id", "revoke"}, ""))
+	pattern_GuardianService_RevokeAppeal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1beta1", "appeals", "id", "revoke"}, ""))
 
-	pattern_GuardianService_CreateAppeal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"appeals"}, ""))
+	pattern_GuardianService_CreateAppeal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "appeals"}, ""))
 
-	pattern_GuardianService_ListUserApprovals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"me", "approvals"}, ""))
+	pattern_GuardianService_ListUserApprovals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1beta1", "me", "approvals"}, ""))
 
-	pattern_GuardianService_ListApprovals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"approvals"}, ""))
+	pattern_GuardianService_ListApprovals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "approvals"}, ""))
 
-	pattern_GuardianService_UpdateApproval_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"appeals", "id", "approvals", "approval_name"}, ""))
+	pattern_GuardianService_UpdateApproval_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v1beta1", "appeals", "id", "approvals", "approval_name"}, ""))
 )
 
 var (
