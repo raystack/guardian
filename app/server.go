@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	v1 "github.com/odpf/guardian/api/handler/v1"
-	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
+	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
+	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/appeal"
 	"github.com/odpf/guardian/approval"
 	"github.com/odpf/guardian/crypto"
@@ -129,8 +129,8 @@ func RunServer(c *Config) error {
 
 	// init grpc server
 	grpcServer := grpc.NewServer()
-	protoAdapter := v1.NewAdapter()
-	pb.RegisterGuardianServiceServer(grpcServer, v1.NewGRPCServer(
+	protoAdapter := handlerv1beta1.NewAdapter()
+	guardianv1beta1.RegisterGuardianServiceServer(grpcServer, handlerv1beta1.NewGRPCServer(
 		resourceService,
 		providerService,
 		policyService,
@@ -163,7 +163,7 @@ func RunServer(c *Config) error {
 	runtimeCtx, runtimeCancel := context.WithCancel(context.Background())
 	defer runtimeCancel()
 
-	if err := pb.RegisterGuardianServiceHandler(runtimeCtx, gwmux, grpcConn); err != nil {
+	if err := guardianv1beta1.RegisterGuardianServiceHandler(runtimeCtx, gwmux, grpcConn); err != nil {
 		return err
 	}
 

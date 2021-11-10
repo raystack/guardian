@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	v1 "github.com/odpf/guardian/api/handler/v1"
-	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
+	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
+	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
@@ -18,7 +18,7 @@ import (
 )
 
 // PolicyCmd is the root command for the policies subcommand.
-func PolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
+func PolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "policy",
 		Aliases: []string{"policies"},
@@ -64,7 +64,7 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.ListPolicies(ctx, &pb.ListPoliciesRequest{})
+			res, err := client.ListPolicies(ctx, &guardianv1beta1.ListPoliciesRequest{})
 			if err != nil {
 				return err
 			}
@@ -94,7 +94,7 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 	}
 }
 
-func getPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
+func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var format string
 	cmd := &cobra.Command{
 		Use:   "view",
@@ -130,7 +130,7 @@ func getPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 				return fmt.Errorf("invalid policy version: %v", err)
 			}
 
-			res, err := client.GetPolicy(ctx, &pb.GetPolicyRequest{
+			res, err := client.GetPolicy(ctx, &guardianv1beta1.GetPolicyRequest{
 				Id:      id,
 				Version: uint32(version),
 			})
@@ -138,7 +138,7 @@ func getPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 				return err
 			}
 
-			p, err := adapter.FromPolicyProto(res)
+			p, err := adapter.FromPolicyProto(res.GetPolicy())
 			if err != nil {
 				return fmt.Errorf("failed to parse policy: %v", err)
 			}
@@ -155,7 +155,7 @@ func getPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	return cmd
 }
 
-func createPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
+func createPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -187,7 +187,7 @@ func createPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.CreatePolicy(ctx, &pb.CreatePolicyRequest{
+			res, err := client.CreatePolicy(ctx, &guardianv1beta1.CreatePolicyRequest{
 				Policy: policyProto,
 			})
 			if err != nil {
@@ -206,7 +206,7 @@ func createPolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 	return cmd
 }
 
-func updatePolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
+func updatePolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "edit",
@@ -240,7 +240,7 @@ func updatePolicyCmd(c *app.CLIConfig, adapter v1.ProtoAdapter) *cobra.Command {
 			defer cancel()
 
 			policyID := policyProto.GetId()
-			_, err = client.UpdatePolicy(ctx, &pb.UpdatePolicyRequest{
+			_, err = client.UpdatePolicy(ctx, &guardianv1beta1.UpdatePolicyRequest{
 				Id:     policyID,
 				Policy: policyProto,
 			})
