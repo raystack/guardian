@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	pb "github.com/odpf/guardian/api/proto/odpf/guardian"
+	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"google.golang.org/grpc"
 )
 
@@ -17,7 +17,7 @@ func createConnection(ctx context.Context, host string) (*grpc.ClientConn, error
 	return grpc.DialContext(ctx, host, opts...)
 }
 
-func createClient(ctx context.Context, host string) (pb.GuardianServiceClient, func(), error) {
+func createClient(ctx context.Context, host string) (guardianv1beta1.GuardianServiceClient, func(), error) {
 	dialTimeoutCtx, dialCancel := context.WithTimeout(ctx, time.Second*2)
 	conn, err := createConnection(dialTimeoutCtx, host)
 	if err != nil {
@@ -30,6 +30,6 @@ func createClient(ctx context.Context, host string) (pb.GuardianServiceClient, f
 		conn.Close()
 	}
 
-	client := pb.NewGuardianServiceClient(conn)
+	client := guardianv1beta1.NewGuardianServiceClient(conn)
 	return client, cancel, nil
 }
