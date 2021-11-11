@@ -15,3 +15,13 @@ type Crypto interface {
 	Encryptor
 	Decryptor
 }
+
+type SensitiveInformation interface {
+	Encrypt() error
+	Decrypt() error
+}
+
+type SensitiveConfig interface {
+	SensitiveInformation
+	Validate() error
+}

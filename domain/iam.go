@@ -12,6 +12,11 @@ type IAMConfig struct {
 	Config   interface{}     `json:"config" yaml:"config" validate:"required"`
 }
 
+type IAMManager interface {
+	ParseConfig(*IAMConfig) (SensitiveConfig, error)
+	GetClient(SensitiveConfig) (IAMClient, error)
+}
+
 // IAMClient interface
 type IAMClient interface {
 	GetUser(id string) (interface{}, error)

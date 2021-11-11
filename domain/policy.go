@@ -190,6 +190,10 @@ type Policy struct {
 	UpdatedAt    time.Time         `json:"updated_at" yaml:"updated_at"`
 }
 
+func (p *Policy) HasIAMConfig() bool {
+	return p.IAM != nil
+}
+
 // PolicyRepository interface
 type PolicyRepository interface {
 	Create(*Policy) error

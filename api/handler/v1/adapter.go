@@ -309,7 +309,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*pb.Policy, error) {
 	}
 
 	var iam pb.Policy_IAM
-	if p.IAM != nil {
+	if p.HasIAMConfig() {
 		config, err := structpb.NewValue(p.IAM.Config)
 		if err != nil {
 			return nil, err

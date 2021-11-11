@@ -9,7 +9,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/evaluator"
-	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
@@ -24,8 +23,8 @@ type Service struct {
 	resourceService domain.ResourceService
 	providerService domain.ProviderService
 	policyService   domain.PolicyService
+	iam             domain.IAMManager
 	notifier        domain.Notifier
-	IAMClient       domain.IAMClient
 	logger          log.Logger
 
 	validator *validator.Validate
@@ -39,6 +38,7 @@ func NewService(
 	resourceService domain.ResourceService,
 	providerService domain.ProviderService,
 	policyService domain.PolicyService,
+	iam domain.IAMManager,
 	notifier domain.Notifier,
 	logger log.Logger,
 ) *Service {
@@ -48,6 +48,7 @@ func NewService(
 		resourceService: resourceService,
 		providerService: providerService,
 		policyService:   policyService,
+		iam:             iam,
 		notifier:        notifier,
 		validator:       validator.New(),
 		logger:          logger,
@@ -174,18 +175,16 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		a.Policy = policies[policyConfig.ID][uint(policyConfig.Version)]
 
 		if a.Policy.IAM != nil {
-			if s.IAMClient == nil { // workaround for mocking in test
-				iamClient, err := iam.NewClient(a.Policy.IAM)
-				if err != nil {
-					return fmt.Errorf("getting iam client: %w", err)
-				}
-				s.IAMClient = iamClient
-				defer func() {
-					s.IAMClient = nil
-				}()
+			iamConfig, err := s.iam.ParseConfig(a.Policy.IAM)
+			if err != nil {
+				return fmt.Errorf("parsing iam config: %w", err)
+			}
+			iamClient, err := s.iam.GetClient(iamConfig)
+			if err != nil {
+				return fmt.Errorf("getting iam client: %w", err)
 			}
 
-			creatorDetails, err := s.IAMClient.GetUser(a.CreatedBy)
+			creatorDetails, err := iamClient.GetUser(a.CreatedBy)
 			if err != nil {
 				return fmt.Errorf("fetching creator's user iam: %w", err)
 			}

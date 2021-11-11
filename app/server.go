@@ -15,6 +15,7 @@ import (
 	"github.com/odpf/guardian/approval"
 	"github.com/odpf/guardian/crypto"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/notifier"
 	"github.com/odpf/guardian/policy"
@@ -75,6 +76,8 @@ func RunServer(c *Config) error {
 		return err
 	}
 
+	iamManager := iam.NewManager(crypto, v)
+
 	resourceService := resource.NewService(resourceRepository)
 	providerService := provider.NewService(
 		logger,
@@ -83,7 +86,13 @@ func RunServer(c *Config) error {
 		resourceService,
 		providers,
 	)
-	policyService := policy.NewService(v, policyRepository, resourceService, providerService)
+	policyService := policy.NewService(
+		v,
+		policyRepository,
+		resourceService,
+		providerService,
+		iamManager,
+	)
 	approvalService := approval.NewService(approvalRepository, policyService)
 	appealService := appeal.NewService(
 		appealRepository,
@@ -91,6 +100,7 @@ func RunServer(c *Config) error {
 		resourceService,
 		providerService,
 		policyService,
+		iamManager,
 		notifier,
 		logger,
 	)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/provider"
@@ -26,7 +27,18 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockPolicyRepository = new(mocks.PolicyRepository)
 	s.mockResourceService = new(mocks.ResourceService)
 	s.mockProviderService = new(mocks.ProviderService)
-	s.service = policy.NewService(validator.New(), s.mockPolicyRepository, s.mockResourceService, s.mockProviderService)
+
+	mockCrypto := new(mocks.Crypto)
+	v := validator.New()
+	iamManager := iam.NewManager(mockCrypto, v)
+
+	s.service = policy.NewService(
+		validator.New(),
+		s.mockPolicyRepository,
+		s.mockResourceService,
+		s.mockProviderService,
+		iamManager,
+	)
 }
 
 func (s *ServiceTestSuite) TestCreate() {
@@ -205,25 +217,6 @@ func (s *ServiceTestSuite) TestCreate() {
 					},
 				},
 			},
-			{
-				name: "iam: invalid iam provider",
-				policy: &domain.Policy{
-					ID:      "test-id",
-					Version: 1,
-					Steps: []*domain.Step{
-						{
-							Name:     "step-1",
-							Strategy: "manual",
-							Approvers: []string{
-								"approver@email.com",
-							},
-						},
-					},
-					IAM: &domain.IAMConfig{
-						Provider: "invalid-provider",
-					},
-				},
-			},
 		}
 
 		for _, tc := range testCases {
@@ -236,6 +229,30 @@ func (s *ServiceTestSuite) TestCreate() {
 				}
 			})
 		}
+
+		s.Run("iam: invalid iam provider", func() {
+			policy := &domain.Policy{
+				ID:      "test-id",
+				Version: 1,
+				Steps: []*domain.Step{
+					{
+						Name:     "step-1",
+						Strategy: "manual",
+						Approvers: []string{
+							"approver@email.com",
+						},
+					},
+				},
+				IAM: &domain.IAMConfig{
+					Provider: "invalid-provider",
+				},
+			}
+			expectedError := iam.ErrUnknownProviderType
+
+			actualError := s.service.Create(policy)
+
+			s.ErrorIs(actualError, expectedError)
+		})
 	})
 
 	validPolicy := &domain.Policy{
