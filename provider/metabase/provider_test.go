@@ -69,6 +69,11 @@ func TestGetResources(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: metabase.ResourceTypeDatabase,
+				},
+			},
 		}
 		expectedError := errors.New("client error")
 		client.On("GetDatabases").Return(nil, expectedError).Once()
@@ -91,8 +96,12 @@ func TestGetResources(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: metabase.ResourceTypeCollection,
+				},
+			},
 		}
-		client.On("GetDatabases").Return([]*metabase.Database{}, nil).Once()
 		expectedError := errors.New("client error")
 		client.On("GetCollections").Return(nil, expectedError).Once()
 
@@ -114,6 +123,14 @@ func TestGetResources(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: metabase.ResourceTypeDatabase,
+				},
+				{
+					Type: metabase.ResourceTypeCollection,
+				},
+			},
 		}
 		expectedDatabases := []*metabase.Database{
 			{

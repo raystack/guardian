@@ -45,60 +45,76 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
+	var resourceTypes []string
+	for _, rc := range pc.Resources {
+		resourceTypes = append(resourceTypes, rc.Type)
+	}
+
 	resources := []*domain.Resource{}
-	workbooks, err := client.GetWorkbooks()
-	if err != nil {
-		return nil, err
-	}
-	for _, w := range workbooks {
-		wb := w.ToDomain()
-		wb.ProviderType = pc.Type
-		wb.ProviderURN = pc.URN
-		resources = append(resources, wb)
+
+	if containsString(resourceTypes, ResourceTypeWorkbook) {
+		workbooks, err := client.GetWorkbooks()
+		if err != nil {
+			return nil, err
+		}
+		for _, w := range workbooks {
+			wb := w.ToDomain()
+			wb.ProviderType = pc.Type
+			wb.ProviderURN = pc.URN
+			resources = append(resources, wb)
+		}
 	}
 
-	flows, err := client.GetFlows()
-	if err != nil {
-		return nil, err
-	}
-	for _, f := range flows {
-		fl := f.ToDomain()
-		fl.ProviderType = pc.Type
-		fl.ProviderURN = pc.URN
-		resources = append(resources, fl)
-	}
-
-	datasources, err := client.GetDataSources()
-	if err != nil {
-		return nil, err
-	}
-	for _, d := range datasources {
-		ds := d.ToDomain()
-		ds.ProviderType = pc.Type
-		ds.ProviderURN = pc.URN
-		resources = append(resources, ds)
+	if containsString(resourceTypes, ResourceTypeFlow) {
+		flows, err := client.GetFlows()
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range flows {
+			fl := f.ToDomain()
+			fl.ProviderType = pc.Type
+			fl.ProviderURN = pc.URN
+			resources = append(resources, fl)
+		}
 	}
 
-	views, err := client.GetViews()
-	if err != nil {
-		return nil, err
-	}
-	for _, v := range views {
-		vs := v.ToDomain()
-		vs.ProviderType = pc.Type
-		vs.ProviderURN = pc.URN
-		resources = append(resources, vs)
+	if containsString(resourceTypes, ResourceTypeDataSource) {
+		datasources, err := client.GetDataSources()
+		if err != nil {
+			return nil, err
+		}
+		for _, d := range datasources {
+			ds := d.ToDomain()
+			ds.ProviderType = pc.Type
+			ds.ProviderURN = pc.URN
+			resources = append(resources, ds)
+		}
 	}
 
-	metrics, err := client.GetMetrics()
-	if err != nil {
-		return nil, err
+	if containsString(resourceTypes, ResourceTypeView) {
+		views, err := client.GetViews()
+		if err != nil {
+			return nil, err
+		}
+		for _, v := range views {
+			vs := v.ToDomain()
+			vs.ProviderType = pc.Type
+			vs.ProviderURN = pc.URN
+			resources = append(resources, vs)
+		}
 	}
-	for _, m := range metrics {
-		mt := m.ToDomain()
-		mt.ProviderType = pc.Type
-		mt.ProviderURN = pc.URN
-		resources = append(resources, mt)
+
+	if containsString(resourceTypes, ResourceTypeMetric) {
+		metrics, err := client.GetMetrics()
+		if err != nil {
+			return nil, err
+		}
+		for _, m := range metrics {
+			mt := m.ToDomain()
+			mt.ProviderType = pc.Type
+			mt.ProviderURN = pc.URN
+			resources = append(resources, mt)
+		}
 	}
 
 	return resources, nil
@@ -399,4 +415,13 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 	}
 
 	return permissions, nil
+}
+
+func containsString(arr []string, v string) bool {
+	for _, item := range arr {
+		if item == v {
+			return true
+		}
+	}
+	return false
 }

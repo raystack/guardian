@@ -53,6 +53,11 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
+	var resourceTypes []string
+	for _, rc := range pc.Resources {
+		resourceTypes = append(resourceTypes, rc.Type)
+	}
+
 	resources := []*domain.Resource{}
 	ctx := context.Background()
 	datasets, err := client.GetDatasets(ctx)
@@ -63,17 +68,22 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		dataset := d.toDomain()
 		dataset.ProviderType = pc.Type
 		dataset.ProviderURN = pc.URN
-		resources = append(resources, dataset)
 
-		tables, err := client.GetTables(ctx, dataset.Name)
-		if err != nil {
-			return nil, err
+		if containsString(resourceTypes, ResourceTypeDataset) {
+			resources = append(resources, dataset)
 		}
-		for _, t := range tables {
-			table := t.toDomain()
-			table.ProviderType = pc.Type
-			table.ProviderURN = pc.URN
-			resources = append(resources, table)
+
+		if containsString(resourceTypes, ResourceTypeTable) {
+			tables, err := client.GetTables(ctx, dataset.Name)
+			if err != nil {
+				return nil, err
+			}
+			for _, t := range tables {
+				table := t.toDomain()
+				table.ProviderType = pc.Type
+				table.ProviderURN = pc.URN
+				resources = append(resources, table)
+			}
 		}
 	}
 
