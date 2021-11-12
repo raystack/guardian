@@ -60,7 +60,24 @@ func (s *Service) Create(p *domain.Provider) error {
 		return err
 	}
 
-	return s.providerRepository.Create(p)
+	if err := s.providerRepository.Create(p); err != nil {
+		return err
+	}
+
+	go func() {
+		s.logger.Info(fmt.Sprintf("fetching resources for %s", p.URN))
+		resources, err := s.getResources(p)
+		if err != nil {
+			s.logger.Error(fmt.Sprintf("fetching resources: %s", err))
+		}
+		if err := s.resourceService.BulkUpsert(resources); err != nil {
+			s.logger.Error(fmt.Sprintf("inserting resources to db: %s", err))
+		} else {
+			s.logger.Info(fmt.Sprintf("added %v resources for %s", len(resources), p.URN))
+		}
+	}()
+
+	return nil
 }
 
 // Find records
@@ -124,53 +141,16 @@ func (s *Service) FetchResources() error {
 
 	resources := []*domain.Resource{}
 	for _, p := range providers {
-		provider := s.getProvider(p.Type)
-		if provider == nil {
-			s.logger.Error(fmt.Sprintf("%v: %v", ErrInvalidProviderType, p.Type))
+		s.logger.Info(fmt.Sprintf("fetching resources for %s", p.URN))
+		res, err := s.getResources(p)
+		if err != nil {
+			s.logger.Error(err.Error())
 			continue
 		}
-
-		existingResources, err := s.resourceService.Find(map[string]interface{}{
-			"provider_type": p.Type,
-			"provider_urn":  p.URN,
-		})
-		if err != nil {
-			return err
-		}
-
-		res, err := provider.GetResources(p.Config)
-		if err != nil {
-			s.logger.Error(fmt.Sprintf("error fetching resources for %v: %v", p.ID, err))
-			continue
-		}
-
-		for _, er := range existingResources {
-			isFound := false
-			for _, r := range res {
-				if er.URN == r.URN {
-					resources = append(resources, r)
-					isFound = true
-					break
-				}
-			}
-			if !isFound {
-				er.IsDeleted = true
-				resources = append(resources, er)
-			}
-		}
-		for _, r := range res {
-			isAdded := false
-			for _, rr := range resources {
-				if r.URN == rr.URN {
-					isAdded = true
-					break
-				}
-			}
-			if !isAdded {
-				resources = append(resources, r)
-			}
-		}
+		s.logger.Info(fmt.Sprintf("got %v resources for %s", len(res), p.URN))
+		resources = append(resources, res...)
 	}
+
 	return s.resourceService.BulkUpsert(resources)
 }
 
@@ -270,6 +250,56 @@ func (s *Service) RevokeAccess(a *domain.Appeal) error {
 	return provider.RevokeAccess(p.Config, a)
 	// TODO: handle if permission for the given user with the given role is not found
 	// handle the resolution for the appeal status
+}
+
+func (s *Service) getResources(p *domain.Provider) ([]*domain.Resource, error) {
+	resources := []*domain.Resource{}
+	provider := s.getProvider(p.Type)
+	if provider == nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidProviderType, p.Type)
+	}
+
+	existingResources, err := s.resourceService.Find(map[string]interface{}{
+		"provider_type": p.Type,
+		"provider_urn":  p.URN,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := provider.GetResources(p.Config)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching resources for %v: %w", p.ID, err)
+	}
+
+	for _, er := range existingResources {
+		isFound := false
+		for _, r := range res {
+			if er.URN == r.URN {
+				resources = append(resources, r)
+				isFound = true
+				break
+			}
+		}
+		if !isFound {
+			er.IsDeleted = true
+			resources = append(resources, er)
+		}
+	}
+	for _, r := range res {
+		isAdded := false
+		for _, rr := range resources {
+			if r.URN == rr.URN {
+				isAdded = true
+				break
+			}
+		}
+		if !isAdded {
+			resources = append(resources, r)
+		}
+	}
+
+	return resources, nil
 }
 
 func (s *Service) validateAppealParam(a *domain.Appeal) error {
