@@ -38,6 +38,7 @@ func (s *RepositoryTestSuite) SetupTest() {
 		"description",
 		"steps",
 		"labels",
+		"iam",
 		"created_at",
 		"updated_at",
 	}
@@ -48,7 +49,7 @@ func (s *RepositoryTestSuite) TearDownTest() {
 }
 
 func (s *RepositoryTestSuite) TestCreate() {
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","labels","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","labels","iam","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`)
 
 	s.Run("should return error if got error from db transaction", func() {
 		p := &domain.Policy{}
@@ -57,6 +58,7 @@ func (s *RepositoryTestSuite) TestCreate() {
 			p.ID,
 			p.Version,
 			p.Description,
+			"null",
 			"null",
 			"null",
 			utils.AnyTime{},
@@ -83,6 +85,7 @@ func (s *RepositoryTestSuite) TestCreate() {
 			p.ID,
 			p.Version,
 			p.Description,
+			"null",
 			"null",
 			"null",
 			utils.AnyTime{},
@@ -134,6 +137,7 @@ func (s *RepositoryTestSuite) TestFind() {
 				"",
 				1,
 				"",
+				"null",
 				"null",
 				"null",
 				now,
@@ -204,6 +208,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 					tc.expectedID,
 					tc.expectedVersion,
 					"",
+					"null",
 					"null",
 					"null",
 					now,

@@ -1,11 +1,23 @@
 package domain
 
-// IAMClient interface
-type IAMClient interface {
-	GetUser(id string) (interface{}, error)
+type IAMProviderType string
+
+const (
+	IAMProviderTypeShield IAMProviderType = "shield"
+	IAMProviderTypeHTTP   IAMProviderType = "http"
+)
+
+type IAMConfig struct {
+	Provider IAMProviderType `json:"provider" yaml:"provider" validate:"required,oneof=http shield"`
+	Config   interface{}     `json:"config" yaml:"config" validate:"required"`
 }
 
-// IAMService interface
-type IAMService interface {
+type IAMManager interface {
+	ParseConfig(*IAMConfig) (SensitiveConfig, error)
+	GetClient(SensitiveConfig) (IAMClient, error)
+}
+
+// IAMClient interface
+type IAMClient interface {
 	GetUser(id string) (interface{}, error)
 }

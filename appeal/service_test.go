@@ -21,7 +21,8 @@ type ServiceTestSuite struct {
 	mockResourceService *mocks.ResourceService
 	mockProviderService *mocks.ProviderService
 	mockPolicyService   *mocks.PolicyService
-	mockIAMService      *mocks.IAMService
+	mockIAMManager      *mocks.IAMManager
+	mockIAMClient       *mocks.IAMClient
 	mockNotifier        *mocks.Notifier
 
 	service *appeal.Service
@@ -34,7 +35,8 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockResourceService = new(mocks.ResourceService)
 	s.mockProviderService = new(mocks.ProviderService)
 	s.mockPolicyService = new(mocks.PolicyService)
-	s.mockIAMService = new(mocks.IAMService)
+	s.mockIAMManager = new(mocks.IAMManager)
+	s.mockIAMClient = new(mocks.IAMClient)
 	s.mockNotifier = new(mocks.Notifier)
 	s.now = time.Now()
 
@@ -44,7 +46,7 @@ func (s *ServiceTestSuite) SetupTest() {
 		s.mockResourceService,
 		s.mockProviderService,
 		s.mockPolicyService,
-		s.mockIAMService,
+		s.mockIAMManager,
 		s.mockNotifier,
 		log.NewNoop(),
 	)
@@ -585,6 +587,12 @@ func (s *ServiceTestSuite) TestCreate() {
 					},
 				},
 			},
+			IAM: &domain.IAMConfig{
+				Provider: "http",
+				Config: map[string]interface{}{
+					"url": "http://localhost",
+				},
+			},
 		},
 	}
 	expectedCreatorUser := map[string]interface{}{
@@ -709,7 +717,9 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(nil)
-		s.mockIAMService.On("GetUser", accountID).Return(expectedCreatorUser, nil)
+		s.mockIAMManager.On("ParseConfig", mock.Anything).Return(nil, nil)
+		s.mockIAMManager.On("GetClient", mock.Anything).Return(s.mockIAMClient, nil)
+		s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 		s.mockRepository.
 			On("BulkUpsert", expectedAppealsInsertionParam).

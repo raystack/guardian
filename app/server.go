@@ -63,12 +63,6 @@ func RunServer(c *Config) error {
 	appealRepository := appeal.NewRepository(db)
 	approvalRepository := approval.NewRepository(db)
 
-	iamClient, err := iam.NewClient(&c.IAM)
-	if err != nil {
-		return err
-	}
-	iamService := iam.NewService(iamClient)
-
 	providers := []domain.ProviderInterface{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
 		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
@@ -82,6 +76,8 @@ func RunServer(c *Config) error {
 		return err
 	}
 
+	iamManager := iam.NewManager(crypto, v)
+
 	resourceService := resource.NewService(resourceRepository)
 	providerService := provider.NewService(
 		logger,
@@ -90,7 +86,13 @@ func RunServer(c *Config) error {
 		resourceService,
 		providers,
 	)
-	policyService := policy.NewService(v, policyRepository, resourceService, providerService)
+	policyService := policy.NewService(
+		v,
+		policyRepository,
+		resourceService,
+		providerService,
+		iamManager,
+	)
 	approvalService := approval.NewService(approvalRepository, policyService)
 	appealService := appeal.NewService(
 		appealRepository,
@@ -98,7 +100,7 @@ func RunServer(c *Config) error {
 		resourceService,
 		providerService,
 		policyService,
-		iamService,
+		iamManager,
 		notifier,
 		logger,
 	)

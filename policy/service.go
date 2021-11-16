@@ -14,31 +14,76 @@ import (
 
 // Service handling the business logics
 type Service struct {
-	validator        *validator.Validate
 	policyRepository domain.PolicyRepository
 	resourceService  domain.ResourceService
 	providerService  domain.ProviderService
+	iam              domain.IAMManager
+
+	validator *validator.Validate
 }
 
 // NewService returns service struct
-func NewService(v *validator.Validate, pr domain.PolicyRepository, rs domain.ResourceService, ps domain.ProviderService) *Service {
-	return &Service{v, pr, rs, ps}
+func NewService(v *validator.Validate, pr domain.PolicyRepository, rs domain.ResourceService, ps domain.ProviderService, iam domain.IAMManager) *Service {
+	return &Service{
+		policyRepository: pr,
+		resourceService:  rs,
+		providerService:  ps,
+		iam:              iam,
+		validator:        v,
+	}
 }
 
 // Create record
 func (s *Service) Create(p *domain.Policy) error {
 	p.Version = 1
 
+	var sensitiveConfig domain.SensitiveConfig
+	if p.HasIAMConfig() {
+		iamClientConfig, err := s.iam.ParseConfig(p.IAM)
+		if err != nil {
+			return fmt.Errorf("parsing iam config: %w", err)
+		}
+		sensitiveConfig = iamClientConfig
+		p.IAM.Config = sensitiveConfig
+	}
+
 	if err := s.validatePolicy(p); err != nil {
 		return fmt.Errorf("policy validation: %w", err)
 	}
 
-	return s.policyRepository.Create(p)
+	if p.HasIAMConfig() {
+		if err := sensitiveConfig.Encrypt(); err != nil {
+			return fmt.Errorf("encrypting iam config: %w", err)
+		}
+		p.IAM.Config = sensitiveConfig
+	}
+	if err := s.policyRepository.Create(p); err != nil {
+		return err
+	}
+
+	if p.HasIAMConfig() {
+		if err := s.decryptAndDeserializeIAMConfig(p.IAM); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Find records
 func (s *Service) Find() ([]*domain.Policy, error) {
-	return s.policyRepository.Find()
+	policies, err := s.policyRepository.Find()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range policies {
+		if p.HasIAMConfig() {
+			if err := s.decryptAndDeserializeIAMConfig(p.IAM); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return policies, nil
 }
 
 // GetOne record
@@ -48,6 +93,12 @@ func (s *Service) GetOne(id string, version uint) (*domain.Policy, error) {
 		return nil, err
 	}
 
+	if p.HasIAMConfig() {
+		if err := s.decryptAndDeserializeIAMConfig(p.IAM); err != nil {
+			return nil, err
+		}
+	}
+
 	return p, nil
 }
 
@@ -55,6 +106,16 @@ func (s *Service) GetOne(id string, version uint) (*domain.Policy, error) {
 func (s *Service) Update(p *domain.Policy) error {
 	if p.ID == "" {
 		return ErrEmptyIDParam
+	}
+
+	var sensitiveConfig domain.SensitiveConfig
+	if p.HasIAMConfig() {
+		iamClientConfig, err := s.iam.ParseConfig(p.IAM)
+		if err != nil {
+			return fmt.Errorf("parsing iam config: %w", err)
+		}
+		sensitiveConfig = iamClientConfig
+		p.IAM.Config = sensitiveConfig
 	}
 
 	if err := s.validatePolicy(p, "Version"); err != nil {
@@ -67,7 +128,41 @@ func (s *Service) Update(p *domain.Policy) error {
 	}
 
 	p.Version = latestPolicy.Version + 1
-	return s.policyRepository.Create(p)
+
+	if p.HasIAMConfig() {
+		if err := sensitiveConfig.Encrypt(); err != nil {
+			return fmt.Errorf("encrypting iam config: %w", err)
+		}
+		p.IAM.Config = sensitiveConfig
+	}
+
+	if err := s.policyRepository.Create(p); err != nil {
+		return err
+	}
+
+	if p.HasIAMConfig() {
+		if err := s.decryptAndDeserializeIAMConfig(p.IAM); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) decryptAndDeserializeIAMConfig(c *domain.IAMConfig) error {
+	iamClientConfig, err := s.iam.ParseConfig(c)
+	if err != nil {
+		return fmt.Errorf("parsing iam config: %w", err)
+	}
+	if err := iamClientConfig.Decrypt(); err != nil {
+		return fmt.Errorf("decrypting iam config: %w", err)
+	}
+	iamClientConfigMap, err := structToMap(iamClientConfig)
+	if err != nil {
+		return fmt.Errorf("deserializing iam config: %w", err)
+	}
+
+	c.Config = iamClientConfigMap
+	return nil
 }
 
 func (s *Service) validatePolicy(p *domain.Policy, excludedFields ...string) error {
@@ -85,6 +180,23 @@ func (s *Service) validatePolicy(p *domain.Policy, excludedFields ...string) err
 
 	if err := s.validateRequirements(p.Requirements); err != nil {
 		return fmt.Errorf("invalid requirements: %w", err)
+	}
+
+	if p.HasIAMConfig() {
+		if config, ok := p.IAM.Config.(domain.SensitiveConfig); ok {
+			if err := config.Validate(); err != nil {
+				return fmt.Errorf("invalid iam config: %w", err)
+			}
+		} else {
+			config, err := s.iam.ParseConfig(p.IAM)
+			if err != nil {
+				return fmt.Errorf("parsing iam config: %w", err)
+			}
+
+			if err := config.Validate(); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

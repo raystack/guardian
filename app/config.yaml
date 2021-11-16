@@ -21,9 +21,6 @@ DB:
   NAME:
   PORT: 5432
   SSLMODE: disable
-IAM:
-  PROVIDER: http
-  URL: http://localhost:3001
 NOTIFIER:
   PROVIDER: slack
   ACCESS_TOKEN:

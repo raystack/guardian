@@ -10,10 +10,26 @@ import (
 	"net/url"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/odpf/guardian/domain"
 )
 
 type ShieldClientConfig struct {
-	Host string `validate:"required,url" mapstructure:"host"`
+	Host string `mapstructure:"host" json:"host" yaml:"host" validate:"required,url"`
+
+	validator *validator.Validate
+	crypto    domain.Crypto
+}
+
+func (c *ShieldClientConfig) Validate() error {
+	return c.validator.Struct(c)
+}
+
+func (c *ShieldClientConfig) Encrypt() error {
+	return nil
+}
+
+func (c *ShieldClientConfig) Decrypt() error {
+	return nil
 }
 
 type role struct {
