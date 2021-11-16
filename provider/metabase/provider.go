@@ -45,28 +45,37 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
+	var resourceTypes []string
+	for _, rc := range pc.Resources {
+		resourceTypes = append(resourceTypes, rc.Type)
+	}
+
 	resources := []*domain.Resource{}
 
-	databases, err := client.GetDatabases()
-	if err != nil {
-		return nil, err
-	}
-	for _, d := range databases {
-		db := d.ToDomain()
-		db.ProviderType = pc.Type
-		db.ProviderURN = pc.URN
-		resources = append(resources, db)
+	if containsString(resourceTypes, ResourceTypeDatabase) {
+		databases, err := client.GetDatabases()
+		if err != nil {
+			return nil, err
+		}
+		for _, d := range databases {
+			db := d.ToDomain()
+			db.ProviderType = pc.Type
+			db.ProviderURN = pc.URN
+			resources = append(resources, db)
+		}
 	}
 
-	collections, err := client.GetCollections()
-	if err != nil {
-		return nil, err
-	}
-	for _, c := range collections {
-		db := c.ToDomain()
-		db.ProviderType = pc.Type
-		db.ProviderURN = pc.URN
-		resources = append(resources, db)
+	if containsString(resourceTypes, ResourceTypeCollection) {
+		collections, err := client.GetCollections()
+		if err != nil {
+			return nil, err
+		}
+		for _, c := range collections {
+			db := c.ToDomain()
+			db.ProviderType = pc.Type
+			db.ProviderURN = pc.URN
+			resources = append(resources, db)
+		}
 	}
 
 	return resources, nil
@@ -229,4 +238,13 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 	}
 
 	return permissions, nil
+}
+
+func containsString(arr []string, v string) bool {
+	for _, item := range arr {
+		if item == v {
+			return true
+		}
+	}
+	return false
 }

@@ -106,10 +106,18 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	s.Run("should pass the model from the param", func() {
+	s.Run("should pass the model from the param and trigger fetch resources on success", func() {
 		s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 		s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 		s.mockProviderRepository.On("Create", p).Return(nil).Once()
+
+		expectedResources := []*domain.Resource{}
+		s.mockResourceService.On("Find", map[string]interface{}{
+			"provider_type": p.Type,
+			"provider_urn":  p.URN,
+		}).Return([]*domain.Resource{}, nil).Once()
+		s.mockProvider.On("GetResources", p.Config).Return(expectedResources, nil).Once()
+		s.mockResourceService.On("BulkUpsert", expectedResources).Return(nil).Once()
 
 		actualError := s.service.Create(p)
 

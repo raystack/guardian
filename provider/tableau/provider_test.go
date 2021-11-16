@@ -72,6 +72,11 @@ func TestGetResources(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: tableau.ResourceTypeWorkbook,
+				},
+			},
 		}
 		expectedError := errors.New("client error")
 		client.On("GetWorkbooks").Return(nil, expectedError).Once()
@@ -94,8 +99,12 @@ func TestGetResources(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: tableau.ResourceTypeFlow,
+				},
+			},
 		}
-		client.On("GetWorkbooks").Return([]*tableau.Workbook{}, nil).Once()
 		expectedError := errors.New("client error")
 		client.On("GetFlows").Return(nil, expectedError).Once()
 
@@ -117,9 +126,12 @@ func TestGetResources(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: tableau.ResourceTypeDataSource,
+				},
+			},
 		}
-		client.On("GetWorkbooks").Return([]*tableau.Workbook{}, nil).Once()
-		client.On("GetFlows").Return([]*tableau.Flow{}, nil).Once()
 		expectedError := errors.New("client error")
 		client.On("GetDataSources").Return(nil, expectedError).Once()
 
@@ -141,10 +153,12 @@ func TestGetResources(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: tableau.ResourceTypeView,
+				},
+			},
 		}
-		client.On("GetWorkbooks").Return([]*tableau.Workbook{}, nil).Once()
-		client.On("GetFlows").Return([]*tableau.Flow{}, nil).Once()
-		client.On("GetDataSources").Return([]*tableau.DataSource{}, nil).Once()
 		expectedError := errors.New("client error")
 		client.On("GetViews").Return(nil, expectedError).Once()
 
@@ -166,11 +180,12 @@ func TestGetResources(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: tableau.ResourceTypeMetric,
+				},
+			},
 		}
-		client.On("GetWorkbooks").Return([]*tableau.Workbook{}, nil).Once()
-		client.On("GetFlows").Return([]*tableau.Flow{}, nil).Once()
-		client.On("GetDataSources").Return([]*tableau.DataSource{}, nil).Once()
-		client.On("GetViews").Return([]*tableau.View{}, nil).Once()
 		expectedError := errors.New("client error")
 		client.On("GetMetrics").Return(nil, expectedError).Once()
 
@@ -192,6 +207,23 @@ func TestGetResources(t *testing.T) {
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: tableau.ResourceTypeWorkbook,
+				},
+				{
+					Type: tableau.ResourceTypeFlow,
+				},
+				{
+					Type: tableau.ResourceTypeDataSource,
+				},
+				{
+					Type: tableau.ResourceTypeView,
+				},
+				{
+					Type: tableau.ResourceTypeMetric,
+				},
+			},
 		}
 		expectedWorkbooks := []*tableau.Workbook{
 			{
