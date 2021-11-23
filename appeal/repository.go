@@ -86,7 +86,7 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Appeal, err
 	}
 
 	var models []*model.Appeal
-	if err := db.Debug().Find(&models).Error; err != nil {
+	if err := db.Preload("Resource").Find(&models).Error; err != nil {
 		return nil, err
 	}
 

@@ -26,6 +26,7 @@ type RepositoryTestSuite struct {
 	columnNames         []string
 	approvalColumnNames []string
 	approverColumnNames []string
+	resourceColumnNames []string
 }
 
 func (s *RepositoryTestSuite) SetupTest() {
@@ -66,6 +67,17 @@ func (s *RepositoryTestSuite) SetupTest() {
 		"email",
 		"appeal_id",
 		"approval_id",
+		"created_at",
+		"updated_at",
+	}
+	s.resourceColumnNames = []string{
+		"id",
+		"provider_type",
+		"provider_urn",
+		"type",
+		"urn",
+		"details",
+		"labels",
 		"created_at",
 		"updated_at",
 	}
@@ -296,8 +308,15 @@ func (s *RepositoryTestSuite) TestFind() {
 		expectedFilters := map[string]interface{}{}
 		expectedRecords := []*domain.Appeal{
 			{
-				ID:            1,
-				ResourceID:    1,
+				ID:         1,
+				ResourceID: 1,
+				Resource: &domain.Resource{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+					URN:          "resource_urn",
+				},
 				PolicyID:      "policy_1",
 				PolicyVersion: 1,
 				Status:        domain.AppealStatusPending,
@@ -305,8 +324,15 @@ func (s *RepositoryTestSuite) TestFind() {
 				Role:          "role_name",
 			},
 			{
-				ID:            2,
-				ResourceID:    2,
+				ID:         2,
+				ResourceID: 2,
+				Resource: &domain.Resource{
+					ID:           2,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+					URN:          "resource_urn",
+				},
 				PolicyID:      "policy_1",
 				PolicyVersion: 1,
 				Status:        domain.AppealStatusPending,
@@ -314,9 +340,9 @@ func (s *RepositoryTestSuite) TestFind() {
 				Role:          "role_name",
 			},
 		}
-		expecterRows := sqlmock.NewRows(s.columnNames)
+		expectedRows := sqlmock.NewRows(s.columnNames)
 		for _, r := range expectedRecords {
-			expecterRows.AddRow(
+			expectedRows.AddRow(
 				r.ID,
 				r.ResourceID,
 				r.PolicyID,
@@ -336,7 +362,27 @@ func (s *RepositoryTestSuite) TestFind() {
 		}
 		s.dbmock.
 			ExpectQuery(expectedQuery).
-			WillReturnRows(expecterRows)
+			WillReturnRows(expectedRows)
+
+		expectedResourcesPreloadQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."id" IN ($1,$2) AND "resources"."deleted_at" IS NULL`)
+		expectedResourceRows := sqlmock.NewRows(s.resourceColumnNames)
+		for _, a := range expectedRecords {
+			expectedResourceRows.AddRow(
+				a.Resource.ID,
+				a.Resource.ProviderType,
+				a.Resource.ProviderURN,
+				a.Resource.Type,
+				a.Resource.URN,
+				"null",
+				"null",
+				a.Resource.CreatedAt,
+				a.Resource.UpdatedAt,
+			)
+		}
+		s.dbmock.
+			ExpectQuery(expectedResourcesPreloadQuery).
+			WithArgs(1, 2).
+			WillReturnRows(expectedResourceRows)
 
 		actualRecords, actualError := s.repository.Find(expectedFilters)
 
