@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/MakeNowJust/heredoc"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/salt/printer"
@@ -29,9 +30,18 @@ func appealsCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
-	return &cobra.Command{
+	var statuses []string
+	var role string
+	var accountID string
+
+	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "list appeals",
+		Example: heredoc.Doc(`
+			$ guardian appeals list
+			$ guardian appeals list --status=pending
+			$ guardian appeals list --role=viewer
+		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cs := term.NewColorScheme()
 
@@ -42,7 +52,11 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.ListAppeals(ctx, &guardianv1beta1.ListAppealsRequest{})
+			res, err := client.ListAppeals(ctx, &guardianv1beta1.ListAppealsRequest{
+				Statuses:  statuses,
+				Role:      role,
+				AccountId: accountID,
+			})
 			if err != nil {
 				return err
 			}
@@ -66,6 +80,12 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().StringArrayVar(&statuses, "status", nil, "Filter appeals by status(es)")
+	cmd.Flags().StringVar(&role, "role", "", "Filter appeals by role")
+	cmd.Flags().StringVar(&accountID, "account-id", "", "Filter appeals by account_id")
+
+	return cmd
 }
 
 func createAppealCommand(c *app.CLIConfig) *cobra.Command {
