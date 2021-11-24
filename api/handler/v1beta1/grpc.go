@@ -362,6 +362,12 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 	filters := map[string]interface{}{
 		"account_id": user,
 	}
+	if req.GetStatuses() != nil {
+		filters["statuses"] = req.GetStatuses()
+	}
+	if req.GetRole() != "" {
+		filters["role"] = req.GetRole()
+	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
 		return nil, err
@@ -376,6 +382,12 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListA
 	filters := map[string]interface{}{}
 	if req.GetAccountId() != "" {
 		filters["account_id"] = req.GetAccountId()
+	}
+	if req.GetStatuses() != nil {
+		filters["statuses"] = req.GetStatuses()
+	}
+	if req.GetRole() != "" {
+		filters["role"] = req.GetRole()
 	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
