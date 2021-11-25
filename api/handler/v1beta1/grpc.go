@@ -368,6 +368,18 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 	if req.GetRole() != "" {
 		filters["role"] = req.GetRole()
 	}
+	if req.GetProviderTypes() != nil {
+		filters["provider_types"] = req.GetProviderTypes()
+	}
+	if req.GetProviderUrns() != nil {
+		filters["provider_urns"] = req.GetProviderUrns()
+	}
+	if req.GetResourceTypes() != nil {
+		filters["resource_types"] = req.GetResourceTypes()
+	}
+	if req.GetResourceUrns() != nil {
+		filters["resource_urns"] = req.GetResourceUrns()
+	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
 		return nil, err
@@ -388,6 +400,18 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListA
 	}
 	if req.GetRole() != "" {
 		filters["role"] = req.GetRole()
+	}
+	if req.GetProviderTypes() != nil {
+		filters["provider_types"] = req.GetProviderTypes()
+	}
+	if req.GetProviderUrns() != nil {
+		filters["provider_urns"] = req.GetProviderUrns()
+	}
+	if req.GetResourceTypes() != nil {
+		filters["resource_types"] = req.GetResourceTypes()
+	}
+	if req.GetResourceUrns() != nil {
+		filters["resource_urns"] = req.GetResourceUrns()
 	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
