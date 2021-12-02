@@ -89,7 +89,7 @@ type Step struct {
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	Approvers []string `json:"approvers" yaml:"approvers" validate:"required_if=Strategy manual,min=1"`
+	Approvers []string `json:"approvers" yaml:"approvers" validate:"required_if=Strategy manual,omitempty,min=1"`
 
 	// ApproveIf is an Expression to determines the resolution of the step. If automatic approval is needed for the step,
 	// use this field.
