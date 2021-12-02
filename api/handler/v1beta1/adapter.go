@@ -215,9 +215,9 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, er
 		}
 	}
 
-	var iam domain.IAMConfig
+	var iam *domain.IAMConfig
 	if p.GetIam() != nil {
-		iam = domain.IAMConfig{
+		iam = &domain.IAMConfig{
 			Provider: domain.IAMProviderType(p.GetIam().GetProvider()),
 			Config:   p.GetIam().GetConfig().AsInterface(),
 		}
@@ -230,7 +230,7 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, er
 		Steps:        steps,
 		Requirements: requirements,
 		Labels:       p.GetLabels(),
-		IAM:          &iam,
+		IAM:          iam,
 		CreatedAt:    p.GetCreatedAt().AsTime(),
 		UpdatedAt:    p.GetUpdatedAt().AsTime(),
 	}, nil
@@ -308,14 +308,14 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 		}
 	}
 
-	var iam guardianv1beta1.Policy_IAM
+	var iam *guardianv1beta1.Policy_IAM
 	if p.HasIAMConfig() {
 		config, err := structpb.NewValue(p.IAM.Config)
 		if err != nil {
 			return nil, err
 		}
 
-		iam = guardianv1beta1.Policy_IAM{
+		iam = &guardianv1beta1.Policy_IAM{
 			Provider: string(p.IAM.Provider),
 			Config:   config,
 		}
@@ -328,7 +328,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 		Steps:        steps,
 		Requirements: requirements,
 		Labels:       p.Labels,
-		Iam:          &iam,
+		Iam:          iam,
 		CreatedAt:    timestamppb.New(p.CreatedAt),
 		UpdatedAt:    timestamppb.New(p.UpdatedAt),
 	}, nil
