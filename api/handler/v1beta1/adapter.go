@@ -33,7 +33,13 @@ func (a *adapter) FromProviderProto(p *guardianv1beta1.Provider) (*domain.Provid
 }
 
 func (a *adapter) FromProviderConfigProto(pc *guardianv1beta1.ProviderConfig) (*domain.ProviderConfig, error) {
-	appeal := pc.GetAppeal()
+	var appealConfig *domain.AppealConfig
+	if pc.GetAppeal() != nil {
+		appealConfig = &domain.AppealConfig{}
+		appealConfig.AllowPermanentAccess = pc.GetAppeal().GetAllowPermanentAccess()
+		appealConfig.AllowActiveAccessExtensionIn = pc.GetAppeal().GetAllowActiveAccessExtensionIn()
+	}
+
 	resources := []*domain.ResourceConfig{}
 	for _, r := range pc.GetResources() {
 		roles := []*domain.Role{}
@@ -63,11 +69,8 @@ func (a *adapter) FromProviderConfigProto(pc *guardianv1beta1.ProviderConfig) (*
 		URN:         pc.GetUrn(),
 		Labels:      pc.GetLabels(),
 		Credentials: pc.GetCredentials().AsInterface(),
-		Appeal: &domain.AppealConfig{
-			AllowPermanentAccess:         appeal.GetAllowPermanentAccess(),
-			AllowActiveAccessExtensionIn: appeal.GetAllowActiveAccessExtensionIn(),
-		},
-		Resources: resources,
+		Appeal:      appealConfig,
+		Resources:   resources,
 	}, nil
 }
 
@@ -215,9 +218,9 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, er
 		}
 	}
 
-	var iam domain.IAMConfig
+	var iam *domain.IAMConfig
 	if p.GetIam() != nil {
-		iam = domain.IAMConfig{
+		iam = &domain.IAMConfig{
 			Provider: domain.IAMProviderType(p.GetIam().GetProvider()),
 			Config:   p.GetIam().GetConfig().AsInterface(),
 		}
@@ -230,7 +233,7 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, er
 		Steps:        steps,
 		Requirements: requirements,
 		Labels:       p.GetLabels(),
-		IAM:          &iam,
+		IAM:          iam,
 		CreatedAt:    p.GetCreatedAt().AsTime(),
 		UpdatedAt:    p.GetUpdatedAt().AsTime(),
 	}, nil
@@ -308,14 +311,14 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 		}
 	}
 
-	var iam guardianv1beta1.Policy_IAM
+	var iam *guardianv1beta1.Policy_IAM
 	if p.HasIAMConfig() {
 		config, err := structpb.NewValue(p.IAM.Config)
 		if err != nil {
 			return nil, err
 		}
 
-		iam = guardianv1beta1.Policy_IAM{
+		iam = &guardianv1beta1.Policy_IAM{
 			Provider: string(p.IAM.Provider),
 			Config:   config,
 		}
@@ -328,7 +331,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 		Steps:        steps,
 		Requirements: requirements,
 		Labels:       p.Labels,
-		Iam:          &iam,
+		Iam:          iam,
 		CreatedAt:    timestamppb.New(p.CreatedAt),
 		UpdatedAt:    timestamppb.New(p.UpdatedAt),
 	}, nil
@@ -384,13 +387,18 @@ func (a *adapter) FromAppealProto(appeal *guardianv1beta1.Appeal) (*domain.Appea
 
 	approvals := []*domain.Approval{}
 	for _, a := range appeal.GetApprovals() {
-		actor := a.GetActor()
+		var actor *string
+		if a.GetActor() != "" {
+			actorStr := a.GetActor()
+			actor = &actorStr
+		}
+
 		approvals = append(approvals, &domain.Approval{
 			ID:            uint(a.GetId()),
 			Name:          a.GetName(),
 			AppealID:      uint(a.GetId()),
 			Status:        a.GetStatus(),
-			Actor:         &actor,
+			Actor:         actor,
 			PolicyID:      a.GetPolicyId(),
 			PolicyVersion: uint(a.GetPolicyVersion()),
 			Approvers:     a.GetApprovers(),
