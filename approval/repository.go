@@ -35,7 +35,8 @@ func (r *repository) ListApprovals(conditions *domain.ListApprovalsFilter) ([]*d
 		approvalIDs = append(approvalIDs, a.ApprovalID)
 	}
 
-	db = r.db.Joins("Appeal")
+	db = r.db.Preload("Appeal.Resource")
+	db = db.Joins("Appeal")
 	if conditions.Statuses != nil {
 		db = db.Where(`"approvals"."status" IN ?`, conditions.Statuses)
 	}
