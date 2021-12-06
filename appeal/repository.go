@@ -19,6 +19,10 @@ type findFilters struct {
 	Statuses                  []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
 	ExpirationDateLessThan    time.Time `mapstructure:"expiration_date_lt" validate:"omitempty,required"`
 	ExpirationDateGreaterThan time.Time `mapstructure:"expiration_date_gt" validate:"omitempty,required"`
+	ProviderTypes             []string  `mapstructure:"provider_types" validate:"omitempty,min=1"`
+	ProviderURNs              []string  `mapstructure:"provider_urns" validate:"omitempty,min=1"`
+	ResourceTypes             []string  `mapstructure:"resource_types" validate:"omitempty,min=1"`
+	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 }
 
 // Repository talks to the store to read or insert data
@@ -85,8 +89,22 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Appeal, err
 		db = db.Where(`"options" -> 'expiration_date' > ?`, conditions.ExpirationDateGreaterThan)
 	}
 
+	db = db.Joins("Resource")
+	if conditions.ProviderTypes != nil {
+		db = db.Where(`"Resource"."provider_type" IN ?`, conditions.ProviderTypes)
+	}
+	if conditions.ProviderURNs != nil {
+		db = db.Where(`"Resource"."provider_urn" IN ?`, conditions.ProviderURNs)
+	}
+	if conditions.ResourceTypes != nil {
+		db = db.Where(`"Resource"."type" IN ?`, conditions.ResourceTypes)
+	}
+	if conditions.ResourceURNs != nil {
+		db = db.Where(`"Resource"."urn" IN ?`, conditions.ResourceURNs)
+	}
+
 	var models []*model.Appeal
-	if err := db.Debug().Find(&models).Error; err != nil {
+	if err := db.Find(&models).Error; err != nil {
 		return nil, err
 	}
 

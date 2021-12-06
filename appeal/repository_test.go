@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"regexp"
 	"testing"
 	"time"
@@ -26,6 +27,7 @@ type RepositoryTestSuite struct {
 	columnNames         []string
 	approvalColumnNames []string
 	approverColumnNames []string
+	resourceColumnNames []string
 }
 
 func (s *RepositoryTestSuite) SetupTest() {
@@ -66,6 +68,17 @@ func (s *RepositoryTestSuite) SetupTest() {
 		"email",
 		"appeal_id",
 		"approval_id",
+		"created_at",
+		"updated_at",
+	}
+	s.resourceColumnNames = []string{
+		"id",
+		"provider_type",
+		"provider_urn",
+		"type",
+		"urn",
+		"details",
+		"labels",
 		"created_at",
 		"updated_at",
 	}
@@ -232,6 +245,7 @@ func (s *RepositoryTestSuite) TestFind() {
 	})
 
 	s.Run("should run query based on filters", func() {
+		selectAppealsJoinsWithResourceSql := `SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id"`
 		timeNow := time.Now()
 		testCases := []struct {
 			filters       map[string]interface{}
@@ -240,41 +254,41 @@ func (s *RepositoryTestSuite) TestFind() {
 		}{
 			{
 				filters:       map[string]interface{}{},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "appeals"."deleted_at" IS NULL`),
+				expectedQuery: regexp.QuoteMeta(selectAppealsJoinsWithResourceSql + ` WHERE "appeals"."deleted_at" IS NULL`),
 			},
 			{
 				filters: map[string]interface{}{
 					"account_id": "user@email.com",
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "account_id" = $1 AND "appeals"."deleted_at" IS NULL`),
+				expectedQuery: regexp.QuoteMeta(selectAppealsJoinsWithResourceSql + ` WHERE "account_id" = $1 AND "appeals"."deleted_at" IS NULL`),
 				expectedArgs:  []driver.Value{"user@email.com"},
 			},
 			{
 				filters: map[string]interface{}{
 					"statuses": []string{domain.AppealStatusActive, domain.AppealStatusTerminated},
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "status" IN ($1,$2) AND "appeals"."deleted_at" IS NULL`),
+				expectedQuery: regexp.QuoteMeta(selectAppealsJoinsWithResourceSql + ` WHERE "status" IN ($1,$2) AND "appeals"."deleted_at" IS NULL`),
 				expectedArgs:  []driver.Value{domain.AppealStatusActive, domain.AppealStatusTerminated},
 			},
 			{
 				filters: map[string]interface{}{
 					"resource_id": uint(1),
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "resource_id" = $1 AND "appeals"."deleted_at" IS NULL`),
+				expectedQuery: regexp.QuoteMeta(selectAppealsJoinsWithResourceSql + ` WHERE "resource_id" = $1 AND "appeals"."deleted_at" IS NULL`),
 				expectedArgs:  []driver.Value{uint(1)},
 			},
 			{
 				filters: map[string]interface{}{
 					"role": "test-role",
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "role" = $1 AND "appeals"."deleted_at" IS NULL`),
+				expectedQuery: regexp.QuoteMeta(selectAppealsJoinsWithResourceSql + ` WHERE "role" = $1 AND "appeals"."deleted_at" IS NULL`),
 				expectedArgs:  []driver.Value{"test-role"},
 			},
 			{
 				filters: map[string]interface{}{
 					"expiration_date_lt": timeNow,
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "options" -> 'expiration_date' < $1 AND "appeals"."deleted_at" IS NULL`),
+				expectedQuery: regexp.QuoteMeta(selectAppealsJoinsWithResourceSql + ` WHERE "options" -> 'expiration_date' < $1 AND "appeals"."deleted_at" IS NULL`),
 				expectedArgs:  []driver.Value{timeNow},
 			},
 		}
@@ -292,12 +306,19 @@ func (s *RepositoryTestSuite) TestFind() {
 	})
 
 	s.Run("should return records on success", func() {
-		expectedQuery := regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "appeals"."deleted_at" IS NULL`)
+		expectedQuery := regexp.QuoteMeta(`SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE "appeals"."deleted_at" IS NULL`)
 		expectedFilters := map[string]interface{}{}
 		expectedRecords := []*domain.Appeal{
 			{
-				ID:            1,
-				ResourceID:    1,
+				ID:         1,
+				ResourceID: 1,
+				Resource: &domain.Resource{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+					URN:          "resource_urn",
+				},
 				PolicyID:      "policy_1",
 				PolicyVersion: 1,
 				Status:        domain.AppealStatusPending,
@@ -305,8 +326,15 @@ func (s *RepositoryTestSuite) TestFind() {
 				Role:          "role_name",
 			},
 			{
-				ID:            2,
-				ResourceID:    2,
+				ID:         2,
+				ResourceID: 2,
+				Resource: &domain.Resource{
+					ID:           2,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+					URN:          "resource_urn",
+				},
 				PolicyID:      "policy_1",
 				PolicyVersion: 1,
 				Status:        domain.AppealStatusPending,
@@ -314,9 +342,14 @@ func (s *RepositoryTestSuite) TestFind() {
 				Role:          "role_name",
 			},
 		}
-		expecterRows := sqlmock.NewRows(s.columnNames)
+		aggregatedColumns := s.columnNames
+		for _, c := range s.resourceColumnNames {
+			aggregatedColumns = append(aggregatedColumns, fmt.Sprintf("Resource__%s", c))
+		}
+		expectedRows := sqlmock.NewRows(aggregatedColumns)
 		for _, r := range expectedRecords {
-			expecterRows.AddRow(
+			expectedRows.AddRow(
+				// appeal
 				r.ID,
 				r.ResourceID,
 				r.PolicyID,
@@ -332,11 +365,22 @@ func (s *RepositoryTestSuite) TestFind() {
 				"null",
 				r.CreatedAt,
 				r.UpdatedAt,
+
+				// resource
+				r.Resource.ID,
+				r.Resource.ProviderType,
+				r.Resource.ProviderURN,
+				r.Resource.Type,
+				r.Resource.URN,
+				"null",
+				"null",
+				r.Resource.CreatedAt,
+				r.Resource.UpdatedAt,
 			)
 		}
 		s.dbmock.
 			ExpectQuery(expectedQuery).
-			WillReturnRows(expecterRows)
+			WillReturnRows(expectedRows)
 
 		actualRecords, actualError := s.repository.Find(expectedFilters)
 
