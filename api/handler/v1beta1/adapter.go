@@ -64,13 +64,19 @@ func (a *adapter) FromProviderConfigProto(pc *guardianv1beta1.ProviderConfig) (*
 		})
 	}
 
+	var allowedAccountTypes []string
+	if pc.GetAllowedAccountTypes() != nil {
+		allowedAccountTypes = pc.GetAllowedAccountTypes()
+	}
+
 	return &domain.ProviderConfig{
-		Type:        pc.GetType(),
-		URN:         pc.GetUrn(),
-		Labels:      pc.GetLabels(),
-		Credentials: pc.GetCredentials().AsInterface(),
-		Appeal:      appealConfig,
-		Resources:   resources,
+		Type:                pc.GetType(),
+		URN:                 pc.GetUrn(),
+		Labels:              pc.GetLabels(),
+		Credentials:         pc.GetCredentials().AsInterface(),
+		Appeal:              appealConfig,
+		Resources:           resources,
+		AllowedAccountTypes: allowedAccountTypes,
 	}, nil
 }
 
@@ -122,13 +128,19 @@ func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*guardianv1b
 		})
 	}
 
+	var allowedAccountTypes []string
+	if pc.AllowedAccountTypes != nil {
+		allowedAccountTypes = pc.AllowedAccountTypes
+	}
+
 	return &guardianv1beta1.ProviderConfig{
-		Type:        pc.Type,
-		Urn:         pc.URN,
-		Labels:      pc.Labels,
-		Credentials: credentials,
-		Appeal:      appeal,
-		Resources:   resources,
+		Type:                pc.Type,
+		Urn:                 pc.URN,
+		Labels:              pc.Labels,
+		Credentials:         credentials,
+		Appeal:              appeal,
+		Resources:           resources,
+		AllowedAccountTypes: allowedAccountTypes,
 	}, nil
 }
 

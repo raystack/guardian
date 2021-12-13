@@ -129,25 +129,27 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			activeAppeals[a.AccountID][a.ResourceID] != nil &&
 			activeAppeals[a.AccountID][a.ResourceID][a.Role] != nil {
 
-			if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
-				return ErrAppealFoundActiveAccess
-			}
+			if p.Config.Appeal != nil {
+				if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
+					return ErrAppealFoundActiveAccess
+				}
 
-			duration, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
-			if err != nil {
-				return fmt.Errorf("%v: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
-			}
+				duration, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
+				if err != nil {
+					return fmt.Errorf("%v: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
+				}
 
-			now := s.TimeNow()
-			activeAppealExpDate := activeAppeals[a.AccountID][a.ResourceID][a.Role].Options.ExpirationDate
-			isEligibleForExtension := activeAppealExpDate.Sub(now) <= duration
-			if isEligibleForExtension {
-				oldAppeal := &domain.Appeal{}
-				*oldAppeal = *activeAppeals[a.AccountID][a.ResourceID][a.Role]
-				oldAppeal.Terminate()
-				expiredAppeals = append(expiredAppeals, oldAppeal)
-			} else {
-				return fmt.Errorf("%v: the extension policy for this resource is %v before current access expiration", ErrAppealNotEligibleForExtension, duration)
+				now := s.TimeNow()
+				activeAppealExpDate := activeAppeals[a.AccountID][a.ResourceID][a.Role].Options.ExpirationDate
+				isEligibleForExtension := activeAppealExpDate.Sub(now) <= duration
+				if isEligibleForExtension {
+					oldAppeal := &domain.Appeal{}
+					*oldAppeal = *activeAppeals[a.AccountID][a.ResourceID][a.Role]
+					oldAppeal.Terminate()
+					expiredAppeals = append(expiredAppeals, oldAppeal)
+				} else {
+					return fmt.Errorf("%v: the extension policy for this resource is %v before current access expiration", ErrAppealNotEligibleForExtension, duration)
+				}
 			}
 		}
 
