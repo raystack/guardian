@@ -234,8 +234,8 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 
 func makeHeaderMatcher(c *Config) func(key string) (string, bool) {
 	return func(key string) (string, bool) {
-		switch key {
-		case c.AuthenticatedUserHeaderKey:
+		switch strings.ToLower(key) {
+		case strings.ToLower(c.AuthenticatedUserHeaderKey):
 			return key, true
 		default:
 			return runtime.DefaultHeaderMatcher(key)
