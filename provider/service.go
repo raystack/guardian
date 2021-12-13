@@ -197,7 +197,7 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 		return ErrInvalidRole
 	}
 
-	if !p.Config.Appeal.AllowPermanentAccess {
+	if p.Config.Appeal != nil && !p.Config.Appeal.AllowPermanentAccess {
 		if a.Options == nil {
 			return ErrOptionsDurationNotFound
 		}
