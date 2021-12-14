@@ -520,6 +520,7 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 		ApprovalName: req.GetApprovalName(),
 		Actor:        actor,
 		Action:       req.GetAction().GetAction(),
+		Reason:       req.GetAction().GetReason(),
 	})
 	if err != nil {
 		switch err {

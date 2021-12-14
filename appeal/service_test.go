@@ -1173,6 +1173,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ApprovalName: "approval_1",
 					Actor:        "user@email.com",
 					Action:       domain.AppealActionNameReject,
+					Reason:       "test-reason",
 				},
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
@@ -1222,6 +1223,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 							Status:    domain.ApprovalStatusRejected,
 							Approvers: []string{"user@email.com"},
 							Actor:     &user,
+							Reason:    "test-reason",
 							UpdatedAt: timeNow,
 						},
 					},

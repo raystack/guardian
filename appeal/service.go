@@ -279,6 +279,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 			}
 
 			approval.Actor = &approvalAction.Actor
+			approval.Reason = approvalAction.Reason
 			approval.UpdatedAt = TimeNow()
 
 			if approvalAction.Action == domain.AppealActionNameApprove {

@@ -17,6 +17,7 @@ type Approval struct {
 	AppealID      uint    `json:"appeal_id"`
 	Status        string  `json:"status"`
 	Actor         *string `json:"actor"`
+	Reason        string  `json:"reason"`
 	PolicyID      string  `json:"policy_id"`
 	PolicyVersion uint    `json:"policy_version"`
 

@@ -15,6 +15,7 @@ type Approval struct {
 	AppealID      uint
 	Status        string
 	Actor         *string
+	Reason        string
 	PolicyID      string
 	PolicyVersion uint
 
@@ -53,6 +54,7 @@ func (m *Approval) FromDomain(a *domain.Approval) error {
 	m.AppealID = a.AppealID
 	m.Status = a.Status
 	m.Actor = a.Actor
+	m.Reason = a.Reason
 	m.PolicyID = a.PolicyID
 	m.PolicyVersion = a.PolicyVersion
 	m.Approvers = approvers
@@ -91,6 +93,7 @@ func (m *Approval) ToDomain() (*domain.Approval, error) {
 		AppealID:      m.AppealID,
 		Status:        m.Status,
 		Actor:         m.Actor,
+		Reason:        m.Reason,
 		PolicyID:      m.PolicyID,
 		PolicyVersion: m.PolicyVersion,
 		Approvers:     approvers,
