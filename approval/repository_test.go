@@ -57,7 +57,7 @@ func (s *RepositoryTestSuite) TearDownTest() {
 }
 
 func (s *RepositoryTestSuite) TestBulkInsert() {
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","policy_id","policy_version","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10),($11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING "id"`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","reason","policy_id","policy_version","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING "id"`)
 
 	actor := "user@email.com"
 	approvals := []*domain.Approval{
@@ -89,6 +89,7 @@ func (s *RepositoryTestSuite) TestBulkInsert() {
 			a.AppealID,
 			a.Status,
 			a.Actor,
+			a.Reason,
 			a.PolicyID,
 			a.PolicyVersion,
 			utils.AnyTime{},

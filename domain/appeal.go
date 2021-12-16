@@ -87,6 +87,7 @@ type ApprovalAction struct {
 	ApprovalName string `validate:"required"`
 	Actor        string `validate:"email"`
 	Action       string `validate:"required,oneof=approve reject"`
+	Reason       string
 }
 
 // AppealRepository interface
