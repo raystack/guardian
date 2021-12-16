@@ -5,6 +5,17 @@ import (
 	"github.com/odpf/guardian/store/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+)
+
+var (
+	ApprovalStatusDefaultSort = []string{
+		domain.ApprovalStatusPending,
+		domain.ApprovalStatusApproved,
+		domain.ApprovalStatusRejected,
+		domain.ApprovalStatusBlocked,
+		domain.ApprovalStatusSkipped,
+	}
 )
 
 type approvalRepository struct {
@@ -40,6 +51,15 @@ func (r *approvalRepository) ListApprovals(conditions *domain.ListApprovalsFilte
 	if conditions.Statuses != nil {
 		db = db.Where(`"approvals"."status" IN ?`, conditions.Statuses)
 	}
+	db = db.Where(`"Appeal"."status" != ?`, domain.AppealStatusCanceled)
+
+	db = db.Clauses(clause.OrderBy{
+		Expression: clause.Expr{
+			SQL:                `ARRAY_POSITION(ARRAY[?], "approvals"."status"), "updated_at"`,
+			Vars:               []interface{}{ApprovalStatusDefaultSort},
+			WithoutParentheses: true,
+		},
+	})
 
 	var models []*model.Approval
 	if err := db.

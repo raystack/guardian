@@ -26,6 +26,16 @@ type appealFindFilters struct {
 	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 }
 
+var (
+	AppealStatusDefaultSort = []string{
+		domain.AppealStatusPending,
+		domain.AppealStatusActive,
+		domain.AppealStatusRejected,
+		domain.AppealStatusTerminated,
+		domain.AppealStatusCanceled,
+	}
+)
+
 // AppealRepository talks to the store to read or insert data
 type AppealRepository struct {
 	db *gorm.DB
@@ -89,6 +99,14 @@ func (r *AppealRepository) Find(filters map[string]interface{}) ([]*domain.Appea
 	if !conditions.ExpirationDateGreaterThan.IsZero() {
 		db = db.Where(`"options" -> 'expiration_date' > ?`, conditions.ExpirationDateGreaterThan)
 	}
+
+	db = db.Clauses(clause.OrderBy{
+		Expression: clause.Expr{
+			SQL:                `ARRAY_POSITION(ARRAY[?], "status"), "updated_at"`,
+			Vars:               []interface{}{AppealStatusDefaultSort},
+			WithoutParentheses: true,
+		},
+	})
 
 	db = db.Joins("Resource")
 	if conditions.ProviderTypes != nil {
