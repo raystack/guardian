@@ -55,7 +55,7 @@ func (r *approvalRepository) ListApprovals(conditions *domain.ListApprovalsFilte
 
 	db = db.Clauses(clause.OrderBy{
 		Expression: clause.Expr{
-			SQL:                `ARRAY_POSITION(ARRAY[?], "approvals"."status"), "updated_at"`,
+			SQL:                `ARRAY_POSITION(ARRAY[?], "approvals"."status"), "updated_at" desc`,
 			Vars:               []interface{}{ApprovalStatusDefaultSort},
 			WithoutParentheses: true,
 		},

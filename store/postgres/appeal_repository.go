@@ -102,7 +102,7 @@ func (r *AppealRepository) Find(filters map[string]interface{}) ([]*domain.Appea
 
 	db = db.Clauses(clause.OrderBy{
 		Expression: clause.Expr{
-			SQL:                `ARRAY_POSITION(ARRAY[?], "status"), "updated_at"`,
+			SQL:                `ARRAY_POSITION(ARRAY[?], "status"), "updated_at" desc`,
 			Vars:               []interface{}{AppealStatusDefaultSort},
 			WithoutParentheses: true,
 		},
