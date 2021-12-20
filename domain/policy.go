@@ -79,7 +79,7 @@ type Step struct {
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	When string `json:"expression" yaml:"expression"`
+	When string `json:"expression,omitempty" yaml:"expression,omitempty"`
 
 	// Strategy defines if the step requires manual approval or not
 	Strategy ApprovalStepStrategy `json:"strategy" yaml:"strategy" validate:"required,oneof=auto manual"`
@@ -89,14 +89,14 @@ type Step struct {
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	Approvers []string `json:"approvers" yaml:"approvers" validate:"required_if=Strategy manual,omitempty,min=1"`
+	Approvers []string `json:"approvers,omitempty" yaml:"approvers,omitempty" validate:"required_if=Strategy manual,omitempty,min=1"`
 
 	// ApproveIf is an Expression to determines the resolution of the step. If automatic approval is needed for the step,
 	// use this field.
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	ApproveIf string `json:"approve_if" yaml:"approve_if" validate:"required_if=Strategy auto"`
+	ApproveIf string `json:"approve_if,omitempty" yaml:"approve_if,omitempty" validate:"required_if=Strategy auto"`
 }
 
 type RequirementTrigger struct {
@@ -183,9 +183,9 @@ type Policy struct {
 	Version      uint              `json:"version" yaml:"version" validate:"required"`
 	Description  string            `json:"description" yaml:"description"`
 	Steps        []*Step           `json:"steps" yaml:"steps" validate:"required,min=1,dive"`
-	Requirements []*Requirement    `json:"requirements" yaml:"requirements" validate:"omitempty,min=1,dive"`
-	Labels       map[string]string `json:"labels" yaml:"labels"`
-	IAM          *IAMConfig        `json:"iam" yaml:"iam" validate:"omitempty,dive"`
+	Requirements []*Requirement    `json:"requirements,omitempty" yaml:"requirements,omitempty" validate:"omitempty,min=1,dive"`
+	Labels       map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
+	IAM          *IAMConfig        `json:"iam,omitempty" yaml:"iam,omitempty" validate:"omitempty,dive"`
 	CreatedAt    time.Time         `json:"created_at,omitempty" yaml:"created_at,omitempty"`
 	UpdatedAt    time.Time         `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
 }
