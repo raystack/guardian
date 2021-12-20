@@ -270,21 +270,8 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				}
 
 				if i == len(appeal.Approvals)-1 {
-					policy, err := s.policyService.GetOne(appeal.PolicyID, appeal.PolicyVersion)
-					if err != nil {
-						return nil, fmt.Errorf("retrieving policy: %v", err)
-					}
-
-					if err := s.handleAppealRequirements(appeal, policy); err != nil {
+					if err := s.createAccess(appeal); err != nil {
 						return nil, err
-					}
-
-					if err := s.providerService.GrantAccess(appeal); err != nil {
-						return nil, err
-					}
-
-					if err := appeal.Activate(); err != nil {
-						return nil, fmt.Errorf("activating appeal: %v", err)
 					}
 				}
 
@@ -710,5 +697,30 @@ func (s *Service) handleAppealRequirements(a *domain.Appeal, p *domain.Policy) e
 			return fmt.Errorf("creating additional appeals: %v", err)
 		}
 	}
+	return nil
+}
+
+func (s *Service) createAccess(a *domain.Appeal) error {
+	policy := a.Policy
+	if policy == nil {
+		p, err := s.policyService.GetOne(a.PolicyID, a.PolicyVersion)
+		if err != nil {
+			return fmt.Errorf("retrieving policy: %v", err)
+		}
+		policy = p
+	}
+
+	if err := s.handleAppealRequirements(a, policy); err != nil {
+		return err
+	}
+
+	if err := s.providerService.GrantAccess(a); err != nil {
+		return err
+	}
+
+	if err := a.Activate(); err != nil {
+		return fmt.Errorf("activating appeal: %v", err)
+	}
+
 	return nil
 }
