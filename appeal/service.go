@@ -275,46 +275,8 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 						return nil, fmt.Errorf("retrieving policy: %v", err)
 					}
 
-					additionalAppeals := []*domain.Appeal{}
-					if policy.Requirements != nil && len(policy.Requirements) > 0 {
-						for reqIndex, r := range policy.Requirements {
-							isAppealMatchesRequirement, err := r.On.IsMatch(appeal)
-							if err != nil {
-								return nil, fmt.Errorf("evaluating requirements[%v]: %v", reqIndex, err)
-							}
-							if !isAppealMatchesRequirement {
-								continue
-							}
-
-							for _, aa := range r.Appeals {
-								// TODO: populate resource data from policyService
-								resource, err := s.resourceService.Get(aa.Resource)
-								if err != nil {
-									return nil, fmt.Errorf("retrieving resource: %v", err)
-								}
-
-								additionalAppeal := &domain.Appeal{
-									AccountID:   appeal.AccountID,
-									AccountType: appeal.AccountType,
-									CreatedBy:   appeal.CreatedBy,
-									Role:        aa.Role,
-									ResourceID:  resource.ID,
-								}
-								if aa.Options != nil {
-									additionalAppeal.Options = aa.Options
-								}
-								if aa.Policy != nil {
-									additionalAppeal.PolicyID = aa.Policy.ID
-									additionalAppeal.PolicyVersion = uint(aa.Policy.Version)
-								}
-								additionalAppeals = append(additionalAppeals, additionalAppeal)
-							}
-						}
-					}
-					if len(additionalAppeals) > 0 {
-						if err := s.Create(additionalAppeals); err != nil {
-							return nil, fmt.Errorf("creating additional appeals: %v", err)
-						}
+					if err := s.handleAppealRequirements(appeal, policy); err != nil {
+						return nil, err
 					}
 
 					if err := s.providerService.GrantAccess(appeal); err != nil {
@@ -703,5 +665,50 @@ func (s *Service) fillApprovals(a *domain.Appeal) error {
 	}
 
 	a.Approvals = approvals
+	return nil
+}
+
+func (s *Service) handleAppealRequirements(a *domain.Appeal, p *domain.Policy) error {
+	additionalAppeals := []*domain.Appeal{}
+	if p.Requirements != nil && len(p.Requirements) > 0 {
+		for reqIndex, r := range p.Requirements {
+			isAppealMatchesRequirement, err := r.On.IsMatch(a)
+			if err != nil {
+				return fmt.Errorf("evaluating requirements[%v]: %v", reqIndex, err)
+			}
+			if !isAppealMatchesRequirement {
+				continue
+			}
+
+			for _, aa := range r.Appeals {
+				// TODO: populate resource data from policyService
+				resource, err := s.resourceService.Get(aa.Resource)
+				if err != nil {
+					return fmt.Errorf("retrieving resource: %v", err)
+				}
+
+				additionalAppeal := &domain.Appeal{
+					AccountID:   a.AccountID,
+					AccountType: a.AccountType,
+					CreatedBy:   a.CreatedBy,
+					Role:        aa.Role,
+					ResourceID:  resource.ID,
+				}
+				if aa.Options != nil {
+					additionalAppeal.Options = aa.Options
+				}
+				if aa.Policy != nil {
+					additionalAppeal.PolicyID = aa.Policy.ID
+					additionalAppeal.PolicyVersion = uint(aa.Policy.Version)
+				}
+				additionalAppeals = append(additionalAppeals, additionalAppeal)
+			}
+		}
+	}
+	if len(additionalAppeals) > 0 {
+		if err := s.Create(additionalAppeals); err != nil {
+			return fmt.Errorf("creating additional appeals: %v", err)
+		}
+	}
 	return nil
 }
