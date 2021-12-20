@@ -193,35 +193,13 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			a.Creator = creatorDetails
 		}
 
-		approvals := []*domain.Approval{}
-		for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService
-			var approverEmails []string
-			if step.Strategy == domain.ApprovalStepStrategyManual {
-				approverEmails, err = s.resolveApprovers(step.Approvers, a)
-				if err != nil {
-					return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
-				}
-			}
-
-			status := domain.ApprovalStatusPending
-			if i > 0 {
-				status = domain.ApprovalStatusBlocked
-			}
-
-			approvals = append(approvals, &domain.Approval{
-				Name:          step.Name,
-				Index:         i,
-				Status:        status,
-				PolicyID:      policyConfig.ID,
-				PolicyVersion: uint(policyConfig.Version),
-				Approvers:     approverEmails,
-			})
+		if err := s.fillApprovals(a); err != nil {
+			return err
 		}
 
-		a.PolicyID = policyConfig.ID
-		a.PolicyVersion = uint(policyConfig.Version)
+		a.PolicyID = a.Policy.ID
+		a.PolicyVersion = a.Policy.Version
 		a.Status = domain.AppealStatusPending
-		a.Approvals = approvals
 
 		if err := s.approvalService.AdvanceApproval(a); err != nil {
 			return err
@@ -695,4 +673,35 @@ func structToMap(item interface{}) (map[string]interface{}, error) {
 	}
 
 	return result, nil
+}
+
+func (s *Service) fillApprovals(a *domain.Appeal) error {
+	approvals := []*domain.Approval{}
+	for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService
+		var approverEmails []string
+		var err error
+		if step.Strategy == domain.ApprovalStepStrategyManual {
+			approverEmails, err = s.resolveApprovers(step.Approvers, a)
+			if err != nil {
+				return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
+			}
+		}
+
+		status := domain.ApprovalStatusPending
+		if i > 0 {
+			status = domain.ApprovalStatusBlocked
+		}
+
+		approvals = append(approvals, &domain.Approval{
+			Name:          step.Name,
+			Index:         i,
+			Status:        status,
+			PolicyID:      a.Policy.ID,
+			PolicyVersion: a.Policy.Version,
+			Approvers:     approverEmails,
+		})
+	}
+
+	a.Approvals = approvals
+	return nil
 }
