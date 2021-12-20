@@ -186,8 +186,8 @@ type Policy struct {
 	Requirements []*Requirement    `json:"requirements" yaml:"requirements" validate:"omitempty,min=1,dive"`
 	Labels       map[string]string `json:"labels" yaml:"labels"`
 	IAM          *IAMConfig        `json:"iam" yaml:"iam" validate:"omitempty,dive"`
-	CreatedAt    time.Time         `json:"created_at" yaml:"created_at"`
-	UpdatedAt    time.Time         `json:"updated_at" yaml:"updated_at"`
+	CreatedAt    time.Time         `json:"created_at,omitempty" yaml:"created_at,omitempty"`
+	UpdatedAt    time.Time         `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
 }
 
 func (p *Policy) HasIAMConfig() bool {
