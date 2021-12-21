@@ -49,20 +49,20 @@ type ProviderConfig struct {
 	Type                string            `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana tableau gcloud_iam"`
 	URN                 string            `json:"urn" yaml:"urn" validate:"required"`
 	AllowedAccountTypes []string          `json:"allowed_account_types" yaml:"allowed_account_types" validate:"omitempty,min=1"`
-	Labels              map[string]string `json:"labels" yaml:"labels"`
+	Labels              map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Credentials         interface{}       `json:"credentials,omitempty" yaml:"credentials" validate:"required"`
-	Appeal              *AppealConfig     `json:"appeal" yaml:"appeal" validate:"required"`
+	Appeal              *AppealConfig     `json:"appeal,omitempty" yaml:"appeal,omitempty" validate:"required"`
 	Resources           []*ResourceConfig `json:"resources" yaml:"resources" validate:"required"`
 }
 
 // Provider domain structure
 type Provider struct {
-	ID        uint            `json:"id"`
-	Type      string          `json:"type"`
-	URN       string          `json:"urn"`
-	Config    *ProviderConfig `json:"config"`
-	CreatedAt time.Time       `json:"created_at"`
-	UpdatedAt time.Time       `json:"updated_at"`
+	ID        uint            `json:"id" yaml:"id"`
+	Type      string          `json:"type" yaml:"type"`
+	URN       string          `json:"urn" yaml:"urn"`
+	Config    *ProviderConfig `json:"config" yaml:"config"`
+	CreatedAt time.Time       `json:"created_at,omitempty" yaml:"created_at,omitempty"`
+	UpdatedAt time.Time       `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
 }
 
 // ProviderRepository interface
