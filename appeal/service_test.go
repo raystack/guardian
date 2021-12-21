@@ -367,18 +367,6 @@ func (s *ServiceTestSuite) TestCreate() {
 				expectedError: appeal.ErrProviderURNNotFound,
 			},
 			{
-				name: "resource type not found",
-				resources: []*domain.Resource{{
-					ID:           1,
-					ProviderType: "provider_type",
-					ProviderURN:  "provider_urn",
-					Type:         "invalid_resource_type",
-				}},
-				providers:     []*domain.Provider{testProvider},
-				appeals:       []*domain.Appeal{{ResourceID: 1}},
-				expectedError: appeal.ErrResourceTypeNotFound,
-			},
-			{
 				name: "duration not found when the appeal config prevents permanent access",
 				resources: []*domain.Resource{{
 					ID:           1,
@@ -432,6 +420,19 @@ func (s *ServiceTestSuite) TestCreate() {
 					},
 				}},
 				expectedError: appeal.ErrInvalidRole,
+			},
+			{
+				name: "resource type not found",
+				resources: []*domain.Resource{{
+					ID:           1,
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "invalid_resource_type",
+				}},
+				providers:              []*domain.Provider{testProvider},
+				callMockValidateAppeal: true,
+				appeals:                []*domain.Appeal{{ResourceID: 1}},
+				expectedError:          appeal.ErrResourceTypeNotFound,
 			},
 			{
 				name: "policy id not found",

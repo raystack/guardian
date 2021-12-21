@@ -82,6 +82,12 @@ func (a *Appeal) Activate() error {
 	return nil
 }
 
+func (a *Appeal) SetDefaults() {
+	if a.AccountType == "" {
+		a.AccountType = DefaultAppealAccountType
+	}
+}
+
 type ApprovalAction struct {
 	AppealID     uint   `validate:"required"`
 	ApprovalName string `validate:"required"`
