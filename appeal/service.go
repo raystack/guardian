@@ -204,6 +204,25 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		if err := s.approvalService.AdvanceApproval(a); err != nil {
 			return err
 		}
+
+		for _, approval := range a.Approvals {
+			if approval.Index == len(a.Approvals)-1 && approval.Status == domain.ApprovalStatusApproved {
+				if err := s.createAccess(a); err != nil {
+					return err
+				}
+				notifications = append(notifications, domain.Notification{
+					User: a.CreatedBy,
+					Message: domain.NotificationMessage{
+						Type: domain.NotificationTypeAppealApproved,
+						Variables: map[string]interface{}{
+							"resource_name": fmt.Sprintf("%s (%s: %s)", a.Resource.Name, a.Resource.ProviderType, a.Resource.URN),
+							"role":          a.Role,
+						},
+					},
+				})
+			}
+		}
+
 		a.Policy = nil
 	}
 
@@ -214,6 +233,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 	for _, a := range appeals {
 		notifications = append(notifications, getApprovalNotifications(a)...)
+		// TODO: add notification to creator if the appeal gets immediately auto-approved
 	}
 
 	if len(notifications) > 0 {
