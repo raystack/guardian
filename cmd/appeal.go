@@ -17,7 +17,10 @@ import (
 func appealsCommand(c *app.CLIConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "appeals",
-		Short: "manage appeals",
+		Short: "Manage appeals",
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 	}
 
 	cmd.AddCommand(listAppealsCommand(c))

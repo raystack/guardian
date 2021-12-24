@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	"github.com/odpf/guardian/app"
@@ -8,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//New  create a root command
 func New() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "guardian <command> <subcommand> [flags]",
@@ -41,10 +42,14 @@ func New() *cobra.Command {
 
 	protoAdapter := handlerv1beta1.NewAdapter()
 
-	cliConfig, err := app.LoadCLIConfig(app.CLIConfigFile)
+	cfg := app.LoadCLIConfig()
+
+	config, err := cfg.Load()
 	if err != nil {
-		panic(err)
+		fmt.Printf("error loading config, try running 'guardian config init'\n")
 	}
+
+	cliConfig, _ := config.(*app.CLIConfig)
 
 	cmdx.SetHelp(cmd)
 
