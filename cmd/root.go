@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	"github.com/odpf/guardian/app"
@@ -10,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func New() *cobra.Command {
+func New(cliConfig *app.CLIConfig) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "guardian <command> <subcommand> [flags]",
 		Short: "Universal data access control",
@@ -32,7 +30,7 @@ func New() *cobra.Command {
 			"group:core": "true",
 			"help:learn": heredoc.Doc(`
 				Use 'guardian <command> <subcommand> --help' for more information about a command.
-				Read the manual at https://odpf.gitbook.io/guardian/
+				Read the manual at https://odpf.github.io/guardian/
 			`),
 			"help:feedback": heredoc.Doc(`
 				Open an issue here https://github.com/odpf/guardian/issues
@@ -41,15 +39,6 @@ func New() *cobra.Command {
 	}
 
 	protoAdapter := handlerv1beta1.NewAdapter()
-
-	cfg := app.LoadCLIConfig()
-
-	config, err := cfg.Load()
-	if err != nil {
-		fmt.Printf("error loading config, try running 'guardian config init'\n")
-	}
-
-	cliConfig, _ := config.(*app.CLIConfig)
 
 	cmdx.SetHelp(cmd)
 

@@ -5,13 +5,14 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/guardian/app"
+	"github.com/odpf/salt/cmdx"
 	"github.com/spf13/cobra"
 )
 
 func configCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config <command>",
-		Short: "Manage configuration settings for Guardian",
+		Short: "Manage client configuration settings",
 		Example: heredoc.Doc(`
 			$ stencil config init
 			$ stencil config get
@@ -36,9 +37,9 @@ func configInitCommand() *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg := app.LoadCLIConfig()
+			cfg := cmdx.SetConfig("guardian")
 
-			if err := cfg.Init(); err != nil {
+			if err := cfg.Init(&app.CLIConfig{}); err != nil {
 				return err
 			}
 
@@ -50,7 +51,7 @@ func configInitCommand() *cobra.Command {
 
 func configGetCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "get",
+		Use:   "get <key>",
 		Short: "Update configuration with a value for the given key",
 		Example: heredoc.Doc(`
 			$ stencil config get --path=.stencil.yml
@@ -59,13 +60,11 @@ func configGetCommand() *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg := app.LoadCLIConfig()
-
-			data, err := cfg.Load()
+			config, err := app.LoadCLIConfig()
 			if err != nil {
 				return err
 			}
-			fmt.Println(data)
+			fmt.Println(config)
 			return nil
 		},
 	}
@@ -83,7 +82,7 @@ func configListCommand() *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg := app.LoadCLIConfig()
+			cfg := cmdx.SetConfig("guardian")
 
 			data, err := cfg.Read()
 			if err != nil {

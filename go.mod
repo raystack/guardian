@@ -13,7 +13,7 @@ require (
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mcuadros/go-lookup v0.0.0-20200831155250-80f87a4fa5ee
 	github.com/mitchellh/mapstructure v1.4.1
-	github.com/odpf/salt v0.0.0-20211223232616-de875a7b94cb
+	github.com/odpf/salt v0.0.0-20220101235629-4806139a9907
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0

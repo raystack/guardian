@@ -7,7 +7,6 @@ import (
 	"github.com/odpf/guardian/notifier"
 	"github.com/odpf/guardian/store"
 	"github.com/odpf/salt/cmdx"
-	"github.com/odpf/salt/cmdx/cfg"
 	"github.com/odpf/salt/config"
 )
 
@@ -39,7 +38,11 @@ func LoadConfig(configFile string) (Config, error) {
 	return cfg, nil
 }
 
-func LoadCLIConfig() *cfg.Config {
+func LoadCLIConfig() (*CLIConfig, error) {
 	var config CLIConfig
-	return cmdx.SetConfig("guardian", &config)
+
+	cfg := cmdx.SetConfig("guardian")
+	err := cfg.Load(&config)
+
+	return &config, err
 }
