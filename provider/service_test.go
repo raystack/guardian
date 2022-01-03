@@ -279,7 +279,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 }
 
 func (s *ServiceTestSuite) TestFetchResources() {
-	s.Run("should return error if got any from provider respository", func() {
+	s.Run("should return error if got any from provider repository", func() {
 		expectedError := errors.New("any error")
 		s.mockProviderRepository.On("Find").Return(nil, expectedError).Once()
 

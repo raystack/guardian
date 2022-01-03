@@ -128,7 +128,6 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		if activeAppeals[a.AccountID] != nil &&
 			activeAppeals[a.AccountID][a.ResourceID] != nil &&
 			activeAppeals[a.AccountID][a.ResourceID][a.Role] != nil {
-
 			if p.Config.Appeal != nil {
 				if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
 					return ErrAppealFoundActiveAccess
@@ -347,7 +346,6 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 						return nil, fmt.Errorf("activating appeal: %v", err)
 					}
 				}
-
 			} else if approvalAction.Action == domain.AppealActionNameReject {
 				approval.Status = domain.ApprovalStatusRejected
 				appeal.Status = domain.AppealStatusRejected

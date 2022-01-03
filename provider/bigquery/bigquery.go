@@ -311,7 +311,6 @@ func (c *bigQueryClient) getGrantableRolesForTables() ([]string, error) {
 	}
 
 	return roles, nil
-
 }
 
 func containsString(arr []string, v string) bool {

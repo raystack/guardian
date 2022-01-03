@@ -261,7 +261,6 @@ func (c *client) updateDashboardPermissions(id int, permissions []*permission) e
 
 	_, err = c.do(req, nil)
 	return err
-
 }
 
 func (c *client) getUser(email string) (*user, error) {

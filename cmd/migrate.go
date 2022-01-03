@@ -6,7 +6,6 @@ import (
 )
 
 func migrateCommand() *cobra.Command {
-
 	var configFile string
 
 	cmd := &cobra.Command{

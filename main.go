@@ -30,5 +30,4 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(exitError)
 	}
-
 }

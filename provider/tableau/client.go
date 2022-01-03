@@ -636,7 +636,6 @@ func (c *client) addWorkbookPermissions(id string, permissions workbookPermissio
 
 	_, err = c.do(req, nil)
 	return err
-
 }
 
 func (c *client) addFlowPermissions(id string, permissions flowPermission) error {
@@ -651,7 +650,6 @@ func (c *client) addFlowPermissions(id string, permissions flowPermission) error
 
 	_, err = c.do(req, nil)
 	return err
-
 }
 
 func (c *client) addMetricPermissions(id string, permissions metricPermission) error {
@@ -666,7 +664,6 @@ func (c *client) addMetricPermissions(id string, permissions metricPermission) e
 
 	_, err = c.do(req, nil)
 	return err
-
 }
 
 func (c *client) addDataSourcePermissions(id string, permissions datasourcePermission) error {
@@ -681,7 +678,6 @@ func (c *client) addDataSourcePermissions(id string, permissions datasourcePermi
 
 	_, err = c.do(req, nil)
 	return err
-
 }
 
 func (c *client) addViewPermissions(id string, permissions viewPermission) error {
@@ -696,7 +692,6 @@ func (c *client) addViewPermissions(id string, permissions viewPermission) error
 
 	_, err = c.do(req, nil)
 	return err
-
 }
 
 func (c *client) deleteWorkbookPermissions(id, user, role string) error {
@@ -711,7 +706,6 @@ func (c *client) deleteWorkbookPermissions(id, user, role string) error {
 
 	_, err = c.do(req, nil)
 	return err
-
 }
 
 func (c *client) deleteFlowPermissions(id, user, role string) error {
@@ -726,7 +720,6 @@ func (c *client) deleteFlowPermissions(id, user, role string) error {
 
 	_, err = c.do(req, nil)
 	return err
-
 }
 
 func (c *client) deleteMetricPermissions(id, user, role string) error {
@@ -741,7 +734,6 @@ func (c *client) deleteMetricPermissions(id, user, role string) error {
 
 	_, err = c.do(req, nil)
 	return err
-
 }
 
 func (c *client) deleteDataSourcePermissions(id, user, role string) error {
@@ -756,7 +748,6 @@ func (c *client) deleteDataSourcePermissions(id, user, role string) error {
 
 	_, err = c.do(req, nil)
 	return err
-
 }
 
 func (c *client) deleteViewPermissions(id, user, role string) error {
@@ -771,7 +762,6 @@ func (c *client) deleteViewPermissions(id, user, role string) error {
 
 	_, err = c.do(req, nil)
 	return err
-
 }
 
 func (c *client) getSession() (string, string, string, error) {
