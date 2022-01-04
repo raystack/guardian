@@ -380,6 +380,9 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 	if req.GetResourceUrns() != nil {
 		filters["resource_urns"] = req.GetResourceUrns()
 	}
+	if req.GetOrderBy() != nil {
+		filters["order_by"] = req.GetOrderBy()
+	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
 		return nil, err
@@ -412,6 +415,9 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListA
 	}
 	if req.GetResourceUrns() != nil {
 		filters["resource_urns"] = req.GetResourceUrns()
+	}
+	if req.GetOrderBy() != nil {
+		filters["order_by"] = req.GetOrderBy()
 	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
@@ -464,6 +470,7 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1beta1
 	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
 		AccountID: user,
 		Statuses:  req.GetStatuses(),
+		OrderBy:   req.GetOrderBy(),
 	})
 	if err != nil {
 		return nil, err
@@ -478,6 +485,7 @@ func (s *GRPCServer) ListApprovals(ctx context.Context, req *guardianv1beta1.Lis
 	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
 		AccountID: req.GetAccountId(),
 		Statuses:  req.GetStatuses(),
+		OrderBy:   req.GetOrderBy(),
 	})
 	if err != nil {
 		return nil, err

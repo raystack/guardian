@@ -255,54 +255,69 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 		}{
 			{
 				filters:             map[string]interface{}{},
-				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$1,$2,$3,$4,$5], "status"), "updated_at" desc`,
+				expectedClauseQuery: `"appeals"."deleted_at" IS NULL`,
 			},
 			{
 				filters: map[string]interface{}{
 					"account_id": "user@email.com",
 				},
-				expectedClauseQuery: `"account_id" = $1 AND "appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$2,$3,$4,$5,$6], "status"), "updated_at" desc`,
+				expectedClauseQuery: `"account_id" = $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"user@email.com"},
 			},
 			{
 				filters: map[string]interface{}{
 					"statuses": []string{domain.AppealStatusActive, domain.AppealStatusTerminated},
 				},
-				expectedClauseQuery: `"status" IN ($1,$2) AND "appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$3,$4,$5,$6,$7], "status"), "updated_at" desc`,
+				expectedClauseQuery: `"status" IN ($1,$2) AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{domain.AppealStatusActive, domain.AppealStatusTerminated},
 			},
 			{
 				filters: map[string]interface{}{
 					"resource_id": uint(1),
 				},
-				expectedClauseQuery: `"resource_id" = $1 AND "appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$2,$3,$4,$5,$6], "status"), "updated_at" desc`,
+				expectedClauseQuery: `"resource_id" = $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{uint(1)},
 			},
 			{
 				filters: map[string]interface{}{
 					"role": "test-role",
 				},
-				expectedClauseQuery: `"role" = $1 AND "appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$2,$3,$4,$5,$6], "status"), "updated_at" desc`,
+				expectedClauseQuery: `"role" = $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"test-role"},
 			},
 			{
 				filters: map[string]interface{}{
 					"expiration_date_lt": timeNow,
 				},
-				expectedClauseQuery: `"options" -> 'expiration_date' < $1 AND "appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$2,$3,$4,$5,$6], "status"), "updated_at" desc`,
+				expectedClauseQuery: `"options" -> 'expiration_date' < $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{timeNow},
+			},
+			{
+				filters: map[string]interface{}{
+					"order_by": []string{"status"},
+				},
+				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$1,$2,$3,$4,$5], "status")`,
+				expectedArgs: []driver.Value{
+					postgres.AppealStatusDefaultSort[0],
+					postgres.AppealStatusDefaultSort[1],
+					postgres.AppealStatusDefaultSort[2],
+					postgres.AppealStatusDefaultSort[3],
+					postgres.AppealStatusDefaultSort[4],
+				},
+			},
+			{
+				filters: map[string]interface{}{
+					"order_by": []string{"updated_at:desc"},
+				},
+				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY "updated_at" desc`,
 			},
 		}
 
 		for _, tc := range testCases {
 			expectedQuery := regexp.QuoteMeta(strings.Join([]string{selectAppealsJoinsWithResourceSql, tc.expectedClauseQuery}, " "))
-			expectedArgs := tc.expectedArgs
-			for _, s := range postgres.AppealStatusDefaultSort {
-				expectedArgs = append(expectedArgs, s)
-			}
 			s.dbmock.
 				ExpectQuery(expectedQuery).
-				WithArgs(expectedArgs...).
+				WithArgs(tc.expectedArgs...).
 				WillReturnRows(sqlmock.NewRows(s.columnNames))
 
 			_, actualError := s.repository.Find(tc.filters)
@@ -312,7 +327,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 	})
 
 	s.Run("should return records on success", func() {
-		expectedQuery := regexp.QuoteMeta(`SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE "appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$1,$2,$3,$4,$5], "status"), "updated_at" desc`)
+		expectedQuery := regexp.QuoteMeta(`SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE "appeals"."deleted_at" IS NULL`)
 		expectedFilters := map[string]interface{}{}
 		expectedRecords := []*domain.Appeal{
 			{
@@ -384,13 +399,8 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				r.Resource.UpdatedAt,
 			)
 		}
-		var expectedArgs []driver.Value
-		for _, s := range postgres.AppealStatusDefaultSort {
-			expectedArgs = append(expectedArgs, s)
-		}
 		s.dbmock.
 			ExpectQuery(expectedQuery).
-			WithArgs(expectedArgs...).
 			WillReturnRows(expectedRows)
 
 		actualRecords, actualError := s.repository.Find(expectedFilters)

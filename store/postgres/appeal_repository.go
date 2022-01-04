@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -24,6 +26,7 @@ type appealFindFilters struct {
 	ProviderURNs              []string  `mapstructure:"provider_urns" validate:"omitempty,min=1"`
 	ResourceTypes             []string  `mapstructure:"resource_types" validate:"omitempty,min=1"`
 	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
+	OrderBy                   []string  `mapstructure:"order_by" validate:"omitempty,min=1"`
 }
 
 var (
@@ -99,14 +102,38 @@ func (r *AppealRepository) Find(filters map[string]interface{}) ([]*domain.Appea
 	if !conditions.ExpirationDateGreaterThan.IsZero() {
 		db = db.Where(`"options" -> 'expiration_date' > ?`, conditions.ExpirationDateGreaterThan)
 	}
+	if conditions.OrderBy != nil {
+		var orderByClauses []string
+		var vars []interface{}
 
-	db = db.Clauses(clause.OrderBy{
-		Expression: clause.Expr{
-			SQL:                `ARRAY_POSITION(ARRAY[?], "status"), "updated_at" desc`,
-			Vars:               []interface{}{AppealStatusDefaultSort},
-			WithoutParentheses: true,
-		},
-	})
+		for _, orderBy := range conditions.OrderBy {
+			if strings.Contains(orderBy, "status") {
+				orderByClauses = append(orderByClauses, `ARRAY_POSITION(ARRAY[?], "status")`)
+				vars = append(vars, AppealStatusDefaultSort)
+			} else {
+				columnOrder := strings.Split(orderBy, ":")
+				column := columnOrder[0]
+				if utils.ContainsString([]string{"updated_at", "created_at"}, column) {
+					if len(columnOrder) == 1 {
+						orderByClauses = append(orderByClauses, fmt.Sprintf(`"%s"`, column))
+					} else if len(columnOrder) == 2 {
+						order := columnOrder[1]
+						if utils.ContainsString([]string{"asc", "desc"}, order) {
+							orderByClauses = append(orderByClauses, fmt.Sprintf(`"%s" %s`, column, order))
+						}
+					}
+				}
+			}
+		}
+
+		db = db.Clauses(clause.OrderBy{
+			Expression: clause.Expr{
+				SQL:                strings.Join(orderByClauses, ", "),
+				Vars:               vars,
+				WithoutParentheses: true,
+			},
+		})
+	}
 
 	db = db.Joins("Resource")
 	if conditions.ProviderTypes != nil {
