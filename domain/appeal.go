@@ -96,10 +96,24 @@ type ApprovalAction struct {
 	Reason       string
 }
 
+type ListAppealsFilter struct {
+	AccountID                 string    `mapstructure:"account_id" validate:"omitempty,required"`
+	ResourceID                uint      `mapstructure:"resource_id" validate:"omitempty,required"`
+	Role                      string    `mapstructure:"role" validate:"omitempty,required"`
+	Statuses                  []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
+	ExpirationDateLessThan    time.Time `mapstructure:"expiration_date_lt" validate:"omitempty,required"`
+	ExpirationDateGreaterThan time.Time `mapstructure:"expiration_date_gt" validate:"omitempty,required"`
+	ProviderTypes             []string  `mapstructure:"provider_types" validate:"omitempty,min=1"`
+	ProviderURNs              []string  `mapstructure:"provider_urns" validate:"omitempty,min=1"`
+	ResourceTypes             []string  `mapstructure:"resource_types" validate:"omitempty,min=1"`
+	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
+	OrderBy                   []string  `mapstructure:"order_by" validate:"omitempty,min=1"`
+}
+
 // AppealService interface
 type AppealService interface {
 	Create([]*Appeal) error
-	Find(map[string]interface{}) ([]*Appeal, error)
+	Find(*ListAppealsFilter) ([]*Appeal, error)
 	GetByID(uint) (*Appeal, error)
 	MakeAction(ApprovalAction) (*Appeal, error)
 	Cancel(uint) (*Appeal, error)

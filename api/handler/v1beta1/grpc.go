@@ -359,29 +359,29 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 		return nil, err
 	}
 
-	filters := map[string]interface{}{
-		"account_id": user,
+	filters := &domain.ListAppealsFilter{
+		AccountID: user,
 	}
 	if req.GetStatuses() != nil {
-		filters["statuses"] = req.GetStatuses()
+		filters.Statuses = req.GetStatuses()
 	}
 	if req.GetRole() != "" {
-		filters["role"] = req.GetRole()
+		filters.Role = req.GetRole()
 	}
 	if req.GetProviderTypes() != nil {
-		filters["provider_types"] = req.GetProviderTypes()
+		filters.ProviderTypes = req.GetProviderTypes()
 	}
 	if req.GetProviderUrns() != nil {
-		filters["provider_urns"] = req.GetProviderUrns()
+		filters.ProviderURNs = req.GetProviderUrns()
 	}
 	if req.GetResourceTypes() != nil {
-		filters["resource_types"] = req.GetResourceTypes()
+		filters.ResourceTypes = req.GetResourceTypes()
 	}
 	if req.GetResourceUrns() != nil {
-		filters["resource_urns"] = req.GetResourceUrns()
+		filters.ResourceURNs = req.GetResourceUrns()
 	}
 	if req.GetOrderBy() != nil {
-		filters["order_by"] = req.GetOrderBy()
+		filters.OrderBy = req.GetOrderBy()
 	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
@@ -394,30 +394,30 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 }
 
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListAppealsRequest) (*guardianv1beta1.ListAppealsResponse, error) {
-	filters := map[string]interface{}{}
+	filters := &domain.ListAppealsFilter{}
 	if req.GetAccountId() != "" {
-		filters["account_id"] = req.GetAccountId()
+		filters.AccountID = req.GetAccountId()
 	}
 	if req.GetStatuses() != nil {
-		filters["statuses"] = req.GetStatuses()
+		filters.Statuses = req.GetStatuses()
 	}
 	if req.GetRole() != "" {
-		filters["role"] = req.GetRole()
+		filters.Role = req.GetRole()
 	}
 	if req.GetProviderTypes() != nil {
-		filters["provider_types"] = req.GetProviderTypes()
+		filters.ProviderTypes = req.GetProviderTypes()
 	}
 	if req.GetProviderUrns() != nil {
-		filters["provider_urns"] = req.GetProviderUrns()
+		filters.ProviderURNs = req.GetProviderUrns()
 	}
 	if req.GetResourceTypes() != nil {
-		filters["resource_types"] = req.GetResourceTypes()
+		filters.ResourceTypes = req.GetResourceTypes()
 	}
 	if req.GetResourceUrns() != nil {
-		filters["resource_urns"] = req.GetResourceUrns()
+		filters.ResourceURNs = req.GetResourceUrns()
 	}
 	if req.GetOrderBy() != nil {
-		filters["order_by"] = req.GetOrderBy()
+		filters.OrderBy = req.GetOrderBy()
 	}
 	appeals, err := s.listAppeals(filters)
 	if err != nil {
@@ -620,7 +620,7 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 	}, nil
 }
 
-func (s *GRPCServer) listAppeals(filters map[string]interface{}) ([]*guardianv1beta1.Appeal, error) {
+func (s *GRPCServer) listAppeals(filters *domain.ListAppealsFilter) ([]*guardianv1beta1.Appeal, error) {
 	appeals, err := s.appealService.Find(filters)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get appeal list: %s", err)

@@ -239,7 +239,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 			ExpectQuery(".*").
 			WillReturnError(expectedError)
 
-		actualResult, actualError := s.repository.Find(map[string]interface{}{})
+		actualResult, actualError := s.repository.Find(&domain.ListAppealsFilter{})
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -249,52 +249,52 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 		selectAppealsJoinsWithResourceSql := `SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE`
 		timeNow := time.Now()
 		testCases := []struct {
-			filters             map[string]interface{}
+			filters             *domain.ListAppealsFilter
 			expectedClauseQuery string
 			expectedArgs        []driver.Value
 		}{
 			{
-				filters:             map[string]interface{}{},
+				filters:             &domain.ListAppealsFilter{},
 				expectedClauseQuery: `"appeals"."deleted_at" IS NULL`,
 			},
 			{
-				filters: map[string]interface{}{
-					"account_id": "user@email.com",
+				filters: &domain.ListAppealsFilter{
+					AccountID: "user@email.com",
 				},
 				expectedClauseQuery: `"account_id" = $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"user@email.com"},
 			},
 			{
-				filters: map[string]interface{}{
-					"statuses": []string{domain.AppealStatusActive, domain.AppealStatusTerminated},
+				filters: &domain.ListAppealsFilter{
+					Statuses: []string{domain.AppealStatusActive, domain.AppealStatusTerminated},
 				},
 				expectedClauseQuery: `"status" IN ($1,$2) AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{domain.AppealStatusActive, domain.AppealStatusTerminated},
 			},
 			{
-				filters: map[string]interface{}{
-					"resource_id": uint(1),
+				filters: &domain.ListAppealsFilter{
+					ResourceID: 1,
 				},
 				expectedClauseQuery: `"resource_id" = $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{uint(1)},
 			},
 			{
-				filters: map[string]interface{}{
-					"role": "test-role",
+				filters: &domain.ListAppealsFilter{
+					Role: "test-role",
 				},
 				expectedClauseQuery: `"role" = $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"test-role"},
 			},
 			{
-				filters: map[string]interface{}{
-					"expiration_date_lt": timeNow,
+				filters: &domain.ListAppealsFilter{
+					ExpirationDateLessThan: timeNow,
 				},
 				expectedClauseQuery: `"options" -> 'expiration_date' < $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{timeNow},
 			},
 			{
-				filters: map[string]interface{}{
-					"order_by": []string{"status"},
+				filters: &domain.ListAppealsFilter{
+					OrderBy: []string{"status"},
 				},
 				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$1,$2,$3,$4,$5], "status")`,
 				expectedArgs: []driver.Value{
@@ -306,8 +306,8 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				},
 			},
 			{
-				filters: map[string]interface{}{
-					"order_by": []string{"updated_at:desc"},
+				filters: &domain.ListAppealsFilter{
+					OrderBy: []string{"updated_at:desc"},
 				},
 				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY "updated_at" desc`,
 			},
@@ -328,7 +328,6 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 
 	s.Run("should return records on success", func() {
 		expectedQuery := regexp.QuoteMeta(`SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE "appeals"."deleted_at" IS NULL`)
-		expectedFilters := map[string]interface{}{}
 		expectedRecords := []*domain.Appeal{
 			{
 				ID:         1,
@@ -403,7 +402,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 			ExpectQuery(expectedQuery).
 			WillReturnRows(expectedRows)
 
-		actualRecords, actualError := s.repository.Find(expectedFilters)
+		actualRecords, actualError := s.repository.Find(&domain.ListAppealsFilter{})
 
 		s.Equal(expectedRecords, actualRecords)
 		s.Nil(actualError)

@@ -4,9 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/store/model"
@@ -14,20 +12,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
-
-type appealFindFilters struct {
-	AccountID                 string    `mapstructure:"account_id" validate:"omitempty,required"`
-	ResourceID                uint      `mapstructure:"resource_id" validate:"omitempty,required"`
-	Role                      string    `mapstructure:"role" validate:"omitempty,required"`
-	Statuses                  []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
-	ExpirationDateLessThan    time.Time `mapstructure:"expiration_date_lt" validate:"omitempty,required"`
-	ExpirationDateGreaterThan time.Time `mapstructure:"expiration_date_gt" validate:"omitempty,required"`
-	ProviderTypes             []string  `mapstructure:"provider_types" validate:"omitempty,min=1"`
-	ProviderURNs              []string  `mapstructure:"provider_urns" validate:"omitempty,min=1"`
-	ResourceTypes             []string  `mapstructure:"resource_types" validate:"omitempty,min=1"`
-	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
-	OrderBy                   []string  `mapstructure:"order_by" validate:"omitempty,min=1"`
-}
 
 var (
 	AppealStatusDefaultSort = []string{
@@ -74,39 +58,35 @@ func (r *AppealRepository) GetByID(id uint) (*domain.Appeal, error) {
 	return a, nil
 }
 
-func (r *AppealRepository) Find(filters map[string]interface{}) ([]*domain.Appeal, error) {
-	var conditions appealFindFilters
-	if err := mapstructure.Decode(filters, &conditions); err != nil {
-		return nil, err
-	}
-	if err := utils.ValidateStruct(conditions); err != nil {
+func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
+	if err := utils.ValidateStruct(filters); err != nil {
 		return nil, err
 	}
 
 	db := r.db
-	if conditions.AccountID != "" {
-		db = db.Where(`"account_id" = ?`, conditions.AccountID)
+	if filters.AccountID != "" {
+		db = db.Where(`"account_id" = ?`, filters.AccountID)
 	}
-	if conditions.Statuses != nil {
-		db = db.Where(`"status" IN ?`, conditions.Statuses)
+	if filters.Statuses != nil {
+		db = db.Where(`"status" IN ?`, filters.Statuses)
 	}
-	if conditions.ResourceID != 0 {
-		db = db.Where(`"resource_id" = ?`, conditions.ResourceID)
+	if filters.ResourceID != 0 {
+		db = db.Where(`"resource_id" = ?`, filters.ResourceID)
 	}
-	if conditions.Role != "" {
-		db = db.Where(`"role" = ?`, conditions.Role)
+	if filters.Role != "" {
+		db = db.Where(`"role" = ?`, filters.Role)
 	}
-	if !conditions.ExpirationDateLessThan.IsZero() {
-		db = db.Where(`"options" -> 'expiration_date' < ?`, conditions.ExpirationDateLessThan)
+	if !filters.ExpirationDateLessThan.IsZero() {
+		db = db.Where(`"options" -> 'expiration_date' < ?`, filters.ExpirationDateLessThan)
 	}
-	if !conditions.ExpirationDateGreaterThan.IsZero() {
-		db = db.Where(`"options" -> 'expiration_date' > ?`, conditions.ExpirationDateGreaterThan)
+	if !filters.ExpirationDateGreaterThan.IsZero() {
+		db = db.Where(`"options" -> 'expiration_date' > ?`, filters.ExpirationDateGreaterThan)
 	}
-	if conditions.OrderBy != nil {
+	if filters.OrderBy != nil {
 		var orderByClauses []string
 		var vars []interface{}
 
-		for _, orderBy := range conditions.OrderBy {
+		for _, orderBy := range filters.OrderBy {
 			if strings.Contains(orderBy, "status") {
 				orderByClauses = append(orderByClauses, `ARRAY_POSITION(ARRAY[?], "status")`)
 				vars = append(vars, AppealStatusDefaultSort)
@@ -136,17 +116,17 @@ func (r *AppealRepository) Find(filters map[string]interface{}) ([]*domain.Appea
 	}
 
 	db = db.Joins("Resource")
-	if conditions.ProviderTypes != nil {
-		db = db.Where(`"Resource"."provider_type" IN ?`, conditions.ProviderTypes)
+	if filters.ProviderTypes != nil {
+		db = db.Where(`"Resource"."provider_type" IN ?`, filters.ProviderTypes)
 	}
-	if conditions.ProviderURNs != nil {
-		db = db.Where(`"Resource"."provider_urn" IN ?`, conditions.ProviderURNs)
+	if filters.ProviderURNs != nil {
+		db = db.Where(`"Resource"."provider_urn" IN ?`, filters.ProviderURNs)
 	}
-	if conditions.ResourceTypes != nil {
-		db = db.Where(`"Resource"."type" IN ?`, conditions.ResourceTypes)
+	if filters.ResourceTypes != nil {
+		db = db.Where(`"Resource"."type" IN ?`, filters.ResourceTypes)
 	}
-	if conditions.ResourceURNs != nil {
-		db = db.Where(`"Resource"."urn" IN ?`, conditions.ResourceURNs)
+	if filters.ResourceURNs != nil {
+		db = db.Where(`"Resource"."urn" IN ?`, filters.ResourceURNs)
 	}
 
 	var models []*model.Appeal
