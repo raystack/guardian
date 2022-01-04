@@ -94,139 +94,74 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	}
 
 	notifications := []domain.Notification{}
-
 	expiredAppeals := []*domain.Appeal{}
-	for _, a := range appeals {
-		if a.AccountType == "" {
-			a.AccountType = domain.DefaultAppealAccountType
+
+	for _, appeal := range appeals {
+		appeal.SetDefaults()
+
+		if err := validateAppeal(appeal, pendingAppeals); err != nil {
+			return err
 		}
-		if a.AccountType == domain.DefaultAppealAccountType && a.AccountID != a.CreatedBy {
-			return ErrCannotCreateAppealForOtherUser
+		if err := addResource(appeal, resources); err != nil {
+			return err
 		}
-
-		if pendingAppeals[a.AccountID] != nil &&
-			pendingAppeals[a.AccountID][a.ResourceID] != nil &&
-			pendingAppeals[a.AccountID][a.ResourceID][a.Role] != nil {
-			return ErrAppealDuplicate
-		}
-
-		r := resources[a.ResourceID]
-		if r == nil {
-			return ErrResourceNotFound
-		} else if r.IsDeleted {
-			return ErrResourceIsDeleted
-		}
-		a.Resource = r
-
-		if providers[a.Resource.ProviderType] == nil {
-			return ErrProviderTypeNotFound
-		} else if providers[a.Resource.ProviderType][a.Resource.ProviderURN] == nil {
-			return ErrProviderURNNotFound
-		}
-		p := providers[a.Resource.ProviderType][a.Resource.ProviderURN]
-
-		if activeAppeals[a.AccountID] != nil &&
-			activeAppeals[a.AccountID][a.ResourceID] != nil &&
-			activeAppeals[a.AccountID][a.ResourceID][a.Role] != nil {
-
-			if p.Config.Appeal != nil {
-				if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
-					return ErrAppealFoundActiveAccess
-				}
-
-				duration, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
-				if err != nil {
-					return fmt.Errorf("%v: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
-				}
-
-				now := s.TimeNow()
-				activeAppealExpDate := activeAppeals[a.AccountID][a.ResourceID][a.Role].Options.ExpirationDate
-				isEligibleForExtension := activeAppealExpDate.Sub(now) <= duration
-				if isEligibleForExtension {
-					oldAppeal := &domain.Appeal{}
-					*oldAppeal = *activeAppeals[a.AccountID][a.ResourceID][a.Role]
-					oldAppeal.Terminate()
-					expiredAppeals = append(expiredAppeals, oldAppeal)
-				} else {
-					return fmt.Errorf("%v: the extension policy for this resource is %v before current access expiration", ErrAppealNotEligibleForExtension, duration)
-				}
-			}
-		}
-
-		var resourceConfig *domain.ResourceConfig
-		for _, rc := range p.Config.Resources {
-			if rc.Type == a.Resource.Type {
-				resourceConfig = rc
-				break
-			}
-		}
-		if resourceConfig == nil {
-			return ErrResourceTypeNotFound
-		}
-
-		if err := s.providerService.ValidateAppeal(a, p); err != nil {
+		provider, err := getProvider(appeal, providers)
+		if err != nil {
 			return err
 		}
 
-		policyConfig := resourceConfig.Policy
-		if policies[policyConfig.ID] == nil {
-			return ErrPolicyIDNotFound
-		} else if policies[policyConfig.ID][uint(policyConfig.Version)] == nil {
-			return ErrPolicyVersionNotFound
-		}
-		a.Policy = policies[policyConfig.ID][uint(policyConfig.Version)]
-
-		if a.Policy.IAM != nil {
-			iamConfig, err := s.iam.ParseConfig(a.Policy.IAM)
-			if err != nil {
-				return fmt.Errorf("parsing iam config: %w", err)
-			}
-			iamClient, err := s.iam.GetClient(iamConfig)
-			if err != nil {
-				return fmt.Errorf("getting iam client: %w", err)
-			}
-
-			creatorDetails, err := iamClient.GetUser(a.CreatedBy)
-			if err != nil {
-				return fmt.Errorf("fetching creator's user iam: %w", err)
-			}
-			a.Creator = creatorDetails
-		}
-
-		approvals := []*domain.Approval{}
-		for i, step := range a.Policy.Steps { // TODO: move this logic to approvalService
-			var approverEmails []string
-			if step.Strategy == domain.ApprovalStepStrategyManual {
-				approverEmails, err = s.resolveApprovers(step.Approvers, a)
-				if err != nil {
-					return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
-				}
-			}
-
-			status := domain.ApprovalStatusPending
-			if i > 0 {
-				status = domain.ApprovalStatusBlocked
-			}
-
-			approvals = append(approvals, &domain.Approval{
-				Name:          step.Name,
-				Index:         i,
-				Status:        status,
-				PolicyID:      policyConfig.ID,
-				PolicyVersion: uint(policyConfig.Version),
-				Approvers:     approverEmails,
-			})
-		}
-
-		a.PolicyID = policyConfig.ID
-		a.PolicyVersion = uint(policyConfig.Version)
-		a.Status = domain.AppealStatusPending
-		a.Approvals = approvals
-
-		if err := s.approvalService.AdvanceApproval(a); err != nil {
+		expiredAppeal, err := s.checkAppealExtension(appeal, provider, activeAppeals)
+		if err != nil {
 			return err
 		}
-		a.Policy = nil
+		if expiredAppeal != nil {
+			expiredAppeals = append(expiredAppeals, expiredAppeal)
+		}
+
+		if err := s.providerService.ValidateAppeal(appeal, provider); err != nil {
+			return err
+		}
+
+		policy, err := getPolicy(appeal, provider, policies)
+		if err != nil {
+			return err
+		}
+
+		if err := s.addCreatorDetails(appeal, policy); err != nil {
+			return err
+		}
+
+		if err := s.fillApprovals(appeal, policy); err != nil {
+			return err
+		}
+
+		appeal.PolicyID = policy.ID
+		appeal.PolicyVersion = policy.Version
+		appeal.Status = domain.AppealStatusPending
+
+		appeal.Policy = policy
+		if err := s.approvalService.AdvanceApproval(appeal); err != nil {
+			return err
+		}
+		appeal.Policy = nil
+
+		for _, approval := range appeal.Approvals {
+			if approval.Index == len(appeal.Approvals)-1 && approval.Status == domain.ApprovalStatusApproved {
+				if err := s.createAccess(appeal); err != nil {
+					return err
+				}
+				notifications = append(notifications, domain.Notification{
+					User: appeal.CreatedBy,
+					Message: domain.NotificationMessage{
+						Type: domain.NotificationTypeAppealApproved,
+						Variables: map[string]interface{}{
+							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+							"role":          appeal.Role,
+						},
+					},
+				})
+			}
+		}
 	}
 
 	allAppeals := append(appeals, expiredAppeals...)
@@ -292,59 +227,8 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				}
 
 				if i == len(appeal.Approvals)-1 {
-					policy, err := s.policyService.GetOne(appeal.PolicyID, appeal.PolicyVersion)
-					if err != nil {
-						return nil, fmt.Errorf("retrieving policy: %v", err)
-					}
-
-					additionalAppeals := []*domain.Appeal{}
-					if policy.Requirements != nil && len(policy.Requirements) > 0 {
-						for reqIndex, r := range policy.Requirements {
-							isAppealMatchesRequirement, err := r.On.IsMatch(appeal)
-							if err != nil {
-								return nil, fmt.Errorf("evaluating requirements[%v]: %v", reqIndex, err)
-							}
-							if !isAppealMatchesRequirement {
-								continue
-							}
-
-							for _, aa := range r.Appeals {
-								// TODO: populate resource data from policyService
-								resource, err := s.resourceService.Get(aa.Resource)
-								if err != nil {
-									return nil, fmt.Errorf("retrieving resource: %v", err)
-								}
-
-								additionalAppeal := &domain.Appeal{
-									AccountID:   appeal.AccountID,
-									AccountType: appeal.AccountType,
-									CreatedBy:   appeal.CreatedBy,
-									Role:        aa.Role,
-									ResourceID:  resource.ID,
-								}
-								if aa.Options != nil {
-									additionalAppeal.Options = aa.Options
-								}
-								if aa.Policy != nil {
-									additionalAppeal.PolicyID = aa.Policy.ID
-									additionalAppeal.PolicyVersion = uint(aa.Policy.Version)
-								}
-								additionalAppeals = append(additionalAppeals, additionalAppeal)
-							}
-						}
-					}
-					if len(additionalAppeals) > 0 {
-						if err := s.Create(additionalAppeals); err != nil {
-							return nil, fmt.Errorf("creating additional appeals: %v", err)
-						}
-					}
-
-					if err := s.providerService.GrantAccess(appeal); err != nil {
+					if err := s.createAccess(appeal); err != nil {
 						return nil, err
-					}
-
-					if err := appeal.Activate(); err != nil {
-						return nil, fmt.Errorf("activating appeal: %v", err)
 					}
 				}
 
@@ -695,4 +579,215 @@ func structToMap(item interface{}) (map[string]interface{}, error) {
 	}
 
 	return result, nil
+}
+
+func (s *Service) fillApprovals(a *domain.Appeal, p *domain.Policy) error {
+	approvals := []*domain.Approval{}
+	for i, step := range p.Steps { // TODO: move this logic to approvalService
+		var approverEmails []string
+		var err error
+		if step.Strategy == domain.ApprovalStepStrategyManual {
+			approverEmails, err = s.resolveApprovers(step.Approvers, a)
+			if err != nil {
+				return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
+			}
+		}
+
+		status := domain.ApprovalStatusPending
+		if i > 0 {
+			status = domain.ApprovalStatusBlocked
+		}
+
+		approvals = append(approvals, &domain.Approval{
+			Name:          step.Name,
+			Index:         i,
+			Status:        status,
+			PolicyID:      p.ID,
+			PolicyVersion: p.Version,
+			Approvers:     approverEmails,
+		})
+	}
+
+	a.Approvals = approvals
+	return nil
+}
+
+func (s *Service) handleAppealRequirements(a *domain.Appeal, p *domain.Policy) error {
+	additionalAppeals := []*domain.Appeal{}
+	if p.Requirements != nil && len(p.Requirements) > 0 {
+		for reqIndex, r := range p.Requirements {
+			isAppealMatchesRequirement, err := r.On.IsMatch(a)
+			if err != nil {
+				return fmt.Errorf("evaluating requirements[%v]: %v", reqIndex, err)
+			}
+			if !isAppealMatchesRequirement {
+				continue
+			}
+
+			for _, aa := range r.Appeals {
+				// TODO: populate resource data from policyService
+				resource, err := s.resourceService.Get(aa.Resource)
+				if err != nil {
+					return fmt.Errorf("retrieving resource: %v", err)
+				}
+
+				additionalAppeal := &domain.Appeal{
+					AccountID:   a.AccountID,
+					AccountType: a.AccountType,
+					CreatedBy:   a.CreatedBy,
+					Role:        aa.Role,
+					ResourceID:  resource.ID,
+				}
+				if aa.Options != nil {
+					additionalAppeal.Options = aa.Options
+				}
+				if aa.Policy != nil {
+					additionalAppeal.PolicyID = aa.Policy.ID
+					additionalAppeal.PolicyVersion = uint(aa.Policy.Version)
+				}
+				additionalAppeals = append(additionalAppeals, additionalAppeal)
+			}
+		}
+	}
+	if len(additionalAppeals) > 0 {
+		if err := s.Create(additionalAppeals); err != nil {
+			return fmt.Errorf("creating additional appeals: %v", err)
+		}
+	}
+	return nil
+}
+
+func (s *Service) createAccess(a *domain.Appeal) error {
+	policy := a.Policy
+	if policy == nil {
+		p, err := s.policyService.GetOne(a.PolicyID, a.PolicyVersion)
+		if err != nil {
+			return fmt.Errorf("retrieving policy: %v", err)
+		}
+		policy = p
+	}
+
+	if err := s.handleAppealRequirements(a, policy); err != nil {
+		return err
+	}
+
+	if err := s.providerService.GrantAccess(a); err != nil {
+		return err
+	}
+
+	if err := a.Activate(); err != nil {
+		return fmt.Errorf("activating appeal: %v", err)
+	}
+
+	return nil
+}
+
+func (s *Service) checkAppealExtension(a *domain.Appeal, p *domain.Provider, activeAppealsMap map[string]map[uint]map[string]*domain.Appeal) (*domain.Appeal, error) {
+	if activeAppealsMap[a.AccountID] != nil &&
+		activeAppealsMap[a.AccountID][a.ResourceID] != nil &&
+		activeAppealsMap[a.AccountID][a.ResourceID][a.Role] != nil {
+
+		if p.Config.Appeal != nil {
+			if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
+				return nil, ErrAppealFoundActiveAccess
+			}
+
+			duration, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
+			if err != nil {
+				return nil, fmt.Errorf("%v: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
+			}
+
+			now := s.TimeNow()
+			activeAppealExpDate := activeAppealsMap[a.AccountID][a.ResourceID][a.Role].Options.ExpirationDate
+			isEligibleForExtension := activeAppealExpDate.Sub(now) <= duration
+			if isEligibleForExtension {
+				oldAppeal := &domain.Appeal{}
+				*oldAppeal = *activeAppealsMap[a.AccountID][a.ResourceID][a.Role]
+				oldAppeal.Terminate()
+				return oldAppeal, nil
+			} else {
+				return nil, fmt.Errorf("%v: the extension policy for this resource is %v before current access expiration", ErrAppealNotEligibleForExtension, duration)
+			}
+		}
+	}
+	return nil, nil
+}
+
+func getPolicy(a *domain.Appeal, p *domain.Provider, policiesMap map[string]map[uint]*domain.Policy) (*domain.Policy, error) {
+	var resourceConfig *domain.ResourceConfig
+	for _, rc := range p.Config.Resources {
+		if rc.Type == a.Resource.Type {
+			resourceConfig = rc
+			break
+		}
+	}
+	if resourceConfig == nil {
+		return nil, ErrResourceTypeNotFound
+	}
+
+	policyConfig := resourceConfig.Policy
+	if policiesMap[policyConfig.ID] == nil {
+		return nil, ErrPolicyIDNotFound
+	} else if policiesMap[policyConfig.ID][uint(policyConfig.Version)] == nil {
+		return nil, ErrPolicyVersionNotFound
+	}
+
+	return policiesMap[policyConfig.ID][uint(policyConfig.Version)], nil
+}
+
+func (s *Service) addCreatorDetails(a *domain.Appeal, p *domain.Policy) error {
+	if p.IAM != nil {
+		iamConfig, err := s.iam.ParseConfig(p.IAM)
+		if err != nil {
+			return fmt.Errorf("parsing iam config: %w", err)
+		}
+		iamClient, err := s.iam.GetClient(iamConfig)
+		if err != nil {
+			return fmt.Errorf("getting iam client: %w", err)
+		}
+
+		creatorDetails, err := iamClient.GetUser(a.CreatedBy)
+		if err != nil {
+			return fmt.Errorf("fetching creator's user iam: %w", err)
+		}
+		a.Creator = creatorDetails
+	}
+
+	return nil
+}
+
+func addResource(a *domain.Appeal, resourcesMap map[uint]*domain.Resource) error {
+	r := resourcesMap[a.ResourceID]
+	if r == nil {
+		return ErrResourceNotFound
+	} else if r.IsDeleted {
+		return ErrResourceIsDeleted
+	}
+
+	a.Resource = r
+	return nil
+}
+
+func getProvider(a *domain.Appeal, providersMap map[string]map[string]*domain.Provider) (*domain.Provider, error) {
+	if providersMap[a.Resource.ProviderType] == nil {
+		return nil, ErrProviderTypeNotFound
+	} else if providersMap[a.Resource.ProviderType][a.Resource.ProviderURN] == nil {
+		return nil, ErrProviderURNNotFound
+	}
+
+	return providersMap[a.Resource.ProviderType][a.Resource.ProviderURN], nil
+}
+
+func validateAppeal(a *domain.Appeal, pendingAppealsMap map[string]map[uint]map[string]*domain.Appeal) error {
+	if a.AccountType == domain.DefaultAppealAccountType && a.AccountID != a.CreatedBy {
+		return ErrCannotCreateAppealForOtherUser
+	}
+
+	if pendingAppealsMap[a.AccountID] != nil &&
+		pendingAppealsMap[a.AccountID][a.ResourceID] != nil &&
+		pendingAppealsMap[a.AccountID][a.ResourceID][a.Role] != nil {
+		return ErrAppealDuplicate
+	}
+
+	return nil
 }
