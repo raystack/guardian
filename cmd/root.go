@@ -8,8 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//New  create a root command
-func New() *cobra.Command {
+func New(cliConfig *app.CLIConfig) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "guardian <command> <subcommand> [flags]",
 		Short: "Universal data access control",
@@ -31,7 +30,7 @@ func New() *cobra.Command {
 			"group:core": "true",
 			"help:learn": heredoc.Doc(`
 				Use 'guardian <command> <subcommand> --help' for more information about a command.
-				Read the manual at https://odpf.gitbook.io/guardian/
+				Read the manual at https://odpf.github.io/guardian/
 			`),
 			"help:feedback": heredoc.Doc(`
 				Open an issue here https://github.com/odpf/guardian/issues
@@ -40,11 +39,6 @@ func New() *cobra.Command {
 	}
 
 	protoAdapter := handlerv1beta1.NewAdapter()
-
-	cliConfig, err := app.LoadCLIConfig(app.CLIConfigFile)
-	if err != nil {
-		panic(err)
-	}
 
 	cmdx.SetHelp(cmd)
 

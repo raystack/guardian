@@ -231,7 +231,6 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 						return nil, err
 					}
 				}
-
 			} else if approvalAction.Action == domain.AppealActionNameReject {
 				approval.Status = domain.ApprovalStatusRejected
 				appeal.Status = domain.AppealStatusRejected
@@ -686,7 +685,6 @@ func (s *Service) checkAppealExtension(a *domain.Appeal, p *domain.Provider, act
 	if activeAppealsMap[a.AccountID] != nil &&
 		activeAppealsMap[a.AccountID][a.ResourceID] != nil &&
 		activeAppealsMap[a.AccountID][a.ResourceID][a.Role] != nil {
-
 		if p.Config.Appeal != nil {
 			if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
 				return nil, ErrAppealFoundActiveAccess

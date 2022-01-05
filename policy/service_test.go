@@ -305,7 +305,6 @@ func (s *ServiceTestSuite) TestCreate() {
 }
 
 func (s *ServiceTestSuite) TestPolicyRequirements() {
-
 	s.Run("validations", func() {
 		testCases := []struct {
 			name         string

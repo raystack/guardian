@@ -285,7 +285,6 @@ func (c *client) RevokeCollectionAccess(resource *Collection, user, role string)
 }
 
 func (c *client) removeMembership(groupID int, user string) error {
-
 	group, err := c.getGroup(groupID)
 	if err != nil {
 		return err

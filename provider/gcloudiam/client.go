@@ -123,7 +123,6 @@ func (c *iamClient) RevokeAccess(accountType, accountID, role string) error {
 
 	member := fmt.Sprintf("%s:%s", accountType, accountID)
 	for _, b := range policy.Bindings {
-
 		if b.Role == role {
 			var removeIndex int
 			for i, m := range b.Members {
@@ -173,7 +172,6 @@ func (c *iamClient) setIamPolicy(policy *cloudresourcemanager.Policy) (*cloudres
 			Do()
 	}
 	return nil, ErrInvalidResourceName
-
 }
 
 func (c *iamClient) fromIamRole(r *iam.Role) *Role {

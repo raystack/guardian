@@ -74,7 +74,6 @@ func TestGrantAccess(t *testing.T) {
 
 		actualError := p.GrantAccess(pc, a)
 		assert.Error(t, actualError)
-
 	})
 
 	t.Run("should return error if resource type is unknown", func(t *testing.T) {

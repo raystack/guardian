@@ -2,43 +2,72 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 
-	"github.com/mcuadros/go-defaults"
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/guardian/app"
+	"github.com/odpf/salt/cmdx"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 func configCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "config",
-		Short: "manage guardian CLI configuration",
+		Use:   "config <command>",
+		Short: "Manage client configuration settings",
+		Example: heredoc.Doc(`
+			$ guardian config init
+			$ guardian config list`),
 	}
+
 	cmd.AddCommand(configInitCommand())
+	cmd.AddCommand(configListCommand())
+
 	return cmd
 }
 
 func configInitCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "init",
-		Short: "initialize CLI configuration",
+		Short: "Initialize a new client configuration",
+		Example: heredoc.Doc(`
+			$ guardian config init
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var config app.CLIConfig
-			defaults.SetDefaults(&config)
+			cfg := cmdx.SetConfig("guardian")
 
-			b, err := yaml.Marshal(&config)
+			if err := cfg.Init(&app.CLIConfig{}); err != nil {
+				return err
+			}
+
+			fmt.Printf("config created: %v\n", cfg.File())
+			return nil
+		},
+	}
+}
+
+func configListCommand() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "list",
+		Short: "List client configuration settings",
+		Example: heredoc.Doc(`
+			$ guardian config list
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg := cmdx.SetConfig("guardian")
+
+			data, err := cfg.Read()
 			if err != nil {
 				return err
 			}
 
-			filepath := fmt.Sprintf("%v", app.CLIConfigFile)
-			if err := ioutil.WriteFile(filepath, b, 0655); err != nil {
-				return err
-			}
-			fmt.Printf("config created: %v\n", filepath)
-
+			fmt.Println(data)
 			return nil
 		},
 	}
+	return cmd
 }

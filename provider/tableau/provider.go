@@ -121,7 +121,6 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 }
 
 func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
-
 	permissions, err := getPermissions(pc.Resources, a)
 	if err != nil {
 		return err
@@ -238,7 +237,6 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 }
 
 func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
-
 	permissions, err := getPermissions(pc.Resources, a)
 	if err != nil {
 		return err

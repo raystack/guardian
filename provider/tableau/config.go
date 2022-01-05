@@ -210,7 +210,6 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 		} else if resourceType == ResourceTypeMetric {
 			nameValidation = c.getValidationString(ResourceTypeMetric)
 		}
-
 	} else {
 		nameValidation = c.getValidationString("site-role")
 	}

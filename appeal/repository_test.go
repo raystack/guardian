@@ -227,7 +227,6 @@ func (s *RepositoryTestSuite) TestGetByID() {
 			s.Nil(actualError)
 			s.Equal(tc.expectedRecord, actualRecord)
 		}
-
 	})
 }
 

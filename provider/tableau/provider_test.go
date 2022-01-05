@@ -458,7 +458,6 @@ func TestGrantAccess(t *testing.T) {
 
 		actualError := p.GrantAccess(pc, a)
 		assert.Error(t, actualError)
-
 	})
 
 	t.Run("should return error if there are any on client initialization", func(t *testing.T) {
@@ -500,7 +499,6 @@ func TestGrantAccess(t *testing.T) {
 		actualError := p.GrantAccess(pc, a)
 
 		assert.EqualError(t, actualError, expectedError.Error())
-
 	})
 
 	t.Run("should return error if resource type in unknown", func(t *testing.T) {
@@ -1084,5 +1082,4 @@ func TestGrantAccess(t *testing.T) {
 			assert.Nil(t, actualError)
 		})
 	})
-
 }

@@ -120,7 +120,6 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 			if err := bqClient.GrantDatasetAccess(ctx, d, a.AccountID, string(p)); err != nil {
 				return err
 			}
-
 		}
 
 		return nil
