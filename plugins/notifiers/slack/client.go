@@ -1,9 +1,10 @@
-package notifier
+package slack
 
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
@@ -16,36 +17,36 @@ const (
 	slackHost = "https://slack.com"
 )
 
-type slackUser struct {
+type user struct {
 	ID       string `json:"id"`
 	TeamID   string `json:"team_id"`
 	Name     string `json:"name"`
 	RealName string `json:"real_name"`
 }
 
-type slackUserResponse struct {
-	OK    bool       `json:"ok"`
-	User  *slackUser `json:"user"`
-	Error string     `json:"error"`
+type userResponse struct {
+	OK    bool   `json:"ok"`
+	User  *user  `json:"user"`
+	Error string `json:"error"`
 }
 
-type slackNotifier struct {
+type notifier struct {
 	accessToken string
 
 	slackIDCache map[string]string
 	Messages     domain.NotificationMessages
 }
 
-type SlackConfig struct {
+type Config struct {
 	AccessToken string `mapstructure:"access_token"`
 	Messages    domain.NotificationMessages
 }
 
-func NewSlackNotifier(config *SlackConfig) *slackNotifier {
-	return &slackNotifier{config.AccessToken, map[string]string{}, config.Messages}
+func New(config *Config) *notifier {
+	return &notifier{config.AccessToken, map[string]string{}, config.Messages}
 }
 
-func (n *slackNotifier) Notify(items []domain.Notification) error {
+func (n *notifier) Notify(items []domain.Notification) error {
 	for _, item := range items {
 		slackID, err := n.findSlackIDByEmail(item.User)
 		if err != nil {
@@ -65,7 +66,7 @@ func (n *slackNotifier) Notify(items []domain.Notification) error {
 	return nil
 }
 
-func (n *slackNotifier) sendMessage(channel, text string) error {
+func (n *notifier) sendMessage(channel, text string) error {
 	url := slackHost + "/api/chat.postMessage"
 	data, err := json.Marshal(map[string]string{
 		"channel": channel,
@@ -86,7 +87,7 @@ func (n *slackNotifier) sendMessage(channel, text string) error {
 	return err
 }
 
-func (n *slackNotifier) findSlackIDByEmail(email string) (string, error) {
+func (n *notifier) findSlackIDByEmail(email string) (string, error) {
 	if n.slackIDCache[email] != "" {
 		return n.slackIDCache[email], nil
 	}
@@ -113,14 +114,14 @@ func (n *slackNotifier) findSlackIDByEmail(email string) (string, error) {
 	return result.User.ID, nil
 }
 
-func (n *slackNotifier) sendRequest(req *http.Request) (*slackUserResponse, error) {
+func (n *notifier) sendRequest(req *http.Request) (*userResponse, error) {
 	Client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	var result slackUserResponse
+	var result userResponse
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
 		return nil, err
@@ -131,4 +132,32 @@ func (n *slackNotifier) sendRequest(req *http.Request) (*slackUserResponse, erro
 	}
 
 	return &result, nil
+}
+
+func parseMessage(message domain.NotificationMessage, templates domain.NotificationMessages) (string, error) {
+	var text string
+	switch message.Type {
+	case domain.NotificationTypeAccessRevoked:
+		text = templates.AccessRevoked
+	case domain.NotificationTypeAppealApproved:
+		text = templates.AppealApproved
+	case domain.NotificationTypeAppealRejected:
+		text = templates.AppealRejected
+	case domain.NotificationTypeApproverNotification:
+		text = templates.ApproverNotification
+	case domain.NotificationTypeExpirationReminder:
+		text = templates.ExpirationReminder
+	}
+
+	t, err := template.New("notification_messages").Parse(text)
+	if err != nil {
+		return "", err
+	}
+
+	var buff bytes.Buffer
+	if err := t.Execute(&buff, message.Variables); err != nil {
+		return "", err
+	}
+
+	return buff.String(), nil
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/evaluator"
+	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
@@ -24,7 +25,7 @@ type Service struct {
 	providerService domain.ProviderService
 	policyService   domain.PolicyService
 	iam             domain.IAMManager
-	notifier        domain.Notifier
+	notifier        notifiers.Client
 	logger          log.Logger
 
 	validator *validator.Validate
@@ -39,7 +40,7 @@ func NewService(
 	providerService domain.ProviderService,
 	policyService domain.PolicyService,
 	iam domain.IAMManager,
-	notifier domain.Notifier,
+	notifier notifiers.Client,
 	logger log.Logger,
 ) *Service {
 	return &Service{

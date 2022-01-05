@@ -6,16 +6,17 @@ import (
 	"time"
 
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/salt/log"
 )
 
 type JobHandler struct {
 	logger        log.Logger
 	appealService domain.AppealService
-	notifier      domain.Notifier
+	notifier      notifiers.Client
 }
 
-func NewJobHandler(logger log.Logger, as domain.AppealService, notifier domain.Notifier) *JobHandler {
+func NewJobHandler(logger log.Logger, as domain.AppealService, notifier notifiers.Client) *JobHandler {
 	return &JobHandler{
 		logger,
 		as,

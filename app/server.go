@@ -18,7 +18,7 @@ import (
 	"github.com/odpf/guardian/internal/crypto"
 	"github.com/odpf/guardian/internal/scheduler"
 	"github.com/odpf/guardian/model"
-	"github.com/odpf/guardian/notifier"
+	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/plugins/providers"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
 	"github.com/odpf/guardian/plugins/providers/gcloudiam"
@@ -72,7 +72,7 @@ func RunServer(c *Config) error {
 		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, crypto),
 	}
 
-	notifier, err := notifier.NewClient(&c.Notifier)
+	notifier, err := notifiers.NewClient(&c.Notifier)
 	if err != nil {
 		return err
 	}
