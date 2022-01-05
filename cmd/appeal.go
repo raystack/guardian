@@ -23,7 +23,7 @@ func appealsCommand(c *app.CLIConfig) *cobra.Command {
 			"group:core": "true",
 		},
 		Example: heredoc.Doc(`
-			$ guardian appeal crerate
+			$ guardian appeal create
 			$ guardian appeal approve
 			$ guardian appeal list --status=pending
 		`),
