@@ -48,10 +48,6 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 		if approval.Status == domain.ApprovalStatusRejected {
 			break
 		} else if approval.Status == domain.ApprovalStatusPending {
-			if approval.IsManualApproval() {
-				break
-			}
-
 			stepConfig := policy.Steps[approval.Index]
 
 			appealMap, err := structToMap(appeal)
@@ -75,6 +71,10 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 					}
 					break
 				}
+			}
+
+			if approval.IsManualApproval() {
+				break
 			}
 
 			if stepConfig.Strategy == domain.ApprovalStepStrategyAuto {
