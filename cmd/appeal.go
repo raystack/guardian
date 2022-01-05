@@ -22,6 +22,11 @@ func appealsCommand(c *app.CLIConfig) *cobra.Command {
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
+		Example: heredoc.Doc(`
+			$ guardian appeal crerate
+			$ guardian appeal approve
+			$ guardian appeal list --status=pending
+		`),
 	}
 
 	cmd.AddCommand(listAppealsCommand(c))
