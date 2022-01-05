@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/provider/tableau"
+	"github.com/odpf/guardian/plugins/providers/tableau"
 	"github.com/stretchr/testify/assert"
 )
 

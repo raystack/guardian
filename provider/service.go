@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/plugins/providers"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
@@ -19,14 +20,14 @@ type Service struct {
 	providerRepository domain.ProviderRepository
 	resourceService    domain.ResourceService
 
-	providers map[string]domain.ProviderInterface
+	providerClients map[string]providers.Client
 }
 
 // NewService returns service struct
-func NewService(logger *log.Logrus, validator *validator.Validate, pr domain.ProviderRepository, rs domain.ResourceService, providers []domain.ProviderInterface) *Service {
-	mapProviders := make(map[string]domain.ProviderInterface)
-	for _, p := range providers {
-		mapProviders[p.GetType()] = p
+func NewService(logger *log.Logrus, validator *validator.Validate, pr domain.ProviderRepository, rs domain.ResourceService, providerClients []providers.Client) *Service {
+	mapProviderClients := make(map[string]providers.Client)
+	for _, c := range providerClients {
+		mapProviderClients[c.GetType()] = c
 	}
 
 	return &Service{
@@ -34,7 +35,7 @@ func NewService(logger *log.Logrus, validator *validator.Validate, pr domain.Pro
 		validator:          validator,
 		providerRepository: pr,
 		resourceService:    rs,
-		providers:          mapProviders,
+		providerClients:    mapProviderClients,
 	}
 }
 
@@ -314,8 +315,8 @@ func (s *Service) validateAppealParam(a *domain.Appeal) error {
 	return nil
 }
 
-func (s *Service) getProvider(pType string) domain.ProviderInterface {
-	return s.providers[pType]
+func (s *Service) getProvider(pType string) providers.Client {
+	return s.providerClients[pType]
 }
 
 func (s *Service) getProviderConfig(pType, urn string) (*domain.Provider, error) {

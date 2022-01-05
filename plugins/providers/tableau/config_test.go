@@ -1,11 +1,11 @@
-package grafana_test
+package tableau_test
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/provider/grafana"
+	"github.com/odpf/guardian/plugins/providers/tableau"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -16,8 +16,8 @@ func TestCredentials(t *testing.T) {
 
 	t.Run("encrypt", func(t *testing.T) {
 		t.Run("should return error if creds is nil", func(t *testing.T) {
-			var creds *grafana.Credentials
-			expectedError := grafana.ErrUnableToEncryptNilCredentials
+			var creds *tableau.Credentials
+			expectedError := tableau.ErrUnableToEncryptNilCredentials
 
 			actualError := creds.Encrypt(encryptor)
 
@@ -25,7 +25,7 @@ func TestCredentials(t *testing.T) {
 		})
 
 		t.Run("should return error if encryptor failed to encrypt the creds", func(t *testing.T) {
-			creds := grafana.Credentials{}
+			creds := tableau.Credentials{}
 			expectedError := errors.New("encryptor error")
 			encryptor.On("Encrypt", mock.Anything).Return("", expectedError).Once()
 
@@ -35,29 +35,29 @@ func TestCredentials(t *testing.T) {
 		})
 
 		t.Run("should return encrypted password inside Credentials on success", func(t *testing.T) {
-			username := "username"
-			password := "password"
-			creds := grafana.Credentials{
+			username := "test_user_name"
+			password := "test_password"
+			creds := tableau.Credentials{
 				Host:     "http://localhost:4000",
 				Username: username,
 				Password: password,
 			}
 
-			expectedEncryptedApiKey := "encrypted_api_key"
-			encryptor.On("Encrypt", password).Return(expectedEncryptedApiKey, nil).Once()
+			expectedEncryptedPassword := "encrypted_password"
+			encryptor.On("Encrypt", password).Return(expectedEncryptedPassword, nil).Once()
 
 			actualError := creds.Encrypt(encryptor)
 
 			assert.Nil(t, actualError)
-			assert.Equal(t, expectedEncryptedApiKey, creds.Password)
+			assert.Equal(t, expectedEncryptedPassword, creds.Password)
 		})
 	})
 
 	t.Run("decrypt", func(t *testing.T) {
 		t.Run("should return error if creds is nil", func(t *testing.T) {
-			var creds *grafana.Credentials
+			var creds *tableau.Credentials
 
-			expectedError := grafana.ErrUnableToDecryptNilCredentials
+			expectedError := tableau.ErrUnableToDecryptNilCredentials
 
 			actualError := creds.Decrypt(decryptor)
 
@@ -65,7 +65,7 @@ func TestCredentials(t *testing.T) {
 		})
 
 		t.Run("should return error if decryptor failed to decrypt the creds", func(t *testing.T) {
-			creds := grafana.Credentials{}
+			creds := tableau.Credentials{}
 			expectedError := errors.New("decryptor error")
 			decryptor.On("Decrypt", mock.Anything).Return("", expectedError).Once()
 
@@ -75,21 +75,21 @@ func TestCredentials(t *testing.T) {
 		})
 
 		t.Run("should return decrypted password inside Credentials on success", func(t *testing.T) {
-			username := "username"
-			password := "encrypted_password"
-			creds := grafana.Credentials{
-				Host:     "http://localhost:3000",
+			username := "test_user_name"
+			password := "test_password"
+			creds := tableau.Credentials{
+				Host:     "http://localhost:4000",
 				Username: username,
 				Password: password,
 			}
 
-			expectedDecryptedApiKey := "decrypted_api_key"
-			decryptor.On("Decrypt", password).Return(expectedDecryptedApiKey, nil).Once()
+			expectedDecryptedPassword := "decrypted_password"
+			decryptor.On("Decrypt", password).Return(expectedDecryptedPassword, nil).Once()
 
 			actualError := creds.Decrypt(decryptor)
 
 			assert.Nil(t, actualError)
-			assert.Equal(t, expectedDecryptedApiKey, creds.Password)
+			assert.Equal(t, expectedDecryptedPassword, creds.Password)
 		})
 	})
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/guardian/plugins/providers"
 	"github.com/odpf/guardian/provider"
 	"github.com/odpf/salt/log"
 	"github.com/stretchr/testify/mock"
@@ -21,7 +22,7 @@ type ServiceTestSuite struct {
 	suite.Suite
 	mockProviderRepository *mocks.ProviderRepository
 	mockResourceService    *mocks.ResourceService
-	mockProvider           *mocks.ProviderInterface
+	mockProvider           *mocks.ProviderClient
 	service                *provider.Service
 }
 
@@ -30,10 +31,10 @@ func (s *ServiceTestSuite) SetupTest() {
 	validator := validator.New()
 	s.mockProviderRepository = new(mocks.ProviderRepository)
 	s.mockResourceService = new(mocks.ResourceService)
-	s.mockProvider = new(mocks.ProviderInterface)
+	s.mockProvider = new(mocks.ProviderClient)
 	s.mockProvider.On("GetType").Return(mockProviderType).Once()
 
-	s.service = provider.NewService(logger, validator, s.mockProviderRepository, s.mockResourceService, []domain.ProviderInterface{s.mockProvider})
+	s.service = provider.NewService(logger, validator, s.mockProviderRepository, s.mockResourceService, []providers.Client{s.mockProvider})
 }
 
 func (s *ServiceTestSuite) TestCreate() {

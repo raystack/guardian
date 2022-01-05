@@ -6,7 +6,7 @@ import (
 
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/provider/gcloudiam"
+	"github.com/odpf/guardian/plugins/providers/gcloudiam"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

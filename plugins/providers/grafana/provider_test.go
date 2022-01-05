@@ -1,4 +1,4 @@
-package metabase_test
+package grafana_test
 
 import (
 	"errors"
@@ -7,16 +7,16 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/provider/metabase"
+	"github.com/odpf/guardian/plugins/providers/grafana"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestGetType(t *testing.T) {
 	t.Run("should return provider type name", func(t *testing.T) {
-		expectedTypeName := domain.ProviderTypeMetabase
+		expectedTypeName := domain.ProviderTypeGrafana
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider(expectedTypeName, crypto)
+		p := grafana.NewProvider(expectedTypeName, crypto)
 
 		actualTypeName := p.GetType()
 
@@ -27,7 +27,7 @@ func TestGetType(t *testing.T) {
 func TestGetResources(t *testing.T) {
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider("", crypto)
+		p := grafana.NewProvider("", crypto)
 
 		pc := &domain.ProviderConfig{
 			Credentials: "invalid-creds",
@@ -41,7 +41,7 @@ func TestGetResources(t *testing.T) {
 
 	t.Run("should return error if there are any on client initialization", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider("", crypto)
+		p := grafana.NewProvider("", crypto)
 
 		expectedError := errors.New("decrypt error")
 		crypto.On("Decrypt", "test-password").Return("", expectedError).Once()
@@ -57,26 +57,21 @@ func TestGetResources(t *testing.T) {
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
 
-	t.Run("should return error if got any on getting database resources", func(t *testing.T) {
+	t.Run("should return error if got any on getting folder resources", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
-		client := new(mocks.MetabaseClient)
-		p := metabase.NewProvider("", crypto)
-		p.Clients = map[string]metabase.MetabaseClient{
+		client := new(mocks.GrafanaClient)
+		p := grafana.NewProvider("", crypto)
+		p.Clients = map[string]grafana.GrafanaClient{
 			providerURN: client,
 		}
 
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
-			Resources: []*domain.ResourceConfig{
-				{
-					Type: metabase.ResourceTypeDatabase,
-				},
-			},
 		}
 		expectedError := errors.New("client error")
-		client.On("GetDatabases").Return(nil, expectedError).Once()
+		client.On("GetFolders").Return(nil, expectedError).Once()
 
 		actualResources, actualError := p.GetResources(pc)
 
@@ -84,26 +79,28 @@ func TestGetResources(t *testing.T) {
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
 
-	t.Run("should return error if got any on getting collection resources", func(t *testing.T) {
+	t.Run("should return error if got any on getting dashboard resources", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
-		client := new(mocks.MetabaseClient)
-		p := metabase.NewProvider("", crypto)
-		p.Clients = map[string]metabase.MetabaseClient{
+		client := new(mocks.GrafanaClient)
+		p := grafana.NewProvider("", crypto)
+		p.Clients = map[string]grafana.GrafanaClient{
 			providerURN: client,
 		}
 
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
-			Resources: []*domain.ResourceConfig{
-				{
-					Type: metabase.ResourceTypeCollection,
-				},
-			},
 		}
 		expectedError := errors.New("client error")
-		client.On("GetCollections").Return(nil, expectedError).Once()
+		expectedFolders := []*grafana.Folder{
+			{
+				ID:    1,
+				Title: "fd_1",
+			},
+		}
+		client.On("GetFolders").Return(expectedFolders, nil).Once()
+		client.On("GetDashboards", 1).Return(nil, expectedError).Times(2)
 
 		actualResources, actualError := p.GetResources(pc)
 
@@ -114,58 +111,36 @@ func TestGetResources(t *testing.T) {
 	t.Run("should return list of resources and nil error on success", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
-		client := new(mocks.MetabaseClient)
-		p := metabase.NewProvider("", crypto)
-		p.Clients = map[string]metabase.MetabaseClient{
+		client := new(mocks.GrafanaClient)
+		p := grafana.NewProvider("", crypto)
+		p.Clients = map[string]grafana.GrafanaClient{
 			providerURN: client,
 		}
 
 		pc := &domain.ProviderConfig{
 			URN:         providerURN,
 			Credentials: map[string]interface{}{},
-			Resources: []*domain.ResourceConfig{
-				{
-					Type: metabase.ResourceTypeDatabase,
-				},
-				{
-					Type: metabase.ResourceTypeCollection,
-				},
-			},
 		}
-		expectedDatabases := []*metabase.Database{
+		expectedFolders := []*grafana.Folder{
 			{
-				ID:   1,
-				Name: "db_1",
+				ID:    1,
+				Title: "fd_1",
 			},
 		}
-		client.On("GetDatabases").Return(expectedDatabases, nil).Once()
-		expectedCollections := []*metabase.Collection{
+		client.On("GetFolders").Return(expectedFolders, nil).Once()
+		expectedDashboards := []*grafana.Dashboard{
 			{
-				ID:   1,
-				Name: "col_1",
+				ID:    1,
+				Title: "db_1",
 			},
 		}
-		client.On("GetCollections").Return(expectedCollections, nil).Once()
+		client.On("GetDashboards", 1).Return(expectedDashboards, nil).Once()
 		expectedResources := []*domain.Resource{
 			{
-				Type:        metabase.ResourceTypeDatabase,
+				Type:        grafana.ResourceTypeDashboard,
 				URN:         "1",
 				ProviderURN: providerURN,
 				Name:        "db_1",
-				Details: map[string]interface{}{
-					"auto_run_queries":            false,
-					"cache_field_values_schedule": "",
-					"engine":                      "",
-					"metadata_sync_schedule":      "",
-					"native_permissions":          "",
-					"timezone":                    "",
-				},
-			},
-			{
-				Type:        metabase.ResourceTypeCollection,
-				URN:         "1",
-				ProviderURN: providerURN,
-				Name:        "col_1",
 				Details:     map[string]interface{}{},
 			},
 		}
@@ -179,7 +154,7 @@ func TestGetResources(t *testing.T) {
 
 func TestGrantAccess(t *testing.T) {
 	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission metabase.Permission
+		var permission grafana.Permission
 		invalidPermissionConfig := map[string]interface{}{}
 		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
 
@@ -194,7 +169,7 @@ func TestGrantAccess(t *testing.T) {
 						Type: "test-type",
 					},
 				},
-				expectedError: metabase.ErrInvalidResourceType,
+				expectedError: grafana.ErrInvalidResourceType,
 			},
 			{
 				resourceConfigs: []*domain.ResourceConfig{
@@ -213,7 +188,7 @@ func TestGrantAccess(t *testing.T) {
 					},
 					Role: "test-role",
 				},
-				expectedError: metabase.ErrInvalidRole,
+				expectedError: grafana.ErrInvalidRole,
 			},
 			{
 				resourceConfigs: []*domain.ResourceConfig{
@@ -241,7 +216,7 @@ func TestGrantAccess(t *testing.T) {
 
 		for _, tc := range testcases {
 			crypto := new(mocks.Crypto)
-			p := metabase.NewProvider("", crypto)
+			p := grafana.NewProvider("", crypto)
 
 			providerConfig := &domain.ProviderConfig{
 				Resources: tc.resourceConfigs,
@@ -254,7 +229,7 @@ func TestGrantAccess(t *testing.T) {
 
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider("", crypto)
+		p := grafana.NewProvider("", crypto)
 
 		pc := &domain.ProviderConfig{
 			Credentials: "invalid-credentials",
@@ -282,16 +257,17 @@ func TestGrantAccess(t *testing.T) {
 	})
 
 	t.Run("should return error if there are any on client initialization", func(t *testing.T) {
+		password := "test-password"
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider("", crypto)
+		p := grafana.NewProvider("", crypto)
 		expectedError := errors.New("decrypt error")
-		crypto.On("Decrypt", "test-password").Return("", expectedError).Once()
+		crypto.On("Decrypt", password).Return("", expectedError).Once()
 
 		pc := &domain.ProviderConfig{
-			Credentials: metabase.Credentials{
+			Credentials: grafana.Credentials{
 				Host:     "localhost",
 				Username: "test-username",
-				Password: "test-password",
+				Password: password,
 			},
 			Resources: []*domain.ResourceConfig{
 				{
@@ -318,16 +294,17 @@ func TestGrantAccess(t *testing.T) {
 	})
 
 	t.Run("should return error if resource type in unknown", func(t *testing.T) {
+		password := "test-password"
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider("", crypto)
+		p := grafana.NewProvider("", crypto)
 		expectedError := errors.New("invalid resource type")
-		crypto.On("Decrypt", "test-password").Return("", expectedError).Once()
+		crypto.On("Decrypt", password).Return("", expectedError).Once()
 
 		pc := &domain.ProviderConfig{
-			Credentials: metabase.Credentials{
+			Credentials: grafana.Credentials{
 				Host:     "localhost",
 				Username: "test-username",
-				Password: "test-password",
+				Password: password,
 			},
 			Resources: []*domain.ResourceConfig{
 				{
@@ -354,27 +331,27 @@ func TestGrantAccess(t *testing.T) {
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
 
-	t.Run("given database resource", func(t *testing.T) {
-		t.Run("should return error if there is an error in granting database access", func(t *testing.T) {
+	t.Run("given dashboard resource", func(t *testing.T) {
+		t.Run("should return error if there is an error in granting dashboard access", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			expectedError := errors.New("client error")
 			crypto := new(mocks.Crypto)
-			client := new(mocks.MetabaseClient)
-			p := metabase.NewProvider("", crypto)
-			p.Clients = map[string]metabase.MetabaseClient{
+			client := new(mocks.GrafanaClient)
+			p := grafana.NewProvider("", crypto)
+			p.Clients = map[string]grafana.GrafanaClient{
 				providerURN: client,
 			}
-			client.On("GrantDatabaseAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+			client.On("GrantDashboardAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: metabase.Credentials{
+				Credentials: grafana.Credentials{
 					Host:     "localhost",
 					Username: "test-username",
 					Password: "test-password",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: metabase.ResourceTypeDatabase,
+						Type: grafana.ResourceTypeDashboard,
 						Roles: []*domain.Role{
 							{
 								ID:          "test-role",
@@ -387,9 +364,9 @@ func TestGrantAccess(t *testing.T) {
 			}
 			a := &domain.Appeal{
 				Resource: &domain.Resource{
-					Type: metabase.ResourceTypeDatabase,
+					Type: grafana.ResourceTypeDashboard,
 					URN:  "999",
-					Name: "test-database",
+					Name: "test-dashboard",
 				},
 				Role: "test-role",
 			}
@@ -402,32 +379,32 @@ func TestGrantAccess(t *testing.T) {
 		t.Run("should return nil error if granting access is successful", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			crypto := new(mocks.Crypto)
-			client := new(mocks.MetabaseClient)
-			expectedDatabase := &metabase.Database{
-				Name: "test-database",
-				ID:   999,
+			client := new(mocks.GrafanaClient)
+			expectedDatabase := &grafana.Dashboard{
+				Title: "test-dashboard",
+				ID:    999,
 			}
 			expectedUser := "test@email.com"
-			expectedRole := metabase.DatabaseRoleViewer
-			p := metabase.NewProvider("", crypto)
-			p.Clients = map[string]metabase.MetabaseClient{
+			expectedRole := grafana.DashboardRoleViewer
+			p := grafana.NewProvider("", crypto)
+			p.Clients = map[string]grafana.GrafanaClient{
 				providerURN: client,
 			}
-			client.On("GrantDatabaseAccess", expectedDatabase, expectedUser, expectedRole).Return(nil).Once()
+			client.On("GrantDashboardAccess", expectedDatabase, expectedUser, expectedRole).Return(nil).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: metabase.Credentials{
+				Credentials: grafana.Credentials{
 					Host:     "localhost",
 					Username: "test-username",
 					Password: "test-password",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: metabase.ResourceTypeDatabase,
+						Type: grafana.ResourceTypeDashboard,
 						Roles: []*domain.Role{
 							{
 								ID:          "viewer",
-								Permissions: []interface{}{expectedRole},
+								Permissions: []interface{}{"view"},
 							},
 						},
 					},
@@ -436,108 +413,9 @@ func TestGrantAccess(t *testing.T) {
 			}
 			a := &domain.Appeal{
 				Resource: &domain.Resource{
-					Type: metabase.ResourceTypeDatabase,
+					Type: grafana.ResourceTypeDashboard,
 					URN:  "999",
-					Name: "test-database",
-				},
-				Role:       "viewer",
-				AccountID:  expectedUser,
-				ResourceID: 999,
-				ID:         999,
-			}
-
-			actualError := p.GrantAccess(pc, a)
-
-			assert.Nil(t, actualError)
-		})
-	})
-
-	t.Run("given collection resource", func(t *testing.T) {
-		t.Run("should return error if there is an error in grandting collection access", func(t *testing.T) {
-			providerURN := "test-provider-urn"
-			expectedError := errors.New("client error")
-			crypto := new(mocks.Crypto)
-			client := new(mocks.MetabaseClient)
-			p := metabase.NewProvider("", crypto)
-			p.Clients = map[string]metabase.MetabaseClient{
-				providerURN: client,
-			}
-			client.On("GrantCollectionAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
-
-			pc := &domain.ProviderConfig{
-				Credentials: metabase.Credentials{
-					Host:     "localhost",
-					Username: "test-username",
-					Password: "test-password",
-				},
-				Resources: []*domain.ResourceConfig{
-					{
-						Type: metabase.ResourceTypeCollection,
-						Roles: []*domain.Role{
-							{
-								ID:          "test-role",
-								Permissions: []interface{}{"test-permission-config"},
-							},
-						},
-					},
-				},
-				URN: providerURN,
-			}
-			a := &domain.Appeal{
-				Resource: &domain.Resource{
-					Type: metabase.ResourceTypeCollection,
-					URN:  "999",
-					Name: "test-collection",
-				},
-				Role: "test-role",
-			}
-
-			actualError := p.GrantAccess(pc, a)
-
-			assert.EqualError(t, actualError, expectedError.Error())
-		})
-
-		t.Run("should return nil error if granting access is successful", func(t *testing.T) {
-			providerURN := "test-provider-urn"
-			crypto := new(mocks.Crypto)
-			client := new(mocks.MetabaseClient)
-			expectedCollection := &metabase.Collection{
-				Name: "test-collection",
-				ID:   999,
-			}
-			expectedUser := "test@email.com"
-			expectedRole := "viewer"
-			p := metabase.NewProvider("", crypto)
-
-			p.Clients = map[string]metabase.MetabaseClient{
-				providerURN: client,
-			}
-			client.On("GrantCollectionAccess", expectedCollection, expectedUser, expectedRole).Return(nil).Once()
-
-			pc := &domain.ProviderConfig{
-				Credentials: metabase.Credentials{
-					Host:     "localhost",
-					Username: "test-username",
-					Password: "test-password",
-				},
-				Resources: []*domain.ResourceConfig{
-					{
-						Type: metabase.ResourceTypeCollection,
-						Roles: []*domain.Role{
-							{
-								ID:          "viewer",
-								Permissions: []interface{}{expectedRole},
-							},
-						},
-					},
-				},
-				URN: providerURN,
-			}
-			a := &domain.Appeal{
-				Resource: &domain.Resource{
-					Type: metabase.ResourceTypeCollection,
-					URN:  "999",
-					Name: "test-collection",
+					Name: "test-dashboard",
 				},
 				Role:       "viewer",
 				AccountID:  expectedUser,

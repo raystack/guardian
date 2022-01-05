@@ -6,7 +6,7 @@ import (
 
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/provider/bigquery"
+	"github.com/odpf/guardian/plugins/providers/bigquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

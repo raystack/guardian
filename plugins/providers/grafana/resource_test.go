@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/provider/grafana"
+	"github.com/odpf/guardian/plugins/providers/grafana"
 	"github.com/stretchr/testify/assert"
 )
 

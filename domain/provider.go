@@ -88,15 +88,3 @@ type ProviderService interface {
 	GrantAccess(*Appeal) error
 	RevokeAccess(*Appeal) error
 }
-
-// ProviderInterface abstracts guardian communicates with external data providers
-type ProviderInterface interface {
-	GetType() string
-	CreateConfig(*ProviderConfig) error
-	GetResources(pc *ProviderConfig) ([]*Resource, error)
-	GrantAccess(*ProviderConfig, *Appeal) error
-	RevokeAccess(*ProviderConfig, *Appeal) error
-
-	GetRoles(pc *ProviderConfig, resourceType string) ([]*Role, error)
-	GetAccountTypes() []string
-}

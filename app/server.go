@@ -19,13 +19,14 @@ import (
 	"github.com/odpf/guardian/internal/scheduler"
 	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/notifier"
+	"github.com/odpf/guardian/plugins/providers"
+	"github.com/odpf/guardian/plugins/providers/bigquery"
+	"github.com/odpf/guardian/plugins/providers/gcloudiam"
+	"github.com/odpf/guardian/plugins/providers/grafana"
+	"github.com/odpf/guardian/plugins/providers/metabase"
+	"github.com/odpf/guardian/plugins/providers/tableau"
 	"github.com/odpf/guardian/policy"
 	"github.com/odpf/guardian/provider"
-	"github.com/odpf/guardian/provider/bigquery"
-	"github.com/odpf/guardian/provider/gcloudiam"
-	"github.com/odpf/guardian/provider/grafana"
-	"github.com/odpf/guardian/provider/metabase"
-	"github.com/odpf/guardian/provider/tableau"
 	"github.com/odpf/guardian/resource"
 	"github.com/odpf/guardian/store"
 	"github.com/odpf/salt/log"
@@ -63,7 +64,7 @@ func RunServer(c *Config) error {
 	appealRepository := appeal.NewRepository(db)
 	approvalRepository := approval.NewRepository(db)
 
-	providers := []domain.ProviderInterface{
+	providerClients := []providers.Client{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
 		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
 		grafana.NewProvider(domain.ProviderTypeGrafana, crypto),
@@ -84,7 +85,7 @@ func RunServer(c *Config) error {
 		v,
 		providerRepository,
 		resourceService,
-		providers,
+		providerClients,
 	)
 	policyService := policy.NewService(
 		v,

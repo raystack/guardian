@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/provider/metabase"
+	"github.com/odpf/guardian/plugins/providers/metabase"
 	"github.com/stretchr/testify/assert"
 )
 

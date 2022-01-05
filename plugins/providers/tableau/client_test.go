@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/provider/tableau"
+	"github.com/odpf/guardian/plugins/providers/tableau"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

@@ -1,11 +1,11 @@
-package metabase_test
+package grafana_test
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/provider/metabase"
+	"github.com/odpf/guardian/plugins/providers/grafana"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -16,8 +16,8 @@ func TestCredentials(t *testing.T) {
 
 	t.Run("encrypt", func(t *testing.T) {
 		t.Run("should return error if creds is nil", func(t *testing.T) {
-			var creds *metabase.Credentials
-			expectedError := metabase.ErrUnableToEncryptNilCredentials
+			var creds *grafana.Credentials
+			expectedError := grafana.ErrUnableToEncryptNilCredentials
 
 			actualError := creds.Encrypt(encryptor)
 
@@ -25,7 +25,7 @@ func TestCredentials(t *testing.T) {
 		})
 
 		t.Run("should return error if encryptor failed to encrypt the creds", func(t *testing.T) {
-			creds := metabase.Credentials{}
+			creds := grafana.Credentials{}
 			expectedError := errors.New("encryptor error")
 			encryptor.On("Encrypt", mock.Anything).Return("", expectedError).Once()
 
@@ -34,29 +34,30 @@ func TestCredentials(t *testing.T) {
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
 
-		t.Run("should return encrypt the password inside Credentials on success", func(t *testing.T) {
+		t.Run("should return encrypted password inside Credentials on success", func(t *testing.T) {
+			username := "username"
 			password := "password"
-			creds := metabase.Credentials{
-				Host:     "http://localhost:3000",
-				Username: "test@email.com",
+			creds := grafana.Credentials{
+				Host:     "http://localhost:4000",
+				Username: username,
 				Password: password,
 			}
 
-			expectedEncryptedPassword := "encrypted_password"
-			encryptor.On("Encrypt", password).Return(expectedEncryptedPassword, nil).Once()
+			expectedEncryptedApiKey := "encrypted_api_key"
+			encryptor.On("Encrypt", password).Return(expectedEncryptedApiKey, nil).Once()
 
 			actualError := creds.Encrypt(encryptor)
 
 			assert.Nil(t, actualError)
-			assert.Equal(t, expectedEncryptedPassword, creds.Password)
+			assert.Equal(t, expectedEncryptedApiKey, creds.Password)
 		})
 	})
 
 	t.Run("decrypt", func(t *testing.T) {
 		t.Run("should return error if creds is nil", func(t *testing.T) {
-			var creds *metabase.Credentials
+			var creds *grafana.Credentials
 
-			expectedError := metabase.ErrUnableToDecryptNilCredentials
+			expectedError := grafana.ErrUnableToDecryptNilCredentials
 
 			actualError := creds.Decrypt(decryptor)
 
@@ -64,7 +65,7 @@ func TestCredentials(t *testing.T) {
 		})
 
 		t.Run("should return error if decryptor failed to decrypt the creds", func(t *testing.T) {
-			creds := metabase.Credentials{}
+			creds := grafana.Credentials{}
 			expectedError := errors.New("decryptor error")
 			decryptor.On("Decrypt", mock.Anything).Return("", expectedError).Once()
 
@@ -73,21 +74,22 @@ func TestCredentials(t *testing.T) {
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
 
-		t.Run("should return encrypt the password inside Credentials on success", func(t *testing.T) {
+		t.Run("should return decrypted password inside Credentials on success", func(t *testing.T) {
+			username := "username"
 			password := "encrypted_password"
-			creds := metabase.Credentials{
+			creds := grafana.Credentials{
 				Host:     "http://localhost:3000",
-				Username: "test@email.com",
+				Username: username,
 				Password: password,
 			}
 
-			expectedDecryptedPassword := "decrypted_password"
-			decryptor.On("Decrypt", password).Return(expectedDecryptedPassword, nil).Once()
+			expectedDecryptedApiKey := "decrypted_api_key"
+			decryptor.On("Decrypt", password).Return(expectedDecryptedApiKey, nil).Once()
 
 			actualError := creds.Decrypt(decryptor)
 
 			assert.Nil(t, actualError)
-			assert.Equal(t, expectedDecryptedPassword, creds.Password)
+			assert.Equal(t, expectedDecryptedApiKey, creds.Password)
 		})
 	})
 }
