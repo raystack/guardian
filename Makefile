@@ -1,33 +1,47 @@
 NAME="github.com/odpf/guardian"
 LAST_COMMIT := $(shell git rev-parse --short HEAD)
 LAST_TAG := "$(shell git rev-list --tags --max-count=1)"
-OPMS_VERSION := "$(shell git describe --tags ${LAST_TAG})-next"
-COVERFILE="/tmp/guardian.coverprofile"
+APP_VERSION := "$(shell git describe --tags ${LAST_TAG})-next"
+PROTON_COMMIT := "63a12920e34140eff89c26265476481053d2231c"
 
-.PHONY: all build test clean
+.PHONY: all build test clean dist vet proto install
 
 all: build
 
-build:
-	go build -ldflags "-X ${NAME}/config.Version=${OPMS_VERSION} -X ${NAME}/config.BuildCommit=${LAST_COMMIT}" -o guardian .
+build: ## Build the guardian binary
+	@echo " > building guardian version ${APP_VERSION}"
+	go build -ldflags "-X ${NAME}/config.Version=${APP_VERSION} -X ${NAME}/config.BuildCommit=${LAST_COMMIT}" -o guardian .
+	@echo " - build complete"
 
-clean:
-	rm -rf guardian dist/
-
-test:
+test: ## Run the tests
 	go test ./... -coverprofile=coverage.out
 
-test-coverage: test
-	go tool cover -html=coverage.out
+coverage: ## Print code coverage
+	go test -race -coverprofile coverage.txt -covermode=atomic ./... & go tool cover -html=coverage.out
 
-dist:
-	@bash ./scripts/build.sh
+vet: ## Run the go vet tool
+	go vet ./...
 
-generate-proto: ## regenerate protos
-	@echo " > cloning protobuf from odpf/proton"
-	@rm -rf proton/
-	@git -c advice.detachedHead=false clone https://github.com/odpf/proton --depth 1 --quiet --branch main
-	@echo " > generating protobuf"
-	@echo " > info: make sure correct version of dependencies are installed using 'install'"
-	@buf generate
+proto: ## Generate the protobuf files
+	@echo " > generating protobuf from odpf/proton"
+	@echo " > [info] make sure correct version of dependencies are installed using 'make install'"
+	@buf generate https://github.com/odpf/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --template buf.gen.yaml --path odpf/guardian
 	@echo " > protobuf compilation finished"
+
+clean: ## Clean the build artifacts
+	rm -rf guardian dist/ ./api/proto/*
+
+install: ## install required dependencies
+	@echo "> installing dependencies"
+	go mod tidy
+	go get google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
+	go get github.com/golang/protobuf/proto@v1.5.2
+	go get github.com/golang/protobuf/protoc-gen-go@v1.5.2
+	go get google.golang.org/grpc@v1.40.0
+	go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
+	go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
+	go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.5.0
+	go get github.com/bufbuild/buf/cmd/buf@v0.54.1
+
+help: ## Display this help message
+	@cat $(MAKEFILE_LIST) | grep -e "^[a-zA-Z_\-]*: *.*## *" | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
