@@ -108,7 +108,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 		Short: "Create a new appeal",
 		Example: heredoc.Doc(`
 			$ guardian appeal create
-			$ guardian appeal create --account-id=<account-id> --resource-id=<resource-id> --role=<role>
+			$ guardian appeal create --account=<account-id> --resource=<resource-id> --role=<role>
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			options := map[string]interface{}{}
