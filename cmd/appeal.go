@@ -90,9 +90,9 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringArrayVar(&statuses, "status", nil, "Filter by status(es)")
-	cmd.Flags().StringVar(&role, "role", "", "Filter by role")
-	cmd.Flags().StringVar(&accountID, "account-id", "", "Filter by account id")
+	cmd.Flags().StringArrayVarP(&statuses, "status", "s", nil, "Filter by status(es)")
+	cmd.Flags().StringVarP(&role, "role", "r", "", "Filter by role")
+	cmd.Flags().StringVarP(&accountID, "account", "a", "", "Filter by account")
 
 	return cmd
 }
@@ -148,11 +148,11 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&accountID, "account-id", "u", "", "Email of the account to appeal")
-	cmd.MarkFlagRequired("account-id")
+	cmd.Flags().StringVarP(&accountID, "account", "a", "", "Email of the account to appeal")
+	cmd.MarkFlagRequired("account")
 
-	cmd.Flags().UintVarP(&resourceID, "resource-id", "t", 0, "ID of the resource")
-	cmd.MarkFlagRequired("resource-id")
+	cmd.Flags().UintVarP(&resourceID, "resource", "R", 0, "ID of the resource")
+	cmd.MarkFlagRequired("resource")
 
 	cmd.Flags().StringVarP(&role, "role", "r", "", "Role to be assigned")
 	cmd.MarkFlagRequired("role")
