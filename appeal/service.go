@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/evaluator"
+	"github.com/odpf/guardian/internal/evaluator"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
