@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/cmd"
@@ -24,10 +25,25 @@ func main() {
 		defer fmt.Println(cs.Yellow("client not configured. try running `guardian config init`"))
 	}
 
-	command := cmd.New(cliConfig)
+	root := cmd.New(cliConfig)
 
-	if err := command.Execute(); err != nil {
+	if cmd, err := root.ExecuteC(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(exitError)
+
+		cmdErr := strings.HasPrefix(err.Error(), "unknown command")
+		flagErr := strings.HasPrefix(err.Error(), "unknown flag")
+		sflagErr := strings.HasPrefix(err.Error(), "unknown shorthand flag")
+
+		if cmdErr || flagErr || sflagErr {
+			if !strings.HasSuffix(err.Error(), "\n") {
+				fmt.Println()
+			}
+			fmt.Println(cmd.UsageString())
+			os.Exit(exitOK)
+		} else {
+			os.Exit(exitError)
+		}
 	}
+
+	// TODO: Notify if updated version is available
 }

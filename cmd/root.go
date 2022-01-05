@@ -21,10 +21,11 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Example: heredoc.Doc(`
-			$ guardian policies list
-			$ guardian providers list
-			$ guardian resources list
-			$ guardian policies create --file policy.yaml
+			$ guardian appeal create
+			$ guardian policy list
+			$ guardian provider list
+			$ guardian resource list
+			$ guardian policy create --file policy.yaml
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
