@@ -14,14 +14,12 @@ func configCommand() *cobra.Command {
 		Use:   "config <command>",
 		Short: "Manage client configuration settings",
 		Example: heredoc.Doc(`
-			$ stencil config init
-			$ stencil config get
-			$ stencil config list`),
+			$ guardian config init
+			$ guardian config list`),
 	}
 
 	cmd.AddCommand(configInitCommand())
 	cmd.AddCommand(configListCommand())
-	cmd.AddCommand(configGetCommand())
 
 	return cmd
 }
@@ -31,7 +29,7 @@ func configInitCommand() *cobra.Command {
 		Use:   "init",
 		Short: "Initialize a new client configuration",
 		Example: heredoc.Doc(`
-			$ stencil init --path=.stencil.yml
+			$ guardian config init
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -49,34 +47,12 @@ func configInitCommand() *cobra.Command {
 	}
 }
 
-func configGetCommand() *cobra.Command {
-	var cmd = &cobra.Command{
-		Use:   "get <key>",
-		Short: "Update configuration with a value for the given key",
-		Example: heredoc.Doc(`
-			$ stencil config get --path=.stencil.yml
-		`),
-		Annotations: map[string]string{
-			"group:core": "true",
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := app.LoadCLIConfig()
-			if err != nil {
-				return err
-			}
-			fmt.Println(config)
-			return nil
-		},
-	}
-	return cmd
-}
-
 func configListCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "list",
-		Short: "Update configuration with a value for the given key",
+		Short: "List client configuration settings",
 		Example: heredoc.Doc(`
-			$ stencil config list --path=.stencil.yml
+			$ guardian config list
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",

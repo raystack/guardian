@@ -685,7 +685,6 @@ func (s *Service) checkAppealExtension(a *domain.Appeal, p *domain.Provider, act
 	if activeAppealsMap[a.AccountID] != nil &&
 		activeAppealsMap[a.AccountID][a.ResourceID] != nil &&
 		activeAppealsMap[a.AccountID][a.ResourceID][a.Role] != nil {
-
 		if p.Config.Appeal != nil {
 			if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
 				return nil, ErrAppealFoundActiveAccess
