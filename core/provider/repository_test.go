@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/provider"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 )

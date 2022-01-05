@@ -2,8 +2,8 @@ package metabase
 
 import (
 	"github.com/mitchellh/mapstructure"
+	pv "github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
-	pv "github.com/odpf/guardian/provider"
 )
 
 type provider struct {

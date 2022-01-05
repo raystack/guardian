@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/odpf/guardian/approval"
+	"github.com/odpf/guardian/core/approval"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/stretchr/testify/mock"

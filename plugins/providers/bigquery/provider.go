@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/provider"
 )
 
 // Provider for bigquery

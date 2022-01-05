@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/providers"
-	"github.com/odpf/guardian/provider"
 	"github.com/odpf/salt/log"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"

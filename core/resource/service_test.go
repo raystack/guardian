@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
