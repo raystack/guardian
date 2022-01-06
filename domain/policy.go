@@ -194,13 +194,6 @@ func (p *Policy) HasIAMConfig() bool {
 	return p.IAM != nil
 }
 
-// PolicyRepository interface
-type PolicyRepository interface {
-	Create(*Policy) error
-	Find() ([]*Policy, error)
-	GetOne(id string, version uint) (*Policy, error)
-}
-
 // PolicyService interface
 type PolicyService interface {
 	Create(*Policy) error

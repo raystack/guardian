@@ -37,11 +37,6 @@ type ListApprovalsFilter struct {
 	Statuses  []string `mapstructure:"statuses" validate:"omitempty,min=1"`
 }
 
-type ApprovalRepository interface {
-	BulkInsert([]*Approval) error
-	ListApprovals(*ListApprovalsFilter) ([]*Approval, error)
-}
-
 type ApprovalService interface {
 	BulkInsert([]*Approval) error
 	ListApprovals(*ListApprovalsFilter) ([]*Approval, error)

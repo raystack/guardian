@@ -11,29 +11,28 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/appeal"
-	"github.com/odpf/guardian/approval"
-	"github.com/odpf/guardian/crypto"
+	"github.com/odpf/guardian/core/appeal"
+	"github.com/odpf/guardian/core/approval"
+	"github.com/odpf/guardian/core/policy"
+	"github.com/odpf/guardian/core/provider"
+	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/iam"
-	"github.com/odpf/guardian/model"
-	"github.com/odpf/guardian/notifier"
-	"github.com/odpf/guardian/policy"
-	"github.com/odpf/guardian/provider"
-	"github.com/odpf/guardian/provider/bigquery"
-	"github.com/odpf/guardian/provider/gcloudiam"
-	"github.com/odpf/guardian/provider/grafana"
-	"github.com/odpf/guardian/provider/metabase"
-	"github.com/odpf/guardian/provider/tableau"
-	"github.com/odpf/guardian/resource"
-	"github.com/odpf/guardian/scheduler"
-	"github.com/odpf/guardian/store"
+	"github.com/odpf/guardian/internal/crypto"
+	"github.com/odpf/guardian/internal/scheduler"
+	"github.com/odpf/guardian/plugins/identities"
+	"github.com/odpf/guardian/plugins/notifiers"
+	"github.com/odpf/guardian/plugins/providers"
+	"github.com/odpf/guardian/plugins/providers/bigquery"
+	"github.com/odpf/guardian/plugins/providers/gcloudiam"
+	"github.com/odpf/guardian/plugins/providers/grafana"
+	"github.com/odpf/guardian/plugins/providers/metabase"
+	"github.com/odpf/guardian/plugins/providers/tableau"
+	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/salt/log"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
-	"gorm.io/gorm"
 )
 
 var (
@@ -48,7 +47,7 @@ type Jobs struct {
 
 // RunServer runs the application server
 func RunServer(c *Config) error {
-	db, err := getDB(c)
+	store, err := getStore(c)
 	if err != nil {
 		return err
 	}
@@ -57,13 +56,14 @@ func RunServer(c *Config) error {
 	crypto := crypto.NewAES(c.EncryptionSecretKeyKey)
 	v := validator.New()
 
-	providerRepository := provider.NewRepository(db)
-	policyRepository := policy.NewRepository(db)
-	resourceRepository := resource.NewRepository(db)
-	appealRepository := appeal.NewRepository(db)
-	approvalRepository := approval.NewRepository(db)
+	db := store.DB()
+	providerRepository := postgres.NewProviderRepository(db)
+	policyRepository := postgres.NewPolicyRepository(db)
+	resourceRepository := postgres.NewResourceRepository(db)
+	appealRepository := postgres.NewAppealRepository(db)
+	approvalRepository := postgres.NewApprovalRepository(db)
 
-	providers := []domain.ProviderInterface{
+	providerClients := []providers.Client{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
 		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
 		grafana.NewProvider(domain.ProviderTypeGrafana, crypto),
@@ -71,12 +71,12 @@ func RunServer(c *Config) error {
 		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, crypto),
 	}
 
-	notifier, err := notifier.NewClient(&c.Notifier)
+	notifier, err := notifiers.NewClient(&c.Notifier)
 	if err != nil {
 		return err
 	}
 
-	iamManager := iam.NewManager(crypto, v)
+	iamManager := identities.NewManager(crypto, v)
 
 	resourceService := resource.NewService(resourceRepository)
 	providerService := provider.NewService(
@@ -84,7 +84,7 @@ func RunServer(c *Config) error {
 		v,
 		providerRepository,
 		resourceService,
-		providers,
+		providerClients,
 	)
 	policyService := policy.NewService(
 		v,
@@ -195,24 +195,15 @@ func RunServer(c *Config) error {
 
 // Migrate runs the schema migration scripts
 func Migrate(c *Config) error {
-	db, err := getDB(c)
+	store, err := getStore(c)
 	if err != nil {
 		return err
 	}
-
-	models := []interface{}{
-		&model.Provider{},
-		&model.Policy{},
-		&model.Resource{},
-		&model.Appeal{},
-		&model.Approval{},
-		&model.Approver{},
-	}
-	return store.Migrate(db, models...)
+	return store.Migrate()
 }
 
-func getDB(c *Config) (*gorm.DB, error) {
-	return store.New(&c.DB)
+func getStore(c *Config) (*postgres.Store, error) {
+	return postgres.NewStore(&c.DB)
 }
 
 // grpcHandlerFunc routes http1 calls to baseMux and http2 with grpc header to grpcServer.

@@ -408,12 +408,6 @@ github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRW
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/odpf/salt v0.0.0-20220105064732-a033eef0a62a h1:V9L9JnUVer/NxNjvbaKxVWhErYEnll3wS4hLLzsQpRg=
-github.com/odpf/salt v0.0.0-20220105064732-a033eef0a62a/go.mod h1:NVnVQaXur70W/1wo06X6DYu6utZIUI/bMeMGyvFIwyo=
-github.com/odpf/salt v0.0.0-20220105064934-13cea3361ccf h1:JPYXvlcdCbxGapvjr7tHC85IrXdFxVxTtHnWCY4RjKc=
-github.com/odpf/salt v0.0.0-20220105064934-13cea3361ccf/go.mod h1:NVnVQaXur70W/1wo06X6DYu6utZIUI/bMeMGyvFIwyo=
-github.com/odpf/salt v0.0.0-20220105065627-e06bd097002c h1:XdN9Ce+5W+LMrMStKvNnAot+fgRGt0lw9u7j0AU6T8w=
-github.com/odpf/salt v0.0.0-20220105065627-e06bd097002c/go.mod h1:NVnVQaXur70W/1wo06X6DYu6utZIUI/bMeMGyvFIwyo=
 github.com/odpf/salt v0.0.0-20220105070534-88cb1476eb93 h1:rxtbZY0SSPRThB2FLmiqI67w5IPc5tYwX79HjOFkgEg=
 github.com/odpf/salt v0.0.0-20220105070534-88cb1476eb93/go.mod h1:NVnVQaXur70W/1wo06X6DYu6utZIUI/bMeMGyvFIwyo=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=

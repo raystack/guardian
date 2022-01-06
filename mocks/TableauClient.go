@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	tableau "github.com/odpf/guardian/provider/tableau"
+	tableau "github.com/odpf/guardian/plugins/providers/tableau"
 	mock "github.com/stretchr/testify/mock"
 )
 

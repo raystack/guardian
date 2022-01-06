@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	gcloudiam "github.com/odpf/guardian/provider/gcloudiam"
+	gcloudiam "github.com/odpf/guardian/plugins/providers/gcloudiam"
 	mock "github.com/stretchr/testify/mock"
 )
 
