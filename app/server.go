@@ -17,9 +17,9 @@ import (
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/internal/crypto"
 	"github.com/odpf/guardian/internal/scheduler"
+	"github.com/odpf/guardian/plugins/identities"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/plugins/providers"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
@@ -76,7 +76,7 @@ func RunServer(c *Config) error {
 		return err
 	}
 
-	iamManager := iam.NewManager(crypto, v)
+	iamManager := identities.NewManager(crypto, v)
 
 	resourceService := resource.NewService(resourceRepository)
 	providerService := provider.NewService(

@@ -1,4 +1,4 @@
-package iam
+package identities
 
 import (
 	"encoding/json"

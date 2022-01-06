@@ -9,8 +9,8 @@ import (
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/guardian/plugins/identities"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -30,7 +30,7 @@ func (s *ServiceTestSuite) SetupTest() {
 
 	mockCrypto := new(mocks.Crypto)
 	v := validator.New()
-	iamManager := iam.NewManager(mockCrypto, v)
+	iamManager := identities.NewManager(mockCrypto, v)
 
 	s.service = policy.NewService(
 		validator.New(),
@@ -247,7 +247,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Provider: "invalid-provider",
 				},
 			}
-			expectedError := iam.ErrUnknownProviderType
+			expectedError := identities.ErrUnknownProviderType
 
 			actualError := s.service.Create(policy)
 
