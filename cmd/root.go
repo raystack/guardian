@@ -53,6 +53,7 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 	cmd.AddCommand(ProviderCmd(cliConfig, protoAdapter))
 	cmd.AddCommand(PolicyCmd(cliConfig, protoAdapter))
 	cmd.AddCommand(appealsCommand(cliConfig))
+	cmd.AddCommand(VersionCmd())
 
 	// Help topics
 	cmd.AddCommand(cmdx.SetHelpTopic("environment", envHelp))
