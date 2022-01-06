@@ -35,6 +35,9 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 			"help:feedback": heredoc.Doc(`
 				Open an issue here https://github.com/odpf/guardian/issues
 			`),
+			"help:environment": heredoc.Doc(`
+				See 'guardian help environment' for the list of supported environment variables.
+			`),
 		},
 	}
 
@@ -49,6 +52,9 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 	cmd.AddCommand(ProviderCmd(cliConfig, protoAdapter))
 	cmd.AddCommand(PolicyCmd(cliConfig, protoAdapter))
 	cmd.AddCommand(appealsCommand(cliConfig))
+
+	// Help topics
+	cmd.AddCommand(cmdx.SetHelpTopic("environment", envHelp))
 
 	return cmd
 }
