@@ -235,8 +235,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 
 	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
 	cmd.MarkFlagRequired("id")
-
-	cmd.Flags().StringVarP(&approvalName, "approval-name", "a", "", "Name of the approval")
+	cmd.Flags().StringVarP(&approvalName, "step", "s", "", "Name of approval step")
 	cmd.MarkFlagRequired("approval-name")
 
 	return cmd
@@ -277,8 +276,7 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 
 	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
 	cmd.MarkFlagRequired("id")
-
-	cmd.Flags().StringVarP(&approvalName, "approval-name", "a", "", "Approval name going to be approved")
+	cmd.Flags().StringVarP(&approvalName, "step", "s", "", "Name of approval step")
 	cmd.MarkFlagRequired("approval-name")
 
 	return cmd
