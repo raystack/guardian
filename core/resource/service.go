@@ -3,15 +3,16 @@ package resource
 import (
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/store"
 )
 
 // Service handles the business logic for resource
 type Service struct {
-	repo domain.ResourceRepository
+	repo store.ResourceRepository
 }
 
 // NewService returns *Service
-func NewService(repo domain.ResourceRepository) *Service {
+func NewService(repo store.ResourceRepository) *Service {
 	return &Service{repo}
 }
 

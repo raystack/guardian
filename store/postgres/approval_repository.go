@@ -1,21 +1,21 @@
-package approval
+package postgres
 
 import (
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/model"
+	"github.com/odpf/guardian/store/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
 )
 
-type repository struct {
+type approvalRepository struct {
 	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) *repository {
-	return &repository{db}
+func NewApprovalRepository(db *gorm.DB) *approvalRepository {
+	return &approvalRepository{db}
 }
 
-func (r *repository) ListApprovals(conditions *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
+func (r *approvalRepository) ListApprovals(conditions *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
 	if err := utils.ValidateStruct(conditions); err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (r *repository) ListApprovals(conditions *domain.ListApprovalsFilter) ([]*d
 	return records, nil
 }
 
-func (r *repository) BulkInsert(approvals []*domain.Approval) error {
+func (r *approvalRepository) BulkInsert(approvals []*domain.Approval) error {
 	models := []*model.Approval{}
 	for _, a := range approvals {
 		m := new(model.Approval)

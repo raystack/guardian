@@ -9,6 +9,7 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/providers"
+	"github.com/odpf/guardian/store"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
@@ -17,14 +18,14 @@ import (
 type Service struct {
 	logger             *log.Logrus
 	validator          *validator.Validate
-	providerRepository domain.ProviderRepository
+	providerRepository store.ProviderRepository
 	resourceService    domain.ResourceService
 
 	providerClients map[string]providers.Client
 }
 
 // NewService returns service struct
-func NewService(logger *log.Logrus, validator *validator.Validate, pr domain.ProviderRepository, rs domain.ResourceService, providerClients []providers.Client) *Service {
+func NewService(logger *log.Logrus, validator *validator.Validate, pr store.ProviderRepository, rs domain.ResourceService, providerClients []providers.Client) *Service {
 	mapProviderClients := make(map[string]providers.Client)
 	for _, c := range providerClients {
 		mapProviderClients[c.GetType()] = c

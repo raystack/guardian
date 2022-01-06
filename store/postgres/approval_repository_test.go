@@ -1,4 +1,4 @@
-package approval_test
+package postgres_test
 
 import (
 	"database/sql"
@@ -8,29 +8,30 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/odpf/guardian/core/approval"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/guardian/store"
+	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/guardian/utils"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 )
 
-type RepositoryTestSuite struct {
+type ApprovalRepositoryTestSuite struct {
 	suite.Suite
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
-	repository domain.ApprovalRepository
+	repository store.ApprovalRepository
 
 	approvalColumnNames []string
 	approverColumnNames []string
 }
 
-func (s *RepositoryTestSuite) SetupTest() {
+func (s *ApprovalRepositoryTestSuite) SetupTest() {
 	db, mock, _ := mocks.NewStore()
 	s.sqldb, _ = db.DB()
 	s.dbmock = mock
-	s.repository = approval.NewRepository(db)
+	s.repository = postgres.NewApprovalRepository(db)
 
 	s.approvalColumnNames = []string{
 		"id",
@@ -52,11 +53,11 @@ func (s *RepositoryTestSuite) SetupTest() {
 	}
 }
 
-func (s *RepositoryTestSuite) TearDownTest() {
+func (s *ApprovalRepositoryTestSuite) TearDownTest() {
 	s.sqldb.Close()
 }
 
-func (s *RepositoryTestSuite) TestBulkInsert() {
+func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
 	expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","reason","policy_id","policy_version","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING "id"`)
 
 	actor := "user@email.com"
@@ -133,6 +134,6 @@ func (s *RepositoryTestSuite) TestBulkInsert() {
 	})
 }
 
-func TestRepository(t *testing.T) {
-	suite.Run(t, new(RepositoryTestSuite))
+func TestApprovalRepository(t *testing.T) {
+	suite.Run(t, new(ApprovalRepositoryTestSuite))
 }

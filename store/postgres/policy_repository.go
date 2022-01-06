@@ -1,25 +1,26 @@
-package policy
+package postgres
 
 import (
 	"fmt"
 
+	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/model"
+	"github.com/odpf/guardian/store/model"
 	"gorm.io/gorm"
 )
 
-// Repository talks to the store to read or insert data
-type Repository struct {
+// PolicyRepository talks to the store to read or insert data
+type PolicyRepository struct {
 	db *gorm.DB
 }
 
-// NewRepository returns repository struct
-func NewRepository(db *gorm.DB) *Repository {
-	return &Repository{db}
+// NewPolicyRepository returns repository struct
+func NewPolicyRepository(db *gorm.DB) *PolicyRepository {
+	return &PolicyRepository{db}
 }
 
 // Create new record to database
-func (r *Repository) Create(p *domain.Policy) error {
+func (r *PolicyRepository) Create(p *domain.Policy) error {
 	m := new(model.Policy)
 	if err := m.FromDomain(p); err != nil {
 		return fmt.Errorf("serializing policy: %w", err)
@@ -42,7 +43,7 @@ func (r *Repository) Create(p *domain.Policy) error {
 }
 
 // Find records based on filters
-func (r *Repository) Find() ([]*domain.Policy, error) {
+func (r *PolicyRepository) Find() ([]*domain.Policy, error) {
 	policies := []*domain.Policy{}
 
 	var models []*model.Policy
@@ -63,7 +64,7 @@ func (r *Repository) Find() ([]*domain.Policy, error) {
 
 // GetOne returns a policy record based on the id and version params.
 // If version is 0, the latest version will be returned
-func (r *Repository) GetOne(id string, version uint) (*domain.Policy, error) {
+func (r *PolicyRepository) GetOne(id string, version uint) (*domain.Policy, error) {
 	m := &model.Policy{}
 	condition := "id = ?"
 	args := []interface{}{id}
@@ -75,7 +76,7 @@ func (r *Repository) GetOne(id string, version uint) (*domain.Policy, error) {
 	conds := append([]interface{}{condition}, args...)
 	if err := r.db.Order("version desc").First(m, conds...).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, ErrPolicyNotFound
+			return nil, policy.ErrPolicyNotFound
 		}
 		return nil, err
 	}

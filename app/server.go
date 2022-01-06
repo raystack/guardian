@@ -20,7 +20,6 @@ import (
 	"github.com/odpf/guardian/iam"
 	"github.com/odpf/guardian/internal/crypto"
 	"github.com/odpf/guardian/internal/scheduler"
-	"github.com/odpf/guardian/model"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/plugins/providers"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
@@ -28,13 +27,12 @@ import (
 	"github.com/odpf/guardian/plugins/providers/grafana"
 	"github.com/odpf/guardian/plugins/providers/metabase"
 	"github.com/odpf/guardian/plugins/providers/tableau"
-	"github.com/odpf/guardian/store"
+	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/salt/log"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
-	"gorm.io/gorm"
 )
 
 var (
@@ -49,7 +47,7 @@ type Jobs struct {
 
 // RunServer runs the application server
 func RunServer(c *Config) error {
-	db, err := getDB(c)
+	store, err := getStore(c)
 	if err != nil {
 		return err
 	}
@@ -58,11 +56,12 @@ func RunServer(c *Config) error {
 	crypto := crypto.NewAES(c.EncryptionSecretKeyKey)
 	v := validator.New()
 
-	providerRepository := provider.NewRepository(db)
-	policyRepository := policy.NewRepository(db)
-	resourceRepository := resource.NewRepository(db)
-	appealRepository := appeal.NewRepository(db)
-	approvalRepository := approval.NewRepository(db)
+	db := store.DB()
+	providerRepository := postgres.NewProviderRepository(db)
+	policyRepository := postgres.NewPolicyRepository(db)
+	resourceRepository := postgres.NewResourceRepository(db)
+	appealRepository := postgres.NewAppealRepository(db)
+	approvalRepository := postgres.NewApprovalRepository(db)
 
 	providerClients := []providers.Client{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
@@ -196,24 +195,15 @@ func RunServer(c *Config) error {
 
 // Migrate runs the schema migration scripts
 func Migrate(c *Config) error {
-	db, err := getDB(c)
+	store, err := getStore(c)
 	if err != nil {
 		return err
 	}
-
-	models := []interface{}{
-		&model.Provider{},
-		&model.Policy{},
-		&model.Resource{},
-		&model.Appeal{},
-		&model.Approval{},
-		&model.Approver{},
-	}
-	return store.Migrate(db, models...)
+	return store.Migrate()
 }
 
-func getDB(c *Config) (*gorm.DB, error) {
-	return store.New(&c.DB)
+func getStore(c *Config) (*postgres.Store, error) {
+	return postgres.NewStore(&c.DB)
 }
 
 // grpcHandlerFunc routes http1 calls to baseMux and http2 with grpc header to grpcServer.

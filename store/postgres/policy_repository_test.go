@@ -1,4 +1,4 @@
-package policy_test
+package postgres_test
 
 import (
 	"database/sql"
@@ -12,25 +12,26 @@ import (
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/guardian/utils"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 )
 
-type RepositoryTestSuite struct {
+type PolicyRepositoryTestSuite struct {
 	suite.Suite
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
-	repository *policy.Repository
+	repository *postgres.PolicyRepository
 
 	rows []string
 }
 
-func (s *RepositoryTestSuite) SetupTest() {
+func (s *PolicyRepositoryTestSuite) SetupTest() {
 	db, mock, _ := mocks.NewStore()
 	s.sqldb, _ = db.DB()
 	s.dbmock = mock
-	s.repository = policy.NewRepository(db)
+	s.repository = postgres.NewPolicyRepository(db)
 
 	s.rows = []string{
 		"id",
@@ -44,11 +45,11 @@ func (s *RepositoryTestSuite) SetupTest() {
 	}
 }
 
-func (s *RepositoryTestSuite) TearDownTest() {
+func (s *PolicyRepositoryTestSuite) TearDownTest() {
 	s.sqldb.Close()
 }
 
-func (s *RepositoryTestSuite) TestCreate() {
+func (s *PolicyRepositoryTestSuite) TestCreate() {
 	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","labels","iam","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`)
 
 	s.Run("should return error if got error from db transaction", func() {
@@ -106,7 +107,7 @@ func (s *RepositoryTestSuite) TestCreate() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestFind() {
+func (s *PolicyRepositoryTestSuite) TestFind() {
 	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "policies" WHERE "policies"."deleted_at" IS NULL`)
 
 	s.Run("should return error if db returns error", func() {
@@ -153,7 +154,7 @@ func (s *RepositoryTestSuite) TestFind() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestGetOne() {
+func (s *PolicyRepositoryTestSuite) TestGetOne() {
 	s.Run("should return error if record not found", func() {
 		expectedDBError := gorm.ErrRecordNotFound
 		s.dbmock.ExpectQuery(".*").
@@ -227,6 +228,6 @@ func (s *RepositoryTestSuite) TestGetOne() {
 	})
 }
 
-func TestRepository(t *testing.T) {
-	suite.Run(t, new(RepositoryTestSuite))
+func TestPolicyRepository(t *testing.T) {
+	suite.Run(t, new(PolicyRepositoryTestSuite))
 }

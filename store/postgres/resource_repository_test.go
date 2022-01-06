@@ -1,4 +1,4 @@
-package resource_test
+package postgres_test
 
 import (
 	"database/sql"
@@ -12,25 +12,26 @@ import (
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/guardian/utils"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 )
 
-type RepositoryTestSuite struct {
+type ResourceRepositoryTestSuite struct {
 	suite.Suite
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
-	repository *resource.Repository
+	repository *postgres.ResourceRepository
 
 	columnNames []string
 }
 
-func (s *RepositoryTestSuite) SetupTest() {
+func (s *ResourceRepositoryTestSuite) SetupTest() {
 	db, mock, _ := mocks.NewStore()
 	s.sqldb, _ = db.DB()
 	s.dbmock = mock
-	s.repository = resource.NewRepository(db)
+	s.repository = postgres.NewResourceRepository(db)
 
 	s.columnNames = []string{
 		"id",
@@ -45,11 +46,11 @@ func (s *RepositoryTestSuite) SetupTest() {
 	}
 }
 
-func (s *RepositoryTestSuite) TearDownTest() {
+func (s *ResourceRepositoryTestSuite) TearDownTest() {
 	s.sqldb.Close()
 }
 
-func (s *RepositoryTestSuite) TestFind() {
+func (s *ResourceRepositoryTestSuite) TestFind() {
 	s.Run("should pass conditions based on filters", func() {
 		testCases := []struct {
 			filters       map[string]interface{}
@@ -129,7 +130,7 @@ func (s *RepositoryTestSuite) TestFind() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestGetOne() {
+func (s *ResourceRepositoryTestSuite) TestGetOne() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := resource.ErrEmptyIDParam
 
@@ -189,7 +190,7 @@ func (s *RepositoryTestSuite) TestGetOne() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestBulkUpsert() {
+func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
 	s.Run("should return records with with existing or new IDs", func() {
 		resources := []*domain.Resource{
 			{
@@ -245,7 +246,7 @@ func (s *RepositoryTestSuite) TestBulkUpsert() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestUpdate() {
+func (s *ResourceRepositoryTestSuite) TestUpdate() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := resource.ErrEmptyIDParam
 
@@ -287,6 +288,6 @@ func (s *RepositoryTestSuite) TestUpdate() {
 	})
 }
 
-func TestRepository(t *testing.T) {
-	suite.Run(t, new(RepositoryTestSuite))
+func TestResourceRepository(t *testing.T) {
+	suite.Run(t, new(ResourceRepositoryTestSuite))
 }

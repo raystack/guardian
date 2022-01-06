@@ -1,25 +1,26 @@
-package provider
+package postgres
 
 import (
 	"errors"
 
+	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/model"
+	"github.com/odpf/guardian/store/model"
 	"gorm.io/gorm"
 )
 
-// Repository talks to the store to read or insert data
-type Repository struct {
+// ProviderRepository talks to the store to read or insert data
+type ProviderRepository struct {
 	db *gorm.DB
 }
 
-// NewRepository returns repository struct
-func NewRepository(db *gorm.DB) *Repository {
-	return &Repository{db}
+// NewProviderRepository returns repository struct
+func NewProviderRepository(db *gorm.DB) *ProviderRepository {
+	return &ProviderRepository{db}
 }
 
 // Create new record to database
-func (r *Repository) Create(p *domain.Provider) error {
+func (r *ProviderRepository) Create(p *domain.Provider) error {
 	m := new(model.Provider)
 	if err := m.FromDomain(p); err != nil {
 		return err
@@ -42,7 +43,7 @@ func (r *Repository) Create(p *domain.Provider) error {
 }
 
 // Find records based on filters
-func (r *Repository) Find() ([]*domain.Provider, error) {
+func (r *ProviderRepository) Find() ([]*domain.Provider, error) {
 	providers := []*domain.Provider{}
 
 	var models []*model.Provider
@@ -62,15 +63,15 @@ func (r *Repository) Find() ([]*domain.Provider, error) {
 }
 
 // GetByID record by ID
-func (r *Repository) GetByID(id uint) (*domain.Provider, error) {
+func (r *ProviderRepository) GetByID(id uint) (*domain.Provider, error) {
 	if id == 0 {
-		return nil, ErrEmptyIDParam
+		return nil, provider.ErrEmptyIDParam
 	}
 
 	var m model.Provider
 	if err := r.db.First(&m, "id = ?", id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, ErrRecordNotFound
+			return nil, provider.ErrRecordNotFound
 		}
 		return nil, err
 	}
@@ -84,12 +85,12 @@ func (r *Repository) GetByID(id uint) (*domain.Provider, error) {
 }
 
 // GetOne returns provider by type and urn
-func (r *Repository) GetOne(pType, urn string) (*domain.Provider, error) {
+func (r *ProviderRepository) GetOne(pType, urn string) (*domain.Provider, error) {
 	if pType == "" {
-		return nil, ErrEmptyProviderType
+		return nil, provider.ErrEmptyProviderType
 	}
 	if urn == "" {
-		return nil, ErrEmptyProviderURN
+		return nil, provider.ErrEmptyProviderURN
 	}
 
 	m := &model.Provider{
@@ -98,7 +99,7 @@ func (r *Repository) GetOne(pType, urn string) (*domain.Provider, error) {
 	}
 	if err := r.db.Take(m).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrRecordNotFound
+			return nil, provider.ErrRecordNotFound
 		}
 		return nil, err
 	}
@@ -112,9 +113,9 @@ func (r *Repository) GetOne(pType, urn string) (*domain.Provider, error) {
 }
 
 // Update record by ID
-func (r *Repository) Update(p *domain.Provider) error {
+func (r *ProviderRepository) Update(p *domain.Provider) error {
 	if p.ID == 0 {
-		return ErrEmptyIDParam
+		return provider.ErrEmptyIDParam
 	}
 
 	m := new(model.Provider)
@@ -139,6 +140,6 @@ func (r *Repository) Update(p *domain.Provider) error {
 }
 
 // Delete record by ID
-func (r *Repository) Delete(id uint) error {
+func (r *ProviderRepository) Delete(id uint) error {
 	return nil
 }

@@ -65,16 +65,6 @@ type Provider struct {
 	UpdatedAt time.Time       `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
 }
 
-// ProviderRepository interface
-type ProviderRepository interface {
-	Create(*Provider) error
-	Update(*Provider) error
-	Find() ([]*Provider, error)
-	GetByID(uint) (*Provider, error)
-	GetOne(pType, urn string) (*Provider, error)
-	Delete(uint) error
-}
-
 // ProviderService interface
 type ProviderService interface {
 	Create(*Provider) error

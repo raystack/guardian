@@ -7,15 +7,16 @@ import (
 
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/evaluator"
+	"github.com/odpf/guardian/store"
 )
 
 type service struct {
-	repo          domain.ApprovalRepository
+	repo          store.ApprovalRepository
 	policyService domain.PolicyService
 }
 
 func NewService(
-	ar domain.ApprovalRepository,
+	ar store.ApprovalRepository,
 	ps domain.PolicyService,
 ) *service {
 	return &service{ar, ps}

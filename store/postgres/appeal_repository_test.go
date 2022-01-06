@@ -1,4 +1,4 @@
-package appeal_test
+package postgres_test
 
 import (
 	"database/sql"
@@ -13,16 +13,17 @@ import (
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/guardian/utils"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 )
 
-type RepositoryTestSuite struct {
+type AppealRepositoryTestSuite struct {
 	suite.Suite
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
-	repository *appeal.Repository
+	repository *postgres.AppealRepository
 
 	columnNames         []string
 	approvalColumnNames []string
@@ -30,11 +31,11 @@ type RepositoryTestSuite struct {
 	resourceColumnNames []string
 }
 
-func (s *RepositoryTestSuite) SetupTest() {
+func (s *AppealRepositoryTestSuite) SetupTest() {
 	db, mock, _ := mocks.NewStore()
 	s.sqldb, _ = db.DB()
 	s.dbmock = mock
-	s.repository = appeal.NewRepository(db)
+	s.repository = postgres.NewAppealRepository(db)
 
 	s.columnNames = []string{
 		"id",
@@ -84,11 +85,11 @@ func (s *RepositoryTestSuite) SetupTest() {
 	}
 }
 
-func (s *RepositoryTestSuite) TearDownTest() {
+func (s *AppealRepositoryTestSuite) TearDownTest() {
 	s.sqldb.Close()
 }
 
-func (s *RepositoryTestSuite) TestGetByID() {
+func (s *AppealRepositoryTestSuite) TestGetByID() {
 	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "appeals"."id" = $1 AND "appeals"."deleted_at" IS NULL ORDER BY "appeals"."id" LIMIT 1`)
 
 	s.Run("should return error if got any from db", func() {
@@ -230,7 +231,7 @@ func (s *RepositoryTestSuite) TestGetByID() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestFind() {
+func (s *AppealRepositoryTestSuite) TestFind() {
 	s.Run("should return error if got any from db", func() {
 		expectedError := errors.New("db error")
 		s.dbmock.
@@ -388,7 +389,7 @@ func (s *RepositoryTestSuite) TestFind() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestBulkUpsert() {
+func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
 	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","account_id","account_type","created_by","creator","role","options","labels","details","revoked_by","revoked_at","revoke_reason","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18),($19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) ON CONFLICT ("id") DO UPDATE SET "resource_id"="excluded"."resource_id","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","status"="excluded"."status","account_id"="excluded"."account_id","account_type"="excluded"."account_type","created_by"="excluded"."created_by","creator"="excluded"."creator","role"="excluded"."role","options"="excluded"."options","labels"="excluded"."labels","details"="excluded"."details","revoked_by"="excluded"."revoked_by","revoked_at"="excluded"."revoked_at","revoke_reason"="excluded"."revoke_reason","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
 
 	appeals := []*domain.Appeal{
@@ -463,7 +464,7 @@ func (s *RepositoryTestSuite) TestBulkUpsert() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestUpdate() {
+func (s *AppealRepositoryTestSuite) TestUpdate() {
 	s.Run("should return error if got error from transaction", func() {
 		expectedError := errors.New("db error")
 		s.dbmock.ExpectBegin()
@@ -529,6 +530,6 @@ func (s *RepositoryTestSuite) TestUpdate() {
 	})
 }
 
-func TestRepository(t *testing.T) {
-	suite.Run(t, new(RepositoryTestSuite))
+func TestAppealRepository(t *testing.T) {
+	suite.Run(t, new(AppealRepositoryTestSuite))
 }

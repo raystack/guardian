@@ -1,18 +1,19 @@
-package appeal
+package postgres
 
 import (
 	"errors"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/model"
+	"github.com/odpf/guardian/store/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-type findFilters struct {
+type appealFindFilters struct {
 	AccountID                 string    `mapstructure:"account_id" validate:"omitempty,required"`
 	ResourceID                uint      `mapstructure:"resource_id" validate:"omitempty,required"`
 	Role                      string    `mapstructure:"role" validate:"omitempty,required"`
@@ -25,18 +26,18 @@ type findFilters struct {
 	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 }
 
-// Repository talks to the store to read or insert data
-type Repository struct {
+// AppealRepository talks to the store to read or insert data
+type AppealRepository struct {
 	db *gorm.DB
 }
 
-// NewRepository returns repository struct
-func NewRepository(db *gorm.DB) *Repository {
-	return &Repository{db}
+// NewAppealRepository returns repository struct
+func NewAppealRepository(db *gorm.DB) *AppealRepository {
+	return &AppealRepository{db}
 }
 
 // GetByID returns appeal record by id along with the approvals and the approvers
-func (r *Repository) GetByID(id uint) (*domain.Appeal, error) {
+func (r *AppealRepository) GetByID(id uint) (*domain.Appeal, error) {
 	m := new(model.Appeal)
 	if err := r.db.
 		Preload("Approvals", func(db *gorm.DB) *gorm.DB {
@@ -47,7 +48,7 @@ func (r *Repository) GetByID(id uint) (*domain.Appeal, error) {
 		First(&m, id).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrAppealNotFound
+			return nil, appeal.ErrAppealNotFound
 		}
 		return nil, err
 	}
@@ -60,8 +61,8 @@ func (r *Repository) GetByID(id uint) (*domain.Appeal, error) {
 	return a, nil
 }
 
-func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Appeal, error) {
-	var conditions findFilters
+func (r *AppealRepository) Find(filters map[string]interface{}) ([]*domain.Appeal, error) {
+	var conditions appealFindFilters
 	if err := mapstructure.Decode(filters, &conditions); err != nil {
 		return nil, err
 	}
@@ -122,7 +123,7 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Appeal, err
 }
 
 // BulkUpsert new record to database
-func (r *Repository) BulkUpsert(appeals []*domain.Appeal) error {
+func (r *AppealRepository) BulkUpsert(appeals []*domain.Appeal) error {
 	models := []*model.Appeal{}
 	for _, a := range appeals {
 		m := new(model.Appeal)
@@ -154,7 +155,7 @@ func (r *Repository) BulkUpsert(appeals []*domain.Appeal) error {
 }
 
 // Update an approval step
-func (r *Repository) Update(a *domain.Appeal) error {
+func (r *AppealRepository) Update(a *domain.Appeal) error {
 	m := new(model.Appeal)
 	if err := m.FromDomain(a); err != nil {
 		return err

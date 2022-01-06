@@ -1,4 +1,4 @@
-package provider_test
+package postgres_test
 
 import (
 	"database/sql"
@@ -11,24 +11,25 @@ import (
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/guardian/store/postgres"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 )
 
-type RepositoryTestSuite struct {
+type ProviderRepositoryTestSuite struct {
 	suite.Suite
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
-	repository *provider.Repository
+	repository *postgres.ProviderRepository
 
 	rows []string
 }
 
-func (s *RepositoryTestSuite) SetupTest() {
+func (s *ProviderRepositoryTestSuite) SetupTest() {
 	db, mock, _ := mocks.NewStore()
 	s.sqldb, _ = db.DB()
 	s.dbmock = mock
-	s.repository = provider.NewRepository(db)
+	s.repository = postgres.NewProviderRepository(db)
 
 	s.rows = []string{
 		"id",
@@ -40,11 +41,11 @@ func (s *RepositoryTestSuite) SetupTest() {
 	}
 }
 
-func (s *RepositoryTestSuite) TearDownTest() {
+func (s *ProviderRepositoryTestSuite) TearDownTest() {
 	s.sqldb.Close()
 }
 
-func (s *RepositoryTestSuite) TestCreate() {
+func (s *ProviderRepositoryTestSuite) TestCreate() {
 	expectedQuery := regexp.QuoteMeta(`INSERT INTO "providers" ("type","urn","config","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"`)
 
 	s.Run("should update model's ID with the returned ID", func() {
@@ -69,7 +70,7 @@ func (s *RepositoryTestSuite) TestCreate() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestFind() {
+func (s *ProviderRepositoryTestSuite) TestFind() {
 	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "providers" WHERE "providers"."deleted_at" IS NULL`)
 
 	s.Run("should return error if db returns error", func() {
@@ -115,7 +116,7 @@ func (s *RepositoryTestSuite) TestFind() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestGetByID() {
+func (s *ProviderRepositoryTestSuite) TestGetByID() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := provider.ErrEmptyIDParam
 
@@ -171,7 +172,7 @@ func (s *RepositoryTestSuite) TestGetByID() {
 	})
 }
 
-func (s *RepositoryTestSuite) TestUpdate() {
+func (s *ProviderRepositoryTestSuite) TestUpdate() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := provider.ErrEmptyIDParam
 
@@ -217,6 +218,6 @@ func (s *RepositoryTestSuite) TestUpdate() {
 	})
 }
 
-func TestRepository(t *testing.T) {
-	suite.Run(t, new(RepositoryTestSuite))
+func TestProviderRepository(t *testing.T) {
+	suite.Run(t, new(ProviderRepositoryTestSuite))
 }

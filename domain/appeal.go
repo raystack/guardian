@@ -96,14 +96,6 @@ type ApprovalAction struct {
 	Reason       string
 }
 
-// AppealRepository interface
-type AppealRepository interface {
-	BulkUpsert([]*Appeal) error
-	Find(map[string]interface{}) ([]*Appeal, error) // TODO: create ListAppealsFilter as the filter param type
-	GetByID(uint) (*Appeal, error)
-	Update(*Appeal) error
-}
-
 // AppealService interface
 type AppealService interface {
 	Create([]*Appeal) error

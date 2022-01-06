@@ -1,17 +1,18 @@
-package resource
+package postgres
 
 import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/model"
+	"github.com/odpf/guardian/store/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-type findFilters struct {
+type resourceFindFilters struct {
 	IDs          []uint            `mapstructure:"ids" validate:"omitempty,min=1"`
 	IsDeleted    bool              `mapstructure:"is_deleted" validate:"omitempty"`
 	ProviderType string            `mapstructure:"provider_type" validate:"omitempty"`
@@ -22,19 +23,19 @@ type findFilters struct {
 	Details      map[string]string `mapstructure:"details"`
 }
 
-// Repository talks to the store/database to read/insert data
-type Repository struct {
+// ResourceRepository talks to the store/database to read/insert data
+type ResourceRepository struct {
 	db *gorm.DB
 }
 
-// NewRepository returns *Repository
-func NewRepository(db *gorm.DB) *Repository {
-	return &Repository{db}
+// NewResourceRepository returns *Repository
+func NewResourceRepository(db *gorm.DB) *ResourceRepository {
+	return &ResourceRepository{db}
 }
 
 // Find records based on filters
-func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Resource, error) {
-	var conditions findFilters
+func (r *ResourceRepository) Find(filters map[string]interface{}) ([]*domain.Resource, error) {
+	var conditions resourceFindFilters
 	if err := mapstructure.Decode(filters, &conditions); err != nil {
 		return nil, err
 	}
@@ -88,15 +89,15 @@ func (r *Repository) Find(filters map[string]interface{}) ([]*domain.Resource, e
 }
 
 // GetOne record by ID
-func (r *Repository) GetOne(id uint) (*domain.Resource, error) {
+func (r *ResourceRepository) GetOne(id uint) (*domain.Resource, error) {
 	if id == 0 {
-		return nil, ErrEmptyIDParam
+		return nil, resource.ErrEmptyIDParam
 	}
 
 	var m model.Resource
 	if err := r.db.Where("id = ?", id).Take(&m).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, ErrRecordNotFound
+			return nil, resource.ErrRecordNotFound
 		}
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func (r *Repository) GetOne(id uint) (*domain.Resource, error) {
 }
 
 // BulkUpsert inserts records if the records are not exist, or updates the records if they are already exist
-func (r *Repository) BulkUpsert(resources []*domain.Resource) error {
+func (r *ResourceRepository) BulkUpsert(resources []*domain.Resource) error {
 	var models []*model.Resource
 	for _, r := range resources {
 		m := new(model.Resource)
@@ -148,13 +149,13 @@ func (r *Repository) BulkUpsert(resources []*domain.Resource) error {
 }
 
 // Update record by ID
-func (r *Repository) Update(resource *domain.Resource) error {
-	if resource.ID == 0 {
-		return ErrEmptyIDParam
+func (r *ResourceRepository) Update(res *domain.Resource) error {
+	if res.ID == 0 {
+		return resource.ErrEmptyIDParam
 	}
 
 	m := new(model.Resource)
-	if err := m.FromDomain(resource); err != nil {
+	if err := m.FromDomain(res); err != nil {
 		return err
 	}
 
@@ -168,7 +169,7 @@ func (r *Repository) Update(resource *domain.Resource) error {
 			return err
 		}
 
-		*resource = *newRecord
+		*res = *newRecord
 
 		return nil
 	})

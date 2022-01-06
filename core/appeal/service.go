@@ -10,6 +10,7 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/evaluator"
 	"github.com/odpf/guardian/plugins/notifiers"
+	"github.com/odpf/guardian/store"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
@@ -18,7 +19,7 @@ var TimeNow = time.Now
 
 // Service handling the business logics
 type Service struct {
-	repo domain.AppealRepository
+	repo store.AppealRepository
 
 	approvalService domain.ApprovalService
 	resourceService domain.ResourceService
@@ -34,7 +35,7 @@ type Service struct {
 
 // NewService returns service struct
 func NewService(
-	appealRepository domain.AppealRepository,
+	appealRepository store.AppealRepository,
 	approvalService domain.ApprovalService,
 	resourceService domain.ResourceService,
 	providerService domain.ProviderService,

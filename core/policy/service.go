@@ -10,11 +10,12 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/evaluator"
+	"github.com/odpf/guardian/store"
 )
 
 // Service handling the business logics
 type Service struct {
-	policyRepository domain.PolicyRepository
+	policyRepository store.PolicyRepository
 	resourceService  domain.ResourceService
 	providerService  domain.ProviderService
 	iam              domain.IAMManager
@@ -23,7 +24,7 @@ type Service struct {
 }
 
 // NewService returns service struct
-func NewService(v *validator.Validate, pr domain.PolicyRepository, rs domain.ResourceService, ps domain.ProviderService, iam domain.IAMManager) *Service {
+func NewService(v *validator.Validate, pr store.PolicyRepository, rs domain.ResourceService, ps domain.ProviderService, iam domain.IAMManager) *Service {
 	return &Service{
 		policyRepository: pr,
 		resourceService:  rs,
