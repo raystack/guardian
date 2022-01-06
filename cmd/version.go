@@ -27,13 +27,12 @@ func VersionCmd() *cobra.Command {
 			cs := term.NewColorScheme()
 
 			if Version == "" {
-				fmt.Println("Version information not available.")
+				fmt.Println(cs.Yellow("guardian version (built from source)"))
 				return nil
 			}
 
-			fmt.Println(Version)
+			fmt.Printf("guardian version %s (%s)\n\n", Version, BuildDate)
 			fmt.Println(cs.Yellow(version.UpdateNotice(Version, "odpf/guardian")))
-
 			return nil
 		},
 	}
