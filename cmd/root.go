@@ -44,8 +44,6 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 
 	protoAdapter := handlerv1beta1.NewAdapter()
 
-	cmdx.SetHelp(cmd)
-
 	cmd.AddCommand(serveCommand())
 	cmd.AddCommand(migrateCommand())
 	cmd.AddCommand(configCommand())
@@ -56,7 +54,9 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 	cmd.AddCommand(VersionCmd())
 
 	// Help topics
+	cmdx.SetHelp(cmd)
 	cmd.AddCommand(cmdx.SetHelpTopic("environment", envHelp))
+	cmd.AddCommand(cmdx.SetRefCmd(cmd))
 
 	return cmd
 }
