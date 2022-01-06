@@ -16,11 +16,17 @@ import (
 
 func appealsCommand(c *app.CLIConfig) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "appeals",
-		Short: "Manage appeals",
+		Use:     "appeal",
+		Aliases: []string{"appeals"},
+		Short:   "Manage appeals",
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
+		Example: heredoc.Doc(`
+			$ guardian appeal create
+			$ guardian appeal approve
+			$ guardian appeal list --status=pending
+		`),
 	}
 
 	cmd.AddCommand(listAppealsCommand(c))
@@ -39,11 +45,11 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "list appeals",
+		Short: "List and filter appeals",
 		Example: heredoc.Doc(`
-			$ guardian appeals list
-			$ guardian appeals list --status=pending
-			$ guardian appeals list --role=viewer
+			$ guardian appeal list
+			$ guardian appeal list --status=pending
+			$ guardian appeal list --role=viewer
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cs := term.NewColorScheme()
@@ -84,9 +90,9 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringArrayVar(&statuses, "status", nil, "Filter appeals by status(es)")
-	cmd.Flags().StringVar(&role, "role", "", "Filter appeals by role")
-	cmd.Flags().StringVar(&accountID, "account-id", "", "Filter appeals by account_id")
+	cmd.Flags().StringArrayVarP(&statuses, "status", "s", nil, "Filter by status(es)")
+	cmd.Flags().StringVarP(&role, "role", "r", "", "Filter by role")
+	cmd.Flags().StringVarP(&accountID, "account", "a", "", "Filter by account")
 
 	return cmd
 }
@@ -99,7 +105,11 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "create appeal",
+		Short: "Create a new appeal",
+		Example: heredoc.Doc(`
+			$ guardian appeal create
+			$ guardian appeal create --account=<account-id> --resource=<resource-id> --role=<role>
+		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			options := map[string]interface{}{}
 			if optionsDuration != "" {
@@ -138,13 +148,16 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&accountID, "account-id", "", "user email")
-	cmd.MarkFlagRequired("account-id")
-	cmd.Flags().UintVar(&resourceID, "resource-id", 0, "resource id")
-	cmd.MarkFlagRequired("resource-id")
-	cmd.Flags().StringVarP(&role, "role", "r", "", "role")
+	cmd.Flags().StringVarP(&accountID, "account", "a", "", "Email of the account to appeal")
+	cmd.MarkFlagRequired("account")
+
+	cmd.Flags().UintVarP(&resourceID, "resource", "R", 0, "ID of the resource")
+	cmd.MarkFlagRequired("resource")
+
+	cmd.Flags().StringVarP(&role, "role", "r", "", "Role to be assigned")
 	cmd.MarkFlagRequired("role")
-	cmd.Flags().StringVar(&optionsDuration, "options.duration", "", "access duration")
+
+	cmd.Flags().StringVarP(&optionsDuration, "duration", "d", "", "Duration of the access")
 
 	return cmd
 }
@@ -155,7 +168,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "revoke",
-		Short: "revoke an active access/appeal",
+		Short: "Revoke an active access/appeal",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -174,15 +187,16 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			fmt.Printf("appeal with id %v revoked successfully", id)
+			fmt.Printf("appeal with id `%v` revoked successfully", id)
 
 			return nil
 		},
 	}
 
-	cmd.Flags().UintVar(&id, "id", 0, "appeal id")
+	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
 	cmd.MarkFlagRequired("id")
-	cmd.Flags().StringVarP(&reason, "reason", "r", "", "rejection reason")
+
+	cmd.Flags().StringVarP(&reason, "reason", "r", "", "Reason of the revocation")
 
 	return cmd
 }
@@ -193,7 +207,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "approve",
-		Short: "approve an approval step",
+		Short: "Approve an approval step",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -219,9 +233,9 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().UintVar(&id, "id", 0, "appeal id")
+	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
 	cmd.MarkFlagRequired("id")
-	cmd.Flags().StringVarP(&approvalName, "approval-name", "a", "", "approval name going to be approved")
+	cmd.Flags().StringVarP(&approvalName, "step", "s", "", "Name of approval step")
 	cmd.MarkFlagRequired("approval-name")
 
 	return cmd
@@ -233,7 +247,7 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "reject",
-		Short: "reject an approval step",
+		Short: "Reject an approval step",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
@@ -260,9 +274,9 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().UintVar(&id, "id", 0, "appeal id")
+	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
 	cmd.MarkFlagRequired("id")
-	cmd.Flags().StringVarP(&approvalName, "approval-name", "a", "", "approval name going to be approved")
+	cmd.Flags().StringVarP(&approvalName, "step", "s", "", "Name of approval step")
 	cmd.MarkFlagRequired("approval-name")
 
 	return cmd

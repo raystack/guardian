@@ -28,6 +28,11 @@ func PolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Com
 
 			Policies are used to define governance rules of the data access.
 		`),
+		Example: heredoc.Doc(`
+			$ guardian policy create
+			$ guardian policy list
+			$ guardian policy view my_policy@1
+		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -150,7 +155,7 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 		},
 	}
 
-	cmd.Flags().StringVar(&format, "format", "yaml", "Print output with the selected format")
+	cmd.Flags().StringVarP(&format, "output", "o", "yaml", "Print output with the selected format")
 
 	return cmd
 }

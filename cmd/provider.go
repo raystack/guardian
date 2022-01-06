@@ -23,7 +23,12 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 		Long: heredoc.Doc(`
 			Work with providers.
 			
-			Providers are the system for which we intend to mange access.
+			Providers are the system for which we intend to manage access.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian provider create -f file.yaml
+			$ guardian provider list
+			$ guardian provider view 1
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -132,7 +137,7 @@ func getProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 		},
 	}
 
-	cmd.Flags().StringVar(&format, "format", "yaml", "Print output with the selected format")
+	cmd.Flags().StringVarP(&format, "output", "o", "yaml", "Print output with the selected format")
 
 	return cmd
 }

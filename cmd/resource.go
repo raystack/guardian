@@ -25,7 +25,7 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 		Example: heredoc.Doc(`
 			$ guardian resource list
 			$ guardian resource view 1
-			$ guardian resource metadata set --id=1 key=value
+			$ guardian resource set --id=1 key=value
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -35,7 +35,7 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 	cmd.AddCommand(listResourcesCmd(c, adapter))
 	cmd.AddCommand(getResourceCmd(c, adapter))
 	cmd.AddCommand(metadataCmd(c))
-	cmd.PersistentFlags().String("format", "", "Print output with specified format (yaml,json,prettyjson)")
+	cmd.PersistentFlags().StringP("output", "o", "", "Print output with specified format (yaml,json,prettyjson)")
 
 	return cmd
 }
@@ -116,7 +116,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 	cmd.Flags().StringVar(&resourceURN, "urn", "", "Filter by urn")
 	cmd.Flags().StringVar(&name, "name", "", "Filter by name")
 	cmd.Flags().StringArrayVar(&details, "details", nil, "Filter by details object values. Example: --details=key1.key2:value")
-	cmd.Flags().BoolVar(&isDeleted, "show-deleted", false, "Show deleted resources")
+	cmd.Flags().BoolVar(&isDeleted, "deleted", false, "Show deleted resources")
 
 	return cmd
 }
@@ -167,13 +167,8 @@ func metadataCmd(c *app.CLIConfig) *cobra.Command {
 	var values []string
 
 	cmd := &cobra.Command{
-		Use:   "metadata",
-		Short: "Manage resource's metadata",
-	}
-
-	setCmd := &cobra.Command{
 		Use:   "set",
-		Short: "Store new metadata",
+		Short: "Store new metadata for a resource",
 		Example: heredoc.Doc(`
 			$ guardian resource metadata set values foo=bar
 		`),
@@ -219,9 +214,8 @@ func metadataCmd(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	setCmd.Flags().StringArrayVar(&values, "values", []string{}, "list of key-value pair. Example: key=value foo=bar")
+	cmd.Flags().StringArrayVar(&values, "values", []string{}, "list of key-value pair. Example: key=value foo=bar")
 
-	cmd.AddCommand(setCmd)
 	cmd.PersistentFlags().UintVar(&id, "id", 0, "resource id")
 	cmd.MarkPersistentFlagRequired("id")
 
