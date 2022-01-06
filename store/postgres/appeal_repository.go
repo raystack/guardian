@@ -2,8 +2,6 @@ package postgres
 
 import (
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
@@ -83,35 +81,8 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 		db = db.Where(`"options" -> 'expiration_date' > ?`, filters.ExpirationDateGreaterThan)
 	}
 	if filters.OrderBy != nil {
-		var orderByClauses []string
-		var vars []interface{}
-
-		for _, orderBy := range filters.OrderBy {
-			if strings.Contains(orderBy, "status") {
-				orderByClauses = append(orderByClauses, `ARRAY_POSITION(ARRAY[?], "status")`)
-				vars = append(vars, AppealStatusDefaultSort)
-			} else {
-				columnOrder := strings.Split(orderBy, ":")
-				column := columnOrder[0]
-				if utils.ContainsString([]string{"updated_at", "created_at"}, column) {
-					if len(columnOrder) == 1 {
-						orderByClauses = append(orderByClauses, fmt.Sprintf(`"%s"`, column))
-					} else if len(columnOrder) == 2 {
-						order := columnOrder[1]
-						if utils.ContainsString([]string{"asc", "desc"}, order) {
-							orderByClauses = append(orderByClauses, fmt.Sprintf(`"%s" %s`, column, order))
-						}
-					}
-				}
-			}
-		}
-
-		db = db.Clauses(clause.OrderBy{
-			Expression: clause.Expr{
-				SQL:                strings.Join(orderByClauses, ", "),
-				Vars:               vars,
-				WithoutParentheses: true,
-			},
+		db = addOrderByClause(db, filters.OrderBy, addOrderByClauseOptions{
+			statusColumnName: `"status"`,
 		})
 	}
 

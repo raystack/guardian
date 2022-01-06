@@ -1,14 +1,10 @@
 package postgres
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/store/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 var (
@@ -57,35 +53,8 @@ func (r *approvalRepository) ListApprovals(conditions *domain.ListApprovalsFilte
 	db = db.Where(`"Appeal"."status" != ?`, domain.AppealStatusCanceled)
 
 	if conditions.OrderBy != nil {
-		var orderByClauses []string
-		var vars []interface{}
-
-		for _, orderBy := range conditions.OrderBy {
-			if strings.Contains(orderBy, "status") {
-				orderByClauses = append(orderByClauses, `ARRAY_POSITION(ARRAY[?], "approvals"."status")`)
-				vars = append(vars, ApprovalStatusDefaultSort)
-			} else {
-				columnOrder := strings.Split(orderBy, ":")
-				column := columnOrder[0]
-				if utils.ContainsString([]string{"updated_at", "created_at"}, column) {
-					if len(columnOrder) == 1 {
-						orderByClauses = append(orderByClauses, fmt.Sprintf(`"%s"`, column))
-					} else if len(columnOrder) == 2 {
-						order := columnOrder[1]
-						if utils.ContainsString([]string{"asc", "desc"}, order) {
-							orderByClauses = append(orderByClauses, fmt.Sprintf(`"%s" %s`, column, order))
-						}
-					}
-				}
-			}
-		}
-
-		db = db.Clauses(clause.OrderBy{
-			Expression: clause.Expr{
-				SQL:                strings.Join(orderByClauses, ", "),
-				Vars:               vars,
-				WithoutParentheses: true,
-			},
+		db = addOrderByClause(db, conditions.OrderBy, addOrderByClauseOptions{
+			statusColumnName: `"approvals"."status"`,
 		})
 	}
 
