@@ -13,11 +13,7 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 		Use:   "guardian <command> <subcommand> [flags]",
 		Short: "Universal data access control",
 		Long: heredoc.Doc(`
-			Universal data access control.
-
-			Guardian is a tool for extensible and universal data access with 
-			automated access workflows and security controls across data stores, 
-			analytical systems, and cloud products.`),
+			Universal access control to cloud apps and infrastructure.`),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Example: heredoc.Doc(`
