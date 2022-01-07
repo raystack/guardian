@@ -1,6 +1,7 @@
 # Guardian
 
 ![test workflow](https://github.com/odpf/guardian/actions/workflows/test.yaml/badge.svg)
+![release workflow](https://github.com/odpf/guardian/actions/workflows/release.yaml/badge.svg)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?logo=apache)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/odpf/guardian?logo=semantic-release)](Version)
 
