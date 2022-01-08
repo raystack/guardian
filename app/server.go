@@ -154,6 +154,9 @@ func RunServer(c *Config) error {
 			MarshalOptions: protojson.MarshalOptions{
 				UseProtoNames: true,
 			},
+			UnmarshalOptions: protojson.UnmarshalOptions{
+				DiscardUnknown: true,
+			},
 		}),
 	)
 	address := fmt.Sprintf(":%d", c.Port)
