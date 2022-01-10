@@ -83,10 +83,20 @@ steps:
     when: $appeal.resource.details.is_pii
     strategy: manual
     approvers:
-    - $creator.userManager
+    - $appeal.creator.userManager
   - name: admin_approval
     description: approval from dataset admin/owner
     strategy: manual
     approvers:
     - $appeal.resource.details.owner
+iam:
+  provider: http
+  config:
+    url: http://localhost:5000/users/{user_id}
+  profile_schema:
+    id: user_id
+    name: full_name
+    email: email
+    entity: company_name
+    userManager: manager_email
 ```
