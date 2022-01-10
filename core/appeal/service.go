@@ -752,10 +752,14 @@ func (s *Service) addCreatorDetails(a *domain.Appeal, p *domain.Policy) error {
 		}
 
 		var creator map[string]interface{}
-		if userProfileMap, ok := userProfile.(map[string]interface{}); ok && p.IAM.ProfileSchema != nil {
-			creator = map[string]interface{}{}
-			for profileKey, targetKey := range p.IAM.ProfileSchema {
-				creator[profileKey] = userProfileMap[targetKey]
+		if userProfileMap, ok := userProfile.(map[string]interface{}); ok {
+			if p.IAM.ProfileSchema != nil {
+				creator = map[string]interface{}{}
+				for profileKey, targetKey := range p.IAM.ProfileSchema {
+					creator[profileKey] = userProfileMap[targetKey]
+				}
+			} else {
+				creator = userProfileMap
 			}
 		}
 
