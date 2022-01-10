@@ -233,8 +233,9 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, er
 	var iam *domain.IAMConfig
 	if p.GetIam() != nil {
 		iam = &domain.IAMConfig{
-			Provider: domain.IAMProviderType(p.GetIam().GetProvider()),
-			Config:   p.GetIam().GetConfig().AsInterface(),
+			Provider:      domain.IAMProviderType(p.GetIam().GetProvider()),
+			Config:        p.GetIam().GetConfig().AsInterface(),
+			ProfileSchema: p.GetIam().GetProfileSchema(),
 		}
 	}
 
@@ -331,8 +332,9 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 		}
 
 		iam = &guardianv1beta1.Policy_IAM{
-			Provider: string(p.IAM.Provider),
-			Config:   config,
+			Provider:      string(p.IAM.Provider),
+			Config:        config,
+			ProfileSchema: p.IAM.ProfileSchema,
 		}
 	}
 
