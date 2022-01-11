@@ -235,6 +235,7 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, er
 		iam = &domain.IAMConfig{
 			Provider: domain.IAMProviderType(p.GetIam().GetProvider()),
 			Config:   p.GetIam().GetConfig().AsInterface(),
+			Schema:   p.GetIam().GetSchema(),
 		}
 	}
 
@@ -333,6 +334,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 		iam = &guardianv1beta1.Policy_IAM{
 			Provider: string(p.IAM.Provider),
 			Config:   config,
+			Schema:   p.IAM.Schema,
 		}
 	}
 

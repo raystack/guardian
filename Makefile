@@ -10,7 +10,7 @@ all: build
 
 build: ## Build the guardian binary
 	@echo " > building guardian version ${APP_VERSION}"
-	go build -ldflags "-X ${NAME}/config.Version=${APP_VERSION} -X ${NAME}/config.BuildCommit=${LAST_COMMIT}" -o guardian .
+	go build -ldflags "-X ${NAME}/cmd.Version=${APP_VERSION} -X ${NAME}/cmd.BuildCommit=${LAST_COMMIT}" -o guardian .
 	@echo " - build complete"
 
 test: ## Run the tests
@@ -29,7 +29,7 @@ proto: ## Generate the protobuf files
 	@echo " > protobuf compilation finished"
 
 clean: ## Clean the build artifacts
-	rm -rf guardian dist/ ./api/proto/*
+	rm -rf guardian dist/
 
 install: ## install required dependencies
 	@echo "> installing dependencies"

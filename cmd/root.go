@@ -13,18 +13,15 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 		Use:   "guardian <command> <subcommand> [flags]",
 		Short: "Universal data access control",
 		Long: heredoc.Doc(`
-			Universal data access control.
-
-			Guardian is a tool for extensible and universal data access with 
-			automated access workflows and security controls across data stores, 
-			analytical systems, and cloud products.`),
+			Universal access control to cloud apps and infrastructure.`),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Example: heredoc.Doc(`
-			$ guardian policies list
-			$ guardian providers list
-			$ guardian resources list
-			$ guardian policies create --file policy.yaml
+			$ guardian appeal create
+			$ guardian policy list
+			$ guardian provider list
+			$ guardian resource list
+			$ guardian policy create --file policy.yaml
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -43,8 +40,6 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 
 	protoAdapter := handlerv1beta1.NewAdapter()
 
-	cmdx.SetHelp(cmd)
-
 	cmd.AddCommand(serveCommand())
 	cmd.AddCommand(migrateCommand())
 	cmd.AddCommand(configCommand())
@@ -52,9 +47,12 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 	cmd.AddCommand(ProviderCmd(cliConfig, protoAdapter))
 	cmd.AddCommand(PolicyCmd(cliConfig, protoAdapter))
 	cmd.AddCommand(appealsCommand(cliConfig))
+	cmd.AddCommand(VersionCmd())
 
 	// Help topics
+	cmdx.SetHelp(cmd)
 	cmd.AddCommand(cmdx.SetHelpTopic("environment", envHelp))
+	cmd.AddCommand(cmdx.SetRefCmd(cmd))
 
 	return cmd
 }
