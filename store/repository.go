@@ -4,7 +4,7 @@ import "github.com/odpf/guardian/domain"
 
 type AppealRepository interface {
 	BulkUpsert([]*domain.Appeal) error
-	Find(map[string]interface{}) ([]*domain.Appeal, error)
+	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
 	GetByID(uint) (*domain.Appeal, error)
 	Update(*domain.Appeal) error
 }

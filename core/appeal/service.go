@@ -68,7 +68,7 @@ func (s *Service) GetByID(id uint) (*domain.Appeal, error) {
 }
 
 // Find appeals by filters
-func (s *Service) Find(filters map[string]interface{}) ([]*domain.Appeal, error) {
+func (s *Service) Find(filters *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
 	return s.repo.Find(filters)
 }
 
@@ -354,8 +354,8 @@ func (s *Service) Revoke(id uint, actor, reason string) (*domain.Appeal, error) 
 }
 
 func (s *Service) getExistingAppealsMap() (map[string]map[uint]map[string]*domain.Appeal, map[string]map[uint]map[string]*domain.Appeal, error) {
-	appeals, err := s.repo.Find(map[string]interface{}{
-		"statuses": []string{domain.AppealStatusPending, domain.AppealStatusActive},
+	appeals, err := s.repo.Find(&domain.ListAppealsFilter{
+		Statuses: []string{domain.AppealStatusPending, domain.AppealStatusActive},
 	})
 	if err != nil {
 		return nil, nil, err
