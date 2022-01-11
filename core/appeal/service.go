@@ -746,20 +746,20 @@ func (s *Service) addCreatorDetails(a *domain.Appeal, p *domain.Policy) error {
 			return fmt.Errorf("getting iam client: %w", err)
 		}
 
-		userProfile, err := iamClient.GetUser(a.CreatedBy)
+		userDetails, err := iamClient.GetUser(a.CreatedBy)
 		if err != nil {
 			return fmt.Errorf("fetching creator's user iam: %w", err)
 		}
 
 		var creator map[string]interface{}
-		if userProfileMap, ok := userProfile.(map[string]interface{}); ok {
-			if p.IAM.ProfileSchema != nil {
+		if userDetailsMap, ok := userDetails.(map[string]interface{}); ok {
+			if p.IAM.Schema != nil {
 				creator = map[string]interface{}{}
-				for profileKey, targetKey := range p.IAM.ProfileSchema {
-					creator[profileKey] = userProfileMap[targetKey]
+				for schemaKey, targetKey := range p.IAM.Schema {
+					creator[schemaKey] = userDetailsMap[targetKey]
 				}
 			} else {
-				creator = userProfileMap
+				creator = userDetailsMap
 			}
 		}
 

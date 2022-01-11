@@ -93,7 +93,7 @@ iam:
   provider: http
   config:
     url: http://localhost:5000/users/{user_id}
-  profile_schema:
+  schema:
     id: user_id
     name: full_name
     email: email
