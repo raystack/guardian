@@ -4,53 +4,48 @@ BigQuery is an enterprise data warehouse tool for storing and querying massive d
 
 BigQuery has **datasets** that each one contains multiple **tables** which are used for storing the data. User also can run queries to read or even transform those data.
 
-## Authentication
+## Prerequisites
 
-A service account is required for Guardian to access BigQuery/GCP for fetching resources as well as managing permissions. The service account key is included during the provider registration. Read more on [Registering Provider](../guides/managing-providers.md#registering-provider).
+1. A service account with `roles/bigquery.dataOwner` role at the project level
 
 ## Access Management
 
-In Guardian, user access can be given at the dataset or table level. To give more flexibility in terms of using BigQuery, Guardian also allow user to get permission at the GCP IAM level.
-
-### BigQuery Resources
-
+Access can be given at the dataset level or table level as those allowed to be managed through these BigQuery APIs:
 - [Dataset Access Control](https://cloud.google.com/bigquery/docs/dataset-access-controls)
 - [Table Access Control](https://cloud.google.com/bigquery/docs/table-access-controls-intro)
 
-### GCP IAM
+## Config
 
-- [IAM Permission](https://cloud.google.com/iam/docs/granting-changing-revoking-access)
-
-## 1. Config
-
-#### Example
+#### YAML Representation
 
 ```yaml
-type: google_bigquery
-urn: bg-resource-urn
+type: bigquery
+urn: my-bigquery
+allowed_account_types:
+  - user
+  - serviceAccount
 credentials:
-  - service_account_key: <base64 encoded service account key json>
-  - resource_name: projects/gcp-project-id
+  service_account_key: <base64 encoded service account key json>
+  resource_name: projects/gcp-project-id
 appeal:
   allow_active_access_extension_in: "7d"
 resources:
   - type: dataset
     policy:
-      id: bq_dataset_approval
+      id: my_policy
       version: 1
     roles:
       - id: viewer
         name: Viewer
         permissions:
           - READER
-          - roles/bigquery.jobUser
       - id: editor
         name: Editor
         permissions:
           - WRITER
   - type: table
     policy:
-      id: bq_table_approval
+      id: my_policy
       version: 1
     roles:
       - id: viewer
@@ -60,9 +55,17 @@ resources:
           - roles/bigquery.jobUser
 ```
 
+### `BigQueryAccountType`
+
+- `user`
+- `serviceAccount`
+
 ### `BigQueryCredentials`
 
-`string`. BigQuery credentials is a struct containing **base64 encoded** service account key json and resource name which should be having a **projects/** prefix followed by the gcp project id.
+| Fields | |
+| :--- | :--- |
+| `resource_name` | `string` GCP Project ID in resource name format. Example: `projects/my-project-id` |
+| `service_account_key` | `string` Service account key JSON that has [prerequisites permissions](#prerequisites). On provider creation, the value should be an base64 encoded JSON key. |
 
 ### `BigQueryResourceType`
 
@@ -71,7 +74,4 @@ resources:
 
 ### `BigQueryResourcePermission`
 
-| Fields   |                                                                                                                                                                                                                                                                               |
-| :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `target` | `string` Target GCP project ID. If this field presents, the specified role in the `name` field will get applied to this GCP project ID                                                                                                                                        |
-| `name`   | `string` Required. GCP role name **Note:** for `dataset` resource type, we are using legacy roles \(`READER`, `WRITER`, or `OWNER`\). [Read more...](https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets#:~:text=Required.%20An%20IAM,back%20as%20%22OWNER%22.) |
+A Google Cloud predefined role name. For `dataset` resource type, we are using legacy roles \(`READER`, `WRITER`, or `OWNER`\). [Read more...](https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets#:~:text=Required.%20An%20IAM,back%20as%20%22OWNER%22.)
