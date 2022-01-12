@@ -5,12 +5,14 @@ import (
 	"errors"
 	"strings"
 
+	ctx_logrus "github.com/grpc-ecosystem/go-grpc-middleware/tags/logrus"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -660,7 +662,11 @@ func (s *GRPCServer) getUser(ctx context.Context) (string, error) {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		users := md.Get(s.authenticatedUserHeaderKey)
 		if len(users) > 0 {
-			return users[0], nil
+			currentUser := users[0]
+			ctx_logrus.AddFields(ctx, logrus.Fields{
+				s.authenticatedUserHeaderKey: currentUser,
+			})
+			return currentUser, nil
 		}
 	}
 
