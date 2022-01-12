@@ -98,7 +98,7 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func createAppealCommand(c *app.CLIConfig) *cobra.Command {
-	var accountID string
+	var accountID, accountType string
 	var resourceID uint
 	var role string
 	var optionsDuration string
@@ -108,7 +108,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 		Short: "Create a new appeal",
 		Example: heredoc.Doc(`
 			$ guardian appeal create
-			$ guardian appeal create --account=<account-id> --resource=<resource-id> --role=<role>
+			$ guardian appeal create --account=<account-id> --type=<account-type> --resource=<resource-id> --role=<role>
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			options := map[string]interface{}{}
@@ -128,7 +128,8 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			res, err := client.CreateAppeal(ctx, &guardianv1beta1.CreateAppealRequest{
-				AccountId: accountID,
+				AccountId:   accountID,
+				AccountType: accountType,
 				Resources: []*guardianv1beta1.CreateAppealRequest_Resource{
 					{
 						Id:      uint32(resourceID),
@@ -143,13 +144,15 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 
 			appealID := res.GetAppeals()[0].GetId()
 			fmt.Printf("appeal created with id: %v", appealID)
-
 			return nil
 		},
 	}
 
 	cmd.Flags().StringVarP(&accountID, "account", "a", "", "Email of the account to appeal")
 	cmd.MarkFlagRequired("account")
+
+	cmd.Flags().StringVarP(&accountType, "type", "t", "", "Type of the account")
+	cmd.MarkFlagRequired("type")
 
 	cmd.Flags().UintVarP(&resourceID, "resource", "R", 0, "ID of the resource")
 	cmd.MarkFlagRequired("resource")
