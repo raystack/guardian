@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
@@ -26,6 +27,7 @@ func appealsCommand(c *app.CLIConfig) *cobra.Command {
 			$ guardian appeal create
 			$ guardian appeal approve
 			$ guardian appeal list --status=pending
+			$ guardian appeal status
 		`),
 	}
 
@@ -34,6 +36,7 @@ func appealsCommand(c *app.CLIConfig) *cobra.Command {
 	cmd.AddCommand(revokeAppealCommand(c))
 	cmd.AddCommand(approveApprovalStepCommand(c))
 	cmd.AddCommand(rejectApprovalStepCommand(c))
+	cmd.AddCommand(statusAppealCommand(c))
 
 	return cmd
 }
@@ -281,6 +284,60 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 	cmd.MarkFlagRequired("id")
 	cmd.Flags().StringVarP(&approvalName, "step", "s", "", "Name of approval step")
 	cmd.MarkFlagRequired("approval-name")
+
+	return cmd
+}
+
+func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
+	var id uint32
+
+	cmd := &cobra.Command{
+		Use:   "status",
+		Short: "Approval status of an appeal",
+		Example: heredoc.Doc(`
+			$ guardian appeal status --id=<appeal-id>
+		`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			res, err := client.GetAppeal(ctx, &guardianv1beta1.GetAppealRequest{
+				Id: id,
+			})
+			if err != nil {
+				return err
+			}
+
+			appeal := res.GetAppeal()
+			approvals := appeal.Approvals
+
+			report := [][]string{}
+			report = append(report, []string{"ID", "NAME", "STATUS", "APPROVER", "ACTOR"})
+
+			fmt.Printf(" \nShowing %d approval steps\n \n", len(approvals))
+
+			for _, a := range approvals {
+				report = append(report, []string{
+
+					fmt.Sprintf("%v", a.GetId()),
+					a.GetName(),
+					a.GetStatus(),
+					strings.Join(a.GetApprovers(), " "),
+					a.GetActor(),
+				})
+			}
+
+			printer.Table(os.Stdout, report)
+			return nil
+		},
+	}
+
+	cmd.Flags().Uint32VarP(&id, "id", "i", 0, "Approval status of an appeal")
 
 	return cmd
 }
