@@ -101,7 +101,7 @@ Response:
 
 ![](/assets/approval-flow.png)
 
-Completing an appeal to gain the access to the designated resource could consist of multiple approvals, depending on the [approval policy](../reference/policy-config.md) applied to the designated resource. In Guardian, it called approval steps. Approval steps are determined during the appeal creation. For approval step without approvers, Guardian will evaluate it and resolve the status immediately. But for one with approvers, an action is required to approve/reject that particular approval step.
+Completing an appeal to gain the access to the designated resource could consist of multiple approvals, depending on the [approval policy](../reference/policy.md) applied to the designated resource. In Guardian, it called approval steps. Approval steps are determined during the appeal creation. For approval step without approvers, Guardian will evaluate it and resolve the status immediately. But for one with approvers, an action is required to approve/reject that particular approval step.
 
 That action is can be done by using this endpoint:
 

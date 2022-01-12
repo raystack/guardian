@@ -27,7 +27,7 @@ steps:
     approvers: $resource.details.owner
 ```
 
-Check [policy reference](../reference/policy-config.md) for more details on the policy configuration
+Check [policy reference](../reference/policy.md) for more details on the policy configuration
 
 To create a policy, you can use this endpoint
 

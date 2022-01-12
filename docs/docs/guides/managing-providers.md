@@ -45,7 +45,7 @@ resources:
           - name: roles/bigQuery.dataEditor
 ```
 
-Check the [approval policy reference](https://github.com/odpf/guardian/tree/9710a699aed45f07a88283bef5f80e60db38d825/docs/reference/provider-config.md) for more details
+Check the [approval policy reference](https://github.com/odpf/guardian/tree/9710a699aed45f07a88283bef5f80e60db38d825/docs/reference/provider.md) for more details
 
 To create provider configuration, you can use this endpoint:
 
