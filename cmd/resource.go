@@ -78,7 +78,11 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 				return err
 			}
 
-			format := cmd.Flag("format").Value.String()
+			var format string
+			if flag := cmd.Flag("format"); flag != nil {
+				format = flag.Value.String()
+			}
+
 			if format != "" {
 				var resources []*domain.Resource
 				for _, r := range res.GetResources() {
@@ -91,7 +95,6 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 			}
 
 			report := [][]string{}
-
 			resources := res.GetResources()
 			fmt.Printf(" \nShowing %d of %d resources\n \n", len(resources), len(resources))
 
