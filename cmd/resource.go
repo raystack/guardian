@@ -26,6 +26,8 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 			$ guardian resource list
 			$ guardian resource view 1
 			$ guardian resource set --id=1 key=value
+			$ guardian resource metadata-set
+			$ guardian resource metadata-get
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -34,7 +36,8 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 
 	cmd.AddCommand(listResourcesCmd(c, adapter))
 	cmd.AddCommand(getResourceCmd(c, adapter))
-	cmd.AddCommand(metadataCmd(c))
+	cmd.AddCommand(metadataSetCmd(c))
+	cmd.AddCommand(metadataGetCmd(c))
 	cmd.PersistentFlags().StringP("output", "o", "", "Print output with specified format (yaml,json,prettyjson)")
 
 	return cmd
@@ -183,15 +186,15 @@ func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 	return cmd
 }
 
-func metadataCmd(c *app.CLIConfig) *cobra.Command {
+func metadataSetCmd(c *app.CLIConfig) *cobra.Command {
 	var id uint
 	var values []string
 
 	cmd := &cobra.Command{
-		Use:   "set",
+		Use:   "metadata-set",
 		Short: "Store new metadata for a resource",
 		Example: heredoc.Doc(`
-			$ guardian resource metadata set values foo=bar
+			$ guardian resource metadata-set --id=<resource-id> --values foo=bar
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -235,10 +238,61 @@ func metadataCmd(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringArrayVar(&values, "values", []string{}, "list of key-value pair. Example: key=value foo=bar")
-
-	cmd.PersistentFlags().UintVar(&id, "id", 0, "resource id")
+	cmd.Flags().StringArrayVarP(&values, "values", "v", []string{}, "list of key-value pair. Example: key=value foo=bar")
+	cmd.MarkFlagRequired("values")
+	cmd.PersistentFlags().UintVarP(&id, "id", "i", 0, "resource id")
 	cmd.MarkPersistentFlagRequired("id")
 
+	return cmd
+}
+
+func metadataGetCmd(c *app.CLIConfig) *cobra.Command {
+	var format string
+	var id uint
+
+	cmd := &cobra.Command{
+		Use:   "metadata-get",
+		Short: "Get metadata for a resource",
+		Example: heredoc.Doc(`
+			$ guardian resource metadata-get --id=<resource-id>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			res, err := client.GetResource(ctx, &guardianv1beta1.GetResourceRequest{
+				Id: uint32(id),
+			})
+			if err != nil {
+				return err
+			}
+
+			resource := res.GetResource()
+			details := resource.GetDetails()
+			detailsMap := details.AsMap()
+			if len(detailsMap) == 0 {
+				fmt.Println("This resource has no metadata to show.")
+				return nil
+			}
+
+			fmt.Print("DETAILS\n\n")
+			for key, value := range detailsMap {
+				fmt.Println(key, ":", value)
+
+			}
+			return nil
+		},
+	}
+
+	cmd.Flags().UintVarP(&id, "id", "i", 0, "Resource id")
+	cmd.MarkFlagRequired("id")
+	cmd.Flags().StringVarP(&format, "format", "f", "", "Format of output - json yaml prettyjson etc")
 	return cmd
 }
