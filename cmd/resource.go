@@ -282,7 +282,7 @@ func metadataGetCmd(c *app.CLIConfig) *cobra.Command {
 				return nil
 			}
 
-			fmt.Print("DETAILS\n\n")
+			fmt.Print(" METADATA\n\n")
 			for key, value := range detailsMap {
 				fmt.Println(key, ":", value)
 
