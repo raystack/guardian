@@ -41,7 +41,7 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 }
 
 func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
-	var providerType, providerURN, resourceType, resourceURN, name string
+	var providerType, providerURN, resourceType, resourceURN, name, format string
 	var isDeleted bool
 	var details []string
 
@@ -78,11 +78,6 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 				return err
 			}
 
-			var format string
-			if flag := cmd.Flag("format"); flag != nil {
-				format = flag.Value.String()
-			}
-
 			if format != "" {
 				var resources []*domain.Resource
 				for _, r := range res.GetResources() {
@@ -113,19 +108,22 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 		},
 	}
 
-	cmd.Flags().StringVar(&providerType, "provider-type", "", "Filter by provider type")
-	cmd.Flags().StringVar(&providerURN, "provider-urn", "", "Filter by provider urn")
-	cmd.Flags().StringVar(&resourceType, "type", "", "Filter by type")
-	cmd.Flags().StringVar(&resourceURN, "urn", "", "Filter by urn")
-	cmd.Flags().StringVar(&name, "name", "", "Filter by name")
-	cmd.Flags().StringArrayVar(&details, "details", nil, "Filter by details object values. Example: --details=key1.key2:value")
-	cmd.Flags().BoolVar(&isDeleted, "deleted", false, "Show deleted resources")
+	cmd.Flags().StringVarP(&providerType, "provider-type", "T", "", "Filter by provider type")
+	cmd.Flags().StringVarP(&providerURN, "provider-urn", "U", "", "Filter by provider urn")
+	cmd.Flags().StringVarP(&resourceType, "type", "t", "", "Filter by type")
+	cmd.Flags().StringVarP(&resourceURN, "urn", "u", "", "Filter by urn")
+	cmd.Flags().StringVarP(&name, "name", "n", "", "Filter by name")
+	cmd.Flags().StringArrayVarP(&details, "details", "d", nil, "Filter by details object values. Example: --details=key1.key2:value")
+	cmd.Flags().BoolVarP(&isDeleted, "deleted", "D", false, "Show deleted resources")
+	cmd.Flags().StringVarP(&format, "format", "f", "", "Format of output - json yaml prettyjson etc")
 
 	return cmd
 }
 
 func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
-	return &cobra.Command{
+	var format string
+
+	cmd := &cobra.Command{
 		Use:   "view",
 		Short: "View a resource details",
 		Example: heredoc.Doc(`
@@ -155,14 +153,34 @@ func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 				return err
 			}
 
-			r := adapter.FromResourceProto(res.GetResource())
-			format := cmd.Flag("format").Value.String()
-			if err := printer.Text(r, format); err != nil {
-				return fmt.Errorf("failed to parse resource: %v", err)
+			if format != "" {
+				r := adapter.FromResourceProto(res.GetResource())
+				if err := printer.Text(r, format); err != nil {
+					return fmt.Errorf("failed to parse resources: %v", err)
+				}
+				return nil
 			}
+
+			report := [][]string{}
+			r := res.GetResource()
+
+			report = append(report, []string{"ID", "PROVIDER", "TYPE", "URN", "NAME"})
+
+			report = append(report, []string{
+				fmt.Sprintf("%v", r.GetId()),
+				fmt.Sprintf("%s\n%s", r.GetProviderType(), r.GetProviderUrn()),
+				r.GetType(),
+				r.GetUrn(),
+				r.GetName(),
+			})
+
+			printer.Table(os.Stdout, report)
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVarP(&format, "format", "f", "", "Format of output - json yaml prettyjson etc")
+	return cmd
 }
 
 func metadataCmd(c *app.CLIConfig) *cobra.Command {
