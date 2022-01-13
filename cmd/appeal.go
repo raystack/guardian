@@ -9,6 +9,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/app"
+	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
@@ -314,21 +315,32 @@ func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
 			}
 
 			appeal := res.GetAppeal()
+			fmt.Printf(" \nAppeal status: %s\n", appeal.GetStatus())
+
 			approvals := appeal.Approvals
 
 			report := [][]string{}
-			report = append(report, []string{"ID", "NAME", "STATUS", "APPROVER", "ACTOR"})
+			report = append(report, []string{"ID", "NAME", "STATUS", "APPROVER(s)"})
 
 			fmt.Printf(" \nShowing %d approval steps\n \n", len(approvals))
 
 			for _, a := range approvals {
-				report = append(report, []string{
+				status := a.GetStatus()
+				actor := a.GetActor()
 
+				if actor != "" {
+					if status == domain.ApprovalStatusApproved {
+						status = fmt.Sprintf("approved by %s", actor)
+					} else if status == domain.ApprovalStatusRejected {
+						status = fmt.Sprintf("rejected by %s", actor)
+					}
+				}
+
+				report = append(report, []string{
 					fmt.Sprintf("%v", a.GetId()),
 					a.GetName(),
-					a.GetStatus(),
+					status,
 					strings.Join(a.GetApprovers(), " "),
-					a.GetActor(),
 				})
 			}
 
