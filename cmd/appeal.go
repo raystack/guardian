@@ -181,7 +181,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 		Short: "Revoke an active access/appeal",
 		Example: heredoc.Doc(`
 		$ guardian appeal revoke --id=<appeal-id>
-		$ guardian appeal revoke --id=<appeal-id> --reson=<reason>
+		$ guardian appeal revoke --id=<appeal-id> --reason=<reason>
 	`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
