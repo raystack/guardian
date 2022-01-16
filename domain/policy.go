@@ -79,7 +79,7 @@ type Step struct {
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	When string `json:"expression,omitempty" yaml:"expression,omitempty"`
+	When string `json:"when,omitempty" yaml:"when,omitempty"`
 
 	// Strategy defines if the step requires manual approval or not
 	Strategy ApprovalStepStrategy `json:"strategy" yaml:"strategy" validate:"required,oneof=auto manual"`
