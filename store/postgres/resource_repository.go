@@ -13,7 +13,7 @@ import (
 )
 
 type resourceFindFilters struct {
-	IDs          []uint            `mapstructure:"ids" validate:"omitempty,min=1"`
+	IDs          []string          `mapstructure:"ids" validate:"omitempty,min=1"`
 	IsDeleted    bool              `mapstructure:"is_deleted" validate:"omitempty"`
 	ProviderType string            `mapstructure:"provider_type" validate:"omitempty"`
 	ProviderURN  string            `mapstructure:"provider_urn" validate:"omitempty"`
@@ -89,8 +89,8 @@ func (r *ResourceRepository) Find(filters map[string]interface{}) ([]*domain.Res
 }
 
 // GetOne record by ID
-func (r *ResourceRepository) GetOne(id uint) (*domain.Resource, error) {
-	if id == 0 {
+func (r *ResourceRepository) GetOne(id string) (*domain.Resource, error) {
+	if id == "" {
 		return nil, resource.ErrEmptyIDParam
 	}
 
@@ -150,7 +150,7 @@ func (r *ResourceRepository) BulkUpsert(resources []*domain.Resource) error {
 
 // Update record by ID
 func (r *ResourceRepository) Update(res *domain.Resource) error {
-	if res.ID == 0 {
+	if res.ID == "" {
 		return resource.ErrEmptyIDParam
 	}
 

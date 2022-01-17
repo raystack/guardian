@@ -21,7 +21,7 @@ func (s *Service) Find(filters map[string]interface{}) ([]*domain.Resource, erro
 	return s.repo.Find(filters)
 }
 
-func (s *Service) GetOne(id uint) (*domain.Resource, error) {
+func (s *Service) GetOne(id string) (*domain.Resource, error) {
 	r, err := s.repo.GetOne(id)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (s *Service) Update(r *domain.Resource) error {
 
 func (s *Service) Get(ri *domain.ResourceIdentifier) (*domain.Resource, error) {
 	var resource *domain.Resource
-	if ri.ID != 0 {
+	if ri.ID != "" {
 		if r, err := s.GetOne(ri.ID); err != nil {
 			return nil, err
 		} else {

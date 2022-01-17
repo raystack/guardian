@@ -325,7 +325,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 						Appeals: []*domain.AdditionalAppeal{
 							{
 								Resource: &domain.ResourceIdentifier{
-									ID: 1,
+									ID: "1",
 								},
 							},
 						},
@@ -341,7 +341,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 						Appeals: []*domain.AdditionalAppeal{
 							{
 								Resource: &domain.ResourceIdentifier{
-									ID: 1,
+									ID: "1",
 								},
 							},
 						},
@@ -361,7 +361,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 						Appeals: []*domain.AdditionalAppeal{
 							{
 								Resource: &domain.ResourceIdentifier{
-									ID: 1,
+									ID: "1",
 								},
 							},
 						},

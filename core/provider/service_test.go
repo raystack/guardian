@@ -209,7 +209,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 
 		for _, tc := range testCases {
 			expectedProvider := &domain.Provider{
-				ID: 1,
+				ID: "1",
 			}
 			expectedError := tc.expectedError
 			s.mockProviderRepository.On("GetByID", expectedProvider.ID).Return(tc.expectedExistingProvider, tc.expectedRepositoryError).Once()
@@ -228,7 +228,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 		}{
 			{
 				updatePayload: &domain.Provider{
-					ID: 1,
+					ID: "1",
 					Config: &domain.ProviderConfig{
 						Labels: map[string]string{
 							"foo": "bar",
@@ -236,7 +236,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 					},
 				},
 				existingProvider: &domain.Provider{
-					ID:   1,
+					ID:   "1",
 					Type: mockProviderType,
 					Config: &domain.ProviderConfig{
 						Appeal: &domain.AppealConfig{
@@ -248,7 +248,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 					},
 				},
 				expectedNewProvider: &domain.Provider{
-					ID:   1,
+					ID:   "1",
 					Type: mockProviderType,
 					Config: &domain.ProviderConfig{
 						Appeal: &domain.AppealConfig{
@@ -291,7 +291,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 
 	providers := []*domain.Provider{
 		{
-			ID:     1,
+			ID:     "1",
 			Type:   mockProviderType,
 			Config: &domain.ProviderConfig{},
 		},

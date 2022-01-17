@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
@@ -52,6 +53,8 @@ func (s *ResourceRepositoryTestSuite) TearDownTest() {
 
 func (s *ResourceRepositoryTestSuite) TestFind() {
 	s.Run("should pass conditions based on filters", func() {
+		resourceID1 := uuid.New().String()
+		resourceID2 := uuid.New().String()
 		testCases := []struct {
 			filters       map[string]interface{}
 			expectedQuery string
@@ -64,10 +67,10 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 			},
 			{
 				filters: map[string]interface{}{
-					"ids": []uint{1, 2, 3},
+					"ids": []string{resourceID1, resourceID2},
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."id" IN ($1,$2,$3) AND "is_deleted" = $4 AND "resources"."deleted_at" IS NULL`),
-				expectedArgs:  []driver.Value{1, 2, 3, false},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."id" IN ($1,$2) AND "is_deleted" = $3 AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{resourceID1, resourceID2, false},
 			},
 		}
 
@@ -97,9 +100,10 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 
 	s.Run("should return list of records on success", func() {
 		timeNow := time.Now()
+		resourceID := uuid.New().String()
 		expectedRecords := []*domain.Resource{
 			{
-				ID:           1,
+				ID:           resourceID,
 				ProviderType: "provider_type_test",
 				ProviderURN:  "provider_urn_test",
 				Type:         "type_test",
@@ -110,7 +114,7 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 		}
 		expectedRows := sqlmock.NewRows(s.columnNames).
 			AddRow(
-				1,
+				resourceID,
 				"provider_type_test",
 				"provider_urn_test",
 				"type_test",
@@ -134,7 +138,7 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := resource.ErrEmptyIDParam
 
-		actualResult, actualError := s.repository.GetOne(0)
+		actualResult, actualError := s.repository.GetOne("")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -146,7 +150,7 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 			WillReturnError(expectedDBError)
 		expectedError := resource.ErrRecordNotFound
 
-		actualResult, actualError := s.repository.GetOne(1)
+		actualResult, actualError := s.repository.GetOne("1")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -157,7 +161,7 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 		s.dbmock.ExpectQuery(".*").
 			WillReturnError(expectedError)
 
-		actualResult, actualError := s.repository.GetOne(1)
+		actualResult, actualError := s.repository.GetOne("1")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -165,11 +169,11 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 
 	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE id = $1 AND "resources"."deleted_at" IS NULL LIMIT 1`)
 	s.Run("should return record and nil error on success", func() {
-		expectedID := uint(10)
+		expectedID := uuid.New().String()
 		timeNow := time.Now()
 		expectedRows := sqlmock.NewRows(s.columnNames).
 			AddRow(
-				1,
+				expectedID,
 				"provider_type_test",
 				"provider_urn_test",
 				"type_test",
@@ -226,7 +230,10 @@ func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
 				false,
 			)
 		}
-		expectedIDs := []uint{1, 2}
+		expectedIDs := []string{
+			uuid.New().String(),
+			uuid.New().String(),
+		}
 		expectedRows := sqlmock.NewRows([]string{"id"})
 		for _, id := range expectedIDs {
 			expectedRows.AddRow(id)
@@ -262,21 +269,21 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 			WillReturnError(expectedError)
 		s.dbmock.ExpectRollback()
 
-		actualError := s.repository.Update(&domain.Resource{ID: 1})
+		actualError := s.repository.Update(&domain.Resource{ID: uuid.New().String()})
 
 		s.EqualError(actualError, expectedError.Error())
 	})
 
 	expectedQuery := regexp.QuoteMeta(`UPDATE "resources" SET "id"=$1,"details"=$2,"labels"=$3,"updated_at"=$4 WHERE id = $5`)
 	s.Run("should return error if got error from transaction", func() {
-		expectedID := uint(1)
+		expectedID := uuid.New().String()
 		resource := &domain.Resource{
 			ID: expectedID,
 		}
 
 		s.dbmock.ExpectBegin()
 		s.dbmock.ExpectExec(expectedQuery).
-			WillReturnResult(sqlmock.NewResult(int64(expectedID), 1))
+			WillReturnResult(sqlmock.NewResult(1, 1))
 		s.dbmock.ExpectCommit()
 
 		err := s.repository.Update(resource)

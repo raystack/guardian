@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -140,13 +139,9 @@ func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 			}
 			defer cancel()
 
-			id, err := strconv.ParseUint(args[0], 10, 32)
-			if err != nil {
-				return fmt.Errorf("invalid resource id: %v", err)
-			}
-
+			id := args[0]
 			res, err := client.GetResource(ctx, &guardianv1beta1.GetResourceRequest{
-				Id: uint32(id),
+				Id: id,
 			})
 			if err != nil {
 				return err
@@ -163,7 +158,7 @@ func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 }
 
 func metadataCmd(c *app.CLIConfig) *cobra.Command {
-	var id uint
+	var id string
 	var values []string
 
 	cmd := &cobra.Command{
@@ -199,7 +194,7 @@ func metadataCmd(c *app.CLIConfig) *cobra.Command {
 			// TODO: get one resource
 
 			_, err = client.UpdateResource(ctx, &guardianv1beta1.UpdateResourceRequest{
-				Id: uint32(id),
+				Id: id,
 				Resource: &guardianv1beta1.Resource{
 					Details: metadataProto,
 				},
@@ -216,7 +211,7 @@ func metadataCmd(c *app.CLIConfig) *cobra.Command {
 
 	cmd.Flags().StringArrayVar(&values, "values", []string{}, "list of key-value pair. Example: key=value foo=bar")
 
-	cmd.PersistentFlags().UintVar(&id, "id", 0, "resource id")
+	cmd.PersistentFlags().StringVar(&id, "id", "", "resource id")
 	cmd.MarkPersistentFlagRequired("id")
 
 	return cmd

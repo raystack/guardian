@@ -57,7 +57,7 @@ type ProviderConfig struct {
 
 // Provider domain structure
 type Provider struct {
-	ID        uint            `json:"id" yaml:"id"`
+	ID        string          `json:"id" yaml:"id"`
 	Type      string          `json:"type" yaml:"type"`
 	URN       string          `json:"urn" yaml:"urn"`
 	Config    *ProviderConfig `json:"config" yaml:"config"`
@@ -69,11 +69,11 @@ type Provider struct {
 type ProviderService interface {
 	Create(*Provider) error
 	Find() ([]*Provider, error)
-	GetByID(uint) (*Provider, error)
+	GetByID(id string) (*Provider, error)
 	GetOne(pType, urn string) (*Provider, error)
 	Update(*Provider) error
 	FetchResources() error
-	GetRoles(id uint, resourceType string) ([]*Role, error)
+	GetRoles(id string, resourceType string) ([]*Role, error)
 	ValidateAppeal(*Appeal, *Provider) error
 	GrantAccess(*Appeal) error
 	RevokeAccess(*Appeal) error

@@ -92,7 +92,7 @@ func (s *GRPCServer) ListProviders(ctx context.Context, req *guardianv1beta1.Lis
 }
 
 func (s *GRPCServer) GetProvider(ctx context.Context, req *guardianv1beta1.GetProviderRequest) (*guardianv1beta1.GetProviderResponse, error) {
-	p, err := s.providerService.GetByID(uint(req.GetId()))
+	p, err := s.providerService.GetByID(req.GetId())
 	if err != nil {
 		switch err {
 		case provider.ErrRecordNotFound:
@@ -145,7 +145,7 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.Up
 	}
 
 	p := &domain.Provider{
-		ID:     uint(id),
+		ID:     id,
 		Type:   providerConfig.Type,
 		URN:    providerConfig.URN,
 		Config: providerConfig,
@@ -165,7 +165,7 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.Up
 }
 
 func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1beta1.ListRolesRequest) (*guardianv1beta1.ListRolesResponse, error) {
-	roles, err := s.providerService.GetRoles(uint(req.GetId()), req.GetResourceType())
+	roles, err := s.providerService.GetRoles(req.GetId(), req.GetResourceType())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list roles: %v", err)
 	}
@@ -314,7 +314,7 @@ func (s *GRPCServer) ListResources(ctx context.Context, req *guardianv1beta1.Lis
 }
 
 func (s *GRPCServer) GetResource(ctx context.Context, req *guardianv1beta1.GetResourceRequest) (*guardianv1beta1.GetResourceResponse, error) {
-	r, err := s.resourceService.GetOne(uint(req.GetId()))
+	r, err := s.resourceService.GetOne(req.GetId())
 	if err != nil {
 		switch err {
 		case resource.ErrRecordNotFound:
@@ -336,7 +336,7 @@ func (s *GRPCServer) GetResource(ctx context.Context, req *guardianv1beta1.GetRe
 
 func (s *GRPCServer) UpdateResource(ctx context.Context, req *guardianv1beta1.UpdateResourceRequest) (*guardianv1beta1.UpdateResourceResponse, error) {
 	r := s.adapter.FromResourceProto(req.GetResource())
-	r.ID = uint(req.GetId())
+	r.ID = req.GetId()
 
 	if err := s.resourceService.Update(r); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update resource: %v", err)
@@ -500,7 +500,7 @@ func (s *GRPCServer) ListApprovals(ctx context.Context, req *guardianv1beta1.Lis
 
 func (s *GRPCServer) GetAppeal(ctx context.Context, req *guardianv1beta1.GetAppealRequest) (*guardianv1beta1.GetAppealResponse, error) {
 	id := req.GetId()
-	appeal, err := s.appealService.GetByID(uint(id))
+	appeal, err := s.appealService.GetByID(id)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrieve appeal: %v", err)
 	}
@@ -526,7 +526,7 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 
 	id := req.GetId()
 	a, err := s.appealService.MakeAction(domain.ApprovalAction{
-		AppealID:     uint(id),
+		AppealID:     id,
 		ApprovalName: req.GetApprovalName(),
 		Actor:        actor,
 		Action:       req.GetAction().GetAction(),
@@ -568,7 +568,7 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 
 func (s *GRPCServer) CancelAppeal(ctx context.Context, req *guardianv1beta1.CancelAppealRequest) (*guardianv1beta1.CancelAppealResponse, error) {
 	id := req.GetId()
-	a, err := s.appealService.Cancel(uint(id))
+	a, err := s.appealService.Cancel(id)
 	if err != nil {
 		switch err {
 		case appeal.ErrAppealNotFound:
@@ -602,7 +602,7 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 	}
 	reason := req.GetReason().GetReason()
 
-	a, err := s.appealService.Revoke(uint(id), actor, reason)
+	a, err := s.appealService.Revoke(id, actor, reason)
 	if err != nil {
 		switch err {
 		case appeal.ErrAppealNotFound:

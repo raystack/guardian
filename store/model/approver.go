@@ -1,17 +1,19 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/domain"
 	"gorm.io/gorm"
 )
 
 // Approver database model
 type Approver struct {
-	ID         uint `gorm:"autoIncrement;uniqueIndex"`
-	ApprovalID uint
-	AppealID   uint   `gorm:"index"`
+	ID         uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	ApprovalID string
+	AppealID   string `gorm:"index"`
 	Email      string `gorm:"index"`
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
@@ -21,7 +23,15 @@ type Approver struct {
 
 // FromDomain transforms *domain.Approver values into the model
 func (m *Approver) FromDomain(a *domain.Approver) error {
-	m.ID = a.ID
+	var id uuid.UUID
+	if a.ID != "" {
+		uuid, err := uuid.Parse(a.ID)
+		if err != nil {
+			return fmt.Errorf("parsing uuid: %w", err)
+		}
+		id = uuid
+	}
+	m.ID = id
 	m.ApprovalID = a.ApprovalID
 	m.AppealID = a.AppealID
 	m.Email = a.Email
@@ -34,7 +44,7 @@ func (m *Approver) FromDomain(a *domain.Approver) error {
 // ToDomain transforms model into *domain.Approver
 func (m *Approver) ToDomain() (*domain.Approver, error) {
 	return &domain.Approver{
-		ID:         m.ID,
+		ID:         m.ID.String(),
 		ApprovalID: m.ApprovalID,
 		AppealID:   m.AppealID,
 		Email:      m.Email,
