@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
@@ -14,7 +12,6 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
@@ -24,10 +21,8 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 		Short:   "Manage resources",
 		Example: heredoc.Doc(`
 			$ guardian resource list
-			$ guardian resource view 1
-			$ guardian resource set --id=1 key=value
-			$ guardian resource metadata-set
-			$ guardian resource metadata-get
+			$ guardian resource view --id=1
+			$ guardian resource set --id=1 filePath=<file-path>
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -35,9 +30,8 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 	}
 
 	cmd.AddCommand(listResourcesCmd(c, adapter))
-	cmd.AddCommand(getResourceCmd(c, adapter))
-	cmd.AddCommand(metadataSetCmd(c))
-	cmd.AddCommand(metadataGetCmd(c))
+	cmd.AddCommand(viewResourceCmd(c, adapter))
+	cmd.AddCommand(setResourceCmd(c, adapter))
 	cmd.PersistentFlags().StringP("output", "o", "", "Print output with specified format (yaml,json,prettyjson)")
 
 	return cmd
@@ -123,19 +117,20 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 	return cmd
 }
 
-func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var format string
+	var metadata bool
+	var id uint32
 
 	cmd := &cobra.Command{
 		Use:   "view",
 		Short: "View a resource details",
 		Example: heredoc.Doc(`
-			$ guardian resource view 1
+			$ guardian resource view --id=1 --format=json --metadata=true
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
-		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -143,11 +138,6 @@ func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 				return err
 			}
 			defer cancel()
-
-			id, err := strconv.ParseUint(args[0], 10, 32)
-			if err != nil {
-				return fmt.Errorf("invalid resource id: %v", err)
-			}
 
 			res, err := client.GetResource(ctx, &guardianv1beta1.GetResourceRequest{
 				Id: uint32(id),
@@ -161,54 +151,72 @@ func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 				if err := printer.Text(r, format); err != nil {
 					return fmt.Errorf("failed to parse resources: %v", err)
 				}
-				return nil
+			} else {
+
+				report := [][]string{}
+				r := res.GetResource()
+
+				report = append(report, []string{"ID", "PROVIDER", "TYPE", "URN", "NAME"})
+
+				report = append(report, []string{
+					fmt.Sprintf("%v", r.GetId()),
+					fmt.Sprintf("%s\n%s", r.GetProviderType(), r.GetProviderUrn()),
+					r.GetType(),
+					r.GetUrn(),
+					r.GetName(),
+				})
+
+				printer.Table(os.Stdout, report)
 			}
 
-			report := [][]string{}
-			r := res.GetResource()
+			if metadata {
+				r := res.GetResource()
+				d := r.GetDetails()
+				details := d.AsMap()
+				if len(details) == 0 {
+					fmt.Println("This resource has no metadata to show.")
+					return nil
+				}
 
-			report = append(report, []string{"ID", "PROVIDER", "TYPE", "URN", "NAME"})
+				fmt.Print("\nMETADATA\n")
+				for key, value := range details {
+					fmt.Println(key, ":", value)
 
-			report = append(report, []string{
-				fmt.Sprintf("%v", r.GetId()),
-				fmt.Sprintf("%s\n%s", r.GetProviderType(), r.GetProviderUrn()),
-				r.GetType(),
-				r.GetUrn(),
-				r.GetName(),
-			})
+				}
+			}
 
-			printer.Table(os.Stdout, report)
 			return nil
 		},
 	}
 
+	cmd.Flags().Uint32VarP(&id, "id", "i", 0, "Id of the resource")
+	cmd.MarkFlagRequired("id")
+	cmd.Flags().BoolVarP(&metadata, "metadata", "m", false, "Set if you want to see metadata")
 	cmd.Flags().StringVarP(&format, "format", "f", "", "Format of output - json yaml prettyjson etc")
 	return cmd
 }
 
-func metadataSetCmd(c *app.CLIConfig) *cobra.Command {
+func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var id uint
-	var values []string
+	var filePath string
 
 	cmd := &cobra.Command{
-		Use:   "metadata-set",
+		Use:   "set",
 		Short: "Store new metadata for a resource",
 		Example: heredoc.Doc(`
-			$ guardian resource metadata-set --id=<resource-id> --values foo=bar
+			$ guardian resource set --id=<resource-id> --filePath=<file-path>
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			metadata := map[string]interface{}{}
-			for _, a := range values {
-				items := strings.Split(a, "=")
-				key := items[0]
-				value := items[1]
 
-				metadata[key] = value
+			var resource domain.Resource
+			if err := parseFile(filePath, &resource); err != nil {
+				return err
 			}
-			metadataProto, err := structpb.NewStruct(metadata)
+
+			resourceProto, err := adapter.ToResourceProto(&resource)
 			if err != nil {
 				return err
 			}
@@ -220,79 +228,24 @@ func metadataSetCmd(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			// TODO: get one resource
-
 			_, err = client.UpdateResource(ctx, &guardianv1beta1.UpdateResourceRequest{
-				Id: uint32(id),
-				Resource: &guardianv1beta1.Resource{
-					Details: metadataProto,
-				},
+				Id:       uint32(id),
+				Resource: resourceProto,
 			})
 			if err != nil {
 				return err
 			}
 
-			fmt.Println("Successfully updated metadata")
+			fmt.Println("Successfully updated resource")
 
 			return nil
 		},
 	}
 
-	cmd.Flags().StringArrayVarP(&values, "values", "v", []string{}, "list of key-value pair. Example: key=value foo=bar")
-	cmd.MarkFlagRequired("values")
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "updated resource file path")
+	cmd.MarkFlagRequired("file")
 	cmd.PersistentFlags().UintVarP(&id, "id", "i", 0, "resource id")
 	cmd.MarkPersistentFlagRequired("id")
 
-	return cmd
-}
-
-func metadataGetCmd(c *app.CLIConfig) *cobra.Command {
-	var format string
-	var id uint
-
-	cmd := &cobra.Command{
-		Use:   "metadata-get",
-		Short: "Get metadata for a resource",
-		Example: heredoc.Doc(`
-			$ guardian resource metadata-get --id=<resource-id>
-		`),
-		Annotations: map[string]string{
-			"group:core": "true",
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := context.Background()
-			client, cancel, err := createClient(ctx, c.Host)
-			if err != nil {
-				return err
-			}
-			defer cancel()
-
-			res, err := client.GetResource(ctx, &guardianv1beta1.GetResourceRequest{
-				Id: uint32(id),
-			})
-			if err != nil {
-				return err
-			}
-
-			resource := res.GetResource()
-			details := resource.GetDetails()
-			detailsMap := details.AsMap()
-			if len(detailsMap) == 0 {
-				fmt.Println("This resource has no metadata to show.")
-				return nil
-			}
-
-			fmt.Print(" METADATA\n\n")
-			for key, value := range detailsMap {
-				fmt.Println(key, ":", value)
-
-			}
-			return nil
-		},
-	}
-
-	cmd.Flags().UintVarP(&id, "id", "i", 0, "Resource id")
-	cmd.MarkFlagRequired("id")
-	cmd.Flags().StringVarP(&format, "format", "f", "", "Format of output - json yaml prettyjson etc")
 	return cmd
 }
