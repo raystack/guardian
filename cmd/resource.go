@@ -140,7 +140,7 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			defer cancel()
 
 			res, err := client.GetResource(ctx, &guardianv1beta1.GetResourceRequest{
-				Id: uint32(id),
+				Id: id,
 			})
 			if err != nil {
 				return err
