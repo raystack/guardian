@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 
@@ -29,6 +30,7 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 			$ guardian provider create -f file.yaml
 			$ guardian provider list
 			$ guardian provider view 1
+			$ guardian provider init
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -39,6 +41,7 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 	cmd.AddCommand(getProviderCmd(c, adapter))
 	cmd.AddCommand(createProviderCmd(c, adapter))
 	cmd.AddCommand(updateProviderCmd(c, adapter))
+	cmd.AddCommand(initProviderCmd(c))
 
 	return cmd
 }
@@ -237,6 +240,42 @@ func updateProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 	cmd.Flags().UintVar(&id, "id", 0, "provider id")
 	cmd.MarkFlagRequired("id")
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
+
+func initProviderCmd(c *app.CLIConfig) *cobra.Command {
+	var file string
+	cmd := &cobra.Command{
+		Use:   "init",
+		Short: "Creates a provider template",
+		Long: heredoc.Doc(`
+			Create a provider template with a given file name.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian provider init --file=<output-name>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			pwd, _ := os.Getwd()
+			bytesRead, err := ioutil.ReadFile(pwd + "/cmd/templates/provider.yml")
+			if err != nil {
+				return err
+			}
+
+			//Copy all the contents to the desitination file
+			err = ioutil.WriteFile(file, bytesRead, 0777)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&file, "file", "f", "", "File name for the policy config")
 	cmd.MarkFlagRequired("file")
 
 	return cmd

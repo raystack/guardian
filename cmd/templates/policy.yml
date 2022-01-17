@@ -1,0 +1,34 @@
+id:
+steps:
+  - name: step-1
+    description:
+    when: $appeal.resource.details.is_field_true
+    strategy: manual
+    approvers:
+    - $appeal.creator.person
+  - name: step-2
+    description:
+    strategy: manual
+    approvers:
+    - $appeal.resource.details.owner
+  - name: step-3
+    description:
+    approve_if:
+    - field: $resource.details.is_field_true
+      match:
+        eq: true
+    allow_failed: true
+  - name: step-4
+    description:
+    dependencies: [step-3]
+    approvers: $name
+iam:
+  provider: http
+  config:
+    url: http://localhost/api/{parameter_name}
+  schema:
+    id: user_id
+    name: full_name
+    email: email
+    entity: company_name
+    userManager: manager_email

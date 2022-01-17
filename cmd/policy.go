@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -32,6 +33,7 @@ func PolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Com
 			$ guardian policy create
 			$ guardian policy list
 			$ guardian policy view my_policy@1
+			$ guardian policy init
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -42,6 +44,7 @@ func PolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Com
 	cmd.AddCommand(getPolicyCmd(c, adapter))
 	cmd.AddCommand(createPolicyCmd(c, adapter))
 	cmd.AddCommand(updatePolicyCmd(c, adapter))
+	cmd.AddCommand(initPolicyCmd(c))
 
 	return cmd
 }
@@ -260,6 +263,42 @@ func updatePolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 	}
 
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the policy config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
+
+func initPolicyCmd(c *app.CLIConfig) *cobra.Command {
+	var file string
+	cmd := &cobra.Command{
+		Use:   "init",
+		Short: "Creates a policy template",
+		Long: heredoc.Doc(`
+			Create a policy template with a given file name.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian policy init --file=<output-name>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			pwd, _ := os.Getwd()
+			bytesRead, err := ioutil.ReadFile(pwd + "/cmd/templates/policy.yml")
+			if err != nil {
+				return err
+			}
+
+			//Copy all the contents to the desitination file
+			err = ioutil.WriteFile(file, bytesRead, 0777)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&file, "file", "f", "", "File name for the policy config")
 	cmd.MarkFlagRequired("file")
 
 	return cmd
