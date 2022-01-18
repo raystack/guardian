@@ -79,7 +79,7 @@ type Step struct {
 	//
 	// Accessible parameters:
 	// $appeal = Appeal object
-	When string `json:"expression,omitempty" yaml:"expression,omitempty"`
+	When string `json:"when,omitempty" yaml:"when,omitempty"`
 
 	// Strategy defines if the step requires manual approval or not
 	Strategy ApprovalStepStrategy `json:"strategy" yaml:"strategy" validate:"required,oneof=auto manual"`
@@ -100,12 +100,12 @@ type Step struct {
 }
 
 type RequirementTrigger struct {
-	ProviderType string       `json:"provider_type" yaml:"provider_type" validate:"required_without_all"`
-	ProviderURN  string       `json:"provider_urn" yaml:"provider_urn" validate:"required_without_all"`
-	ResourceType string       `json:"resource_type" yaml:"resource_type" validate:"required_without_all"`
-	ResourceURN  string       `json:"resource_urn" yaml:"resource_urn" validate:"required_without_all"`
-	Role         string       `json:"role" yaml:"role" validate:"required_without_all"`
-	Conditions   []*Condition `json:"conditions" yaml:"conditions" validate:"required_without_all"`
+	ProviderType string       `json:"provider_type" yaml:"provider_type" validate:"required_without_all=ProviderURN ResourceType ResourceURN Role Conditions"`
+	ProviderURN  string       `json:"provider_urn" yaml:"provider_urn" validate:"required_without_all=ProviderType ResourceType ResourceURN Role Conditions"`
+	ResourceType string       `json:"resource_type" yaml:"resource_type" validate:"required_without_all=ProviderType ProviderURN ResourceURN Role Conditions"`
+	ResourceURN  string       `json:"resource_urn" yaml:"resource_urn" validate:"required_without_all=ProviderType ProviderURN ResourceType Role Conditions"`
+	Role         string       `json:"role" yaml:"role" validate:"required_without_all=ProviderType ProviderURN ResourceType ResourceType Conditions"`
+	Conditions   []*Condition `json:"conditions" yaml:"conditions" validate:"required_without_all=ProviderType ProviderURN ResourceType ResourceType Role"`
 }
 
 func (r *RequirementTrigger) IsMatch(a *Appeal) (bool, error) {
@@ -162,7 +162,7 @@ type ResourceIdentifier struct {
 	ProviderURN  string `json:"provider_urn" yaml:"provider_urn" validate:"required_with=ProviderType Type URN"`
 	Type         string `json:"type" yaml:"type" validate:"required_with=ProviderType ProviderURN URN"`
 	URN          string `json:"urn" yaml:"urn" validate:"required_with=ProviderType ProviderURN Type"`
-	ID           string `json:"id" yaml:"id" validate:"required_without_all"`
+	ID           string `json:"id" yaml:"id" validate:"required_without_all=ProviderType ProviderURN Type URN"`
 }
 
 type AdditionalAppeal struct {
