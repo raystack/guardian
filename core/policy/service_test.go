@@ -492,47 +492,49 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 		}
 
 		for _, tc := range testCases {
-			policy := &domain.Policy{
-				ID:      "policy-test",
-				Version: 1,
-				Steps: []*domain.Step{
-					{
-						Name:     "step-test",
-						Strategy: "manual",
-						Approvers: []string{
-							"user@email.com",
+			s.Run(tc.name, func() {
+				policy := &domain.Policy{
+					ID:      "policy-test",
+					Version: 1,
+					Steps: []*domain.Step{
+						{
+							Name:     "step-test",
+							Strategy: "manual",
+							Approvers: []string{
+								"user@email.com",
+							},
 						},
 					},
-				},
-				Requirements: tc.requirements,
-			}
-
-			for _, r := range tc.requirements {
-				for _, aa := range r.Appeals {
-					s.mockResourceService.
-						On("Get", aa.Resource).
-						Return(expectedResource, nil).
-						Once()
-					s.mockProviderService.
-						On("GetOne", expectedResource.ProviderType, expectedResource.ProviderURN).
-						Return(expectedProvider, nil).
-						Once()
-					expectedAppeal := &domain.Appeal{
-						ResourceID: expectedResource.ID,
-						Resource:   expectedResource,
-						Role:       aa.Role,
-						Options:    aa.Options,
-					}
-					s.mockProviderService.
-						On("ValidateAppeal", expectedAppeal, expectedProvider).
-						Return(nil).
-						Once()
+					Requirements: tc.requirements,
 				}
-			}
-			s.mockPolicyRepository.On("Create", policy).Return(nil).Once()
 
-			actualError := s.service.Create(policy)
-			s.Nil(actualError)
+				for _, r := range tc.requirements {
+					for _, aa := range r.Appeals {
+						s.mockResourceService.
+							On("Get", aa.Resource).
+							Return(expectedResource, nil).
+							Once()
+						s.mockProviderService.
+							On("GetOne", expectedResource.ProviderType, expectedResource.ProviderURN).
+							Return(expectedProvider, nil).
+							Once()
+						expectedAppeal := &domain.Appeal{
+							ResourceID: expectedResource.ID,
+							Resource:   expectedResource,
+							Role:       aa.Role,
+							Options:    aa.Options,
+						}
+						s.mockProviderService.
+							On("ValidateAppeal", expectedAppeal, expectedProvider).
+							Return(nil).
+							Once()
+					}
+				}
+				s.mockPolicyRepository.On("Create", policy).Return(nil).Once()
+
+				actualError := s.service.Create(policy)
+				s.Nil(actualError)
+			})
 		}
 	})
 }
