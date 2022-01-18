@@ -78,7 +78,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 				return err
 			}
 
-			format := cmd.Flag("format").Value.String()
+			format := cmd.Flag("output").Value.String()
 			if format != "" {
 				var resources []*domain.Resource
 				for _, r := range res.GetResources() {
@@ -153,7 +153,10 @@ func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 			}
 
 			r := adapter.FromResourceProto(res.GetResource())
-			format := cmd.Flag("format").Value.String()
+			format := cmd.Flag("output").Value.String()
+			if format == "" {
+				format = "yaml"
+			}
 			if err := printer.Text(r, format); err != nil {
 				return fmt.Errorf("failed to parse resource: %v", err)
 			}

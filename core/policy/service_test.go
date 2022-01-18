@@ -425,6 +425,118 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 			})
 		}
 	})
+
+	s.Run("valid requirements", func() {
+		expectedResource := &domain.Resource{
+			ID:           1,
+			ProviderType: "provider-type-test",
+			ProviderURN:  "provider-urn-test",
+		}
+		expectedProvider := &domain.Provider{}
+		additionalAppeals := []*domain.AdditionalAppeal{
+			{
+				Resource: &domain.ResourceIdentifier{
+					ID: 1,
+				},
+				Role: "viewer",
+			},
+		}
+
+		testCases := []struct {
+			name         string
+			requirements []*domain.Requirement
+		}{
+			{
+				name: "requirement condition on ProviderType only",
+				requirements: []*domain.Requirement{
+					{
+						On: &domain.RequirementTrigger{
+							ProviderType: "test-bigquery",
+						},
+						Appeals: additionalAppeals,
+					},
+				},
+			},
+			{
+				name: "requirement condition on Role only",
+				requirements: []*domain.Requirement{
+					{
+						On: &domain.RequirementTrigger{
+							Role: "test-viewer",
+						},
+						Appeals: additionalAppeals,
+					},
+				},
+			},
+			{
+				name: "appeal identifier using provider type+urn and resource type+urn",
+				requirements: []*domain.Requirement{
+					{
+						On: &domain.RequirementTrigger{
+							Role: "test-viewer",
+						},
+						Appeals: []*domain.AdditionalAppeal{
+							{
+								Resource: &domain.ResourceIdentifier{
+									ProviderType: "test-provider-type",
+									ProviderURN:  "test-provider-urn",
+									Type:         "test-type",
+									URN:          "test-urn",
+								},
+								Role: "viewer",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				policy := &domain.Policy{
+					ID:      "policy-test",
+					Version: 1,
+					Steps: []*domain.Step{
+						{
+							Name:     "step-test",
+							Strategy: "manual",
+							Approvers: []string{
+								"user@email.com",
+							},
+						},
+					},
+					Requirements: tc.requirements,
+				}
+
+				for _, r := range tc.requirements {
+					for _, aa := range r.Appeals {
+						s.mockResourceService.
+							On("Get", aa.Resource).
+							Return(expectedResource, nil).
+							Once()
+						s.mockProviderService.
+							On("GetOne", expectedResource.ProviderType, expectedResource.ProviderURN).
+							Return(expectedProvider, nil).
+							Once()
+						expectedAppeal := &domain.Appeal{
+							ResourceID: expectedResource.ID,
+							Resource:   expectedResource,
+							Role:       aa.Role,
+							Options:    aa.Options,
+						}
+						s.mockProviderService.
+							On("ValidateAppeal", expectedAppeal, expectedProvider).
+							Return(nil).
+							Once()
+					}
+				}
+				s.mockPolicyRepository.On("Create", policy).Return(nil).Once()
+
+				actualError := s.service.Create(policy)
+				s.Nil(actualError)
+			})
+		}
+	})
 }
 
 func (s *ServiceTestSuite) TestFind() {
