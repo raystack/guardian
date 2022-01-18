@@ -132,22 +132,9 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 			policyId := strings.Split(args[0], "@")
 			id = policyId[0]
 
-			if versionFlag != "" {
-				ver, err := strconv.ParseUint(versionFlag, 10, 32)
-				if err != nil {
-					return fmt.Errorf("invalid policy version: %v", err)
-				}
-				version = ver
-			} else {
-				if len(policyId) != 2 {
-					return fmt.Errorf("policy version is missing")
-				}
-
-				ver, err := strconv.ParseUint(policyId[1], 10, 32)
-				if err != nil {
-					return fmt.Errorf("invalid policy version: %v", err)
-				}
-				version = ver
+			version, err = getVersion(versionFlag, policyId)
+			if err != nil {
+				return err
 			}
 
 			res, err := client.GetPolicy(ctx, &guardianv1beta1.GetPolicyRequest{
@@ -279,4 +266,24 @@ func updatePolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 	cmd.MarkFlagRequired("file")
 
 	return cmd
+}
+
+func getVersion(versionFlag string, policyId []string) (uint64, error) {
+	if versionFlag != "" {
+		ver, err := strconv.ParseUint(versionFlag, 10, 32)
+		if err != nil {
+			return 0, fmt.Errorf("invalid policy version: %v", err)
+		}
+		return ver, nil
+	} else {
+		if len(policyId) != 2 {
+			return 0, fmt.Errorf("policy version is missing")
+		}
+
+		ver, err := strconv.ParseUint(policyId[1], 10, 32)
+		if err != nil {
+			return 0, fmt.Errorf("invalid policy version: %v", err)
+		}
+		return ver, nil
+	}
 }
