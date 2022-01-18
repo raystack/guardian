@@ -28,7 +28,6 @@ func main() {
 	root := cmd.New(cliConfig)
 
 	if cmd, err := root.ExecuteC(); err != nil {
-		//fmt.Fprintln(os.Stderr, err)
 		printError(err)
 
 		cmdErr := strings.HasPrefix(err.Error(), "unknown command")
