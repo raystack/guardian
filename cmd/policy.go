@@ -30,10 +30,11 @@ func PolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Com
 			Policies are used to define governance rules of the data access.
 		`),
 		Example: heredoc.Doc(`
-			$ guardian policy create
+			$ guardian policy create --file policy.yaml
+			$ guardian policy edit --file policy.yaml
 			$ guardian policy list
-			$ guardian policy view my_policy@1
 			$ guardian policy init
+			$ guardian policy view my_policy --version 1	
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -103,7 +104,8 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 }
 
 func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
-	var format string
+	var format, versionFlag string
+
 	cmd := &cobra.Command{
 		Use:   "view",
 		Short: "View a policy",
@@ -113,13 +115,16 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 			Display the ID, name, and other information about a policy.
 		`),
 		Example: heredoc.Doc(`
-			$ guardian policy view my_policy@1
+			$ guardian policy view my_policy -v 1
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var version uint64
+			var id string
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -128,14 +133,11 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 			defer cancel()
 
 			policyId := strings.Split(args[0], "@")
-			if len(policyId) != 2 {
-				return fmt.Errorf("policy version is missing")
-			}
+			id = policyId[0]
 
-			id := policyId[0]
-			version, err := strconv.ParseUint(policyId[1], 10, 32)
+			version, err = getVersion(versionFlag, policyId)
 			if err != nil {
-				return fmt.Errorf("invalid policy version: %v", err)
+				return err
 			}
 
 			res, err := client.GetPolicy(ctx, &guardianv1beta1.GetPolicyRequest{
@@ -159,6 +161,7 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 	}
 
 	cmd.Flags().StringVarP(&format, "output", "o", "yaml", "Print output with the selected format")
+	cmd.Flags().StringVarP(&versionFlag, "version", "v", "", "Version of the policy")
 
 	return cmd
 }
@@ -302,4 +305,23 @@ func initPolicyCmd(c *app.CLIConfig) *cobra.Command {
 	cmd.MarkFlagRequired("file")
 
 	return cmd
+}
+func getVersion(versionFlag string, policyId []string) (uint64, error) {
+	if versionFlag != "" {
+		ver, err := strconv.ParseUint(versionFlag, 10, 32)
+		if err != nil {
+			return 0, fmt.Errorf("invalid policy version: %v", err)
+		}
+		return ver, nil
+	} else {
+		if len(policyId) != 2 {
+			return 0, fmt.Errorf("policy version is missing")
+		}
+
+		ver, err := strconv.ParseUint(policyId[1], 10, 32)
+		if err != nil {
+			return 0, fmt.Errorf("invalid policy version: %v", err)
+		}
+		return ver, nil
+	}
 }

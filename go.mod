@@ -8,6 +8,7 @@ require (
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/antonmedv/expr v1.9.0
 	github.com/go-playground/validator/v10 v10.4.1
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/imdario/mergo v0.3.11
 	github.com/mcuadros/go-defaults v1.2.0
@@ -15,6 +16,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/odpf/salt v0.0.0-20220106155451-62e8c849ae81
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/net v0.0.0-20210825183410-e898025ed96a
@@ -72,7 +74,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

@@ -96,15 +96,15 @@ func (s *ServiceTestSuite) TestFind() {
 		expectedError := errors.New("unexpected repository error")
 		s.mockRepository.On("Find", mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Find(map[string]interface{}{})
+		actualResult, actualError := s.service.Find(&domain.ListAppealsFilter{})
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should return records on success", func() {
-		expectedFilters := map[string]interface{}{
-			"user": "user@email.com",
+		expectedFilters := &domain.ListAppealsFilter{
+			AccountID: "user@email.com",
 		}
 		expectedResult := []*domain.Appeal{
 			{
@@ -710,8 +710,8 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockResourceService.On("Find", expectedResourceFilters).Return(resources, nil).Once()
 		s.mockProviderService.On("Find").Return(providers, nil).Once()
 		s.mockPolicyService.On("Find").Return(policies, nil).Once()
-		expectedExistingAppealsFilters := map[string]interface{}{
-			"statuses": []string{
+		expectedExistingAppealsFilters := &domain.ListAppealsFilter{
+			Statuses: []string{
 				domain.AppealStatusPending,
 				domain.AppealStatusActive,
 			},

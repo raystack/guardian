@@ -27,11 +27,11 @@ func (_m *AppealRepository) BulkUpsert(_a0 []*domain.Appeal) error {
 }
 
 // Find provides a mock function with given fields: _a0
-func (_m *AppealRepository) Find(_a0 map[string]interface{}) ([]*domain.Appeal, error) {
+func (_m *AppealRepository) Find(_a0 *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
 	ret := _m.Called(_a0)
 
 	var r0 []*domain.Appeal
-	if rf, ok := ret.Get(0).(func(map[string]interface{}) []*domain.Appeal); ok {
+	if rf, ok := ret.Get(0).(func(*domain.ListAppealsFilter) []*domain.Appeal); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
@@ -40,7 +40,7 @@ func (_m *AppealRepository) Find(_a0 map[string]interface{}) ([]*domain.Appeal, 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(map[string]interface{}) error); ok {
+	if rf, ok := ret.Get(1).(func(*domain.ListAppealsFilter) error); ok {
 		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)

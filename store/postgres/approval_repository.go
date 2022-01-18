@@ -7,6 +7,16 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	ApprovalStatusDefaultSort = []string{
+		domain.ApprovalStatusPending,
+		domain.ApprovalStatusApproved,
+		domain.ApprovalStatusRejected,
+		domain.ApprovalStatusBlocked,
+		domain.ApprovalStatusSkipped,
+	}
+)
+
 type approvalRepository struct {
 	db *gorm.DB
 }
@@ -39,6 +49,13 @@ func (r *approvalRepository) ListApprovals(conditions *domain.ListApprovalsFilte
 	db = db.Joins("Appeal")
 	if conditions.Statuses != nil {
 		db = db.Where(`"approvals"."status" IN ?`, conditions.Statuses)
+	}
+	db = db.Where(`"Appeal"."status" != ?`, domain.AppealStatusCanceled)
+
+	if conditions.OrderBy != nil {
+		db = addOrderByClause(db, conditions.OrderBy, addOrderByClauseOptions{
+			statusColumnName: `"approvals"."status"`,
+		})
 	}
 
 	var models []*model.Approval
