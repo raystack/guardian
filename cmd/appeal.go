@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -134,6 +135,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
+			ctx = metadata.AppendToOutgoingContext(ctx, "x-goog-authenticated-user-email", "rahmat.hd@gojek.com")
 			res, err := client.CreateAppeal(ctx, &guardianv1beta1.CreateAppealRequest{
 				AccountId:   accountID,
 				AccountType: accountType,

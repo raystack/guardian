@@ -8,8 +8,9 @@ const (
 )
 
 type IAMConfig struct {
-	Provider IAMProviderType `json:"provider" yaml:"provider" validate:"required,oneof=http shield"`
-	Config   interface{}     `json:"config" yaml:"config" validate:"required"`
+	Provider IAMProviderType   `json:"provider" yaml:"provider" validate:"required,oneof=http shield"`
+	Config   interface{}       `json:"config" yaml:"config" validate:"required"`
+	Schema   map[string]string `json:"schema" yaml:"schema"`
 }
 
 type IAMManager interface {

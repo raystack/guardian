@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
@@ -29,6 +31,7 @@ import (
 	"github.com/odpf/guardian/plugins/providers/tableau"
 	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/salt/log"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
@@ -130,7 +133,15 @@ func RunServer(c *Config) error {
 	s.Run()
 
 	// init grpc server
-	grpcServer := grpc.NewServer()
+	logrusEntry := logrus.NewEntry(logrus.New()) // TODO: get logrus instance from `logger` var
+	grpcServer := grpc.NewServer(
+		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+			grpc_logrus.StreamServerInterceptor(logrusEntry),
+		)),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpc_logrus.UnaryServerInterceptor(logrusEntry),
+		)),
+	)
 	protoAdapter := handlerv1beta1.NewAdapter()
 	guardianv1beta1.RegisterGuardianServiceServer(grpcServer, handlerv1beta1.NewGRPCServer(
 		resourceService,
@@ -153,6 +164,9 @@ func RunServer(c *Config) error {
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
 				UseProtoNames: true,
+			},
+			UnmarshalOptions: protojson.UnmarshalOptions{
+				DiscardUnknown: true,
 			},
 		}),
 	)

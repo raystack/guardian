@@ -25,9 +25,9 @@ func NewJobHandler(logger log.Logger, as domain.AppealService, notifier notifier
 }
 
 func (h *JobHandler) RevokeExpiredAccess() error {
-	filters := map[string]interface{}{
-		"statuses":           []string{domain.AppealStatusActive},
-		"expiration_date_lt": time.Now(),
+	filters := &domain.ListAppealsFilter{
+		Statuses:               []string{domain.AppealStatusActive},
+		ExpirationDateLessThan: time.Now(),
 	}
 
 	h.logger.Info("retrieving access...")
@@ -76,10 +76,10 @@ func (h *JobHandler) NotifyAboutToExpireAccess() error {
 		from := time.Date(year, month, day, 0, 0, 0, 0, now.Location())
 		to := time.Date(year, month, day, 23, 59, 59, 999999999, now.Location())
 
-		filters := map[string]interface{}{
-			"statuses":           []string{domain.AppealStatusActive},
-			"expiration_date_gt": from,
-			"expiration_date_lt": to,
+		filters := &domain.ListAppealsFilter{
+			Statuses:                  []string{domain.AppealStatusActive},
+			ExpirationDateGreaterThan: from,
+			ExpirationDateLessThan:    to,
 		}
 
 		appeals, err := h.appealService.Find(filters)

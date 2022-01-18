@@ -68,7 +68,7 @@ func (s *Service) GetByID(id uint) (*domain.Appeal, error) {
 }
 
 // Find appeals by filters
-func (s *Service) Find(filters map[string]interface{}) ([]*domain.Appeal, error) {
+func (s *Service) Find(filters *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
 	return s.repo.Find(filters)
 }
 
@@ -354,8 +354,8 @@ func (s *Service) Revoke(id uint, actor, reason string) (*domain.Appeal, error) 
 }
 
 func (s *Service) getExistingAppealsMap() (map[string]map[uint]map[string]*domain.Appeal, map[string]map[uint]map[string]*domain.Appeal, error) {
-	appeals, err := s.repo.Find(map[string]interface{}{
-		"statuses": []string{domain.AppealStatusPending, domain.AppealStatusActive},
+	appeals, err := s.repo.Find(&domain.ListAppealsFilter{
+		Statuses: []string{domain.AppealStatusPending, domain.AppealStatusActive},
 	})
 	if err != nil {
 		return nil, nil, err
@@ -746,11 +746,24 @@ func (s *Service) addCreatorDetails(a *domain.Appeal, p *domain.Policy) error {
 			return fmt.Errorf("getting iam client: %w", err)
 		}
 
-		creatorDetails, err := iamClient.GetUser(a.CreatedBy)
+		userDetails, err := iamClient.GetUser(a.CreatedBy)
 		if err != nil {
 			return fmt.Errorf("fetching creator's user iam: %w", err)
 		}
-		a.Creator = creatorDetails
+
+		var creator map[string]interface{}
+		if userDetailsMap, ok := userDetails.(map[string]interface{}); ok {
+			if p.IAM.Schema != nil {
+				creator = map[string]interface{}{}
+				for schemaKey, targetKey := range p.IAM.Schema {
+					creator[schemaKey] = userDetailsMap[targetKey]
+				}
+			} else {
+				creator = userDetailsMap
+			}
+		}
+
+		a.Creator = creator
 	}
 
 	return nil
