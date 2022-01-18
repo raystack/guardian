@@ -35,8 +35,10 @@ module.exports = {
       label: "Reference",
       items: [
         "reference/glossary",
-        "reference/policy-config",
-        "reference/provider-config",
+        "reference/appeal",
+        "reference/policy",
+        "reference/provider",
+        "reference/resource",
       ],
     },
     {
