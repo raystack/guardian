@@ -284,7 +284,7 @@ func initPolicyCmd(c *app.CLIConfig) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pwd, _ := os.Getwd()
-			bytesRead, err := ioutil.ReadFile(pwd + "/cmd/templates/policy.yml")
+			bytesRead, err := ioutil.ReadFile(pwd + "/templates/policy.yml")
 			if err != nil {
 				return err
 			}

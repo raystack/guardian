@@ -1,0 +1,48 @@
+# -- This is a Provider template for Guardian.
+# -- Make changes as per your use case
+# -- This is a YAML-formatted file.
+
+type:
+# -- provider type. Possible values: google_bigquery, metabase
+
+urn:
+# -- urn of the provider
+
+credentials:
+# -- credentials to setup connection and access the provider instance 
+# -- possible values: - 
+# -- BigQuery: string(BigQueryCredentials)
+# --  credentials:
+# --    service_account_key: <base64 encoded service account key json>
+# --    resource_name: projects/gcp-project-id
+# -- Metabase: object(MetabaseCredentials)
+# --  credentials:
+# --    host: http://localhost:12345
+# --    user: administrator@email.com
+# --    password: password123
+
+appeal:
+  allow_permanent_access: false
+  # -- allow users to have permanent access
+  allow_active_access_extension_in: ""
+  # -- duration before the access expiration date when the user
+  # -- id allowed to create appeal to the same resource (extend their current access)
+  # -- ex. "7d"
+
+resources:
+  - type:
+    # -- type of resource
+    policy:
+    # -- policy you want to associate the resource with
+      id:
+      # -- ex. bigquery_approval
+      version: 1
+    roles:
+    # -- what are all the supported roles
+      - id:
+        ## -- can be viewer, editor, etc
+        name:
+        # -- can be Viewer, Editor, etc
+        permissions:
+        # -- can be READER, roles/bigquery.jobUser, roles/bigquery.dataViewer,
+        # -- schemas:all, native:write, read, write, etc
