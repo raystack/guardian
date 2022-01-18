@@ -64,6 +64,9 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := getSpinner("Fetching policy list ")
+			defer s.Stop()
+
 			cs := term.NewColorScheme()
 
 			ctx := context.Background()
@@ -82,6 +85,9 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 			index := 0
 
 			policies := res.GetPolicies()
+
+			s.Stop()
+
 			fmt.Printf(" \nShowing %d of %d policies\n \n", len(policies), len(policies))
 
 			report = append(report, []string{"ID", "NAME", "DESCRIPTION", "VERSION", "STEPS"})
@@ -125,6 +131,9 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 			var version uint64
 			var id string
 
+			s := getSpinner("Fetching policy ")
+			defer s.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -152,6 +161,8 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 			if err != nil {
 				return fmt.Errorf("failed to parse policy: %v", err)
 			}
+
+			s.Stop()
 
 			if err := printer.Text(p, format); err != nil {
 				return fmt.Errorf("failed to format policy: %v", err)
@@ -181,6 +192,9 @@ func createPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := getSpinner("Creating policy ")
+			defer s.Stop()
+
 			var policy domain.Policy
 			if err := parseFile(filePath, &policy); err != nil {
 				return err
@@ -204,6 +218,8 @@ func createPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			if err != nil {
 				return err
 			}
+
+			s.Stop()
 
 			fmt.Printf("Policy created with id: %v\n", res.GetPolicy().GetId())
 
@@ -233,6 +249,9 @@ func updatePolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := getSpinner("Editing policy ")
+			defer s.Stop()
+
 			var policy domain.Policy
 			if err := parseFile(filePath, &policy); err != nil {
 				return err
@@ -258,6 +277,8 @@ func updatePolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			if err != nil {
 				return err
 			}
+
+			s.Stop()
 
 			fmt.Println("Successfully updated policy")
 
