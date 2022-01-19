@@ -4,7 +4,7 @@ import "time"
 
 // Resource struct
 type Resource struct {
-	ID           uint                   `json:"id" yaml:"id"`
+	ID           string                 `json:"id" yaml:"id"`
 	ProviderType string                 `json:"provider_type" yaml:"provider_type"`
 	ProviderURN  string                 `json:"provider_urn" yaml:"provider_urn"`
 	Type         string                 `json:"type" yaml:"type"`
@@ -20,7 +20,7 @@ type Resource struct {
 // ResourceService interface
 type ResourceService interface {
 	Find(filters map[string]interface{}) ([]*Resource, error)
-	GetOne(uint) (*Resource, error)
+	GetOne(id string) (*Resource, error)
 	Get(*ResourceIdentifier) (*Resource, error)
 	BulkUpsert([]*Resource) error
 	Update(*Resource) error

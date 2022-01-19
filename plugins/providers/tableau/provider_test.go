@@ -641,8 +641,8 @@ func TestGrantAccess(t *testing.T) {
 				},
 				Role:       "viewer",
 				AccountID:  expectedUser,
-				ResourceID: 999,
-				ID:         999,
+				ResourceID: "999",
+				ID:         "999",
 			}
 
 			actualError := p.GrantAccess(pc, a)
@@ -749,8 +749,8 @@ func TestGrantAccess(t *testing.T) {
 				},
 				Role:       "viewer",
 				AccountID:  expectedUser,
-				ResourceID: 999,
-				ID:         999,
+				ResourceID: "999",
+				ID:         "999",
 			}
 
 			actualError := p.GrantAccess(pc, a)
@@ -857,8 +857,8 @@ func TestGrantAccess(t *testing.T) {
 				},
 				Role:       "viewer",
 				AccountID:  expectedUser,
-				ResourceID: 99,
-				ID:         99,
+				ResourceID: "99",
+				ID:         "99",
 			}
 
 			actualError := p.GrantAccess(pc, a)
@@ -965,8 +965,8 @@ func TestGrantAccess(t *testing.T) {
 				},
 				Role:       "viewer",
 				AccountID:  expectedUser,
-				ResourceID: 99,
-				ID:         99,
+				ResourceID: "99",
+				ID:         "99",
 			}
 
 			actualError := p.GrantAccess(pc, a)
@@ -1073,8 +1073,8 @@ func TestGrantAccess(t *testing.T) {
 				},
 				Role:       "viewer",
 				AccountID:  expectedUser,
-				ResourceID: 99,
-				ID:         99,
+				ResourceID: "99",
+				ID:         "99",
 			}
 
 			actualError := p.GrantAccess(pc, a)

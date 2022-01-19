@@ -92,7 +92,7 @@ func (s *Service) Find() ([]*domain.Provider, error) {
 	return providers, nil
 }
 
-func (s *Service) GetByID(id uint) (*domain.Provider, error) {
+func (s *Service) GetByID(id string) (*domain.Provider, error) {
 	return s.providerRepository.GetByID(id)
 }
 
@@ -156,7 +156,7 @@ func (s *Service) FetchResources() error {
 	return s.resourceService.BulkUpsert(resources)
 }
 
-func (s *Service) GetRoles(id uint, resourceType string) ([]*domain.Role, error) {
+func (s *Service) GetRoles(id string, resourceType string) ([]*domain.Role, error) {
 	p, err := s.GetByID(id)
 	if err != nil {
 		return nil, err

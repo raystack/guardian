@@ -38,12 +38,18 @@ func (s *Store) DB() *gorm.DB {
 }
 
 func (s *Store) Migrate() error {
-	return s.db.AutoMigrate(
-		&model.Provider{},
-		&model.Policy{},
-		&model.Resource{},
-		&model.Appeal{},
-		&model.Approval{},
-		&model.Approver{},
-	)
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`).Error; err != nil {
+			return err
+		}
+
+		return tx.AutoMigrate(
+			&model.Provider{},
+			&model.Policy{},
+			&model.Resource{},
+			&model.Appeal{},
+			&model.Approval{},
+			&model.Approver{},
+		)
+	})
 }

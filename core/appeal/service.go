@@ -59,8 +59,8 @@ func NewService(
 }
 
 // GetByID returns one record by id
-func (s *Service) GetByID(id uint) (*domain.Appeal, error) {
-	if id == 0 {
+func (s *Service) GetByID(id string) (*domain.Appeal, error) {
+	if id == "" {
 		return nil, ErrAppealIDEmptyParam
 	}
 
@@ -74,7 +74,7 @@ func (s *Service) Find(filters *domain.ListAppealsFilter) ([]*domain.Appeal, err
 
 // Create record
 func (s *Service) Create(appeals []*domain.Appeal) error {
-	resourceIDs := []uint{}
+	resourceIDs := []string{}
 	for _, a := range appeals {
 		resourceIDs = append(resourceIDs, a.ResourceID)
 	}
@@ -293,7 +293,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 	return nil, ErrApprovalNameNotFound
 }
 
-func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
+func (s *Service) Cancel(id string) (*domain.Appeal, error) {
 	appeal, err := s.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -313,7 +313,7 @@ func (s *Service) Cancel(id uint) (*domain.Appeal, error) {
 	return appeal, nil
 }
 
-func (s *Service) Revoke(id uint, actor, reason string) (*domain.Appeal, error) {
+func (s *Service) Revoke(id string, actor, reason string) (*domain.Appeal, error) {
 	appeal, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -353,7 +353,7 @@ func (s *Service) Revoke(id uint, actor, reason string) (*domain.Appeal, error) 
 	return revokedAppeal, nil
 }
 
-func (s *Service) getExistingAppealsMap() (map[string]map[uint]map[string]*domain.Appeal, map[string]map[uint]map[string]*domain.Appeal, error) {
+func (s *Service) getExistingAppealsMap() (map[string]map[string]map[string]*domain.Appeal, map[string]map[string]map[string]*domain.Appeal, error) {
 	appeals, err := s.repo.Find(&domain.ListAppealsFilter{
 		Statuses: []string{domain.AppealStatusPending, domain.AppealStatusActive},
 	})
@@ -361,12 +361,12 @@ func (s *Service) getExistingAppealsMap() (map[string]map[uint]map[string]*domai
 		return nil, nil, err
 	}
 
-	pendingAppealsMap := map[string]map[uint]map[string]*domain.Appeal{}
-	activeAppealsMap := map[string]map[uint]map[string]*domain.Appeal{}
+	pendingAppealsMap := map[string]map[string]map[string]*domain.Appeal{}
+	activeAppealsMap := map[string]map[string]map[string]*domain.Appeal{}
 	for _, a := range appeals {
 		if a.Status == domain.AppealStatusPending {
 			if pendingAppealsMap[a.AccountID] == nil {
-				pendingAppealsMap[a.AccountID] = map[uint]map[string]*domain.Appeal{}
+				pendingAppealsMap[a.AccountID] = map[string]map[string]*domain.Appeal{}
 			}
 			if pendingAppealsMap[a.AccountID][a.ResourceID] == nil {
 				pendingAppealsMap[a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
@@ -374,7 +374,7 @@ func (s *Service) getExistingAppealsMap() (map[string]map[uint]map[string]*domai
 			pendingAppealsMap[a.AccountID][a.ResourceID][a.Role] = a
 		} else if a.Status == domain.AppealStatusActive {
 			if activeAppealsMap[a.AccountID] == nil {
-				activeAppealsMap[a.AccountID] = map[uint]map[string]*domain.Appeal{}
+				activeAppealsMap[a.AccountID] = map[string]map[string]*domain.Appeal{}
 			}
 			if activeAppealsMap[a.AccountID][a.ResourceID] == nil {
 				activeAppealsMap[a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
@@ -386,14 +386,14 @@ func (s *Service) getExistingAppealsMap() (map[string]map[uint]map[string]*domai
 	return pendingAppealsMap, activeAppealsMap, nil
 }
 
-func (s *Service) getResourcesMap(ids []uint) (map[uint]*domain.Resource, error) {
+func (s *Service) getResourcesMap(ids []string) (map[string]*domain.Resource, error) {
 	filters := map[string]interface{}{"ids": ids}
 	resources, err := s.resourceService.Find(filters)
 	if err != nil {
 		return nil, err
 	}
 
-	result := map[uint]*domain.Resource{}
+	result := map[string]*domain.Resource{}
 	for _, r := range resources {
 		result[r.ID] = r
 	}
@@ -683,7 +683,7 @@ func (s *Service) createAccess(a *domain.Appeal) error {
 	return nil
 }
 
-func (s *Service) checkAppealExtension(a *domain.Appeal, p *domain.Provider, activeAppealsMap map[string]map[uint]map[string]*domain.Appeal) (*domain.Appeal, error) {
+func (s *Service) checkAppealExtension(a *domain.Appeal, p *domain.Provider, activeAppealsMap map[string]map[string]map[string]*domain.Appeal) (*domain.Appeal, error) {
 	if activeAppealsMap[a.AccountID] != nil &&
 		activeAppealsMap[a.AccountID][a.ResourceID] != nil &&
 		activeAppealsMap[a.AccountID][a.ResourceID][a.Role] != nil {
@@ -769,7 +769,7 @@ func (s *Service) addCreatorDetails(a *domain.Appeal, p *domain.Policy) error {
 	return nil
 }
 
-func addResource(a *domain.Appeal, resourcesMap map[uint]*domain.Resource) error {
+func addResource(a *domain.Appeal, resourcesMap map[string]*domain.Resource) error {
 	r := resourcesMap[a.ResourceID]
 	if r == nil {
 		return ErrResourceNotFound
@@ -791,7 +791,7 @@ func getProvider(a *domain.Appeal, providersMap map[string]map[string]*domain.Pr
 	return providersMap[a.Resource.ProviderType][a.Resource.ProviderURN], nil
 }
 
-func validateAppeal(a *domain.Appeal, pendingAppealsMap map[string]map[uint]map[string]*domain.Appeal) error {
+func validateAppeal(a *domain.Appeal, pendingAppealsMap map[string]map[string]map[string]*domain.Appeal) error {
 	if a.AccountType == domain.DefaultAppealAccountType && a.AccountID != a.CreatedBy {
 		return ErrCannotCreateAppealForOtherUser
 	}

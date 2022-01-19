@@ -2,8 +2,10 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/domain"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -11,8 +13,8 @@ import (
 
 // Appeal database model
 type Appeal struct {
-	ID            uint `gorm:"primaryKey"`
-	ResourceID    uint
+	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	ResourceID    string
 	PolicyID      string
 	PolicyVersion uint
 	Status        string
@@ -79,7 +81,15 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 		m.Resource = r
 	}
 
-	m.ID = a.ID
+	var id uuid.UUID
+	if a.ID != "" {
+		uuid, err := uuid.Parse(a.ID)
+		if err != nil {
+			return fmt.Errorf("parsing uuid: %w", err)
+		}
+		id = uuid
+	}
+	m.ID = id
 	m.ResourceID = a.ResourceID
 	m.PolicyID = a.PolicyID
 	m.PolicyVersion = a.PolicyVersion
@@ -150,7 +160,7 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 	}
 
 	return &domain.Appeal{
-		ID:            m.ID,
+		ID:            m.ID.String(),
 		ResourceID:    m.ResourceID,
 		PolicyID:      m.PolicyID,
 		PolicyVersion: m.PolicyVersion,

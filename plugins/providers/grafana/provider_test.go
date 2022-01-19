@@ -419,8 +419,8 @@ func TestGrantAccess(t *testing.T) {
 				},
 				Role:       "viewer",
 				AccountID:  expectedUser,
-				ResourceID: 999,
-				ID:         999,
+				ResourceID: "999",
+				ID:         "999",
 			}
 
 			actualError := p.GrantAccess(pc, a)

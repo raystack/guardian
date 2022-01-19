@@ -99,10 +99,7 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func createAppealCommand(c *app.CLIConfig) *cobra.Command {
-	var accountID string
-	var resourceID uint
-	var role string
-	var optionsDuration string
+	var accountID, resourceID, role, optionsDuration string
 
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -133,13 +130,14 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 				AccountId: accountID,
 				Resources: []*guardianv1beta1.CreateAppealRequest_Resource{
 					{
-						Id:      uint32(resourceID),
+						Id:      resourceID,
 						Role:    role,
 						Options: optionsProto,
 					},
 				},
 			})
 			if err != nil {
+				fmt.Println("Create error")
 				return err
 			}
 
@@ -153,7 +151,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 	cmd.Flags().StringVarP(&accountID, "account", "a", "", "Email of the account to appeal")
 	cmd.MarkFlagRequired("account")
 
-	cmd.Flags().UintVarP(&resourceID, "resource", "R", 0, "ID of the resource")
+	cmd.Flags().StringVarP(&resourceID, "resource", "R", "", "ID of the resource")
 	cmd.MarkFlagRequired("resource")
 
 	cmd.Flags().StringVarP(&role, "role", "r", "", "Role to be assigned")
@@ -165,8 +163,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
-	var id uint
-	var reason string
+	var id, reason string
 
 	cmd := &cobra.Command{
 		Use:   "revoke",
@@ -180,7 +177,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			_, err = client.RevokeAppeal(ctx, &guardianv1beta1.RevokeAppealRequest{
-				Id: uint32(id),
+				Id: id,
 				Reason: &guardianv1beta1.RevokeAppealRequest_Reason{
 					Reason: reason,
 				},
@@ -195,7 +192,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
+	cmd.Flags().StringVar(&id, "id", "", "ID of the appeal")
 	cmd.MarkFlagRequired("id")
 
 	cmd.Flags().StringVarP(&reason, "reason", "r", "", "Reason of the revocation")
@@ -204,8 +201,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
-	var id uint
-	var approvalName string
+	var id, approvalName string
 
 	cmd := &cobra.Command{
 		Use:   "approve",
@@ -219,7 +215,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			_, err = client.UpdateApproval(ctx, &guardianv1beta1.UpdateApprovalRequest{
-				Id:           uint32(id),
+				Id:           id,
 				ApprovalName: approvalName,
 				Action: &guardianv1beta1.UpdateApprovalRequest_Action{
 					Action: "approve",
@@ -235,7 +231,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
+	cmd.Flags().StringVar(&id, "id", "", "ID of the appeal")
 	cmd.MarkFlagRequired("id")
 	cmd.Flags().StringVarP(&approvalName, "step", "s", "", "Name of approval step")
 	cmd.MarkFlagRequired("approval-name")
@@ -244,8 +240,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
-	var id uint
-	var approvalName string
+	var id, approvalName string
 
 	cmd := &cobra.Command{
 		Use:   "reject",
@@ -260,7 +255,7 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			_, err = client.UpdateApproval(ctx, &guardianv1beta1.UpdateApprovalRequest{
-				Id:           uint32(id),
+				Id:           id,
 				ApprovalName: approvalName,
 				Action: &guardianv1beta1.UpdateApprovalRequest_Action{
 					Action: "reject",
@@ -276,7 +271,7 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
+	cmd.Flags().StringVar(&id, "id", "", "ID of the appeal")
 	cmd.MarkFlagRequired("id")
 	cmd.Flags().StringVarP(&approvalName, "step", "s", "", "Name of approval step")
 	cmd.MarkFlagRequired("approval-name")

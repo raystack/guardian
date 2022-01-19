@@ -11,10 +11,10 @@ const (
 )
 
 type Approval struct {
-	ID            uint    `json:"id" yaml:"id"`
+	ID            string  `json:"id" yaml:"id"`
 	Name          string  `json:"name" yaml:"name"`
 	Index         int     `json:"-" yaml:"-"`
-	AppealID      uint    `json:"appeal_id" yaml:"appeal_id"`
+	AppealID      string  `json:"appeal_id" yaml:"appeal_id"`
 	Status        string  `json:"status" yaml:"status"`
 	Actor         *string `json:"actor" yaml:"actor"`
 	Reason        string  `json:"reason,omitempty" yaml:"reason,omitempty"`

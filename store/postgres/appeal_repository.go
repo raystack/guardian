@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
@@ -32,7 +33,7 @@ func NewAppealRepository(db *gorm.DB) *AppealRepository {
 }
 
 // GetByID returns appeal record by id along with the approvals and the approvers
-func (r *AppealRepository) GetByID(id uint) (*domain.Appeal, error) {
+func (r *AppealRepository) GetByID(id string) (*domain.Appeal, error) {
 	m := new(model.Appeal)
 	if err := r.db.
 		Preload("Approvals", func(db *gorm.DB) *gorm.DB {
@@ -40,7 +41,7 @@ func (r *AppealRepository) GetByID(id uint) (*domain.Appeal, error) {
 		}).
 		Preload("Approvals.Approvers").
 		Preload("Resource").
-		First(&m, id).
+		First(&m, "id = ?", id).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, appeal.ErrAppealNotFound
@@ -50,7 +51,7 @@ func (r *AppealRepository) GetByID(id uint) (*domain.Appeal, error) {
 
 	a, err := m.ToDomain()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing appeal: %w", err)
 	}
 
 	return a, nil
@@ -68,7 +69,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 	if filters.Statuses != nil {
 		db = db.Where(`"status" IN ?`, filters.Statuses)
 	}
-	if filters.ResourceID != 0 {
+	if filters.ResourceID != "" {
 		db = db.Where(`"resource_id" = ?`, filters.ResourceID)
 	}
 	if filters.Role != "" {
@@ -109,7 +110,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 	for _, m := range models {
 		a, err := m.ToDomain()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parsing appeal: %w", err)
 		}
 
 		records = append(records, a)
@@ -140,7 +141,7 @@ func (r *AppealRepository) BulkUpsert(appeals []*domain.Appeal) error {
 		for i, m := range models {
 			newAppeal, err := m.ToDomain()
 			if err != nil {
-				return err
+				return fmt.Errorf("parsing appeal: %w", err)
 			}
 
 			*appeals[i] = *newAppeal
@@ -164,7 +165,7 @@ func (r *AppealRepository) Update(a *domain.Appeal) error {
 
 		newRecord, err := m.ToDomain()
 		if err != nil {
-			return err
+			return fmt.Errorf("parsing appeal: %w", err)
 		}
 
 		*a = *newRecord

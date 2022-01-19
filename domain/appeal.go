@@ -27,8 +27,8 @@ type AppealOptions struct {
 
 // Appeal struct
 type Appeal struct {
-	ID            uint                   `json:"id" yaml:"id"`
-	ResourceID    uint                   `json:"resource_id" yaml:"resource_id"`
+	ID            string                 `json:"id" yaml:"id"`
+	ResourceID    string                 `json:"resource_id" yaml:"resource_id"`
 	PolicyID      string                 `json:"policy_id" yaml:"policy_id"`
 	PolicyVersion uint                   `json:"policy_version" yaml:"policy_version"`
 	Status        string                 `json:"status" yaml:"status"`
@@ -89,7 +89,7 @@ func (a *Appeal) SetDefaults() {
 }
 
 type ApprovalAction struct {
-	AppealID     uint   `validate:"required"`
+	AppealID     string `validate:"required"`
 	ApprovalName string `validate:"required"`
 	Actor        string `validate:"email"`
 	Action       string `validate:"required,oneof=approve reject"`
@@ -98,7 +98,7 @@ type ApprovalAction struct {
 
 type ListAppealsFilter struct {
 	AccountID                 string    `mapstructure:"account_id" validate:"omitempty,required"`
-	ResourceID                uint      `mapstructure:"resource_id" validate:"omitempty,required"`
+	ResourceID                string    `mapstructure:"resource_id" validate:"omitempty,required"`
 	Role                      string    `mapstructure:"role" validate:"omitempty,required"`
 	Statuses                  []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
 	ExpirationDateLessThan    time.Time `mapstructure:"expiration_date_lt" validate:"omitempty,required"`
@@ -114,8 +114,8 @@ type ListAppealsFilter struct {
 type AppealService interface {
 	Create([]*Appeal) error
 	Find(*ListAppealsFilter) ([]*Appeal, error)
-	GetByID(uint) (*Appeal, error)
+	GetByID(id string) (*Appeal, error)
 	MakeAction(ApprovalAction) (*Appeal, error)
-	Cancel(uint) (*Appeal, error)
-	Revoke(id uint, actor, reason string) (*Appeal, error)
+	Cancel(id string) (*Appeal, error)
+	Revoke(id string, actor, reason string) (*Appeal, error)
 }

@@ -78,7 +78,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 
 		for _, tc := range testCases {
 			expectedResource := &domain.Resource{
-				ID: 1,
+				ID: "1",
 			}
 			expectedError := tc.expectedError
 			s.mockRepository.On("GetOne", expectedResource.ID).Return(tc.expectedExistingResource, tc.expectedRepositoryError).Once()
@@ -107,16 +107,16 @@ func (s *ServiceTestSuite) TestUpdate() {
 		}{
 			{
 				resourceUpdatePayload: &domain.Resource{
-					ID: 1,
+					ID: "1",
 					Labels: map[string]string{
 						"key": "value",
 					},
 				},
 				existingResource: &domain.Resource{
-					ID: 1,
+					ID: "1",
 				},
 				expectedUpdatedValues: &domain.Resource{
-					ID: 1,
+					ID: "1",
 					Labels: map[string]string{
 						"key": "value",
 					},
@@ -124,16 +124,16 @@ func (s *ServiceTestSuite) TestUpdate() {
 			},
 			{
 				resourceUpdatePayload: &domain.Resource{
-					ID: 2,
+					ID: "2",
 					Details: map[string]interface{}{
 						"key": "value",
 					},
 				},
 				existingResource: &domain.Resource{
-					ID: 2,
+					ID: "2",
 				},
 				expectedUpdatedValues: &domain.Resource{
-					ID: 2,
+					ID: "2",
 					Details: map[string]interface{}{
 						"key": "value",
 					},
@@ -141,14 +141,14 @@ func (s *ServiceTestSuite) TestUpdate() {
 			},
 			{
 				resourceUpdatePayload: &domain.Resource{
-					ID:   2,
+					ID:   "2",
 					Type: "test",
 				},
 				existingResource: &domain.Resource{
-					ID: 2,
+					ID: "2",
 				},
 				expectedUpdatedValues: &domain.Resource{
-					ID: 2,
+					ID: "2",
 				},
 			},
 		}

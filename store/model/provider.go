@@ -2,8 +2,10 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/domain"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -11,9 +13,9 @@ import (
 
 // Provider is the database model for provider
 type Provider struct {
-	ID        uint   `gorm:"autoIncrement;uniqueIndex"`
-	Type      string `gorm:"primaryKey"`
-	URN       string `gorm:"primaryKey"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	Type      string    `gorm:"uniqueIndex:provider_index"`
+	URN       string    `gorm:"uniqueIndex:provider_index"`
 	Config    datatypes.JSON
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
@@ -32,7 +34,15 @@ func (m *Provider) FromDomain(p *domain.Provider) error {
 		return err
 	}
 
-	m.ID = p.ID
+	var id uuid.UUID
+	if p.ID != "" {
+		uuid, err := uuid.Parse(p.ID)
+		if err != nil {
+			return fmt.Errorf("parsing uuid: %w", err)
+		}
+		id = uuid
+	}
+	m.ID = id
 	m.Type = p.Type
 	m.URN = p.URN
 	m.Config = datatypes.JSON(config)
@@ -50,7 +60,7 @@ func (m *Provider) ToDomain() (*domain.Provider, error) {
 	}
 
 	return &domain.Provider{
-		ID:        m.ID,
+		ID:        m.ID.String(),
 		Type:      m.Type,
 		URN:       m.URN,
 		Config:    config,

@@ -23,7 +23,7 @@ func (a *adapter) FromProviderProto(p *guardianv1beta1.Provider) (*domain.Provid
 	}
 
 	return &domain.Provider{
-		ID:        uint(p.GetId()),
+		ID:        p.GetId(),
 		Type:      p.GetType(),
 		URN:       p.GetUrn(),
 		Config:    providerConfig,
@@ -87,7 +87,7 @@ func (a *adapter) ToProviderProto(p *domain.Provider) (*guardianv1beta1.Provider
 	}
 
 	return &guardianv1beta1.Provider{
-		Id:        uint32(p.ID),
+		Id:        p.ID,
 		Type:      p.Type,
 		Urn:       p.URN,
 		Config:    config,
@@ -210,7 +210,7 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, er
 							ProviderURN:  aa.GetResource().GetProviderUrn(),
 							Type:         aa.GetResource().GetType(),
 							URN:          aa.GetResource().GetUrn(),
-							ID:           uint(aa.GetResource().GetId()),
+							ID:           aa.GetResource().GetId(),
 						}
 					}
 
@@ -304,7 +304,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 							ProviderUrn:  aa.Resource.ProviderURN,
 							Type:         aa.Resource.Type,
 							Urn:          aa.Resource.URN,
-							Id:           uint32(aa.Resource.ID),
+							Id:           aa.Resource.ID,
 						}
 					}
 
@@ -357,7 +357,7 @@ func (a *adapter) FromResourceProto(r *guardianv1beta1.Resource) *domain.Resourc
 		details = r.GetDetails().AsMap()
 	}
 	return &domain.Resource{
-		ID:           uint(r.GetId()),
+		ID:           r.GetId(),
 		ProviderType: r.GetProviderType(),
 		ProviderURN:  r.GetProviderUrn(),
 		Type:         r.GetType(),
@@ -382,7 +382,7 @@ func (a *adapter) ToResourceProto(r *domain.Resource) (*guardianv1beta1.Resource
 	}
 
 	return &guardianv1beta1.Resource{
-		Id:           uint32(r.ID),
+		Id:           r.ID,
 		ProviderType: r.ProviderType,
 		ProviderUrn:  r.ProviderURN,
 		Type:         r.Type,
@@ -408,9 +408,9 @@ func (a *adapter) FromAppealProto(appeal *guardianv1beta1.Appeal) (*domain.Appea
 		}
 
 		approvals = append(approvals, &domain.Approval{
-			ID:            uint(a.GetId()),
+			ID:            a.GetId(),
 			Name:          a.GetName(),
-			AppealID:      uint(a.GetId()),
+			AppealID:      a.GetId(),
 			Status:        a.GetStatus(),
 			Actor:         actor,
 			Reason:        a.GetReason(),
@@ -428,8 +428,8 @@ func (a *adapter) FromAppealProto(appeal *guardianv1beta1.Appeal) (*domain.Appea
 	}
 
 	return &domain.Appeal{
-		ID:            uint(appeal.GetId()),
-		ResourceID:    uint(appeal.GetResourceId()),
+		ID:            appeal.GetId(),
+		ResourceID:    appeal.GetResourceId(),
 		PolicyID:      appeal.GetPolicyId(),
 		PolicyVersion: uint(appeal.GetPolicyVersion()),
 		Status:        appeal.GetStatus(),
@@ -486,8 +486,8 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 	}
 
 	return &guardianv1beta1.Appeal{
-		Id:            uint32(appeal.ID),
-		ResourceId:    uint32(appeal.ResourceID),
+		Id:            appeal.ID,
+		ResourceId:    appeal.ResourceID,
 		PolicyId:      appeal.PolicyID,
 		PolicyVersion: uint32(appeal.PolicyVersion),
 		Status:        appeal.Status,
@@ -524,7 +524,7 @@ func (a *adapter) FromCreateAppealProto(ca *guardianv1beta1.CreateAppealRequest,
 			AccountID:   ca.GetAccountId(),
 			AccountType: ca.GetAccountType(),
 			CreatedBy:   authenticatedUser,
-			ResourceID:  uint(r.GetId()),
+			ResourceID:  r.GetId(),
 			Role:        r.GetRole(),
 			Options:     options,
 			Details:     r.GetDetails().AsMap(),
@@ -550,9 +550,9 @@ func (a *adapter) ToApprovalProto(approval *domain.Approval) (*guardianv1beta1.A
 	}
 
 	return &guardianv1beta1.Approval{
-		Id:            uint32(approval.ID),
+		Id:            approval.ID,
 		Name:          approval.Name,
-		AppealId:      uint32(approval.AppealID),
+		AppealId:      approval.AppealID,
 		Appeal:        appealProto,
 		Status:        approval.Status,
 		Actor:         actor,
