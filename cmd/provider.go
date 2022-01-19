@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
@@ -27,7 +28,7 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 		Example: heredoc.Doc(`
 			$ guardian provider create -f file.yaml
 			$ guardian provider list
-			$ guardian provider view 1
+			$ guardian provider view <provider-id>
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -98,7 +99,7 @@ func getProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 			Display the ID, name, and other information about a provider.
 		`),
 		Example: heredoc.Doc(`
-			$ guardian provider view 1
+			$ guardian provider view <provider-id>
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -145,6 +146,9 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 		Long: heredoc.Doc(`
 			Register a new provider.
 		`),
+		Example: heredoc.Doc(`
+			$ guardian provider create --file <file-path>
+		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -186,16 +190,20 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 }
 
 func updateProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
-	var id, filePath string
+	var filePath string
 	cmd := &cobra.Command{
 		Use:   "edit",
 		Short: "Edit a provider",
 		Long: heredoc.Doc(`
 			Edit an existing provider.
 		`),
+		Example: heredoc.Doc(`
+			$ guardian provider edit <provider-id> --file <file-path>
+		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var providerConfig domain.ProviderConfig
 			if err := parseFile(filePath, &providerConfig); err != nil {
@@ -214,6 +222,12 @@ func updateProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 			}
 			defer cancel()
 
+			id := args[0]
+			_, err = strconv.ParseUint(id, 10, 32)
+			if err != nil {
+				return fmt.Errorf("invalid provider id: %v", err)
+			}
+
 			_, err = client.UpdateProvider(ctx, &guardianv1beta1.UpdateProviderRequest{
 				Id:     id,
 				Config: configProto,
@@ -228,8 +242,6 @@ func updateProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 		},
 	}
 
-	cmd.Flags().StringVar(&id, "id", "", "provider id")
-	cmd.MarkFlagRequired("id")
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
 	cmd.MarkFlagRequired("file")
 

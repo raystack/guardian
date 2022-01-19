@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -105,10 +106,7 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func createAppealCommand(c *app.CLIConfig) *cobra.Command {
-	var accountID, accountType string
-	var resourceID uint
-	var role string
-	var optionsDuration string
+	var accountID, accountType, resourceID, role, optionsDuration string
 
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -139,7 +137,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 				AccountType: accountType,
 				Resources: []*guardianv1beta1.CreateAppealRequest_Resource{
 					{
-						Id:      string(resourceID),
+						Id:      resourceID,
 						Role:    role,
 						Options: optionsProto,
 					},
@@ -162,7 +160,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 	cmd.Flags().StringVarP(&accountType, "type", "t", "", "Type of the account")
 	cmd.MarkFlagRequired("type")
 
-	cmd.Flags().UintVarP(&resourceID, "resource", "R", 0, "ID of the resource")
+	cmd.Flags().StringVarP(&resourceID, "resource", "R", "", "ID of the resource")
 	cmd.MarkFlagRequired("resource")
 
 	cmd.Flags().StringVarP(&role, "role", "r", "", "Role to be assigned")
@@ -174,15 +172,16 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
-	var id, reason string
+	var reason string
 
 	cmd := &cobra.Command{
 		Use:   "revoke",
 		Short: "Revoke an active access/appeal",
 		Example: heredoc.Doc(`
-		$ guardian appeal revoke --id=<appeal-id>
-		$ guardian appeal revoke --id=<appeal-id> --reason=<reason>
+		$ guardian appeal revoke <appeal-id>
+		$ guardian appeal revoke <appeal-id> --reason=<reason>
 	`),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -190,6 +189,12 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 			defer cancel()
+
+			id := args[0]
+			_, err = strconv.ParseUint(args[0], 10, 32)
+			if err != nil {
+				return fmt.Errorf("invalid provider id: %v", err)
+			}
 
 			_, err = client.RevokeAppeal(ctx, &guardianv1beta1.RevokeAppealRequest{
 				Id: id,
@@ -207,20 +212,21 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&id, "id", "", "ID of the appeal")
-	cmd.MarkFlagRequired("id")
-
 	cmd.Flags().StringVarP(&reason, "reason", "r", "", "Reason of the revocation")
 
 	return cmd
 }
 
 func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
-	var id, approvalName string
+	var approvalName string
 
 	cmd := &cobra.Command{
 		Use:   "approve",
 		Short: "Approve an approval step",
+		Args:  cobra.ExactArgs(1),
+		Example: heredoc.Doc(`
+		$ guardian appeal approve <appeal-id> --step <step-name>
+	`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -228,6 +234,12 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 			defer cancel()
+
+			id := args[0]
+			_, err = strconv.ParseUint(args[0], 10, 32)
+			if err != nil {
+				return fmt.Errorf("invalid provider id: %v", err)
+			}
 
 			_, err = client.UpdateApproval(ctx, &guardianv1beta1.UpdateApprovalRequest{
 				Id:           id,
@@ -246,8 +258,6 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&id, "id", "", "ID of the appeal")
-	cmd.MarkFlagRequired("id")
 	cmd.Flags().StringVarP(&approvalName, "step", "s", "", "Name of approval step")
 	cmd.MarkFlagRequired("approval-name")
 
@@ -255,12 +265,15 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
-	var id, approvalName string
+	var approvalName string
 
 	cmd := &cobra.Command{
 		Use:   "reject",
 		Short: "Reject an approval step",
-		Args:  cobra.ExactArgs(1),
+		Example: heredoc.Doc(`
+		$ guardian appeal reject <appeal-id> --step <step-name>
+	`),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -268,6 +281,12 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 			defer cancel()
+
+			id := args[0]
+			_, err = strconv.ParseUint(args[0], 10, 32)
+			if err != nil {
+				return fmt.Errorf("invalid provider id: %v", err)
+			}
 
 			_, err = client.UpdateApproval(ctx, &guardianv1beta1.UpdateApprovalRequest{
 				Id:           id,
@@ -286,8 +305,6 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&id, "id", "", "ID of the appeal")
-	cmd.MarkFlagRequired("id")
 	cmd.Flags().StringVarP(&approvalName, "step", "s", "", "Name of approval step")
 	cmd.MarkFlagRequired("approval-name")
 
@@ -295,14 +312,13 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
-	var id uint32
-
 	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Approval status of an appeal",
 		Example: heredoc.Doc(`
-			$ guardian appeal status --id=<appeal-id>
+			$ guardian appeal status <appeal-id>
 		`),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			ctx := context.Background()
@@ -312,8 +328,14 @@ func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
+			id := args[0]
+			_, err = strconv.ParseUint(id, 10, 32)
+			if err != nil {
+				return fmt.Errorf("invalid provider id: %v", err)
+			}
+
 			res, err := client.GetAppeal(ctx, &guardianv1beta1.GetAppealRequest{
-				Id: string(id),
+				Id: id,
 			})
 			if err != nil {
 				return err
@@ -354,20 +376,17 @@ func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Uint32VarP(&id, "id", "i", 0, "Approval status of an appeal")
-
 	return cmd
 }
 
 func cancelAppealCommand(c *app.CLIConfig) *cobra.Command {
-	var id uint
-
 	cmd := &cobra.Command{
 		Use:   "cancel",
 		Short: "Cancel an appeal",
 		Example: heredoc.Doc(`
-		$ guardian appeal cancel --id=<appeal-id>
+		$ guardian appeal cancel <appeal-id>
 	`),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -376,8 +395,14 @@ func cancelAppealCommand(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
+			id := args[0]
+			_, err = strconv.ParseUint(id, 10, 32)
+			if err != nil {
+				return fmt.Errorf("invalid provider id: %v", err)
+			}
+
 			_, err = client.CancelAppeal(ctx, &guardianv1beta1.CancelAppealRequest{
-				Id: string(id),
+				Id: id,
 			})
 			if err != nil {
 				return err
@@ -388,9 +413,6 @@ func cancelAppealCommand(c *app.CLIConfig) *cobra.Command {
 			return nil
 		},
 	}
-
-	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
-	cmd.MarkFlagRequired("id")
 
 	return cmd
 }

@@ -22,8 +22,8 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 		Short:   "Manage resources",
 		Example: heredoc.Doc(`
 			$ guardian resource list
-			$ guardian resource view --id=1
-			$ guardian resource set --id=1 filePath=<file-path>
+			$ guardian resource view <resource-id>
+			$ guardian resource set <resource-id> filePath=<file-path>
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -121,17 +121,17 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var format string
 	var metadata bool
-	var id int
 
 	cmd := &cobra.Command{
 		Use:   "view",
 		Short: "View a resource details",
 		Example: heredoc.Doc(`
-			$ guardian resource view --id=1 --format=json --metadata=true
+			$ guardian resource view <resource-id> --format=json --metadata=true
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -140,8 +140,14 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			}
 			defer cancel()
 
+			id := args[0]
+			_, err = strconv.ParseUint(id, 10, 32)
+			if err != nil {
+				return fmt.Errorf("invalid provider id: %v", err)
+			}
+
 			res, err := client.GetResource(ctx, &guardianv1beta1.GetResourceRequest{
-				Id: strconv.Itoa(id),
+				Id: id,
 			})
 			if err != nil {
 				return err
@@ -190,26 +196,24 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 		},
 	}
 
-	cmd.Flags().IntVarP(&id, "id", "i", 0, "Id of the resource")
-	cmd.MarkFlagRequired("id")
 	cmd.Flags().BoolVarP(&metadata, "metadata", "m", false, "Set if you want to see metadata")
 	cmd.Flags().StringVarP(&format, "format", "f", "", "Format of output - json yaml prettyjson etc")
 	return cmd
 }
 
 func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
-	var id uint
 	var filePath string
 
 	cmd := &cobra.Command{
 		Use:   "set",
 		Short: "Store new metadata for a resource",
 		Example: heredoc.Doc(`
-			$ guardian resource set --id=<resource-id> --filePath=<file-path>
+			$ guardian resource set <resource-id> --filePath=<file-path>
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			var resource domain.Resource
@@ -229,8 +233,14 @@ func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 			}
 			defer cancel()
 
+			id := args[0]
+			_, err = strconv.ParseUint(id, 10, 32)
+			if err != nil {
+				return fmt.Errorf("invalid provider id: %v", err)
+			}
+
 			_, err = client.UpdateResource(ctx, &guardianv1beta1.UpdateResourceRequest{
-				Id:       string(id),
+				Id:       id,
 				Resource: resourceProto,
 			})
 			if err != nil {
@@ -245,8 +255,6 @@ func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "updated resource file path")
 	cmd.MarkFlagRequired("file")
-	cmd.PersistentFlags().UintVarP(&id, "id", "i", 0, "resource id")
-	cmd.MarkPersistentFlagRequired("id")
 
 	return cmd
 }
