@@ -283,7 +283,7 @@ func initProviderCmd(c *app.CLIConfig) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pwd, _ := os.Getwd()
-			bytesRead, err := ioutil.ReadFile(pwd + "/templates/provider.yml")
+			bytesRead, err := ioutil.ReadFile(pwd + "/spec/provider.yml")
 			if err != nil {
 				return err
 			}
