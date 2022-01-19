@@ -28,7 +28,8 @@ func appealsCommand(c *app.CLIConfig) *cobra.Command {
 		Example: heredoc.Doc(`
 			$ guardian appeal create
 			$ guardian appeal approve
-			$ guardian appeal list --status=pending
+			$ guardian appeal reject
+			$ guardian appeal list
 			$ guardian appeal status
 			$ guardian appeal revoke
 			$ guardian appeal cancel
@@ -223,10 +224,10 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "approve",
 		Short: "Approve an approval step",
-		Args:  cobra.ExactArgs(1),
 		Example: heredoc.Doc(`
-		$ guardian appeal approve <appeal-id> --step <step-name>
+		$ guardian appeal approve <appeal-id> --step=<step-name>
 	`),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -271,7 +272,7 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		Use:   "reject",
 		Short: "Reject an approval step",
 		Example: heredoc.Doc(`
-		$ guardian appeal reject <appeal-id> --step <step-name>
+		$ guardian appeal reject <appeal-id> --step=<step-name>
 	`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

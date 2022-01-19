@@ -26,9 +26,10 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 			Providers are the system for which we intend to manage access.
 		`),
 		Example: heredoc.Doc(`
-			$ guardian provider create -f file.yaml
+			$ guardian provider create
 			$ guardian provider list
-			$ guardian provider view <provider-id>
+			$ guardian provider view
+			$ guardian provider edit
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -36,9 +37,9 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 	}
 
 	cmd.AddCommand(listProvidersCmd(c))
-	cmd.AddCommand(getProviderCmd(c, adapter))
+	cmd.AddCommand(viewProviderCmd(c, adapter))
 	cmd.AddCommand(createProviderCmd(c, adapter))
-	cmd.AddCommand(updateProviderCmd(c, adapter))
+	cmd.AddCommand(editProviderCmd(c, adapter))
 
 	return cmd
 }
@@ -88,7 +89,7 @@ func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 	}
 }
 
-func getProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+func viewProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var format string
 	cmd := &cobra.Command{
 		Use:   "view",
@@ -189,7 +190,7 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 	return cmd
 }
 
-func updateProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+func editProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
 	cmd := &cobra.Command{
 		Use:   "edit",

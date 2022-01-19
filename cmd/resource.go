@@ -22,8 +22,8 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 		Short:   "Manage resources",
 		Example: heredoc.Doc(`
 			$ guardian resource list
-			$ guardian resource view <resource-id>
-			$ guardian resource set <resource-id> filePath=<file-path>
+			$ guardian resource view
+			$ guardian resource set
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
