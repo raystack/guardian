@@ -168,8 +168,8 @@ func TestGrantAccess(t *testing.T) {
 			Role:        expectedRole,
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
-			ResourceID:  999,
-			ID:          999,
+			ResourceID:  "999",
+			ID:          "999",
 		}
 
 		actualError := p.GrantAccess(pc, a)
@@ -271,8 +271,8 @@ func TestRevokeAccess(t *testing.T) {
 			Role:        expectedRole,
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
-			ResourceID:  999,
-			ID:          999,
+			ResourceID:  "999",
+			ID:          "999",
 		}
 
 		actualError := p.RevokeAccess(pc, a)

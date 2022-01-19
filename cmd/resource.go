@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
@@ -120,7 +121,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var format string
 	var metadata bool
-	var id uint32
+	var id int
 
 	cmd := &cobra.Command{
 		Use:   "view",
@@ -140,7 +141,7 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			defer cancel()
 
 			res, err := client.GetResource(ctx, &guardianv1beta1.GetResourceRequest{
-				Id: id,
+				Id: strconv.Itoa(id),
 			})
 			if err != nil {
 				return err
@@ -189,7 +190,7 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 		},
 	}
 
-	cmd.Flags().Uint32VarP(&id, "id", "i", 0, "Id of the resource")
+	cmd.Flags().IntVarP(&id, "id", "i", 0, "Id of the resource")
 	cmd.MarkFlagRequired("id")
 	cmd.Flags().BoolVarP(&metadata, "metadata", "m", false, "Set if you want to see metadata")
 	cmd.Flags().StringVarP(&format, "format", "f", "", "Format of output - json yaml prettyjson etc")
@@ -229,7 +230,7 @@ func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 			defer cancel()
 
 			_, err = client.UpdateResource(ctx, &guardianv1beta1.UpdateResourceRequest{
-				Id:       uint32(id),
+				Id:       string(id),
 				Resource: resourceProto,
 			})
 			if err != nil {

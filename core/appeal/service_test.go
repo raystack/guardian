@@ -61,7 +61,7 @@ func (s *ServiceTestSuite) TestGetByID() {
 	s.Run("should return error if id is empty/0", func() {
 		expectedError := appeal.ErrAppealIDEmptyParam
 
-		actualResult, actualError := s.service.GetByID(0)
+		actualResult, actualError := s.service.GetByID("")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -71,14 +71,14 @@ func (s *ServiceTestSuite) TestGetByID() {
 		expectedError := errors.New("repository error")
 		s.mockRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.GetByID(1)
+		actualResult, actualError := s.service.GetByID("1")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should return record on success", func() {
-		expectedID := uint(1)
+		expectedID := "1"
 		expectedResult := &domain.Appeal{
 			ID: expectedID,
 		}
@@ -108,8 +108,8 @@ func (s *ServiceTestSuite) TestFind() {
 		}
 		expectedResult := []*domain.Appeal{
 			{
-				ID:         1,
-				ResourceID: 1,
+				ID:         "1",
+				ResourceID: "1",
 				AccountID:  "user@email.com",
 				Role:       "viewer",
 			},
@@ -178,7 +178,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 	s.Run("should return error for invalid appeals", func() {
 		testProvider := &domain.Provider{
-			ID:   1,
+			ID:   "1",
 			Type: "provider_type",
 			URN:  "provider_urn",
 			Config: &domain.ProviderConfig{
@@ -219,7 +219,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				appeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user-2",
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 				}},
 				expectedError: appeal.ErrCannotCreateAppealForOtherUser,
@@ -229,14 +229,14 @@ func (s *ServiceTestSuite) TestCreate() {
 				existingAppeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user",
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Status:     domain.AppealStatusPending,
 				}},
 				appeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user",
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 				}},
 				expectedError: appeal.ErrAppealDuplicate,
@@ -244,12 +244,12 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "resource not found",
 				resources: []*domain.Resource{{
-					ID: 1,
+					ID: "1",
 				}},
 				appeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user",
-					ResourceID: 2,
+					ResourceID: "2",
 					Role:       "test-role",
 				}},
 				expectedError: appeal.ErrResourceNotFound,
@@ -257,32 +257,32 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "provider type not found",
 				resources: []*domain.Resource{{
-					ID:           1,
+					ID:           "1",
 					ProviderType: "invalid_provider_type",
 					ProviderURN:  "provider_urn",
 				}},
 				providers:     []*domain.Provider{testProvider},
-				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				appeals:       []*domain.Appeal{{ResourceID: "1"}},
 				expectedError: appeal.ErrProviderTypeNotFound,
 			},
 			{
 				name: "user still have active access",
 				resources: []*domain.Resource{{
-					ID:           1,
+					ID:           "1",
 					ProviderType: testProvider.Type,
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user",
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Status:     domain.AppealStatusActive,
 				}},
 				appeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user",
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 				}},
 				providers:     []*domain.Provider{testProvider},
@@ -291,25 +291,25 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "invalid extension duration",
 				resources: []*domain.Resource{{
-					ID:           1,
+					ID:           "1",
 					ProviderType: testProvider.Type,
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user",
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Status:     domain.AppealStatusActive,
 				}},
 				appeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user",
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 				}},
 				providers: []*domain.Provider{{
-					ID:   1,
+					ID:   "1",
 					Type: testProvider.Type,
 					URN:  testProvider.URN,
 					Config: &domain.ProviderConfig{
@@ -323,14 +323,14 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "extension not eligible",
 				resources: []*domain.Resource{{
-					ID:           1,
+					ID:           "1",
 					ProviderType: testProvider.Type,
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user",
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Status:     domain.AppealStatusActive,
 					Options: &domain.AppealOptions{
@@ -340,11 +340,11 @@ func (s *ServiceTestSuite) TestCreate() {
 				appeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user",
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 				}},
 				providers: []*domain.Provider{{
-					ID:   1,
+					ID:   "1",
 					Type: testProvider.Type,
 					URN:  testProvider.URN,
 					Config: &domain.ProviderConfig{
@@ -358,18 +358,18 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "provider urn not found",
 				resources: []*domain.Resource{{
-					ID:           1,
+					ID:           "1",
 					ProviderType: "provider_type",
 					ProviderURN:  "invalid_provider_urn",
 				}},
 				providers:     []*domain.Provider{testProvider},
-				appeals:       []*domain.Appeal{{ResourceID: 1}},
+				appeals:       []*domain.Appeal{{ResourceID: "1"}},
 				expectedError: appeal.ErrProviderURNNotFound,
 			},
 			{
 				name: "duration not found when the appeal config prevents permanent access",
 				resources: []*domain.Resource{{
-					ID:           1,
+					ID:           "1",
 					ProviderType: "provider_type",
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
@@ -378,14 +378,14 @@ func (s *ServiceTestSuite) TestCreate() {
 				callMockValidateAppeal:        true,
 				expectedAppealValidationError: provider.ErrOptionsDurationNotFound,
 				appeals: []*domain.Appeal{{
-					ResourceID: 1,
+					ResourceID: "1",
 				}},
 				expectedError: appeal.ErrOptionsDurationNotFound,
 			},
 			{
 				name: "empty duration option",
 				resources: []*domain.Resource{{
-					ID:           1,
+					ID:           "1",
 					ProviderType: "provider_type",
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
@@ -394,7 +394,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				callMockValidateAppeal:        true,
 				expectedAppealValidationError: provider.ErrDurationIsRequired,
 				appeals: []*domain.Appeal{{
-					ResourceID: 1,
+					ResourceID: "1",
 					Options: &domain.AppealOptions{
 						Duration: "",
 					},
@@ -404,7 +404,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "invalid role",
 				resources: []*domain.Resource{{
-					ID:           1,
+					ID:           "1",
 					ProviderType: "provider_type",
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
@@ -413,7 +413,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				callMockValidateAppeal:        true,
 				expectedAppealValidationError: provider.ErrInvalidRole,
 				appeals: []*domain.Appeal{{
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "invalid_role",
 					Options: &domain.AppealOptions{
 						ExpirationDate: &timeNow,
@@ -424,20 +424,20 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "resource type not found",
 				resources: []*domain.Resource{{
-					ID:           1,
+					ID:           "1",
 					ProviderType: "provider_type",
 					ProviderURN:  "provider_urn",
 					Type:         "invalid_resource_type",
 				}},
 				providers:              []*domain.Provider{testProvider},
 				callMockValidateAppeal: true,
-				appeals:                []*domain.Appeal{{ResourceID: 1}},
+				appeals:                []*domain.Appeal{{ResourceID: "1"}},
 				expectedError:          appeal.ErrResourceTypeNotFound,
 			},
 			{
 				name: "policy id not found",
 				resources: []*domain.Resource{{
-					ID:           1,
+					ID:           "1",
 					ProviderType: "provider_type",
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
@@ -445,7 +445,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				providers:              []*domain.Provider{testProvider},
 				callMockValidateAppeal: true,
 				appeals: []*domain.Appeal{{
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "role_1",
 					Options: &domain.AppealOptions{
 						ExpirationDate: &timeNow,
@@ -456,7 +456,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "policy version not found",
 				resources: []*domain.Resource{{
-					ID:           1,
+					ID:           "1",
 					ProviderType: "provider_type",
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
@@ -467,7 +467,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ID: "policy_id",
 				}},
 				appeals: []*domain.Appeal{{
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "role_1",
 					Options: &domain.AppealOptions{
 						ExpirationDate: &timeNow,
@@ -512,7 +512,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	})
 
 	accountID := "test@email.com"
-	resourceIDs := []uint{1, 2}
+	resourceIDs := []string{"1", "2"}
 	resources := []*domain.Resource{}
 	for _, id := range resourceIDs {
 		resources = append(resources, &domain.Resource{
@@ -527,7 +527,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	}
 	providers := []*domain.Provider{
 		{
-			ID:   1,
+			ID:   "1",
 			Type: "provider_type",
 			URN:  "provider1",
 			Config: &domain.ProviderConfig{
@@ -554,11 +554,11 @@ func (s *ServiceTestSuite) TestCreate() {
 	}
 	expDate := timeNow.Add(23 * time.Hour)
 	currentActiveAppeal := &domain.Appeal{
-		ID:         99,
+		ID:         "99",
 		AccountID:  accountID,
-		ResourceID: 2,
+		ResourceID: "2",
 		Resource: &domain.Resource{
-			ID:  2,
+			ID:  "2",
 			URN: "urn",
 		},
 		Role:   "role_id",
@@ -638,8 +638,8 @@ func (s *ServiceTestSuite) TestCreate() {
 	expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, insertionParamExpiredAppeal)
 	expectedResult := []*domain.Appeal{
 		{
-			ID:            1,
-			ResourceID:    1,
+			ID:            "1",
+			ResourceID:    "1",
 			Resource:      resources[0],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
@@ -651,7 +651,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
-					ID:            1,
+					ID:            "1",
 					Name:          "step_1",
 					Index:         0,
 					Status:        domain.ApprovalStatusPending,
@@ -660,7 +660,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Approvers:     []string{"resource.owner@email.com"},
 				},
 				{
-					ID:            2,
+					ID:            "2",
 					Name:          "step_2",
 					Index:         1,
 					Status:        domain.ApprovalStatusBlocked,
@@ -671,8 +671,8 @@ func (s *ServiceTestSuite) TestCreate() {
 			},
 		},
 		{
-			ID:            2,
-			ResourceID:    2,
+			ID:            "2",
+			ResourceID:    "2",
 			Resource:      resources[1],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
@@ -684,7 +684,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			Role:          "role_id",
 			Approvals: []*domain.Approval{
 				{
-					ID:            1,
+					ID:            "1",
 					Name:          "step_1",
 					Index:         0,
 					Status:        domain.ApprovalStatusPending,
@@ -693,7 +693,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Approvers:     []string{"resource.owner@email.com"},
 				},
 				{
-					ID:            2,
+					ID:            "2",
 					Name:          "step_2",
 					Index:         1,
 					Status:        domain.ApprovalStatusBlocked,
@@ -741,9 +741,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				CreatedBy:  accountID,
 				AccountID:  accountID,
-				ResourceID: 1,
+				ResourceID: "1",
 				Resource: &domain.Resource{
-					ID:  1,
+					ID:  "1",
 					URN: "urn",
 				},
 				Role: "role_id",
@@ -751,9 +751,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				CreatedBy:  accountID,
 				AccountID:  accountID,
-				ResourceID: 2,
+				ResourceID: "2",
 				Resource: &domain.Resource{
-					ID:  2,
+					ID:  "2",
 					URN: "urn",
 				},
 				Role: "role_id",
@@ -779,23 +779,23 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				Action:       "name",
 			},
 			{
-				AppealID: 1,
+				AppealID: "1",
 				Actor:    "user@email.com",
 				Action:   "name",
 			},
 			{
-				AppealID:     1,
+				AppealID:     "1",
 				ApprovalName: "approval_1",
 				Actor:        "invalidemail",
 				Action:       "name",
 			},
 			{
-				AppealID:     1,
+				AppealID:     "1",
 				ApprovalName: "approval_1",
 				Action:       "name",
 			},
 			{
-				AppealID:     1,
+				AppealID:     "1",
 				ApprovalName: "approval_1",
 				Actor:        "user@email.com",
 			},
@@ -810,7 +810,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 	})
 
 	validApprovalActionParam := domain.ApprovalAction{
-		AppealID:     1,
+		AppealID:     "1",
 		ApprovalName: "approval_1",
 		Actor:        "user@email.com",
 		Action:       "approve",
@@ -1106,10 +1106,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:           1,
+						ID:           "1",
 						URN:          "urn",
 						Name:         "test-resource-name",
 						ProviderType: "test-provider",
@@ -1131,10 +1131,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:           1,
+						ID:           "1",
 						URN:          "urn",
 						Name:         "test-resource-name",
 						ProviderType: "test-provider",
@@ -1170,7 +1170,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 			{
 				name: "reject",
 				expectedApprovalAction: domain.ApprovalAction{
-					AppealID:     1,
+					AppealID:     "1",
 					ApprovalName: "approval_1",
 					Actor:        "user@email.com",
 					Action:       domain.AppealActionNameReject,
@@ -1180,10 +1180,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:           1,
+						ID:           "1",
 						URN:          "urn",
 						Name:         "test-resource-name",
 						ProviderType: "test-provider",
@@ -1205,10 +1205,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:           1,
+						ID:           "1",
 						URN:          "urn",
 						Name:         "test-resource-name",
 						ProviderType: "test-provider",
@@ -1245,7 +1245,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 			{
 				name: "reject in the middle step",
 				expectedApprovalAction: domain.ApprovalAction{
-					AppealID:     1,
+					AppealID:     "1",
 					ApprovalName: "approval_1",
 					Actor:        user,
 					Action:       domain.AppealActionNameReject,
@@ -1254,10 +1254,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:           1,
+						ID:           "1",
 						URN:          "urn",
 						Name:         "test-resource-name",
 						ProviderType: "test-provider",
@@ -1283,10 +1283,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:           1,
+						ID:           "1",
 						URN:          "urn",
 						Name:         "test-resource-name",
 						ProviderType: "test-provider",
@@ -1336,10 +1336,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:           1,
+						ID:           "1",
 						URN:          "urn",
 						Name:         "test-resource-name",
 						ProviderType: "test-provider",
@@ -1365,10 +1365,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
-					ResourceID: 1,
+					ResourceID: "1",
 					Role:       "test-role",
 					Resource: &domain.Resource{
-						ID:           1,
+						ID:           "1",
 						URN:          "urn",
 						Name:         "test-resource-name",
 						ProviderType: "test-provider",
@@ -1457,7 +1457,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 		expectedError := errors.New("repository error")
 		s.mockRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Revoke(0, "", "")
+		actualResult, actualError := s.service.Revoke("", "", "")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -1467,21 +1467,21 @@ func (s *ServiceTestSuite) TestRevoke() {
 		s.mockRepository.On("GetByID", mock.Anything).Return(nil, appeal.ErrAppealNotFound).Once()
 		expectedError := appeal.ErrAppealNotFound
 
-		actualResult, actualError := s.service.Revoke(0, "", "")
+		actualResult, actualError := s.service.Revoke("", "", "")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	appealID := uint(1)
+	appealID := "1"
 	actor := "user@email.com"
 	reason := "test-reason"
 
 	appealDetails := &domain.Appeal{
 		ID:         appealID,
-		ResourceID: 1,
+		ResourceID: "1",
 		Resource: &domain.Resource{
-			ID:  1,
+			ID:  "1",
 			URN: "urn",
 		},
 	}

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
@@ -91,10 +92,10 @@ func (s *AppealRepositoryTestSuite) TearDownTest() {
 }
 
 func (s *AppealRepositoryTestSuite) TestGetByID() {
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "appeals"."id" = $1 AND "appeals"."deleted_at" IS NULL ORDER BY "appeals"."id" LIMIT 1`)
+	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE id = $1 AND "appeals"."deleted_at" IS NULL ORDER BY "appeals"."id" LIMIT 1`)
 
 	s.Run("should return error if got any from db", func() {
-		expectedID := uint(1)
+		expectedID := uuid.New().String()
 		expectedError := errors.New("db error")
 		s.dbmock.
 			ExpectQuery(expectedQuery).
@@ -108,7 +109,7 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 	})
 
 	s.Run("should return error if record not found", func() {
-		expectedID := uint(1)
+		expectedID := uuid.New().String()
 		expectedDBError := gorm.ErrRecordNotFound
 		s.dbmock.
 			ExpectQuery(expectedQuery).
@@ -124,21 +125,24 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 
 	s.Run("should return records on success", func() {
 		timeNow := time.Now()
+		expectedID := uuid.New().String()
+		approvalID1 := uuid.New().String()
+		approvalID2 := uuid.New().String()
 		testCases := []struct {
-			expectedID     uint
+			expectedID     string
 			expectedRecord *domain.Appeal
 		}{
 			{
-				expectedID: 1,
+				expectedID: expectedID,
 				expectedRecord: &domain.Appeal{
-					ID:            1,
+					ID:            expectedID,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
 					Approvals: []*domain.Approval{
 						{
-							ID:            11,
+							ID:            approvalID1,
 							Name:          "approval_1",
-							AppealID:      1,
+							AppealID:      expectedID,
 							Status:        "pending",
 							PolicyID:      "policy_1",
 							PolicyVersion: 1,
@@ -146,9 +150,9 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 							UpdatedAt:     timeNow,
 						},
 						{
-							ID:            12,
+							ID:            approvalID2,
 							Name:          "approval_2",
-							AppealID:      1,
+							AppealID:      expectedID,
 							Status:        "pending",
 							PolicyID:      "policy_1",
 							PolicyVersion: 1,
@@ -221,7 +225,7 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 			}
 			s.dbmock.
 				ExpectQuery(expectedApproversPreloadQuery).
-				WithArgs(11, 12).
+				WithArgs(approvalID1, approvalID2).
 				WillReturnRows(expectedApproverRows)
 
 			actualRecord, actualError := s.repository.GetByID(tc.expectedID)
@@ -273,10 +277,10 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 			},
 			{
 				filters: &domain.ListAppealsFilter{
-					ResourceID: 1,
+					ResourceID: "1",
 				},
 				expectedClauseQuery: `"resource_id" = $1 AND "appeals"."deleted_at" IS NULL`,
-				expectedArgs:        []driver.Value{uint(1)},
+				expectedArgs:        []driver.Value{"1"},
 			},
 			{
 				filters: &domain.ListAppealsFilter{
@@ -328,12 +332,14 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 
 	s.Run("should return records on success", func() {
 		expectedQuery := regexp.QuoteMeta(`SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE "appeals"."deleted_at" IS NULL`)
+		resourceID1 := uuid.New().String()
+		resourceID2 := uuid.New().String()
 		expectedRecords := []*domain.Appeal{
 			{
-				ID:         1,
-				ResourceID: 1,
+				ID:         uuid.New().String(),
+				ResourceID: resourceID1,
 				Resource: &domain.Resource{
-					ID:           1,
+					ID:           resourceID1,
 					ProviderType: "provider_type",
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
@@ -346,10 +352,10 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				Role:          "role_name",
 			},
 			{
-				ID:         2,
-				ResourceID: 2,
+				ID:         uuid.New().String(),
+				ResourceID: resourceID2,
 				Resource: &domain.Resource{
-					ID:           2,
+					ID:           resourceID2,
 					ProviderType: "provider_type",
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
@@ -416,12 +422,12 @@ func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
 		{
 			AccountID:  "test@email.com",
 			Role:       "role_name",
-			ResourceID: 1,
+			ResourceID: uuid.New().String(),
 		},
 		{
 			AccountID:  "test2@email.com",
 			Role:       "role_name",
-			ResourceID: 3,
+			ResourceID: uuid.New().String(),
 		},
 	}
 
@@ -462,7 +468,10 @@ func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	expectedIDs := []uint{1, 2}
+	expectedIDs := []string{
+		uuid.New().String(),
+		uuid.New().String(),
+	}
 	expectedRows := sqlmock.NewRows([]string{"id"})
 	for _, id := range expectedIDs {
 		expectedRows.AddRow(id)
@@ -492,7 +501,7 @@ func (s *AppealRepositoryTestSuite) TestUpdate() {
 			WillReturnError(expectedError)
 		s.dbmock.ExpectRollback()
 
-		actualError := s.repository.Update(&domain.Appeal{ID: 1})
+		actualError := s.repository.Update(&domain.Appeal{ID: uuid.New().String()})
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -500,16 +509,16 @@ func (s *AppealRepositoryTestSuite) TestUpdate() {
 	expectedUpdateApprovalsQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","reason","policy_id","policy_version","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12),($13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) ON CONFLICT ("id") DO UPDATE SET "name"="excluded"."name","index"="excluded"."index","appeal_id"="excluded"."appeal_id","status"="excluded"."status","actor"="excluded"."actor","reason"="excluded"."reason","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","created_at"="excluded"."created_at","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
 	expectedUpdateAppealQuery := regexp.QuoteMeta(`UPDATE "appeals" SET "resource_id"=$1,"policy_id"=$2,"policy_version"=$3,"status"=$4,"account_id"=$5,"account_type"=$6,"created_by"=$7,"creator"=$8,"role"=$9,"options"=$10,"labels"=$11,"details"=$12,"revoked_by"=$13,"revoked_at"=$14,"revoke_reason"=$15,"created_at"=$16,"updated_at"=$17,"deleted_at"=$18 WHERE "id" = $19`)
 	s.Run("should return nil on success", func() {
-		expectedID := uint(1)
+		expectedID := uuid.New().String()
 		appeal := &domain.Appeal{
 			ID: expectedID,
 			Approvals: []*domain.Approval{
 				{
-					ID:       11,
+					ID:       uuid.New().String(),
 					AppealID: expectedID,
 				},
 				{
-					ID:       12,
+					ID:       uuid.New().String(),
 					AppealID: expectedID,
 				},
 			},
@@ -517,7 +526,7 @@ func (s *AppealRepositoryTestSuite) TestUpdate() {
 
 		s.dbmock.ExpectBegin()
 		s.dbmock.ExpectExec(expectedUpdateAppealQuery).
-			WillReturnResult(sqlmock.NewResult(int64(expectedID), 1))
+			WillReturnResult(sqlmock.NewResult(1, 1))
 		var expectedApprovalArgs []driver.Value
 		expectedApprovalRows := sqlmock.NewRows([]string{"id"})
 		for _, approval := range appeal.Approvals {

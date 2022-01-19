@@ -162,7 +162,7 @@ type ResourceIdentifier struct {
 	ProviderURN  string `json:"provider_urn" yaml:"provider_urn" validate:"required_with=ProviderType Type URN"`
 	Type         string `json:"type" yaml:"type" validate:"required_with=ProviderType ProviderURN URN"`
 	URN          string `json:"urn" yaml:"urn" validate:"required_with=ProviderType ProviderURN Type"`
-	ID           uint   `json:"id" yaml:"id" validate:"required_without_all=ProviderType ProviderURN Type URN"`
+	ID           string `json:"id" yaml:"id" validate:"required_without_all=ProviderType ProviderURN Type URN"`
 }
 
 type AdditionalAppeal struct {

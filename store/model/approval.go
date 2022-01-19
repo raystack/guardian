@@ -1,18 +1,20 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/domain"
 	"gorm.io/gorm"
 )
 
 // Approval database model
 type Approval struct {
-	ID            uint   `gorm:"primaryKey"`
-	Name          string `gorm:"index"`
+	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	Name          string    `gorm:"index"`
 	Index         int
-	AppealID      uint
+	AppealID      string
 	Status        string
 	Actor         *string
 	Reason        string
@@ -48,7 +50,15 @@ func (m *Approval) FromDomain(a *domain.Approval) error {
 		m.Appeal = appealModel
 	}
 
-	m.ID = a.ID
+	var id uuid.UUID
+	if a.ID != "" {
+		uuid, err := uuid.Parse(a.ID)
+		if err != nil {
+			return fmt.Errorf("parsing uuid: %w", err)
+		}
+		id = uuid
+	}
+	m.ID = id
 	m.Name = a.Name
 	m.Index = a.Index
 	m.AppealID = a.AppealID
@@ -87,7 +97,7 @@ func (m *Approval) ToDomain() (*domain.Approval, error) {
 	}
 
 	return &domain.Approval{
-		ID:            m.ID,
+		ID:            m.ID.String(),
 		Name:          m.Name,
 		Index:         m.Index,
 		AppealID:      m.AppealID,

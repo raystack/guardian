@@ -2,8 +2,10 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/domain"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -11,11 +13,11 @@ import (
 
 // Resource is the database model for resource
 type Resource struct {
-	ID           uint   `gorm:"autoIncrement;uniqueIndex"`
-	ProviderType string `gorm:"primaryKey"`
-	ProviderURN  string `gorm:"primaryKey"`
-	Type         string `gorm:"primaryKey"`
-	URN          string `gorm:"primaryKey"`
+	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	ProviderType string    `gorm:"uniqueIndex:resource_index"`
+	ProviderURN  string    `gorm:"uniqueIndex:resource_index"`
+	Type         string    `gorm:"uniqueIndex:resource_index"`
+	URN          string    `gorm:"uniqueIndex:resource_index"`
 	Name         string
 	Details      datatypes.JSON
 	Labels       datatypes.JSON
@@ -45,7 +47,15 @@ func (m *Resource) FromDomain(r *domain.Resource) error {
 		return err
 	}
 
-	m.ID = r.ID
+	var id uuid.UUID
+	if r.ID != "" {
+		uuid, err := uuid.Parse(r.ID)
+		if err != nil {
+			return fmt.Errorf("parsing uuid: %w", err)
+		}
+		id = uuid
+	}
+	m.ID = id
 	m.ProviderType = r.ProviderType
 	m.ProviderURN = r.ProviderURN
 	m.Type = r.Type
@@ -72,7 +82,7 @@ func (m *Resource) ToDomain() (*domain.Resource, error) {
 	}
 
 	return &domain.Resource{
-		ID:           m.ID,
+		ID:           m.ID.String(),
 		ProviderType: m.ProviderType,
 		ProviderURN:  m.ProviderURN,
 		Type:         m.Type,

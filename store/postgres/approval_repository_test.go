@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/store"
@@ -61,11 +62,12 @@ func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
 	expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","reason","policy_id","policy_version","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING "id"`)
 
 	actor := "user@email.com"
+	appealID := uuid.New().String()
 	approvals := []*domain.Approval{
 		{
 			Name:          "approval_step_1",
 			Index:         0,
-			AppealID:      1,
+			AppealID:      appealID,
 			Status:        domain.ApprovalStatusPending,
 			Actor:         &actor,
 			PolicyID:      "policy_1",
@@ -74,7 +76,7 @@ func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
 		{
 			Name:          "approval_step_2",
 			Index:         1,
-			AppealID:      1,
+			AppealID:      appealID,
 			Status:        domain.ApprovalStatusPending,
 			Actor:         &actor,
 			PolicyID:      "policy_1",
@@ -112,7 +114,10 @@ func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	expectedIDs := []uint{1, 2}
+	expectedIDs := []string{
+		uuid.New().String(),
+		uuid.New().String(),
+	}
 	expectedRows := sqlmock.NewRows([]string{"id"})
 	for _, id := range expectedIDs {
 		expectedRows.AddRow(id)

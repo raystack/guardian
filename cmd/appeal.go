@@ -13,7 +13,6 @@ import (
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -135,19 +134,19 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 			}
 			defer cancel()
 
-			ctx = metadata.AppendToOutgoingContext(ctx, "x-goog-authenticated-user-email", "rahmat.hd@gojek.com")
 			res, err := client.CreateAppeal(ctx, &guardianv1beta1.CreateAppealRequest{
 				AccountId:   accountID,
 				AccountType: accountType,
 				Resources: []*guardianv1beta1.CreateAppealRequest_Resource{
 					{
-						Id:      uint32(resourceID),
+						Id:      string(resourceID),
 						Role:    role,
 						Options: optionsProto,
 					},
 				},
 			})
 			if err != nil {
+				fmt.Println("Create error")
 				return err
 			}
 
@@ -175,8 +174,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
-	var id uint
-	var reason string
+	var id, reason string
 
 	cmd := &cobra.Command{
 		Use:   "revoke",
@@ -194,7 +192,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			_, err = client.RevokeAppeal(ctx, &guardianv1beta1.RevokeAppealRequest{
-				Id: uint32(id),
+				Id: id,
 				Reason: &guardianv1beta1.RevokeAppealRequest_Reason{
 					Reason: reason,
 				},
@@ -209,7 +207,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
+	cmd.Flags().StringVar(&id, "id", "", "ID of the appeal")
 	cmd.MarkFlagRequired("id")
 
 	cmd.Flags().StringVarP(&reason, "reason", "r", "", "Reason of the revocation")
@@ -218,8 +216,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
-	var id uint
-	var approvalName string
+	var id, approvalName string
 
 	cmd := &cobra.Command{
 		Use:   "approve",
@@ -233,7 +230,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			_, err = client.UpdateApproval(ctx, &guardianv1beta1.UpdateApprovalRequest{
-				Id:           uint32(id),
+				Id:           id,
 				ApprovalName: approvalName,
 				Action: &guardianv1beta1.UpdateApprovalRequest_Action{
 					Action: "approve",
@@ -249,7 +246,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
+	cmd.Flags().StringVar(&id, "id", "", "ID of the appeal")
 	cmd.MarkFlagRequired("id")
 	cmd.Flags().StringVarP(&approvalName, "step", "s", "", "Name of approval step")
 	cmd.MarkFlagRequired("approval-name")
@@ -258,8 +255,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 }
 
 func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
-	var id uint
-	var approvalName string
+	var id, approvalName string
 
 	cmd := &cobra.Command{
 		Use:   "reject",
@@ -274,7 +270,7 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			_, err = client.UpdateApproval(ctx, &guardianv1beta1.UpdateApprovalRequest{
-				Id:           uint32(id),
+				Id:           id,
 				ApprovalName: approvalName,
 				Action: &guardianv1beta1.UpdateApprovalRequest_Action{
 					Action: "reject",
@@ -290,7 +286,7 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().UintVar(&id, "id", 0, "ID of the appeal")
+	cmd.Flags().StringVar(&id, "id", "", "ID of the appeal")
 	cmd.MarkFlagRequired("id")
 	cmd.Flags().StringVarP(&approvalName, "step", "s", "", "Name of approval step")
 	cmd.MarkFlagRequired("approval-name")
@@ -317,7 +313,7 @@ func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			res, err := client.GetAppeal(ctx, &guardianv1beta1.GetAppealRequest{
-				Id: id,
+				Id: string(id),
 			})
 			if err != nil {
 				return err
@@ -381,7 +377,7 @@ func cancelAppealCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			_, err = client.CancelAppeal(ctx, &guardianv1beta1.CancelAppealRequest{
-				Id: uint32(id),
+				Id: string(id),
 			})
 			if err != nil {
 				return err

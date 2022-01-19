@@ -63,8 +63,8 @@ func (r *ProviderRepository) Find() ([]*domain.Provider, error) {
 }
 
 // GetByID record by ID
-func (r *ProviderRepository) GetByID(id uint) (*domain.Provider, error) {
-	if id == 0 {
+func (r *ProviderRepository) GetByID(id string) (*domain.Provider, error) {
+	if id == "" {
 		return nil, provider.ErrEmptyIDParam
 	}
 
@@ -114,7 +114,7 @@ func (r *ProviderRepository) GetOne(pType, urn string) (*domain.Provider, error)
 
 // Update record by ID
 func (r *ProviderRepository) Update(p *domain.Provider) error {
-	if p.ID == 0 {
+	if p.ID == "" {
 		return provider.ErrEmptyIDParam
 	}
 
@@ -140,6 +140,6 @@ func (r *ProviderRepository) Update(p *domain.Provider) error {
 }
 
 // Delete record by ID
-func (r *ProviderRepository) Delete(id uint) error {
+func (r *ProviderRepository) Delete(id string) error {
 	return nil
 }

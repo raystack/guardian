@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
@@ -325,7 +326,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 						Appeals: []*domain.AdditionalAppeal{
 							{
 								Resource: &domain.ResourceIdentifier{
-									ID: 1,
+									ID: "1",
 								},
 							},
 						},
@@ -341,7 +342,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 						Appeals: []*domain.AdditionalAppeal{
 							{
 								Resource: &domain.ResourceIdentifier{
-									ID: 1,
+									ID: "1",
 								},
 							},
 						},
@@ -361,7 +362,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 						Appeals: []*domain.AdditionalAppeal{
 							{
 								Resource: &domain.ResourceIdentifier{
-									ID: 1,
+									ID: "1",
 								},
 							},
 						},
@@ -427,8 +428,9 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 	})
 
 	s.Run("valid requirements", func() {
+		resourceID := uuid.New().String()
 		expectedResource := &domain.Resource{
-			ID:           1,
+			ID:           resourceID,
 			ProviderType: "provider-type-test",
 			ProviderURN:  "provider-urn-test",
 		}
@@ -436,7 +438,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 		additionalAppeals := []*domain.AdditionalAppeal{
 			{
 				Resource: &domain.ResourceIdentifier{
-					ID: 1,
+					ID: resourceID,
 				},
 				Role: "viewer",
 			},

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
@@ -54,7 +55,7 @@ func (s *ProviderRepositoryTestSuite) TestCreate() {
 			Config: config,
 		}
 
-		expectedID := uint(1)
+		expectedID := uuid.New().String()
 		expectedRows := sqlmock.NewRows([]string{"id"}).
 			AddRow(expectedID)
 		s.dbmock.ExpectBegin()
@@ -87,9 +88,10 @@ func (s *ProviderRepositoryTestSuite) TestFind() {
 
 	s.Run("should return list of records on success", func() {
 		now := time.Now()
+		providerID := uuid.New().String()
 		expectedRecords := []*domain.Provider{
 			{
-				ID:        1,
+				ID:        providerID,
 				Type:      "type_test",
 				URN:       "urn_test",
 				Config:    &domain.ProviderConfig{},
@@ -99,7 +101,7 @@ func (s *ProviderRepositoryTestSuite) TestFind() {
 		}
 		expectedRows := sqlmock.NewRows(s.rows).
 			AddRow(
-				1,
+				providerID,
 				"type_test",
 				"urn_test",
 				"null",
@@ -120,7 +122,7 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := provider.ErrEmptyIDParam
 
-		actualResult, actualError := s.repository.GetByID(0)
+		actualResult, actualError := s.repository.GetByID("")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -132,7 +134,7 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 			WillReturnError(expectedDBError)
 		expectedError := provider.ErrRecordNotFound
 
-		actualResult, actualError := s.repository.GetByID(1)
+		actualResult, actualError := s.repository.GetByID("1")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -143,7 +145,7 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 		s.dbmock.ExpectQuery(".*").
 			WillReturnError(expectedError)
 
-		actualResult, actualError := s.repository.GetByID(1)
+		actualResult, actualError := s.repository.GetByID("1")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -151,7 +153,7 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 
 	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "providers" WHERE id = $1 AND "providers"."deleted_at" IS NULL ORDER BY "providers"."id" LIMIT 1`)
 	s.Run("should return record and nil error on success", func() {
-		expectedID := uint(10)
+		expectedID := uuid.New().String()
 		timeNow := time.Now()
 		expectedRows := sqlmock.NewRows(s.rows).
 			AddRow(
@@ -188,15 +190,15 @@ func (s *ProviderRepositoryTestSuite) TestUpdate() {
 			WillReturnError(expectedError)
 		s.dbmock.ExpectRollback()
 
-		actualError := s.repository.Update(&domain.Provider{ID: 1, Type: "test-type", URN: "test-urn"})
+		actualError := s.repository.Update(&domain.Provider{ID: uuid.New().String(), Type: "test-type", URN: "test-urn"})
 
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	expectedQuery := regexp.QuoteMeta(`UPDATE "providers" SET "id"=$1,"type"=$2,"urn"=$3,"config"=$4,"updated_at"=$5 WHERE "type" = $6 AND "urn" = $7`)
+	expectedQuery := regexp.QuoteMeta(`UPDATE "providers" SET "id"=$1,"type"=$2,"urn"=$3,"config"=$4,"updated_at"=$5 WHERE "id" = $6`)
 	s.Run("should return error if got error from transaction", func() {
 		config := &domain.ProviderConfig{}
-		expectedID := uint(1)
+		expectedID := uuid.New().String()
 		provider := &domain.Provider{
 			ID:     expectedID,
 			Type:   "test-type",
@@ -206,7 +208,7 @@ func (s *ProviderRepositoryTestSuite) TestUpdate() {
 
 		s.dbmock.ExpectBegin()
 		s.dbmock.ExpectExec(expectedQuery).
-			WillReturnResult(sqlmock.NewResult(int64(expectedID), 1))
+			WillReturnResult(sqlmock.NewResult(1, 1))
 		s.dbmock.ExpectCommit()
 
 		err := s.repository.Update(provider)

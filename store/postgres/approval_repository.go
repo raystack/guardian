@@ -40,7 +40,7 @@ func (r *approvalRepository) ListApprovals(conditions *domain.ListApprovalsFilte
 		return nil, err
 	}
 
-	var approvalIDs []uint
+	var approvalIDs []string
 	for _, a := range approverModels {
 		approvalIDs = append(approvalIDs, a.ApprovalID)
 	}
