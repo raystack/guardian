@@ -41,14 +41,14 @@ func (h *JobHandler) RevokeExpiredAccess() error {
 	failedRevoke := []map[string]interface{}{}
 	for _, a := range appeals {
 		h.logger.Info(fmt.Sprintf("revoking access with appeal id: %d\n", a.ID))
-		if _, err := h.appealService.Revoke(a.ID, domain.SystemActorName, ""); err != nil {
+		if _, err := h.appealService.Revoke(a.ID, domain.SystemActorName, "Automatically revoked"); err != nil {
 			h.logger.Info(fmt.Sprintf("failed to revoke access %d, error: %s\n", a.ID, err.Error()))
 			failedRevoke = append(failedRevoke, map[string]interface{}{
 				"id":    a.ID,
 				"error": err.Error(),
 			})
 		} else {
-			h.logger.Fatal(fmt.Sprintf("access %d revoked successfully\n", a.ID))
+			h.logger.Info(fmt.Sprintf("access %d revoked successfully\n", a.ID))
 			successRevoke = append(successRevoke, a.ID)
 		}
 	}
