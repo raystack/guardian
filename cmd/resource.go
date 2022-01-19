@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
+	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -57,7 +58,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Fetching resource list ")
+			s := term.Spin("Fetching resource list")
 			defer s.Stop()
 
 			ctx := context.Background()
@@ -142,7 +143,7 @@ func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Fetching resource ")
+			s := term.Spin("Fetching resource")
 			defer s.Stop()
 
 			ctx := context.Background()
@@ -194,7 +195,7 @@ func metadataCmd(c *app.CLIConfig) *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Updating resource ")
+			s := term.Spin("Updating resource")
 			defer s.Stop()
 
 			metadata := map[string]interface{}{}

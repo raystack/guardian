@@ -422,6 +422,8 @@ github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWb
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/odpf/salt v0.0.0-20220106155451-62e8c849ae81 h1:kZvnrHtQX5WcftjLvaVIZ83mm8QCIg71Vzu34xwl4rw=
 github.com/odpf/salt v0.0.0-20220106155451-62e8c849ae81/go.mod h1:kmqHb7LvWQxMKTf1b60P8eNUfdO68Ttx7VZAJiElTNA=
+github.com/odpf/salt v0.0.0-20220119024410-9aa38ffc5626 h1:L5q37xm99mdw2+9MMX+VCcuh549RUs2uls3hjzy2ulI=
+github.com/odpf/salt v0.0.0-20220119024410-9aa38ffc5626/go.mod h1:4jycjYfOxdU7cY+cJwJESrB2l+tRBayR6rNWQ6rVkXk=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=

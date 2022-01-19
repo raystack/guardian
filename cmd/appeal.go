@@ -53,7 +53,7 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 			$ guardian appeal list --role=viewer
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Fetching appeal list ")
+			s := term.Spin("Fetching appeal list")
 			defer s.Stop()
 
 			cs := term.NewColorScheme()
@@ -117,7 +117,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 			$ guardian appeal create --account=<account-id> --resource=<resource-id> --role=<role>
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Creating appeal ")
+			s := term.Spin("Creating appeal")
 			defer s.Stop()
 
 			options := map[string]interface{}{}
@@ -182,7 +182,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 		Use:   "revoke",
 		Short: "Revoke an active access/appeal",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Revoking appeal ")
+			s := term.Spin("Revoking appeal")
 			defer s.Stop()
 
 			ctx := context.Background()
@@ -226,7 +226,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		Use:   "approve",
 		Short: "Approve an approval step",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Approving appeal ")
+			s := term.Spin("Approving appeal")
 			defer s.Stop()
 
 			ctx := context.Background()
@@ -272,7 +272,7 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		Short: "Reject an approval step",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Rejecting appeal ")
+			s := term.Spin("Rejecting appeal")
 			defer s.Stop()
 
 			ctx := context.Background()

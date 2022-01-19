@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
+	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +58,7 @@ func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Fetching provider list ")
+			s := term.Spin("Fetching provider list")
 			defer s.Stop()
 
 			ctx := context.Background()
@@ -115,7 +116,7 @@ func getProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Fetching provider ")
+			s := term.Spin("Fetching provider")
 			defer s.Stop()
 
 			ctx := context.Background()
@@ -168,7 +169,7 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Creating provider ")
+			s := term.Spin("Creating provider")
 			defer s.Stop()
 
 			var providerConfig domain.ProviderConfig
@@ -222,7 +223,7 @@ func updateProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Editing provider ")
+			s := term.Spin("Editing provider")
 			defer s.Stop()
 
 			var providerConfig domain.ProviderConfig

@@ -64,7 +64,7 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Fetching policy list ")
+			s := term.Spin("Fetching policy list")
 			defer s.Stop()
 
 			cs := term.NewColorScheme()
@@ -131,7 +131,7 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 			var version uint64
 			var id string
 
-			s := getSpinner("Fetching policy ")
+			s := term.Spin("Fetching policy")
 			defer s.Stop()
 
 			ctx := context.Background()
@@ -192,7 +192,7 @@ func createPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Creating policy ")
+			s := term.Spin("Creating policy")
 			defer s.Stop()
 
 			var policy domain.Policy
@@ -249,7 +249,7 @@ func updatePolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := getSpinner("Editing policy ")
+			s := term.Spin("Editing policy")
 			defer s.Stop()
 
 			var policy domain.Policy
