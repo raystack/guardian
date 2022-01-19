@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/MakeNowJust/heredoc"
@@ -11,6 +12,7 @@ import (
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
+	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 )
 
@@ -28,6 +30,7 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 			$ guardian provider create -f file.yaml
 			$ guardian provider list
 			$ guardian provider view 1
+			$ guardian provider init
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -38,6 +41,7 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 	cmd.AddCommand(getProviderCmd(c, adapter))
 	cmd.AddCommand(createProviderCmd(c, adapter))
 	cmd.AddCommand(updateProviderCmd(c, adapter))
+	cmd.AddCommand(initProviderCmd(c))
 
 	return cmd
 }
@@ -53,6 +57,9 @@ func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Fetching provider list")
+			defer s.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -68,6 +75,9 @@ func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 			report := [][]string{}
 
 			providers := res.GetProviders()
+
+			s.Stop()
+
 			fmt.Printf(" \nShowing %d of %d providers\n \n", len(providers), len(providers))
 
 			report = append(report, []string{"ID", "TYPE", "URN"})
@@ -105,6 +115,9 @@ func getProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Fetching provider")
+			defer s.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -124,6 +137,8 @@ func getProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 			if err != nil {
 				return fmt.Errorf("failed to parse provider: %v", err)
 			}
+
+			s.Stop()
 
 			if err := printer.Text(p, format); err != nil {
 				return fmt.Errorf("failed to format provider: %v", err)
@@ -149,6 +164,9 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Creating provider")
+			defer s.Stop()
+
 			var providerConfig domain.ProviderConfig
 			if err := parseFile(filePath, &providerConfig); err != nil {
 				return err
@@ -172,6 +190,8 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 			if err != nil {
 				return err
 			}
+
+			s.Stop()
 
 			fmt.Printf("Provider created with id: %v", res.GetProvider().GetId())
 
@@ -197,6 +217,9 @@ func updateProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Editing provider")
+			defer s.Stop()
+
 			var providerConfig domain.ProviderConfig
 			if err := parseFile(filePath, &providerConfig); err != nil {
 				return err
@@ -222,6 +245,8 @@ func updateProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 				return err
 			}
 
+			s.Stop()
+
 			fmt.Println("Successfully updated provider")
 
 			return nil
@@ -231,6 +256,42 @@ func updateProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 	cmd.Flags().StringVar(&id, "id", "", "provider id")
 	cmd.MarkFlagRequired("id")
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
+
+func initProviderCmd(c *app.CLIConfig) *cobra.Command {
+	var file string
+	cmd := &cobra.Command{
+		Use:   "init",
+		Short: "Creates a provider template",
+		Long: heredoc.Doc(`
+			Create a provider template with a given file name.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian provider init --file=<output-name>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			pwd, _ := os.Getwd()
+			bytesRead, err := ioutil.ReadFile(pwd + "/spec/provider.yml")
+			if err != nil {
+				return err
+			}
+
+			//Copy all the contents to the desitination file
+			err = ioutil.WriteFile(file, bytesRead, 0777)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&file, "file", "f", "", "File name for the policy config")
 	cmd.MarkFlagRequired("file")
 
 	return cmd

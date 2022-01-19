@@ -12,6 +12,7 @@ import (
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
+	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -56,6 +57,9 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Fetching resource list")
+			defer s.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -83,6 +87,9 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 				for _, r := range res.GetResources() {
 					resources = append(resources, adapter.FromResourceProto(r))
 				}
+
+				s.Stop()
+
 				if err := printer.Text(resources, format); err != nil {
 					return fmt.Errorf("failed to parse resources: %v", err)
 				}
@@ -92,6 +99,9 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 			report := [][]string{}
 
 			resources := res.GetResources()
+
+			s.Stop()
+
 			fmt.Printf(" \nShowing %d of %d resources\n \n", len(resources), len(resources))
 
 			report = append(report, []string{"ID", "PROVIDER", "TYPE", "URN", "NAME"})
@@ -132,6 +142,9 @@ func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Fetching resource")
+			defer s.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -148,6 +161,9 @@ func getResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 			}
 
 			r := adapter.FromResourceProto(res.GetResource())
+
+			s.Stop()
+
 			format := cmd.Flag("output").Value.String()
 			if format == "" {
 				format = "yaml"
@@ -174,6 +190,9 @@ func metadataCmd(c *app.CLIConfig) *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Updating resource")
+			defer s.Stop()
+
 			metadata := map[string]interface{}{}
 			for _, a := range values {
 				items := strings.Split(a, "=")
@@ -205,6 +224,8 @@ func metadataCmd(c *app.CLIConfig) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			s.Stop()
 
 			fmt.Println("Successfully updated metadata")
 

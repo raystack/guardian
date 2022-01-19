@@ -52,6 +52,9 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 			$ guardian appeal list --role=viewer
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Fetching appeal list")
+			defer s.Stop()
+
 			cs := term.NewColorScheme()
 
 			ctx := context.Background()
@@ -73,6 +76,8 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 			report := [][]string{}
 
 			appeals := res.GetAppeals()
+			s.Stop()
+
 			fmt.Printf(" \nShowing %d of %d policies\n \n", len(appeals), len(appeals))
 
 			report = append(report, []string{"ID", "USER", "RESOURCE ID", "ROLE", "STATUS"})
@@ -108,6 +113,9 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 			$ guardian appeal create --account=<account-id> --resource=<resource-id> --role=<role>
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Creating appeal")
+			defer s.Stop()
+
 			options := map[string]interface{}{}
 			if optionsDuration != "" {
 				options["duration"] = optionsDuration
@@ -139,6 +147,8 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
+			s.Stop()
+
 			appealID := res.GetAppeals()[0].GetId()
 			fmt.Printf("appeal created with id: %v", appealID)
 
@@ -167,6 +177,9 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 		Use:   "revoke",
 		Short: "Revoke an active access/appeal",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Revoking appeal")
+			defer s.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -183,6 +196,8 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			s.Stop()
 
 			fmt.Printf("appeal with id `%v` revoked successfully", id)
 
@@ -205,6 +220,9 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		Use:   "approve",
 		Short: "Approve an approval step",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Approving appeal")
+			defer s.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -222,6 +240,8 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			s.Stop()
 
 			fmt.Printf("appeal with id %v and approval name %v approved successfully", id, approvalName)
 
@@ -245,6 +265,9 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 		Short: "Reject an approval step",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Rejecting appeal")
+			defer s.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -262,6 +285,8 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			s.Stop()
 
 			fmt.Printf("appeal with id %v and approval name %v rejected successfully", id, approvalName)
 
