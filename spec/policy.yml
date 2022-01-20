@@ -1,0 +1,60 @@
+# -- This is a Policy template for Guardian.
+# -- Make changes as per your use case
+# -- This is a YAML-formatted file.
+
+id:
+# -- a unique name for your policy
+# -- ex. bigquery_approval
+
+steps:
+# -- there can be multiple steps 
+# -- those can be auto or manual
+
+  - name: step-1
+    description:
+    when: $appeal.resource.details.is_field_true
+    strategy: manual
+    # -- manual steps have approver(s)
+    approvers:
+    - $appeal.creator.person
+
+  - name: step-2
+    description:
+    run_if:
+    # -- Determines whether the step should be evaluated or it can be skipped. 
+    # -- If it evaluates to be falsy, the step will automatically skipped.
+    # -- Otherwise, step become pending/blocked (normal).
+    strategy: manual
+    approvers:
+    - $appeal.resource.details.owner
+
+  - name: step-3
+    description:
+    strategy: auto
+    approve_if:
+    - field: $resource.details.is_field_true
+      match:
+        eq: true
+    # -- auto steps can be condition driven (using approve_if)
+    allow_failed: true
+    # -- If true and the step got rejected, 
+    # -- it will mark the appeal status as skipped instead of rejected
+
+  - name: step-4
+    description:
+    strategy: manual
+    dependencies: [step-3]
+    approvers: $name
+    # -- we can set dependencies on previous steps
+
+# -- iam can be configured like shown below
+iam:
+  provider: http
+  config:
+    url: http://localhost/api/{parameter_name}
+  schema:
+    id: user_id
+    name: full_name
+    email: email
+    entity: company_name
+    userManager: manager_email

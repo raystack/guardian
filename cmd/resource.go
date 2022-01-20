@@ -12,6 +12,7 @@ import (
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
+	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 )
 
@@ -55,6 +56,9 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Fetching resource list")
+			defer s.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -81,6 +85,9 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 				for _, r := range res.GetResources() {
 					resources = append(resources, adapter.FromResourceProto(r))
 				}
+
+				s.Stop()
+
 				if err := printer.Text(resources, format); err != nil {
 					return fmt.Errorf("failed to parse resources: %v", err)
 				}
@@ -89,6 +96,9 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 
 			report := [][]string{}
 			resources := res.GetResources()
+
+			s.Stop()
+
 			fmt.Printf(" \nShowing %d of %d resources\n \n", len(resources), len(resources))
 
 			report = append(report, []string{"ID", "PROVIDER", "TYPE", "URN", "NAME"})
@@ -133,6 +143,9 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Fetching resource")
+			defer s.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -215,6 +228,8 @@ func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Updating resource")
+			defer s.Stop()
 
 			var resource domain.Resource
 			if err := parseFile(filePath, &resource); err != nil {
@@ -247,7 +262,9 @@ func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 				return err
 			}
 
-			fmt.Println("Successfully updated resource")
+			s.Stop()
+
+			fmt.Println("Successfully updated metadata")
 
 			return nil
 		},

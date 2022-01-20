@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -33,6 +34,7 @@ func PolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Com
 			$ guardian policy edit
 			$ guardian policy list
 			$ guardian policy view
+			$ guardian policy init	
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -43,6 +45,7 @@ func PolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Com
 	cmd.AddCommand(getPolicyCmd(c, adapter))
 	cmd.AddCommand(createPolicyCmd(c, adapter))
 	cmd.AddCommand(updatePolicyCmd(c, adapter))
+	cmd.AddCommand(initPolicyCmd(c))
 
 	return cmd
 }
@@ -61,6 +64,9 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Fetching policy list")
+			defer s.Stop()
+
 			cs := term.NewColorScheme()
 
 			ctx := context.Background()
@@ -79,6 +85,9 @@ func listPoliciesCmd(c *app.CLIConfig) *cobra.Command {
 			index := 0
 
 			policies := res.GetPolicies()
+
+			s.Stop()
+
 			fmt.Printf(" \nShowing %d of %d policies\n \n", len(policies), len(policies))
 
 			report = append(report, []string{"ID", "NAME", "DESCRIPTION", "VERSION", "STEPS"})
@@ -122,6 +131,9 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 			var version uint64
 			var id string
 
+			s := term.Spin("Fetching policy")
+			defer s.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -149,6 +161,8 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 			if err != nil {
 				return fmt.Errorf("failed to parse policy: %v", err)
 			}
+
+			s.Stop()
 
 			if err := printer.Text(p, format); err != nil {
 				return fmt.Errorf("failed to format policy: %v", err)
@@ -179,6 +193,9 @@ func createPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Creating policy")
+			defer s.Stop()
+
 			var policy domain.Policy
 			if err := parseFile(filePath, &policy); err != nil {
 				return err
@@ -202,6 +219,8 @@ func createPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			if err != nil {
 				return err
 			}
+
+			s.Stop()
 
 			fmt.Printf("Policy created with id: %v\n", res.GetPolicy().GetId())
 
@@ -231,6 +250,9 @@ func updatePolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			s := term.Spin("Editing policy")
+			defer s.Stop()
+
 			var policy domain.Policy
 			if err := parseFile(filePath, &policy); err != nil {
 				return err
@@ -257,6 +279,8 @@ func updatePolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 				return err
 			}
 
+			s.Stop()
+
 			fmt.Println("Successfully updated policy")
 
 			return nil
@@ -269,6 +293,41 @@ func updatePolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 	return cmd
 }
 
+func initPolicyCmd(c *app.CLIConfig) *cobra.Command {
+	var file string
+	cmd := &cobra.Command{
+		Use:   "init",
+		Short: "Creates a policy template",
+		Long: heredoc.Doc(`
+			Create a policy template with a given file name.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian policy init --file=<output-name>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			pwd, _ := os.Getwd()
+			bytesRead, err := ioutil.ReadFile(pwd + "/spec/policy.yml")
+			if err != nil {
+				return err
+			}
+
+			//Copy all the contents to the desitination file
+			err = ioutil.WriteFile(file, bytesRead, 0777)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&file, "file", "f", "", "File name for the policy config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
 func getVersion(versionFlag string, policyId []string) (uint64, error) {
 	if versionFlag != "" {
 		ver, err := strconv.ParseUint(versionFlag, 10, 32)
