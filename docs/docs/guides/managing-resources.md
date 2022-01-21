@@ -2,93 +2,80 @@
 
 ## Collecting Resources
 
-Guardian collects resources from the providers automatically as soon as it registered. It uses cronjob to fetch the resource data continuously.
+Guardian collects resources from the provider automatically as soon as it registered. While in parallel, Guardian also has a job for continously syncing resources.
 
-Example resource object:
-
-```javascript
+#### Example
+```json
 {
-  "id": 1,
-  "provider_type": "google_bigquery",
-  "provider_urn": "resource-urn",
+  "id": "a32b702a-029d-4d76-90c4-c3b8cc52941b",
+  "provider_type": "bigquery",
+  "provider_urn": "gcp-project-id-bigquery",
   "type": "table",
   "urn": "gcp-project-id:dataset_name.table_name",
   "name": "table_name",
-  "metadata": {
-    "owners": [
-      "owner@email.com"
-    ]
-  },
-  "labels": {
-    "key": "value"
-  }
-}
-```
-
-You can see all the resources by using this endpoint:
-
-```text
-GET /resources
-Accept: application/json
-
-Response:
-[
-  {
-    "id": 1,
-    "provider_type": "google_bigquery",
-    "provider_urn": "resource-urn",
-    "type": "table",
-    "urn": "gcp-project-id:dataset_name.table_name",
-    "name": "table_name",
-    "metadata": {
-      "owners": [
-        "owner@email.com"
-      ]
-    },
-    "labels": {
-      "key": "value"
-    }
-  }
-]
-```
-
-## Adding metadata to resources
-
-Guardian also still allows user to add their own metadata or any additional information into the resources.
-
-This can be useful when we configuring the approval policy, and we need information from metadata e.g. “owners” as the approvers.
-
-Endpoint:
-
-```text
-PUT /resources/:id
-Content-Type: application/json
-Accept: application/json
-
-Request Body:
-{
   "details": {
-    "owners": [
-      “user@email.com”
-    ],
-    “key”: “value”
-  }
-}
-
-Response:
-{
-  "id": 1,
-  "provider_type": "google_bigquery",
-  "provider_urn": "resource-urn",
-  "type": "table",
-  "urn": "gcp-project-id:dataset_name.table_name",
-  "name": "table_name",
-  "metadata": {
-    "owners": [
-      "user@email.com"
-    ],
-    “key”: “value”
+    "is_sensitive": false,
+    "owner": [
+      "john.doe@example.com",
+      "john.smith@example.com"
+    ]
   }
 }
 ```
 
+## Updating Resources Metadata
+
+Update a resource can be done in the following ways:
+1. [Using `guardian resource set` CLI command](#1-update-a-resource-using-cli)
+2. [Calling to `PUT /api/v1beta1/resources/:id` API](#2-update-a-resource-using-http-api)
+
+Guardian allows users to add metadata to the resources. This can be useful when configuring the approval steps in the policy that needs information from metadata e.g. “owners” as the approvers.
+
+### 1. Update a Resource using CLI
+```console
+$ guardian resource set --id={{resource_id}} --values=<key1>=<value1> --values=<key2>=<value2>
+```
+### 2. Update a Resource using HTTP CLI
+```console
+$ curl --request PUT '{{HOST}}/api/v1beta1/resources/{{resource_id}}' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "details": {
+        "key1": "value1",
+        "key2": "value2"
+    }
+}'
+```
+
+## Listing Resources
+
+Listing resources can be done in the following ways:
+1. [Using `guardian resource list` CLI command](#1-list-resources-using-cli)
+2. [Calling to `GET /api/v1beta1/resources` API](#2-list-resources-using-http-api)
+
+### 1. List Resources using CLI
+```console
+$ guardian resource list --output=yaml
+```
+
+### 2. List Resources using HTTP API
+```console
+$ curl --request GET '{{HOST}}/api/v1beta1/resources'
+```
+
+## Viewing Resources
+
+Viewing a resource can be done in the following ways:
+
+1. [Using `guardian resource view` CLI command](#1-view-a-resource-using-cli)
+2. [Calling to `GET /api/v1beta1/resources/:id` API](#2-view-a-resource-using-http-api)
+
+### 1. View a Resource using CLI
+```console
+$ guardian resource view {{resource_id}}
+```
+
+### 2. View a Resource using HTTP API
+```console
+$ curl --request GET '{{HOST}}/api/v1beta1/resources/{{resource_id}}'
+```

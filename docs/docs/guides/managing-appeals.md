@@ -2,18 +2,23 @@
 
 ## Creating appeal
 
-This is the main use case of Guardian, to manage access approval for user to a particular resource. Appeal is created by a user with specifying which resource they want to access along with some other appeal options.
+Appeals can be created in the following ways:
+1. [Using `guardian appeal create` CLI command](#1-create-an-appeal-using-cli)
+2. [Calling to `POST /api/v1beta1/appeals` API](#2-create-an-appeal-using-http-api)
+
+Guardian creates access for users to resources with configurable approval flow. Appeal created by user with specifying which resource they want to access and also the role.
 
 ### Appeal Lifecycle
 
 ![](/assets/appeal-lifecycle.png)
 
-#### Request statuses
+#### Appeal Status
 
-- Pending \(initial status\): During this state, the appeal will evaluate approval steps one by one. The result from the approval steps evaluation will determine whether the appeal will be approved or rejected.
-- Rejected: The appeal has at least one failed approval step.
-- Active: The appeal has been approved. As long as the appeal is in this status, the user will have the access to the designated resource.
-- Terminated: An active access can be revoked by any authorized user at any time, or, if the appeal already exceeds the lifetime limit then it will automatically get revoked.
+- `pending` \(initial status\): During this state, the appeal will evaluate approval steps one by one. The result from the approval steps evaluation will determine whether the appeal will be approved or rejected.
+- `rejected`: The appeal has at least one failed approval step.
+- `active`: The appeal has been approved. As long as the appeal is in this status, the user will have the access to the designated resource.
+- `terminated`: An active access can be revoked by any authorized user at any time, or, if the appeal already exceeds the lifetime limit then it will automatically get revoked.
+- `canceled`: The appeal canceled by the creator when the status was on pending.
 
 #### Actions
 
@@ -23,149 +28,76 @@ This is the main use case of Guardian, to manage access approval for user to a p
 - Expire: If the appeal specifies the expiration policy then it will automatically get expired when it is already passed the lifetime limit.
 - Recreate: Possible for appeals that are currently still active, rejected, or terminated. This action will create a new appeal based on the previous one. For the appeal coming from active status, there is a policy related to access extension.
 
-To create an appeal, you can use this endpoint:
-
-```text
-POST /appeals
-Content-Type: application/json
-Accept: application/json
-
-Request Body:
-{
-   "user": "user@email.com",
-   "resources": [
-       {
-           "id": 1,
-           "role": "viewer",
-           "options": {
-             "duration": "24h"
-           }
-       }
-   ]
-}
-
-Response:
-[
-  {
-    "id": 1,
-    "resource_id": 1,
-    "policy_id": "bigquery_dataset",
-    "policy_version": 1,
-    "status": "pending",
-    "user": "user@email.com",
-    "role": "viewer",
-    "options": {
-      "expiration_date": "2021-05-10T09:49:26.402189+07:00"
-    },
-    "labels": null,
-    "approvals": [
-      {
-        "id": 11,
-        "name": "check_if_dataset_is_pii",
-        "appeal_id": 11,
-        "status": "pending",
-        "actor": null,
-        "policy_id": "bigquery_dataset",
-        "policy_version": 1
-      },
-      {
-        "id": 12,
-        "name": "supervisor_approval",
-        "appeal_id": 11,
-        "status": "pending",
-        "actor": null,
-        "policy_id": "bigquery_dataset",
-        "policy_version": 1,
-        "approvers": [
-          "john.doe@email.com"
-        ]
-      },
-      {
-        "id": 13,
-        "name": "admin_approval",
-        "appeal_id": 11,
-        "status": "pending",
-        "actor": null,
-        "policy_id": "bigquery_dataset",
-        "policy_version": 1,
-        "approvers": [
-          "owner@email.com"
-        ]
-      }
-    ]
-  }
-]
+### 1. Create an Appeal using CLI
+```console
+$ guardian appeal create --account-id=user@example.com --resource=a32b702a-029d-4d76-90c4-c3b8cc52941b --role=viewer
 ```
 
-## Approving/Rejecting appeal
+### 2. Create an Appeal using HTTP API
+```console
+$ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
+--header 'X-Auth-Email: user@example.com' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "account_id": "user@example.com",
+  "resources": [
+    {
+      "id": "a32b702a-029d-4d76-90c4-c3b8cc52941b",
+      "role": "viewer"
+    }
+  ]
+}'
+```
+
+## Canceling Appeals
+
+Appeal creator can cancel their appeal while it's status is still on `pending`.
+
+Appeals can be canceled in the following ways:
+1. [Calling to `PUT /api/v1beta1/appeals/:id/cancel` API](#1-cancel-an-appeal-using-http-api)
+
+### 1. Cancel an Appeal using HTTP API
+```console
+$ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
+```
+
+## Approving and Rejecting Appeals
 
 ![](/assets/approval-flow.png)
 
-Completing an appeal to gain the access to the designated resource could consist of multiple approvals, depending on the [approval policy](../reference/policy.md) applied to the designated resource. In Guardian, it called approval steps. Approval steps are determined during the appeal creation. For approval step without approvers, Guardian will evaluate it and resolve the status immediately. But for one with approvers, an action is required to approve/reject that particular approval step.
+Appeals can be approved/rejected in the following ways:
+1. [Using `guardian appeal approve/reject` CLI command](#1-approve-or-reject-an-appeal-using-cli)
+2. [Calling to `POST /api/v1beta1/appeals/:id/approvals/:approval_step_name/` API](#2-approve-or-reject-an-appeal-using-http-api)
 
-That action is can be done by using this endpoint:
+### 1. Approve or Reject an Appeal using CLI
+#### Approve an Appeal
+```console
+$ guardian appeal approve --id={{appeal_id}} --step={{approval_step_name}}
+```
 
-```text
-PUT /appeals/:id/approvals/:step_name
-Content-Type: application/json
-Accept: application/json
+#### Reject an Appeal
+```console
+$ guardian appeal reject --id={{appeal_id}} --step={{approval_step_name}} --reason={{rejection_message}}
+```
 
-Params:
-id: 1
-step_name: supervisor_approval
-
-Request Body:
-{
+### 2. Approve or Reject an Appeal using HTTP API
+#### Approve an Appeal
+```console
+$ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{approval_step_name}}' \
+--header 'X-Auth-Email: user@example.com' \
+--header 'Content-Type: application/json' \
+--data-raw '{
     "action": "approve"
-}
+}'
+```
 
-Response:
-{
-  "id": 1,
-  "resource_id": 1,
-  "policy_id": "bigquery_dataset",
-  "policy_version": 1,
-  "status": "pending",
-  "user": "user@email.com",
-  "role": "viewer",
-  "options": {
-    "expiration_date": "2021-05-10T09:49:26.402189+07:00"
-  },
-  "labels": null,
-  "approvals": [
-    {
-      "id": 11,
-      "name": "check_if_dataset_is_pii",
-      "appeal_id": 11,
-      "status": "pending",
-      "actor": null,
-      "policy_id": "bigquery_dataset",
-      "policy_version": 1
-    },
-    {
-      "id": 12,
-      "name": "supervisor_approval",
-      "appeal_id": 11,
-      "status": "approved", // this approval step’s status is updated to ‘approved’
-      "actor": null,
-      "policy_id": "bigquery_dataset",
-      "policy_version": 1,
-      "approvers": [
-        "john.doe@email.com"
-      ]
-    },
-    {
-      "id": 13,
-      "name": "admin_approval",
-      "appeal_id": 11,
-      "status": "pending",
-      "actor": null,
-      "policy_id": "bigquery_dataset",
-      "policy_version": 1,
-      "approvers": [
-        "owner@email.com"
-      ]
-    }
-  ]
-}
+#### Reject an Appeal
+```console
+$ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{approval_step_name}}' \
+--header 'X-Auth-Email: user@example.com' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "action": "reject",
+    "reason": "{{rejection_message}}"
+}'
 ```

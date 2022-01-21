@@ -1,178 +1,140 @@
 # Managing policies
 
-Access can be given to a user after it passed a set of approval steps that we call policy. Guardian lets you configure the policy based on your own governance rules of the data access.
+Policy controls how users or accounts can get access to a resource. Policy used by appeal to determine the approval flow, get creator's identity/profile, and decide whether it needs additional appeals. Policy is attached to a resource type in the provider config, thus a policy should be the first thing to setup before creating a provider and getting its resources.
 
-## Creating Policy
+## Creating Policies
 
-Creating a policy is the first step required for setting up Guardian in your environment. It is a dependency for the next step which is setting up provider configuration.
+Policies can be created in the following ways:
+1. [Using `guardian policy create` CLI command](#1-create-a-policy-using-cli)
+2. [Calling to `POST /api/v1beta1/policies` API](#2-create-a-policy-using-http-api)
 
-Policy created by providing a configuration of the approval flow itself. Here’s the example of the configuration:
+Policy has `version` to ensure each appeal has a reference to an applied policy when it's created. A policy is created with an initial `version` equal to `1`.
 
+#### Example
 ```yaml
-id: bigquery_dataset
+# policy.yaml
+id: my_policy
 steps:
-  - name: check_if_dataset_is_pii
-    description: pii dataset needs additional approval from the team lead
-    approve_if:
-    - field: $resource.details.is_pii
-      match:
-        eq: true
-    allow_failed: true
-  - name: supervisor_approval
-    description: 'only will get evaluated if check_if_dataset_is_pii return true'
-    dependencies: [check_if_dataset_is_pii]
-    approvers: $user_approvers
-  - name: admin_approval
-    description: ...
-    approvers: $resource.details.owner
+  - name: manager_approval
+    description: Manager approval for sensitive data
+    when: $appeal.resource.details.is_sensitive == true
+    strategy: manual
+    approvers:
+      - $appeal.creator.manager_email
+  - name: resource_owner_approval
+    description: Approval from resource admin/owner
+    strategy: manual
+    approvers:
+      - $appeal.resource.details.owner
 ```
 
 Check [policy reference](../reference/policy.md) for more details on the policy configuration
 
-To create a policy, you can use this endpoint
+### 1. Create a Policy using CLI
 
-```text
-POST /policies
-Accept: application/json
-
-Request Body:
-id: bigquery_dataset
-steps:
-  - name: check_if_dataset_is_pii
-    description: pii dataset needs additional approval from the team lead
-    approve_if:
-    - field: $resource.details.is_pii
-      match:
-        eq: true
-    allow_failed: true
-  - name: supervisor_approval
-    description: 'only will get evaluated if check_if_dataset_is_pii return true'
-    dependencies: [check_if_dataset_is_pii]
-    approvers: $user_approvers
-  - name: admin_approval
-    description: ...
-    approvers: $resource.details.owner
-
-Response:
-{
-  "id": "bigquery_dataset",
-  "version": 1,
-  "description": "",
-  "steps": [
-    {
-      "name": "check_if_dataset_is_pii",
-      "description": "pii dataset needs additional approval from the team lead",
-      "approve_if": [
-        {
-          "field": "$resource.details.is_pii",
-          "match": {
-            "eq": true
-          }
-        }
-      ],
-      "allow_failed": true,
-      "dependencies": null,
-      "approvers": ""
-    },
-    {
-      "name": "supervisor_approval",
-      "description": "only will get evaluated if check_if_dataset_is_pii return true",
-      "approve_if": null,
-      "allow_failed": false,
-      "dependencies": [
-        "check_if_dataset_is_pii"
-      ],
-      "approvers": "$user_approvers"
-    },
-    {
-      "name": "admin_approval",
-      "description": "...",
-      "approve_if": null,
-      "allow_failed": false,
-      "dependencies": null,
-      "approvers": "$resource.details.owner"
-    }
-  ],
-  "labels": null,
-  "created_at": "2021-05-04T08:05:07.691557+07:00",
-  "updated_at": "2021-05-04T08:05:07.691557+07:00"
-}
+```console
+$ guardian policy create --file=policy.yaml
 ```
 
+### 2. Create a Policy using HTTP API
+
+```console
+$ curl --request POST '{{HOST}}/api/v1beta1/policies' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "id": "my_policy",
+  "steps": [
+    {
+      "name": "manager_approval",
+      "description": "Manager approval for sensitive data",
+      "when": "$appeal.resource.details.is_sensitive == true",
+      "strategy": "manual",
+      "approvers": [
+        "$appeal.creator.manager_email"
+      ]
+    },
+    {
+      "name": "resource_owner_approval",
+      "description": "Approval from resource admin/owner",
+      "strategy": "manual",
+      "approvers": [
+        "$appeal.resource.details.owner"
+      ]
+    }
+  ]
+}'
+```
 ## Updating Policy
 
-In Guardian, we keep track of the policy changes using the policy version which generated after you create/update a policy. This version tracking will help Guardian in case you updated the policy, the existing appeals that were created using the previous version would still be able to retrieve the matching policy version.
+Policies can be updated in the following ways:
+1. [Using `guardian policy edit` CLI command](#1-update-a-policy-using-cli)
+2. [Calling to `PUT /api/v1beta1/policies/:id` API](#2-update-a-policy-using-http-api)
 
-By updating a policy, Guardian will automatically bump up the version of that particular policy. For example, if the current version of policy `bigquery_dataset` is `1`, the version will automatically get increased to `2` when it gets updated.
+Updating a policy actually means creating a new policy with the same `id` but the `version` gets incremented by `1`. Both the new and previous policies still can be used by providers.
 
-To update a policy, you can use this endpoint:
+### 1. Update a Policy using CLI
 
-```text
-PUT /policies/:id
-Accept: application/json
-
-Request Body:
-id: bigquery_dataset
-steps:
-  - name: check_if_dataset_is_pii
-    description: pii dataset needs additional approval from the team lead
-    approve_if:
-    - field: $resource.details.is_pii
-      match:
-        eq: true
-    allow_failed: true
-  - name: supervisor_approval
-    description: 'only will get evaluated if check_if_dataset_is_pii return true'
-    dependencies: [check_if_dataset_is_pii]
-    approvers: $user_approvers
-  - name: admin_approval
-    description: ...
-    approvers: $resource.details.owners
-
-
-Response:
-{
-  "id": "bigquery_dataset",
-  "version": 2,
-  "description": "",
-  "steps": [
-    {
-      "name": "check_if_dataset_is_pii",
-      "description": "pii dataset needs additional approval from the team lead",
-      "approve_if": [
-        {
-          "field": "$resource.details.is_pii",
-          "match": {
-            "eq": true
-          }
-        }
-      ],
-      "allow_failed": true,
-      "dependencies": null,
-      "approvers": ""
-    },
-    {
-      "name": "supervisor_approval",
-      "description": "only will get evaluated if check_if_dataset_is_pii return true",
-      "approve_if": null,
-      "allow_failed": false,
-      "dependencies": [
-        "check_if_dataset_is_pii"
-      ],
-      "approvers": "$user_approvers"
-    },
-    {
-      "name": "admin_approval",
-      "description": "...",
-      "approve_if": null,
-      "allow_failed": false,
-      "dependencies": null,
-      "approvers": "$resource.details.owners"
-    }
-  ],
-  "labels": null,
-  "created_at": "2021-05-04T08:05:07.691557+07:00",
-  "updated_at": "2021-05-04T08:05:07.691557+07:00"
-}
+```console
+$ guardian policy edit --file=policy.yaml
 ```
 
+### 2. Update a Policy using HTTP API
+
+```console
+$ curl --request PUT '{{HOST}}/api/v1beta1/policies/{{policy_id}}' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "steps": [
+    {
+      "name": "manager_approval",
+      "description": "Manager approval for sensitive data",
+      "when": "$appeal.resource.details.is_sensitive == true",
+      "strategy": "manual",
+      "approvers": [
+        "$appeal.creator.manager_email"
+      ]
+    },
+    {
+      "name": "resource_owner_approval",
+      "description": "Approval from resource admin/owner",
+      "strategy": "manual",
+      "approvers": [
+        "$appeal.resource.details.owner"
+      ]
+    }
+  ]
+}'
+```
+
+## Listing Policies
+
+Listing policies can be done in the following ways:
+1. [Using `guardian policy list` CLI command](#1-list-policies-using-cli)
+2. [Calling to `GET /api/v1beta1/policies` API](#2-list-policies-using-http-api)
+
+### 1. List Policies using CLI
+```console
+$ guardian policy list --output=yaml
+```
+
+### 2. List Policies using HTTP API
+```console
+$ curl --request GET '{{HOST}}/api/v1beta1/policies'
+```
+
+## Viewing Policies
+
+Viewing a policy can be done in the following ways:
+
+1. [Using `guardian policy view` CLI command](#1-view-a-policy-using-cli)
+2. [Calling to `GET /api/v1beta1/policies/:id/versions/:version` API](#2-view-a-policy-using-http-api)
+
+### 1. View a Policy using CLI
+```console
+$ guardian policy view {{policy_id}} --version={{policy_version}}
+```
+
+### 2. View a Policy using HTTP API
+```console
+$ curl --request GET '{{HOST}}/api/v1beta1/policies/{{policy_id}}/versions/{{policy_version}}'
+```
