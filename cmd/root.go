@@ -40,8 +40,7 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 
 	protoAdapter := handlerv1beta1.NewAdapter()
 
-	cmd.AddCommand(serveCommand())
-	cmd.AddCommand(migrateCommand())
+	cmd.AddCommand(ServerCommand())
 	cmd.AddCommand(configCommand())
 	cmd.AddCommand(ResourceCmd(cliConfig, protoAdapter))
 	cmd.AddCommand(ProviderCmd(cliConfig, protoAdapter))
