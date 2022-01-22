@@ -1,3 +1,6 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Managing Resources
 
 Resource in Guardian represents the actual resource in the provider e.g. for BigQuery provider, a resource represents a dataset or a table. One of Guardian's responsibility is to manage the access to resources, and in order to do that Guardian needs to be able to manage the resources as well.
@@ -27,17 +30,22 @@ Guardian collects resources from the provider automatically as soon as it regist
 
 ## Updating Resources Metadata
 
-Update a resource can be done in the following ways:
-1. [Using `guardian resource set` CLI command](#1-update-a-resource-using-cli)
-2. [Calling to `PUT /api/v1beta1/resources/:id` API](#2-update-a-resource-using-http-api)
-
 Guardian allows users to add metadata to the resources. This can be useful when configuring the approval steps in the policy that needs information from metadata e.g. “owners” as the approvers.
 
-### 1. Update a Resource using CLI
+#### Update a resource can be done in the following ways:
+1. Using `guardian resource set` CLI command
+2. Calling to `PUT /api/v1beta1/resources/:id` API
+
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
 ```console
 $ guardian resource set --id={{resource_id}} --values=<key1>=<value1> --values=<key2>=<value2>
 ```
-### 2. Update a Resource using HTTP CLI
+
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
 ```console
 $ curl --request PUT '{{HOST}}/api/v1beta1/resources/{{resource_id}}' \
 --header 'Content-Type: application/json' \
@@ -49,35 +57,51 @@ $ curl --request PUT '{{HOST}}/api/v1beta1/resources/{{resource_id}}' \
 }'
 ```
 
+  </TabItem>
+</Tabs>
+
 ## Listing Resources
 
-Listing resources can be done in the following ways:
-1. [Using `guardian resource list` CLI command](#1-list-resources-using-cli)
-2. [Calling to `GET /api/v1beta1/resources` API](#2-list-resources-using-http-api)
+#### Listing resources can be done in the following ways:
+1. Using `guardian resource list` CLI command
+2. Calling to `GET /api/v1beta1/resources` API
 
-### 1. List Resources using CLI
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
 ```console
 $ guardian resource list --output=yaml
 ```
 
-### 2. List Resources using HTTP API
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
 ```console
 $ curl --request GET '{{HOST}}/api/v1beta1/resources'
 ```
 
+  </TabItem>
+</Tabs>
+
 ## Viewing Resources
 
-Viewing a resource can be done in the following ways:
+#### Viewing a resource can be done in the following ways:
+1. Using `guardian resource view` CLI command
+2. Calling to `GET /api/v1beta1/resources/:id` API
 
-1. [Using `guardian resource view` CLI command](#1-view-a-resource-using-cli)
-2. [Calling to `GET /api/v1beta1/resources/:id` API](#2-view-a-resource-using-http-api)
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
 
-### 1. View a Resource using CLI
 ```console
 $ guardian resource view {{resource_id}}
 ```
 
-### 2. View a Resource using HTTP API
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
 ```console
 $ curl --request GET '{{HOST}}/api/v1beta1/resources/{{resource_id}}'
 ```
+
+  </TabItem>
+</Tabs>

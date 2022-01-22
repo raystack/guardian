@@ -1,12 +1,11 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Managing Appeals
 
 An appeal is essentially a request created by users to give them access to resources. In order to grant the access, an appeal has to be approved by approvers which is assigned based on the applied policy. Appeal contains information about the requested account, the creator, the selected resources, the specific role for accessing the resource, and options to determine the behaviour of the access e.g. permanent or temporary access.
 
 ## Creating Appeals
-
-Appeals can be created in the following ways:
-1. [Using `guardian appeal create` CLI command](#1-create-an-appeal-using-cli)
-2. [Calling to `POST /api/v1beta1/appeals` API](#2-create-an-appeal-using-http-api)
 
 Guardian creates access for users to resources with configurable approval flow. Appeal created by user with specifying which resource they want to access and also the role.
 
@@ -30,12 +29,20 @@ Guardian creates access for users to resources with configurable approval flow. 
 - Expire: If the appeal specifies the expiration policy then it will automatically get expired when it is already passed the lifetime limit.
 - Recreate: Possible for appeals that are currently still active, rejected, or terminated. This action will create a new appeal based on the previous one. For the appeal coming from active status, there is a policy related to access extension.
 
-### 1. Create an Appeal using CLI
+#### Appeals can be created in the following ways:
+1. Using `guardian appeal create` CLI command
+2. Calling to `POST /api/v1beta1/appeals` API
+
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
 ```console
 $ guardian appeal create --account-id=user@example.com --resource=a32b702a-029d-4d76-90c4-c3b8cc52941b --role=viewer
 ```
 
-### 2. Create an Appeal using HTTP API
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
 ```console
 $ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
 --header 'X-Auth-Email: user@example.com' \
@@ -51,27 +58,38 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
 }'
 ```
 
+  </TabItem>
+</Tabs>
+
 ## Canceling Appeals
 
-Appeal creator can cancel their appeal while it's status is still on `pending`.
+#### Appeal creator can cancel their appeal while it's status is still on `pending`.
 
 Appeals can be canceled in the following ways:
-1. [Calling to `PUT /api/v1beta1/appeals/:id/cancel` API](#1-cancel-an-appeal-using-http-api)
+1. Calling to `PUT /api/v1beta1/appeals/:id/cancel` API
 
-### 1. Cancel an Appeal using HTTP API
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
 ```console
 $ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
 ```
+
+  </TabItem>
+</Tabs>
+
 
 ## Approving and Rejecting Appeals
 
 ![](/assets/approval-flow.png)
 
-Appeals can be approved/rejected in the following ways:
-1. [Using `guardian appeal approve/reject` CLI command](#1-approve-or-reject-an-appeal-using-cli)
-2. [Calling to `POST /api/v1beta1/appeals/:id/approvals/:approval_step_name/` API](#2-approve-or-reject-an-appeal-using-http-api)
+#### Appeals can be approved/rejected in the following ways:
+1. Using `guardian appeal approve/reject` CLI command
+2. Calling to `POST /api/v1beta1/appeals/:id/approvals/:approval_step_name/` API
 
-### 1. Approve or Reject an Appeal using CLI
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
 #### Approve an Appeal
 ```console
 $ guardian appeal approve --id={{appeal_id}} --step={{approval_step_name}}
@@ -82,7 +100,9 @@ $ guardian appeal approve --id={{appeal_id}} --step={{approval_step_name}}
 $ guardian appeal reject --id={{appeal_id}} --step={{approval_step_name}} --reason={{rejection_message}}
 ```
 
-### 2. Approve or Reject an Appeal using HTTP API
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
 #### Approve an Appeal
 ```console
 $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{approval_step_name}}' \
@@ -103,3 +123,6 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
     "reason": "{{rejection_message}}"
 }'
 ```
+
+  </TabItem>
+</Tabs>
