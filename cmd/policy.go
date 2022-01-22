@@ -30,11 +30,11 @@ func PolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Com
 			Policies are used to define governance rules of the data access.
 		`),
 		Example: heredoc.Doc(`
-			$ guardian policy create --file policy.yaml
-			$ guardian policy edit --file policy.yaml
+			$ guardian policy create
+			$ guardian policy edit
 			$ guardian policy list
-			$ guardian policy init
-			$ guardian policy view my_policy --version 1	
+			$ guardian policy view
+			$ guardian policy init	
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -121,7 +121,7 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 			Display the ID, name, and other information about a policy.
 		`),
 		Example: heredoc.Doc(`
-			$ guardian policy view my_policy -v 1
+			$ guardian policy view <policy-id> --version=<policy-version>
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -179,6 +179,7 @@ func getPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.
 
 func createPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
+
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new policy",
@@ -186,7 +187,7 @@ func createPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			Create a new policy from a file.
 		`),
 		Example: heredoc.Doc(`
-			$ guardian policy create -f policy.yaml
+			$ guardian policy create --file=<file-path>
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -242,7 +243,7 @@ func updatePolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			Edit an existing policy with a file.
 		`),
 		Example: heredoc.Doc(`
-			$ guardian policy edit -f policy.yaml
+			$ guardian policy edit --file=<file-path>
 		`),
 
 		Annotations: map[string]string{
