@@ -1,4 +1,6 @@
-# Managing resources
+# Managing Resources
+
+Resource in Guardian represents the actual resource in the provider e.g. for BigQuery provider, a resource represents a dataset or a table. One of Guardian's responsibility is to manage the access to resources, and in order to do that Guardian needs to be able to manage the resources as well.
 
 ## Collecting Resources
 

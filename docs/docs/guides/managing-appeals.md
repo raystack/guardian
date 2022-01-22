@@ -1,6 +1,8 @@
-# Managing appeals
+# Managing Appeals
 
-## Creating appeal
+An appeal is essentially a request created by users to give them access to resources. In order to grant the access, an appeal has to be approved by approvers which is assigned based on the applied policy. Appeal contains information about the requested account, the creator, the selected resources, the specific role for accessing the resource, and options to determine the behaviour of the access e.g. permanent or temporary access.
+
+## Creating Appeals
 
 Appeals can be created in the following ways:
 1. [Using `guardian appeal create` CLI command](#1-create-an-appeal-using-cli)

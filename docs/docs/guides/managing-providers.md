@@ -1,4 +1,4 @@
-# Managing providers
+# Managing Providers
 
 Provider manages roles, resources, provider credentials and also points each resource type to a considered policy.
 
