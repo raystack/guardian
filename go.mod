@@ -7,7 +7,6 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/antonmedv/expr v1.9.0
-	github.com/briandowns/spinner v1.18.0
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -16,7 +15,7 @@ require (
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mcuadros/go-lookup v0.0.0-20200831155250-80f87a4fa5ee
 	github.com/mitchellh/mapstructure v1.4.1
-	github.com/odpf/salt v0.0.0-20220119024410-9aa38ffc5626
+	github.com/odpf/salt v0.0.0-20220122204403-0c7b270fb29b
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
@@ -36,6 +35,7 @@ require (
 	cloud.google.com/go v0.81.0 // indirect
 	github.com/alecthomas/chroma v0.8.2 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/briandowns/spinner v1.18.0 // indirect
 	github.com/charmbracelet/glamour v0.3.0 // indirect
 	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

@@ -51,6 +51,7 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 
 	// Help topics
 	cmdx.SetHelp(cmd)
+	cmd.AddCommand(cmdx.SetCompletionCmd("guardian"))
 	cmd.AddCommand(cmdx.SetHelpTopic("environment", envHelp))
 	cmd.AddCommand(cmdx.SetRefCmd(cmd))
 

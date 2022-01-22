@@ -12,7 +12,7 @@ import (
 func configCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config <command>",
-		Short: "Manage client configuration settings",
+		Short: "Manage client configurations",
 		Example: heredoc.Doc(`
 			$ guardian config init
 			$ guardian config list`),
