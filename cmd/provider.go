@@ -58,7 +58,7 @@ func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			ctx := context.Background()
@@ -116,7 +116,7 @@ func viewProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			ctx := context.Background()
@@ -168,7 +168,7 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			var providerConfig domain.ProviderConfig
@@ -225,7 +225,7 @@ func editProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			var providerConfig domain.ProviderConfig
