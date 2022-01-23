@@ -55,7 +55,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			ctx := context.Background()
@@ -142,7 +142,7 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			ctx := context.Background()
@@ -227,7 +227,7 @@ func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			var resource domain.Resource

@@ -61,7 +61,7 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 			$ guardian appeal list --role=viewer
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			cs := term.NewColorScheme()
@@ -122,7 +122,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 			$ guardian appeal create --account=<account-id> --type=<account-type> --resource=<resource-id> --role=<role>
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			options := map[string]interface{}{}
@@ -194,7 +194,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 	`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			ctx := context.Background()
@@ -244,7 +244,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 	`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			ctx := context.Background()
@@ -296,7 +296,7 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 	`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			ctx := context.Background()
@@ -346,7 +346,7 @@ func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			ctx := context.Background()
@@ -418,7 +418,7 @@ func cancelAppealCommand(c *app.CLIConfig) *cobra.Command {
 	`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spinner := printer.Progress("")
+			spinner := printer.Spin("")
 			defer spinner.Stop()
 
 			ctx := context.Background()
