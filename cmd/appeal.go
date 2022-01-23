@@ -61,8 +61,8 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 			$ guardian appeal list --role=viewer
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Fetching appeal list")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			cs := term.NewColorScheme()
 
@@ -85,7 +85,7 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 			report := [][]string{}
 
 			appeals := res.GetAppeals()
-			s.Stop()
+			spinner.Stop()
 
 			fmt.Printf(" \nShowing %d of %d policies\n \n", len(appeals), len(appeals))
 
@@ -122,8 +122,8 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 			$ guardian appeal create --account=<account-id> --type=<account-type> --resource=<resource-id> --role=<role>
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Creating appeal")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			options := map[string]interface{}{}
 			if optionsDuration != "" {
@@ -157,7 +157,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			s.Stop()
+			spinner.Stop()
 
 			appealID := res.GetAppeals()[0].GetId()
 			fmt.Printf("appeal created with id: %v", appealID)
@@ -194,8 +194,8 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 	`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Revoking appeal")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -220,7 +220,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			s.Stop()
+			spinner.Stop()
 
 			fmt.Printf("appeal with id `%v` revoked successfully", id)
 
@@ -244,8 +244,8 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 	`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Approving appeal")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -271,7 +271,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			s.Stop()
+			spinner.Stop()
 
 			fmt.Printf("appeal with id %v and approval name %v approved successfully", id, approvalName)
 
@@ -296,8 +296,8 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 	`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Rejecting appeal")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -323,7 +323,7 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			s.Stop()
+			spinner.Stop()
 
 			fmt.Printf("appeal with id %v and approval name %v rejected successfully", id, approvalName)
 
@@ -346,6 +346,8 @@ func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -366,6 +368,8 @@ func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			spinner.Stop()
 
 			appeal := res.GetAppeal()
 			fmt.Printf(" \nAppeal status: %s\n", appeal.GetStatus())
@@ -414,6 +418,9 @@ func cancelAppealCommand(c *app.CLIConfig) *cobra.Command {
 	`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			spinner := printer.Progress("")
+			defer spinner.Stop()
+
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
 			if err != nil {
@@ -433,6 +440,8 @@ func cancelAppealCommand(c *app.CLIConfig) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			spinner.Stop()
 
 			fmt.Printf("appeal with id `%v` cancelled successfully", id)
 

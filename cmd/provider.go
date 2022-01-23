@@ -13,7 +13,6 @@ import (
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
-	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 )
 
@@ -59,8 +58,8 @@ func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Fetching provider list")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -78,7 +77,7 @@ func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 
 			providers := res.GetProviders()
 
-			s.Stop()
+			spinner.Stop()
 
 			fmt.Printf(" \nShowing %d of %d providers\n \n", len(providers), len(providers))
 
@@ -117,8 +116,8 @@ func viewProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Fetching provider")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -140,7 +139,7 @@ func viewProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 				return fmt.Errorf("failed to parse provider: %v", err)
 			}
 
-			s.Stop()
+			spinner.Stop()
 
 			if err := printer.Text(p, format); err != nil {
 				return fmt.Errorf("failed to format provider: %v", err)
@@ -169,8 +168,8 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Creating provider")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			var providerConfig domain.ProviderConfig
 			if err := parseFile(filePath, &providerConfig); err != nil {
@@ -196,7 +195,7 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 				return err
 			}
 
-			s.Stop()
+			spinner.Stop()
 
 			fmt.Printf("Provider created with id: %v", res.GetProvider().GetId())
 
@@ -226,8 +225,8 @@ func editProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Editing provider")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			var providerConfig domain.ProviderConfig
 			if err := parseFile(filePath, &providerConfig); err != nil {
@@ -260,7 +259,7 @@ func editProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 				return err
 			}
 
-			s.Stop()
+			spinner.Stop()
 
 			fmt.Println("Successfully updated provider")
 

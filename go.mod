@@ -15,7 +15,7 @@ require (
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mcuadros/go-lookup v0.0.0-20200831155250-80f87a4fa5ee
 	github.com/mitchellh/mapstructure v1.4.1
-	github.com/odpf/salt v0.0.0-20220122204403-0c7b270fb29b
+	github.com/odpf/salt v0.0.0-20220123001712-98c9d67d7bef
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1

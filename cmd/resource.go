@@ -12,7 +12,6 @@ import (
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
-	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 )
 
@@ -56,8 +55,8 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Fetching resource list")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -86,7 +85,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 					resources = append(resources, adapter.FromResourceProto(r))
 				}
 
-				s.Stop()
+				spinner.Stop()
 
 				if err := printer.Text(resources, format); err != nil {
 					return fmt.Errorf("failed to parse resources: %v", err)
@@ -97,7 +96,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 			report := [][]string{}
 			resources := res.GetResources()
 
-			s.Stop()
+			spinner.Stop()
 
 			fmt.Printf(" \nShowing %d of %d resources\n \n", len(resources), len(resources))
 
@@ -143,8 +142,8 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Fetching resource")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			ctx := context.Background()
 			client, cancel, err := createClient(ctx, c.Host)
@@ -228,8 +227,8 @@ func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			s := term.Spin("Updating resource")
-			defer s.Stop()
+			spinner := printer.Progress("")
+			defer spinner.Stop()
 
 			var resource domain.Resource
 			if err := parseFile(filePath, &resource); err != nil {
@@ -262,7 +261,7 @@ func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 				return err
 			}
 
-			s.Stop()
+			spinner.Stop()
 
 			fmt.Println("Successfully updated metadata")
 
