@@ -1,0 +1,107 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Managing Resources
+
+Resource in Guardian represents the actual resource in the provider e.g. for BigQuery provider, a resource represents a dataset or a table. One of Guardian's responsibility is to manage the access to resources, and in order to do that Guardian needs to be able to manage the resources as well.
+
+## Collecting Resources
+
+Guardian collects resources from the provider automatically as soon as it registered. While in parallel, Guardian also has a job for continously syncing resources.
+
+#### Example
+```json
+{
+  "id": "a32b702a-029d-4d76-90c4-c3b8cc52941b",
+  "provider_type": "bigquery",
+  "provider_urn": "gcp-project-id-bigquery",
+  "type": "table",
+  "urn": "gcp-project-id:dataset_name.table_name",
+  "name": "table_name",
+  "details": {
+    "is_sensitive": false,
+    "owner": [
+      "john.doe@example.com",
+      "john.smith@example.com"
+    ]
+  }
+}
+```
+
+## Updating Resources Metadata
+
+Guardian allows users to add metadata to the resources. This can be useful when configuring the approval steps in the policy that needs information from metadata e.g. “owners” as the approvers.
+
+#### Update a resource can be done in the following ways:
+1. Using `guardian resource set` CLI command
+2. Calling to `PUT /api/v1beta1/resources/:id` API
+
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
+```console
+$ guardian resource set --id={{resource_id}} --values=<key1>=<value1> --values=<key2>=<value2>
+```
+
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
+```console
+$ curl --request PUT '{{HOST}}/api/v1beta1/resources/{{resource_id}}' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "details": {
+        "key1": "value1",
+        "key2": "value2"
+    }
+}'
+```
+
+  </TabItem>
+</Tabs>
+
+## Listing Resources
+
+#### Listing resources can be done in the following ways:
+1. Using `guardian resource list` CLI command
+2. Calling to `GET /api/v1beta1/resources` API
+
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
+```console
+$ guardian resource list --output=yaml
+```
+
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
+```console
+$ curl --request GET '{{HOST}}/api/v1beta1/resources'
+```
+
+  </TabItem>
+</Tabs>
+
+## Viewing Resources
+
+#### Viewing a resource can be done in the following ways:
+1. Using `guardian resource view` CLI command
+2. Calling to `GET /api/v1beta1/resources/:id` API
+
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
+```console
+$ guardian resource view {{resource_id}}
+```
+
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
+```console
+$ curl --request GET '{{HOST}}/api/v1beta1/resources/{{resource_id}}'
+```
+
+  </TabItem>
+</Tabs>

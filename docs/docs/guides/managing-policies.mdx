@@ -1,0 +1,168 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Managing Policies
+
+Policy controls how users or accounts can get access to a resource. Policy used by appeal to determine the approval flow, get creator's identity/profile, and decide whether it needs additional appeals. Policy is attached to a resource type in the provider config, thus a policy should be the first thing to setup before creating a provider and getting its resources.
+
+## Creating Policies
+
+Policy has `version` to ensure each appeal has a reference to an applied policy when it's created. A policy is created with an initial `version` equal to `1`.
+
+#### Example
+```yaml
+# policy.yaml
+id: my_policy
+steps:
+  - name: manager_approval
+    description: Manager approval for sensitive data
+    when: $appeal.resource.details.is_sensitive == true
+    strategy: manual
+    approvers:
+      - $appeal.creator.manager_email
+  - name: resource_owner_approval
+    description: Approval from resource admin/owner
+    strategy: manual
+    approvers:
+      - $appeal.resource.details.owner
+```
+
+Check [policy reference](../reference/policy.md) for more details on the policy configuration
+
+#### Policies can be created in the following ways:
+1. Using `guardian policy create` CLI command
+2. Calling to `POST /api/v1beta1/policies` API
+
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
+```console
+$ guardian policy create --file=policy.yaml
+```
+
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
+```console
+$ curl --request POST '{{HOST}}/api/v1beta1/policies' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "id": "my_policy",
+  "steps": [
+    {
+      "name": "manager_approval",
+      "description": "Manager approval for sensitive data",
+      "when": "$appeal.resource.details.is_sensitive == true",
+      "strategy": "manual",
+      "approvers": [
+        "$appeal.creator.manager_email"
+      ]
+    },
+    {
+      "name": "resource_owner_approval",
+      "description": "Approval from resource admin/owner",
+      "strategy": "manual",
+      "approvers": [
+        "$appeal.resource.details.owner"
+      ]
+    }
+  ]
+}'
+```
+
+  </TabItem>
+</Tabs>
+
+## Updating Policy
+
+Updating a policy actually means creating a new policy with the same `id` but the `version` gets incremented by `1`. Both the new and previous policies still can be used by providers.
+
+#### Policies can be updated in the following ways:
+1. Using `guardian policy edit` CLI command
+2. Calling to `PUT /api/v1beta1/policies/:id` API
+
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
+```console
+$ guardian policy edit --file=policy.yaml
+```
+
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
+```console
+$ curl --request PUT '{{HOST}}/api/v1beta1/policies/{{policy_id}}' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "steps": [
+    {
+      "name": "manager_approval",
+      "description": "Manager approval for sensitive data",
+      "when": "$appeal.resource.details.is_sensitive == true",
+      "strategy": "manual",
+      "approvers": [
+        "$appeal.creator.manager_email"
+      ]
+    },
+    {
+      "name": "resource_owner_approval",
+      "description": "Approval from resource admin/owner",
+      "strategy": "manual",
+      "approvers": [
+        "$appeal.resource.details.owner"
+      ]
+    }
+  ]
+}'
+```
+
+  </TabItem>
+</Tabs>
+
+## Listing Policies
+
+#### Listing policies can be done in the following ways:
+1. Using `guardian policy list` CLI command
+2. Calling to `GET /api/v1beta1/policies` API
+
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
+```console
+$ guardian policy list --output=yaml
+```
+
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
+```console
+$ curl --request GET '{{HOST}}/api/v1beta1/policies'
+```
+
+  </TabItem>
+</Tabs>
+
+## Viewing Policies
+
+#### Viewing a policy can be done in the following ways:
+
+1. Using `guardian policy view` CLI command
+2. Calling to `GET /api/v1beta1/policies/:id/versions/:version` API
+
+<Tabs groupId="api">
+  <TabItem value="cli" label="CLI" default>
+
+```console
+$ guardian policy view {{policy_id}} --version={{policy_version}}
+```
+
+  </TabItem>
+  <TabItem value="http" label="HTTP">
+
+```console
+$ curl --request GET '{{HOST}}/api/v1beta1/policies/{{policy_id}}/versions/{{policy_version}}'
+```
+
+  </TabItem>
+</Tabs>
