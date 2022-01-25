@@ -16,7 +16,6 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
-	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -483,11 +482,10 @@ func planPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra
 				return fmt.Errorf("failed to marshal new policy: %w", err)
 			}
 
-			dmp := diffmatchpatch.New()
-			diffs := dmp.DiffMain(string(existingPolicyYaml), string(newPolicyYaml), false)
+			diffs := diff(string(existingPolicyYaml), string(newPolicyYaml))
 
 			spinner.Stop()
-			fmt.Println(dmp.DiffPrettyText(diffs))
+			fmt.Println(diffs)
 			return nil
 		},
 	}

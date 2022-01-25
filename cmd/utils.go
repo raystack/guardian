@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"gopkg.in/yaml.v3"
 )
 
@@ -30,4 +31,15 @@ func parseFile(filePath string, v interface{}) error {
 	}
 
 	return nil
+}
+
+func diff(a, b string) string {
+	dmp := diffmatchpatch.New()
+
+	aDmp, bDmp, dmpStrings := dmp.DiffLinesToChars(a, b)
+	diffs := dmp.DiffMain(aDmp, bDmp, false)
+	diffs = dmp.DiffCharsToLines(diffs, dmpStrings)
+	diffs = dmp.DiffCleanupSemantic(diffs)
+
+	return dmp.DiffPrettyText(diffs)
 }

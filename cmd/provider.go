@@ -12,7 +12,6 @@ import (
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
-	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -448,11 +447,10 @@ func planProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 				return fmt.Errorf("failed to marshal new provider: %w", err)
 			}
 
-			dmp := diffmatchpatch.New()
-			diffs := dmp.DiffMain(string(existingProviderYaml), string(newProviderYaml), false)
+			diffs := diff(string(existingProviderYaml), string(newProviderYaml))
 
 			spinner.Stop()
-			fmt.Println(dmp.DiffPrettyText(diffs))
+			fmt.Println(diffs)
 			return nil
 		},
 	}
