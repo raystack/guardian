@@ -40,6 +40,7 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 	cmd.AddCommand(viewProviderCmd(c, adapter))
 	cmd.AddCommand(createProviderCmd(c, adapter))
 	cmd.AddCommand(editProviderCmd(c, adapter))
+	cmd.AddCommand(applyProviderCmd(c, adapter))
 	cmd.AddCommand(initProviderCmd(c))
 
 	return cmd
@@ -288,6 +289,88 @@ func initProviderCmd(c *app.CLIConfig) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File name for the policy config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
+
+func applyProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+	var filePath string
+	cmd := &cobra.Command{
+		Use:   "apply",
+		Short: "Apply a provider",
+		Long: heredoc.Doc(`
+			Create or edit a provider from a file.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian provider apply --file <file-path>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			spinner := printer.Spin("")
+			defer spinner.Stop()
+
+			var providerConfig domain.ProviderConfig
+			if err := parseFile(filePath, &providerConfig); err != nil {
+				return err
+			}
+
+			configProto, err := adapter.ToProviderConfigProto(&providerConfig)
+			if err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			pType := configProto.GetType()
+			pUrn := configProto.GetUrn()
+
+			listRes, err := client.ListProviders(ctx, &guardianv1beta1.ListProvidersRequest{}) // TODO: filter by type & urn
+			if err != nil {
+				return err
+			}
+			providerID := ""
+			for _, p := range listRes.GetProviders() {
+				if p.GetType() == pType && p.GetUrn() == pUrn {
+					providerID = p.GetId()
+				}
+			}
+
+			if providerID == "" {
+				res, err := client.CreateProvider(ctx, &guardianv1beta1.CreateProviderRequest{
+					Config: configProto,
+				})
+				if err != nil {
+					return err
+				}
+
+				spinner.Stop()
+				fmt.Printf("Provider created with id: %v", res.GetProvider().GetId())
+			} else {
+				_, err = client.UpdateProvider(ctx, &guardianv1beta1.UpdateProviderRequest{
+					Id:     providerID,
+					Config: configProto,
+				})
+				if err != nil {
+					return err
+				}
+
+				spinner.Stop()
+				fmt.Println("Successfully updated provider")
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
 	cmd.MarkFlagRequired("file")
 
 	return cmd

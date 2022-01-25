@@ -16,6 +16,8 @@ import (
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // PolicyCmd is the root command for the policies subcommand.
@@ -44,6 +46,7 @@ func PolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Com
 	cmd.AddCommand(getPolicyCmd(c, adapter))
 	cmd.AddCommand(createPolicyCmd(c, adapter))
 	cmd.AddCommand(updatePolicyCmd(c, adapter))
+	cmd.AddCommand(applyPolicyCmd(c, adapter))
 	cmd.AddCommand(initPolicyCmd(c))
 
 	return cmd
@@ -327,6 +330,89 @@ func initPolicyCmd(c *app.CLIConfig) *cobra.Command {
 
 	return cmd
 }
+
+func applyPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+	var filePath string
+
+	cmd := &cobra.Command{
+		Use:   "apply",
+		Short: "Apply a policy config",
+		Long: heredoc.Doc(`
+			Create or edit a policy from a file.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian policy apply --file=<file-path>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			spinner := printer.Spin("")
+			defer spinner.Stop()
+
+			var policy domain.Policy
+			if err := parseFile(filePath, &policy); err != nil {
+				return err
+			}
+
+			policyProto, err := adapter.ToPolicyProto(&policy)
+			if err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			policyID := policyProto.GetId()
+			_, err = client.GetPolicy(ctx, &guardianv1beta1.GetPolicyRequest{
+				Id: policyID,
+			})
+			policyExists := true
+			if err != nil {
+				if e, ok := status.FromError(err); ok && e.Code() == codes.NotFound {
+					policyExists = false
+				} else {
+					return err
+				}
+			}
+
+			if policyExists {
+				res, err := client.UpdatePolicy(ctx, &guardianv1beta1.UpdatePolicyRequest{
+					Id:     policyID,
+					Policy: policyProto,
+				})
+				if err != nil {
+					return err
+				}
+				spinner.Stop()
+
+				fmt.Printf("Policy updated to version: %v\n", res.GetPolicy().GetVersion())
+			} else {
+				res, err := client.CreatePolicy(ctx, &guardianv1beta1.CreatePolicyRequest{
+					Policy: policyProto,
+				})
+				if err != nil {
+					return err
+				}
+				spinner.Stop()
+
+				fmt.Printf("Policy created with id: %v\n", res.GetPolicy().GetId())
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the policy config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
+
 func getVersion(versionFlag string, policyId []string) (uint64, error) {
 	if versionFlag != "" {
 		ver, err := strconv.ParseUint(versionFlag, 10, 32)
