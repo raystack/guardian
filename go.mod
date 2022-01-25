@@ -17,6 +17,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/odpf/salt v0.0.0-20220123021549-36df4f993e88
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/sergi/go-diff v1.0.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0

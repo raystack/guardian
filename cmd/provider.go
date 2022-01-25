@@ -12,7 +12,9 @@ import (
 	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
@@ -40,6 +42,7 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 	cmd.AddCommand(viewProviderCmd(c, adapter))
 	cmd.AddCommand(createProviderCmd(c, adapter))
 	cmd.AddCommand(editProviderCmd(c, adapter))
+	cmd.AddCommand(planProviderCmd(c, adapter))
 	cmd.AddCommand(applyProviderCmd(c, adapter))
 	cmd.AddCommand(initProviderCmd(c))
 
@@ -366,6 +369,90 @@ func applyProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 				fmt.Println("Successfully updated provider")
 			}
 
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
+
+func planProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+	var filePath string
+	cmd := &cobra.Command{
+		Use:   "plan",
+		Short: "Show changes from the new provider",
+		Long: heredoc.Doc(`
+			Show changes from the new provider. This will not actually apply the provider config.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian provider plan --file=<file-path>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			spinner := printer.Spin("")
+			defer spinner.Stop()
+
+			var newProvider domain.ProviderConfig
+			if err := parseFile(filePath, &newProvider); err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			pType := newProvider.Type
+			pUrn := newProvider.URN
+
+			listRes, err := client.ListProviders(ctx, &guardianv1beta1.ListProvidersRequest{}) // TODO: filter by type & urn
+			if err != nil {
+				return err
+			}
+			providerID := ""
+			for _, p := range listRes.GetProviders() {
+				if p.GetType() == pType && p.GetUrn() == pUrn {
+					providerID = p.GetId()
+				}
+			}
+
+			var existingProvider *domain.ProviderConfig
+			if providerID != "" {
+				getRes, err := client.GetProvider(ctx, &guardianv1beta1.GetProviderRequest{
+					Id: providerID,
+				})
+				if err != nil {
+					return err
+				}
+
+				pc, err := adapter.FromProviderConfigProto(getRes.GetProvider().GetConfig())
+				if err != nil {
+					return fmt.Errorf("unable to parse existing provider: %w", err)
+				}
+				existingProvider = pc
+			}
+
+			existingProviderYaml, err := yaml.Marshal(existingProvider)
+			if err != nil {
+				return fmt.Errorf("failed to marshal existing provider: %w", err)
+			}
+			newProviderYaml, err := yaml.Marshal(newProvider)
+			if err != nil {
+				return fmt.Errorf("failed to marshal new provider: %w", err)
+			}
+
+			dmp := diffmatchpatch.New()
+			diffs := dmp.DiffMain(string(existingProviderYaml), string(newProviderYaml), false)
+
+			spinner.Stop()
+			fmt.Println(dmp.DiffPrettyText(diffs))
 			return nil
 		},
 	}
