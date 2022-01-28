@@ -13,14 +13,20 @@ build: ## Build the guardian binary
 	go build -ldflags "-X ${NAME}/cmd.Version=${APP_VERSION} -X ${NAME}/cmd.BuildCommit=${LAST_COMMIT}" -o guardian .
 	@echo " - build complete"
 
+buildr: install ## Build with goreleaser
+	goreleaser --snapshot --skip-publish --rm-dist
+
 test: ## Run the tests
-	go test ./... -coverprofile=coverage.out
+	go test ./... -race -coverprofile=coverage.out
 
 coverage: ## Print code coverage
 	go test -race -coverprofile coverage.txt -covermode=atomic ./... & go tool cover -html=coverage.out
 
 vet: ## Run the go vet tool
 	go vet ./...
+
+lint: ## Lint with golangci-lint
+	golangci-lint run
 
 proto: ## Generate the protobuf files
 	@echo " > generating protobuf from odpf/proton"
@@ -30,6 +36,7 @@ proto: ## Generate the protobuf files
 
 clean: ## Clean the build artifacts
 	rm -rf guardian dist/
+	rm -f coverage.*
 
 install: ## install required dependencies
 	@echo "> installing dependencies"

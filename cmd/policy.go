@@ -27,8 +27,7 @@ func PolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Com
 		Long: heredoc.Doc(`
 			Work with policies.
 
-			Policies are used to define governance rules of the data access.
-		`),
+			Policies are used to define governance rules of the data access.`),
 		Example: heredoc.Doc(`
 			$ guardian policy create
 			$ guardian policy edit
