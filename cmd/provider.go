@@ -24,8 +24,7 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 		Long: heredoc.Doc(`
 			Work with providers.
 			
-			Providers are the system for which we intend to manage access.
-		`),
+			Providers are the system for which we intend to manage access.`),
 		Example: heredoc.Doc(`
 			$ guardian provider create
 			$ guardian provider list
@@ -51,9 +50,7 @@ func listProvidersCmd(c *app.CLIConfig) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "List and filter providers",
-		Long: heredoc.Doc(`
-			List and filter all registered providers.
-		`),
+		Long:  "List and filter all registered providers.",
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -106,8 +103,7 @@ func viewProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 		Long: heredoc.Doc(`
 			View a provider.
 
-			Display the ID, name, and other information about a provider.
-		`),
+			Display the ID, name, and other information about a provider.`),
 		Example: heredoc.Doc(`
 			$ guardian provider view <provider-id>
 		`),
@@ -158,9 +154,7 @@ func createProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *c
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Register a new provider",
-		Long: heredoc.Doc(`
-			Register a new provider.
-		`),
+		Long:  "Register a new provider.",
 		Example: heredoc.Doc(`
 			$ guardian provider create --file <file-path>
 		`),
@@ -214,9 +208,7 @@ func editProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 	cmd := &cobra.Command{
 		Use:   "edit",
 		Short: "Edit a provider",
-		Long: heredoc.Doc(`
-			Edit an existing provider.
-		`),
+		Long:  "Edit an existing provider.",
 		Example: heredoc.Doc(`
 			$ guardian provider edit <provider-id> --file <file-path>
 		`),
@@ -278,9 +270,7 @@ func initProviderCmd(c *app.CLIConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Creates a provider template",
-		Long: heredoc.Doc(`
-			Create a provider template with a given file name.
-		`),
+		Long:  "Create a provider template with a given file name.",
 		Example: heredoc.Doc(`
 			$ guardian provider init --file=<output-name>
 		`),

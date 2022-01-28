@@ -171,7 +171,6 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 					return fmt.Errorf("failed to parse resources: %v", err)
 				}
 			} else {
-
 				report := [][]string{}
 				r := res.GetResource()
 
@@ -200,7 +199,6 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 				fmt.Print("\nMETADATA\n")
 				for key, value := range details {
 					fmt.Println(key, ":", value)
-
 				}
 			}
 
