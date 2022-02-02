@@ -438,6 +438,10 @@ func planProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 				existingProvider = pc
 			}
 
+			existingProvider.Credentials = nil
+			newProvider.Credentials = nil
+			// TODO: show decrypted credentials value instead of omitting them
+
 			existingProviderYaml, err := yaml.Marshal(existingProvider)
 			if err != nil {
 				return fmt.Errorf("failed to marshal existing provider: %w", err)
