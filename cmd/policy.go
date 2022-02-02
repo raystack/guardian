@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
@@ -16,6 +17,9 @@ import (
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gopkg.in/yaml.v3"
 )
 
 // PolicyCmd is the root command for the policies subcommand.
@@ -44,6 +48,8 @@ func PolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Com
 	cmd.AddCommand(getPolicyCmd(c, adapter))
 	cmd.AddCommand(createPolicyCmd(c, adapter))
 	cmd.AddCommand(updatePolicyCmd(c, adapter))
+	cmd.AddCommand(planPolicyCmd(c, adapter))
+	cmd.AddCommand(applyPolicyCmd(c, adapter))
 	cmd.AddCommand(initPolicyCmd(c))
 
 	return cmd
@@ -327,6 +333,169 @@ func initPolicyCmd(c *app.CLIConfig) *cobra.Command {
 
 	return cmd
 }
+
+func applyPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+	var filePath string
+
+	cmd := &cobra.Command{
+		Use:   "apply",
+		Short: "Apply a policy config",
+		Long: heredoc.Doc(`
+			Create or edit a policy from a file.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian policy apply --file=<file-path>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			spinner := printer.Spin("")
+			defer spinner.Stop()
+
+			var policy domain.Policy
+			if err := parseFile(filePath, &policy); err != nil {
+				return err
+			}
+
+			policyProto, err := adapter.ToPolicyProto(&policy)
+			if err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			policyID := policyProto.GetId()
+			_, err = client.GetPolicy(ctx, &guardianv1beta1.GetPolicyRequest{
+				Id: policyID,
+			})
+			policyExists := true
+			if err != nil {
+				if e, ok := status.FromError(err); ok && e.Code() == codes.NotFound {
+					policyExists = false
+				} else {
+					return err
+				}
+			}
+
+			if policyExists {
+				res, err := client.UpdatePolicy(ctx, &guardianv1beta1.UpdatePolicyRequest{
+					Id:     policyID,
+					Policy: policyProto,
+				})
+				if err != nil {
+					return err
+				}
+				spinner.Stop()
+
+				fmt.Printf("Policy updated to version: %v\n", res.GetPolicy().GetVersion())
+			} else {
+				res, err := client.CreatePolicy(ctx, &guardianv1beta1.CreatePolicyRequest{
+					Policy: policyProto,
+				})
+				if err != nil {
+					return err
+				}
+				spinner.Stop()
+
+				fmt.Printf("Policy created with id: %v\n", res.GetPolicy().GetId())
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the policy config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
+
+func planPolicyCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+	var filePath string
+
+	cmd := &cobra.Command{
+		Use:   "plan",
+		Short: "Show changes from the new policy",
+		Long: heredoc.Doc(`
+			Show changes from the new policy. This will not actually apply the policy config.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian policy plan --file=<file-path>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			spinner := printer.Spin("")
+			defer spinner.Stop()
+
+			var newPolicy domain.Policy
+			if err := parseFile(filePath, &newPolicy); err != nil {
+				return err
+			}
+
+			policyProto, err := adapter.ToPolicyProto(&newPolicy)
+			if err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			policyID := policyProto.GetId()
+			res, err := client.GetPolicy(ctx, &guardianv1beta1.GetPolicyRequest{
+				Id: policyID,
+			})
+			if err != nil {
+				return err
+			}
+
+			existingPolicy, err := adapter.FromPolicyProto(res.GetPolicy())
+			if err != nil {
+				return fmt.Errorf("unable to parse existing policy: %w", err)
+			}
+			if existingPolicy != nil {
+				newPolicy.Version = existingPolicy.Version + 1
+				newPolicy.CreatedAt = existingPolicy.CreatedAt
+			} else {
+				newPolicy.Version = 1
+				newPolicy.CreatedAt = time.Now()
+			}
+			newPolicy.UpdatedAt = time.Now()
+
+			existingPolicyYaml, err := yaml.Marshal(existingPolicy)
+			if err != nil {
+				return fmt.Errorf("failed to marshal existing policy: %w", err)
+			}
+			newPolicyYaml, err := yaml.Marshal(newPolicy)
+			if err != nil {
+				return fmt.Errorf("failed to marshal new policy: %w", err)
+			}
+
+			diffs := diff(string(existingPolicyYaml), string(newPolicyYaml))
+
+			spinner.Stop()
+			fmt.Println(diffs)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the policy config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
+
 func getVersion(versionFlag string, policyId []string) (uint64, error) {
 	if versionFlag != "" {
 		ver, err := strconv.ParseUint(versionFlag, 10, 32)

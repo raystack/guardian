@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
@@ -40,6 +41,8 @@ func ProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 	cmd.AddCommand(viewProviderCmd(c, adapter))
 	cmd.AddCommand(createProviderCmd(c, adapter))
 	cmd.AddCommand(editProviderCmd(c, adapter))
+	cmd.AddCommand(planProviderCmd(c, adapter))
+	cmd.AddCommand(applyProviderCmd(c, adapter))
 	cmd.AddCommand(initProviderCmd(c))
 
 	return cmd
@@ -288,6 +291,175 @@ func initProviderCmd(c *app.CLIConfig) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File name for the policy config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
+
+func applyProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+	var filePath string
+	cmd := &cobra.Command{
+		Use:   "apply",
+		Short: "Apply a provider",
+		Long: heredoc.Doc(`
+			Create or edit a provider from a file.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian provider apply --file <file-path>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			spinner := printer.Spin("")
+			defer spinner.Stop()
+
+			var providerConfig domain.ProviderConfig
+			if err := parseFile(filePath, &providerConfig); err != nil {
+				return err
+			}
+
+			configProto, err := adapter.ToProviderConfigProto(&providerConfig)
+			if err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			pType := configProto.GetType()
+			pUrn := configProto.GetUrn()
+
+			listRes, err := client.ListProviders(ctx, &guardianv1beta1.ListProvidersRequest{}) // TODO: filter by type & urn
+			if err != nil {
+				return err
+			}
+			providerID := ""
+			for _, p := range listRes.GetProviders() {
+				if p.GetType() == pType && p.GetUrn() == pUrn {
+					providerID = p.GetId()
+				}
+			}
+
+			if providerID == "" {
+				res, err := client.CreateProvider(ctx, &guardianv1beta1.CreateProviderRequest{
+					Config: configProto,
+				})
+				if err != nil {
+					return err
+				}
+
+				spinner.Stop()
+				fmt.Printf("Provider created with id: %v", res.GetProvider().GetId())
+			} else {
+				_, err = client.UpdateProvider(ctx, &guardianv1beta1.UpdateProviderRequest{
+					Id:     providerID,
+					Config: configProto,
+				})
+				if err != nil {
+					return err
+				}
+
+				spinner.Stop()
+				fmt.Println("Successfully updated provider")
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
+	cmd.MarkFlagRequired("file")
+
+	return cmd
+}
+
+func planProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+	var filePath string
+	cmd := &cobra.Command{
+		Use:   "plan",
+		Short: "Show changes from the new provider",
+		Long: heredoc.Doc(`
+			Show changes from the new provider. This will not actually apply the provider config.
+		`),
+		Example: heredoc.Doc(`
+			$ guardian provider plan --file=<file-path>
+		`),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			spinner := printer.Spin("")
+			defer spinner.Stop()
+
+			var newProvider domain.ProviderConfig
+			if err := parseFile(filePath, &newProvider); err != nil {
+				return err
+			}
+
+			ctx := context.Background()
+			client, cancel, err := createClient(ctx, c.Host)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			pType := newProvider.Type
+			pUrn := newProvider.URN
+
+			listRes, err := client.ListProviders(ctx, &guardianv1beta1.ListProvidersRequest{}) // TODO: filter by type & urn
+			if err != nil {
+				return err
+			}
+			providerID := ""
+			for _, p := range listRes.GetProviders() {
+				if p.GetType() == pType && p.GetUrn() == pUrn {
+					providerID = p.GetId()
+				}
+			}
+
+			var existingProvider *domain.ProviderConfig
+			if providerID != "" {
+				getRes, err := client.GetProvider(ctx, &guardianv1beta1.GetProviderRequest{
+					Id: providerID,
+				})
+				if err != nil {
+					return err
+				}
+
+				pc, err := adapter.FromProviderConfigProto(getRes.GetProvider().GetConfig())
+				if err != nil {
+					return fmt.Errorf("unable to parse existing provider: %w", err)
+				}
+				existingProvider = pc
+			}
+
+			existingProvider.Credentials = nil
+			newProvider.Credentials = nil
+			// TODO: show decrypted credentials value instead of omitting them
+
+			existingProviderYaml, err := yaml.Marshal(existingProvider)
+			if err != nil {
+				return fmt.Errorf("failed to marshal existing provider: %w", err)
+			}
+			newProviderYaml, err := yaml.Marshal(newProvider)
+			if err != nil {
+				return fmt.Errorf("failed to marshal new provider: %w", err)
+			}
+
+			diffs := diff(string(existingProviderYaml), string(newProviderYaml))
+
+			spinner.Stop()
+			fmt.Println(diffs)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
 	cmd.MarkFlagRequired("file")
 
 	return cmd
