@@ -97,6 +97,50 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 		s.Nil(actualError)
 	})
 
+	s.Run("should autofill rejection reason on auto-reject", func() {
+		rejectionReason := "test rejection reason"
+		testAppeal := &domain.Appeal{
+			PolicyID:      "test-id",
+			PolicyVersion: 1,
+			Resource: &domain.Resource{
+				Name: "grafana",
+				Details: map[string]interface{}{
+					"owner": "test-owner",
+				},
+			},
+			Policy: &domain.Policy{
+				ID:      "test-id",
+				Version: 1,
+				Steps: []*domain.Step{
+					{
+						Name:            "step-1",
+						Strategy:        "auto",
+						RejectionReason: rejectionReason,
+						ApproveIf:       `false`, // hard reject for testing purpose
+					},
+				},
+			},
+			Approvals: []*domain.Approval{
+				{
+					Status: domain.ApprovalStatusPending,
+					Index:  0,
+				},
+			},
+		}
+		expectedApprovals := []*domain.Approval{
+			{
+				Status: domain.ApprovalStatusRejected,
+				Index:  0,
+				Reason: rejectionReason,
+			},
+		}
+
+		actualError := s.service.AdvanceApproval(testAppeal)
+
+		s.Nil(actualError)
+		s.Equal(expectedApprovals, testAppeal.Approvals)
+	})
+
 	s.Run("should update approval statuses", func() {
 		resourceFlagStep := &domain.Step{
 			Name: "resourceFlagStep",

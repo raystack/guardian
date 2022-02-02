@@ -84,6 +84,9 @@ type Step struct {
 	// Strategy defines if the step requires manual approval or not
 	Strategy ApprovalStepStrategy `json:"strategy" yaml:"strategy" validate:"required,oneof=auto manual"`
 
+	// RejectionReason message fills `Approval.Reason` if the approval step gets rejected based on `ApproveIf` expression.
+	RejectionReason string `json:"rejection_reason" yaml:"rejection_reason"`
+
 	// Approvers is an Expression that if the evaluation returns string or []string that contains email address of the approvers.
 	// If human approval (manual) is required, use this field.
 	//
