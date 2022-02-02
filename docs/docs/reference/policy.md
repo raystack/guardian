@@ -57,6 +57,7 @@ requirements:
 | `description` | `string` Approval step description |
 | `when` | [`Expression`](#expression) Determines whether the step should be evaluated or it can be skipped. If it evaluates to be falsy, the step will automatically skipped. Otherwise, step become pending/blocked (normal). |
 | `strategy` | `string` Execution behaviour of the step. Possible values are `auto` or `manual` |
+| `rejection_reason` | `string` This fills `Approval.Reason` if current approval step gets rejected based on `ApproveIf` expression. If `strategy=manual`, this field ignored. |
 | `approvers` | `[]string` List of email or [`Expression`](#expression) string. The `Expression` is expected to return an email address or list of email addresses. Required if `strategy` is `manual` |
 | `approve_if` | [`Expression`](#expression) Determines the automatic resolution of current step when `strategy` is `auto` |
 | `allow_failed` | `boolean` If `true`, and current step is rejected, it will mark the appeal status as skipped instead of rejected |

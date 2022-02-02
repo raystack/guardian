@@ -95,6 +95,7 @@ func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
 						}
 					} else {
 						approval.Status = domain.ApprovalStatusRejected
+						approval.Reason = stepConfig.RejectionReason
 						appeal.Status = domain.AppealStatusRejected
 					}
 				} else {
