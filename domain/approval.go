@@ -34,6 +34,7 @@ func (a *Approval) IsManualApproval() bool {
 
 type ListApprovalsFilter struct {
 	AccountID string   `mapstructure:"account_id" validate:"omitempty,required"`
+	CreatedBy string   `mapstructure:"created_by" validate:"omitempty,required"`
 	Statuses  []string `mapstructure:"statuses" validate:"omitempty,min=1"`
 	OrderBy   []string `mapstructure:"order_by" validate:"omitempty,min=1"`
 }

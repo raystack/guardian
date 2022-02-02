@@ -31,8 +31,8 @@ func (r *approvalRepository) ListApprovals(conditions *domain.ListApprovalsFilte
 	}
 
 	db := r.db
-	if conditions.AccountID != "" {
-		db = db.Where("email = ?", conditions.AccountID)
+	if conditions.CreatedBy != "" {
+		db = db.Where("email = ?", conditions.CreatedBy)
 	}
 
 	var approverModels []*model.Approver
@@ -40,39 +40,45 @@ func (r *approvalRepository) ListApprovals(conditions *domain.ListApprovalsFilte
 		return nil, err
 	}
 
-	var approvalIDs []string
-	for _, a := range approverModels {
-		approvalIDs = append(approvalIDs, a.ApprovalID)
-	}
-
-	db = r.db.Preload("Appeal.Resource")
-	db = db.Joins("Appeal")
-	if conditions.Statuses != nil {
-		db = db.Where(`"approvals"."status" IN ?`, conditions.Statuses)
-	}
-	db = db.Where(`"Appeal"."status" != ?`, domain.AppealStatusCanceled)
-
-	if conditions.OrderBy != nil {
-		db = addOrderByClause(db, conditions.OrderBy, addOrderByClauseOptions{
-			statusColumnName: `"approvals"."status"`,
-		})
-	}
-
-	var models []*model.Approval
-	if err := db.
-		Find(&models, approvalIDs).
-		Error; err != nil {
-		return nil, err
-	}
-
 	records := []*domain.Approval{}
-	for _, m := range models {
-		appeal, err := m.ToDomain()
-		if err != nil {
+
+	if len(approverModels) > 0 {
+		var approvalIDs []string
+		for _, a := range approverModels {
+			approvalIDs = append(approvalIDs, a.ApprovalID)
+		}
+
+		db = r.db.Preload("Appeal.Resource")
+		db = db.Joins("Appeal")
+		if conditions.Statuses != nil {
+			db = db.Where(`"approvals"."status" IN ?`, conditions.Statuses)
+		}
+		if conditions.AccountID != "" {
+			db = db.Where(`"Appeal"."account_id" = ?`, conditions.AccountID)
+		}
+		db = db.Where(`"Appeal"."status" != ?`, domain.AppealStatusCanceled)
+
+		if conditions.OrderBy != nil {
+			db = addOrderByClause(db, conditions.OrderBy, addOrderByClauseOptions{
+				statusColumnName: `"approvals"."status"`,
+			})
+		}
+
+		var models []*model.Approval
+		if err := db.
+			Find(&models, approvalIDs).
+			Error; err != nil {
 			return nil, err
 		}
 
-		records = append(records, appeal)
+		for _, m := range models {
+			appeal, err := m.ToDomain()
+			if err != nil {
+				return nil, err
+			}
+
+			records = append(records, appeal)
+		}
 	}
 
 	return records, nil
