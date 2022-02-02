@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
@@ -153,11 +152,6 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			defer cancel()
 
 			id := args[0]
-			_, err = strconv.ParseUint(id, 10, 32)
-			if err != nil {
-				return fmt.Errorf("invalid provider id: %v", err)
-			}
-
 			res, err := client.GetResource(ctx, &guardianv1beta1.GetResourceRequest{
 				Id: id,
 			})
@@ -246,11 +240,6 @@ func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 			defer cancel()
 
 			id := args[0]
-			_, err = strconv.ParseUint(id, 10, 32)
-			if err != nil {
-				return fmt.Errorf("invalid provider id: %v", err)
-			}
-
 			_, err = client.UpdateResource(ctx, &guardianv1beta1.UpdateResourceRequest{
 				Id:       id,
 				Resource: resourceProto,

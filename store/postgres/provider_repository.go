@@ -93,11 +93,9 @@ func (r *ProviderRepository) GetOne(pType, urn string) (*domain.Provider, error)
 		return nil, provider.ErrEmptyProviderURN
 	}
 
-	m := &model.Provider{
-		Type: pType,
-		URN:  urn,
-	}
-	if err := r.db.Take(m).Error; err != nil {
+	m := &model.Provider{}
+	db := r.db.Where("type = ?", pType).Where("urn = ?", urn)
+	if err := db.Take(m).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, provider.ErrRecordNotFound
 		}

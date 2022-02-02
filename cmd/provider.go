@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strconv"
 
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
@@ -238,11 +237,6 @@ func editProviderCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			defer cancel()
 
 			id := args[0]
-			_, err = strconv.ParseUint(id, 10, 32)
-			if err != nil {
-				return fmt.Errorf("invalid provider id: %v", err)
-			}
-
 			_, err = client.UpdateProvider(ctx, &guardianv1beta1.UpdateProviderRequest{
 				Id:     id,
 				Config: configProto,

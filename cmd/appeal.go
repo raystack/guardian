@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -205,11 +204,6 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			_, err = strconv.ParseUint(args[0], 10, 32)
-			if err != nil {
-				return fmt.Errorf("invalid provider id: %v", err)
-			}
-
 			_, err = client.RevokeAppeal(ctx, &guardianv1beta1.RevokeAppealRequest{
 				Id: id,
 				Reason: &guardianv1beta1.RevokeAppealRequest_Reason{
@@ -255,11 +249,6 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			_, err = strconv.ParseUint(args[0], 10, 32)
-			if err != nil {
-				return fmt.Errorf("invalid provider id: %v", err)
-			}
-
 			_, err = client.UpdateApproval(ctx, &guardianv1beta1.UpdateApprovalRequest{
 				Id:           id,
 				ApprovalName: approvalName,
@@ -307,11 +296,6 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			_, err = strconv.ParseUint(args[0], 10, 32)
-			if err != nil {
-				return fmt.Errorf("invalid provider id: %v", err)
-			}
-
 			_, err = client.UpdateApproval(ctx, &guardianv1beta1.UpdateApprovalRequest{
 				Id:           id,
 				ApprovalName: approvalName,
@@ -357,11 +341,6 @@ func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			_, err = strconv.ParseUint(id, 10, 32)
-			if err != nil {
-				return fmt.Errorf("invalid provider id: %v", err)
-			}
-
 			res, err := client.GetAppeal(ctx, &guardianv1beta1.GetAppealRequest{
 				Id: id,
 			})
@@ -429,11 +408,6 @@ func cancelAppealCommand(c *app.CLIConfig) *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			_, err = strconv.ParseUint(id, 10, 32)
-			if err != nil {
-				return fmt.Errorf("invalid provider id: %v", err)
-			}
-
 			_, err = client.CancelAppeal(ctx, &guardianv1beta1.CancelAppealRequest{
 				Id: id,
 			})

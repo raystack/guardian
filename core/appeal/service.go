@@ -105,36 +105,36 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return err
 		}
 		if err := addResource(appeal, resources); err != nil {
-			return err
+			return fmt.Errorf("retrieving resource details for %s: %w", appeal.ResourceID, err)
 		}
 		provider, err := getProvider(appeal, providers)
 		if err != nil {
-			return err
+			return fmt.Errorf("retrieving provider: %w", err)
 		}
 
 		expiredAppeal, err := s.checkAppealExtension(appeal, provider, activeAppeals)
 		if err != nil {
-			return err
+			return fmt.Errorf("checking appeal extension: %w", err)
 		}
 		if expiredAppeal != nil {
 			expiredAppeals = append(expiredAppeals, expiredAppeal)
 		}
 
 		if err := s.providerService.ValidateAppeal(appeal, provider); err != nil {
-			return err
+			return fmt.Errorf("validating appeal based on provider: %w", err)
 		}
 
 		policy, err := getPolicy(appeal, provider, policies)
 		if err != nil {
-			return err
+			return fmt.Errorf("retrieving policy: %w", err)
 		}
 
 		if err := s.addCreatorDetails(appeal, policy); err != nil {
-			return err
+			return fmt.Errorf("retrieving creator details: %w", err)
 		}
 
 		if err := s.fillApprovals(appeal, policy); err != nil {
-			return err
+			return fmt.Errorf("populating approvals: %w", err)
 		}
 
 		appeal.PolicyID = policy.ID
@@ -143,14 +143,14 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 		appeal.Policy = policy
 		if err := s.approvalService.AdvanceApproval(appeal); err != nil {
-			return err
+			return fmt.Errorf("initializing approval step statuses: %w", err)
 		}
 		appeal.Policy = nil
 
 		for _, approval := range appeal.Approvals {
 			if approval.Index == len(appeal.Approvals)-1 && approval.Status == domain.ApprovalStatusApproved {
 				if err := s.createAccess(appeal); err != nil {
-					return err
+					return fmt.Errorf("creating access: %w", err)
 				}
 				notifications = append(notifications, domain.Notification{
 					User: appeal.CreatedBy,
@@ -168,7 +168,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 	allAppeals := append(appeals, expiredAppeals...)
 	if err := s.repo.BulkUpsert(allAppeals); err != nil {
-		return err
+		return fmt.Errorf("inserting appeals into db: %w", err)
 	}
 
 	for _, a := range appeals {
@@ -663,21 +663,21 @@ func (s *Service) createAccess(a *domain.Appeal) error {
 	if policy == nil {
 		p, err := s.policyService.GetOne(a.PolicyID, a.PolicyVersion)
 		if err != nil {
-			return fmt.Errorf("retrieving policy: %v", err)
+			return fmt.Errorf("retrieving policy: %w", err)
 		}
 		policy = p
 	}
 
 	if err := s.handleAppealRequirements(a, policy); err != nil {
-		return err
+		return fmt.Errorf("handling appeal requirements: %w", err)
 	}
 
 	if err := s.providerService.GrantAccess(a); err != nil {
-		return err
+		return fmt.Errorf("granting access: %w", err)
 	}
 
 	if err := a.Activate(); err != nil {
-		return fmt.Errorf("activating appeal: %v", err)
+		return fmt.Errorf("activating appeal: %w", err)
 	}
 
 	return nil

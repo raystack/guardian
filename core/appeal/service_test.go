@@ -508,7 +508,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		actualError := s.service.Create([]*domain.Appeal{})
 
-		s.EqualError(actualError, expectedError.Error())
+		s.ErrorIs(actualError, expectedError)
 	})
 
 	accountID := "test@email.com"
