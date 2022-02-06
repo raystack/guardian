@@ -526,6 +526,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 							Role:       aa.Role,
 							Options:    aa.Options,
 						}
+						expectedAppeal.SetDefaults()
 						s.mockProviderService.
 							On("ValidateAppeal", expectedAppeal, expectedProvider).
 							Return(nil).
