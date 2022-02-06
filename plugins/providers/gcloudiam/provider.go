@@ -1,6 +1,7 @@
 package gcloudiam
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -74,7 +75,13 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	}
 
 	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
-		return client.GrantAccess(a.AccountType, a.AccountID, a.Role)
+		if err := client.GrantAccess(a.AccountType, a.AccountID, a.Role); err != nil {
+			if errors.Is(err, ErrPermissionAlreadyExists) {
+				return nil
+			}
+			return err
+		}
+		return nil
 	}
 
 	return ErrInvalidResourceType
@@ -92,7 +99,13 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	}
 
 	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
-		return client.RevokeAccess(a.AccountType, a.AccountID, a.Role)
+		if err := client.RevokeAccess(a.AccountType, a.AccountID, a.Role); err != nil {
+			if errors.Is(err, ErrPermissionNotFound) {
+				return nil
+			}
+			return err
+		}
+		return nil
 	}
 
 	return ErrInvalidResourceType
