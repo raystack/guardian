@@ -16,13 +16,13 @@ type Store struct {
 
 func NewStore(c *store.Config) (*Store, error) {
 	dsn := fmt.Sprintf(
-		"host=%s user=%s dbname=%s password=%s port=%s sslmode=%s",
+		"host=%s user=%s dbname=%s port=%s sslmode=%s password=%s",
 		c.Host,
 		c.User,
 		c.Name,
-		c.Password,
 		c.Port,
 		c.SslMode,
+		c.Password,
 	)
 
 	gormDB, err := gorm.Open(pg.Open(dsn), &gorm.Config{})
