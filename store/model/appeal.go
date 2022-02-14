@@ -102,6 +102,9 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	m.Options = datatypes.JSON(options)
 	m.Labels = datatypes.JSON(labels)
 	m.Details = datatypes.JSON(details)
+	m.RevokedBy = a.RevokedBy
+	m.RevokedAt = a.RevokedAt
+	m.RevokeReason = a.RevokeReason
 	m.Approvals = approvals
 	m.CreatedAt = a.CreatedAt
 	m.UpdatedAt = a.UpdatedAt
@@ -172,6 +175,9 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		Role:          m.Role,
 		Options:       options,
 		Details:       details,
+		RevokedBy:     m.RevokedBy,
+		RevokedAt:     m.RevokedAt,
+		RevokeReason:  m.RevokeReason,
 		Labels:        labels,
 		Approvals:     approvals,
 		Resource:      resource,

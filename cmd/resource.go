@@ -38,7 +38,7 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 }
 
 func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
-	var providerType, providerURN, resourceType, resourceURN, name, format string
+	var providerType, providerURN, resourceType, resourceURN, name string
 	var isDeleted bool
 	var details []string
 
@@ -74,6 +74,11 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 				Details:      details,
 			}
 			res, err := client.ListResources(ctx, req)
+			if err != nil {
+				return err
+			}
+
+			format, err := cmd.Flags().GetString("output")
 			if err != nil {
 				return err
 			}
@@ -121,20 +126,18 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 	cmd.Flags().StringVarP(&name, "name", "n", "", "Filter by name")
 	cmd.Flags().StringArrayVarP(&details, "details", "d", nil, "Filter by details object values. Example: --details=key1.key2:value")
 	cmd.Flags().BoolVarP(&isDeleted, "deleted", "D", false, "Show deleted resources")
-	cmd.Flags().StringVarP(&format, "format", "f", "", "Format of output - json yaml prettyjson etc")
 
 	return cmd
 }
 
 func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
-	var format string
 	var metadata bool
 
 	cmd := &cobra.Command{
 		Use:   "view",
 		Short: "View a resource details",
 		Example: heredoc.Doc(`
-			$ guardian resource view <resource-id> --format=json --metadata=true
+			$ guardian resource view <resource-id> --output=json --metadata=true
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
@@ -159,8 +162,14 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 				return err
 			}
 
+			format, err := cmd.Flags().GetString("output")
+			if err != nil {
+				return err
+			}
+
 			if format != "" {
 				r := adapter.FromResourceProto(res.GetResource())
+				spinner.Stop()
 				if err := printer.Text(r, format); err != nil {
 					return fmt.Errorf("failed to parse resources: %v", err)
 				}
@@ -178,6 +187,7 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 					r.GetName(),
 				})
 
+				spinner.Stop()
 				printer.Table(os.Stdout, report)
 			}
 
@@ -196,12 +206,12 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 				}
 			}
 
+			spinner.Stop()
 			return nil
 		},
 	}
 
 	cmd.Flags().BoolVarP(&metadata, "metadata", "m", false, "Set if you want to see metadata")
-	cmd.Flags().StringVarP(&format, "format", "f", "", "Format of output - json yaml prettyjson etc")
 	return cmd
 }
 
@@ -249,7 +259,6 @@ func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 			}
 
 			spinner.Stop()
-
 			fmt.Println("Successfully updated metadata")
 
 			return nil

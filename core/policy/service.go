@@ -221,6 +221,7 @@ func (s *Service) validateRequirements(requirements []*domain.Requirement) error
 				Role:       aa.Role,
 				Options:    aa.Options,
 			}
+			appeal.SetDefaults()
 			if err := s.providerService.ValidateAppeal(appeal, provider); err != nil {
 				return fmt.Errorf("requirement[%v].appeals[%v]: %w", i, j, err)
 			}

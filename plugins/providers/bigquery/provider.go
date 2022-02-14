@@ -2,6 +2,7 @@ package bigquery
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -118,6 +119,9 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 
 		for _, p := range permissions {
 			if err := bqClient.GrantDatasetAccess(ctx, d, a.AccountID, string(p)); err != nil {
+				if errors.Is(err, ErrPermissionAlreadyExists) {
+					return nil
+				}
 				return err
 			}
 		}
@@ -131,6 +135,9 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 
 		for _, p := range permissions {
 			if err := bqClient.GrantTableAccess(ctx, t, a.AccountType, a.AccountID, string(p)); err != nil {
+				if errors.Is(err, ErrPermissionAlreadyExists) {
+					return nil
+				}
 				return err
 			}
 		}
@@ -169,6 +176,9 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 
 		for _, p := range permissions {
 			if err := bqClient.RevokeDatasetAccess(ctx, d, a.AccountID, string(p)); err != nil {
+				if errors.Is(err, ErrPermissionNotFound) {
+					return nil
+				}
 				return err
 			}
 		}
@@ -182,6 +192,9 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 
 		for _, p := range permissions {
 			if err := bqClient.RevokeTableAccess(ctx, t, a.AccountType, a.AccountID, string(p)); err != nil {
+				if errors.Is(err, ErrPermissionNotFound) {
+					return nil
+				}
 				return err
 			}
 		}

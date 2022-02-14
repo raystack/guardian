@@ -11,15 +11,16 @@ import (
 
 // Policy is the database model for policy
 type Policy struct {
-	ID          string `gorm:"primaryKey"`
-	Version     uint   `gorm:"primaryKey"`
-	Description string
-	Steps       datatypes.JSON
-	Labels      datatypes.JSON
-	IAM         datatypes.JSON
-	CreatedAt   time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
+	ID           string `gorm:"primaryKey"`
+	Version      uint   `gorm:"primaryKey"`
+	Description  string
+	Steps        datatypes.JSON
+	Labels       datatypes.JSON
+	Requirements datatypes.JSON
+	IAM          datatypes.JSON
+	CreatedAt    time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt    time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
 // TableName overrides the table name
@@ -39,6 +40,11 @@ func (m *Policy) FromDomain(p *domain.Policy) error {
 		return err
 	}
 
+	requirements, err := json.Marshal(p.Requirements)
+	if err != nil {
+		return err
+	}
+
 	iam, err := json.Marshal(p.IAM)
 	if err != nil {
 		return err
@@ -49,6 +55,7 @@ func (m *Policy) FromDomain(p *domain.Policy) error {
 	m.Description = p.Description
 	m.Steps = datatypes.JSON(steps)
 	m.Labels = datatypes.JSON(labels)
+	m.Requirements = datatypes.JSON(requirements)
 	m.IAM = datatypes.JSON(iam)
 	m.CreatedAt = p.CreatedAt
 	m.UpdatedAt = p.UpdatedAt
@@ -68,6 +75,13 @@ func (m *Policy) ToDomain() (*domain.Policy, error) {
 		return nil, err
 	}
 
+	var requirements []*domain.Requirement
+	if m.Requirements != nil {
+		if err := json.Unmarshal(m.Requirements, &requirements); err != nil {
+			return nil, err
+		}
+	}
+
 	var iam *domain.IAMConfig
 	if m.IAM != nil {
 		if err := json.Unmarshal(m.IAM, &iam); err != nil {
@@ -76,13 +90,14 @@ func (m *Policy) ToDomain() (*domain.Policy, error) {
 	}
 
 	return &domain.Policy{
-		ID:          m.ID,
-		Version:     m.Version,
-		Description: m.Description,
-		Steps:       steps,
-		Labels:      labels,
-		IAM:         iam,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
+		ID:           m.ID,
+		Version:      m.Version,
+		Description:  m.Description,
+		Steps:        steps,
+		Labels:       labels,
+		Requirements: requirements,
+		IAM:          iam,
+		CreatedAt:    m.CreatedAt,
+		UpdatedAt:    m.UpdatedAt,
 	}, nil
 }
