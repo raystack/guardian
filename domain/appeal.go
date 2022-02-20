@@ -62,8 +62,14 @@ func (a *Appeal) GetNextPendingApproval() *Approval {
 	return nil
 }
 
-func (a *Appeal) Terminate() {
-	a.Status = AppealStatusTerminated
+func (a *Appeal) Init(policy *Policy) {
+	a.Status = AppealStatusPending
+	a.PolicyID = policy.ID
+	a.PolicyVersion = policy.Version
+}
+
+func (a *Appeal) Cancel() {
+	a.Status = AppealStatusCanceled
 }
 
 func (a *Appeal) Activate() error {
@@ -80,6 +86,14 @@ func (a *Appeal) Activate() error {
 	}
 
 	return nil
+}
+
+func (a *Appeal) Reject() {
+	a.Status = AppealStatusRejected
+}
+
+func (a *Appeal) Terminate() {
+	a.Status = AppealStatusTerminated
 }
 
 func (a *Appeal) SetDefaults() {

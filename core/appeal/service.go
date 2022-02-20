@@ -142,9 +142,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return fmt.Errorf("populating approvals: %w", err)
 		}
 
-		appeal.PolicyID = policy.ID
-		appeal.PolicyVersion = policy.Version
-		appeal.Status = domain.AppealStatusPending
+		appeal.Init(policy)
 
 		appeal.Policy = policy
 		if err := s.approvalService.AdvanceApproval(appeal); err != nil {
@@ -225,7 +223,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 
 			var oldExtendedAppeal *domain.Appeal
 			if approvalAction.Action == domain.AppealActionNameApprove {
-				approval.Status = domain.ApprovalStatusApproved
+				approval.Approve()
 				if i+1 <= len(appeal.Approvals)-1 {
 					appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
 				}
@@ -253,12 +251,12 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 					}
 				}
 			} else if approvalAction.Action == domain.AppealActionNameReject {
-				approval.Status = domain.ApprovalStatusRejected
-				appeal.Status = domain.AppealStatusRejected
+				approval.Reject()
+				appeal.Reject()
 
 				if i < len(appeal.Approvals)-1 {
 					for j := i + 1; j < len(appeal.Approvals); j++ {
-						appeal.Approvals[j].Status = domain.ApprovalStatusSkipped
+						appeal.Approvals[j].Skip()
 						appeal.Approvals[j].UpdatedAt = TimeNow()
 					}
 				}
@@ -329,7 +327,7 @@ func (s *Service) Cancel(id string) (*domain.Appeal, error) {
 		return nil, err
 	}
 
-	appeal.Status = domain.AppealStatusCanceled
+	appeal.Cancel()
 	if err := s.repo.Update(appeal); err != nil {
 		return nil, err
 	}
@@ -609,19 +607,11 @@ func (s *Service) fillApprovals(a *domain.Appeal, p *domain.Policy) error {
 			}
 		}
 
-		status := domain.ApprovalStatusPending
-		if i > 0 {
-			status = domain.ApprovalStatusBlocked
+		approval := &domain.Approval{}
+		if err := approval.Init(p, i, approverEmails); err != nil {
+			return fmt.Errorf(`initializing approval "%s": %w`, step.Name, err)
 		}
-
-		approvals = append(approvals, &domain.Approval{
-			Name:          step.Name,
-			Index:         i,
-			Status:        status,
-			PolicyID:      p.ID,
-			PolicyVersion: p.Version,
-			Approvers:     approverEmails,
-		})
+		approvals = append(approvals, approval)
 	}
 
 	a.Approvals = approvals
