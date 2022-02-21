@@ -17,14 +17,35 @@ import (
 
 var TimeNow = time.Now
 
+type policyService interface {
+	Find() ([]*domain.Policy, error)
+	GetOne(string, uint) (*domain.Policy, error)
+}
+
+type approvalService interface {
+	AdvanceApproval(*domain.Appeal) error
+}
+
+type providerService interface {
+	Find() ([]*domain.Provider, error)
+	GrantAccess(*domain.Appeal) error
+	RevokeAccess(*domain.Appeal) error
+	ValidateAppeal(*domain.Appeal, *domain.Provider) error
+}
+
+type resourceService interface {
+	Find(map[string]interface{}) ([]*domain.Resource, error)
+	Get(*domain.ResourceIdentifier) (*domain.Resource, error)
+}
+
 // Service handling the business logics
 type Service struct {
 	repo store.AppealRepository
 
-	approvalService domain.ApprovalService
-	resourceService domain.ResourceService
-	providerService domain.ProviderService
-	policyService   domain.PolicyService
+	approvalService approvalService
+	resourceService resourceService
+	providerService providerService
+	policyService   policyService
 	iam             domain.IAMManager
 	notifier        notifiers.Client
 	logger          log.Logger
@@ -36,10 +57,10 @@ type Service struct {
 // NewService returns service struct
 func NewService(
 	appealRepository store.AppealRepository,
-	approvalService domain.ApprovalService,
-	resourceService domain.ResourceService,
-	providerService domain.ProviderService,
-	policyService domain.PolicyService,
+	approvalService approvalService,
+	resourceService resourceService,
+	providerService providerService,
+	policyService policyService,
 	iam domain.IAMManager,
 	notifier notifiers.Client,
 	logger log.Logger,

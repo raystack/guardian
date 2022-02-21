@@ -8,6 +8,7 @@ import (
 	ctx_logrus "github.com/grpc-ecosystem/go-grpc-middleware/tags/logrus"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/core/appeal"
+	"github.com/odpf/guardian/core/approval"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
@@ -38,11 +39,11 @@ type ProtoAdapter interface {
 }
 
 type GRPCServer struct {
-	resourceService domain.ResourceService
-	providerService domain.ProviderService
-	policyService   domain.PolicyService
-	appealService   domain.AppealService
-	approvalService domain.ApprovalService
+	resourceService *resource.Service
+	providerService *provider.Service
+	policyService   *policy.Service
+	appealService   *appeal.Service
+	approvalService *approval.Service
 	adapter         ProtoAdapter
 
 	authenticatedUserHeaderKey string
@@ -51,11 +52,11 @@ type GRPCServer struct {
 }
 
 func NewGRPCServer(
-	resourceService domain.ResourceService,
-	providerService domain.ProviderService,
-	policyService domain.PolicyService,
-	appealService domain.AppealService,
-	approvalService domain.ApprovalService,
+	resourceService *resource.Service,
+	providerService *provider.Service,
+	policyService *policy.Service,
+	appealService *appeal.Service,
+	approvalService *approval.Service,
 	adapter ProtoAdapter,
 	authenticatedUserHeaderKey string,
 ) *GRPCServer {

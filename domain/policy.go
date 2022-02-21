@@ -196,11 +196,3 @@ type Policy struct {
 func (p *Policy) HasIAMConfig() bool {
 	return p.IAM != nil
 }
-
-// PolicyService interface
-type PolicyService interface {
-	Create(*Policy) error
-	Find() ([]*Policy, error)
-	GetOne(id string, version uint) (*Policy, error)
-	Update(*Policy) error
-}

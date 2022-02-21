@@ -1,16 +1,16 @@
 package provider
 
-import (
-	"github.com/odpf/guardian/domain"
-)
+type ProviderService interface {
+	FetchResources() error
+}
 
 // JobHandler for cronjob
 type JobHandler struct {
-	providerService domain.ProviderService
+	providerService ProviderService
 }
 
 // NewJobHandler returns *JobHandler
-func NewJobHandler(ps domain.ProviderService) *JobHandler {
+func NewJobHandler(ps ProviderService) *JobHandler {
 	return &JobHandler{ps}
 }
 

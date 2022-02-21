@@ -38,9 +38,3 @@ type ListApprovalsFilter struct {
 	Statuses  []string `mapstructure:"statuses" validate:"omitempty,min=1"`
 	OrderBy   []string `mapstructure:"order_by" validate:"omitempty,min=1"`
 }
-
-type ApprovalService interface {
-	BulkInsert([]*Approval) error
-	ListApprovals(*ListApprovalsFilter) ([]*Approval, error)
-	AdvanceApproval(appeal *Appeal) error
-}

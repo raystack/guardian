@@ -64,17 +64,3 @@ type Provider struct {
 	CreatedAt time.Time       `json:"created_at,omitempty" yaml:"created_at,omitempty"`
 	UpdatedAt time.Time       `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
 }
-
-// ProviderService interface
-type ProviderService interface {
-	Create(*Provider) error
-	Find() ([]*Provider, error)
-	GetByID(id string) (*Provider, error)
-	GetOne(pType, urn string) (*Provider, error)
-	Update(*Provider) error
-	FetchResources() error
-	GetRoles(id string, resourceType string) ([]*Role, error)
-	ValidateAppeal(*Appeal, *Provider) error
-	GrantAccess(*Appeal) error
-	RevokeAccess(*Appeal) error
-}

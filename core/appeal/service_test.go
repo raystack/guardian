@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/odpf/guardian/core/appeal"
+	appealmocks "github.com/odpf/guardian/core/appeal/mocks"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
@@ -17,10 +18,10 @@ import (
 type ServiceTestSuite struct {
 	suite.Suite
 	mockRepository      *mocks.AppealRepository
-	mockApprovalService *mocks.ApprovalService
-	mockResourceService *mocks.ResourceService
-	mockProviderService *mocks.ProviderService
-	mockPolicyService   *mocks.PolicyService
+	mockApprovalService *appealmocks.ApprovalService
+	mockResourceService *appealmocks.ResourceService
+	mockProviderService *appealmocks.ProviderService
+	mockPolicyService   *appealmocks.PolicyService
 	mockIAMManager      *mocks.IAMManager
 	mockIAMClient       *mocks.IAMClient
 	mockNotifier        *mocks.Notifier
@@ -31,10 +32,10 @@ type ServiceTestSuite struct {
 
 func (s *ServiceTestSuite) SetupTest() {
 	s.mockRepository = new(mocks.AppealRepository)
-	s.mockApprovalService = new(mocks.ApprovalService)
-	s.mockResourceService = new(mocks.ResourceService)
-	s.mockProviderService = new(mocks.ProviderService)
-	s.mockPolicyService = new(mocks.PolicyService)
+	s.mockApprovalService = new(appealmocks.ApprovalService)
+	s.mockResourceService = new(appealmocks.ResourceService)
+	s.mockProviderService = new(appealmocks.ProviderService)
+	s.mockPolicyService = new(appealmocks.PolicyService)
 	s.mockIAMManager = new(mocks.IAMManager)
 	s.mockIAMClient = new(mocks.IAMClient)
 	s.mockNotifier = new(mocks.Notifier)

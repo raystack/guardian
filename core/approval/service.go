@@ -10,27 +10,31 @@ import (
 	"github.com/odpf/guardian/store"
 )
 
-type service struct {
+type policyService interface {
+	GetOne(string, uint) (*domain.Policy, error)
+}
+
+type Service struct {
 	repo          store.ApprovalRepository
-	policyService domain.PolicyService
+	policyService policyService
 }
 
 func NewService(
 	ar store.ApprovalRepository,
-	ps domain.PolicyService,
-) *service {
-	return &service{ar, ps}
+	ps policyService,
+) *Service {
+	return &Service{ar, ps}
 }
 
-func (s *service) ListApprovals(filters *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
+func (s *Service) ListApprovals(filters *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
 	return s.repo.ListApprovals(filters)
 }
 
-func (s *service) BulkInsert(approvals []*domain.Approval) error {
+func (s *Service) BulkInsert(approvals []*domain.Approval) error {
 	return s.repo.BulkInsert(approvals)
 }
 
-func (s *service) AdvanceApproval(appeal *domain.Appeal) error {
+func (s *Service) AdvanceApproval(appeal *domain.Appeal) error {
 	policy := appeal.Policy
 	if policy == nil {
 		p, err := s.policyService.GetOne(appeal.PolicyID, appeal.PolicyVersion)

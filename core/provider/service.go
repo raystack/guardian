@@ -14,18 +14,29 @@ import (
 	"github.com/odpf/salt/log"
 )
 
+type resourceService interface {
+	Find(map[string]interface{}) ([]*domain.Resource, error)
+	BulkUpsert([]*domain.Resource) error
+}
+
 // Service handling the business logics
 type Service struct {
 	logger             *log.Logrus
 	validator          *validator.Validate
 	providerRepository store.ProviderRepository
-	resourceService    domain.ResourceService
+	resourceService    resourceService
 
 	providerClients map[string]providers.Client
 }
 
 // NewService returns service struct
-func NewService(logger *log.Logrus, validator *validator.Validate, pr store.ProviderRepository, rs domain.ResourceService, providerClients []providers.Client) *Service {
+func NewService(
+	logger *log.Logrus,
+	validator *validator.Validate,
+	pr store.ProviderRepository,
+	rs resourceService,
+	providerClients []providers.Client,
+) *Service {
 	mapProviderClients := make(map[string]providers.Client)
 	for _, c := range providerClients {
 		mapProviderClients[c.GetType()] = c

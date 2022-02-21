@@ -16,12 +16,3 @@ type Resource struct {
 	UpdatedAt    time.Time              `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
 	IsDeleted    bool                   `json:"is_deleted,omitempty" yaml:"is_deleted,omitempty"`
 }
-
-// ResourceService interface
-type ResourceService interface {
-	Find(filters map[string]interface{}) ([]*Resource, error)
-	GetOne(id string) (*Resource, error)
-	Get(*ResourceIdentifier) (*Resource, error)
-	BulkUpsert([]*Resource) error
-	Update(*Resource) error
-}

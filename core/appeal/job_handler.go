@@ -10,13 +10,18 @@ import (
 	"github.com/odpf/salt/log"
 )
 
+type AppealService interface {
+	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
+	Revoke(id, actor, reason string) (*domain.Appeal, error)
+}
+
 type JobHandler struct {
 	logger        log.Logger
-	appealService domain.AppealService
+	appealService AppealService
 	notifier      notifiers.Client
 }
 
-func NewJobHandler(logger log.Logger, as domain.AppealService, notifier notifiers.Client) *JobHandler {
+func NewJobHandler(logger log.Logger, as AppealService, notifier notifiers.Client) *JobHandler {
 	return &JobHandler{
 		logger,
 		as,
