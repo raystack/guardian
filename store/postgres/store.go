@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/odpf/guardian/store"
-	"github.com/odpf/guardian/store/model"
+	"github.com/odpf/guardian/store/postgres/model"
 	pg "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
