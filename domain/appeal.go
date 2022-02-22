@@ -124,13 +124,3 @@ type ListAppealsFilter struct {
 	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 	OrderBy                   []string  `mapstructure:"order_by" validate:"omitempty,min=1"`
 }
-
-// AppealService interface
-type AppealService interface {
-	Create([]*Appeal) error
-	Find(*ListAppealsFilter) ([]*Appeal, error)
-	GetByID(id string) (*Appeal, error)
-	MakeAction(ApprovalAction) (*Appeal, error)
-	Cancel(id string) (*Appeal, error)
-	Revoke(id string, actor, reason string) (*Appeal, error)
-}

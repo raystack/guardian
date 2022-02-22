@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/odpf/guardian/core/approval"
+	approvalmocks "github.com/odpf/guardian/core/approval/mocks"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/stretchr/testify/mock"
@@ -14,14 +15,14 @@ import (
 type ServiceTestSuite struct {
 	suite.Suite
 	mockRepository    *mocks.ApprovalRepository
-	mockPolicyService *mocks.PolicyService
+	mockPolicyService *approvalmocks.PolicyService
 
-	service domain.ApprovalService
+	service *approval.Service
 }
 
 func (s *ServiceTestSuite) SetupTest() {
 	s.mockRepository = new(mocks.ApprovalRepository)
-	s.mockPolicyService = new(mocks.PolicyService)
+	s.mockPolicyService = new(approvalmocks.PolicyService)
 
 	s.service = approval.NewService(s.mockRepository, s.mockPolicyService)
 }

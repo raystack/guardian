@@ -6,7 +6,7 @@ import (
 
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/store/model"
+	"github.com/odpf/guardian/store/postgres/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

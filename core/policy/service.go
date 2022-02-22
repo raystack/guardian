@@ -13,18 +13,33 @@ import (
 	"github.com/odpf/guardian/store"
 )
 
+type providerService interface {
+	GetOne(pType, urn string) (*domain.Provider, error)
+	ValidateAppeal(*domain.Appeal, *domain.Provider) error
+}
+
+type resourceService interface {
+	Get(*domain.ResourceIdentifier) (*domain.Resource, error)
+}
+
 // Service handling the business logics
 type Service struct {
 	policyRepository store.PolicyRepository
-	resourceService  domain.ResourceService
-	providerService  domain.ProviderService
+	resourceService  resourceService
+	providerService  providerService
 	iam              domain.IAMManager
 
 	validator *validator.Validate
 }
 
 // NewService returns service struct
-func NewService(v *validator.Validate, pr store.PolicyRepository, rs domain.ResourceService, ps domain.ProviderService, iam domain.IAMManager) *Service {
+func NewService(
+	v *validator.Validate,
+	pr store.PolicyRepository,
+	rs resourceService,
+	ps providerService,
+	iam domain.IAMManager,
+) *Service {
 	return &Service{
 		policyRepository: pr,
 		resourceService:  rs,

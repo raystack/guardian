@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/policy"
+	policymocks "github.com/odpf/guardian/core/policy/mocks"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
@@ -19,15 +20,15 @@ import (
 type ServiceTestSuite struct {
 	suite.Suite
 	mockPolicyRepository *mocks.PolicyRepository
-	mockResourceService  *mocks.ResourceService
-	mockProviderService  *mocks.ProviderService
+	mockResourceService  *policymocks.ResourceService
+	mockProviderService  *policymocks.ProviderService
 	service              *policy.Service
 }
 
 func (s *ServiceTestSuite) SetupTest() {
 	s.mockPolicyRepository = new(mocks.PolicyRepository)
-	s.mockResourceService = new(mocks.ResourceService)
-	s.mockProviderService = new(mocks.ProviderService)
+	s.mockResourceService = new(policymocks.ResourceService)
+	s.mockProviderService = new(policymocks.ProviderService)
 
 	mockCrypto := new(mocks.Crypto)
 	v := validator.New()
