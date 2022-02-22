@@ -1,4 +1,4 @@
-package handler
+package jobs
 
 import (
 	"github.com/odpf/guardian/domain"
@@ -22,7 +22,7 @@ type handler struct {
 	notifier        notifiers.Client
 }
 
-func New(
+func NewHandler(
 	logger log.Logger,
 	appealService appealService,
 	providerService providerService,

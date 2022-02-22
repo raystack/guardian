@@ -21,7 +21,7 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/crypto"
 	"github.com/odpf/guardian/internal/scheduler"
-	jobhandler "github.com/odpf/guardian/jobs/handler"
+	"github.com/odpf/guardian/jobs"
 	"github.com/odpf/guardian/plugins/identities"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/plugins/providers"
@@ -109,7 +109,7 @@ func RunServer(c *Config) error {
 		logger,
 	)
 
-	jobHandler := jobhandler.New(
+	jobHandler := jobs.NewHandler(
 		logger,
 		appealService,
 		providerService,
