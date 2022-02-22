@@ -63,6 +63,9 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 	}
 
 	db := r.db
+	if filters.CreatedBy != "" {
+		db = db.Where(`"created_by" = ?`, filters.CreatedBy)
+	}
 	if filters.AccountID != "" {
 		db = db.Where(`"account_id" = ?`, filters.AccountID)
 	}

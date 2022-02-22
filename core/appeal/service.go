@@ -90,13 +90,18 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 	if err != nil {
 		return err
 	}
-	pendingAppeals, activeAppeals, err := s.getExistingAppealsMap()
+
+	appealsGroupedByStatus, err := s.getAppealsMapGroupedByStatus([]string{
+		domain.AppealStatusPending,
+		domain.AppealStatusActive,
+	})
 	if err != nil {
 		return err
 	}
+	pendingAppeals := appealsGroupedByStatus[domain.AppealStatusPending]
+	activeAppeals := appealsGroupedByStatus[domain.AppealStatusActive]
 
 	notifications := []domain.Notification{}
-	expiredAppeals := []*domain.Appeal{}
 
 	for _, appeal := range appeals {
 		appeal.SetDefaults()
@@ -112,12 +117,12 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return fmt.Errorf("retrieving provider: %w", err)
 		}
 
-		expiredAppeal, err := s.checkAppealExtension(appeal, provider, activeAppeals)
+		ok, err := s.isEligibleToExtend(appeal, provider, activeAppeals)
 		if err != nil {
-			return fmt.Errorf("checking appeal extension: %w", err)
+			return fmt.Errorf("checking appeal extension eligibility: %w", err)
 		}
-		if expiredAppeal != nil {
-			expiredAppeals = append(expiredAppeals, expiredAppeal)
+		if !ok {
+			return ErrAppealNotEligibleForExtension
 		}
 
 		if err := s.providerService.ValidateAppeal(appeal, provider); err != nil {
@@ -137,9 +142,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return fmt.Errorf("populating approvals: %w", err)
 		}
 
-		appeal.PolicyID = policy.ID
-		appeal.PolicyVersion = policy.Version
-		appeal.Status = domain.AppealStatusPending
+		appeal.Init(policy)
 
 		appeal.Policy = policy
 		if err := s.approvalService.AdvanceApproval(appeal); err != nil {
@@ -166,8 +169,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 	}
 
-	allAppeals := append(appeals, expiredAppeals...)
-	if err := s.repo.BulkUpsert(allAppeals); err != nil {
+	if err := s.repo.BulkUpsert(appeals); err != nil {
 		return fmt.Errorf("inserting appeals into db: %w", err)
 	}
 
@@ -219,8 +221,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 			approval.Reason = approvalAction.Reason
 			approval.UpdatedAt = TimeNow()
 
+			var oldExtendedAppeal *domain.Appeal
 			if approvalAction.Action == domain.AppealActionNameApprove {
-				approval.Status = domain.ApprovalStatusApproved
+				approval.Approve()
 				if i+1 <= len(appeal.Approvals)-1 {
 					appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
 				}
@@ -229,17 +232,31 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				}
 
 				if i == len(appeal.Approvals)-1 {
-					if err := s.createAccess(appeal); err != nil {
-						return nil, err
+					activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
+						AccountID:  appeal.AccountID,
+						ResourceID: appeal.ResourceID,
+						Role:       appeal.Role,
+						Statuses:   []string{domain.AppealStatusActive},
+					})
+					if err != nil {
+						return nil, fmt.Errorf("unable to retrieve existing active appeal from db: %w", err)
+					}
+					if len(activeAppeals) > 0 {
+						oldExtendedAppeal = activeAppeals[0]
+						oldExtendedAppeal.Terminate()
+					} else {
+						if err := s.createAccess(appeal); err != nil {
+							return nil, err
+						}
 					}
 				}
 			} else if approvalAction.Action == domain.AppealActionNameReject {
-				approval.Status = domain.ApprovalStatusRejected
-				appeal.Status = domain.AppealStatusRejected
+				approval.Reject()
+				appeal.Reject()
 
 				if i < len(appeal.Approvals)-1 {
 					for j := i + 1; j < len(appeal.Approvals); j++ {
-						appeal.Approvals[j].Status = domain.ApprovalStatusSkipped
+						appeal.Approvals[j].Skip()
 						appeal.Approvals[j].UpdatedAt = TimeNow()
 					}
 				}
@@ -247,6 +264,11 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				return nil, ErrActionInvalidValue
 			}
 
+			if oldExtendedAppeal != nil {
+				if err := s.repo.Update(oldExtendedAppeal); err != nil {
+					return nil, fmt.Errorf("failed to update existing active appeal: %w", err)
+				}
+			}
 			if err := s.repo.Update(appeal); err != nil {
 				if err := s.providerService.RevokeAccess(appeal); err != nil {
 					return nil, err
@@ -305,7 +327,7 @@ func (s *Service) Cancel(id string) (*domain.Appeal, error) {
 		return nil, err
 	}
 
-	appeal.Status = domain.AppealStatusCanceled
+	appeal.Cancel()
 	if err := s.repo.Update(appeal); err != nil {
 		return nil, err
 	}
@@ -353,37 +375,28 @@ func (s *Service) Revoke(id string, actor, reason string) (*domain.Appeal, error
 	return revokedAppeal, nil
 }
 
-func (s *Service) getExistingAppealsMap() (map[string]map[string]map[string]*domain.Appeal, map[string]map[string]map[string]*domain.Appeal, error) {
-	appeals, err := s.repo.Find(&domain.ListAppealsFilter{
-		Statuses: []string{domain.AppealStatusPending, domain.AppealStatusActive},
-	})
+// getAppealsMapGroupedByStatus returns map[status]map[account_id]map[resource_id]map[role]*domain.Appeal, error
+func (s *Service) getAppealsMapGroupedByStatus(statuses []string) (map[string]map[string]map[string]map[string]*domain.Appeal, error) {
+	appeals, err := s.repo.Find(&domain.ListAppealsFilter{Statuses: statuses})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	pendingAppealsMap := map[string]map[string]map[string]*domain.Appeal{}
-	activeAppealsMap := map[string]map[string]map[string]*domain.Appeal{}
+	appealsMap := map[string]map[string]map[string]map[string]*domain.Appeal{}
 	for _, a := range appeals {
-		if a.Status == domain.AppealStatusPending {
-			if pendingAppealsMap[a.AccountID] == nil {
-				pendingAppealsMap[a.AccountID] = map[string]map[string]*domain.Appeal{}
-			}
-			if pendingAppealsMap[a.AccountID][a.ResourceID] == nil {
-				pendingAppealsMap[a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
-			}
-			pendingAppealsMap[a.AccountID][a.ResourceID][a.Role] = a
-		} else if a.Status == domain.AppealStatusActive {
-			if activeAppealsMap[a.AccountID] == nil {
-				activeAppealsMap[a.AccountID] = map[string]map[string]*domain.Appeal{}
-			}
-			if activeAppealsMap[a.AccountID][a.ResourceID] == nil {
-				activeAppealsMap[a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
-			}
-			activeAppealsMap[a.AccountID][a.ResourceID][a.Role] = a
+		if appealsMap[a.Status] == nil {
+			appealsMap[a.Status] = map[string]map[string]map[string]*domain.Appeal{}
 		}
+		if appealsMap[a.Status][a.AccountID] == nil {
+			appealsMap[a.Status][a.AccountID] = map[string]map[string]*domain.Appeal{}
+		}
+		if appealsMap[a.Status][a.AccountID][a.ResourceID] == nil {
+			appealsMap[a.Status][a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
+		}
+		appealsMap[a.Status][a.AccountID][a.ResourceID][a.Role] = a
 	}
 
-	return pendingAppealsMap, activeAppealsMap, nil
+	return appealsMap, nil
 }
 
 func (s *Service) getResourcesMap(ids []string) (map[string]*domain.Resource, error) {
@@ -594,19 +607,11 @@ func (s *Service) fillApprovals(a *domain.Appeal, p *domain.Policy) error {
 			}
 		}
 
-		status := domain.ApprovalStatusPending
-		if i > 0 {
-			status = domain.ApprovalStatusBlocked
+		approval := &domain.Approval{}
+		if err := approval.Init(p, i, approverEmails); err != nil {
+			return fmt.Errorf(`initializing approval "%s": %w`, step.Name, err)
 		}
-
-		approvals = append(approvals, &domain.Approval{
-			Name:          step.Name,
-			Index:         i,
-			Status:        status,
-			PolicyID:      p.ID,
-			PolicyVersion: p.Version,
-			Approvers:     approverEmails,
-		})
+		approvals = append(approvals, approval)
 	}
 
 	a.Approvals = approvals
@@ -683,34 +688,28 @@ func (s *Service) createAccess(a *domain.Appeal) error {
 	return nil
 }
 
-func (s *Service) checkAppealExtension(a *domain.Appeal, p *domain.Provider, activeAppealsMap map[string]map[string]map[string]*domain.Appeal) (*domain.Appeal, error) {
+func (s *Service) isEligibleToExtend(a *domain.Appeal, p *domain.Provider, activeAppealsMap map[string]map[string]map[string]*domain.Appeal) (bool, error) {
 	if activeAppealsMap[a.AccountID] != nil &&
 		activeAppealsMap[a.AccountID][a.ResourceID] != nil &&
 		activeAppealsMap[a.AccountID][a.ResourceID][a.Role] != nil {
 		if p.Config.Appeal != nil {
 			if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
-				return nil, ErrAppealFoundActiveAccess
+				return false, ErrAppealFoundActiveAccess
 			}
 
 			duration, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
 			if err != nil {
-				return nil, fmt.Errorf("%v: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
+				return false, fmt.Errorf("%v: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
 			}
 
 			now := s.TimeNow()
 			activeAppealExpDate := activeAppealsMap[a.AccountID][a.ResourceID][a.Role].Options.ExpirationDate
 			isEligibleForExtension := activeAppealExpDate.Sub(now) <= duration
-			if isEligibleForExtension {
-				oldAppeal := &domain.Appeal{}
-				*oldAppeal = *activeAppealsMap[a.AccountID][a.ResourceID][a.Role]
-				oldAppeal.Terminate()
-				return oldAppeal, nil
-			} else {
-				return nil, fmt.Errorf("%v: the extension policy for this resource is %v before current access expiration", ErrAppealNotEligibleForExtension, duration)
-			}
+			return isEligibleForExtension, nil
 		}
 	}
-	return nil, nil
+
+	return true, nil
 }
 
 func getPolicy(a *domain.Appeal, p *domain.Provider, policiesMap map[string]map[uint]*domain.Policy) (*domain.Policy, error) {

@@ -632,10 +632,6 @@ func (s *ServiceTestSuite) TestCreate() {
 			},
 		})
 	}
-	insertionParamExpiredAppeal := &domain.Appeal{}
-	*insertionParamExpiredAppeal = *currentActiveAppeal
-	insertionParamExpiredAppeal.Status = domain.AppealStatusTerminated
-	expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, insertionParamExpiredAppeal)
 	expectedResult := []*domain.Appeal{
 		{
 			ID:            "1",
@@ -727,7 +723,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			Return(nil).
 			Run(func(args mock.Arguments) {
 				appeals := args.Get(0).([]*domain.Appeal)
-				for i, a := range appeals[0 : len(appeals)-1] {
+				for i, a := range appeals {
 					a.ID = expectedResult[i].ID
 					for j, approval := range a.Approvals {
 						approval.ID = expectedResult[i].Approvals[j].ID
@@ -1037,6 +1033,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
 		s.mockApprovalService.On("AdvanceApproval", expectedAppeal).Return(nil).Once()
 		expectedError := errors.New("policy service error")
+		s.mockRepository.On("Find", mock.Anything).Return([]*domain.Appeal{}, nil).Once()
 		s.mockPolicyService.
 			On("GetOne", expectedAppeal.PolicyID, expectedAppeal.PolicyVersion).
 			Return(nil, expectedError).
@@ -1075,6 +1072,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
 		expectedError := errors.New("repository error")
 		s.mockApprovalService.On("AdvanceApproval", expectedAppeal).Return(nil).Once()
+		s.mockRepository.On("Find", mock.Anything).Return([]*domain.Appeal{}, nil).Once()
 		s.mockPolicyService.
 			On("GetOne", expectedAppeal.PolicyID, expectedAppeal.PolicyVersion).
 			Return(expectedPolicy, nil).
@@ -1087,6 +1085,63 @@ func (s *ServiceTestSuite) TestMakeAction() {
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should terminate existing active access if present", func() {
+		action := domain.ApprovalAction{
+			AppealID:     "1",
+			ApprovalName: "test-approval-step",
+			Action:       "approve",
+			Actor:        "approver@example.com",
+		}
+		appealDetails := &domain.Appeal{
+			ID:         "1",
+			AccountID:  "user@example.com",
+			ResourceID: "1",
+			Role:       "test-role",
+			Status:     domain.AppealStatusPending,
+			Approvals: []*domain.Approval{
+				{
+					Name:      "test-approval-step",
+					Status:    domain.ApprovalStatusPending,
+					Approvers: []string{"approver@example.com"},
+				},
+			},
+		}
+		existingAppeals := []*domain.Appeal{
+			{
+				ID:         "2",
+				Status:     domain.AppealStatusActive,
+				AccountID:  "user@example.com",
+				ResourceID: "1",
+				Role:       "test-role",
+			},
+		}
+		expectedTerminatedAppeal := &domain.Appeal{}
+		*expectedTerminatedAppeal = *existingAppeals[0]
+		expectedTerminatedAppeal.Status = domain.AppealStatusTerminated
+
+		s.mockRepository.On("GetByID", action.AppealID).Return(appealDetails, nil).Once()
+		s.mockApprovalService.On("AdvanceApproval", appealDetails).Return(nil).Once()
+		s.mockRepository.On("Find", &domain.ListAppealsFilter{
+			AccountID:  appealDetails.AccountID,
+			ResourceID: appealDetails.ResourceID,
+			Role:       appealDetails.Role,
+			Statuses:   []string{domain.AppealStatusActive},
+		}).
+			Return(existingAppeals, nil).
+			Once()
+		s.mockPolicyService.
+			On("GetOne", mock.Anything, mock.Anything).
+			Return(expectedPolicy, nil).
+			Once()
+		s.mockProviderService.On("GrantAccess", appealDetails).Return(nil).Once()
+		s.mockRepository.On("Update", expectedTerminatedAppeal).Return(nil).Once()
+		s.mockRepository.On("Update", appealDetails).Return(nil).Once()
+		s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
+
+		_, actualError := s.service.MakeAction(action)
+		s.Nil(actualError)
 	})
 
 	s.Run("should return updated appeal on success", func() {
@@ -1427,6 +1482,11 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					Once()
 				s.mockApprovalService.On("AdvanceApproval", tc.expectedAppealDetails).
 					Return(nil).Once()
+				if tc.expectedApprovalAction.Action == "approve" {
+					s.mockRepository.On("Find", mock.Anything).
+						Return([]*domain.Appeal{}, nil).
+						Once()
+				}
 				s.mockPolicyService.
 					On("GetOne", tc.expectedAppealDetails.PolicyID, tc.expectedAppealDetails.PolicyVersion).
 					Return(expectedPolicy, nil).

@@ -62,8 +62,14 @@ func (a *Appeal) GetNextPendingApproval() *Approval {
 	return nil
 }
 
-func (a *Appeal) Terminate() {
-	a.Status = AppealStatusTerminated
+func (a *Appeal) Init(policy *Policy) {
+	a.Status = AppealStatusPending
+	a.PolicyID = policy.ID
+	a.PolicyVersion = policy.Version
+}
+
+func (a *Appeal) Cancel() {
+	a.Status = AppealStatusCanceled
 }
 
 func (a *Appeal) Activate() error {
@@ -82,6 +88,14 @@ func (a *Appeal) Activate() error {
 	return nil
 }
 
+func (a *Appeal) Reject() {
+	a.Status = AppealStatusRejected
+}
+
+func (a *Appeal) Terminate() {
+	a.Status = AppealStatusTerminated
+}
+
 func (a *Appeal) SetDefaults() {
 	if a.AccountType == "" {
 		a.AccountType = DefaultAppealAccountType
@@ -97,6 +111,7 @@ type ApprovalAction struct {
 }
 
 type ListAppealsFilter struct {
+	CreatedBy                 string    `mapstructure:"created_by" validate:"omitempty,required"`
 	AccountID                 string    `mapstructure:"account_id" validate:"omitempty,required"`
 	ResourceID                string    `mapstructure:"resource_id" validate:"omitempty,required"`
 	Role                      string    `mapstructure:"role" validate:"omitempty,required"`

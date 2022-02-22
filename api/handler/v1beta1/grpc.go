@@ -362,7 +362,7 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 	}
 
 	filters := &domain.ListAppealsFilter{
-		AccountID: user,
+		CreatedBy: user,
 	}
 	if req.GetStatuses() != nil {
 		filters.Statuses = req.GetStatuses()
