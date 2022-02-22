@@ -21,6 +21,7 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/crypto"
 	"github.com/odpf/guardian/internal/scheduler"
+	jobhandler "github.com/odpf/guardian/jobs/handler"
 	"github.com/odpf/guardian/plugins/identities"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/plugins/providers"
@@ -108,22 +109,26 @@ func RunServer(c *Config) error {
 		logger,
 	)
 
-	providerJobHandler := provider.NewJobHandler(providerService)
-	appealJobHandler := appeal.NewJobHandler(logger, appealService, notifier)
+	jobHandler := jobhandler.New(
+		logger,
+		appealService,
+		providerService,
+		notifier,
+	)
 
 	// init scheduler
 	tasks := []*scheduler.Task{
 		{
 			CronTab: c.Jobs.FetchResourcesInterval,
-			Func:    providerJobHandler.GetResources,
+			Func:    jobHandler.FetchResources,
 		},
 		{
 			CronTab: c.Jobs.RevokeExpiredAccessInterval,
-			Func:    appealJobHandler.RevokeExpiredAccess,
+			Func:    jobHandler.RevokeExpiredAppeals,
 		},
 		{
 			CronTab: c.Jobs.ExpiringAccessNotificationInterval,
-			Func:    appealJobHandler.NotifyAboutToExpireAccess,
+			Func:    jobHandler.AppealExpirationReminder,
 		},
 	}
 	s, err := scheduler.New(tasks)
