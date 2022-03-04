@@ -1,20 +1,18 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
 	"github.com/spf13/cobra"
 )
 
-func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+func ResourceCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "resource",
 		Aliases: []string{"resources"},
@@ -29,15 +27,15 @@ func ResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.C
 		},
 	}
 
-	cmd.AddCommand(listResourcesCmd(c, adapter))
-	cmd.AddCommand(viewResourceCmd(c, adapter))
-	cmd.AddCommand(setResourceCmd(c, adapter))
+	cmd.AddCommand(listResourcesCmd(adapter))
+	cmd.AddCommand(viewResourceCmd(adapter))
+	cmd.AddCommand(setResourceCmd(adapter))
 	cmd.PersistentFlags().StringP("output", "o", "", "Print output with specified format (yaml,json,prettyjson)")
 
 	return cmd
 }
 
-func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+func listResourcesCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var providerType, providerURN, resourceType, resourceURN, name string
 	var isDeleted bool
 	var details []string
@@ -57,8 +55,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 			spinner := printer.Spin("")
 			defer spinner.Stop()
 
-			ctx := context.Background()
-			client, cancel, err := createClient(ctx, c.Host)
+			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
 			}
@@ -73,7 +70,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 				IsDeleted:    isDeleted,
 				Details:      details,
 			}
-			res, err := client.ListResources(ctx, req)
+			res, err := client.ListResources(cmd.Context(), req)
 			if err != nil {
 				return err
 			}
@@ -130,7 +127,7 @@ func listResourcesCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *co
 	return cmd
 }
 
-func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+func viewResourceCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var metadata bool
 
 	cmd := &cobra.Command{
@@ -147,15 +144,14 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 			spinner := printer.Spin("")
 			defer spinner.Stop()
 
-			ctx := context.Background()
-			client, cancel, err := createClient(ctx, c.Host)
+			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
 			}
 			defer cancel()
 
 			id := args[0]
-			res, err := client.GetResource(ctx, &guardianv1beta1.GetResourceRequest{
+			res, err := client.GetResource(cmd.Context(), &guardianv1beta1.GetResourceRequest{
 				Id: id,
 			})
 			if err != nil {
@@ -215,7 +211,7 @@ func viewResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cob
 	return cmd
 }
 
-func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
+func setResourceCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
 
 	cmd := &cobra.Command{
@@ -242,15 +238,14 @@ func setResourceCmd(c *app.CLIConfig, adapter handlerv1beta1.ProtoAdapter) *cobr
 				return err
 			}
 
-			ctx := context.Background()
-			client, cancel, err := createClient(ctx, c.Host)
+			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
 			}
 			defer cancel()
 
 			id := args[0]
-			_, err = client.UpdateResource(ctx, &guardianv1beta1.UpdateResourceRequest{
+			_, err = client.UpdateResource(cmd.Context(), &guardianv1beta1.UpdateResourceRequest{
 				Id:       id,
 				Resource: resourceProto,
 			})

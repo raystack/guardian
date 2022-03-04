@@ -3,12 +3,11 @@ package cmd
 import (
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
-	"github.com/odpf/guardian/app"
 	"github.com/odpf/salt/cmdx"
 	"github.com/spf13/cobra"
 )
 
-func New(cliConfig *app.CLIConfig) *cobra.Command {
+func New() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "guardian <command> <subcommand> [flags]",
 		Short: "Universal data access control",
@@ -39,20 +38,30 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 	}
 
 	protoAdapter := handlerv1beta1.NewAdapter()
+	coreCommands := []*cobra.Command{
+		ResourceCmd(protoAdapter),
+		ProviderCmd(protoAdapter),
+		PolicyCmd(protoAdapter),
+		appealsCommand(),
+	}
+	cmd.AddCommand(coreCommands...)
 
-	cmd.AddCommand(ServerCommand())
-	cmd.AddCommand(configCommand())
-	cmd.AddCommand(ResourceCmd(cliConfig, protoAdapter))
-	cmd.AddCommand(ProviderCmd(cliConfig, protoAdapter))
-	cmd.AddCommand(PolicyCmd(cliConfig, protoAdapter))
-	cmd.AddCommand(appealsCommand(cliConfig))
-	cmd.AddCommand(VersionCmd())
+	otherCommands := []*cobra.Command{
+		ServerCommand(),
+		configCommand(),
+		VersionCmd(),
+		cmdx.SetCompletionCmd("guardian"),
+		cmdx.SetHelpTopic("environment", envHelp),
+		cmdx.SetRefCmd(cmd),
+	}
+	for _, c := range otherCommands {
+		c.SetHelpFunc(func(c *cobra.Command, s []string) {
+			cmd.Flags().MarkHidden("host")
+			cmd.HelpFunc()(c, s)
+		})
+	}
+	cmd.AddCommand(otherCommands...)
 
-	// Help topics
 	cmdx.SetHelp(cmd)
-	cmd.AddCommand(cmdx.SetCompletionCmd("guardian"))
-	cmd.AddCommand(cmdx.SetHelpTopic("environment", envHelp))
-	cmd.AddCommand(cmdx.SetRefCmd(cmd))
-
 	return cmd
 }

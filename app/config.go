@@ -6,7 +6,6 @@ import (
 
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/store"
-	"github.com/odpf/salt/cmdx"
 	"github.com/odpf/salt/config"
 )
 
@@ -18,10 +17,6 @@ type Config struct {
 	DB                         store.Config     `mapstructure:"db"`
 	AuthenticatedUserHeaderKey string           `mapstructure:"authenticated_user_header_key"`
 	Jobs                       Jobs             `mapstructure:"jobs"`
-}
-
-type CLIConfig struct {
-	Host string `mapstructure:"host" default:"localhost"`
 }
 
 func LoadConfig(configFile string) (Config, error) {
@@ -36,13 +31,4 @@ func LoadConfig(configFile string) (Config, error) {
 		return Config{}, err
 	}
 	return cfg, nil
-}
-
-func LoadCLIConfig() (*CLIConfig, error) {
-	var config CLIConfig
-
-	cfg := cmdx.SetConfig("guardian")
-	err := cfg.Load(&config)
-
-	return &config, err
 }

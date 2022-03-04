@@ -1,14 +1,12 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
@@ -16,7 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func appealsCommand(c *app.CLIConfig) *cobra.Command {
+func appealsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "appeal",
 		Aliases: []string{"appeals"},
@@ -35,18 +33,18 @@ func appealsCommand(c *app.CLIConfig) *cobra.Command {
 		`),
 	}
 
-	cmd.AddCommand(listAppealsCommand(c))
-	cmd.AddCommand(createAppealCommand(c))
-	cmd.AddCommand(revokeAppealCommand(c))
-	cmd.AddCommand(approveApprovalStepCommand(c))
-	cmd.AddCommand(rejectApprovalStepCommand(c))
-	cmd.AddCommand(statusAppealCommand(c))
-	cmd.AddCommand(cancelAppealCommand(c))
+	cmd.AddCommand(listAppealsCommand())
+	cmd.AddCommand(createAppealCommand())
+	cmd.AddCommand(revokeAppealCommand())
+	cmd.AddCommand(approveApprovalStepCommand())
+	cmd.AddCommand(rejectApprovalStepCommand())
+	cmd.AddCommand(statusAppealCommand())
+	cmd.AddCommand(cancelAppealCommand())
 
 	return cmd
 }
 
-func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
+func listAppealsCommand() *cobra.Command {
 	var statuses []string
 	var role string
 	var accountID string
@@ -65,14 +63,13 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 
 			cs := term.NewColorScheme()
 
-			ctx := context.Background()
-			client, cancel, err := createClient(ctx, c.Host)
+			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
 			}
 			defer cancel()
 
-			res, err := client.ListAppeals(ctx, &guardianv1beta1.ListAppealsRequest{
+			res, err := client.ListAppeals(cmd.Context(), &guardianv1beta1.ListAppealsRequest{
 				Statuses:  statuses,
 				Role:      role,
 				AccountId: accountID,
@@ -110,7 +107,7 @@ func listAppealsCommand(c *app.CLIConfig) *cobra.Command {
 	return cmd
 }
 
-func createAppealCommand(c *app.CLIConfig) *cobra.Command {
+func createAppealCommand() *cobra.Command {
 	var accountID, accountType, resourceID, role, optionsDuration string
 
 	cmd := &cobra.Command{
@@ -133,14 +130,13 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 				return err
 			}
 
-			ctx := context.Background()
-			client, cancel, err := createClient(ctx, c.Host)
+			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
 			}
 			defer cancel()
 
-			res, err := client.CreateAppeal(ctx, &guardianv1beta1.CreateAppealRequest{
+			res, err := client.CreateAppeal(cmd.Context(), &guardianv1beta1.CreateAppealRequest{
 				AccountId:   accountID,
 				AccountType: accountType,
 				Resources: []*guardianv1beta1.CreateAppealRequest_Resource{
@@ -181,7 +177,7 @@ func createAppealCommand(c *app.CLIConfig) *cobra.Command {
 	return cmd
 }
 
-func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
+func revokeAppealCommand() *cobra.Command {
 	var reason string
 
 	cmd := &cobra.Command{
@@ -196,15 +192,14 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 			spinner := printer.Spin("")
 			defer spinner.Stop()
 
-			ctx := context.Background()
-			client, cancel, err := createClient(ctx, c.Host)
+			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
 			}
 			defer cancel()
 
 			id := args[0]
-			_, err = client.RevokeAppeal(ctx, &guardianv1beta1.RevokeAppealRequest{
+			_, err = client.RevokeAppeal(cmd.Context(), &guardianv1beta1.RevokeAppealRequest{
 				Id: id,
 				Reason: &guardianv1beta1.RevokeAppealRequest_Reason{
 					Reason: reason,
@@ -227,7 +222,7 @@ func revokeAppealCommand(c *app.CLIConfig) *cobra.Command {
 	return cmd
 }
 
-func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
+func approveApprovalStepCommand() *cobra.Command {
 	var approvalName string
 
 	cmd := &cobra.Command{
@@ -241,15 +236,14 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			spinner := printer.Spin("")
 			defer spinner.Stop()
 
-			ctx := context.Background()
-			client, cancel, err := createClient(ctx, c.Host)
+			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
 			}
 			defer cancel()
 
 			id := args[0]
-			_, err = client.UpdateApproval(ctx, &guardianv1beta1.UpdateApprovalRequest{
+			_, err = client.UpdateApproval(cmd.Context(), &guardianv1beta1.UpdateApprovalRequest{
 				Id:           id,
 				ApprovalName: approvalName,
 				Action: &guardianv1beta1.UpdateApprovalRequest_Action{
@@ -274,7 +268,7 @@ func approveApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 	return cmd
 }
 
-func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
+func rejectApprovalStepCommand() *cobra.Command {
 	var approvalName string
 
 	cmd := &cobra.Command{
@@ -288,15 +282,14 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 			spinner := printer.Spin("")
 			defer spinner.Stop()
 
-			ctx := context.Background()
-			client, cancel, err := createClient(ctx, c.Host)
+			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
 			}
 			defer cancel()
 
 			id := args[0]
-			_, err = client.UpdateApproval(ctx, &guardianv1beta1.UpdateApprovalRequest{
+			_, err = client.UpdateApproval(cmd.Context(), &guardianv1beta1.UpdateApprovalRequest{
 				Id:           id,
 				ApprovalName: approvalName,
 				Action: &guardianv1beta1.UpdateApprovalRequest_Action{
@@ -321,7 +314,7 @@ func rejectApprovalStepCommand(c *app.CLIConfig) *cobra.Command {
 	return cmd
 }
 
-func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
+func statusAppealCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Approval status of an appeal",
@@ -333,15 +326,14 @@ func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
 			spinner := printer.Spin("")
 			defer spinner.Stop()
 
-			ctx := context.Background()
-			client, cancel, err := createClient(ctx, c.Host)
+			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
 			}
 			defer cancel()
 
 			id := args[0]
-			res, err := client.GetAppeal(ctx, &guardianv1beta1.GetAppealRequest{
+			res, err := client.GetAppeal(cmd.Context(), &guardianv1beta1.GetAppealRequest{
 				Id: id,
 			})
 			if err != nil {
@@ -388,7 +380,7 @@ func statusAppealCommand(c *app.CLIConfig) *cobra.Command {
 	return cmd
 }
 
-func cancelAppealCommand(c *app.CLIConfig) *cobra.Command {
+func cancelAppealCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cancel",
 		Short: "Cancel an appeal",
@@ -400,15 +392,14 @@ func cancelAppealCommand(c *app.CLIConfig) *cobra.Command {
 			spinner := printer.Spin("")
 			defer spinner.Stop()
 
-			ctx := context.Background()
-			client, cancel, err := createClient(ctx, c.Host)
+			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
 			}
 			defer cancel()
 
 			id := args[0]
-			_, err = client.CancelAppeal(ctx, &guardianv1beta1.CancelAppealRequest{
+			_, err = client.CancelAppeal(cmd.Context(), &guardianv1beta1.CancelAppealRequest{
 				Id: id,
 			})
 			if err != nil {
