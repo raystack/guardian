@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/antonmedv/expr"
@@ -17,13 +18,27 @@ func (e Expression) String() string {
 	return string(e)
 }
 
+type ExprParam map[string]interface{}
+
+func (m ExprParam) Split(s, sep string) []string {
+	return strings.Split(s, sep)
+}
+
+func (m ExprParam) Match(s, pattern string) bool {
+	match, _ := regexp.MatchString(pattern, s)
+	return match
+}
+func (m ExprParam) Contains(s, sub string) bool {
+	return strings.Contains(s, sub)
+}
+
 func (e Expression) EvaluateWithVars(params map[string]interface{}) (interface{}, error) {
 	program, err := expr.Compile(e.String())
 	if err != nil {
 		return nil, fmt.Errorf("invalid expression: %w", err)
 	}
 
-	env := make(map[string]interface{})
+	env := make(ExprParam)
 
 	for _, c := range program.Constants {
 		if reflect.TypeOf(c).Kind() == reflect.String {
