@@ -151,7 +151,7 @@ func (s *ServiceTestSuite) TestFind() {
 	})
 }
 
-func (s *ServiceTestSuite) TestUpdate() {
+func (s *ServiceTestSuite) TestUpdateValidation() {
 	s.Run("validation", func() {
 		s.Run("should return error if got error on account types validation", func() {
 			p := &domain.Provider{
@@ -164,6 +164,8 @@ func (s *ServiceTestSuite) TestUpdate() {
 			s.mockProviderRepository.On("GetByID", mock.Anything).
 				Return(&domain.Provider{}, nil).
 				Once()
+			s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
+				Return(&domain.Provider{}, nil)
 			s.mockProvider.On("GetAccountTypes").Return([]string{"non-user-only"}).Once()
 			actualError := s.service.Update(p)
 
@@ -189,7 +191,9 @@ func (s *ServiceTestSuite) TestUpdate() {
 			s.Error(actualError)
 		})
 	})
+}
 
+func (s *ServiceTestSuite) TestUpdate() {
 	s.Run("should return error if got error getting existing record", func() {
 		testCases := []struct {
 			expectedExistingProvider *domain.Provider

@@ -113,7 +113,14 @@ func (s *Service) GetOne(pType, urn string) (*domain.Provider, error) {
 
 // Update updates the non-zero value(s) only
 func (s *Service) Update(p *domain.Provider) error {
-	currentProvider, err := s.GetByID(p.ID)
+	var currentProvider *domain.Provider
+	var err error
+
+	if len(p.ID) > 0 {
+		currentProvider, err = s.GetByID(p.ID)
+	} else {
+		currentProvider, err = s.GetOne(p.Type, p.URN)
+	}
 	if err != nil {
 		return err
 	}
