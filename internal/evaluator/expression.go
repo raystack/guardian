@@ -17,13 +17,19 @@ func (e Expression) String() string {
 	return string(e)
 }
 
+type ExprParam map[string]interface{}
+
+func (m ExprParam) Split(s, sep string) []string {
+	return strings.Split(s, sep)
+}
+
 func (e Expression) EvaluateWithVars(params map[string]interface{}) (interface{}, error) {
 	program, err := expr.Compile(e.String())
 	if err != nil {
 		return nil, fmt.Errorf("invalid expression: %w", err)
 	}
 
-	env := make(map[string]interface{})
+	env := make(ExprParam)
 
 	for _, c := range program.Constants {
 		if reflect.TypeOf(c).Kind() == reflect.String {
