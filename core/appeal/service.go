@@ -212,6 +212,11 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 	if err := utils.ValidateStruct(approvalAction); err != nil {
 		return nil, err
 	}
+
+	if approvalAction.Action != domain.AppealActionNameApprove && approvalAction.Action != domain.AppealActionNameReject {
+		return nil, ErrActionInvalidValue
+	}
+
 	appeal, err := s.repo.GetByID(approvalAction.AppealID)
 	if err != nil {
 		return nil, err
@@ -221,119 +226,105 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 		return nil, err
 	}
 
-	for i, approval := range appeal.Approvals {
-		if approval.Name != approvalAction.ApprovalName {
-			if err := checkPreviousApprovalStatus(approval.Status); err != nil {
-				return nil, err
+	var approvalType = domain.NotificationTypeApproverNotification
+	approvalMaps := make(map[string]*domain.Approval, 0)
+	var firstPendingApproval *domain.Approval
+	var pendingApprovalCounts = 0
+	for _, approvalEntry := range appeal.Approvals {
+		approvalMaps[approvalEntry.Name] = approvalEntry
+		if approvalEntry.Status == domain.ApprovalStatusPending {
+			if firstPendingApproval == nil {
+				firstPendingApproval = approvalEntry
 			}
-			continue
-		} else {
-			if approval.Status != domain.ApprovalStatusPending {
-				if err := checkApprovalStatus(approval.Status); err != nil {
-					return nil, err
-				}
-			}
-
-			if !utils.ContainsString(approval.Approvers, approvalAction.Actor) {
-				return nil, ErrActionForbidden
-			}
-
-			approval.Actor = &approvalAction.Actor
-			approval.Reason = approvalAction.Reason
-			approval.UpdatedAt = TimeNow()
-
-			var oldExtendedAppeal *domain.Appeal
-			if approvalAction.Action == domain.AppealActionNameApprove {
-				approval.Approve()
-				if i+1 <= len(appeal.Approvals)-1 {
-					appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
-				}
-				if err := s.approvalService.AdvanceApproval(appeal); err != nil {
-					return nil, err
-				}
-
-				if i == len(appeal.Approvals)-1 {
-					activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
-						AccountID:  appeal.AccountID,
-						ResourceID: appeal.ResourceID,
-						Role:       appeal.Role,
-						Statuses:   []string{domain.AppealStatusActive},
-					})
-					if err != nil {
-						return nil, fmt.Errorf("unable to retrieve existing active appeal from db: %w", err)
-					}
-					if len(activeAppeals) > 0 {
-						oldExtendedAppeal = activeAppeals[0]
-						oldExtendedAppeal.Terminate()
-					} else {
-						if err := s.createAccess(appeal); err != nil {
-							return nil, err
-						}
-					}
-				}
-			} else if approvalAction.Action == domain.AppealActionNameReject {
-				approval.Reject()
-				appeal.Reject()
-
-				if i < len(appeal.Approvals)-1 {
-					for j := i + 1; j < len(appeal.Approvals); j++ {
-						appeal.Approvals[j].Skip()
-						appeal.Approvals[j].UpdatedAt = TimeNow()
-					}
-				}
-			} else {
-				return nil, ErrActionInvalidValue
-			}
-
-			if oldExtendedAppeal != nil {
-				if err := s.repo.Update(oldExtendedAppeal); err != nil {
-					return nil, fmt.Errorf("failed to update existing active appeal: %w", err)
-				}
-			}
-			if err := s.repo.Update(appeal); err != nil {
-				if err := s.providerService.RevokeAccess(appeal); err != nil {
-					return nil, err
-				}
-				return nil, err
-			}
-
-			notifications := []domain.Notification{}
-			if appeal.Status == domain.AppealStatusActive {
-				notifications = append(notifications, domain.Notification{
-					User: appeal.CreatedBy,
-					Message: domain.NotificationMessage{
-						Type: domain.NotificationTypeAppealApproved,
-						Variables: map[string]interface{}{
-							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
-							"role":          appeal.Role,
-						},
-					},
-				})
-			} else if appeal.Status == domain.AppealStatusRejected {
-				notifications = append(notifications, domain.Notification{
-					User: appeal.CreatedBy,
-					Message: domain.NotificationMessage{
-						Type: domain.NotificationTypeAppealRejected,
-						Variables: map[string]interface{}{
-							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
-							"role":          appeal.Role,
-						},
-					},
-				})
-			} else {
-				notifications = append(notifications, getApprovalNotifications(appeal)...)
-			}
-			if len(notifications) > 0 {
-				if err := s.notifier.Notify(notifications); err != nil {
-					s.logger.Error(err.Error())
-				}
-			}
-
-			return appeal, nil
+			pendingApprovalCounts += 1
 		}
 	}
 
-	return nil, ErrApprovalNameNotFound
+	var oldExtendedAppeal *domain.Appeal
+	if tobeActApproval, ok := approvalMaps[approvalAction.ApprovalName]; ok {
+		if firstPendingApproval.Name != tobeActApproval.Name {
+			return nil, ErrApprovalDependencyIsPending
+		}
+
+		if tobeActApproval.Status != domain.ApprovalStatusPending {
+			if err := checkApprovalStatus(tobeActApproval.Status); err != nil {
+				return nil, err
+			}
+		}
+
+		if !utils.ContainsString(tobeActApproval.Approvers, approvalAction.Actor) {
+			return nil, ErrActionForbidden
+		}
+
+		if approvalAction.Action == domain.AppealActionNameApprove {
+			tobeActApproval.Approve()
+			pendingApprovalCounts -= 1
+			approvalType = domain.NotificationTypeAppealApproved
+
+			if pendingApprovalCounts == 0 {
+				activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
+					AccountID:  appeal.AccountID,
+					ResourceID: appeal.ResourceID,
+					Role:       appeal.Role,
+					Statuses:   []string{domain.AppealStatusActive},
+				})
+				if err != nil {
+					return nil, fmt.Errorf("unable to retrieve existing active appeal from db: %w", err)
+				}
+				if len(activeAppeals) > 0 {
+					oldExtendedAppeal = activeAppeals[0]
+					oldExtendedAppeal.Terminate()
+				} else {
+					if err := s.createAccess(appeal); err != nil {
+						return nil, err
+					}
+				}
+			}
+		} else if approvalAction.Action == domain.AppealActionNameReject {
+			tobeActApproval.Reject()
+			appeal.Reject()
+
+			approvalType = domain.NotificationTypeAppealRejected
+
+			for _, pendingApproval := range approvalMaps {
+				pendingApproval.Skip()
+			}
+		}
+	} else {
+		return nil, fmt.Errorf("not a valid approval step: %s", approvalAction.ApprovalName)
+	}
+
+	if oldExtendedAppeal != nil {
+		if err := s.repo.Update(oldExtendedAppeal); err != nil {
+			return nil, fmt.Errorf("failed to update existing active appeal: %w", err)
+		}
+	}
+	if err := s.repo.Update(appeal); err != nil {
+		if err := s.providerService.RevokeAccess(appeal); err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	s.sendNotification(appeal, approvalType)
+	return appeal, nil
+}
+
+func (s *Service) sendNotification(appeal *domain.Appeal, approveType string) {
+	notification := domain.Notification{
+		User: appeal.CreatedBy,
+		Message: domain.NotificationMessage{
+			Type: approveType,
+			Variables: map[string]interface{}{
+				"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+				"role":          appeal.Role,
+			},
+		},
+	}
+
+	if err := s.notifier.Notify([]domain.Notification{notification}); err != nil {
+		s.logger.Error(err.Error())
+	}
 }
 
 func (s *Service) Cancel(id string) (*domain.Appeal, error) {
@@ -698,9 +689,9 @@ func (s *Service) createAccess(a *domain.Appeal) error {
 		return fmt.Errorf("handling appeal requirements: %w", err)
 	}
 
-	if err := s.providerService.GrantAccess(a); err != nil {
+	/*if err := s.providerService.GrantAccess(a); err != nil {
 		return fmt.Errorf("granting access: %w", err)
-	}
+	}*/
 
 	if err := a.Activate(); err != nil {
 		return fmt.Errorf("activating appeal: %w", err)

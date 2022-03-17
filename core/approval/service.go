@@ -52,7 +52,8 @@ func (s *Service) AdvanceApproval(appeal *domain.Appeal) error {
 	for i, approval := range appeal.Approvals {
 		if approval.Status == domain.ApprovalStatusRejected {
 			break
-		} else if approval.Status == domain.ApprovalStatusPending {
+		} else if approval.Status == domain.ApprovalStatusPending || approval.Status == domain.ApprovalStatusBlocked {
+			approval.Status = domain.AppealStatusPending
 			stepConfig := policy.Steps[approval.Index]
 
 			appealMap, err := structToMap(appeal)
@@ -71,15 +72,7 @@ func (s *Service) AdvanceApproval(appeal *domain.Appeal) error {
 				isFalsy := reflect.ValueOf(v).IsZero()
 				if isFalsy {
 					approval.Status = domain.ApprovalStatusSkipped
-					if i < len(appeal.Approvals)-1 {
-						appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
-					}
-					break
 				}
-			}
-
-			if approval.IsManualApproval() {
-				break
 			}
 
 			if stepConfig.Strategy == domain.ApprovalStepStrategyAuto {
