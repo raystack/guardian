@@ -555,7 +555,7 @@ func checkIfAppealStatusStillPending(status string) error {
 	return err
 }
 
-func checkPreviousApprovalStatus(status string) error {
+/*func checkPreviousApprovalStatus(status string) error {
 	var err error
 	switch status {
 	case domain.ApprovalStatusApproved,
@@ -571,7 +571,7 @@ func checkPreviousApprovalStatus(status string) error {
 		err = ErrApprovalStatusUnrecognized
 	}
 	return err
-}
+}*/
 
 func checkApprovalStatus(status string) error {
 	var err error
