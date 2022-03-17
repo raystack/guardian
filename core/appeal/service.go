@@ -689,9 +689,9 @@ func (s *Service) createAccess(a *domain.Appeal) error {
 		return fmt.Errorf("handling appeal requirements: %w", err)
 	}
 
-	/*if err := s.providerService.GrantAccess(a); err != nil {
+	if err := s.providerService.GrantAccess(a); err != nil {
 		return fmt.Errorf("granting access: %w", err)
-	}*/
+	}
 
 	if err := a.Activate(); err != nil {
 		return fmt.Errorf("activating appeal: %w", err)
