@@ -242,7 +242,6 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 			approval.Reason = approvalAction.Reason
 			approval.UpdatedAt = TimeNow()
 
-			var oldExtendedAppeal *domain.Appeal
 			if approvalAction.Action == domain.AppealActionNameApprove {
 				approval.Approve()
 				if i+1 <= len(appeal.Approvals)-1 {
@@ -252,32 +251,6 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 					return nil, err
 				}
 
-				if i == len(appeal.Approvals)-1 {
-					activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
-						AccountID:  appeal.AccountID,
-						ResourceID: appeal.ResourceID,
-						Role:       appeal.Role,
-						Statuses:   []string{domain.AppealStatusActive},
-					})
-					if err != nil {
-						return nil, fmt.Errorf("unable to retrieve existing active appeal from db: %w", err)
-					}
-					if len(activeAppeals) > 0 {
-						oldExtendedAppeal = activeAppeals[0]
-						oldExtendedAppeal.Terminate()
-
-						// the status is marked as active in the advance_approval method
-						if appeal.Status == domain.AppealStatusActive {
-							if err := appeal.Activate(); err != nil {
-								s.logger.Error("activating appeal: %w", err)
-							}
-						}
-					} else {
-						if err := s.createAccess(appeal); err != nil {
-							return nil, err
-						}
-					}
-				}
 			} else if approvalAction.Action == domain.AppealActionNameReject {
 				approval.Reject()
 				appeal.Reject()
@@ -292,9 +265,31 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				return nil, ErrActionInvalidValue
 			}
 
-			if oldExtendedAppeal != nil {
-				if err := s.repo.Update(oldExtendedAppeal); err != nil {
-					return nil, fmt.Errorf("failed to update existing active appeal: %w", err)
+			if appeal.Status == domain.AppealStatusActive {
+				var oldExtendedAppeal *domain.Appeal
+				activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
+					AccountID:  appeal.AccountID,
+					ResourceID: appeal.ResourceID,
+					Role:       appeal.Role,
+					Statuses:   []string{domain.AppealStatusActive},
+				})
+				if err != nil {
+					return nil, fmt.Errorf("unable to retrieve existing active appeal from db: %w", err)
+				}
+				if len(activeAppeals) > 0 {
+					oldExtendedAppeal = activeAppeals[0]
+					oldExtendedAppeal.Terminate()
+					if err := s.repo.Update(oldExtendedAppeal); err != nil {
+						return nil, fmt.Errorf("failed to update existing active appeal: %w", err)
+					}
+				} else {
+					if err := s.createAccess(appeal); err != nil {
+						return nil, err
+					}
+				}
+
+				if err := appeal.Activate(); err != nil {
+					s.logger.Error("activating appeal: %w", err)
 				}
 			}
 			if err := s.repo.Update(appeal); err != nil {
