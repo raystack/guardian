@@ -265,6 +265,13 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 					if len(activeAppeals) > 0 {
 						oldExtendedAppeal = activeAppeals[0]
 						oldExtendedAppeal.Terminate()
+
+						// the status is marked as active in the advance_approval method
+						if appeal.Status == domain.AppealStatusActive {
+							if err := appeal.Activate(); err != nil {
+								s.logger.Error("activating appeal: %w", err)
+							}
+						}
 					} else {
 						if err := s.createAccess(appeal); err != nil {
 							return nil, err
