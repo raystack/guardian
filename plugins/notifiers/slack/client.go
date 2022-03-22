@@ -31,19 +31,20 @@ type userResponse struct {
 }
 
 type notifier struct {
-	accessToken string
-
+	accessToken  string
+	variables    map[string]interface{}
 	slackIDCache map[string]string
 	Messages     domain.NotificationMessages
 }
 
 type Config struct {
 	AccessToken string `mapstructure:"access_token"`
+	Variables   map[string]interface{}
 	Messages    domain.NotificationMessages
 }
 
 func New(config *Config) *notifier {
-	return &notifier{config.AccessToken, map[string]string{}, config.Messages}
+	return &notifier{config.AccessToken, config.Variables, map[string]string{}, config.Messages}
 }
 
 func (n *notifier) Notify(items []domain.Notification) error {
@@ -53,7 +54,7 @@ func (n *notifier) Notify(items []domain.Notification) error {
 			return err
 		}
 
-		msg, err := parseMessage(item.Message, n.Messages)
+		msg, err := n.parseMessage(item.Message, n.Messages)
 		if err != nil {
 			return err
 		}
@@ -134,7 +135,7 @@ func (n *notifier) sendRequest(req *http.Request) (*userResponse, error) {
 	return &result, nil
 }
 
-func parseMessage(message domain.NotificationMessage, templates domain.NotificationMessages) (string, error) {
+func (n *notifier) parseMessage(message domain.NotificationMessage, templates domain.NotificationMessages) (string, error) {
 	var text string
 	switch message.Type {
 	case domain.NotificationTypeAccessRevoked:
@@ -155,6 +156,13 @@ func parseMessage(message domain.NotificationMessage, templates domain.Notificat
 	}
 
 	var buff bytes.Buffer
+	//add global variables like console_url
+	if len(message.Variables) > 0 {
+		for key, value := range n.variables {
+			message.Variables[key] = value
+		}
+	}
+
 	if err := t.Execute(&buff, message.Variables); err != nil {
 		return "", err
 	}

@@ -18,6 +18,9 @@ const (
 type Config struct {
 	Provider string `mapstructure:"provider" validate:"omitempty,oneof=slack"`
 
+	//console host url
+	ConsoleUrl string `mapstructure:"console_url" validate:"required"`
+
 	// slack
 	AccessToken string `mapstructure:"access_token" validate:"required_if=Provider slack"`
 
@@ -27,8 +30,11 @@ type Config struct {
 
 func NewClient(config *Config) (Client, error) {
 	if config.Provider == ProviderTypeSlack {
+		variables := make(map[string]interface{}, 0)
+		variables["console_url"] = config.ConsoleUrl
 		return slack.New(&slack.Config{
 			AccessToken: config.AccessToken,
+			Variables:   variables,
 			Messages:    config.Messages,
 		}), nil
 	}
