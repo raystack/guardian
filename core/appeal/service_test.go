@@ -763,7 +763,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	})
 }
 
-func (s *ServiceTestSuite) TestMakeAction() {
+func (s *ServiceTestSuite) MakeAction() {
 	timeNow := time.Now()
 	appeal.TimeNow = func() time.Time {
 		return timeNow
@@ -1079,7 +1079,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 			Return(expectedPolicy, nil).
 			Once()
 		s.mockProviderService.On("GrantAccess", expectedAppeal).Return(nil).Once()
-		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
+		s.mockRepository.On("Update", mock.Anything).Return(expectedError)
 		s.mockProviderService.On("RevokeAccess", expectedAppeal).Return(nil).Once()
 
 		actualResult, actualError := s.service.MakeAction(validApprovalActionParam)
