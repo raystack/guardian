@@ -250,7 +250,6 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				if err := s.approvalService.AdvanceApproval(appeal); err != nil {
 					return nil, err
 				}
-
 			} else if approvalAction.Action == domain.AppealActionNameReject {
 				approval.Reject()
 				appeal.Reject()
@@ -726,8 +725,14 @@ func (s *Service) isEligibleToExtend(a *domain.Appeal, p *domain.Provider, activ
 			}
 
 			now := s.TimeNow()
-			activeAppealExpDate := activeAppealsMap[a.AccountID][a.ResourceID][a.Role].Options.ExpirationDate
-			isEligibleForExtension := activeAppealExpDate.Sub(now) <= duration
+			appeal := activeAppealsMap[a.AccountID][a.ResourceID][a.Role]
+			var isEligibleForExtension bool
+			if appeal.Options != nil && appeal.Options.ExpirationDate != nil {
+				activeAppealExpDate := appeal.Options.ExpirationDate
+				isEligibleForExtension = activeAppealExpDate.Sub(now) <= duration
+			} else {
+				isEligibleForExtension = true
+			}
 			return isEligibleForExtension, nil
 		}
 	}
