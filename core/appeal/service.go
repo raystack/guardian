@@ -250,7 +250,6 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				if err := s.approvalService.AdvanceApproval(appeal); err != nil {
 					return nil, err
 				}
-
 			} else if approvalAction.Action == domain.AppealActionNameReject {
 				approval.Reject()
 				appeal.Reject()
