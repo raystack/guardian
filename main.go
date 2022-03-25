@@ -1,13 +1,11 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/odpf/guardian/cmd"
-	"github.com/odpf/salt/config"
 )
 
 const (
@@ -17,10 +15,7 @@ const (
 
 func main() {
 	cliConfig, err := cmd.LoadConfig()
-	if err != nil && !errors.As(err, &config.ConfigFileNotFoundError{}) {
-		panic(err)
-	}
-	if cliConfig == nil {
+	if err != nil {
 		cliConfig = &cmd.Config{}
 	}
 
