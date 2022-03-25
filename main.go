@@ -16,8 +16,6 @@ const (
 )
 
 func main() {
-	root := cmd.New()
-
 	cliConfig, err := cmd.LoadConfig()
 	if err != nil && !errors.As(err, &config.ConfigFileNotFoundError{}) {
 		panic(err)
@@ -25,10 +23,8 @@ func main() {
 	if cliConfig == nil {
 		cliConfig = &cmd.Config{}
 	}
-	if err := cmd.BindFlagsFromConfig(root, cliConfig); err != nil {
-		panic(err)
-	}
 
+	root := cmd.New(cliConfig)
 	if cmd, err := root.ExecuteC(); err != nil {
 		printError(err)
 

@@ -40,6 +40,7 @@ func appealsCommand() *cobra.Command {
 	cmd.AddCommand(rejectApprovalStepCommand())
 	cmd.AddCommand(statusAppealCommand())
 	cmd.AddCommand(cancelAppealCommand())
+	bindFlagsFromConfig(cmd)
 
 	return cmd
 }

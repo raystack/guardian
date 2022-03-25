@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var cliConfig *Config
+
 type Config struct {
 	Host string `mapstructure:"host"`
 }
@@ -21,16 +23,14 @@ func LoadConfig() (*Config, error) {
 	return &config, err
 }
 
-func BindFlagsFromConfig(cmd *cobra.Command, cfg *Config) error {
+func bindFlagsFromConfig(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringP("host", "H", "", "Guardian service to connect to")
 
-	if cfg.Host != "" {
-		if err := cmd.PersistentFlags().Set("host", cfg.Host); err != nil {
-			return err
+	if cliConfig != nil {
+		if cliConfig.Host != "" {
+			cmd.PersistentFlags().Set("host", cliConfig.Host)
 		}
 	}
-
-	return nil
 }
 
 func configCommand() *cobra.Command {

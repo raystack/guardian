@@ -31,6 +31,7 @@ func ResourceCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	cmd.AddCommand(viewResourceCmd(adapter))
 	cmd.AddCommand(setResourceCmd(adapter))
 	cmd.PersistentFlags().StringP("output", "o", "", "Print output with specified format (yaml,json,prettyjson)")
+	bindFlagsFromConfig(cmd)
 
 	return cmd
 }

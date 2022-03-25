@@ -42,6 +42,7 @@ func ProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	cmd.AddCommand(planProviderCmd(adapter))
 	cmd.AddCommand(applyProviderCmd(adapter))
 	cmd.AddCommand(initProviderCmd())
+	bindFlagsFromConfig(cmd)
 
 	return cmd
 }

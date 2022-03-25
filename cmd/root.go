@@ -7,7 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func New() *cobra.Command {
+func New(cfg *Config) *cobra.Command {
+	cliConfig = cfg
 	var cmd = &cobra.Command{
 		Use:   "guardian <command> <subcommand> [flags]",
 		Short: "Universal data access control",
@@ -38,30 +39,19 @@ func New() *cobra.Command {
 	}
 
 	protoAdapter := handlerv1beta1.NewAdapter()
-	coreCommands := []*cobra.Command{
-		ResourceCmd(protoAdapter),
-		ProviderCmd(protoAdapter),
-		PolicyCmd(protoAdapter),
-		appealsCommand(),
-	}
-	cmd.AddCommand(coreCommands...)
+	cmd.AddCommand(ResourceCmd(protoAdapter))
+	cmd.AddCommand(ProviderCmd(protoAdapter))
+	cmd.AddCommand(PolicyCmd(protoAdapter))
+	cmd.AddCommand(appealsCommand())
+	cmd.AddCommand(ServerCommand())
+	cmd.AddCommand(configCommand())
+	cmd.AddCommand(VersionCmd())
 
-	otherCommands := []*cobra.Command{
-		ServerCommand(),
-		configCommand(),
-		VersionCmd(),
-		cmdx.SetCompletionCmd("guardian"),
-		cmdx.SetHelpTopic("environment", envHelp),
-		cmdx.SetRefCmd(cmd),
-	}
-	for _, c := range otherCommands {
-		c.SetHelpFunc(func(c *cobra.Command, s []string) {
-			cmd.Flags().MarkHidden("host")
-			cmd.HelpFunc()(c, s)
-		})
-	}
-	cmd.AddCommand(otherCommands...)
-
+	// Help topics
 	cmdx.SetHelp(cmd)
+	cmd.AddCommand(cmdx.SetCompletionCmd("guardian"))
+	cmd.AddCommand(cmdx.SetHelpTopic("environment", envHelp))
+	cmd.AddCommand(cmdx.SetRefCmd(cmd))
+
 	return cmd
 }

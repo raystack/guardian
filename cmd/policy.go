@@ -49,6 +49,7 @@ func PolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	cmd.AddCommand(planPolicyCmd(adapter))
 	cmd.AddCommand(applyPolicyCmd(adapter))
 	cmd.AddCommand(initPolicyCmd())
+	bindFlagsFromConfig(cmd)
 
 	return cmd
 }
