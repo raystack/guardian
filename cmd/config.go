@@ -4,10 +4,34 @@ import (
 	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/guardian/app"
 	"github.com/odpf/salt/cmdx"
 	"github.com/spf13/cobra"
 )
+
+var cliConfig *Config
+
+type Config struct {
+	Host string `mapstructure:"host"`
+}
+
+func LoadConfig() (*Config, error) {
+	var config Config
+
+	cfg := cmdx.SetConfig("guardian")
+	err := cfg.Load(&config)
+
+	return &config, err
+}
+
+func bindFlagsFromConfig(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringP("host", "H", "", "Guardian service to connect to")
+
+	if cliConfig != nil {
+		if cliConfig.Host != "" {
+			cmd.PersistentFlags().Set("host", cliConfig.Host)
+		}
+	}
+}
 
 func configCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -37,7 +61,7 @@ func configInitCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := cmdx.SetConfig("guardian")
 
-			if err := cfg.Init(&app.CLIConfig{}); err != nil {
+			if err := cfg.Init(&Config{}); err != nil {
 				return err
 			}
 

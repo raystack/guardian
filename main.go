@@ -5,9 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/odpf/guardian/app"
 	"github.com/odpf/guardian/cmd"
-	"github.com/odpf/salt/term"
 )
 
 const (
@@ -16,17 +14,12 @@ const (
 )
 
 func main() {
-	cliConfig, err := app.LoadCLIConfig()
+	cliConfig, err := cmd.LoadConfig()
 	if err != nil {
-		// Init with blank client config
-		cliConfig = &app.CLIConfig{}
-		cs := term.NewColorScheme()
-
-		defer fmt.Println(cs.Yellow("client not configured. try running `guardian config init`"))
+		cliConfig = &cmd.Config{}
 	}
 
 	root := cmd.New(cliConfig)
-
 	if cmd, err := root.ExecuteC(); err != nil {
 		printError(err)
 
@@ -64,6 +57,4 @@ func printError(err error) {
 	} else {
 		fmt.Fprintln(os.Stderr, err)
 	}
-
-	return
 }

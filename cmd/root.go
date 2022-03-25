@@ -3,12 +3,12 @@ package cmd
 import (
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
-	"github.com/odpf/guardian/app"
 	"github.com/odpf/salt/cmdx"
 	"github.com/spf13/cobra"
 )
 
-func New(cliConfig *app.CLIConfig) *cobra.Command {
+func New(cfg *Config) *cobra.Command {
+	cliConfig = cfg
 	var cmd = &cobra.Command{
 		Use:   "guardian <command> <subcommand> [flags]",
 		Short: "Universal data access control",
@@ -39,13 +39,12 @@ func New(cliConfig *app.CLIConfig) *cobra.Command {
 	}
 
 	protoAdapter := handlerv1beta1.NewAdapter()
-
+	cmd.AddCommand(ResourceCmd(protoAdapter))
+	cmd.AddCommand(ProviderCmd(protoAdapter))
+	cmd.AddCommand(PolicyCmd(protoAdapter))
+	cmd.AddCommand(appealsCommand())
 	cmd.AddCommand(ServerCommand())
 	cmd.AddCommand(configCommand())
-	cmd.AddCommand(ResourceCmd(cliConfig, protoAdapter))
-	cmd.AddCommand(ProviderCmd(cliConfig, protoAdapter))
-	cmd.AddCommand(PolicyCmd(cliConfig, protoAdapter))
-	cmd.AddCommand(appealsCommand(cliConfig))
 	cmd.AddCommand(VersionCmd())
 
 	// Help topics
