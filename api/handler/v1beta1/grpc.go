@@ -339,7 +339,7 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *guardianv1beta1.Up
 	r := s.adapter.FromResourceProto(req.GetResource())
 	r.ID = req.GetId()
 
-	if err := s.resourceService.Update(r); err != nil {
+	if err := s.resourceService.Update(ctx, r); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update resource: %v", err)
 	}
 

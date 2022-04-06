@@ -13,6 +13,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
+	"github.com/odpf/guardian/audit"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/core/approval"
 	"github.com/odpf/guardian/core/policy"
@@ -36,6 +37,7 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -82,7 +84,23 @@ func RunServer(c *Config) error {
 
 	iamManager := identities.NewManager(crypto, v)
 
-	resourceService := resource.NewService(resourceRepository)
+	auditLogger := audit.New(
+		audit.WithRepository(audit.NewLogRepository()),
+		audit.WithAppDetails(audit.AppDetails{
+			Name: "guardian",
+			// TODO: get version
+		}),
+		audit.WithTrackIDExtractor(func(ctx context.Context) string {
+			if md, ok := metadata.FromIncomingContext(ctx); ok {
+				if rawTraceID := md.Get("X-Trace-Id"); len(rawTraceID) > 0 { // TODO: make key configurable
+					return rawTraceID[0]
+				}
+			}
+			return ""
+		}),
+	)
+
+	resourceService := resource.NewService(resourceRepository, auditLogger)
 	providerService := provider.NewService(
 		logger,
 		v,
@@ -247,6 +265,8 @@ func makeHeaderMatcher(c *Config) func(key string) (string, bool) {
 		switch strings.ToLower(key) {
 		case strings.ToLower(c.AuthenticatedUserHeaderKey):
 			return key, true
+		case "x-trace-id": // TODO: make key configurable
+			return "X-Trace-Id", true
 		default:
 			return runtime.DefaultHeaderMatcher(key)
 		}

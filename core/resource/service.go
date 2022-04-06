@@ -1,19 +1,26 @@
 package resource
 
 import (
+	"context"
+
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/store"
 )
 
+type auditLogger interface {
+	Log(ctx context.Context, actor, action string, data interface{}) error
+}
+
 // Service handles the business logic for resource
 type Service struct {
-	repo store.ResourceRepository
+	repo        store.ResourceRepository
+	auditLogger auditLogger
 }
 
 // NewService returns *Service
-func NewService(repo store.ResourceRepository) *Service {
-	return &Service{repo}
+func NewService(repo store.ResourceRepository, auditLogger auditLogger) *Service {
+	return &Service{repo, auditLogger}
 }
 
 // Find records based on filters
@@ -36,7 +43,7 @@ func (s *Service) BulkUpsert(resources []*domain.Resource) error {
 }
 
 // Update updates only details and labels of a resource by ID
-func (s *Service) Update(r *domain.Resource) error {
+func (s *Service) Update(ctx context.Context, r *domain.Resource) error {
 	existingResource, err := s.GetOne(r.ID)
 	if err != nil {
 		return err
@@ -56,6 +63,8 @@ func (s *Service) Update(r *domain.Resource) error {
 	}
 
 	r.UpdatedAt = res.UpdatedAt
+	s.auditLogger.Log(ctx, "// TODO", "resource.update", r)
+
 	return nil
 }
 
