@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 	"strings"
 	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/go-playground/validator/v10"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -144,6 +148,20 @@ func RunServer(c *Config) error {
 			grpc_logrus.StreamServerInterceptor(logrusEntry),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+				panicked := true
+
+				defer func() {
+					if r := recover(); r != nil || panicked {
+						logger.Error(string(debug.Stack()))
+						err = status.Errorf(codes.Internal, "Internal error, please check log")
+					}
+				}()
+
+				resp, err = handler(ctx, req)
+				panicked = false
+				return resp, err
+			},
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
 		)),
 	)
