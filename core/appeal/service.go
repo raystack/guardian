@@ -783,11 +783,7 @@ func (s *Service) addCreatorDetails(a *domain.Appeal, p *domain.Policy) error {
 			if p.IAM.Schema != nil {
 				creator = map[string]interface{}{}
 				for schemaKey, targetKey := range p.IAM.Schema {
-					//This will make all value as a string
-					creator[schemaKey] = ""
-					if userDetailsMap[targetKey] != nil {
-						creator[schemaKey] = userDetailsMap[targetKey]
-					}
+					creator[schemaKey] = userDetailsMap[targetKey]
 				}
 			} else {
 				creator = userDetailsMap
