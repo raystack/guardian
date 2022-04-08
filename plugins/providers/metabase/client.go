@@ -10,6 +10,8 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/mitchellh/mapstructure"
+
 	"github.com/go-playground/validator/v10"
 )
 
@@ -133,11 +135,20 @@ func (c *client) GetDatabases() ([]*Database, error) {
 	}
 
 	var databases []*Database
-	if _, err := c.do(req, &databases); err != nil {
-		return nil, err
-	}
+	var response interface{}
+	if _, err := c.do(req, &response); err == nil {
+		if v, ok := response.([]interface{}); ok {
+			err = mapstructure.Decode(v, &databases) // this is for metabase v0.37
+		} else {
+			err = mapstructure.Decode(response.(map[string]interface{})["data"], &databases) // this is for metabase v0.42
+		}
 
-	return databases, nil
+		if err != nil {
+			return databases, err
+		}
+		return databases, nil
+	}
+	return databases, err
 }
 
 func (c *client) GetCollections() ([]*Collection, error) {
