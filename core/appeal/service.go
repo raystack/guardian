@@ -173,6 +173,25 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 		for _, approval := range appeal.Approvals {
 			if approval.Index == len(appeal.Approvals)-1 && approval.Status == domain.ApprovalStatusApproved {
+				var oldExtendedAppeal *domain.Appeal
+				activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
+					AccountID:  appeal.AccountID,
+					ResourceID: appeal.ResourceID,
+					Role:       appeal.Role,
+					Statuses:   []string{domain.AppealStatusActive},
+				})
+				if err != nil {
+					return fmt.Errorf("unable to retrieve existing active appeal from db: %w", err)
+				}
+
+				if len(activeAppeals) > 0 {
+					oldExtendedAppeal = activeAppeals[0]
+					oldExtendedAppeal.Terminate()
+					if err := s.repo.Update(oldExtendedAppeal); err != nil {
+						return fmt.Errorf("unable to update existing active appeal: %w", err)
+					}
+				}
+
 				if err := s.createAccess(appeal); err != nil {
 					return fmt.Errorf("creating access: %w", err)
 				}
