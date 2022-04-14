@@ -136,19 +136,22 @@ func (c *client) GetDatabases() ([]*Database, error) {
 
 	var databases []*Database
 	var response interface{}
-	if _, err := c.do(req, &response); err == nil {
-		if v, ok := response.([]interface{}); ok {
-			err = mapstructure.Decode(v, &databases) // this is for metabase v0.37
-		} else if v, ok := response.(map[string]interface{}); ok && v["data"] != nil {
-			err = mapstructure.Decode(v["data"], &databases) // this is for metabase v0.42
-		} else {
-			return databases, ErrInvalidApiResponse
-		}
 
-		if err != nil {
-			return databases, err
-		}
-		return databases, nil
+	_, err = c.do(req, &response)
+	if err != nil {
+		return databases, err
+	}
+
+	if v, ok := response.([]interface{}); ok {
+		err = mapstructure.Decode(v, &databases) // this is for metabase v0.37
+	} else if v, ok := response.(map[string]interface{}); ok && v["data"] != nil {
+		err = mapstructure.Decode(v["data"], &databases) // this is for metabase v0.42
+	} else {
+		return databases, ErrInvalidApiResponse
+	}
+
+	if err != nil {
+		return databases, err
 	}
 	return databases, err
 }
