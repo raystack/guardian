@@ -11,4 +11,5 @@ var (
 	ErrInvalidRole                   = errors.New("invalid role")
 	ErrInvalidResourceType           = errors.New("invalid resource type")
 	ErrPermissionNotFound            = errors.New("permission not found")
+	ErrInvalidApiResponse            = errors.New("invalid api response")
 )
