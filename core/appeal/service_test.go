@@ -762,223 +762,227 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.Equal(expectedResult, appeals)
 		s.Nil(actualError)
 	})
+}
 
-	s.Run("should return appeals which have auto approval steps on success ", func() {
-		accountID := "test@email.com"
-		resourceIDs := []string{"1"}
-		var resources []*domain.Resource
-		for _, id := range resourceIDs {
-			resources = append(resources, &domain.Resource{
-				ID:           id,
-				Type:         "resource_type_1",
-				ProviderType: "provider_type",
-				ProviderURN:  "provider1",
-				Details: map[string]interface{}{
-					"owner": []string{"resource.owner@email.com"},
+func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprovalSteps() {
+	timeNow := time.Now()
+	appeal.TimeNow = func() time.Time {
+		return timeNow
+	}
+
+	accountID := "test@email.com"
+	resourceIDs := []string{"1"}
+	var resources []*domain.Resource
+	for _, id := range resourceIDs {
+		resources = append(resources, &domain.Resource{
+			ID:           id,
+			Type:         "resource_type_1",
+			ProviderType: "provider_type",
+			ProviderURN:  "provider1",
+			Details: map[string]interface{}{
+				"owner": []string{"resource.owner@email.com"},
+			},
+		})
+	}
+
+	providers := []*domain.Provider{
+		{
+			ID:   "1",
+			Type: "provider_type",
+			URN:  "provider1",
+			Config: &domain.ProviderConfig{
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess:         true,
+					AllowActiveAccessExtensionIn: "24h",
 				},
-			})
-		}
-
-		providers := []*domain.Provider{
-			{
-				ID:   "1",
-				Type: "provider_type",
-				URN:  "provider1",
-				Config: &domain.ProviderConfig{
-					Appeal: &domain.AppealConfig{
-						AllowPermanentAccess:         true,
-						AllowActiveAccessExtensionIn: "24h",
-					},
-					Resources: []*domain.ResourceConfig{
-						{
-							Type: "resource_type_1",
-							Policy: &domain.PolicyConfig{
-								ID:      "policy_1",
-								Version: 1,
-							},
-							Roles: []*domain.Role{
-								{
-									ID: "role_id",
-								},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: "resource_type_1",
+						Policy: &domain.PolicyConfig{
+							ID:      "policy_1",
+							Version: 1,
+						},
+						Roles: []*domain.Role{
+							{
+								ID: "role_id",
 							},
 						},
 					},
 				},
 			},
-		}
+		},
+	}
 
-		currentActiveAppeal := &domain.Appeal{
-			ID:         "99",
+	currentActiveAppeal := &domain.Appeal{
+		ID:         "99",
+		AccountID:  accountID,
+		ResourceID: "1",
+		Resource: &domain.Resource{
+			ID:  "1",
+			URN: "urn",
+		},
+		Role:    "role_id",
+		Status:  domain.AppealStatusActive,
+		Options: nil,
+	}
+	expectedExistingAppeals := []*domain.Appeal{currentActiveAppeal}
+
+	policies := []*domain.Policy{
+		{
+			ID:      "policy_1",
+			Version: 1,
+			Steps: []*domain.Step{
+				{
+					Name:        "step_1",
+					Strategy:    "auto",
+					AllowFailed: false,
+					ApproveIf:   "1==1",
+				},
+			},
+			IAM: &domain.IAMConfig{
+				Provider: "http",
+				Config: map[string]interface{}{
+					"url": "http://localhost",
+				},
+			},
+		},
+	}
+
+	expectedCreatorUser := map[string]interface{}{
+		"managers": []interface{}{"user.approver@email.com"},
+	}
+	var expectedAppealsInsertionParam []*domain.Appeal
+
+	for i, r := range resourceIDs {
+		expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, &domain.Appeal{
+			ResourceID:    r,
+			Resource:      resources[i],
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+			Status:        domain.AppealStatusActive,
+			AccountID:     accountID,
+			AccountType:   domain.DefaultAppealAccountType,
+			CreatedBy:     accountID,
+			Creator:       expectedCreatorUser,
+			Role:          "role_id",
+			Approvals: []*domain.Approval{
+				{
+					Name:          "step_1",
+					Index:         0,
+					Status:        domain.ApprovalStatusApproved,
+					PolicyID:      "policy_1",
+					PolicyVersion: 1,
+				},
+			},
+		})
+	}
+
+	expectedResult := []*domain.Appeal{
+		{
+			ID:            "1",
+			ResourceID:    "1",
+			Resource:      resources[0],
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+			Status:        domain.AppealStatusActive,
+			AccountID:     accountID,
+			AccountType:   domain.DefaultAppealAccountType,
+			CreatedBy:     accountID,
+			Creator:       expectedCreatorUser,
+			Role:          "role_id",
+			Approvals: []*domain.Approval{
+				{
+					ID:            "1",
+					Name:          "step_1",
+					Index:         0,
+					Status:        domain.ApprovalStatusApproved,
+					PolicyID:      "policy_1",
+					PolicyVersion: 1,
+				},
+			},
+		},
+	}
+
+	appeals := []*domain.Appeal{
+		{
+			CreatedBy:  accountID,
 			AccountID:  accountID,
 			ResourceID: "1",
 			Resource: &domain.Resource{
 				ID:  "1",
 				URN: "urn",
 			},
-			Role:    "role_id",
-			Status:  domain.AppealStatusActive,
-			Options: nil,
-		}
-		expectedExistingAppeals := []*domain.Appeal{currentActiveAppeal}
+			Role: "role_id",
+		},
+	}
 
-		policies := []*domain.Policy{
-			{
-				ID:      "policy_1",
-				Version: 1,
-				Steps: []*domain.Step{
-					{
-						Name:        "step_1",
-						Strategy:    "auto",
-						AllowFailed: false,
-						ApproveIf:   "1==1",
-					},
-				},
-				IAM: &domain.IAMConfig{
-					Provider: "http",
-					Config: map[string]interface{}{
-						"url": "http://localhost",
-					},
-				},
-			},
-		}
+	expectedResourceFilters := map[string]interface{}{"ids": resourceIDs}
+	s.mockResourceService.On("Find", expectedResourceFilters).Return(resources, nil).Once()
+	s.mockProviderService.On("Find").Return(providers, nil).Once()
+	s.mockPolicyService.On("Find").Return(policies, nil).Once()
+	expectedExistingAppealsFilters := &domain.ListAppealsFilter{
+		Statuses: []string{
+			domain.AppealStatusPending,
+			domain.AppealStatusActive,
+		},
+	}
+	s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
+	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(nil)
+	s.mockIAMManager.On("ParseConfig", mock.Anything).Return(nil, nil)
+	s.mockIAMManager.On("GetClient", mock.Anything).Return(s.mockIAMClient, nil)
+	s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
+	//s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
 
-		expectedCreatorUser := map[string]interface{}{
-			"managers": []interface{}{"user.approver@email.com"},
-		}
-		var expectedAppealsInsertionParam []*domain.Appeal
+	s.mockApprovalService.On("AdvanceApproval", appeals[0]).
+		Return(nil).
+		Run(func(args mock.Arguments) {
+			ap := args.Get(0).(*domain.Appeal)
+			ap.Status = domain.AppealStatusActive
+			ap.Approvals[0].Status = domain.ApprovalStatusApproved
+		})
 
-		for i, r := range resourceIDs {
-			expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, &domain.Appeal{
-				ResourceID:    r,
-				Resource:      resources[i],
-				PolicyID:      "policy_1",
-				PolicyVersion: 1,
-				Status:        domain.AppealStatusActive,
-				AccountID:     accountID,
-				AccountType:   domain.DefaultAppealAccountType,
-				CreatedBy:     accountID,
-				Creator:       expectedCreatorUser,
-				Role:          "role_id",
-				Approvals: []*domain.Approval{
-					{
-						Name:          "step_1",
-						Index:         0,
-						Status:        domain.ApprovalStatusApproved,
-						PolicyID:      "policy_1",
-						PolicyVersion: 1,
-					},
-				},
-			})
-		}
+	expectedExistingActiveAppealsFilters := &domain.ListAppealsFilter{
+		AccountID:  "test@email.com",
+		ResourceID: "1",
+		Role:       "role_id",
+		Statuses:   []string{domain.AppealStatusActive},
+	}
+	s.mockRepository.On("Find", expectedExistingActiveAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 
-		expectedResult := []*domain.Appeal{
-			{
-				ID:            "1",
-				ResourceID:    "1",
-				Resource:      resources[0],
-				PolicyID:      "policy_1",
-				PolicyVersion: 1,
-				Status:        domain.AppealStatusActive,
-				AccountID:     accountID,
-				AccountType:   domain.DefaultAppealAccountType,
-				CreatedBy:     accountID,
-				Creator:       expectedCreatorUser,
-				Role:          "role_id",
-				Approvals: []*domain.Approval{
-					{
-						ID:            "1",
-						Name:          "step_1",
-						Index:         0,
-						Status:        domain.ApprovalStatusApproved,
-						PolicyID:      "policy_1",
-						PolicyVersion: 1,
-					},
-				},
-			},
-		}
+	terminatedAppeal := expectedExistingAppeals[0]
+	terminatedAppeal.Terminate()
 
-		appeals := []*domain.Appeal{
-			{
-				CreatedBy:  accountID,
-				AccountID:  accountID,
-				ResourceID: "1",
-				Resource: &domain.Resource{
-					ID:  "1",
-					URN: "urn",
-				},
-				Role: "role_id",
-			},
-		}
+	s.mockPolicyService.On("GetOne", "policy_1", uint(1)).Return(policies[0], nil).Once()
 
-		expectedResourceFilters := map[string]interface{}{"ids": resourceIDs}
-		s.mockResourceService.On("Find", expectedResourceFilters).Return(resources, nil).Once()
-		s.mockProviderService.On("Find").Return(providers, nil).Once()
-		s.mockPolicyService.On("Find").Return(policies, nil).Once()
-		expectedExistingAppealsFilters := &domain.ListAppealsFilter{
-			Statuses: []string{
-				domain.AppealStatusPending,
-				domain.AppealStatusActive,
-			},
-		}
-		s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
-		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything).Return(nil)
-		s.mockIAMManager.On("ParseConfig", mock.Anything).Return(nil, nil)
-		s.mockIAMManager.On("GetClient", mock.Anything).Return(s.mockIAMClient, nil)
-		s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
-		//s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
+	s.mockResourceService.On("Get", appeals[0].Resource).Return(resources[0], nil).Once()
+	s.mockProviderService.On("GrantAccess", appeals[0]).Return(nil).Once()
 
-		s.mockApprovalService.On("AdvanceApproval", appeals[0]).
-			Return(nil).
-			Run(func(args mock.Arguments) {
-				ap := args.Get(0).(*domain.Appeal)
-				ap.Status = domain.AppealStatusActive
-				ap.Approvals[0].Status = domain.ApprovalStatusApproved
-			})
+	var appealsToUpdate []*domain.Appeal
+	appealsToUpdate = append(appealsToUpdate, expectedAppealsInsertionParam...)
+	appealsToUpdate = append(appealsToUpdate, terminatedAppeal)
 
-		expectedExistingActiveAppealsFilters := &domain.ListAppealsFilter{
-			AccountID:  "test@email.com",
-			ResourceID: "1",
-			Role:       "role_id",
-			Statuses:   []string{domain.AppealStatusActive},
-		}
-		s.mockRepository.On("Find", expectedExistingActiveAppealsFilters).Return(expectedExistingAppeals, nil).Once()
-
-		terminatedAppeal := expectedExistingAppeals[0]
-		terminatedAppeal.Terminate()
-
-		s.mockPolicyService.On("GetOne", "policy_1", uint(1)).Return(policies[0], nil).Once()
-
-		s.mockResourceService.On("Get", appeals[0].Resource).Return(resources[0], nil).Once()
-		s.mockProviderService.On("GrantAccess", appeals[0]).Return(nil).Once()
-
-		var appealsToUpdate []*domain.Appeal
-		appealsToUpdate = append(appealsToUpdate, expectedAppealsInsertionParam...)
-		appealsToUpdate = append(appealsToUpdate, terminatedAppeal)
-
-		s.mockRepository.
-			On("BulkUpsert", appealsToUpdate).
-			Return(nil).
-			Run(func(args mock.Arguments) {
-				appeals := args.Get(0).([]*domain.Appeal)
-				for i, a := range appeals {
-					if a.Status == domain.AppealStatusTerminated {
-						continue
-					}
-					a.ID = expectedResult[i].ID
-					for j, approval := range a.Approvals {
-						approval.ID = expectedResult[i].Approvals[j].ID
-					}
+	s.mockRepository.
+		On("BulkUpsert", appealsToUpdate).
+		Return(nil).
+		Run(func(args mock.Arguments) {
+			appeals := args.Get(0).([]*domain.Appeal)
+			for i, a := range appeals {
+				if a.Status == domain.AppealStatusTerminated {
+					continue
 				}
-			}).
-			Once()
-		s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
+				a.ID = expectedResult[i].ID
+				for j, approval := range a.Approvals {
+					approval.ID = expectedResult[i].Approvals[j].ID
+				}
+			}
+		}).
+		Once()
+	s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 
-		actualError := s.service.Create(appeals)
+	actualError := s.service.Create(appeals)
 
-		s.Equal(expectedResult, appeals)
-		s.Nil(actualError)
-	})
-
+	s.Equal(expectedResult, appeals)
+	s.Nil(actualError)
 }
 
 func (s *ServiceTestSuite) MakeAction() {
