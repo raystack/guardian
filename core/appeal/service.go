@@ -124,6 +124,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 	notifications := []domain.Notification{}
 
+	var oldExtendedAppeals []*domain.Appeal
 	for _, appeal := range appeals {
 		appeal.SetDefaults()
 
@@ -187,12 +188,10 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 				if len(activeAppeals) > 0 {
 					oldExtendedAppeal = activeAppeals[0]
 					oldExtendedAppeal.Terminate()
-					if err := s.repo.Update(oldExtendedAppeal); err != nil {
-						return fmt.Errorf("unable to update existing active appeal: %w", err)
-					}
+					oldExtendedAppeals = append(oldExtendedAppeals, oldExtendedAppeal)
 				}
 
-				if err := s.createAccess(appeal); err != nil {
+				if err := s.CreateAccess(appeal); err != nil {
 					return fmt.Errorf("creating access: %w", err)
 				}
 				notifications = append(notifications, domain.Notification{
@@ -209,7 +208,12 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		}
 	}
 
-	if err := s.repo.BulkUpsert(appeals); err != nil {
+	var appealsToUpdate []*domain.Appeal
+
+	appealsToUpdate = append(appealsToUpdate, appeals...)
+	appealsToUpdate = append(appealsToUpdate, oldExtendedAppeals...)
+
+	if err := s.repo.BulkUpsert(appealsToUpdate); err != nil {
 		return fmt.Errorf("inserting appeals into db: %w", err)
 	}
 
@@ -301,7 +305,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 						return nil, fmt.Errorf("failed to update existing active appeal: %w", err)
 					}
 				} else {
-					if err := s.createAccess(appeal); err != nil {
+					if err := s.CreateAccess(appeal); err != nil {
 						return nil, err
 					}
 				}
@@ -704,7 +708,7 @@ func (s *Service) handleAppealRequirements(a *domain.Appeal, p *domain.Policy) e
 	return nil
 }
 
-func (s *Service) createAccess(a *domain.Appeal) error {
+func (s *Service) CreateAccess(a *domain.Appeal) error {
 	policy := a.Policy
 	if policy == nil {
 		p, err := s.policyService.GetOne(a.PolicyID, a.PolicyVersion)
