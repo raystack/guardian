@@ -9,7 +9,6 @@ import (
 type appealService interface {
 	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
 	Revoke(id, actor, reason string) (*domain.Appeal, error)
-	Create(appeals []*domain.Appeal) error
 }
 
 type providerService interface {
