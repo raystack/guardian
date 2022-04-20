@@ -64,3 +64,8 @@ type Provider struct {
 	CreatedAt time.Time       `json:"created_at,omitempty" yaml:"created_at,omitempty"`
 	UpdatedAt time.Time       `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
 }
+
+type ProviderType struct {
+	Name          string   `json:"name" yaml:"name"`
+	ResourceTypes []string `json:"resource_types" yaml:"resource_types"`
+}

@@ -24,6 +24,7 @@ type ProtoAdapter interface {
 	FromProviderConfigProto(*guardianv1beta1.ProviderConfig) (*domain.ProviderConfig, error)
 	ToProviderProto(*domain.Provider) (*guardianv1beta1.Provider, error)
 	ToProviderConfigProto(*domain.ProviderConfig) (*guardianv1beta1.ProviderConfig, error)
+	ToProviderTypeProto(domain.ProviderType) (*guardianv1beta1.ProviderType, error)
 	ToRole(*domain.Role) (*guardianv1beta1.Role, error)
 
 	FromPolicyProto(*guardianv1beta1.Policy) (*domain.Policy, error)
@@ -110,6 +111,26 @@ func (s *GRPCServer) GetProvider(ctx context.Context, req *guardianv1beta1.GetPr
 
 	return &guardianv1beta1.GetProviderResponse{
 		Provider: providerProto,
+	}, nil
+}
+
+func (s *GRPCServer) GetProviderTypes(ctx context.Context, req *guardianv1beta1.GetProviderTypesRequest) (*guardianv1beta1.GetProviderTypesResponse, error) {
+	providerTypes, err := s.providerService.GetTypes()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to retrieve provider types: %v", err)
+	}
+
+	var providerTypeProtos []*guardianv1beta1.ProviderType
+	for _, pt := range providerTypes {
+		providerTypeProto, err := s.adapter.ToProviderTypeProto(pt)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse provider type %s: %v", pt.Name, err)
+		}
+		providerTypeProtos = append(providerTypeProtos, providerTypeProto)
+	}
+
+	return &guardianv1beta1.GetProviderTypesResponse{
+		ProviderTypes: providerTypeProtos,
 	}, nil
 }
 

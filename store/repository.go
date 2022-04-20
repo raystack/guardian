@@ -25,6 +25,7 @@ type ProviderRepository interface {
 	Update(*domain.Provider) error
 	Find() ([]*domain.Provider, error)
 	GetByID(id string) (*domain.Provider, error)
+	GetTypes() ([]domain.ProviderType, error)
 	GetOne(pType, urn string) (*domain.Provider, error)
 	Delete(id string) error
 }
