@@ -85,7 +85,6 @@ func (r *ProviderRepository) GetByID(id string) (*domain.Provider, error) {
 }
 
 func (r *ProviderRepository) GetTypes() ([]domain.ProviderType, error) {
-
 	var results []struct {
 		ProviderType string
 		ResourceType string
