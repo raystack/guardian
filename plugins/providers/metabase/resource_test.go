@@ -23,7 +23,7 @@ func TestDatabase(t *testing.T) {
 					expectedResource: &domain.Resource{
 						Type: metabase.ResourceTypeDatabase,
 						Name: "database 1",
-						URN:  "1",
+						URN:  "database:1",
 					},
 				},
 			}
@@ -69,7 +69,7 @@ func TestDatabase(t *testing.T) {
 			}
 
 			r := &domain.Resource{
-				URN:  "1",
+				URN:  "database:1",
 				Type: metabase.ResourceTypeDatabase,
 				Name: "test-resource",
 			}

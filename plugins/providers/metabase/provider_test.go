@@ -126,22 +126,33 @@ func TestGetResources(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: metabase.ResourceTypeDatabase,
+				}, {
+					Type: metabase.ResourceTypeTable,
 				},
 				{
 					Type: metabase.ResourceTypeCollection,
+				}, {
+					Type: metabase.ResourceTypeGroup,
 				},
 			},
 		}
 		expectedDatabases := []*metabase.Database{
 			{
-				ID:   1,
-				Name: "db_1",
+				ID:     1,
+				Name:   "db_1",
+				Tables: []metabase.Table{{ID: 2, Name: "table_1", DbId: 1}},
 			},
 		}
 		client.On("GetDatabases").Return(expectedDatabases, nil).Once()
-		groups := make([]*metabase.Group, 0)
-		maps := make(map[string][]map[string]interface{}, 0)
-		client.On("GetGroups").Return(groups, maps, maps, nil).Once()
+
+		d := []map[string]interface{}{{"urn": "database:1"}}
+		c := []map[string]interface{}{{"urn": "1"}}
+		group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
+
+		client.On("GetGroups").Return([]*metabase.Group{&group},
+			map[string][]map[string]interface{}{"database:1": {{"urn": "group:1"}}},
+			map[string][]map[string]interface{}{"1": {{"urn": "group:1"}}}, nil).Once()
+
 		expectedCollections := []*metabase.Collection{
 			{
 				ID:   1,
@@ -152,13 +163,28 @@ func TestGetResources(t *testing.T) {
 		expectedResources := []*domain.Resource{
 			{
 				Type:        metabase.ResourceTypeDatabase,
-				URN:         "1",
+				URN:         "database:1",
 				ProviderURN: providerURN,
 				Name:        "db_1",
 				Details: map[string]interface{}{
 					"auto_run_queries":            false,
 					"cache_field_values_schedule": "",
 					"engine":                      "",
+					"metadata_sync_schedule":      "",
+					"native_permissions":          "",
+					"timezone":                    "",
+					"groups":                      []map[string]interface{}{{"urn": "group:1"}},
+				},
+			}, {
+				Type:        metabase.ResourceTypeTable,
+				URN:         "table:1.2",
+				ProviderURN: providerURN,
+				Name:        "table_1",
+				Details: map[string]interface{}{
+					"auto_run_queries":            false,
+					"cache_field_values_schedule": "",
+					"engine":                      "",
+					"groups":                      []map[string]interface{}{{"urn": "group:1"}},
 					"metadata_sync_schedule":      "",
 					"native_permissions":          "",
 					"timezone":                    "",
@@ -169,7 +195,19 @@ func TestGetResources(t *testing.T) {
 				URN:         "1",
 				ProviderURN: providerURN,
 				Name:        "col_1",
-				Details:     map[string]interface{}{},
+				Details: map[string]interface{}{
+					"groups": []map[string]interface{}{{"urn": "group:1"}},
+				},
+			},
+			{
+				Type:        metabase.ResourceTypeGroup,
+				URN:         "group:0",
+				ProviderURN: providerURN,
+				Name:        "All Users",
+				Details: map[string]interface{}{
+					"collection": []map[string]interface{}{{"name": "col_1", "type": "collection", "urn": "1"}},
+					"database":   []map[string]interface{}{{"name": "db_1", "type": "database", "urn": "database:1"}},
+				},
 			},
 		}
 
@@ -391,7 +429,7 @@ func TestGrantAccess(t *testing.T) {
 			a := &domain.Appeal{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeDatabase,
-					URN:  "999",
+					URN:  "database:999",
 					Name: "test-database",
 				},
 				Role: "test-role",
@@ -440,7 +478,7 @@ func TestGrantAccess(t *testing.T) {
 			a := &domain.Appeal{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeDatabase,
-					URN:  "999",
+					URN:  "database:999",
 					Name: "test-database",
 				},
 				Role:       "viewer",
