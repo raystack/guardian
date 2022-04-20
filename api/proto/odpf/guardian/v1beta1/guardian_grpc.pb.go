@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type GuardianServiceClient interface {
 	ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error)
 	GetProvider(ctx context.Context, in *GetProviderRequest, opts ...grpc.CallOption) (*GetProviderResponse, error)
+	GetProviderTypes(ctx context.Context, in *GetProviderTypesRequest, opts ...grpc.CallOption) (*GetProviderTypesResponse, error)
 	CreateProvider(ctx context.Context, in *CreateProviderRequest, opts ...grpc.CallOption) (*CreateProviderResponse, error)
 	UpdateProvider(ctx context.Context, in *UpdateProviderRequest, opts ...grpc.CallOption) (*UpdateProviderResponse, error)
 	ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error)
@@ -61,6 +62,15 @@ func (c *guardianServiceClient) ListProviders(ctx context.Context, in *ListProvi
 func (c *guardianServiceClient) GetProvider(ctx context.Context, in *GetProviderRequest, opts ...grpc.CallOption) (*GetProviderResponse, error) {
 	out := new(GetProviderResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/GetProvider", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) GetProviderTypes(ctx context.Context, in *GetProviderTypesRequest, opts ...grpc.CallOption) (*GetProviderTypesResponse, error) {
+	out := new(GetProviderTypesResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/GetProviderTypes", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -244,6 +254,7 @@ func (c *guardianServiceClient) UpdateApproval(ctx context.Context, in *UpdateAp
 type GuardianServiceServer interface {
 	ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error)
 	GetProvider(context.Context, *GetProviderRequest) (*GetProviderResponse, error)
+	GetProviderTypes(context.Context, *GetProviderTypesRequest) (*GetProviderTypesResponse, error)
 	CreateProvider(context.Context, *CreateProviderRequest) (*CreateProviderResponse, error)
 	UpdateProvider(context.Context, *UpdateProviderRequest) (*UpdateProviderResponse, error)
 	ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error)
@@ -275,6 +286,9 @@ func (UnimplementedGuardianServiceServer) ListProviders(context.Context, *ListPr
 }
 func (UnimplementedGuardianServiceServer) GetProvider(context.Context, *GetProviderRequest) (*GetProviderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProvider not implemented")
+}
+func (UnimplementedGuardianServiceServer) GetProviderTypes(context.Context, *GetProviderTypesRequest) (*GetProviderTypesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProviderTypes not implemented")
 }
 func (UnimplementedGuardianServiceServer) CreateProvider(context.Context, *CreateProviderRequest) (*CreateProviderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProvider not implemented")
@@ -378,6 +392,24 @@ func _GuardianService_GetProvider_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GuardianServiceServer).GetProvider(ctx, req.(*GetProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_GetProviderTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProviderTypesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).GetProviderTypes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/GetProviderTypes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).GetProviderTypes(ctx, req.(*GetProviderTypesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -738,6 +770,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetProvider",
 			Handler:    _GuardianService_GetProvider_Handler,
+		},
+		{
+			MethodName: "GetProviderTypes",
+			Handler:    _GuardianService_GetProviderTypes_Handler,
 		},
 		{
 			MethodName: "CreateProvider",
