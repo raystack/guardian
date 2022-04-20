@@ -136,7 +136,7 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 }
 
 func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
-	resourceTypeValidation := fmt.Sprintf("oneof=%s %s", ResourceTypeCollection, ResourceTypeDatabase)
+	resourceTypeValidation := fmt.Sprintf("oneof=%s %s %s %s", ResourceTypeCollection, ResourceTypeDatabase, ResourceTypeTable, ResourceTypeGroup)
 	if err := c.validator.Var(resource.Type, resourceTypeValidation); err != nil {
 		return err
 	}

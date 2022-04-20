@@ -139,6 +139,9 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 		client.On("GetDatabases").Return(expectedDatabases, nil).Once()
+		groups := make([]*metabase.Group, 0)
+		maps := make(map[string][]map[string]interface{}, 0)
+		client.On("GetGroups").Return(groups, maps, maps, nil).Once()
 		expectedCollections := []*metabase.Collection{
 			{
 				ID:   1,

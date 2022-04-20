@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"reflect"
 	"strconv"
+	"sync"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -18,6 +19,7 @@ import (
 type MetabaseClient interface {
 	GetDatabases() ([]*Database, error)
 	GetCollections() ([]*Collection, error)
+	GetGroups() ([]*Group, map[string][]map[string]interface{}, map[string][]map[string]interface{}, error)
 	GrantDatabaseAccess(resource *Database, user, role string) error
 	RevokeDatabaseAccess(resource *Database, user, role string) error
 	GrantCollectionAccess(resource *Collection, user, role string) error
@@ -129,7 +131,7 @@ func NewClient(config *ClientConfig) (*client, error) {
 }
 
 func (c *client) GetDatabases() ([]*Database, error) {
-	req, err := c.newRequest(http.MethodGet, "/api/database", nil)
+	req, err := c.newRequest(http.MethodGet, "/api/database?include=tables", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -168,6 +170,134 @@ func (c *client) GetCollections() ([]*Collection, error) {
 	}
 
 	return collection, nil
+}
+
+func (c *client) GetGroups() ([]*Group, map[string][]map[string]interface{}, map[string][]map[string]interface{}, error) {
+
+	wg := sync.WaitGroup{}
+	wg.Add(3)
+
+	var groups []*Group
+	var err error
+	go c.fetchGroups(&wg, &groups, err)
+
+	databaseResourceGroups := make(map[string][]map[string]interface{}, 0)
+	go c.fetchDatabasePermissions(&wg, databaseResourceGroups, err)
+
+	collectionResourceGroups := make(map[string][]map[string]interface{}, 0)
+	go c.fetchCollectionPermissions(&wg, collectionResourceGroups, err)
+
+	wg.Wait()
+
+	groupMap := make(map[string]*Group, 0)
+	for _, group := range groups {
+		groupMap[fmt.Sprintf("group:%d", group.ID)] = group
+	}
+
+	addResourceToGroup(databaseResourceGroups, groupMap, "database")
+	addResourceToGroup(collectionResourceGroups, groupMap, "collection")
+
+	return groups, databaseResourceGroups, collectionResourceGroups, err
+}
+
+func (c *client) fetchGroups(wg *sync.WaitGroup, groups *[]*Group, err error) {
+	defer wg.Done()
+	req, err := c.newRequest(http.MethodGet, "/api/permissions/group", nil)
+	if err != nil {
+		return
+	}
+
+	_, err = c.do(req, &groups)
+	if err != nil {
+		return
+	}
+}
+
+func (c *client) fetchDatabasePermissions(wg *sync.WaitGroup, resourceGroups map[string][]map[string]interface{}, err error) {
+	defer wg.Done()
+
+	req, err := c.newRequest(http.MethodGet, "/api/permissions/graph", nil)
+	if err != nil {
+		return
+	}
+
+	graphs := make(map[string]interface{}, 0)
+	_, err = c.do(req, &graphs)
+	if err != nil {
+		return
+	}
+
+	for groupId, r := range graphs["groups"].(map[string]interface{}) {
+		for dbId, role := range r.(map[string]interface{}) {
+			if roles, ok := role.(map[string]interface{}); ok {
+				for _, value := range roles {
+					if tables, ok := value.(map[string]interface{}); ok {
+						for _, tables := range tables {
+							if tables, ok := tables.(map[string]interface{}); ok {
+								for tableId, _ := range tables {
+									addGroupToResource(resourceGroups, fmt.Sprintf("table:%s.%s", dbId, tableId), groupId, err)
+								}
+							}
+						}
+					}
+				}
+			}
+			addGroupToResource(resourceGroups, fmt.Sprintf("database:%s", dbId), groupId, err)
+		}
+	}
+}
+
+func (c *client) fetchCollectionPermissions(wg *sync.WaitGroup, resourceGroups map[string][]map[string]interface{}, err error) {
+	defer wg.Done()
+
+	req, err := c.newRequest(http.MethodGet, "/api/collection/graph", nil)
+	if err != nil {
+		return
+	}
+
+	graphs := make(map[string]interface{}, 0)
+	_, err = c.do(req, &graphs)
+	if err != nil {
+		return
+	}
+
+	for groupId, r := range graphs["groups"].(map[string]interface{}) {
+		for collectionId, role := range r.(map[string]interface{}) {
+			if role != "none" {
+				addGroupToResource(resourceGroups, collectionId, groupId, err)
+			}
+		}
+	}
+}
+
+func addResourceToGroup(resourceGroups map[string][]map[string]interface{}, groupMap map[string]*Group, resourceType string) {
+	for resourceId, groups := range resourceGroups {
+		for _, groupDetails := range groups {
+			groupID := groupDetails["urn"].(string)
+			if group, ok := groupMap[groupID]; ok {
+				groupDetails["name"] = group.Name
+				if resourceType == "database" {
+					group.DatabaseResources = append(group.DatabaseResources, map[string]interface{}{"urn": resourceId})
+				}
+				if resourceType == "collection" {
+					group.CollectionResources = append(group.CollectionResources, map[string]interface{}{"urn": resourceId})
+				}
+			}
+		}
+	}
+}
+
+func addGroupToResource(resourceGroups map[string][]map[string]interface{}, resourceId string, groupId string, err error) {
+	id, err := strconv.Atoi(groupId)
+	if err != nil {
+		return
+	}
+	if groups, ok := resourceGroups[resourceId]; ok {
+		groups = append(groups, map[string]interface{}{"urn": fmt.Sprintf("group:%d", id)})
+		resourceGroups[resourceId] = groups
+	} else {
+		resourceGroups[resourceId] = []map[string]interface{}{{"urn": fmt.Sprintf("group:%d", id)}}
+	}
 }
 
 func (c *client) GrantDatabaseAccess(resource *Database, user, role string) error {

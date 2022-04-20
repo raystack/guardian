@@ -45,14 +45,14 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
-	var resourceTypes []string
+	var resourceTypes = make(map[string]bool, 0)
 	for _, rc := range pc.Resources {
-		resourceTypes = append(resourceTypes, rc.Type)
+		resourceTypes[rc.Type] = true
 	}
 
 	resources := []*domain.Resource{}
 
-	if containsString(resourceTypes, ResourceTypeDatabase) {
+	if _, ok := resourceTypes[ResourceTypeDatabase]; ok && resourceTypes[ResourceTypeDatabase] {
 		databases, err := client.GetDatabases()
 		if err != nil {
 			return nil, err
@@ -62,16 +62,81 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 			db.ProviderType = pc.Type
 			db.ProviderURN = pc.URN
 			resources = append(resources, db)
+
+			if _, ok := resourceTypes[ResourceTypeTable]; ok && resourceTypes[ResourceTypeTable] {
+				tables := d.Tables
+				for _, t := range tables {
+					t.Database = db
+					table := t.ToDomain()
+					table.ProviderType = pc.Type
+					table.ProviderURN = pc.URN
+					resources = append(resources, table)
+				}
+			}
 		}
 	}
 
-	if containsString(resourceTypes, ResourceTypeCollection) {
+	if _, ok := resourceTypes[ResourceTypeCollection]; ok && resourceTypes[ResourceTypeCollection] {
 		collections, err := client.GetCollections()
 		if err != nil {
 			return nil, err
 		}
 		for _, c := range collections {
 			db := c.ToDomain()
+			db.ProviderType = pc.Type
+			db.ProviderURN = pc.URN
+			resources = append(resources, db)
+		}
+	}
+
+	groups, databaseResourceGroups, collectionResourceGroups, err := client.GetGroups()
+	if err != nil {
+		return nil, err
+	}
+
+	databaseResourceMap := make(map[string]*domain.Resource, 0)
+	collectionResourceMap := make(map[string]*domain.Resource, 0)
+	for _, resource := range resources {
+		if resource.Type == ResourceTypeDatabase || resource.Type == ResourceTypeTable {
+			databaseResourceMap[resource.URN] = resource
+		}
+		if resource.Type == ResourceTypeCollection {
+			collectionResourceMap[resource.URN] = resource
+		}
+	}
+
+	for _, resource := range resources {
+		if resource.Type == ResourceTypeDatabase || resource.Type == ResourceTypeTable {
+			if groups, ok := databaseResourceGroups[resource.URN]; ok {
+				resource.Details["groups"] = groups
+			}
+		}
+		if resource.Type == ResourceTypeCollection {
+			if groups, ok := collectionResourceGroups[resource.URN]; ok {
+				resource.Details["groups"] = groups
+			}
+		}
+	}
+
+	if _, ok := resourceTypes[ResourceTypeGroup]; ok && resourceTypes[ResourceTypeGroup] {
+		for _, g := range groups {
+			for _, resourceMap := range g.DatabaseResources {
+				resourceId := resourceMap["urn"].(string)
+				if resource, ok := databaseResourceMap[resourceId]; ok {
+					resourceMap["name"] = resource.Name
+					resourceMap["type"] = resource.Type
+				}
+			}
+
+			for _, resourceMap := range g.CollectionResources {
+				resourceId := resourceMap["urn"].(string)
+				if resource, ok := collectionResourceMap[resourceId]; ok {
+					resourceMap["name"] = resource.Name
+					resourceMap["type"] = resource.Type
+				}
+			}
+
+			db := g.ToDomain()
 			db.ProviderType = pc.Type
 			db.ProviderURN = pc.URN
 			resources = append(resources, db)
@@ -238,13 +303,4 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 	}
 
 	return permissions, nil
-}
-
-func containsString(arr []string, v string) bool {
-	for _, item := range arr {
-		if item == v {
-			return true
-		}
-	}
-	return false
 }

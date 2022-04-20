@@ -58,6 +58,42 @@ func (_m *MetabaseClient) GetDatabases() ([]*metabase.Database, error) {
 	return r0, r1
 }
 
+func (_m *MetabaseClient) GetGroups() ([]*metabase.Group, map[string][]map[string]interface{}, map[string][]map[string]interface{}, error) {
+	ret := _m.Called()
+
+	var r0 []*metabase.Group
+	if rf, ok := ret.Get(0).(func() []*metabase.Group); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*metabase.Group)
+		}
+	}
+
+	var r1 map[string][]map[string]interface{}
+	if rf, ok := ret.Get(1).(func() map[string][]map[string]interface{}); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Get(1).(map[string][]map[string]interface{})
+	}
+
+	var r2 map[string][]map[string]interface{}
+	if rf, ok := ret.Get(2).(func() map[string][]map[string]interface{}); ok {
+		r2 = rf()
+	} else {
+		r2 = ret.Get(2).(map[string][]map[string]interface{})
+	}
+
+	var r3 error
+	if rf, ok := ret.Get(3).(func() error); ok {
+		r3 = rf()
+	} else {
+		r3 = ret.Error(3)
+	}
+
+	return r0, r1, r2, r3
+}
+
 // GrantCollectionAccess provides a mock function with given fields: resource, user, role
 func (_m *MetabaseClient) GrantCollectionAccess(resource *metabase.Collection, user string, role string) error {
 	ret := _m.Called(resource, user, role)
