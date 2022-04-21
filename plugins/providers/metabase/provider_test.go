@@ -153,8 +153,8 @@ func TestGetResources(t *testing.T) {
 		}
 		client.On("GetDatabases").Return(expectedDatabases, nil).Once()
 
-		d := []map[string]interface{}{{"urn": "database:1", "permissions": []string{"read", "write"}}}
-		c := []map[string]interface{}{{"urn": "collection:1", "permissions": []string{"read", "write"}}}
+		d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
+		c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
 		group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
 
 		client.On("GetGroups").Return([]*metabase.Group{&group},
@@ -213,8 +213,8 @@ func TestGetResources(t *testing.T) {
 				ProviderURN: providerURN,
 				Name:        "All Users",
 				Details: map[string]interface{}{
-					"collection": []map[string]interface{}{{"name": "col_1", "type": "collection", "urn": "collection:1", "permissions": []string{"read", "write"}}},
-					"database":   []map[string]interface{}{{"name": "db_1", "type": "database", "urn": "database:1", "permissions": []string{"read", "write"}}},
+					"collection": []*metabase.GroupResource{{Name: "col_1", Type: "collection", Urn: "collection:1", Permissions: []string{"read", "write"}}},
+					"database":   []*metabase.GroupResource{{Name: "db_1", Type: "database", Urn: "database:1", Permissions: []string{"read", "write"}}},
 				},
 			},
 		}

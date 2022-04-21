@@ -307,10 +307,10 @@ func addResourceToGroup(resourceGroups ResourceGroupDetails, groupMap map[string
 			if group, ok := groupMap[groupID]; ok {
 				groupDetails[name] = group.Name
 				if resourceType == database {
-					group.DatabaseResources = append(group.DatabaseResources, map[string]interface{}{urn: resourceId, permissionsConst: groupDetails[permissionsConst]})
+					group.DatabaseResources = append(group.DatabaseResources, &GroupResource{Urn: resourceId, Permissions: groupDetails[permissionsConst].([]string)})
 				}
 				if resourceType == collection {
-					group.CollectionResources = append(group.CollectionResources, map[string]interface{}{urn: resourceId, permissionsConst: groupDetails[permissionsConst]})
+					group.CollectionResources = append(group.CollectionResources, &GroupResource{Urn: resourceId, Permissions: groupDetails[permissionsConst].([]string)})
 				}
 			}
 		}

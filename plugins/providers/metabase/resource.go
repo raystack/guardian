@@ -34,11 +34,18 @@ type Table struct {
 	Database *domain.Resource
 }
 
+type GroupResource struct {
+	Name        string   `json:"name"`
+	Permissions []string `json:"permission"`
+	Urn         string   `json:"urn"`
+	Type        string   `json:"type"`
+}
+
 type Group struct {
-	ID                  int                      `json:"id"`
-	Name                string                   `json:"name"`
-	DatabaseResources   []map[string]interface{} `json:"database_resources"`
-	CollectionResources []map[string]interface{} `json:"collection_resources"`
+	ID                  int              `json:"id"`
+	Name                string           `json:"name"`
+	DatabaseResources   []*GroupResource `json:"database"`
+	CollectionResources []*GroupResource `json:"collection"`
 }
 
 func (d *Database) FromDomain(r *domain.Resource) error {
@@ -126,8 +133,8 @@ func (g *Group) FromDomain(r *domain.Resource) error {
 
 	g.ID = id
 	g.Name = r.Name
-	g.DatabaseResources = r.Details["database"].([]map[string]interface{})
-	g.CollectionResources = r.Details["collection"].([]map[string]interface{})
+	g.DatabaseResources = r.Details["database"].([]*GroupResource)
+	g.CollectionResources = r.Details["collection"].([]*GroupResource)
 	if err != nil {
 		return err
 	}

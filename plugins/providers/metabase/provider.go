@@ -67,8 +67,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 			resources = append(resources, db)
 
 			if _, ok := resourceTypes[ResourceTypeTable]; ok && resourceTypes[ResourceTypeTable] {
-				tables := d.Tables
-				for _, t := range tables {
+				for _, t := range d.Tables {
 					t.Database = db
 					table := t.ToDomain()
 					table.ProviderType = pc.Type
@@ -123,19 +122,19 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 
 	if _, ok := resourceTypes[ResourceTypeGroup]; ok && resourceTypes[ResourceTypeGroup] {
 		for _, g := range groups {
-			for _, resourceMap := range g.DatabaseResources {
-				resourceId := resourceMap["urn"].(string)
+			for _, groupResource := range g.DatabaseResources {
+				resourceId := groupResource.Urn
 				if resource, ok := databaseResourceMap[resourceId]; ok {
-					resourceMap["name"] = resource.Name
-					resourceMap["type"] = resource.Type
+					groupResource.Name = resource.Name
+					groupResource.Type = resource.Type
 				}
 			}
 
-			for _, resourceMap := range g.CollectionResources {
-				resourceId := resourceMap["urn"].(string)
+			for _, groupResource := range g.CollectionResources {
+				resourceId := groupResource.Urn
 				if resource, ok := collectionResourceMap[resourceId]; ok {
-					resourceMap["name"] = resource.Name
-					resourceMap["type"] = resource.Type
+					groupResource.Name = resource.Name
+					groupResource.Type = resource.Type
 				}
 			}
 
