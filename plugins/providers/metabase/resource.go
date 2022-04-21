@@ -117,7 +117,7 @@ func (g *Group) FromDomain(r *domain.Resource) error {
 
 	groupUrn := strings.Split(r.URN, ":")
 	if len(groupUrn) != 2 {
-		return ErrInvalidDatabaseURN
+		return ErrInvalidGroupURN
 	}
 	id, err := strconv.Atoi(groupUrn[1])
 	if err != nil {
@@ -159,7 +159,15 @@ func (c *Collection) FromDomain(r *domain.Resource) error {
 		return ErrInvalidResourceType
 	}
 
-	id, _ := strconv.Atoi(r.URN)
+	collectionUrn := strings.Split(r.URN, ":")
+	if len(collectionUrn) != 2 {
+		return ErrInvalidCollectionURN
+	}
+	id, err := strconv.Atoi(collectionUrn[1])
+	if err != nil {
+		return err
+	}
+
 	if id == 0 {
 		c.ID = r.URN
 	} else {
@@ -180,7 +188,7 @@ func (c *Collection) ToDomain() *domain.Resource {
 	return &domain.Resource{
 		Type:    ResourceTypeCollection,
 		Name:    c.Name,
-		URN:     fmt.Sprintf("%v", c.ID),
+		URN:     fmt.Sprintf("collection:%v", c.ID),
 		Details: details,
 	}
 }

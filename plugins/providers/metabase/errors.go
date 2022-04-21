@@ -14,4 +14,6 @@ var (
 	ErrInvalidApiResponse            = errors.New("invalid api response")
 	ErrInvalidDatabaseURN            = errors.New("database URN is invalid")
 	ErrInvalidTableURN               = errors.New("table URN is invalid")
+	ErrInvalidGroupURN               = errors.New("group URN is invalid")
+	ErrInvalidCollectionURN          = errors.New("collection URN is invalid")
 )

@@ -4,19 +4,22 @@ import (
 	"github.com/mitchellh/mapstructure"
 	pv "github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/salt/log"
 )
 
 type provider struct {
 	typeName string
 	Clients  map[string]MetabaseClient
 	crypto   domain.Crypto
+	logger   *log.Logrus
 }
 
-func NewProvider(typeName string, crypto domain.Crypto) *provider {
+func NewProvider(typeName string, crypto domain.Crypto, logger *log.Logrus) *provider {
 	return &provider{
 		typeName: typeName,
 		Clients:  map[string]MetabaseClient{},
 		crypto:   crypto,
+		logger:   logger,
 	}
 }
 
@@ -262,7 +265,7 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Metab
 		Host:     credentials.Host,
 		Username: credentials.Username,
 		Password: credentials.Password,
-	})
+	}, p.logger)
 	if err != nil {
 		return nil, err
 	}

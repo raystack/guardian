@@ -58,7 +58,7 @@ func (_m *MetabaseClient) GetDatabases() ([]*metabase.Database, error) {
 	return r0, r1
 }
 
-func (_m *MetabaseClient) GetGroups() ([]*metabase.Group, map[string][]map[string]interface{}, map[string][]map[string]interface{}, error) {
+func (_m *MetabaseClient) GetGroups() ([]*metabase.Group, metabase.ResourceGroupDetails, metabase.ResourceGroupDetails, error) {
 	ret := _m.Called()
 
 	var r0 []*metabase.Group

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/odpf/salt/log"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
@@ -15,8 +17,9 @@ import (
 func TestGetType(t *testing.T) {
 	t.Run("should return provider type name", func(t *testing.T) {
 		expectedTypeName := domain.ProviderTypeMetabase
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider(expectedTypeName, crypto)
+		p := metabase.NewProvider(expectedTypeName, crypto, logger)
 
 		actualTypeName := p.GetType()
 
@@ -27,7 +30,8 @@ func TestGetType(t *testing.T) {
 func TestGetResources(t *testing.T) {
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider("", crypto)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		p := metabase.NewProvider("", crypto, logger)
 
 		pc := &domain.ProviderConfig{
 			Credentials: "invalid-creds",
@@ -41,7 +45,8 @@ func TestGetResources(t *testing.T) {
 
 	t.Run("should return error if there are any on client initialization", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider("", crypto)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		p := metabase.NewProvider("", crypto, logger)
 
 		expectedError := errors.New("decrypt error")
 		crypto.On("Decrypt", "test-password").Return("", expectedError).Once()
@@ -61,7 +66,8 @@ func TestGetResources(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.MetabaseClient)
-		p := metabase.NewProvider("", crypto)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		p := metabase.NewProvider("", crypto, logger)
 		p.Clients = map[string]metabase.MetabaseClient{
 			providerURN: client,
 		}
@@ -88,7 +94,8 @@ func TestGetResources(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.MetabaseClient)
-		p := metabase.NewProvider("", crypto)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		p := metabase.NewProvider("", crypto, logger)
 		p.Clients = map[string]metabase.MetabaseClient{
 			providerURN: client,
 		}
@@ -115,7 +122,8 @@ func TestGetResources(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.MetabaseClient)
-		p := metabase.NewProvider("", crypto)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		p := metabase.NewProvider("", crypto, logger)
 		p.Clients = map[string]metabase.MetabaseClient{
 			providerURN: client,
 		}
@@ -145,13 +153,13 @@ func TestGetResources(t *testing.T) {
 		}
 		client.On("GetDatabases").Return(expectedDatabases, nil).Once()
 
-		d := []map[string]interface{}{{"urn": "database:1"}}
-		c := []map[string]interface{}{{"urn": "1"}}
+		d := []map[string]interface{}{{"urn": "database:1", "permissions": []string{"read", "write"}}}
+		c := []map[string]interface{}{{"urn": "collection:1", "permissions": []string{"read", "write"}}}
 		group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
 
 		client.On("GetGroups").Return([]*metabase.Group{&group},
-			map[string][]map[string]interface{}{"database:1": {{"urn": "group:1"}}},
-			map[string][]map[string]interface{}{"1": {{"urn": "group:1"}}}, nil).Once()
+			map[string][]map[string]interface{}{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
+			map[string][]map[string]interface{}{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 		expectedCollections := []*metabase.Collection{
 			{
@@ -173,7 +181,7 @@ func TestGetResources(t *testing.T) {
 					"metadata_sync_schedule":      "",
 					"native_permissions":          "",
 					"timezone":                    "",
-					"groups":                      []map[string]interface{}{{"urn": "group:1"}},
+					"groups":                      []map[string]interface{}{{"urn": "group:1", "permissions": []string{"read", "write"}}},
 				},
 			}, {
 				Type:        metabase.ResourceTypeTable,
@@ -184,7 +192,7 @@ func TestGetResources(t *testing.T) {
 					"auto_run_queries":            false,
 					"cache_field_values_schedule": "",
 					"engine":                      "",
-					"groups":                      []map[string]interface{}{{"urn": "group:1"}},
+					"groups":                      []map[string]interface{}{{"urn": "group:1", "permissions": []string{"read", "write"}}},
 					"metadata_sync_schedule":      "",
 					"native_permissions":          "",
 					"timezone":                    "",
@@ -192,11 +200,11 @@ func TestGetResources(t *testing.T) {
 			},
 			{
 				Type:        metabase.ResourceTypeCollection,
-				URN:         "1",
+				URN:         "collection:1",
 				ProviderURN: providerURN,
 				Name:        "col_1",
 				Details: map[string]interface{}{
-					"groups": []map[string]interface{}{{"urn": "group:1"}},
+					"groups": []map[string]interface{}{{"urn": "group:1", "permissions": []string{"write"}}},
 				},
 			},
 			{
@@ -205,8 +213,8 @@ func TestGetResources(t *testing.T) {
 				ProviderURN: providerURN,
 				Name:        "All Users",
 				Details: map[string]interface{}{
-					"collection": []map[string]interface{}{{"name": "col_1", "type": "collection", "urn": "1"}},
-					"database":   []map[string]interface{}{{"name": "db_1", "type": "database", "urn": "database:1"}},
+					"collection": []map[string]interface{}{{"name": "col_1", "type": "collection", "urn": "collection:1", "permissions": []string{"read", "write"}}},
+					"database":   []map[string]interface{}{{"name": "db_1", "type": "database", "urn": "database:1", "permissions": []string{"read", "write"}}},
 				},
 			},
 		}
@@ -282,7 +290,8 @@ func TestGrantAccess(t *testing.T) {
 
 		for _, tc := range testcases {
 			crypto := new(mocks.Crypto)
-			p := metabase.NewProvider("", crypto)
+			logger := log.NewLogrus(log.LogrusWithLevel("info"))
+			p := metabase.NewProvider("", crypto, logger)
 
 			providerConfig := &domain.ProviderConfig{
 				Resources: tc.resourceConfigs,
@@ -295,7 +304,8 @@ func TestGrantAccess(t *testing.T) {
 
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider("", crypto)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		p := metabase.NewProvider("", crypto, logger)
 
 		pc := &domain.ProviderConfig{
 			Credentials: "invalid-credentials",
@@ -324,7 +334,8 @@ func TestGrantAccess(t *testing.T) {
 
 	t.Run("should return error if there are any on client initialization", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider("", crypto)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		p := metabase.NewProvider("", crypto, logger)
 		expectedError := errors.New("decrypt error")
 		crypto.On("Decrypt", "test-password").Return("", expectedError).Once()
 
@@ -360,7 +371,8 @@ func TestGrantAccess(t *testing.T) {
 
 	t.Run("should return error if resource type in unknown", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
-		p := metabase.NewProvider("", crypto)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		p := metabase.NewProvider("", crypto, logger)
 		expectedError := errors.New("invalid resource type")
 		crypto.On("Decrypt", "test-password").Return("", expectedError).Once()
 
@@ -401,7 +413,8 @@ func TestGrantAccess(t *testing.T) {
 			expectedError := errors.New("client error")
 			crypto := new(mocks.Crypto)
 			client := new(mocks.MetabaseClient)
-			p := metabase.NewProvider("", crypto)
+			logger := log.NewLogrus(log.LogrusWithLevel("info"))
+			p := metabase.NewProvider("", crypto, logger)
 			p.Clients = map[string]metabase.MetabaseClient{
 				providerURN: client,
 			}
@@ -443,6 +456,7 @@ func TestGrantAccess(t *testing.T) {
 		t.Run("should return nil error if granting access is successful", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			crypto := new(mocks.Crypto)
+			logger := log.NewLogrus(log.LogrusWithLevel("info"))
 			client := new(mocks.MetabaseClient)
 			expectedDatabase := &metabase.Database{
 				Name: "test-database",
@@ -450,7 +464,7 @@ func TestGrantAccess(t *testing.T) {
 			}
 			expectedUser := "test@email.com"
 			expectedRole := metabase.DatabaseRoleViewer
-			p := metabase.NewProvider("", crypto)
+			p := metabase.NewProvider("", crypto, logger)
 			p.Clients = map[string]metabase.MetabaseClient{
 				providerURN: client,
 			}
@@ -494,12 +508,13 @@ func TestGrantAccess(t *testing.T) {
 	})
 
 	t.Run("given collection resource", func(t *testing.T) {
-		t.Run("should return error if there is an error in grandting collection access", func(t *testing.T) {
+		t.Run("should return error if there is an error in granting collection access", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			expectedError := errors.New("client error")
 			crypto := new(mocks.Crypto)
 			client := new(mocks.MetabaseClient)
-			p := metabase.NewProvider("", crypto)
+			logger := log.NewLogrus(log.LogrusWithLevel("info"))
+			p := metabase.NewProvider("", crypto, logger)
 			p.Clients = map[string]metabase.MetabaseClient{
 				providerURN: client,
 			}
@@ -527,7 +542,7 @@ func TestGrantAccess(t *testing.T) {
 			a := &domain.Appeal{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeCollection,
-					URN:  "999",
+					URN:  "collection:999",
 					Name: "test-collection",
 				},
 				Role: "test-role",
@@ -548,7 +563,8 @@ func TestGrantAccess(t *testing.T) {
 			}
 			expectedUser := "test@email.com"
 			expectedRole := "viewer"
-			p := metabase.NewProvider("", crypto)
+			logger := log.NewLogrus(log.LogrusWithLevel("info"))
+			p := metabase.NewProvider("", crypto, logger)
 
 			p.Clients = map[string]metabase.MetabaseClient{
 				providerURN: client,
@@ -577,7 +593,7 @@ func TestGrantAccess(t *testing.T) {
 			a := &domain.Appeal{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeCollection,
-					URN:  "999",
+					URN:  "collection:999",
 					Name: "test-collection",
 				},
 				Role:       "viewer",

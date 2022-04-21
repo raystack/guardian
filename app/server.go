@@ -73,7 +73,7 @@ func RunServer(c *Config) error {
 
 	providerClients := []providers.Client{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
-		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
+		metabase.NewProvider(domain.ProviderTypeMetabase, crypto, logger),
 		grafana.NewProvider(domain.ProviderTypeGrafana, crypto),
 		tableau.NewProvider(domain.ProviderTypeTableau, crypto),
 		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, crypto),
