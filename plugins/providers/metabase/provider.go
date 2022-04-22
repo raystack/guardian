@@ -55,7 +55,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 
 	resources := []*domain.Resource{}
 
-	if _, ok := resourceTypes[ResourceTypeDatabase]; ok && resourceTypes[ResourceTypeDatabase] {
+	if _, ok := resourceTypes[ResourceTypeDatabase]; ok {
 		databases, err := client.GetDatabases()
 		if err != nil {
 			return nil, err
@@ -66,7 +66,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 			db.ProviderURN = pc.URN
 			resources = append(resources, db)
 
-			if _, ok := resourceTypes[ResourceTypeTable]; ok && resourceTypes[ResourceTypeTable] {
+			if _, ok := resourceTypes[ResourceTypeTable]; ok {
 				for _, t := range d.Tables {
 					t.Database = db
 					table := t.ToDomain()
@@ -78,7 +78,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		}
 	}
 
-	if _, ok := resourceTypes[ResourceTypeCollection]; ok && resourceTypes[ResourceTypeCollection] {
+	if _, ok := resourceTypes[ResourceTypeCollection]; ok {
 		collections, err := client.GetCollections()
 		if err != nil {
 			return nil, err
