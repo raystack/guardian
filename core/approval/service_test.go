@@ -219,7 +219,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				steps: []*domain.Step{
 					{
 						Strategy:  "manual",
-						When:      `$appeal.details != nil && $appeal.details.foo && $appeal.details.foo.bar == "baz"`,
+						When:      `$appeal.creator != nil && $appeal.creator.product_group != nil && $appeal.creator.supervisory_org != nil && ($appeal.creator.product_group contains 'Financial Services' || $appeal.creator.product_group contains 'financial services' || (($appeal.creator.product_group == 'Not Applicable' || $appeal.creator.product_group == 'not applicable') && ($appeal.creator.supervisory_org contains 'Financial Services' || $appeal.creator.supervisory_org contains 'financial services')))`,
 						Approvers: []string{"approver1@email.com"},
 					},
 					{
