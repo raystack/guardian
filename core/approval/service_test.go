@@ -211,6 +211,31 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 					domain.ApprovalStatusBlocked,
 				},
 			},
+			{
+				name: "should access nested fields properly in expression",
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{},
+				},
+				steps: []*domain.Step{
+					{
+						Strategy:  "manual",
+						When:      `$appeal.details != nil && $appeal.details.foo && $appeal.details.foo.bar == "baz"`,
+						Approvers: []string{"approver1@email.com"},
+					},
+					{
+						Strategy:  "manual",
+						Approvers: []string{"approver2@email.com"},
+					},
+				},
+				existingApprovalStatuses: []string{
+					domain.ApprovalStatusPending,
+					domain.ApprovalStatusPending,
+				},
+				expectedApprovalStatuses: []string{
+					domain.ApprovalStatusSkipped,
+					domain.ApprovalStatusPending,
+				},
+			},
 		}
 
 		for _, tc := range testCases {
