@@ -163,6 +163,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 			steps                    []*domain.Step
 			existingApprovalStatuses []string
 			expectedApprovalStatuses []string
+			expectedErrorStr         string
 		}{
 			{
 				name: "initial process, When on the first step",
@@ -219,7 +220,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				steps: []*domain.Step{
 					{
 						Strategy:  "manual",
-						When:      `$appeal.creator != nil && $appeal.creator.product_group != nil && $appeal.creator.supervisory_org != nil && ($appeal.creator.product_group contains 'Financial Services' || $appeal.creator.product_group contains 'financial services' || (($appeal.creator.product_group == 'Not Applicable' || $appeal.creator.product_group == 'not applicable') && ($appeal.creator.supervisory_org contains 'Financial Services' || $appeal.creator.supervisory_org contains 'financial services')))`,
+						When:      `$appeal.details != nil && $appeal.details.foo != nil && $appeal.details.bar != nil && ($appeal.details.foo.foo contains "foo" || $appeal.details.foo.bar contains "bar")`,
 						Approvers: []string{"approver1@email.com"},
 					},
 					{
@@ -236,6 +237,32 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 					domain.ApprovalStatusPending,
 				},
 			},
+			{
+				name: "should return error if failed when evaluating expression",
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{},
+				},
+				steps: []*domain.Step{
+					{
+						Strategy:  "manual",
+						When:      `$appeal.details != nil && $appeal.details.foo != nil && $appeal.details.bar != nil && $appeal.details.foo.foo contains "foo" || $appeal.details.foo.bar contains "bar"`,
+						Approvers: []string{"approver1@email.com"},
+					},
+					{
+						Strategy:  "manual",
+						Approvers: []string{"approver2@email.com"},
+					},
+				},
+				existingApprovalStatuses: []string{
+					domain.ApprovalStatusPending,
+					domain.ApprovalStatusPending,
+				},
+				expectedApprovalStatuses: []string{
+					domain.ApprovalStatusSkipped,
+					domain.ApprovalStatusPending,
+				},
+				expectedErrorStr: "evaluating expression ",
+			},
 		}
 
 		for _, tc := range testCases {
@@ -250,7 +277,11 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 					Steps: tc.steps,
 				}
 				actualError := s.service.AdvanceApproval(&appeal)
-				s.Nil(actualError)
+				if tc.expectedErrorStr == "" {
+					s.Nil(actualError)
+				} else {
+					s.Contains(actualError.Error(), tc.expectedErrorStr)
+				}
 			})
 		}
 	})
