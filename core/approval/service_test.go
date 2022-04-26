@@ -230,7 +230,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				},
 				existingApprovalStatuses: []string{
 					domain.ApprovalStatusPending,
-					domain.ApprovalStatusPending,
+					domain.ApprovalStatusBlocked,
 				},
 				expectedApprovalStatuses: []string{
 					domain.ApprovalStatusSkipped,
@@ -257,10 +257,6 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 					domain.ApprovalStatusPending,
 					domain.ApprovalStatusPending,
 				},
-				expectedApprovalStatuses: []string{
-					domain.ApprovalStatusSkipped,
-					domain.ApprovalStatusPending,
-				},
 				expectedErrorStr: "evaluating expression ",
 			},
 		}
@@ -268,9 +264,10 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 		for _, tc := range testCases {
 			s.Run(tc.name, func() {
 				appeal := *tc.appeal
-				for _, s := range tc.existingApprovalStatuses {
+				for i, s := range tc.existingApprovalStatuses {
 					appeal.Approvals = append(appeal.Approvals, &domain.Approval{
 						Status: s,
+						Index:  i,
 					})
 				}
 				appeal.Policy = &domain.Policy{
@@ -279,6 +276,9 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				actualError := s.service.AdvanceApproval(&appeal)
 				if tc.expectedErrorStr == "" {
 					s.Nil(actualError)
+					for i, a := range appeal.Approvals {
+						s.Equal(a.Status, tc.expectedApprovalStatuses[i])
+					}
 				} else {
 					s.Contains(actualError.Error(), tc.expectedErrorStr)
 				}
