@@ -513,7 +513,6 @@ func (s *ServiceTestSuite) TestCreate() {
 	})
 
 	s.Run("should return appeals on success", func() {
-
 		accountID := "test@email.com"
 		resourceIDs := []string{"1", "2"}
 		resources := []*domain.Resource{}
