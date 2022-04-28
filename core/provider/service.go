@@ -174,6 +174,7 @@ func (s *Service) FetchResources() error {
 		resources = append(resources, res...)
 	}
 
+	// TODO: add actor into ctx
 	return s.resourceService.BulkUpsert(context.TODO(), resources)
 }
 

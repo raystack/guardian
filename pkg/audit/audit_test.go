@@ -57,7 +57,9 @@ func (s *AuditTestSuite) TestLog() {
 			},
 		}).Return(nil)
 
-		err := s.service.Log(context.Background(), "user@example.com", "action", map[string]interface{}{"foo": "bar"})
+		ctx := context.Background()
+		ctx = audit.WithActor(ctx, "user@example.com")
+		err := s.service.Log(ctx, "action", map[string]interface{}{"foo": "bar"})
 		s.NoError(err)
 	})
 
@@ -72,7 +74,7 @@ func (s *AuditTestSuite) TestLog() {
 			s.Empty(l.TraceID)
 		}).Return(nil)
 
-		err := s.service.Log(context.Background(), "", "", nil)
+		err := s.service.Log(context.Background(), "", nil)
 		s.NoError(err)
 	})
 
@@ -82,7 +84,7 @@ func (s *AuditTestSuite) TestLog() {
 		expectedError := errors.New("test error")
 		s.mockRepository.On("Insert", mock.Anything, mock.Anything).Return(expectedError)
 
-		err := s.service.Log(context.Background(), "", "", nil)
+		err := s.service.Log(context.Background(), "", nil)
 		s.ErrorIs(err, expectedError)
 	})
 }

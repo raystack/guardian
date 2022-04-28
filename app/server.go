@@ -102,13 +102,10 @@ func RunServer(c *Config) error {
 		}),
 	)
 
-	h := NewHelper(c.AuthenticatedUserHeaderKey)
-
 	resourceService := resource.NewService(resource.ServiceOptions{
 		Repository:  resourceRepository,
 		Logger:      logger,
 		AuditLogger: auditLogger,
-		Helper:      h,
 	})
 	providerService := provider.NewService(
 		logger,

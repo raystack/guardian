@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/pkg/audit"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -339,6 +340,12 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *guardianv1beta1.Up
 	r := s.adapter.FromResourceProto(req.GetResource())
 	r.ID = req.GetId()
 
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = audit.WithActor(ctx, user)
 	if err := s.resourceService.Update(ctx, r); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update resource: %v", err)
 	}
@@ -359,7 +366,7 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *guardianv1beta1.Up
 func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.ListUserAppealsRequest) (*guardianv1beta1.ListUserAppealsResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
 	filters := &domain.ListAppealsFilter{
@@ -435,7 +442,7 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListA
 func (s *GRPCServer) CreateAppeal(ctx context.Context, req *guardianv1beta1.CreateAppealRequest) (*guardianv1beta1.CreateAppealResponse, error) {
 	authenticatedUser, err := s.getUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
 	appeals, err := s.adapter.FromCreateAppealProto(req, authenticatedUser)
@@ -467,7 +474,7 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *guardianv1beta1.Crea
 func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1beta1.ListUserApprovalsRequest) (*guardianv1beta1.ListUserApprovalsResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
 	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
@@ -524,7 +531,7 @@ func (s *GRPCServer) GetAppeal(ctx context.Context, req *guardianv1beta1.GetAppe
 func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.UpdateApprovalRequest) (*guardianv1beta1.UpdateApprovalResponse, error) {
 	actor, err := s.getUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
 	id := req.GetId()
@@ -662,16 +669,19 @@ func (s *GRPCServer) listApprovals(filters *domain.ListApprovalsFilter) ([]*guar
 }
 
 func (s *GRPCServer) getUser(ctx context.Context) (string, error) {
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		users := md.Get(s.authenticatedUserHeaderKey)
-		if len(users) > 0 {
-			currentUser := users[0]
-			ctx_logrus.AddFields(ctx, logrus.Fields{
-				s.authenticatedUserHeaderKey: currentUser,
-			})
-			return currentUser, nil
-		}
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", errors.New("unable to retrieve metadata from context")
 	}
 
-	return "", status.Error(codes.Unauthenticated, "user email not found")
+	users := md.Get(s.authenticatedUserHeaderKey)
+	if len(users) == 0 {
+		return "", errors.New("user email not found")
+	}
+
+	currentUser := users[0]
+	ctx_logrus.AddFields(ctx, logrus.Fields{
+		s.authenticatedUserHeaderKey: currentUser,
+	})
+	return currentUser, nil
 }

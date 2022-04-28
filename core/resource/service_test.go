@@ -16,7 +16,6 @@ type ServiceTestSuite struct {
 	suite.Suite
 	mockRepository  *mocks.Repository
 	mockAuditLogger *mocks.AuditLogger
-	mockHelper      *mocks.Helper
 	service         *resource.Service
 
 	authenticatedUserEmail string
@@ -25,15 +24,11 @@ type ServiceTestSuite struct {
 func (s *ServiceTestSuite) SetupTest() {
 	s.mockRepository = new(mocks.Repository)
 	s.mockAuditLogger = new(mocks.AuditLogger)
-	s.mockHelper = new(mocks.Helper)
 	s.service = resource.NewService(resource.ServiceOptions{
 		Repository:  s.mockRepository,
 		AuditLogger: s.mockAuditLogger,
-		Helper:      s.mockHelper,
 	})
 	s.authenticatedUserEmail = "user@example.com"
-
-	s.mockHelper.On("GetAuthenticatedUser", mock.Anything).Return(s.authenticatedUserEmail, nil)
 }
 
 func (s *ServiceTestSuite) TestFind() {
@@ -170,7 +165,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 		for _, tc := range testCases {
 			s.mockRepository.On("GetOne", tc.resourceUpdatePayload.ID).Return(tc.existingResource, nil).Once()
 			s.mockRepository.On("Update", tc.expectedUpdatedValues).Return(nil).Once()
-			s.mockAuditLogger.On("Log", mock.Anything, s.authenticatedUserEmail, resource.AuditKeyResourceUpdate, mock.Anything).Return(nil)
+			s.mockAuditLogger.On("Log", mock.Anything, resource.AuditKeyResourceUpdate, mock.Anything).Return(nil)
 
 			actualError := s.service.Update(context.Background(), tc.resourceUpdatePayload)
 

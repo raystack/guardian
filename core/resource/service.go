@@ -1,6 +1,5 @@
 //go:generate mockery --name=repository --exported
 //go:generate mockery --name=auditLogger --exported
-//go:generate mockery --name=helper --exported
 
 package resource
 
@@ -24,11 +23,7 @@ type repository interface {
 }
 
 type auditLogger interface {
-	Log(ctx context.Context, actor, action string, data interface{}) error
-}
-
-type helper interface {
-	GetAuthenticatedUser(context.Context) (string, error)
+	Log(ctx context.Context, action string, data interface{}) error
 }
 
 // Service handles the business logic for resource
@@ -37,7 +32,6 @@ type Service struct {
 
 	logger      log.Logger
 	auditLogger auditLogger
-	helper      helper
 }
 
 type ServiceOptions struct {
@@ -45,7 +39,6 @@ type ServiceOptions struct {
 
 	Logger      log.Logger
 	AuditLogger auditLogger
-	Helper      helper
 }
 
 // NewService returns *Service
@@ -55,7 +48,6 @@ func NewService(opts ServiceOptions) *Service {
 
 		opts.Logger,
 		opts.AuditLogger,
-		opts.Helper,
 	}
 }
 
@@ -79,15 +71,7 @@ func (s *Service) BulkUpsert(ctx context.Context, resources []*domain.Resource) 
 		return err
 	}
 
-	actor, err := s.helper.GetAuthenticatedUser(ctx)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("unable to get authenticated user: %s", err))
-	}
-	if err := s.auditLogger.Log(ctx, actor, AuditKeyResoruceBulkUpsert, map[string]interface{}{
-		"created_resource_ids": []string{}, // TODO: add inserted ids
-		"updated_resource_ids": []string{}, // TODO: add modified ids
-		"removed_resource_ids": []string{}, // TODO: add removed ids
-	}); err != nil {
+	if err := s.auditLogger.Log(ctx, AuditKeyResoruceBulkUpsert, resources); err != nil {
 		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
 	}
 
@@ -116,11 +100,7 @@ func (s *Service) Update(ctx context.Context, r *domain.Resource) error {
 
 	r.UpdatedAt = res.UpdatedAt
 
-	actor, err := s.helper.GetAuthenticatedUser(ctx)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("unable to get authenticated user: %s", err))
-	}
-	if err := s.auditLogger.Log(ctx, actor, AuditKeyResourceUpdate, r); err != nil {
+	if err := s.auditLogger.Log(ctx, AuditKeyResourceUpdate, r); err != nil {
 		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
 	}
 

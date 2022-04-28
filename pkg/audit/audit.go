@@ -9,6 +9,12 @@ import (
 
 var TimeNow = time.Now
 
+type actorContextKey struct{}
+
+func WithActor(ctx context.Context, actor string) context.Context {
+	return context.WithValue(ctx, actorContextKey{}, actor)
+}
+
 type repository interface {
 	Init(context.Context) error
 	Insert(context.Context, *Log) error
@@ -49,17 +55,21 @@ func New(opts ...AuditOption) *Service {
 	return svc
 }
 
-func (s *Service) Log(ctx context.Context, actor, action string, data interface{}) error {
-	var traceID string
-	if s.trackIDExtractor != nil {
-		traceID = s.trackIDExtractor(ctx)
-	}
-	return s.repository.Insert(ctx, &Log{
-		TraceID:   traceID,
+func (s *Service) Log(ctx context.Context, action string, data interface{}) error {
+	l := &Log{
 		Timestamp: TimeNow(),
 		Action:    action,
-		Actor:     actor,
 		Data:      data,
 		App:       &s.appDetails,
-	})
+	}
+
+	if s.trackIDExtractor != nil {
+		l.TraceID = s.trackIDExtractor(ctx)
+	}
+
+	if actor, ok := ctx.Value(actorContextKey{}).(string); ok {
+		l.Actor = actor
+	}
+
+	return s.repository.Insert(ctx, l)
 }
