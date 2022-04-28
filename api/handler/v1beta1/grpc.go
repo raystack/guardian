@@ -287,7 +287,7 @@ func (s *GRPCServer) ListResources(ctx context.Context, req *guardianv1beta1.Lis
 			}
 		}
 	}
-	resources, err := s.resourceService.Find(map[string]interface{}{
+	resources, err := s.resourceService.Find(ctx, map[string]interface{}{
 		"is_deleted":    req.GetIsDeleted(),
 		"type":          req.GetType(),
 		"urn":           req.GetUrn(),

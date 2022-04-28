@@ -28,6 +28,9 @@ vet: ## Run the go vet tool
 lint: ## Lint with golangci-lint
 	golangci-lint run
 
+generate: ## Generate mocks
+	go generate ./...
+
 proto: ## Generate the protobuf files
 	@echo " > generating protobuf from odpf/proton"
 	@echo " > [info] make sure correct version of dependencies are installed using 'make install'"

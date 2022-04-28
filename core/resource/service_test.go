@@ -1,25 +1,39 @@
 package resource_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/odpf/guardian/core/resource"
+	"github.com/odpf/guardian/core/resource/mocks"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockRepository *mocks.ResourceRepository
-	service        *resource.Service
+	mockRepository  *mocks.Repository
+	mockAuditLogger *mocks.AuditLogger
+	mockHelper      *mocks.Helper
+	service         *resource.Service
+
+	authenticatedUserEmail string
 }
 
 func (s *ServiceTestSuite) SetupTest() {
-	s.mockRepository = new(mocks.ResourceRepository)
-	s.service = resource.NewService(s.mockRepository)
+	s.mockRepository = new(mocks.Repository)
+	s.mockAuditLogger = new(mocks.AuditLogger)
+	s.mockHelper = new(mocks.Helper)
+	s.service = resource.NewService(resource.ServiceOptions{
+		Repository:  s.mockRepository,
+		AuditLogger: s.mockAuditLogger,
+		Helper:      s.mockHelper,
+	})
+	s.authenticatedUserEmail = "user@example.com"
+
+	s.mockHelper.On("GetAuthenticatedUser", mock.Anything).Return(s.authenticatedUserEmail, nil)
 }
 
 func (s *ServiceTestSuite) TestFind() {
@@ -27,7 +41,7 @@ func (s *ServiceTestSuite) TestFind() {
 		expectedError := errors.New("error from repository")
 		s.mockRepository.On("Find", mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Find(map[string]interface{}{})
+		actualResult, actualError := s.service.Find(context.Background(), map[string]interface{}{})
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -38,7 +52,7 @@ func (s *ServiceTestSuite) TestFind() {
 		expectedResult := []*domain.Resource{}
 		s.mockRepository.On("Find", expectedFilters).Return(expectedResult, nil).Once()
 
-		actualResult, actualError := s.service.Find(expectedFilters)
+		actualResult, actualError := s.service.Find(context.Background(), expectedFilters)
 
 		s.Equal(expectedResult, actualResult)
 		s.Nil(actualError)
@@ -51,7 +65,7 @@ func (s *ServiceTestSuite) TestBulkUpsert() {
 		expectedError := errors.New("error from repository")
 		s.mockRepository.On("BulkUpsert", mock.Anything).Return(expectedError).Once()
 
-		actualError := s.service.BulkUpsert([]*domain.Resource{})
+		actualError := s.service.BulkUpsert(context.Background(), []*domain.Resource{})
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -83,7 +97,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 			expectedError := tc.expectedError
 			s.mockRepository.On("GetOne", expectedResource.ID).Return(tc.expectedExistingResource, tc.expectedRepositoryError).Once()
 
-			actualError := s.service.Update(expectedResource)
+			actualError := s.service.Update(context.Background(), expectedResource)
 
 			s.EqualError(actualError, expectedError.Error())
 		}
@@ -94,7 +108,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 		s.mockRepository.On("GetOne", mock.Anything).Return(&domain.Resource{}, nil).Once()
 		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
 
-		actualError := s.service.Update(&domain.Resource{})
+		actualError := s.service.Update(context.Background(), &domain.Resource{})
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -156,8 +170,9 @@ func (s *ServiceTestSuite) TestUpdate() {
 		for _, tc := range testCases {
 			s.mockRepository.On("GetOne", tc.resourceUpdatePayload.ID).Return(tc.existingResource, nil).Once()
 			s.mockRepository.On("Update", tc.expectedUpdatedValues).Return(nil).Once()
+			s.mockAuditLogger.On("Log", mock.Anything, s.authenticatedUserEmail, resource.AuditKeyResourceUpdate, mock.Anything).Return(nil)
 
-			actualError := s.service.Update(tc.resourceUpdatePayload)
+			actualError := s.service.Update(context.Background(), tc.resourceUpdatePayload)
 
 			s.Nil(actualError)
 			s.mockRepository.AssertExpectations(s.T())

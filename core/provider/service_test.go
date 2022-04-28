@@ -114,12 +114,12 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockProviderRepository.On("Create", p).Return(nil).Once()
 
 		expectedResources := []*domain.Resource{}
-		s.mockResourceService.On("Find", map[string]interface{}{
+		s.mockResourceService.On("Find", mock.Anything, map[string]interface{}{
 			"provider_type": p.Type,
 			"provider_urn":  p.URN,
 		}).Return([]*domain.Resource{}, nil).Once()
 		s.mockProvider.On("GetResources", p.Config).Return(expectedResources, nil).Once()
-		s.mockResourceService.On("BulkUpsert", expectedResources).Return(nil).Once()
+		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil).Once()
 
 		actualError := s.service.Create(p)
 
@@ -308,8 +308,8 @@ func (s *ServiceTestSuite) TestFetchResources() {
 			s.mockProvider.On("GetResources", p.Config).Return([]*domain.Resource{}, nil).Once()
 		}
 		expectedError := errors.New("any error")
-		s.mockResourceService.On("BulkUpsert", mock.Anything).Return(expectedError).Once()
-		s.mockResourceService.On("Find", mock.Anything).Return([]*domain.Resource{}, nil).Once()
+		s.mockResourceService.On("BulkUpsert", mock.Anything, mock.Anything).Return(expectedError).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
 		actualError := s.service.FetchResources()
 
 		s.EqualError(actualError, expectedError.Error())
@@ -328,8 +328,8 @@ func (s *ServiceTestSuite) TestFetchResources() {
 			s.mockProvider.On("GetResources", p.Config).Return(resources, nil).Once()
 			expectedResources = append(expectedResources, resources...)
 		}
-		s.mockResourceService.On("BulkUpsert", expectedResources).Return(nil).Once()
-		s.mockResourceService.On("Find", mock.Anything).Return([]*domain.Resource{}, nil).Once()
+		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
 		actualError := s.service.FetchResources()
 
 		s.Nil(actualError)

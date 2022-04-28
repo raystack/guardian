@@ -1,6 +1,12 @@
+//go:generate mockery --name=policyService --exported
+//go:generate mockery --name=approvalService --exported
+//go:generate mockery --name=providerService --exported
+//go:generate mockery --name=resourceService --exported
+
 package appeal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -34,8 +40,8 @@ type providerService interface {
 }
 
 type resourceService interface {
-	Find(map[string]interface{}) ([]*domain.Resource, error)
-	Get(*domain.ResourceIdentifier) (*domain.Resource, error)
+	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
+	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
 }
 
 // Service handling the business logics
@@ -423,7 +429,7 @@ func (s *Service) getAppealsMapGroupedByStatus(statuses []string) (map[string]ma
 
 func (s *Service) getResourcesMap(ids []string) (map[string]*domain.Resource, error) {
 	filters := map[string]interface{}{"ids": ids}
-	resources, err := s.resourceService.Find(filters)
+	resources, err := s.resourceService.Find(context.TODO(), filters)
 	if err != nil {
 		return nil, err
 	}
@@ -654,7 +660,7 @@ func (s *Service) handleAppealRequirements(a *domain.Appeal, p *domain.Policy) e
 
 			for _, aa := range r.Appeals {
 				// TODO: populate resource data from policyService
-				resource, err := s.resourceService.Get(aa.Resource)
+				resource, err := s.resourceService.Get(context.TODO(), aa.Resource)
 				if err != nil {
 					return fmt.Errorf("retrieving resource: %v", err)
 				}

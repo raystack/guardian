@@ -1,6 +1,10 @@
+//go:generate mockery --name=providerService --exported
+//go:generate mockery --name=resourceService --exported
+
 package policy
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -19,7 +23,7 @@ type providerService interface {
 }
 
 type resourceService interface {
-	Get(*domain.ResourceIdentifier) (*domain.Resource, error)
+	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
 }
 
 // Service handling the business logics
@@ -221,7 +225,7 @@ func (s *Service) validatePolicy(p *domain.Policy, excludedFields ...string) err
 func (s *Service) validateRequirements(requirements []*domain.Requirement) error {
 	for i, r := range requirements {
 		for j, aa := range r.Appeals {
-			resource, err := s.resourceService.Get(aa.Resource)
+			resource, err := s.resourceService.Get(context.TODO(), aa.Resource)
 			if err != nil {
 				return fmt.Errorf("requirement[%v].appeals[%v].resource: %w", i, j, err)
 			}

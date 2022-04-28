@@ -131,7 +131,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	}
 	s.Run("should return error if got error from resource service", func() {
 		expectedError := errors.New("resource service error")
-		s.mockResourceService.On("Find", mock.Anything).Return(nil, expectedError).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(nil, expectedError).Once()
 
 		actualError := s.service.Create([]*domain.Appeal{})
 
@@ -140,7 +140,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 	s.Run("should return error if got error from provider service", func() {
 		expectedResources := []*domain.Resource{}
-		s.mockResourceService.On("Find", mock.Anything).Return(expectedResources, nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(expectedResources, nil).Once()
 		expectedError := errors.New("provider service error")
 		s.mockProviderService.On("Find").Return(nil, expectedError).Once()
 
@@ -152,7 +152,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	s.Run("should return error if got error from policy service", func() {
 		expectedResources := []*domain.Resource{}
 		expectedProviders := []*domain.Provider{}
-		s.mockResourceService.On("Find", mock.Anything).Return(expectedResources, nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(expectedResources, nil).Once()
 		s.mockProviderService.On("Find").Return(expectedProviders, nil).Once()
 		expectedError := errors.New("policy service error")
 		s.mockPolicyService.On("Find").Return(nil, expectedError).Once()
@@ -166,7 +166,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		expectedResources := []*domain.Resource{}
 		expectedProviders := []*domain.Provider{}
 		expectedPolicies := []*domain.Policy{}
-		s.mockResourceService.On("Find", mock.Anything).Return(expectedResources, nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(expectedResources, nil).Once()
 		s.mockProviderService.On("Find").Return(expectedProviders, nil).Once()
 		s.mockPolicyService.On("Find").Return(expectedPolicies, nil).Once()
 		expectedError := errors.New("appeal repository error")
@@ -480,7 +480,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		for _, tc := range testCases {
 			s.Run(tc.name, func() {
-				s.mockResourceService.On("Find", mock.Anything).Return(tc.resources, nil).Once()
+				s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(tc.resources, nil).Once()
 				s.mockProviderService.On("Find").Return(tc.providers, nil).Once()
 				s.mockPolicyService.On("Find").Return(tc.policies, nil).Once()
 				s.mockRepository.On("Find", mock.Anything).Return(tc.existingAppeals, nil).Once()
@@ -500,7 +500,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		expectedProviders := []*domain.Provider{}
 		expectedPolicies := []*domain.Policy{}
 		expectedPendingAppeals := []*domain.Appeal{}
-		s.mockResourceService.On("Find", mock.Anything).Return(expectedResources, nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(expectedResources, nil).Once()
 		s.mockProviderService.On("Find").Return(expectedProviders, nil).Once()
 		s.mockPolicyService.On("Find").Return(expectedPolicies, nil).Once()
 		s.mockRepository.On("Find", mock.Anything).Return(expectedPendingAppeals, nil).Once()
@@ -704,7 +704,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 	s.Run("should return appeals on success", func() {
 		expectedResourceFilters := map[string]interface{}{"ids": resourceIDs}
-		s.mockResourceService.On("Find", expectedResourceFilters).Return(resources, nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, expectedResourceFilters).Return(resources, nil).Once()
 		s.mockProviderService.On("Find").Return(providers, nil).Once()
 		s.mockPolicyService.On("Find").Return(policies, nil).Once()
 		expectedExistingAppealsFilters := &domain.ListAppealsFilter{

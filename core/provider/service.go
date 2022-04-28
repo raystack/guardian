@@ -1,6 +1,9 @@
+//go:generate mockery --name=resourceService --exported
+
 package provider
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -15,8 +18,8 @@ import (
 )
 
 type resourceService interface {
-	Find(map[string]interface{}) ([]*domain.Resource, error)
-	BulkUpsert([]*domain.Resource) error
+	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
+	BulkUpsert(context.Context, []*domain.Resource) error
 }
 
 // Service handling the business logics
@@ -83,7 +86,7 @@ func (s *Service) Create(p *domain.Provider) error {
 		if err != nil {
 			s.logger.Error(fmt.Sprintf("fetching resources: %s", err))
 		}
-		if err := s.resourceService.BulkUpsert(resources); err != nil {
+		if err := s.resourceService.BulkUpsert(context.TODO(), resources); err != nil {
 			s.logger.Error(fmt.Sprintf("inserting resources to db: %s", err))
 		} else {
 			s.logger.Info(fmt.Sprintf("added %v resources for %s", len(resources), p.URN))
@@ -171,7 +174,7 @@ func (s *Service) FetchResources() error {
 		resources = append(resources, res...)
 	}
 
-	return s.resourceService.BulkUpsert(resources)
+	return s.resourceService.BulkUpsert(context.TODO(), resources)
 }
 
 func (s *Service) GetRoles(id string, resourceType string) ([]*domain.Role, error) {
@@ -279,7 +282,7 @@ func (s *Service) getResources(p *domain.Provider) ([]*domain.Resource, error) {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidProviderType, p.Type)
 	}
 
-	existingResources, err := s.resourceService.Find(map[string]interface{}{
+	existingResources, err := s.resourceService.Find(context.TODO(), map[string]interface{}{
 		"provider_type": p.Type,
 		"provider_urn":  p.URN,
 	})

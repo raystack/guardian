@@ -397,7 +397,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 				for _, r := range tc.requirements {
 					for _, aa := range r.Appeals {
 						s.mockResourceService.
-							On("Get", &domain.ResourceIdentifier{}).
+							On("Get", mock.Anything, &domain.ResourceIdentifier{}).
 							Return(tc.expectedResource, tc.expectedResourceServiceGetError).
 							Once()
 						if tc.expectedResource != nil {
@@ -514,7 +514,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 				for _, r := range tc.requirements {
 					for _, aa := range r.Appeals {
 						s.mockResourceService.
-							On("Get", aa.Resource).
+							On("Get", mock.Anything, aa.Resource).
 							Return(expectedResource, nil).
 							Once()
 						s.mockProviderService.

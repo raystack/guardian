@@ -13,7 +13,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/audit"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/core/approval"
 	"github.com/odpf/guardian/core/policy"
@@ -23,6 +22,8 @@ import (
 	"github.com/odpf/guardian/internal/crypto"
 	"github.com/odpf/guardian/internal/scheduler"
 	"github.com/odpf/guardian/jobs"
+	"github.com/odpf/guardian/pkg/audit"
+	audit_repos "github.com/odpf/guardian/pkg/audit/repositories"
 	"github.com/odpf/guardian/plugins/identities"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/plugins/providers"
@@ -84,8 +85,9 @@ func RunServer(c *Config) error {
 
 	iamManager := identities.NewManager(crypto, v)
 
+	auditRepository := audit_repos.NewPostgresRepository(db)
 	auditLogger := audit.New(
-		audit.WithRepository(audit.NewLogRepository()),
+		audit.WithRepository(auditRepository),
 		audit.WithAppDetails(audit.AppDetails{
 			Name: "guardian",
 			// TODO: get version
@@ -100,7 +102,14 @@ func RunServer(c *Config) error {
 		}),
 	)
 
-	resourceService := resource.NewService(resourceRepository, auditLogger)
+	h := NewHelper(c.AuthenticatedUserHeaderKey)
+
+	resourceService := resource.NewService(resource.ServiceOptions{
+		Repository:  resourceRepository,
+		Logger:      logger,
+		AuditLogger: auditLogger,
+		Helper:      h,
+	})
 	providerService := provider.NewService(
 		logger,
 		v,
@@ -236,6 +245,13 @@ func Migrate(c *Config) error {
 	if err != nil {
 		return err
 	}
+
+	db := store.DB()
+	auditRepository := audit_repos.NewPostgresRepository(db)
+	if err := auditRepository.Init(context.Background()); err != nil {
+		return fmt.Errorf("initializing audit repository: %w", err)
+	}
+
 	return store.Migrate()
 }
 
