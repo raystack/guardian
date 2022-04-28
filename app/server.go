@@ -89,8 +89,8 @@ func RunServer(c *Config) error {
 	auditLogger := audit.New(
 		audit.WithRepository(auditRepository),
 		audit.WithAppDetails(audit.AppDetails{
-			Name: "guardian",
-			// TODO: get version
+			Name:    "guardian",
+			Version: Version,
 		}),
 		audit.WithTrackIDExtractor(func(ctx context.Context) string {
 			if md, ok := metadata.FromIncomingContext(ctx); ok {

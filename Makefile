@@ -10,7 +10,7 @@ all: build
 
 build: ## Build the guardian binary
 	@echo " > building guardian version ${APP_VERSION}"
-	go build -ldflags "-X ${NAME}/cmd.Version=${APP_VERSION} -X ${NAME}/cmd.BuildCommit=${LAST_COMMIT}" -o guardian .
+	go build -ldflags "-X ${NAME}/app.Version=${APP_VERSION} -X ${NAME}/app.BuildCommit=${LAST_COMMIT}" -o guardian .
 	@echo " - build complete"
 
 buildr: install ## Build with goreleaser
