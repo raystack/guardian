@@ -5,7 +5,6 @@ package resource
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
@@ -72,7 +71,7 @@ func (s *Service) BulkUpsert(ctx context.Context, resources []*domain.Resource) 
 	}
 
 	if err := s.auditLogger.Log(ctx, AuditKeyResoruceBulkUpsert, resources); err != nil {
-		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+		s.logger.Error("failed to record audit log", "error", err)
 	}
 
 	return nil
@@ -101,7 +100,7 @@ func (s *Service) Update(ctx context.Context, r *domain.Resource) error {
 	r.UpdatedAt = res.UpdatedAt
 
 	if err := s.auditLogger.Log(ctx, AuditKeyResourceUpdate, r); err != nil {
-		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+		s.logger.Error("failed to record audit log", "error", err)
 	}
 
 	return nil

@@ -108,19 +108,22 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 	}
 
 	if err := s.auditLogger.Log(ctx, AuditKeyCreate, p); err != nil {
-		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+		s.logger.Error("failed to record audit log", "error", err)
 	}
 
 	go func() {
-		s.logger.Info(fmt.Sprintf("fetching resources for %s", p.URN))
+		s.logger.Info("fetching resources", "provider_urn", p.URN)
 		resources, err := s.getResources(ctx, p)
 		if err != nil {
-			s.logger.Error(fmt.Sprintf("fetching resources: %s", err))
+			s.logger.Error("failed to fetch resources", "error", err)
 		}
 		if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
-			s.logger.Error(fmt.Sprintf("inserting resources to db: %s", err))
+			s.logger.Error("failed to insert resources to db", "error", err)
 		} else {
-			s.logger.Info(fmt.Sprintf("added %v resources for %s", len(resources), p.URN))
+			s.logger.Info("resources added",
+				"provider_urn", p.URN,
+				"count", len(resources),
+			)
 		}
 	}()
 
@@ -192,7 +195,7 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 	}
 
 	if err := s.auditLogger.Log(ctx, AuditKeyUpdate, p); err != nil {
-		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+		s.logger.Error("failed to record audit log", "error", err)
 	}
 
 	return nil
@@ -207,13 +210,16 @@ func (s *Service) FetchResources(ctx context.Context) error {
 
 	resources := []*domain.Resource{}
 	for _, p := range providers {
-		s.logger.Info(fmt.Sprintf("fetching resources for %s", p.URN))
+		s.logger.Info("fetching resources", "provider_urn", p.URN)
 		res, err := s.getResources(ctx, p)
 		if err != nil {
-			s.logger.Error(err.Error())
+			s.logger.Error("failed to send notifications", "error", err)
 			continue
 		}
-		s.logger.Info(fmt.Sprintf("got %v resources for %s", len(res), p.URN))
+		s.logger.Info("resources added",
+			"provider_urn", p.URN,
+			"count", len(resources),
+		)
 		resources = append(resources, res...)
 	}
 

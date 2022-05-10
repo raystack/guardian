@@ -9,11 +9,11 @@ import (
 )
 
 func (h *handler) AppealExpirationReminder(ctx context.Context) error {
-	h.logger.Info("Appeal Expiration Reminder")
+	h.logger.Info("running appeal expiration reminder job")
 
 	daysBeforeExpired := []int{7, 3, 1}
 	for _, d := range daysBeforeExpired {
-		h.logger.Info(fmt.Sprintf("Retrieving active appeals expiring in %v day(s)...", d))
+		h.logger.Info("retrieving active appeals", "expiration_window_in_days", d)
 
 		now := time.Now().AddDate(0, 0, d)
 		year, month, day := now.Date()
@@ -26,7 +26,10 @@ func (h *handler) AppealExpirationReminder(ctx context.Context) error {
 		}
 		appeals, err := h.appealService.Find(ctx, filters)
 		if err != nil {
-			h.logger.Error(fmt.Sprintf("Failed to retrieve active appeals expiting in %v day(s): %v", d, err))
+			h.logger.Error("failed to retrieve active appeals",
+				"expiration_window_in_days", d,
+				"error", err,
+			)
 			continue
 		}
 
@@ -47,7 +50,7 @@ func (h *handler) AppealExpirationReminder(ctx context.Context) error {
 		}
 
 		if err := h.notifier.Notify(notifications); err != nil {
-			h.logger.Error(fmt.Sprintf("Failed to send notifications: %v", err))
+			h.logger.Error("failed to send notifications", "error", err)
 			return err
 		}
 	}

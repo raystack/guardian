@@ -261,7 +261,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 	}
 
 	if err := s.auditLogger.Log(ctx, AuditKeyBulkInsert, appeals); err != nil {
-		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+		s.logger.Error("failed to record audit log", "error", err)
 	}
 
 	for _, a := range appeals {
@@ -270,7 +270,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 
 	if len(notifications) > 0 {
 		if err := s.notifier.Notify(notifications); err != nil {
-			s.logger.Error(err.Error())
+			s.logger.Error("failed to send notifications", "error", err.Error())
 		}
 	}
 
@@ -358,7 +358,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 				}
 
 				if err := appeal.Activate(); err != nil {
-					s.logger.Error("activating appeal: %w", err)
+					return nil, fmt.Errorf("activating appeal: %w", err)
 				}
 			}
 			if err := s.repo.Update(appeal); err != nil {
@@ -396,7 +396,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 			}
 			if len(notifications) > 0 {
 				if err := s.notifier.Notify(notifications); err != nil {
-					s.logger.Error(err.Error())
+					s.logger.Error("failed to send notifications", "error", err.Error())
 				}
 			}
 
@@ -405,7 +405,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 				auditKey = AuditKeyReject
 			}
 			if err := s.auditLogger.Log(ctx, auditKey, approvalAction); err != nil {
-				s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+				s.logger.Error("failed to record audit log", "error", err)
 			}
 
 			return appeal, nil
@@ -435,7 +435,7 @@ func (s *Service) Cancel(ctx context.Context, id string) (*domain.Appeal, error)
 	if err := s.auditLogger.Log(ctx, AuditKeyCancel, map[string]interface{}{
 		"appeal_id": id,
 	}); err != nil {
-		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+		s.logger.Error("failed to record audit log", "error", err)
 	}
 
 	return appeal, nil
@@ -475,14 +475,14 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 			},
 		},
 	}}); err != nil {
-		s.logger.Error(err.Error())
+		s.logger.Error("failed to send notifications", "error", err.Error())
 	}
 
 	if err := s.auditLogger.Log(ctx, AuditKeyRevoke, map[string]interface{}{
 		"appeal_id": id,
 		"reason":    reason,
 	}); err != nil {
-		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+		s.logger.Error("failed to record audit log", "error", err)
 	}
 
 	return revokedAppeal, nil
