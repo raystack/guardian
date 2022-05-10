@@ -161,16 +161,6 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	return resources, nil
 }
 
-func (p *provider) addTable(pc *domain.ProviderConfig, resourceTypes map[string]bool, d *Database, db *domain.Resource, resources []*domain.Resource) {
-	for _, t := range d.Tables {
-		t.Database = db
-		table := t.ToDomain()
-		table.ProviderType = pc.Type
-		table.ProviderURN = pc.URN
-		resources = append(resources, table)
-	}
-}
-
 func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
 	// TODO: validate provider config and appeal
 

@@ -2,9 +2,10 @@ package metabase
 
 import (
 	"fmt"
-	"github.com/mitchellh/mapstructure"
 	"strconv"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/odpf/guardian/domain"
 )
