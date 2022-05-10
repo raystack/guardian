@@ -84,6 +84,38 @@ func (r *ProviderRepository) GetByID(id string) (*domain.Provider, error) {
 	return p, nil
 }
 
+func (r *ProviderRepository) GetTypes() ([]domain.ProviderType, error) {
+	var results []struct {
+		ProviderType string
+		ResourceType string
+	}
+
+	r.db.Raw("select distinct provider_type, type as resource_type from resources").Scan(&results)
+
+	if len(results) == 0 {
+		return nil, errors.New("no provider types found")
+	}
+
+	providerTypesMap := make(map[string][]string)
+	for _, res := range results {
+		if val, ok := providerTypesMap[res.ProviderType]; ok {
+			providerTypesMap[res.ProviderType] = append(val, res.ResourceType)
+		} else {
+			providerTypesMap[res.ProviderType] = []string{res.ResourceType}
+		}
+	}
+
+	var providerTypes []domain.ProviderType
+	for providerType, resourceTypes := range providerTypesMap {
+		providerTypes = append(providerTypes, domain.ProviderType{
+			Name:          providerType,
+			ResourceTypes: resourceTypes,
+		})
+	}
+
+	return providerTypes, nil
+}
+
 // GetOne returns provider by type and urn
 func (r *ProviderRepository) GetOne(pType, urn string) (*domain.Provider, error) {
 	if pType == "" {

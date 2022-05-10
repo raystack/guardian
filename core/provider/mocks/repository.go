@@ -109,6 +109,29 @@ func (_m *Repository) GetOne(pType string, urn string) (*domain.Provider, error)
 	return r0, r1
 }
 
+// GetTypes provides a mock function with given fields:
+func (_m *Repository) GetTypes() ([]domain.ProviderType, error) {
+	ret := _m.Called()
+
+	var r0 []domain.ProviderType
+	if rf, ok := ret.Get(0).(func() []domain.ProviderType); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.ProviderType)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Update provides a mock function with given fields: _a0
 func (_m *Repository) Update(_a0 *domain.Provider) error {
 	ret := _m.Called(_a0)

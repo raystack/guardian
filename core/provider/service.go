@@ -141,6 +141,10 @@ func (s *Service) GetByID(ctx context.Context, id string) (*domain.Provider, err
 	return s.repository.GetByID(id)
 }
 
+func (s *Service) GetTypes(ctx context.Context) ([]domain.ProviderType, error) {
+	return s.repository.GetTypes()
+}
+
 func (s *Service) GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error) {
 	return s.repository.GetOne(pType, urn)
 }
