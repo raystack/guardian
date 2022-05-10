@@ -20,7 +20,7 @@ import (
 	"github.com/odpf/salt/log"
 )
 
-var (
+const (
 	AuditKeyCreate = "provider.create"
 	AuditKeyUpdate = "provider.update"
 )

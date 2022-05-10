@@ -25,7 +25,7 @@ import (
 	"github.com/odpf/salt/log"
 )
 
-var (
+const (
 	AuditKeyBulkInsert = "appeal.bulkInsert"
 	AuditKeyCancel     = "appeal.cancel"
 	AuditKeyApprove    = "appeal.approve"
