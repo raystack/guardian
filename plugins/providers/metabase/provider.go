@@ -55,8 +55,9 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 
 	resources := []*domain.Resource{}
 
+	var databases []*Database
 	if _, ok := resourceTypes[ResourceTypeDatabase]; ok {
-		databases, err := client.GetDatabases()
+		databases, err = client.GetDatabases()
 		if err != nil {
 			return nil, err
 		}
@@ -65,15 +66,27 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 			db.ProviderType = pc.Type
 			db.ProviderURN = pc.URN
 			resources = append(resources, db)
+		}
+	}
 
-			if _, ok := resourceTypes[ResourceTypeTable]; ok {
-				for _, t := range d.Tables {
-					t.Database = db
-					table := t.ToDomain()
-					table.ProviderType = pc.Type
-					table.ProviderURN = pc.URN
-					resources = append(resources, table)
-				}
+	if _, ok := resourceTypes[ResourceTypeTable]; ok {
+		if databases == nil {
+			databases, err = client.GetDatabases()
+		}
+		if err != nil {
+			return nil, err
+		}
+		for _, d := range databases {
+			db := d.ToDomain()
+			db.ProviderType = pc.Type
+			db.ProviderURN = pc.URN
+
+			for _, t := range d.Tables {
+				t.Database = db
+				table := t.ToDomain()
+				table.ProviderType = pc.Type
+				table.ProviderURN = pc.URN
+				resources = append(resources, table)
 			}
 		}
 	}
@@ -148,6 +161,16 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	return resources, nil
 }
 
+func (p *provider) addTable(pc *domain.ProviderConfig, resourceTypes map[string]bool, d *Database, db *domain.Resource, resources []*domain.Resource) {
+	for _, t := range d.Tables {
+		t.Database = db
+		table := t.ToDomain()
+		table.ProviderType = pc.Type
+		table.ProviderURN = pc.URN
+		resources = append(resources, table)
+	}
+}
+
 func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
 	// TODO: validate provider config and appeal
 
@@ -210,7 +233,19 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		if err := client.GrantGroupAccess(g.ID, a.AccountID); err != nil {
 			return err
 		}
+		return nil
+	} else if a.Resource.Type == ResourceTypeTable {
+		t := new(Table)
+		if err := t.FromDomain(a.Resource); err != nil {
+			return err
+		}
 
+		for _, p := range permissions {
+			if err := client.GrantTableAccess(t, a.AccountID, string(p), groupMap); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	return ErrInvalidResourceType
@@ -268,6 +303,18 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		}
 
 		return nil
+	} else if a.Resource.Type == ResourceTypeTable {
+		t := new(Table)
+		if err := t.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if err := client.RevokeTableAccess(t, a.AccountID, string(p)); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	return ErrInvalidResourceType
@@ -315,13 +362,18 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 		return nil, ErrInvalidResourceType
 	}
 
-	var role *domain.Role
-	for _, r := range resourceConfig.Roles {
-		if r.ID == a.Role {
+	roles := resourceConfig.Roles
+	role := &domain.Role{}
+	isRoleExists := len(roles) == 0
+	for _, r := range roles {
+		if a.Role == r.ID {
+			isRoleExists = true
 			role = r
+			break
 		}
 	}
-	if role == nil {
+
+	if !isRoleExists {
 		return nil, ErrInvalidRole
 	}
 

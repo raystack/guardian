@@ -158,8 +158,8 @@ func TestGetResources(t *testing.T) {
 		group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
 
 		client.On("GetGroups").Return([]*metabase.Group{&group},
-			map[string][]map[string]interface{}{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-			map[string][]map[string]interface{}{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
+			metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
+			metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 		expectedCollections := []*metabase.Collection{
 			{
@@ -423,8 +423,8 @@ func TestGrantAccess(t *testing.T) {
 			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
 			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
 			client.On("GetGroups").Return([]*metabase.Group{&group},
-				map[string][]map[string]interface{}{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-				map[string][]map[string]interface{}{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
+				metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
+				metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -480,8 +480,8 @@ func TestGrantAccess(t *testing.T) {
 			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
 			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
 			client.On("GetGroups").Return([]*metabase.Group{&group},
-				map[string][]map[string]interface{}{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-				map[string][]map[string]interface{}{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
+				metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
+				metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -537,8 +537,8 @@ func TestGrantAccess(t *testing.T) {
 			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
 			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
 			client.On("GetGroups").Return([]*metabase.Group{&group},
-				map[string][]map[string]interface{}{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-				map[string][]map[string]interface{}{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
+				metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
+				metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -595,8 +595,8 @@ func TestGrantAccess(t *testing.T) {
 			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
 			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
 			client.On("GetGroups").Return([]*metabase.Group{&group},
-				map[string][]map[string]interface{}{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-				map[string][]map[string]interface{}{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
+				metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
+				metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{

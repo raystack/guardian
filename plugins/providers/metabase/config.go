@@ -11,8 +11,11 @@ import (
 )
 
 const (
-	DatabaseRoleViewer = "schemas:all"
-	DatabaseRoleEditor = "native:write"
+	DatabaseRoleViewer   = "schemas:all"
+	DatabaseRoleEditor   = "native:write"
+	CollectionRoleViewer = "read"
+	CollectionRoleCurate = "write"
+	TableRoleViewer      = "all"
 
 	AccountTypeUser = "user"
 )

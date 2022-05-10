@@ -2,6 +2,7 @@ package metabase
 
 import (
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 	"strconv"
 	"strings"
 
@@ -101,7 +102,7 @@ func (t *Table) FromDomain(r *domain.Resource) error {
 
 	t.ID = id
 	t.Name = r.Name
-	t.DbId, err = strconv.Atoi(tableURN[1])
+	t.DbId, err = strconv.Atoi(tableURN[0])
 	if err != nil {
 		return err
 	}
@@ -133,8 +134,8 @@ func (g *Group) FromDomain(r *domain.Resource) error {
 
 	g.ID = id
 	g.Name = r.Name
-	g.DatabaseResources = r.Details["database"].([]*GroupResource)
-	g.CollectionResources = r.Details["collection"].([]*GroupResource)
+	_ = mapstructure.Decode(r.Details["database"], &g.DatabaseResources)
+	_ = mapstructure.Decode(r.Details["collection"], &g.CollectionResources)
 	if err != nil {
 		return err
 	}
