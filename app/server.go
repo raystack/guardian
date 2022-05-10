@@ -14,6 +14,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
@@ -178,20 +179,12 @@ func RunServer(c *Config) error {
 			grpc_logrus.StreamServerInterceptor(logrusEntry),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-				panicked := true
-
-				defer func() {
-					if r := recover(); r != nil || panicked {
-						logger.Error(string(debug.Stack()))
-						err = status.Errorf(codes.Internal, "Internal error, please check log")
-					}
-				}()
-
-				resp, err = handler(ctx, req)
-				panicked = false
-				return resp, err
-			},
+			grpc_recovery.UnaryServerInterceptor(
+				grpc_recovery.WithRecoveryHandler(func(p interface{}) (err error) {
+					logger.Error(string(debug.Stack()))
+					return status.Errorf(codes.Internal, "Internal error, please check log")
+				}),
+			),
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
 			audit.UnaryServerInterceptor(c.AuthenticatedUserHeaderKey),
 		)),
