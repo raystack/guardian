@@ -27,7 +27,7 @@ func (h *handler) RevokeExpiredAppeals(ctx context.Context) error {
 	for _, a := range appeals {
 		h.logger.Info("revoking appeal", "id", a.ID)
 
-		ctx = audit.WithActor(ctx, "system")
+		ctx = audit.WithActor(ctx, domain.SystemActorName)
 		if _, err := h.appealService.Revoke(ctx, a.ID, domain.SystemActorName, "Automatically revoked"); err != nil {
 			h.logger.Error("failed to revoke appeal",
 				"id", a.ID,
