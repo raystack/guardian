@@ -95,7 +95,7 @@ func RunServer(c *Config) error {
 			Name:    "guardian",
 			Version: Version,
 		}),
-		audit.WithTrackIDExtractor(func(ctx context.Context) string {
+		audit.WithTraceIDExtractor(func(ctx context.Context) string {
 			if md, ok := metadata.FromIncomingContext(ctx); ok {
 				if rawTraceID := md.Get(c.AuditLogTraceIDHeaderKey); len(rawTraceID) > 0 {
 					return rawTraceID[0]

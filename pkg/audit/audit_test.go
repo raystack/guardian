@@ -26,7 +26,7 @@ func (s *AuditTestSuite) setupTest() {
 	s.service = audit.New(
 		audit.WithAppDetails(audit.AppDetails{Name: "guardian_test", Version: "1"}),
 		audit.WithRepository(s.mockRepository),
-		audit.WithTrackIDExtractor(func(_ context.Context) string {
+		audit.WithTraceIDExtractor(func(_ context.Context) string {
 			return "test-trace-id"
 		}),
 	)

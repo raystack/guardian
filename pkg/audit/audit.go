@@ -34,7 +34,7 @@ func WithAppDetails(app AppDetails) AuditOption {
 	}
 }
 
-func WithTrackIDExtractor(fn func(ctx context.Context) string) AuditOption {
+func WithTraceIDExtractor(fn func(ctx context.Context) string) AuditOption {
 	return func(s *Service) {
 		s.trackIDExtractor = fn
 	}
