@@ -192,7 +192,6 @@ func TestGetResources(t *testing.T) {
 					"auto_run_queries":            false,
 					"cache_field_values_schedule": "",
 					"engine":                      "",
-					"groups":                      []map[string]interface{}{{"urn": "group:1", "permissions": []string{"read", "write"}}},
 					"metadata_sync_schedule":      "",
 					"native_permissions":          "",
 					"timezone":                    "",
