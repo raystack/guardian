@@ -301,10 +301,10 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 func makeHeaderMatcher(c *Config) func(key string) (string, bool) {
 	return func(key string) (string, bool) {
 		switch strings.ToLower(key) {
-		case strings.ToLower(c.AuthenticatedUserHeaderKey):
+		case
+			strings.ToLower(c.AuthenticatedUserHeaderKey),
+			strings.ToLower(c.AuditLogTraceIDHeaderKey):
 			return key, true
-		case "x-trace-id": // TODO: make key configurable
-			return "X-Trace-Id", true
 		default:
 			return runtime.DefaultHeaderMatcher(key)
 		}
