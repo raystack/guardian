@@ -8,7 +8,7 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
-func (h *handler) AppealExpirationReminder(_ context.Context) error {
+func (h *handler) AppealExpirationReminder(ctx context.Context) error {
 	h.logger.Info("Appeal Expiration Reminder")
 
 	daysBeforeExpired := []int{7, 3, 1}
@@ -24,7 +24,7 @@ func (h *handler) AppealExpirationReminder(_ context.Context) error {
 			ExpirationDateGreaterThan: from,
 			ExpirationDateLessThan:    to,
 		}
-		appeals, err := h.appealService.Find(filters)
+		appeals, err := h.appealService.Find(ctx, filters)
 		if err != nil {
 			h.logger.Error(fmt.Sprintf("Failed to retrieve active appeals expiting in %v day(s): %v", d, err))
 			continue

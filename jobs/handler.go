@@ -12,8 +12,8 @@ import (
 )
 
 type appealService interface {
-	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
-	Revoke(id, actor, reason string) (*domain.Appeal, error)
+	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
+	Revoke(ctx context.Context, id, actor, reason string) (*domain.Appeal, error)
 }
 
 type providerService interface {

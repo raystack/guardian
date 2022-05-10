@@ -415,7 +415,7 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 	if req.GetOrderBy() != nil {
 		filters.OrderBy = req.GetOrderBy()
 	}
-	appeals, err := s.listAppeals(filters)
+	appeals, err := s.listAppeals(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +451,7 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListA
 	if req.GetOrderBy() != nil {
 		filters.OrderBy = req.GetOrderBy()
 	}
-	appeals, err := s.listAppeals(filters)
+	appeals, err := s.listAppeals(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +472,8 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *guardianv1beta1.Crea
 		return nil, status.Errorf(codes.Internal, "cannot deserialize payload: %v", err)
 	}
 
-	if err := s.appealService.Create(appeals); err != nil {
+	ctx = audit.WithActor(ctx, authenticatedUser)
+	if err := s.appealService.Create(ctx, appeals); err != nil {
 		if errors.Is(err, appeal.ErrAppealDuplicate) {
 			return nil, status.Errorf(codes.AlreadyExists, "appeal already exists: %v", err)
 		}
@@ -532,7 +533,7 @@ func (s *GRPCServer) ListApprovals(ctx context.Context, req *guardianv1beta1.Lis
 
 func (s *GRPCServer) GetAppeal(ctx context.Context, req *guardianv1beta1.GetAppealRequest) (*guardianv1beta1.GetAppealResponse, error) {
 	id := req.GetId()
-	appeal, err := s.appealService.GetByID(id)
+	appeal, err := s.appealService.GetByID(ctx, id)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrieve appeal: %v", err)
 	}
@@ -557,7 +558,8 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 	}
 
 	id := req.GetId()
-	a, err := s.appealService.MakeAction(domain.ApprovalAction{
+	ctx = audit.WithActor(ctx, actor)
+	a, err := s.appealService.MakeAction(ctx, domain.ApprovalAction{
 		AppealID:     id,
 		ApprovalName: req.GetApprovalName(),
 		Actor:        actor,
@@ -599,8 +601,13 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 }
 
 func (s *GRPCServer) CancelAppeal(ctx context.Context, req *guardianv1beta1.CancelAppealRequest) (*guardianv1beta1.CancelAppealResponse, error) {
+	actor, err := s.getUser(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, err.Error())
+	}
+	ctx = audit.WithActor(ctx, actor)
 	id := req.GetId()
-	a, err := s.appealService.Cancel(id)
+	a, err := s.appealService.Cancel(ctx, id)
 	if err != nil {
 		switch err {
 		case appeal.ErrAppealNotFound:
@@ -634,7 +641,8 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 	}
 	reason := req.GetReason().GetReason()
 
-	a, err := s.appealService.Revoke(id, actor, reason)
+	ctx = audit.WithActor(ctx, actor)
+	a, err := s.appealService.Revoke(ctx, id, actor, reason)
 	if err != nil {
 		switch err {
 		case appeal.ErrAppealNotFound:
@@ -654,8 +662,8 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 	}, nil
 }
 
-func (s *GRPCServer) listAppeals(filters *domain.ListAppealsFilter) ([]*guardianv1beta1.Appeal, error) {
-	appeals, err := s.appealService.Find(filters)
+func (s *GRPCServer) listAppeals(ctx context.Context, filters *domain.ListAppealsFilter) ([]*guardianv1beta1.Appeal, error) {
+	appeals, err := s.appealService.Find(ctx, filters)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get appeal list: %s", err)
 	}

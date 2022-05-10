@@ -1,7 +1,11 @@
+//go:generate mockery --name=repository --exported
+//go:generate mockery --name=iamManager --exported
+//go:generate mockery --name=notifier --exported
 //go:generate mockery --name=policyService --exported
 //go:generate mockery --name=approvalService --exported
 //go:generate mockery --name=providerService --exported
 //go:generate mockery --name=resourceService --exported
+//go:generate mockery --name=auditLogger --exported
 
 package appeal
 
@@ -21,7 +25,28 @@ import (
 	"github.com/odpf/salt/log"
 )
 
+var (
+	AuditKeyBulkInsert = "appeal.bulkInsert"
+	AuditKeyCancel     = "appeal.cancel"
+	AuditKeyApprove    = "appeal.approve"
+	AuditKeyReject     = "appeal.reject"
+	AuditKeyRevoke     = "appeal.revoke"
+	AuditKeyExtend     = "appeal.extend"
+)
+
 var TimeNow = time.Now
+
+type repository interface {
+	store.AppealRepository
+}
+
+type iamManager interface {
+	domain.IAMManager
+}
+
+type notifier interface {
+	notifiers.Client
+}
 
 type policyService interface {
 	Find(context.Context) ([]*domain.Policy, error)
@@ -44,49 +69,61 @@ type resourceService interface {
 	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
 }
 
+type auditLogger interface {
+	Log(ctx context.Context, action string, data interface{}) error
+}
+
+type ServiceOptions struct {
+	Repository      repository
+	ApprovalService approvalService
+	ResourceService resourceService
+	ProviderService providerService
+	PolicyService   policyService
+	IAMManager      iamManager
+
+	Notifier    notifier
+	Validator   *validator.Validate
+	Logger      log.Logger
+	AuditLogger auditLogger
+}
+
 // Service handling the business logics
 type Service struct {
-	repo store.AppealRepository
-
+	repo            repository
 	approvalService approvalService
 	resourceService resourceService
 	providerService providerService
 	policyService   policyService
 	iam             domain.IAMManager
-	notifier        notifiers.Client
-	logger          log.Logger
 
-	validator *validator.Validate
-	TimeNow   func() time.Time
+	notifier    notifier
+	validator   *validator.Validate
+	logger      log.Logger
+	auditLogger auditLogger
+
+	TimeNow func() time.Time
 }
 
 // NewService returns service struct
-func NewService(
-	appealRepository store.AppealRepository,
-	approvalService approvalService,
-	resourceService resourceService,
-	providerService providerService,
-	policyService policyService,
-	iam domain.IAMManager,
-	notifier notifiers.Client,
-	logger log.Logger,
-) *Service {
+func NewService(opts ServiceOptions) *Service {
 	return &Service{
-		repo:            appealRepository,
-		approvalService: approvalService,
-		resourceService: resourceService,
-		providerService: providerService,
-		policyService:   policyService,
-		iam:             iam,
-		notifier:        notifier,
-		validator:       validator.New(),
-		logger:          logger,
-		TimeNow:         time.Now,
+		opts.Repository,
+		opts.ApprovalService,
+		opts.ResourceService,
+		opts.ProviderService,
+		opts.PolicyService,
+		opts.IAMManager,
+
+		opts.Notifier,
+		opts.Validator,
+		opts.Logger,
+		opts.AuditLogger,
+		time.Now,
 	}
 }
 
 // GetByID returns one record by id
-func (s *Service) GetByID(id string) (*domain.Appeal, error) {
+func (s *Service) GetByID(ctx context.Context, id string) (*domain.Appeal, error) {
 	if id == "" {
 		return nil, ErrAppealIDEmptyParam
 	}
@@ -95,25 +132,25 @@ func (s *Service) GetByID(id string) (*domain.Appeal, error) {
 }
 
 // Find appeals by filters
-func (s *Service) Find(filters *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
+func (s *Service) Find(ctx context.Context, filters *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
 	return s.repo.Find(filters)
 }
 
 // Create record
-func (s *Service) Create(appeals []*domain.Appeal) error {
+func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 	resourceIDs := []string{}
 	for _, a := range appeals {
 		resourceIDs = append(resourceIDs, a.ResourceID)
 	}
-	resources, err := s.getResourcesMap(resourceIDs)
+	resources, err := s.getResourcesMap(ctx, resourceIDs)
 	if err != nil {
 		return err
 	}
-	providers, err := s.getProvidersMap()
+	providers, err := s.getProvidersMap(ctx)
 	if err != nil {
 		return err
 	}
-	policies, err := s.getPoliciesMap()
+	policies, err := s.getPoliciesMap(ctx)
 	if err != nil {
 		return err
 	}
@@ -152,7 +189,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return ErrAppealNotEligibleForExtension
 		}
 
-		if err := s.providerService.ValidateAppeal(context.TODO(), appeal, provider); err != nil {
+		if err := s.providerService.ValidateAppeal(ctx, appeal, provider); err != nil {
 			return fmt.Errorf("validating appeal based on provider: %w", err)
 		}
 
@@ -179,7 +216,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 
 		for _, approval := range appeal.Approvals {
 			if approval.Index == len(appeal.Approvals)-1 && approval.Status == domain.ApprovalStatusApproved {
-				if err := s.createAccess(appeal); err != nil {
+				if err := s.createAccess(ctx, appeal); err != nil {
 					return fmt.Errorf("creating access: %w", err)
 				}
 				notifications = append(notifications, domain.Notification{
@@ -200,6 +237,10 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 		return fmt.Errorf("inserting appeals into db: %w", err)
 	}
 
+	if err := s.auditLogger.Log(ctx, AuditKeyBulkInsert, appeals); err != nil {
+		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+	}
+
 	for _, a := range appeals {
 		notifications = append(notifications, getApprovalNotifications(a)...)
 	}
@@ -214,7 +255,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 }
 
 // Approve an approval step
-func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appeal, error) {
+func (s *Service) MakeAction(ctx context.Context, approvalAction domain.ApprovalAction) (*domain.Appeal, error) {
 	if err := utils.ValidateStruct(approvalAction); err != nil {
 		return nil, err
 	}
@@ -288,7 +329,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 						return nil, fmt.Errorf("failed to update existing active appeal: %w", err)
 					}
 				} else {
-					if err := s.createAccess(appeal); err != nil {
+					if err := s.createAccess(ctx, appeal); err != nil {
 						return nil, err
 					}
 				}
@@ -298,7 +339,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				}
 			}
 			if err := s.repo.Update(appeal); err != nil {
-				if err := s.providerService.RevokeAccess(context.TODO(), appeal); err != nil {
+				if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
 					return nil, err
 				}
 				return nil, err
@@ -316,6 +357,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 						},
 					},
 				})
+				if err := s.auditLogger.Log(ctx, AuditKeyApprove, approvalAction); err != nil {
+					s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+				}
 			} else if appeal.Status == domain.AppealStatusRejected {
 				notifications = append(notifications, domain.Notification{
 					User: appeal.CreatedBy,
@@ -327,6 +371,9 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 						},
 					},
 				})
+				if err := s.auditLogger.Log(ctx, AuditKeyReject, approvalAction); err != nil {
+					s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+				}
 			} else {
 				notifications = append(notifications, getApprovalNotifications(appeal)...)
 			}
@@ -343,8 +390,8 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 	return nil, ErrApprovalNameNotFound
 }
 
-func (s *Service) Cancel(id string) (*domain.Appeal, error) {
-	appeal, err := s.GetByID(id)
+func (s *Service) Cancel(ctx context.Context, id string) (*domain.Appeal, error) {
+	appeal, err := s.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -360,10 +407,16 @@ func (s *Service) Cancel(id string) (*domain.Appeal, error) {
 		return nil, err
 	}
 
+	if err := s.auditLogger.Log(ctx, AuditKeyCancel, map[string]interface{}{
+		"appeal_id": id,
+	}); err != nil {
+		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+	}
+
 	return appeal, nil
 }
 
-func (s *Service) Revoke(id string, actor, reason string) (*domain.Appeal, error) {
+func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (*domain.Appeal, error) {
 	appeal, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -380,7 +433,7 @@ func (s *Service) Revoke(id string, actor, reason string) (*domain.Appeal, error
 		return nil, err
 	}
 
-	if err := s.providerService.RevokeAccess(context.TODO(), appeal); err != nil {
+	if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
 		if err := s.repo.Update(appeal); err != nil {
 			return nil, err
 		}
@@ -398,6 +451,13 @@ func (s *Service) Revoke(id string, actor, reason string) (*domain.Appeal, error
 		},
 	}}); err != nil {
 		s.logger.Error(err.Error())
+	}
+
+	if err := s.auditLogger.Log(ctx, AuditKeyRevoke, map[string]interface{}{
+		"appeal_id": id,
+		"reason":    reason,
+	}); err != nil {
+		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
 	}
 
 	return revokedAppeal, nil
@@ -427,9 +487,9 @@ func (s *Service) getAppealsMapGroupedByStatus(statuses []string) (map[string]ma
 	return appealsMap, nil
 }
 
-func (s *Service) getResourcesMap(ids []string) (map[string]*domain.Resource, error) {
+func (s *Service) getResourcesMap(ctx context.Context, ids []string) (map[string]*domain.Resource, error) {
 	filters := map[string]interface{}{"ids": ids}
-	resources, err := s.resourceService.Find(context.TODO(), filters)
+	resources, err := s.resourceService.Find(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
@@ -442,8 +502,8 @@ func (s *Service) getResourcesMap(ids []string) (map[string]*domain.Resource, er
 	return result, nil
 }
 
-func (s *Service) getProvidersMap() (map[string]map[string]*domain.Provider, error) {
-	providers, err := s.providerService.Find(context.TODO())
+func (s *Service) getProvidersMap(ctx context.Context) (map[string]map[string]*domain.Provider, error) {
+	providers, err := s.providerService.Find(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -463,8 +523,8 @@ func (s *Service) getProvidersMap() (map[string]map[string]*domain.Provider, err
 	return providersMap, nil
 }
 
-func (s *Service) getPoliciesMap() (map[string]map[uint]*domain.Policy, error) {
-	policies, err := s.policyService.Find(context.TODO())
+func (s *Service) getPoliciesMap(ctx context.Context) (map[string]map[uint]*domain.Policy, error) {
+	policies, err := s.policyService.Find(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -646,7 +706,7 @@ func (s *Service) fillApprovals(a *domain.Appeal, p *domain.Policy) error {
 	return nil
 }
 
-func (s *Service) handleAppealRequirements(a *domain.Appeal, p *domain.Policy) error {
+func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal, p *domain.Policy) error {
 	additionalAppeals := []*domain.Appeal{}
 	if p.Requirements != nil && len(p.Requirements) > 0 {
 		for reqIndex, r := range p.Requirements {
@@ -660,7 +720,7 @@ func (s *Service) handleAppealRequirements(a *domain.Appeal, p *domain.Policy) e
 
 			for _, aa := range r.Appeals {
 				// TODO: populate resource data from policyService
-				resource, err := s.resourceService.Get(context.TODO(), aa.Resource)
+				resource, err := s.resourceService.Get(ctx, aa.Resource)
 				if err != nil {
 					return fmt.Errorf("retrieving resource: %v", err)
 				}
@@ -684,28 +744,28 @@ func (s *Service) handleAppealRequirements(a *domain.Appeal, p *domain.Policy) e
 		}
 	}
 	if len(additionalAppeals) > 0 {
-		if err := s.Create(additionalAppeals); err != nil {
+		if err := s.Create(ctx, additionalAppeals); err != nil {
 			return fmt.Errorf("creating additional appeals: %v", err)
 		}
 	}
 	return nil
 }
 
-func (s *Service) createAccess(a *domain.Appeal) error {
+func (s *Service) createAccess(ctx context.Context, a *domain.Appeal) error {
 	policy := a.Policy
 	if policy == nil {
-		p, err := s.policyService.GetOne(context.TODO(), a.PolicyID, a.PolicyVersion)
+		p, err := s.policyService.GetOne(ctx, a.PolicyID, a.PolicyVersion)
 		if err != nil {
 			return fmt.Errorf("retrieving policy: %w", err)
 		}
 		policy = p
 	}
 
-	if err := s.handleAppealRequirements(a, policy); err != nil {
+	if err := s.handleAppealRequirements(ctx, a, policy); err != nil {
 		return fmt.Errorf("handling appeal requirements: %w", err)
 	}
 
-	if err := s.providerService.GrantAccess(context.TODO(), a); err != nil {
+	if err := s.providerService.GrantAccess(ctx, a); err != nil {
 		return fmt.Errorf("granting access: %w", err)
 	}
 

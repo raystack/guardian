@@ -103,11 +103,11 @@ func (a *Appeal) SetDefaults() {
 }
 
 type ApprovalAction struct {
-	AppealID     string `validate:"required"`
-	ApprovalName string `validate:"required"`
-	Actor        string `validate:"email"`
-	Action       string `validate:"required,oneof=approve reject"`
-	Reason       string
+	AppealID     string `validate:"required" json:"appeal_id"`
+	ApprovalName string `validate:"required" json:"approval_name"`
+	Actor        string `validate:"email" json:"actor"`
+	Action       string `validate:"required,oneof=approve reject" json:"action"`
+	Reason       string `json:"reason"`
 }
 
 type ListAppealsFilter struct {

@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/pkg/audit"
 )
 
-func (h *handler) RevokeExpiredAppeals(_ context.Context) error {
+func (h *handler) RevokeExpiredAppeals(ctx context.Context) error {
 	h.logger.Info("Revoke Expired Appeals")
 
 	filters := &domain.ListAppealsFilter{
@@ -19,7 +20,7 @@ func (h *handler) RevokeExpiredAppeals(_ context.Context) error {
 
 	h.logger.Info("Retrieving active appeals...")
 
-	appeals, err := h.appealService.Find(filters)
+	appeals, err := h.appealService.Find(ctx, filters)
 	if err != nil {
 		return err
 	}
@@ -29,7 +30,8 @@ func (h *handler) RevokeExpiredAppeals(_ context.Context) error {
 	for _, a := range appeals {
 		h.logger.Info(fmt.Sprintf("Revoking appeal ID: %s", a.ID))
 
-		if _, err := h.appealService.Revoke(a.ID, domain.SystemActorName, "Automatically revoked"); err != nil {
+		ctx = audit.WithActor(ctx, "system")
+		if _, err := h.appealService.Revoke(ctx, a.ID, domain.SystemActorName, "Automatically revoked"); err != nil {
 			h.logger.Info(fmt.Sprintf("Failed to revoke appeal ID: %s, error: %s", a.ID, err.Error()))
 
 			failedRevoke = append(failedRevoke, map[string]interface{}{

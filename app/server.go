@@ -124,16 +124,18 @@ func RunServer(c *Config) error {
 		AuditLogger:     auditLogger,
 	})
 	approvalService := approval.NewService(approvalRepository, policyService)
-	appealService := appeal.NewService(
-		appealRepository,
-		approvalService,
-		resourceService,
-		providerService,
-		policyService,
-		iamManager,
-		notifier,
-		logger,
-	)
+	appealService := appeal.NewService(appeal.ServiceOptions{
+		Repository:      appealRepository,
+		ResourceService: resourceService,
+		ApprovalService: approvalService,
+		ProviderService: providerService,
+		PolicyService:   policyService,
+		IAMManager:      iamManager,
+		Notifier:        notifier,
+		Validator:       v,
+		Logger:          logger,
+		AuditLogger:     auditLogger,
+	})
 
 	jobHandler := jobs.NewHandler(
 		logger,
