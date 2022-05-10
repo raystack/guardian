@@ -3,6 +3,7 @@ package metabase
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -43,10 +44,12 @@ type MetabaseClient interface {
 	GetDatabases() ([]*Database, error)
 	GetCollections() ([]*Collection, error)
 	GetGroups() ([]*Group, ResourceGroupDetails, ResourceGroupDetails, error)
-	GrantDatabaseAccess(resource *Database, user, role string) error
+	GrantDatabaseAccess(resource *Database, user, role string, groups map[string]*Group) error
 	RevokeDatabaseAccess(resource *Database, user, role string) error
 	GrantCollectionAccess(resource *Collection, user, role string) error
 	RevokeCollectionAccess(resource *Collection, user, role string) error
+	GrantGroupAccess(groupID int, email string) error
+	RevokeGroupAccess(groupID int, email string) error
 }
 
 type ClientConfig struct {
@@ -60,6 +63,7 @@ type user struct {
 	ID           int    `json:"id"`
 	Email        string `json:"email"`
 	MembershipID int    `json:"membership_id"`
+	GroupIds     []int  `json:"group_ids"`
 }
 
 type group struct {
@@ -77,10 +81,7 @@ type SessionResponse struct {
 	ID string `json:"id"`
 }
 
-type databasePermission struct {
-	Native  string `json:"native,omitempty" mapstructure:"native"`
-	Schemas string `json:"schemas" mapstructure:"schemas"`
-}
+type databasePermission map[string]interface{}
 
 type databaseGraph struct {
 	Revision int `json:"revision"`
@@ -101,11 +102,11 @@ type membershipRequest struct {
 
 var (
 	databaseViewerPermission = databasePermission{
-		Schemas: "all",
+		"schemas": "all",
 	}
 	databaseEditorPermission = databasePermission{
-		Schemas: "all",
-		Native:  "write",
+		"native":  "write",
+		"schemas": "all",
 	}
 )
 
@@ -330,7 +331,7 @@ func addGroupToResource(resourceGroups ResourceGroupDetails, resourceId string, 
 	}
 }
 
-func (c *client) GrantDatabaseAccess(resource *Database, user, role string) error {
+func (c *client) GrantDatabaseAccess(resource *Database, email, role string, groups map[string]*Group) error {
 	access, err := c.getDatabaseAccess()
 	if err != nil {
 		return err
@@ -344,17 +345,24 @@ func (c *client) GrantDatabaseAccess(resource *Database, user, role string) erro
 	}
 
 	resourceIDStr := strconv.Itoa(resource.ID)
+	toBrGroupName := fmt.Sprintf("%s_%v_%s", ResourceTypeDatabase, resource.ID, role)
 	groupID := c.findDatabaseAccessGroup(access, resourceIDStr, dbPermission)
 
 	if groupID == "" {
-		g := &group{
-			Name: fmt.Sprintf("%s_%v_%s", ResourceTypeDatabase, resource.ID, role),
-		}
-		if err := c.createGroup(g); err != nil {
-			return err
+		var groupID string
+		if g, ok := groups[toBrGroupName]; ok {
+			groupID = strconv.Itoa(g.ID)
+		} else {
+			g := &group{
+				Name: toBrGroupName,
+			}
+			if err := c.createGroup(g); err != nil {
+				return err
+			}
+
+			groupID = strconv.Itoa(g.ID)
 		}
 
-		groupID = strconv.Itoa(g.ID)
 		databaseID := fmt.Sprintf("%v", resource.ID)
 
 		access.Groups[groupID] = map[string]databasePermission{}
@@ -368,11 +376,19 @@ func (c *client) GrantDatabaseAccess(resource *Database, user, role string) erro
 	if err != nil {
 		return err
 	}
-	userID, err := c.getUserID(user)
+
+	user, err := c.getUser(email)
 	if err != nil {
 		return err
 	}
-	return c.addGroupMember(groupIDint, userID)
+
+	for _, groupId := range user.GroupIds {
+		if groupId == groupIDint {
+			return nil
+		}
+	}
+
+	return c.addGroupMember(groupIDint, user.ID)
 }
 
 func (c *client) RevokeDatabaseAccess(resource *Database, user, role string) error {
@@ -402,7 +418,7 @@ func (c *client) RevokeDatabaseAccess(resource *Database, user, role string) err
 	return c.removeMembership(groupIDInt, user)
 }
 
-func (c *client) GrantCollectionAccess(resource *Collection, user, role string) error {
+func (c *client) GrantCollectionAccess(resource *Collection, email, role string) error {
 	access, err := c.getCollectionAccess()
 	if err != nil {
 		return err
@@ -433,11 +449,11 @@ func (c *client) GrantCollectionAccess(resource *Collection, user, role string) 
 	if err != nil {
 		return err
 	}
-	userID, err := c.getUserID(user)
+	user, err := c.getUser(email)
 	if err != nil {
 		return err
 	}
-	return c.addGroupMember(groupIDInt, userID)
+	return c.addGroupMember(groupIDInt, user.ID)
 }
 
 func (c *client) RevokeCollectionAccess(resource *Collection, user, role string) error {
@@ -460,6 +476,26 @@ func (c *client) RevokeCollectionAccess(resource *Collection, user, role string)
 	return c.removeMembership(groupIDInt, user)
 }
 
+func (c *client) GrantGroupAccess(groupID int, email string) error {
+	user, err := c.getUser(email)
+	if err != nil {
+		return err
+	}
+
+	for _, userGroupId := range user.GroupIds {
+		if userGroupId == groupID {
+			c.logger.Warn(fmt.Sprintf("User %s is already member of group %s", email, groupID))
+			return nil
+		}
+	}
+
+	return c.addGroupMember(groupID, user.ID)
+}
+
+func (c *client) RevokeGroupAccess(groupID int, email string) error {
+	return c.removeMembership(groupID, email)
+}
+
 func (c *client) removeMembership(groupID int, user string) error {
 	group, err := c.getGroup(groupID)
 	if err != nil {
@@ -480,40 +516,37 @@ func (c *client) removeMembership(groupID int, user string) error {
 	return c.removeGroupMember(membershipID)
 }
 
-func (c *client) getUserID(email string) (int, error) {
-	if c.userIDs[email] != 0 {
-		return c.userIDs[email], nil
-	}
-
-	users, err := c.getUsers()
+func (c *client) getUser(email string) (user, error) {
+	req, err := c.newRequest(http.MethodGet, fmt.Sprintf("/api/user?query=%s", email), nil)
 	if err != nil {
-		return 0, err
-	}
-
-	userIDs := map[string]int{}
-	for _, u := range users {
-		userIDs[u.Email] = u.ID
-	}
-	c.userIDs = userIDs
-
-	if c.userIDs[email] == 0 {
-		return 0, ErrUserNotFound
-	}
-	return c.userIDs[email], nil
-}
-
-func (c *client) getUsers() ([]user, error) {
-	req, err := c.newRequest(http.MethodGet, "/api/user", nil)
-	if err != nil {
-		return nil, err
+		return user{}, err
 	}
 
 	var users []user
-	if _, err := c.do(req, &users); err != nil {
-		return nil, err
+	var response interface{}
+	if _, err := c.do(req, &response); err != nil {
+		return user{}, err
 	}
 
-	return users, nil
+	if v, ok := response.([]interface{}); ok {
+		err = mapstructure.Decode(v, &users) // this is for metabase v0.37
+	} else if v, ok := response.(map[string]interface{}); ok && v[data] != nil {
+		err = mapstructure.Decode(v[data], &users) // this is for metabase v0.42
+	} else {
+		return user{}, ErrInvalidApiResponse
+	}
+
+	if err != nil {
+		return user{}, ErrUserNotFound
+	}
+
+	for _, u := range users {
+		if u.Email == email {
+			return u, nil
+		}
+	}
+
+	return user{}, ErrUserNotFound
 }
 
 func (c *client) getSessionToken() (string, error) {
@@ -731,8 +764,21 @@ func (c *client) do(req *http.Request, v interface{}) (*http.Response, error) {
 		}
 	}
 
+	if resp.StatusCode == http.StatusBadRequest {
+		byteData, _ := io.ReadAll(resp.Body)
+		return nil, errors.New(string(byteData))
+	}
+
+	if resp.StatusCode == http.StatusInternalServerError {
+		byteData, _ := io.ReadAll(resp.Body)
+		return nil, errors.New(string(byteData))
+	}
+
 	if v != nil {
-		err = json.NewDecoder(resp.Body).Decode(v)
+		byteData, _ := io.ReadAll(resp.Body)
+		a := string(byteData)
+		fmt.Println(a)
+		err = json.NewDecoder(bytes.NewReader(byteData)).Decode(v)
 	}
 	return resp, err
 }

@@ -418,7 +418,13 @@ func TestGrantAccess(t *testing.T) {
 			p.Clients = map[string]metabase.MetabaseClient{
 				providerURN: client,
 			}
-			client.On("GrantDatabaseAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+			client.On("GrantDatabaseAccess", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+			d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
+			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
+			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
+			client.On("GetGroups").Return([]*metabase.Group{&group},
+				map[string][]map[string]interface{}{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
+				map[string][]map[string]interface{}{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -468,7 +474,14 @@ func TestGrantAccess(t *testing.T) {
 			p.Clients = map[string]metabase.MetabaseClient{
 				providerURN: client,
 			}
-			client.On("GrantDatabaseAccess", expectedDatabase, expectedUser, expectedRole).Return(nil).Once()
+			client.On("GrantDatabaseAccess", expectedDatabase, expectedUser, expectedRole, mock.Anything).Return(nil).Once()
+
+			d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
+			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
+			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
+			client.On("GetGroups").Return([]*metabase.Group{&group},
+				map[string][]map[string]interface{}{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
+				map[string][]map[string]interface{}{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -518,7 +531,14 @@ func TestGrantAccess(t *testing.T) {
 			p.Clients = map[string]metabase.MetabaseClient{
 				providerURN: client,
 			}
-			client.On("GrantCollectionAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+			client.On("GrantCollectionAccess", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+
+			d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
+			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
+			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
+			client.On("GetGroups").Return([]*metabase.Group{&group},
+				map[string][]map[string]interface{}{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
+				map[string][]map[string]interface{}{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -569,7 +589,14 @@ func TestGrantAccess(t *testing.T) {
 			p.Clients = map[string]metabase.MetabaseClient{
 				providerURN: client,
 			}
-			client.On("GrantCollectionAccess", expectedCollection, expectedUser, expectedRole).Return(nil).Once()
+			client.On("GrantCollectionAccess", expectedCollection, expectedUser, expectedRole, mock.Anything).Return(nil).Once()
+
+			d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
+			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
+			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
+			client.On("GetGroups").Return([]*metabase.Group{&group},
+				map[string][]map[string]interface{}{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
+				map[string][]map[string]interface{}{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{

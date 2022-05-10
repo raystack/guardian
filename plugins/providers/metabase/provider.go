@@ -165,6 +165,16 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return err
 	}
 
+	groups, _, _, err := client.GetGroups()
+	if err != nil {
+		return err
+	}
+
+	groupMap := make(map[string]*Group, 0)
+	for _, group := range groups {
+		groupMap[group.Name] = group
+	}
+
 	if a.Resource.Type == ResourceTypeDatabase {
 		d := new(Database)
 		if err := d.FromDomain(a.Resource); err != nil {
@@ -172,7 +182,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 
 		for _, p := range permissions {
-			if err := client.GrantDatabaseAccess(d, a.AccountID, string(p)); err != nil {
+			if err := client.GrantDatabaseAccess(d, a.AccountID, string(p), groupMap); err != nil {
 				return err
 			}
 		}
@@ -191,6 +201,16 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 
 		return nil
+	} else if a.Resource.Type == ResourceTypeGroup {
+		g := new(Group)
+		if err := g.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		if err := client.GrantGroupAccess(g.ID, a.AccountID); err != nil {
+			return err
+		}
+
 	}
 
 	return ErrInvalidResourceType
@@ -234,6 +254,17 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 			if err := client.RevokeCollectionAccess(c, a.AccountID, string(p)); err != nil {
 				return err
 			}
+		}
+
+		return nil
+	} else if a.Resource.Type == ResourceTypeGroup {
+		g := new(Group)
+		if err := g.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		if err := client.RevokeGroupAccess(g.ID, a.AccountID); err != nil {
+			return err
 		}
 
 		return nil

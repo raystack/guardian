@@ -109,12 +109,12 @@ func (_m *MetabaseClient) GrantCollectionAccess(resource *metabase.Collection, u
 }
 
 // GrantDatabaseAccess provides a mock function with given fields: resource, user, role
-func (_m *MetabaseClient) GrantDatabaseAccess(resource *metabase.Database, user string, role string) error {
-	ret := _m.Called(resource, user, role)
+func (_m *MetabaseClient) GrantDatabaseAccess(resource *metabase.Database, user string, role string, groups map[string]*metabase.Group) error {
+	ret := _m.Called(resource, user, role, groups)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*metabase.Database, string, string) error); ok {
-		r0 = rf(resource, user, role)
+	if rf, ok := ret.Get(0).(func(*metabase.Database, string, string, map[string]*metabase.Group) error); ok {
+		r0 = rf(resource, user, role, groups)
 	} else {
 		r0 = ret.Error(0)
 	}
