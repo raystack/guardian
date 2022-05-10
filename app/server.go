@@ -128,8 +128,8 @@ func RunServer(c *Config) error {
 		AuditLogger:     auditLogger,
 	})
 	approvalService := approval.NewService(approval.ServiceOptions{
-		approvalRepository,
-		policyService,
+		Repository:    approvalRepository,
+		PolicyService: policyService,
 	})
 	appealService := appeal.NewService(appeal.ServiceOptions{
 		Repository:      appealRepository,
