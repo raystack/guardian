@@ -93,7 +93,7 @@ func RunServer(c *Config) error {
 		}),
 		audit.WithTrackIDExtractor(func(ctx context.Context) string {
 			if md, ok := metadata.FromIncomingContext(ctx); ok {
-				if rawTraceID := md.Get("X-Trace-Id"); len(rawTraceID) > 0 { // TODO: make key configurable
+				if rawTraceID := md.Get(c.AuditLogTraceIDHeaderKey); len(rawTraceID) > 0 {
 					return rawTraceID[0]
 				}
 			}
