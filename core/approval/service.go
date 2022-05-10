@@ -1,3 +1,4 @@
+//go:generate mockery --name=repository --exported
 //go:generate mockery --name=policyService --exported
 
 package approval
@@ -13,34 +14,42 @@ import (
 	"github.com/odpf/guardian/store"
 )
 
+type repository interface {
+	store.ApprovalRepository
+}
+
 type policyService interface {
 	GetOne(context.Context, string, uint) (*domain.Policy, error)
 }
 
+type ServiceOptions struct {
+	Repository    repository
+	PolicyService policyService
+}
 type Service struct {
-	repo          store.ApprovalRepository
+	repo          repository
 	policyService policyService
 }
 
-func NewService(
-	ar store.ApprovalRepository,
-	ps policyService,
-) *Service {
-	return &Service{ar, ps}
+func NewService(opts ServiceOptions) *Service {
+	return &Service{
+		opts.Repository,
+		opts.PolicyService,
+	}
 }
 
-func (s *Service) ListApprovals(filters *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
+func (s *Service) ListApprovals(ctx context.Context, filters *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
 	return s.repo.ListApprovals(filters)
 }
 
-func (s *Service) BulkInsert(approvals []*domain.Approval) error {
+func (s *Service) BulkInsert(ctx context.Context, approvals []*domain.Approval) error {
 	return s.repo.BulkInsert(approvals)
 }
 
-func (s *Service) AdvanceApproval(appeal *domain.Appeal) error {
+func (s *Service) AdvanceApproval(ctx context.Context, appeal *domain.Appeal) error {
 	policy := appeal.Policy
 	if policy == nil {
-		p, err := s.policyService.GetOne(context.TODO(), appeal.PolicyID, appeal.PolicyVersion)
+		p, err := s.policyService.GetOne(ctx, appeal.PolicyID, appeal.PolicyVersion)
 		if err != nil {
 			return err
 		}

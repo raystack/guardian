@@ -500,7 +500,7 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1beta1
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
-	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
+	approvals, err := s.listApprovals(ctx, &domain.ListApprovalsFilter{
 		AccountID: req.GetAccountId(),
 		CreatedBy: user,
 		Statuses:  req.GetStatuses(),
@@ -516,7 +516,7 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1beta1
 }
 
 func (s *GRPCServer) ListApprovals(ctx context.Context, req *guardianv1beta1.ListApprovalsRequest) (*guardianv1beta1.ListApprovalsResponse, error) {
-	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
+	approvals, err := s.listApprovals(ctx, &domain.ListApprovalsFilter{
 		AccountID: req.GetAccountId(),
 		CreatedBy: req.GetCreatedBy(),
 		Statuses:  req.GetStatuses(),
@@ -680,8 +680,8 @@ func (s *GRPCServer) listAppeals(ctx context.Context, filters *domain.ListAppeal
 	return appealProtos, nil
 }
 
-func (s *GRPCServer) listApprovals(filters *domain.ListApprovalsFilter) ([]*guardianv1beta1.Approval, error) {
-	approvals, err := s.approvalService.ListApprovals(filters)
+func (s *GRPCServer) listApprovals(ctx context.Context, filters *domain.ListApprovalsFilter) ([]*guardianv1beta1.Approval, error) {
+	approvals, err := s.approvalService.ListApprovals(ctx, filters)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get approval list: %s", err)
 	}

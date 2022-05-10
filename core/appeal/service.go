@@ -54,7 +54,7 @@ type policyService interface {
 }
 
 type approvalService interface {
-	AdvanceApproval(*domain.Appeal) error
+	AdvanceApproval(context.Context, *domain.Appeal) error
 }
 
 type providerService interface {
@@ -209,7 +209,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 		appeal.Init(policy)
 
 		appeal.Policy = policy
-		if err := s.approvalService.AdvanceApproval(appeal); err != nil {
+		if err := s.approvalService.AdvanceApproval(ctx, appeal); err != nil {
 			return fmt.Errorf("initializing approval step statuses: %w", err)
 		}
 		appeal.Policy = nil
@@ -294,7 +294,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 				if i+1 <= len(appeal.Approvals)-1 {
 					appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
 				}
-				if err := s.approvalService.AdvanceApproval(appeal); err != nil {
+				if err := s.approvalService.AdvanceApproval(ctx, appeal); err != nil {
 					return nil, err
 				}
 			} else if approvalAction.Action == domain.AppealActionNameReject {
@@ -357,9 +357,6 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 						},
 					},
 				})
-				if err := s.auditLogger.Log(ctx, AuditKeyApprove, approvalAction); err != nil {
-					s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
-				}
 			} else if appeal.Status == domain.AppealStatusRejected {
 				notifications = append(notifications, domain.Notification{
 					User: appeal.CreatedBy,
@@ -371,9 +368,6 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 						},
 					},
 				})
-				if err := s.auditLogger.Log(ctx, AuditKeyReject, approvalAction); err != nil {
-					s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
-				}
 			} else {
 				notifications = append(notifications, getApprovalNotifications(appeal)...)
 			}
@@ -381,6 +375,14 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 				if err := s.notifier.Notify(notifications); err != nil {
 					s.logger.Error(err.Error())
 				}
+			}
+
+			auditKey := AuditKeyApprove
+			if approvalAction.Action == "revoke" {
+				auditKey = AuditKeyReject
+			}
+			if err := s.auditLogger.Log(ctx, auditKey, approvalAction); err != nil {
+				s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
 			}
 
 			return appeal, nil

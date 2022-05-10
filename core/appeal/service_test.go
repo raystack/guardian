@@ -724,7 +724,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockIAMManager.On("ParseConfig", mock.Anything).Return(nil, nil)
 		s.mockIAMManager.On("GetClient", mock.Anything).Return(s.mockIAMClient, nil)
 		s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
-		s.mockApprovalService.On("AdvanceApproval", mock.Anything).Return(nil)
+		s.mockApprovalService.On("AdvanceApproval", mock.Anything, mock.Anything).Return(nil)
 		s.mockRepository.
 			On("BulkUpsert", expectedAppealsInsertionParam).
 			Return(nil).
@@ -1039,7 +1039,7 @@ func (s *ServiceTestSuite) MakeAction() {
 
 	s.Run("should return error if got any from policy service", func() {
 		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
-		s.mockApprovalService.On("AdvanceApproval", expectedAppeal).Return(nil).Once()
+		s.mockApprovalService.On("AdvanceApproval", mock.Anything, expectedAppeal).Return(nil).Once()
 		expectedError := errors.New("policy service error")
 		s.mockRepository.On("Find", mock.Anything).Return([]*domain.Appeal{}, nil).Once()
 		s.mockPolicyService.
@@ -1079,7 +1079,7 @@ func (s *ServiceTestSuite) MakeAction() {
 
 		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
 		expectedError := errors.New("repository error")
-		s.mockApprovalService.On("AdvanceApproval", expectedAppeal).Return(nil).Once()
+		s.mockApprovalService.On("AdvanceApproval", mock.Anything, expectedAppeal).Return(nil).Once()
 		s.mockRepository.On("Find", mock.Anything).Return([]*domain.Appeal{}, nil).Once()
 		s.mockPolicyService.
 			On("GetOne", expectedAppeal.PolicyID, expectedAppeal.PolicyVersion).
@@ -1130,7 +1130,7 @@ func (s *ServiceTestSuite) MakeAction() {
 		expectedTerminatedAppeal.Status = domain.AppealStatusTerminated
 
 		s.mockRepository.On("GetByID", action.AppealID).Return(appealDetails, nil).Once()
-		s.mockApprovalService.On("AdvanceApproval", appealDetails).Return(nil).Once()
+		s.mockApprovalService.On("AdvanceApproval", mock.Anything, appealDetails).Return(nil).Once()
 		s.mockRepository.On("Find", &domain.ListAppealsFilter{
 			AccountID:  appealDetails.AccountID,
 			ResourceID: appealDetails.ResourceID,
@@ -1488,7 +1488,7 @@ func (s *ServiceTestSuite) MakeAction() {
 				s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).
 					Return(tc.expectedAppealDetails, nil).
 					Once()
-				s.mockApprovalService.On("AdvanceApproval", tc.expectedAppealDetails).
+				s.mockApprovalService.On("AdvanceApproval", mock.Anything, tc.expectedAppealDetails).
 					Return(nil).Once()
 				if tc.expectedApprovalAction.Action == "approve" {
 					s.mockRepository.On("Find", mock.Anything).

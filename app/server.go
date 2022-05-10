@@ -123,7 +123,10 @@ func RunServer(c *Config) error {
 		Logger:          logger,
 		AuditLogger:     auditLogger,
 	})
-	approvalService := approval.NewService(approvalRepository, policyService)
+	approvalService := approval.NewService(approval.ServiceOptions{
+		approvalRepository,
+		policyService,
+	})
 	appealService := appeal.NewService(appeal.ServiceOptions{
 		Repository:      appealRepository,
 		ResourceService: resourceService,
