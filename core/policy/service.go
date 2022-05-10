@@ -1,5 +1,7 @@
+//go:generate mockery --name=repository --exported
 //go:generate mockery --name=providerService --exported
 //go:generate mockery --name=resourceService --exported
+//go:generate mockery --name=auditLogger --exported
 
 package policy
 
@@ -15,7 +17,17 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/evaluator"
 	"github.com/odpf/guardian/store"
+	"github.com/odpf/salt/log"
 )
+
+const (
+	AuditKeyPolicyCreate = "policy.create"
+	AuditKeyPolicyUpdate = "policy.update"
+)
+
+type repository interface {
+	store.PolicyRepository
+}
 
 type providerService interface {
 	GetOne(pType, urn string) (*domain.Provider, error)
@@ -26,35 +38,49 @@ type resourceService interface {
 	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
 }
 
+type auditLogger interface {
+	Log(ctx context.Context, action string, data interface{}) error
+}
+
 // Service handling the business logics
 type Service struct {
-	policyRepository store.PolicyRepository
-	resourceService  resourceService
-	providerService  providerService
-	iam              domain.IAMManager
+	repository      store.PolicyRepository
+	resourceService resourceService
+	providerService providerService
+	iam             domain.IAMManager
 
-	validator *validator.Validate
+	validator   *validator.Validate
+	logger      log.Logger
+	auditLogger auditLogger
+}
+
+type ServiceOptions struct {
+	Repository      repository
+	ResourceService resourceService
+	ProviderService providerService
+	IAMManager      domain.IAMManager
+
+	Validator   *validator.Validate
+	Logger      log.Logger
+	AuditLogger auditLogger
 }
 
 // NewService returns service struct
-func NewService(
-	v *validator.Validate,
-	pr store.PolicyRepository,
-	rs resourceService,
-	ps providerService,
-	iam domain.IAMManager,
-) *Service {
+func NewService(opts ServiceOptions) *Service {
 	return &Service{
-		policyRepository: pr,
-		resourceService:  rs,
-		providerService:  ps,
-		iam:              iam,
-		validator:        v,
+		opts.Repository,
+		opts.ResourceService,
+		opts.ProviderService,
+		opts.IAMManager,
+
+		opts.Validator,
+		opts.Logger,
+		opts.AuditLogger,
 	}
 }
 
 // Create record
-func (s *Service) Create(p *domain.Policy) error {
+func (s *Service) Create(ctx context.Context, p *domain.Policy) error {
 	p.Version = 1
 
 	var sensitiveConfig domain.SensitiveConfig
@@ -67,7 +93,7 @@ func (s *Service) Create(p *domain.Policy) error {
 		p.IAM.Config = sensitiveConfig
 	}
 
-	if err := s.validatePolicy(p); err != nil {
+	if err := s.validatePolicy(ctx, p); err != nil {
 		return fmt.Errorf("policy validation: %w", err)
 	}
 
@@ -77,7 +103,7 @@ func (s *Service) Create(p *domain.Policy) error {
 		}
 		p.IAM.Config = sensitiveConfig
 	}
-	if err := s.policyRepository.Create(p); err != nil {
+	if err := s.repository.Create(p); err != nil {
 		return err
 	}
 
@@ -86,12 +112,17 @@ func (s *Service) Create(p *domain.Policy) error {
 			return err
 		}
 	}
+
+	if err := s.auditLogger.Log(ctx, AuditKeyPolicyCreate, p); err != nil {
+		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+	}
+
 	return nil
 }
 
 // Find records
-func (s *Service) Find() ([]*domain.Policy, error) {
-	policies, err := s.policyRepository.Find()
+func (s *Service) Find(ctx context.Context) ([]*domain.Policy, error) {
+	policies, err := s.repository.Find()
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +138,8 @@ func (s *Service) Find() ([]*domain.Policy, error) {
 }
 
 // GetOne record
-func (s *Service) GetOne(id string, version uint) (*domain.Policy, error) {
-	p, err := s.policyRepository.GetOne(id, version)
+func (s *Service) GetOne(ctx context.Context, id string, version uint) (*domain.Policy, error) {
+	p, err := s.repository.GetOne(id, version)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +154,7 @@ func (s *Service) GetOne(id string, version uint) (*domain.Policy, error) {
 }
 
 // Update a record
-func (s *Service) Update(p *domain.Policy) error {
+func (s *Service) Update(ctx context.Context, p *domain.Policy) error {
 	if p.ID == "" {
 		return ErrEmptyIDParam
 	}
@@ -138,11 +169,11 @@ func (s *Service) Update(p *domain.Policy) error {
 		p.IAM.Config = sensitiveConfig
 	}
 
-	if err := s.validatePolicy(p, "Version"); err != nil {
+	if err := s.validatePolicy(ctx, p, "Version"); err != nil {
 		return fmt.Errorf("policy validation: %w", err)
 	}
 
-	latestPolicy, err := s.GetOne(p.ID, p.Version)
+	latestPolicy, err := s.GetOne(ctx, p.ID, p.Version)
 	if err != nil {
 		return err
 	}
@@ -156,8 +187,12 @@ func (s *Service) Update(p *domain.Policy) error {
 		p.IAM.Config = sensitiveConfig
 	}
 
-	if err := s.policyRepository.Create(p); err != nil {
+	if err := s.repository.Create(p); err != nil {
 		return err
+	}
+
+	if err := s.auditLogger.Log(ctx, AuditKeyPolicyUpdate, p); err != nil {
+		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
 	}
 
 	if p.HasIAMConfig() {
@@ -185,7 +220,7 @@ func (s *Service) decryptAndDeserializeIAMConfig(c *domain.IAMConfig) error {
 	return nil
 }
 
-func (s *Service) validatePolicy(p *domain.Policy, excludedFields ...string) error {
+func (s *Service) validatePolicy(ctx context.Context, p *domain.Policy, excludedFields ...string) error {
 	if containsWhitespaces(p.ID) {
 		return ErrIDContainsWhitespaces
 	}
@@ -198,7 +233,7 @@ func (s *Service) validatePolicy(p *domain.Policy, excludedFields ...string) err
 		return err
 	}
 
-	if err := s.validateRequirements(p.Requirements); err != nil {
+	if err := s.validateRequirements(ctx, p.Requirements); err != nil {
 		return fmt.Errorf("invalid requirements: %w", err)
 	}
 
@@ -222,10 +257,10 @@ func (s *Service) validatePolicy(p *domain.Policy, excludedFields ...string) err
 	return nil
 }
 
-func (s *Service) validateRequirements(requirements []*domain.Requirement) error {
+func (s *Service) validateRequirements(ctx context.Context, requirements []*domain.Requirement) error {
 	for i, r := range requirements {
 		for j, aa := range r.Appeals {
-			resource, err := s.resourceService.Get(context.TODO(), aa.Resource)
+			resource, err := s.resourceService.Get(ctx, aa.Resource)
 			if err != nil {
 				return fmt.Errorf("requirement[%v].appeals[%v].resource: %w", i, j, err)
 			}

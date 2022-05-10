@@ -188,7 +188,7 @@ func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1beta1.ListRol
 }
 
 func (s *GRPCServer) ListPolicies(ctx context.Context, req *guardianv1beta1.ListPoliciesRequest) (*guardianv1beta1.ListPoliciesResponse, error) {
-	policies, err := s.policyService.Find()
+	policies, err := s.policyService.Find(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get policy list: %v", err)
 	}
@@ -208,7 +208,7 @@ func (s *GRPCServer) ListPolicies(ctx context.Context, req *guardianv1beta1.List
 }
 
 func (s *GRPCServer) GetPolicy(ctx context.Context, req *guardianv1beta1.GetPolicyRequest) (*guardianv1beta1.GetPolicyResponse, error) {
-	p, err := s.policyService.GetOne(req.GetId(), uint(req.GetVersion()))
+	p, err := s.policyService.GetOne(ctx, req.GetId(), uint(req.GetVersion()))
 	if err != nil {
 		switch err {
 		case policy.ErrPolicyNotFound:
@@ -234,7 +234,12 @@ func (s *GRPCServer) CreatePolicy(ctx context.Context, req *guardianv1beta1.Crea
 		return nil, status.Errorf(codes.Internal, "cannot deserialize policy: %v", err)
 	}
 
-	if err := s.policyService.Create(policy); err != nil {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ctx = audit.WithActor(ctx, user)
+	if err := s.policyService.Create(ctx, policy); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create policy: %v", err)
 	}
 
@@ -254,8 +259,13 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *guardianv1beta1.Upda
 		return nil, status.Errorf(codes.Internal, "cannot deserialize policy: %v", err)
 	}
 
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ctx = audit.WithActor(ctx, user)
 	p.ID = req.GetId()
-	if err := s.policyService.Update(p); err != nil {
+	if err := s.policyService.Update(ctx, p); err != nil {
 		if errors.Is(err, policy.ErrPolicyNotFound) {
 			return nil, status.Error(codes.NotFound, "policy not found")
 		} else if errors.Is(err, policy.ErrEmptyIDParam) {

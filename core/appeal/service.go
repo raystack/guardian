@@ -24,8 +24,8 @@ import (
 var TimeNow = time.Now
 
 type policyService interface {
-	Find() ([]*domain.Policy, error)
-	GetOne(string, uint) (*domain.Policy, error)
+	Find(context.Context) ([]*domain.Policy, error)
+	GetOne(context.Context, string, uint) (*domain.Policy, error)
 }
 
 type approvalService interface {
@@ -464,7 +464,7 @@ func (s *Service) getProvidersMap() (map[string]map[string]*domain.Provider, err
 }
 
 func (s *Service) getPoliciesMap() (map[string]map[uint]*domain.Policy, error) {
-	policies, err := s.policyService.Find()
+	policies, err := s.policyService.Find(context.TODO())
 	if err != nil {
 		return nil, err
 	}
@@ -694,7 +694,7 @@ func (s *Service) handleAppealRequirements(a *domain.Appeal, p *domain.Policy) e
 func (s *Service) createAccess(a *domain.Appeal) error {
 	policy := a.Policy
 	if policy == nil {
-		p, err := s.policyService.GetOne(a.PolicyID, a.PolicyVersion)
+		p, err := s.policyService.GetOne(context.TODO(), a.PolicyID, a.PolicyVersion)
 		if err != nil {
 			return fmt.Errorf("retrieving policy: %w", err)
 		}

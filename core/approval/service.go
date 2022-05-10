@@ -1,6 +1,9 @@
+//go:generate mockery --name=policyService --exported
+
 package approval
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -11,7 +14,7 @@ import (
 )
 
 type policyService interface {
-	GetOne(string, uint) (*domain.Policy, error)
+	GetOne(context.Context, string, uint) (*domain.Policy, error)
 }
 
 type Service struct {
@@ -37,7 +40,7 @@ func (s *Service) BulkInsert(approvals []*domain.Approval) error {
 func (s *Service) AdvanceApproval(appeal *domain.Appeal) error {
 	policy := appeal.Policy
 	if policy == nil {
-		p, err := s.policyService.GetOne(appeal.PolicyID, appeal.PolicyVersion)
+		p, err := s.policyService.GetOne(context.TODO(), appeal.PolicyID, appeal.PolicyVersion)
 		if err != nil {
 			return err
 		}

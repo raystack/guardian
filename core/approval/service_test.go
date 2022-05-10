@@ -45,7 +45,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 			PolicyVersion: 1,
 		}
 		expectedError := errors.New("policy error")
-		s.mockPolicyService.On("GetOne", mock.Anything, mock.Anything).Return(nil, expectedError).Once()
+		s.mockPolicyService.On("GetOne", mock.Anything, mock.Anything, mock.Anything).Return(nil, expectedError).Once()
 		actualError := s.service.AdvanceApproval(&testappeal)
 		s.EqualError(actualError, expectedError.Error())
 	})

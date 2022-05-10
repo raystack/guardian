@@ -1,6 +1,7 @@
 package policy_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -19,28 +20,31 @@ import (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockPolicyRepository *mocks.PolicyRepository
+	mockPolicyRepository *policymocks.Repository
 	mockResourceService  *policymocks.ResourceService
 	mockProviderService  *policymocks.ProviderService
+	mockAuditLogger      *policymocks.AuditLogger
 	service              *policy.Service
 }
 
 func (s *ServiceTestSuite) SetupTest() {
-	s.mockPolicyRepository = new(mocks.PolicyRepository)
+	s.mockPolicyRepository = new(policymocks.Repository)
 	s.mockResourceService = new(policymocks.ResourceService)
 	s.mockProviderService = new(policymocks.ProviderService)
+	s.mockAuditLogger = new(policymocks.AuditLogger)
 
 	mockCrypto := new(mocks.Crypto)
 	v := validator.New()
 	iamManager := identities.NewManager(mockCrypto, v)
 
-	s.service = policy.NewService(
-		validator.New(),
-		s.mockPolicyRepository,
-		s.mockResourceService,
-		s.mockProviderService,
-		iamManager,
-	)
+	s.service = policy.NewService(policy.ServiceOptions{
+		Repository:      s.mockPolicyRepository,
+		ResourceService: s.mockResourceService,
+		ProviderService: s.mockProviderService,
+		IAMManager:      iamManager,
+		AuditLogger:     s.mockAuditLogger,
+		Validator:       validator.New(),
+	})
 }
 
 func (s *ServiceTestSuite) TestCreate() {
@@ -223,7 +227,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		for _, tc := range testCases {
 			s.Run(tc.name, func() {
-				actualError := s.service.Create(tc.policy)
+				actualError := s.service.Create(context.Background(), tc.policy)
 
 				s.Error(actualError)
 				if tc.expectedError != nil {
@@ -251,7 +255,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			}
 			expectedError := identities.ErrUnknownProviderType
 
-			actualError := s.service.Create(policy)
+			actualError := s.service.Create(context.Background(), policy)
 
 			s.ErrorIs(actualError, expectedError)
 		})
@@ -275,7 +279,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		expectedError := errors.New("error from repository")
 		s.mockPolicyRepository.On("Create", mock.Anything).Return(expectedError).Once()
 
-		actualError := s.service.Create(validPolicy)
+		actualError := s.service.Create(context.Background(), validPolicy)
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -288,21 +292,25 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		expectedVersion := uint(1)
 		s.mockPolicyRepository.On("Create", p).Return(nil).Once()
+		s.mockAuditLogger.On("Log", mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
 
-		actualError := s.service.Create(p)
+		actualError := s.service.Create(context.Background(), p)
 
 		s.Nil(actualError)
 		s.Equal(expectedVersion, p.Version)
 		s.mockPolicyRepository.AssertExpectations(s.T())
+		s.mockAuditLogger.AssertExpectations(s.T())
 	})
 
 	s.Run("should pass the model from the param", func() {
 		s.mockPolicyRepository.On("Create", validPolicy).Return(nil).Once()
+		s.mockAuditLogger.On("Log", mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
 
-		actualError := s.service.Create(validPolicy)
+		actualError := s.service.Create(context.Background(), validPolicy)
 
 		s.Nil(actualError)
 		s.mockPolicyRepository.AssertExpectations(s.T())
+		s.mockAuditLogger.AssertExpectations(s.T())
 	})
 }
 
@@ -421,7 +429,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 					}
 				}
 
-				actualError := s.service.Create(policy)
+				actualError := s.service.Create(context.Background(), policy)
 
 				s.Error(actualError)
 			})
@@ -496,7 +504,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 
 		for _, tc := range testCases {
 			s.Run(tc.name, func() {
-				policy := &domain.Policy{
+				p := &domain.Policy{
 					ID:      "policy-test",
 					Version: 1,
 					Steps: []*domain.Step{
@@ -534,9 +542,10 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 							Once()
 					}
 				}
-				s.mockPolicyRepository.On("Create", policy).Return(nil).Once()
+				s.mockPolicyRepository.On("Create", p).Return(nil).Once()
+				s.mockAuditLogger.On("Log", mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
 
-				actualError := s.service.Create(policy)
+				actualError := s.service.Create(context.Background(), p)
 				s.Nil(actualError)
 			})
 		}
@@ -548,7 +557,7 @@ func (s *ServiceTestSuite) TestFind() {
 		expectedError := errors.New("error from repository")
 		s.mockPolicyRepository.On("Find").Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Find()
+		actualResult, actualError := s.service.Find(context.Background())
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -558,7 +567,7 @@ func (s *ServiceTestSuite) TestFind() {
 		expectedResult := []*domain.Policy{}
 		s.mockPolicyRepository.On("Find").Return(expectedResult, nil).Once()
 
-		actualResult, actualError := s.service.Find()
+		actualResult, actualError := s.service.Find(context.Background())
 
 		s.Equal(expectedResult, actualResult)
 		s.Nil(actualError)
@@ -571,7 +580,7 @@ func (s *ServiceTestSuite) TestGetOne() {
 		expectedError := errors.New("error from repository")
 		s.mockPolicyRepository.On("GetOne", mock.Anything, mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.GetOne("", 0)
+		actualResult, actualError := s.service.GetOne(context.Background(), "", 0)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -581,7 +590,7 @@ func (s *ServiceTestSuite) TestGetOne() {
 		expectedResult := &domain.Policy{}
 		s.mockPolicyRepository.On("GetOne", mock.Anything, mock.Anything).Return(expectedResult, nil).Once()
 
-		actualResult, actualError := s.service.GetOne("", 0)
+		actualResult, actualError := s.service.GetOne(context.Background(), "", 0)
 
 		s.Equal(expectedResult, actualResult)
 		s.Nil(actualError)
@@ -594,7 +603,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 		p := &domain.Policy{}
 		expectedError := policy.ErrEmptyIDParam
 
-		actualError := s.service.Update(p)
+		actualError := s.service.Update(context.Background(), p)
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -621,7 +630,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 		s.mockPolicyRepository.On("GetOne", p.ID, p.Version).Return(expectedLatestPolicy, nil).Once()
 		s.mockPolicyRepository.On("Create", p).Return(nil)
 
-		s.service.Update(p)
+		s.service.Update(context.Background(), p)
 
 		s.mockPolicyRepository.AssertExpectations(s.T())
 		s.Equal(expectedNewVersion, p.Version)

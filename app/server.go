@@ -114,13 +114,15 @@ func RunServer(c *Config) error {
 		resourceService,
 		providerClients,
 	)
-	policyService := policy.NewService(
-		v,
-		policyRepository,
-		resourceService,
-		providerService,
-		iamManager,
-	)
+	policyService := policy.NewService(policy.ServiceOptions{
+		Repository:      policyRepository,
+		ResourceService: resourceService,
+		ProviderService: providerService,
+		IAMManager:      iamManager,
+		Validator:       v,
+		Logger:          logger,
+		AuditLogger:     auditLogger,
+	})
 	approvalService := approval.NewService(approvalRepository, policyService)
 	appealService := appeal.NewService(
 		appealRepository,

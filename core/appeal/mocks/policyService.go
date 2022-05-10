@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	domain "github.com/odpf/guardian/domain"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -12,13 +14,13 @@ type PolicyService struct {
 	mock.Mock
 }
 
-// Find provides a mock function with given fields:
-func (_m *PolicyService) Find() ([]*domain.Policy, error) {
-	ret := _m.Called()
+// Find provides a mock function with given fields: _a0
+func (_m *PolicyService) Find(_a0 context.Context) ([]*domain.Policy, error) {
+	ret := _m.Called(_a0)
 
 	var r0 []*domain.Policy
-	if rf, ok := ret.Get(0).(func() []*domain.Policy); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) []*domain.Policy); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*domain.Policy)
@@ -26,8 +28,8 @@ func (_m *PolicyService) Find() ([]*domain.Policy, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -35,13 +37,13 @@ func (_m *PolicyService) Find() ([]*domain.Policy, error) {
 	return r0, r1
 }
 
-// GetOne provides a mock function with given fields: _a0, _a1
-func (_m *PolicyService) GetOne(_a0 string, _a1 uint) (*domain.Policy, error) {
-	ret := _m.Called(_a0, _a1)
+// GetOne provides a mock function with given fields: _a0, _a1, _a2
+func (_m *PolicyService) GetOne(_a0 context.Context, _a1 string, _a2 uint) (*domain.Policy, error) {
+	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 *domain.Policy
-	if rf, ok := ret.Get(0).(func(string, uint) *domain.Policy); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, string, uint) *domain.Policy); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Policy)
@@ -49,8 +51,8 @@ func (_m *PolicyService) GetOne(_a0 string, _a1 uint) (*domain.Policy, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, uint) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, string, uint) error); ok {
+		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
 	}
