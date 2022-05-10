@@ -24,7 +24,7 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockRepository = new(approvalmocks.Repository)
 	s.mockPolicyService = new(approvalmocks.PolicyService)
 
-	s.service = approval.NewService(approval.ServiceOptions{
+	s.service = approval.NewService(approval.ServiceDeps{
 		s.mockRepository,
 		s.mockPolicyService,
 	})

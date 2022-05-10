@@ -22,7 +22,7 @@ type policyService interface {
 	GetOne(context.Context, string, uint) (*domain.Policy, error)
 }
 
-type ServiceOptions struct {
+type ServiceDeps struct {
 	Repository    repository
 	PolicyService policyService
 }
@@ -31,10 +31,10 @@ type Service struct {
 	policyService policyService
 }
 
-func NewService(opts ServiceOptions) *Service {
+func NewService(deps ServiceDeps) *Service {
 	return &Service{
-		opts.Repository,
-		opts.PolicyService,
+		deps.Repository,
+		deps.PolicyService,
 	}
 }
 

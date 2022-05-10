@@ -54,7 +54,7 @@ type Service struct {
 	auditLogger auditLogger
 }
 
-type ServiceOptions struct {
+type ServiceDeps struct {
 	Repository      repository
 	ResourceService resourceService
 	ProviderService providerService
@@ -66,16 +66,16 @@ type ServiceOptions struct {
 }
 
 // NewService returns service struct
-func NewService(opts ServiceOptions) *Service {
+func NewService(deps ServiceDeps) *Service {
 	return &Service{
-		opts.Repository,
-		opts.ResourceService,
-		opts.ProviderService,
-		opts.IAMManager,
+		deps.Repository,
+		deps.ResourceService,
+		deps.ProviderService,
+		deps.IAMManager,
 
-		opts.Validator,
-		opts.Logger,
-		opts.AuditLogger,
+		deps.Validator,
+		deps.Logger,
+		deps.AuditLogger,
 	}
 }
 

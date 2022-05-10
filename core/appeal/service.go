@@ -73,7 +73,7 @@ type auditLogger interface {
 	Log(ctx context.Context, action string, data interface{}) error
 }
 
-type ServiceOptions struct {
+type ServiceDeps struct {
 	Repository      repository
 	ApprovalService approvalService
 	ResourceService resourceService
@@ -105,19 +105,19 @@ type Service struct {
 }
 
 // NewService returns service struct
-func NewService(opts ServiceOptions) *Service {
+func NewService(deps ServiceDeps) *Service {
 	return &Service{
-		opts.Repository,
-		opts.ApprovalService,
-		opts.ResourceService,
-		opts.ProviderService,
-		opts.PolicyService,
-		opts.IAMManager,
+		deps.Repository,
+		deps.ApprovalService,
+		deps.ResourceService,
+		deps.ProviderService,
+		deps.PolicyService,
+		deps.IAMManager,
 
-		opts.Notifier,
-		opts.Validator,
-		opts.Logger,
-		opts.AuditLogger,
+		deps.Notifier,
+		deps.Validator,
+		deps.Logger,
+		deps.AuditLogger,
 		time.Now,
 	}
 }

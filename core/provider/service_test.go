@@ -36,7 +36,7 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockAuditLogger = new(providermocks.AuditLogger)
 	s.mockProvider.On("GetType").Return(mockProviderType).Once()
 
-	s.service = provider.NewService(provider.ServiceOptions{
+	s.service = provider.NewService(provider.ServiceDeps{
 		Repository:      s.mockProviderRepository,
 		ResourceService: s.mockResourceService,
 		Clients:         []provider.Client{s.mockProvider},

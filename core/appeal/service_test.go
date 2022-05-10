@@ -45,7 +45,7 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockAuditLogger = new(appealmocks.AuditLogger)
 	s.now = time.Now()
 
-	service := appeal.NewService(appeal.ServiceOptions{
+	service := appeal.NewService(appeal.ServiceDeps{
 		s.mockRepository,
 		s.mockApprovalService,
 		s.mockResourceService,

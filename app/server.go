@@ -104,12 +104,12 @@ func RunServer(c *Config) error {
 		}),
 	)
 
-	resourceService := resource.NewService(resource.ServiceOptions{
+	resourceService := resource.NewService(resource.ServiceDeps{
 		Repository:  resourceRepository,
 		Logger:      logger,
 		AuditLogger: auditLogger,
 	})
-	providerService := provider.NewService(provider.ServiceOptions{
+	providerService := provider.NewService(provider.ServiceDeps{
 		Repository:      providerRepository,
 		ResourceService: resourceService,
 		Clients:         providerClients,
@@ -117,7 +117,7 @@ func RunServer(c *Config) error {
 		Logger:          logger,
 		AuditLogger:     auditLogger,
 	})
-	policyService := policy.NewService(policy.ServiceOptions{
+	policyService := policy.NewService(policy.ServiceDeps{
 		Repository:      policyRepository,
 		ResourceService: resourceService,
 		ProviderService: providerService,
@@ -126,11 +126,11 @@ func RunServer(c *Config) error {
 		Logger:          logger,
 		AuditLogger:     auditLogger,
 	})
-	approvalService := approval.NewService(approval.ServiceOptions{
+	approvalService := approval.NewService(approval.ServiceDeps{
 		Repository:    approvalRepository,
 		PolicyService: policyService,
 	})
-	appealService := appeal.NewService(appeal.ServiceOptions{
+	appealService := appeal.NewService(appeal.ServiceDeps{
 		Repository:      appealRepository,
 		ResourceService: resourceService,
 		ApprovalService: approvalService,

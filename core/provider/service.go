@@ -53,7 +53,7 @@ type Service struct {
 	auditLogger auditLogger
 }
 
-type ServiceOptions struct {
+type ServiceDeps struct {
 	Repository      repository
 	ResourceService resourceService
 	Clients         []Client
@@ -64,20 +64,20 @@ type ServiceOptions struct {
 }
 
 // NewService returns service struct
-func NewService(opts ServiceOptions) *Service {
+func NewService(deps ServiceDeps) *Service {
 	mapProviderClients := make(map[string]Client)
-	for _, c := range opts.Clients {
+	for _, c := range deps.Clients {
 		mapProviderClients[c.GetType()] = c
 	}
 
 	return &Service{
-		opts.Repository,
-		opts.ResourceService,
+		deps.Repository,
+		deps.ResourceService,
 		mapProviderClients,
 
-		opts.Validator,
-		opts.Logger,
-		opts.AuditLogger,
+		deps.Validator,
+		deps.Logger,
+		deps.AuditLogger,
 	}
 }
 

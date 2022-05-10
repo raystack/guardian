@@ -37,7 +37,7 @@ func (s *ServiceTestSuite) SetupTest() {
 	v := validator.New()
 	iamManager := identities.NewManager(mockCrypto, v)
 
-	s.service = policy.NewService(policy.ServiceOptions{
+	s.service = policy.NewService(policy.ServiceDeps{
 		Repository:      s.mockPolicyRepository,
 		ResourceService: s.mockResourceService,
 		ProviderService: s.mockProviderService,
