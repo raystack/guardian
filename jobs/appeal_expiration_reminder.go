@@ -1,13 +1,14 @@
 package jobs
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/odpf/guardian/domain"
 )
 
-func (h *handler) AppealExpirationReminder() error {
+func (h *handler) AppealExpirationReminder(_ context.Context) error {
 	h.logger.Info("Appeal Expiration Reminder")
 
 	daysBeforeExpired := []int{7, 3, 1}

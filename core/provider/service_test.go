@@ -1,6 +1,7 @@
 package provider_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -8,8 +9,6 @@ import (
 	"github.com/odpf/guardian/core/provider"
 	providermocks "github.com/odpf/guardian/core/provider/mocks"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/plugins/providers"
 	"github.com/odpf/salt/log"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -21,21 +20,30 @@ const (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockProviderRepository *mocks.ProviderRepository
+	mockProviderRepository *providermocks.Repository
 	mockResourceService    *providermocks.ResourceService
-	mockProvider           *mocks.ProviderClient
+	mockProvider           *providermocks.Client
+	mockAuditLogger        *providermocks.AuditLogger
 	service                *provider.Service
 }
 
 func (s *ServiceTestSuite) SetupTest() {
 	logger := log.NewLogrus(log.LogrusWithLevel("info"))
 	validator := validator.New()
-	s.mockProviderRepository = new(mocks.ProviderRepository)
+	s.mockProviderRepository = new(providermocks.Repository)
 	s.mockResourceService = new(providermocks.ResourceService)
-	s.mockProvider = new(mocks.ProviderClient)
+	s.mockProvider = new(providermocks.Client)
+	s.mockAuditLogger = new(providermocks.AuditLogger)
 	s.mockProvider.On("GetType").Return(mockProviderType).Once()
 
-	s.service = provider.NewService(logger, validator, s.mockProviderRepository, s.mockResourceService, []providers.Client{s.mockProvider})
+	s.service = provider.NewService(provider.ServiceOptions{
+		Repository:      s.mockProviderRepository,
+		ResourceService: s.mockResourceService,
+		Clients:         []provider.Client{s.mockProvider},
+		Validator:       validator,
+		Logger:          logger,
+		AuditLogger:     s.mockAuditLogger,
+	})
 }
 
 func (s *ServiceTestSuite) TestCreate() {
@@ -48,7 +56,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	s.Run("should return error if unable to retrieve provider", func() {
 		expectedError := provider.ErrInvalidProviderType
 
-		actualError := s.service.Create(&domain.Provider{
+		actualError := s.service.Create(context.Background(), &domain.Provider{
 			Type: "invalid-provider-type",
 		})
 
@@ -65,7 +73,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				},
 			}
 
-			actualError := s.service.Create(p)
+			actualError := s.service.Create(context.Background(), p)
 
 			s.Error(actualError)
 		})
@@ -81,7 +89,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			expectedAccountTypes := []string{"non-user-only"}
 			s.mockProvider.On("GetAccountTypes").Return(expectedAccountTypes).Once()
 
-			actualError := s.service.Create(p)
+			actualError := s.service.Create(context.Background(), p)
 
 			s.Error(actualError)
 		})
@@ -91,7 +99,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 			s.mockProvider.On("CreateConfig", mock.Anything).Return(expectedError).Once()
 
-			actualError := s.service.Create(p)
+			actualError := s.service.Create(context.Background(), p)
 
 			s.EqualError(actualError, expectedError.Error())
 		})
@@ -103,7 +111,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 		s.mockProviderRepository.On("Create", mock.Anything).Return(expectedError).Once()
 
-		actualError := s.service.Create(p)
+		actualError := s.service.Create(context.Background(), p)
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -112,6 +120,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 		s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 		s.mockProviderRepository.On("Create", p).Return(nil).Once()
+		s.mockAuditLogger.On("Log", mock.Anything, provider.AuditKeyCreate, mock.Anything).Return(nil).Once()
 
 		expectedResources := []*domain.Resource{}
 		s.mockResourceService.On("Find", mock.Anything, map[string]interface{}{
@@ -121,10 +130,11 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockProvider.On("GetResources", p.Config).Return(expectedResources, nil).Once()
 		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil).Once()
 
-		actualError := s.service.Create(p)
+		actualError := s.service.Create(context.Background(), p)
 
 		s.Nil(actualError)
 		s.mockProviderRepository.AssertExpectations(s.T())
+		s.mockAuditLogger.AssertExpectations(s.T())
 	})
 }
 
@@ -133,7 +143,7 @@ func (s *ServiceTestSuite) TestFind() {
 		expectedError := errors.New("error from repository")
 		s.mockProviderRepository.On("Find").Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Find()
+		actualResult, actualError := s.service.Find(context.Background())
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -143,7 +153,7 @@ func (s *ServiceTestSuite) TestFind() {
 		expectedResult := []*domain.Provider{}
 		s.mockProviderRepository.On("Find").Return(expectedResult, nil).Once()
 
-		actualResult, actualError := s.service.Find()
+		actualResult, actualError := s.service.Find(context.Background())
 
 		s.Equal(expectedResult, actualResult)
 		s.Nil(actualError)
@@ -167,7 +177,7 @@ func (s *ServiceTestSuite) TestUpdateValidation() {
 			s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
 				Return(&domain.Provider{}, nil)
 			s.mockProvider.On("GetAccountTypes").Return([]string{"non-user-only"}).Once()
-			actualError := s.service.Update(p)
+			actualError := s.service.Update(context.Background(), p)
 
 			s.Error(actualError)
 		})
@@ -186,7 +196,7 @@ func (s *ServiceTestSuite) TestUpdateValidation() {
 				Return(&domain.Provider{}, nil).
 				Once()
 			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
-			actualError := s.service.Update(p)
+			actualError := s.service.Update(context.Background(), p)
 
 			s.Error(actualError)
 		})
@@ -219,7 +229,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 			expectedError := tc.expectedError
 			s.mockProviderRepository.On("GetByID", expectedProvider.ID).Return(tc.expectedExistingProvider, tc.expectedRepositoryError).Once()
 
-			actualError := s.service.Update(expectedProvider)
+			actualError := s.service.Update(context.Background(), expectedProvider)
 
 			s.EqualError(actualError, expectedError.Error())
 		}
@@ -276,8 +286,9 @@ func (s *ServiceTestSuite) TestUpdate() {
 			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 			s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 			s.mockProviderRepository.On("Update", tc.expectedNewProvider).Return(nil)
+			s.mockAuditLogger.On("Log", mock.Anything, provider.AuditKeyUpdate, mock.Anything).Return(nil).Once()
 
-			actualError := s.service.Update(tc.updatePayload)
+			actualError := s.service.Update(context.Background(), tc.updatePayload)
 
 			s.Nil(actualError)
 		}
@@ -289,7 +300,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 		expectedError := errors.New("any error")
 		s.mockProviderRepository.On("Find").Return(nil, expectedError).Once()
 
-		actualError := s.service.FetchResources()
+		actualError := s.service.FetchResources(context.Background())
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -310,7 +321,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 		expectedError := errors.New("any error")
 		s.mockResourceService.On("BulkUpsert", mock.Anything, mock.Anything).Return(expectedError).Once()
 		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
-		actualError := s.service.FetchResources()
+		actualError := s.service.FetchResources(context.Background())
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -330,7 +341,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 		}
 		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil).Once()
 		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
-		actualError := s.service.FetchResources()
+		actualError := s.service.FetchResources(context.Background())
 
 		s.Nil(actualError)
 	})
@@ -352,7 +363,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 			},
 		}
 		for _, tc := range testCases {
-			actualError := s.service.GrantAccess(tc.appealParam)
+			actualError := s.service.GrantAccess(context.Background(), tc.appealParam)
 			s.EqualError(actualError, tc.expectedError.Error())
 		}
 	})
@@ -364,7 +375,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 			},
 		}
 		expectedError := provider.ErrInvalidProviderType
-		actualError := s.service.GrantAccess(appeal)
+		actualError := s.service.GrantAccess(context.Background(), appeal)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
@@ -381,7 +392,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 			Return(nil, expectedError).
 			Once()
 
-		actualError := s.service.GrantAccess(validAppeal)
+		actualError := s.service.GrantAccess(context.Background(), validAppeal)
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -392,7 +403,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 			Once()
 		expectedError := provider.ErrRecordNotFound
 
-		actualError := s.service.GrantAccess(validAppeal)
+		actualError := s.service.GrantAccess(context.Background(), validAppeal)
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -410,7 +421,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 			Return(expectedError).
 			Once()
 
-		actualError := s.service.GrantAccess(validAppeal)
+		actualError := s.service.GrantAccess(context.Background(), validAppeal)
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -428,7 +439,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 			Return(nil).
 			Once()
 
-		actualError := s.service.GrantAccess(validAppeal)
+		actualError := s.service.GrantAccess(context.Background(), validAppeal)
 
 		s.Nil(actualError)
 	})
@@ -450,7 +461,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 			},
 		}
 		for _, tc := range testCases {
-			actualError := s.service.RevokeAccess(tc.appealParam)
+			actualError := s.service.RevokeAccess(context.Background(), tc.appealParam)
 			s.EqualError(actualError, tc.expectedError.Error())
 		}
 	})
@@ -462,7 +473,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 			},
 		}
 		expectedError := provider.ErrInvalidProviderType
-		actualError := s.service.RevokeAccess(appeal)
+		actualError := s.service.RevokeAccess(context.Background(), appeal)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
@@ -479,7 +490,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 			Return(nil, expectedError).
 			Once()
 
-		actualError := s.service.RevokeAccess(validAppeal)
+		actualError := s.service.RevokeAccess(context.Background(), validAppeal)
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -490,7 +501,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 			Once()
 		expectedError := provider.ErrRecordNotFound
 
-		actualError := s.service.RevokeAccess(validAppeal)
+		actualError := s.service.RevokeAccess(context.Background(), validAppeal)
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -508,7 +519,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 			Return(expectedError).
 			Once()
 
-		actualError := s.service.RevokeAccess(validAppeal)
+		actualError := s.service.RevokeAccess(context.Background(), validAppeal)
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -526,7 +537,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 			Return(nil).
 			Once()
 
-		actualError := s.service.RevokeAccess(validAppeal)
+		actualError := s.service.RevokeAccess(context.Background(), validAppeal)
 
 		s.Nil(actualError)
 	})

@@ -30,8 +30,8 @@ type repository interface {
 }
 
 type providerService interface {
-	GetOne(pType, urn string) (*domain.Provider, error)
-	ValidateAppeal(*domain.Appeal, *domain.Provider) error
+	GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error)
+	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
 }
 
 type resourceService interface {
@@ -264,7 +264,7 @@ func (s *Service) validateRequirements(ctx context.Context, requirements []*doma
 			if err != nil {
 				return fmt.Errorf("requirement[%v].appeals[%v].resource: %w", i, j, err)
 			}
-			provider, err := s.providerService.GetOne(resource.ProviderType, resource.ProviderURN)
+			provider, err := s.providerService.GetOne(ctx, resource.ProviderType, resource.ProviderURN)
 			if err != nil {
 				return fmt.Errorf("requirement[%v].appeals[%v].resource: retrieving provider: %w", i, j, err)
 			}
@@ -276,7 +276,7 @@ func (s *Service) validateRequirements(ctx context.Context, requirements []*doma
 				Options:    aa.Options,
 			}
 			appeal.SetDefaults()
-			if err := s.providerService.ValidateAppeal(appeal, provider); err != nil {
+			if err := s.providerService.ValidateAppeal(ctx, appeal, provider); err != nil {
 				return fmt.Errorf("requirement[%v].appeals[%v]: %w", i, j, err)
 			}
 		}

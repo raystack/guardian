@@ -33,10 +33,10 @@ type approvalService interface {
 }
 
 type providerService interface {
-	Find() ([]*domain.Provider, error)
-	GrantAccess(*domain.Appeal) error
-	RevokeAccess(*domain.Appeal) error
-	ValidateAppeal(*domain.Appeal, *domain.Provider) error
+	Find(context.Context) ([]*domain.Provider, error)
+	GrantAccess(context.Context, *domain.Appeal) error
+	RevokeAccess(context.Context, *domain.Appeal) error
+	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
 }
 
 type resourceService interface {
@@ -152,7 +152,7 @@ func (s *Service) Create(appeals []*domain.Appeal) error {
 			return ErrAppealNotEligibleForExtension
 		}
 
-		if err := s.providerService.ValidateAppeal(appeal, provider); err != nil {
+		if err := s.providerService.ValidateAppeal(context.TODO(), appeal, provider); err != nil {
 			return fmt.Errorf("validating appeal based on provider: %w", err)
 		}
 
@@ -298,7 +298,7 @@ func (s *Service) MakeAction(approvalAction domain.ApprovalAction) (*domain.Appe
 				}
 			}
 			if err := s.repo.Update(appeal); err != nil {
-				if err := s.providerService.RevokeAccess(appeal); err != nil {
+				if err := s.providerService.RevokeAccess(context.TODO(), appeal); err != nil {
 					return nil, err
 				}
 				return nil, err
@@ -380,7 +380,7 @@ func (s *Service) Revoke(id string, actor, reason string) (*domain.Appeal, error
 		return nil, err
 	}
 
-	if err := s.providerService.RevokeAccess(appeal); err != nil {
+	if err := s.providerService.RevokeAccess(context.TODO(), appeal); err != nil {
 		if err := s.repo.Update(appeal); err != nil {
 			return nil, err
 		}
@@ -443,7 +443,7 @@ func (s *Service) getResourcesMap(ids []string) (map[string]*domain.Resource, er
 }
 
 func (s *Service) getProvidersMap() (map[string]map[string]*domain.Provider, error) {
-	providers, err := s.providerService.Find()
+	providers, err := s.providerService.Find(context.TODO())
 	if err != nil {
 		return nil, err
 	}
@@ -705,7 +705,7 @@ func (s *Service) createAccess(a *domain.Appeal) error {
 		return fmt.Errorf("handling appeal requirements: %w", err)
 	}
 
-	if err := s.providerService.GrantAccess(a); err != nil {
+	if err := s.providerService.GrantAccess(context.TODO(), a); err != nil {
 		return fmt.Errorf("granting access: %w", err)
 	}
 

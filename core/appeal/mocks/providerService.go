@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	domain "github.com/odpf/guardian/domain"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -12,13 +14,13 @@ type ProviderService struct {
 	mock.Mock
 }
 
-// Find provides a mock function with given fields:
-func (_m *ProviderService) Find() ([]*domain.Provider, error) {
-	ret := _m.Called()
+// Find provides a mock function with given fields: _a0
+func (_m *ProviderService) Find(_a0 context.Context) ([]*domain.Provider, error) {
+	ret := _m.Called(_a0)
 
 	var r0 []*domain.Provider
-	if rf, ok := ret.Get(0).(func() []*domain.Provider); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) []*domain.Provider); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*domain.Provider)
@@ -26,8 +28,8 @@ func (_m *ProviderService) Find() ([]*domain.Provider, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -35,41 +37,41 @@ func (_m *ProviderService) Find() ([]*domain.Provider, error) {
 	return r0, r1
 }
 
-// GrantAccess provides a mock function with given fields: _a0
-func (_m *ProviderService) GrantAccess(_a0 *domain.Appeal) error {
-	ret := _m.Called(_a0)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*domain.Appeal) error); ok {
-		r0 = rf(_a0)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// RevokeAccess provides a mock function with given fields: _a0
-func (_m *ProviderService) RevokeAccess(_a0 *domain.Appeal) error {
-	ret := _m.Called(_a0)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*domain.Appeal) error); ok {
-		r0 = rf(_a0)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// ValidateAppeal provides a mock function with given fields: _a0, _a1
-func (_m *ProviderService) ValidateAppeal(_a0 *domain.Appeal, _a1 *domain.Provider) error {
+// GrantAccess provides a mock function with given fields: _a0, _a1
+func (_m *ProviderService) GrantAccess(_a0 context.Context, _a1 *domain.Appeal) error {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*domain.Appeal, *domain.Provider) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.Appeal) error); ok {
 		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RevokeAccess provides a mock function with given fields: _a0, _a1
+func (_m *ProviderService) RevokeAccess(_a0 context.Context, _a1 *domain.Appeal) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.Appeal) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ValidateAppeal provides a mock function with given fields: _a0, _a1, _a2
+func (_m *ProviderService) ValidateAppeal(_a0 context.Context, _a1 *domain.Appeal, _a2 *domain.Provider) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.Appeal, *domain.Provider) error); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}

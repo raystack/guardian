@@ -26,7 +26,6 @@ import (
 	audit_repos "github.com/odpf/guardian/pkg/audit/repositories"
 	"github.com/odpf/guardian/plugins/identities"
 	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/guardian/plugins/providers"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
 	"github.com/odpf/guardian/plugins/providers/gcloudiam"
 	"github.com/odpf/guardian/plugins/providers/grafana"
@@ -70,7 +69,7 @@ func RunServer(c *Config) error {
 	appealRepository := postgres.NewAppealRepository(db)
 	approvalRepository := postgres.NewApprovalRepository(db)
 
-	providerClients := []providers.Client{
+	providerClients := []provider.Client{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
 		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
 		grafana.NewProvider(domain.ProviderTypeGrafana, crypto),
@@ -107,13 +106,14 @@ func RunServer(c *Config) error {
 		Logger:      logger,
 		AuditLogger: auditLogger,
 	})
-	providerService := provider.NewService(
-		logger,
-		v,
-		providerRepository,
-		resourceService,
-		providerClients,
-	)
+	providerService := provider.NewService(provider.ServiceOptions{
+		Repository:      providerRepository,
+		ResourceService: resourceService,
+		Clients:         providerClients,
+		Validator:       v,
+		Logger:          logger,
+		AuditLogger:     auditLogger,
+	})
 	policyService := policy.NewService(policy.ServiceOptions{
 		Repository:      policyRepository,
 		ResourceService: resourceService,
@@ -146,15 +146,15 @@ func RunServer(c *Config) error {
 	tasks := []*scheduler.Task{
 		{
 			CronTab: c.Jobs.FetchResourcesInterval,
-			Func:    jobHandler.FetchResources,
+			Func:    func() error { return jobHandler.FetchResources(context.Background()) },
 		},
 		{
 			CronTab: c.Jobs.RevokeExpiredAccessInterval,
-			Func:    jobHandler.RevokeExpiredAppeals,
+			Func:    func() error { return jobHandler.RevokeExpiredAppeals(context.Background()) },
 		},
 		{
 			CronTab: c.Jobs.ExpiringAccessNotificationInterval,
-			Func:    jobHandler.AppealExpirationReminder,
+			Func:    func() error { return jobHandler.AppealExpirationReminder(context.Background()) },
 		},
 	}
 	s, err := scheduler.New(tasks)

@@ -1,6 +1,11 @@
+//go:generate mockery --name=appealService --exported
+//go:generate mockery --name=providerService --exported
+
 package jobs
 
 import (
+	"context"
+
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/salt/log"
@@ -12,7 +17,7 @@ type appealService interface {
 }
 
 type providerService interface {
-	FetchResources() error
+	FetchResources(context.Context) error
 }
 
 type handler struct {

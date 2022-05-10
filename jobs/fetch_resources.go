@@ -1,5 +1,7 @@
 package jobs
 
-func (h *handler) FetchResources() error {
-	return h.providerService.FetchResources()
+import "context"
+
+func (h *handler) FetchResources(ctx context.Context) error {
+	return h.providerService.FetchResources(ctx)
 }

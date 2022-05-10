@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -8,7 +9,7 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
-func (h *handler) RevokeExpiredAppeals() error {
+func (h *handler) RevokeExpiredAppeals(_ context.Context) error {
 	h.logger.Info("Revoke Expired Appeals")
 
 	filters := &domain.ListAppealsFilter{

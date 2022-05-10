@@ -73,7 +73,7 @@ func NewGRPCServer(
 }
 
 func (s *GRPCServer) ListProviders(ctx context.Context, req *guardianv1beta1.ListProvidersRequest) (*guardianv1beta1.ListProvidersResponse, error) {
-	providers, err := s.providerService.Find()
+	providers, err := s.providerService.Find(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (s *GRPCServer) ListProviders(ctx context.Context, req *guardianv1beta1.Lis
 }
 
 func (s *GRPCServer) GetProvider(ctx context.Context, req *guardianv1beta1.GetProviderRequest) (*guardianv1beta1.GetProviderResponse, error) {
-	p, err := s.providerService.GetByID(req.GetId())
+	p, err := s.providerService.GetByID(ctx, req.GetId())
 	if err != nil {
 		switch err {
 		case provider.ErrRecordNotFound:
@@ -125,7 +125,13 @@ func (s *GRPCServer) CreateProvider(ctx context.Context, req *guardianv1beta1.Cr
 		URN:    providerConfig.URN,
 		Config: providerConfig,
 	}
-	if err := s.providerService.Create(p); err != nil {
+
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ctx = audit.WithActor(ctx, user)
+	if err := s.providerService.Create(ctx, p); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
 	}
 
@@ -152,7 +158,13 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.Up
 		URN:    providerConfig.URN,
 		Config: providerConfig,
 	}
-	if err := s.providerService.Update(p); err != nil {
+
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ctx = audit.WithActor(ctx, user)
+	if err := s.providerService.Update(ctx, p); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update provider: %v", err)
 	}
 
@@ -167,7 +179,7 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.Up
 }
 
 func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1beta1.ListRolesRequest) (*guardianv1beta1.ListRolesResponse, error) {
-	roles, err := s.providerService.GetRoles(req.GetId(), req.GetResourceType())
+	roles, err := s.providerService.GetRoles(ctx, req.GetId(), req.GetResourceType())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list roles: %v", err)
 	}

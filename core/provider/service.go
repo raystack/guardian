@@ -1,4 +1,7 @@
+//go:generate mockery --name=repository --exported
+//go:generate mockery --name=Client --exported
 //go:generate mockery --name=resourceService --exported
+//go:generate mockery --name=auditLogger --exported
 
 package provider
 
@@ -17,51 +20,75 @@ import (
 	"github.com/odpf/salt/log"
 )
 
+var (
+	AuditKeyCreate = "provider.create"
+	AuditKeyUpdate = "provider.update"
+)
+
+type repository interface {
+	store.ProviderRepository
+}
+
+type Client interface {
+	providers.Client
+}
+
 type resourceService interface {
 	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
 	BulkUpsert(context.Context, []*domain.Resource) error
 }
 
+type auditLogger interface {
+	Log(ctx context.Context, action string, data interface{}) error
+}
+
 // Service handling the business logics
 type Service struct {
-	logger             *log.Logrus
-	validator          *validator.Validate
-	providerRepository store.ProviderRepository
-	resourceService    resourceService
+	repository      repository
+	resourceService resourceService
+	clients         map[string]Client
 
-	providerClients map[string]providers.Client
+	validator   *validator.Validate
+	logger      log.Logger
+	auditLogger auditLogger
+}
+
+type ServiceOptions struct {
+	Repository      repository
+	ResourceService resourceService
+	Clients         []Client
+
+	Validator   *validator.Validate
+	Logger      log.Logger
+	AuditLogger auditLogger
 }
 
 // NewService returns service struct
-func NewService(
-	logger *log.Logrus,
-	validator *validator.Validate,
-	pr store.ProviderRepository,
-	rs resourceService,
-	providerClients []providers.Client,
-) *Service {
-	mapProviderClients := make(map[string]providers.Client)
-	for _, c := range providerClients {
+func NewService(opts ServiceOptions) *Service {
+	mapProviderClients := make(map[string]Client)
+	for _, c := range opts.Clients {
 		mapProviderClients[c.GetType()] = c
 	}
 
 	return &Service{
-		logger:             logger,
-		validator:          validator,
-		providerRepository: pr,
-		resourceService:    rs,
-		providerClients:    mapProviderClients,
+		opts.Repository,
+		opts.ResourceService,
+		mapProviderClients,
+
+		opts.Validator,
+		opts.Logger,
+		opts.AuditLogger,
 	}
 }
 
 // Create record
-func (s *Service) Create(p *domain.Provider) error {
-	provider := s.getProvider(p.Type)
-	if provider == nil {
+func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
+	c := s.getClient(p.Type)
+	if c == nil {
 		return ErrInvalidProviderType
 	}
 
-	accountTypes := provider.GetAccountTypes()
+	accountTypes := c.GetAccountTypes()
 	if err := s.validateAccountTypes(p.Config, accountTypes); err != nil {
 		return err
 	}
@@ -72,21 +99,25 @@ func (s *Service) Create(p *domain.Provider) error {
 		}
 	}
 
-	if err := provider.CreateConfig(p.Config); err != nil {
+	if err := c.CreateConfig(p.Config); err != nil {
 		return err
 	}
 
-	if err := s.providerRepository.Create(p); err != nil {
+	if err := s.repository.Create(p); err != nil {
 		return err
+	}
+
+	if err := s.auditLogger.Log(ctx, AuditKeyCreate, p); err != nil {
+		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
 	}
 
 	go func() {
 		s.logger.Info(fmt.Sprintf("fetching resources for %s", p.URN))
-		resources, err := s.getResources(p)
+		resources, err := s.getResources(ctx, p)
 		if err != nil {
 			s.logger.Error(fmt.Sprintf("fetching resources: %s", err))
 		}
-		if err := s.resourceService.BulkUpsert(context.TODO(), resources); err != nil {
+		if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
 			s.logger.Error(fmt.Sprintf("inserting resources to db: %s", err))
 		} else {
 			s.logger.Info(fmt.Sprintf("added %v resources for %s", len(resources), p.URN))
@@ -97,8 +128,8 @@ func (s *Service) Create(p *domain.Provider) error {
 }
 
 // Find records
-func (s *Service) Find() ([]*domain.Provider, error) {
-	providers, err := s.providerRepository.Find()
+func (s *Service) Find(ctx context.Context) ([]*domain.Provider, error) {
+	providers, err := s.repository.Find()
 	if err != nil {
 		return nil, err
 	}
@@ -106,23 +137,23 @@ func (s *Service) Find() ([]*domain.Provider, error) {
 	return providers, nil
 }
 
-func (s *Service) GetByID(id string) (*domain.Provider, error) {
-	return s.providerRepository.GetByID(id)
+func (s *Service) GetByID(ctx context.Context, id string) (*domain.Provider, error) {
+	return s.repository.GetByID(id)
 }
 
-func (s *Service) GetOne(pType, urn string) (*domain.Provider, error) {
-	return s.providerRepository.GetOne(pType, urn)
+func (s *Service) GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error) {
+	return s.repository.GetOne(pType, urn)
 }
 
 // Update updates the non-zero value(s) only
-func (s *Service) Update(p *domain.Provider) error {
+func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 	var currentProvider *domain.Provider
 	var err error
 
 	if len(p.ID) > 0 {
-		currentProvider, err = s.GetByID(p.ID)
+		currentProvider, err = s.GetByID(ctx, p.ID)
 	} else {
-		currentProvider, err = s.GetOne(p.Type, p.URN)
+		currentProvider, err = s.GetOne(ctx, p.Type, p.URN)
 	}
 	if err != nil {
 		return err
@@ -132,12 +163,12 @@ func (s *Service) Update(p *domain.Provider) error {
 		return err
 	}
 
-	provider := s.getProvider(p.Type)
-	if provider == nil {
+	c := s.getClient(p.Type)
+	if c == nil {
 		return ErrInvalidProviderType
 	}
 
-	accountTypes := provider.GetAccountTypes()
+	accountTypes := c.GetAccountTypes()
 	if err := s.validateAccountTypes(p.Config, accountTypes); err != nil {
 		return err
 	}
@@ -148,16 +179,24 @@ func (s *Service) Update(p *domain.Provider) error {
 		}
 	}
 
-	if err := provider.CreateConfig(p.Config); err != nil {
+	if err := c.CreateConfig(p.Config); err != nil {
 		return err
 	}
 
-	return s.providerRepository.Update(p)
+	if err := s.repository.Update(p); err != nil {
+		return err
+	}
+
+	if err := s.auditLogger.Log(ctx, AuditKeyUpdate, p); err != nil {
+		s.logger.Error(fmt.Sprintf("failed to record audit log: %s", err))
+	}
+
+	return nil
 }
 
 // FetchResources fetches all resources for all registered providers
-func (s *Service) FetchResources() error {
-	providers, err := s.providerRepository.Find()
+func (s *Service) FetchResources(ctx context.Context) error {
+	providers, err := s.repository.Find()
 	if err != nil {
 		return err
 	}
@@ -165,7 +204,7 @@ func (s *Service) FetchResources() error {
 	resources := []*domain.Resource{}
 	for _, p := range providers {
 		s.logger.Info(fmt.Sprintf("fetching resources for %s", p.URN))
-		res, err := s.getResources(p)
+		res, err := s.getResources(ctx, p)
 		if err != nil {
 			s.logger.Error(err.Error())
 			continue
@@ -174,28 +213,27 @@ func (s *Service) FetchResources() error {
 		resources = append(resources, res...)
 	}
 
-	// TODO: add actor into ctx
-	return s.resourceService.BulkUpsert(context.TODO(), resources)
+	return s.resourceService.BulkUpsert(ctx, resources)
 }
 
-func (s *Service) GetRoles(id string, resourceType string) ([]*domain.Role, error) {
-	p, err := s.GetByID(id)
+func (s *Service) GetRoles(ctx context.Context, id string, resourceType string) ([]*domain.Role, error) {
+	p, err := s.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	provider := s.getProvider(p.Type)
-	return provider.GetRoles(p.Config, resourceType)
+	c := s.getClient(p.Type)
+	return c.GetRoles(p.Config, resourceType)
 }
 
-func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
+func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domain.Provider) error {
 	if err := s.validateAppealParam(a); err != nil {
 		return err
 	}
 
 	resourceType := a.Resource.Type
-	provider := s.getProvider(p.Type)
-	if provider == nil {
+	c := s.getClient(p.Type)
+	if c == nil {
 		return ErrInvalidProviderType
 	}
 
@@ -204,7 +242,7 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 		return fmt.Errorf("invalid account type: %v. allowed account types for %v: %v", a.AccountType, p.Type, allowedAccountTypesStr)
 	}
 
-	roles, err := provider.GetRoles(p.Config, resourceType)
+	roles, err := c.GetRoles(p.Config, resourceType)
 	if err != nil {
 		return err
 	}
@@ -238,52 +276,52 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 	return nil
 }
 
-func (s *Service) GrantAccess(a *domain.Appeal) error {
+func (s *Service) GrantAccess(ctx context.Context, a *domain.Appeal) error {
 	if err := s.validateAppealParam(a); err != nil {
 		return err
 	}
 
-	provider := s.getProvider(a.Resource.ProviderType)
-	if provider == nil {
+	c := s.getClient(a.Resource.ProviderType)
+	if c == nil {
 		return ErrInvalidProviderType
 	}
 
-	p, err := s.getProviderConfig(a.Resource.ProviderType, a.Resource.ProviderURN)
+	p, err := s.getProviderConfig(ctx, a.Resource.ProviderType, a.Resource.ProviderURN)
 	if err != nil {
 		return err
 	}
 
-	return provider.GrantAccess(p.Config, a)
+	return c.GrantAccess(p.Config, a)
 }
 
-func (s *Service) RevokeAccess(a *domain.Appeal) error {
+func (s *Service) RevokeAccess(ctx context.Context, a *domain.Appeal) error {
 	if err := s.validateAppealParam(a); err != nil {
 		return err
 	}
 
-	provider := s.getProvider(a.Resource.ProviderType)
-	if provider == nil {
+	c := s.getClient(a.Resource.ProviderType)
+	if c == nil {
 		return ErrInvalidProviderType
 	}
 
-	p, err := s.getProviderConfig(a.Resource.ProviderType, a.Resource.ProviderURN)
+	p, err := s.getProviderConfig(ctx, a.Resource.ProviderType, a.Resource.ProviderURN)
 	if err != nil {
 		return err
 	}
 
-	return provider.RevokeAccess(p.Config, a)
+	return c.RevokeAccess(p.Config, a)
 	// TODO: handle if permission for the given user with the given role is not found
 	// handle the resolution for the appeal status
 }
 
-func (s *Service) getResources(p *domain.Provider) ([]*domain.Resource, error) {
+func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*domain.Resource, error) {
 	resources := []*domain.Resource{}
-	provider := s.getProvider(p.Type)
-	if provider == nil {
+	c := s.getClient(p.Type)
+	if c == nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidProviderType, p.Type)
 	}
 
-	existingResources, err := s.resourceService.Find(context.TODO(), map[string]interface{}{
+	existingResources, err := s.resourceService.Find(ctx, map[string]interface{}{
 		"provider_type": p.Type,
 		"provider_urn":  p.URN,
 	})
@@ -291,7 +329,7 @@ func (s *Service) getResources(p *domain.Provider) ([]*domain.Resource, error) {
 		return nil, err
 	}
 
-	res, err := provider.GetResources(p.Config)
+	res, err := c.GetResources(p.Config)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching resources for %v: %w", p.ID, err)
 	}
@@ -338,12 +376,12 @@ func (s *Service) validateAppealParam(a *domain.Appeal) error {
 	return nil
 }
 
-func (s *Service) getProvider(pType string) providers.Client {
-	return s.providerClients[pType]
+func (s *Service) getClient(pType string) providers.Client {
+	return s.clients[pType]
 }
 
-func (s *Service) getProviderConfig(pType, urn string) (*domain.Provider, error) {
-	p, err := s.GetOne(pType, urn)
+func (s *Service) getProviderConfig(ctx context.Context, pType, urn string) (*domain.Provider, error) {
+	p, err := s.GetOne(ctx, pType, urn)
 	if err != nil {
 		return nil, err
 	}

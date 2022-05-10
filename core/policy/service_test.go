@@ -410,7 +410,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 							Once()
 						if tc.expectedResource != nil {
 							s.mockProviderService.
-								On("GetOne", tc.expectedResource.ProviderType, tc.expectedResource.ProviderURN).
+								On("GetOne", mock.Anything, tc.expectedResource.ProviderType, tc.expectedResource.ProviderURN).
 								Return(tc.expectedProvider, tc.expectedProviderServiceGetOneError).
 								Once()
 							if tc.expectedProviderServiceGetOneError == nil {
@@ -421,7 +421,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 									Options:    aa.Options,
 								}
 								s.mockProviderService.
-									On("ValidateAppeal", expectedAppeal, tc.expectedProvider).
+									On("ValidateAppeal", mock.Anything, expectedAppeal, tc.expectedProvider).
 									Return(tc.expectedProviderServiceValidateAppealError).
 									Once()
 							}
@@ -526,7 +526,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 							Return(expectedResource, nil).
 							Once()
 						s.mockProviderService.
-							On("GetOne", expectedResource.ProviderType, expectedResource.ProviderURN).
+							On("GetOne", mock.Anything, expectedResource.ProviderType, expectedResource.ProviderURN).
 							Return(expectedProvider, nil).
 							Once()
 						expectedAppeal := &domain.Appeal{
@@ -537,7 +537,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 						}
 						expectedAppeal.SetDefaults()
 						s.mockProviderService.
-							On("ValidateAppeal", expectedAppeal, expectedProvider).
+							On("ValidateAppeal", mock.Anything, expectedAppeal, expectedProvider).
 							Return(nil).
 							Once()
 					}
@@ -629,10 +629,12 @@ func (s *ServiceTestSuite) TestUpdate() {
 		expectedNewVersion := uint(6)
 		s.mockPolicyRepository.On("GetOne", p.ID, p.Version).Return(expectedLatestPolicy, nil).Once()
 		s.mockPolicyRepository.On("Create", p).Return(nil)
+		s.mockAuditLogger.On("Log", mock.Anything, policy.AuditKeyPolicyUpdate, mock.Anything).Return(nil).Once()
 
 		s.service.Update(context.Background(), p)
 
 		s.mockPolicyRepository.AssertExpectations(s.T())
+		s.mockAuditLogger.AssertExpectations(s.T())
 		s.Equal(expectedNewVersion, p.Version)
 	})
 }
