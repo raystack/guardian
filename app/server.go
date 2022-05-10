@@ -66,12 +66,11 @@ func RunServer(c *Config) error {
 	crypto := crypto.NewAES(c.EncryptionSecretKeyKey)
 	v := validator.New()
 
-	db := store.DB()
-	providerRepository := postgres.NewProviderRepository(db)
-	policyRepository := postgres.NewPolicyRepository(db)
-	resourceRepository := postgres.NewResourceRepository(db)
-	appealRepository := postgres.NewAppealRepository(db)
-	approvalRepository := postgres.NewApprovalRepository(db)
+	providerRepository := postgres.NewProviderRepository(store.DB())
+	policyRepository := postgres.NewPolicyRepository(store.DB())
+	resourceRepository := postgres.NewResourceRepository(store.DB())
+	appealRepository := postgres.NewAppealRepository(store.DB())
+	approvalRepository := postgres.NewApprovalRepository(store.DB())
 
 	providerClients := []provider.Client{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
@@ -88,7 +87,7 @@ func RunServer(c *Config) error {
 
 	iamManager := identities.NewManager(crypto, v)
 
-	auditRepository := audit_repos.NewPostgresRepository(db)
+	auditRepository := audit_repos.NewPostgresRepository(store.DB())
 	auditLogger := audit.New(
 		audit.WithRepository(auditRepository),
 		audit.WithAppDetails(audit.AppDetails{
@@ -268,8 +267,7 @@ func Migrate(c *Config) error {
 		return err
 	}
 
-	db := store.DB()
-	auditRepository := audit_repos.NewPostgresRepository(db)
+	auditRepository := audit_repos.NewPostgresRepository(store.DB())
 	if err := auditRepository.Init(context.Background()); err != nil {
 		return fmt.Errorf("initializing audit repository: %w", err)
 	}
