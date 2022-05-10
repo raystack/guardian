@@ -13,7 +13,6 @@ import (
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/pkg/audit"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -147,11 +146,6 @@ func (s *GRPCServer) CreateProvider(ctx context.Context, req *guardianv1beta1.Cr
 		Config: providerConfig,
 	}
 
-	user, err := s.getUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ctx = audit.WithActor(ctx, user)
 	if err := s.providerService.Create(ctx, p); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
 	}
@@ -180,11 +174,6 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.Up
 		Config: providerConfig,
 	}
 
-	user, err := s.getUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ctx = audit.WithActor(ctx, user)
 	if err := s.providerService.Update(ctx, p); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update provider: %v", err)
 	}
@@ -267,11 +256,6 @@ func (s *GRPCServer) CreatePolicy(ctx context.Context, req *guardianv1beta1.Crea
 		return nil, status.Errorf(codes.Internal, "cannot deserialize policy: %v", err)
 	}
 
-	user, err := s.getUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ctx = audit.WithActor(ctx, user)
 	if err := s.policyService.Create(ctx, policy); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create policy: %v", err)
 	}
@@ -292,11 +276,6 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *guardianv1beta1.Upda
 		return nil, status.Errorf(codes.Internal, "cannot deserialize policy: %v", err)
 	}
 
-	user, err := s.getUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ctx = audit.WithActor(ctx, user)
 	p.ID = req.GetId()
 	if err := s.policyService.Update(ctx, p); err != nil {
 		if errors.Is(err, policy.ErrPolicyNotFound) {
@@ -383,12 +362,6 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *guardianv1beta1.Up
 	r := s.adapter.FromResourceProto(req.GetResource())
 	r.ID = req.GetId()
 
-	user, err := s.getUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx = audit.WithActor(ctx, user)
 	if err := s.resourceService.Update(ctx, r); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update resource: %v", err)
 	}
@@ -493,7 +466,6 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *guardianv1beta1.Crea
 		return nil, status.Errorf(codes.Internal, "cannot deserialize payload: %v", err)
 	}
 
-	ctx = audit.WithActor(ctx, authenticatedUser)
 	if err := s.appealService.Create(ctx, appeals); err != nil {
 		if errors.Is(err, appeal.ErrAppealDuplicate) {
 			return nil, status.Errorf(codes.AlreadyExists, "appeal already exists: %v", err)
@@ -579,7 +551,6 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 	}
 
 	id := req.GetId()
-	ctx = audit.WithActor(ctx, actor)
 	a, err := s.appealService.MakeAction(ctx, domain.ApprovalAction{
 		AppealID:     id,
 		ApprovalName: req.GetApprovalName(),
@@ -622,11 +593,6 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 }
 
 func (s *GRPCServer) CancelAppeal(ctx context.Context, req *guardianv1beta1.CancelAppealRequest) (*guardianv1beta1.CancelAppealResponse, error) {
-	actor, err := s.getUser(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, err.Error())
-	}
-	ctx = audit.WithActor(ctx, actor)
 	id := req.GetId()
 	a, err := s.appealService.Cancel(ctx, id)
 	if err != nil {
@@ -662,7 +628,6 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 	}
 	reason := req.GetReason().GetReason()
 
-	ctx = audit.WithActor(ctx, actor)
 	a, err := s.appealService.Revoke(ctx, id, actor, reason)
 	if err != nil {
 		switch err {

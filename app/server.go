@@ -193,6 +193,7 @@ func RunServer(c *Config) error {
 				return resp, err
 			},
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
+			audit.UnaryServerInterceptor(c.AuthenticatedUserHeaderKey),
 		)),
 	)
 	protoAdapter := handlerv1beta1.NewAdapter()
