@@ -13,12 +13,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func JobsCmd() *cobra.Command {
+func JobCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "jobs",
-		Short: "Manage jobs",
+		Use:     "job",
+		Aliases: []string{"jobs"},
+		Short:   "Manage jobs",
 		Example: heredoc.Doc(`
-			$ guardian jobs run fetch_resources
+			$ guardian job run fetch_resources
 		`),
 	}
 
@@ -37,7 +38,9 @@ func runJobCmd() *cobra.Command {
 		Use:   "run",
 		Short: "Fire a specific job",
 		Example: heredoc.Doc(`
-			$ guardian jobs run fetch_resources
+			$ guardian job run fetch_resources
+			$ guardian job run appeal_expiration_reminder
+			$ guardian job run appeal_expiration_revocation
 		`),
 		Args: cobra.OnlyValidArgs,
 		ValidArgs: []string{
