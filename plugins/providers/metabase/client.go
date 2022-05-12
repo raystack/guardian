@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/odpf/salt/log"
@@ -308,6 +309,9 @@ func addResourceToGroup(resourceGroups ResourceGroupDetails, groupMap map[string
 		for _, groupDetails := range groups {
 			groupID := groupDetails[urn].(string)
 			if group, ok := groupMap[groupID]; ok {
+				if strings.HasPrefix(group.Name, GuardianGroupPrefix) {
+					continue
+				}
 				groupDetails[name] = group.Name
 				if resourceType == database {
 					group.DatabaseResources = append(group.DatabaseResources, &GroupResource{Urn: resourceId, Permissions: groupDetails[permissionsConst].([]string)})
@@ -736,6 +740,7 @@ func (c *client) updateDatabaseAccess(dbGraph *databaseGraph) error {
 }
 
 func (c *client) createGroup(group *group) error {
+	group.Name = GuardianGroupPrefix + group.Name
 	req, err := c.newRequest(http.MethodPost, groupEndpoint, group)
 	if err != nil {
 		return err

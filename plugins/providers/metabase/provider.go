@@ -1,6 +1,8 @@
 package metabase
 
 import (
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 	pv "github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
@@ -128,6 +130,10 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		}
 
 		for _, g := range groups {
+			if strings.HasPrefix(g.Name, GuardianGroupPrefix) {
+				continue
+			}
+
 			for _, groupResource := range g.DatabaseResources {
 				resourceId := groupResource.Urn
 				if resource, ok := databaseResourceMap[resourceId]; ok {
