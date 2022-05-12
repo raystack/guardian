@@ -400,12 +400,16 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 				}
 			}
 
-			auditKey := AuditKeyApprove
-			if approvalAction.Action == "revoke" {
+			var auditKey string
+			if approvalAction.Action == string(domain.ApprovalActionReject) {
 				auditKey = AuditKeyReject
+			} else if approvalAction.Action == string(domain.ApprovalActionApprove) {
+				auditKey = AuditKeyApprove
 			}
-			if err := s.auditLogger.Log(ctx, auditKey, approvalAction); err != nil {
-				s.logger.Error("failed to record audit log", "error", err)
+			if auditKey != "" {
+				if err := s.auditLogger.Log(ctx, auditKey, approvalAction); err != nil {
+					s.logger.Error("failed to record audit log", "error", err)
+				}
 			}
 
 			return appeal, nil

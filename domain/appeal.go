@@ -102,6 +102,13 @@ func (a *Appeal) SetDefaults() {
 	}
 }
 
+type ApprovalActionType string
+
+const (
+	ApprovalActionApprove ApprovalActionType = "approve"
+	ApprovalActionReject  ApprovalActionType = "reject"
+)
+
 type ApprovalAction struct {
 	AppealID     string `validate:"required" json:"appeal_id"`
 	ApprovalName string `validate:"required" json:"approval_name"`
