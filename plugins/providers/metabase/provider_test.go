@@ -157,7 +157,7 @@ func TestGetResources(t *testing.T) {
 		c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
 		group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
 
-		client.On("GetGroups").Return([]*metabase.Group{&group},
+		client.On("GetGroups").Return([]*metabase.Group{&group, {Name: metabase.GuardianGroupPrefix + "database_1_schema:all", DatabaseResources: d, CollectionResources: c}},
 			metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
 			metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 

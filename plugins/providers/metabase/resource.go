@@ -15,6 +15,8 @@ const (
 	ResourceTypeTable      = "table"
 	ResourceTypeCollection = "collection"
 	ResourceTypeGroup      = "group"
+
+	GuardianGroupPrefix = "_guardian_"
 )
 
 type Database struct {

@@ -736,6 +736,7 @@ func (c *client) updateDatabaseAccess(dbGraph *databaseGraph) error {
 }
 
 func (c *client) createGroup(group *group) error {
+	group.Name = GuardianGroupPrefix + group.Name
 	req, err := c.newRequest(http.MethodPost, groupEndpoint, group)
 	if err != nil {
 		return err
