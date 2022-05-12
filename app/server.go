@@ -152,6 +152,7 @@ func RunServer(c *Config) error {
 	)
 
 	// init scheduler
+	// TODO: allow timeout configuration for job handler context
 	tasks := []*scheduler.Task{
 		{
 			CronTab: c.Jobs.FetchResourcesInterval,
