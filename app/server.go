@@ -101,7 +101,7 @@ func RunServer(c *Config) error {
 					return rawTraceID[0]
 				}
 			}
-			return ""
+			return "" // TODO: decide if trace ID should auto-generate on empty
 		}),
 	)
 
