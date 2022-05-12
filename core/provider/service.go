@@ -14,6 +14,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/pkg/audit"
 	"github.com/odpf/guardian/plugins/providers"
 	"github.com/odpf/guardian/store"
 	"github.com/odpf/guardian/utils"
@@ -113,6 +114,7 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 
 	go func() {
 		s.logger.Info("fetching resources", "provider_urn", p.URN)
+		ctx := audit.WithActor(context.Background(), domain.SystemActorName)
 		resources, err := s.getResources(ctx, p)
 		if err != nil {
 			s.logger.Error("failed to fetch resources", "error", err)
