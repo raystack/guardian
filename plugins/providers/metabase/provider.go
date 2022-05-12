@@ -11,7 +11,7 @@ type provider struct {
 	typeName string
 	Clients  map[string]MetabaseClient
 	crypto   domain.Crypto
-	logger   *log.Logrus
+	logger   log.Logger
 }
 
 func NewProvider(typeName string, crypto domain.Crypto, logger *log.Logrus) *provider {
@@ -56,17 +56,13 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	resources := []*domain.Resource{}
 
 	var databases []*Database
+	var collections []*Collection
 	if _, ok := resourceTypes[ResourceTypeDatabase]; ok {
 		databases, err = client.GetDatabases()
 		if err != nil {
 			return nil, err
 		}
-		for _, d := range databases {
-			db := d.ToDomain()
-			db.ProviderType = pc.Type
-			db.ProviderURN = pc.URN
-			resources = append(resources, db)
-		}
+		resources = p.addDatabases(pc, databases, resources)
 	}
 
 	if _, ok := resourceTypes[ResourceTypeTable]; ok {
@@ -76,48 +72,20 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		if err != nil {
 			return nil, err
 		}
-		for _, d := range databases {
-			db := d.ToDomain()
-			db.ProviderType = pc.Type
-			db.ProviderURN = pc.URN
-
-			for _, t := range d.Tables {
-				t.Database = db
-				table := t.ToDomain()
-				table.ProviderType = pc.Type
-				table.ProviderURN = pc.URN
-				resources = append(resources, table)
-			}
-		}
+		resources = p.addTables(pc, databases, resources)
 	}
 
 	if _, ok := resourceTypes[ResourceTypeCollection]; ok {
-		collections, err := client.GetCollections()
+		collections, err = client.GetCollections()
 		if err != nil {
 			return nil, err
 		}
-		for _, c := range collections {
-			db := c.ToDomain()
-			db.ProviderType = pc.Type
-			db.ProviderURN = pc.URN
-			resources = append(resources, db)
-		}
+		resources = p.addCollection(pc, collections, resources)
 	}
 
 	groups, databaseResourceGroups, collectionResourceGroups, err := client.GetGroups()
 	if err != nil {
 		return nil, err
-	}
-
-	databaseResourceMap := make(map[string]*domain.Resource, 0)
-	collectionResourceMap := make(map[string]*domain.Resource, 0)
-	for _, resource := range resources {
-		if resource.Type == ResourceTypeDatabase || resource.Type == ResourceTypeTable {
-			databaseResourceMap[resource.URN] = resource
-		}
-		if resource.Type == ResourceTypeCollection {
-			collectionResourceMap[resource.URN] = resource
-		}
 	}
 
 	for _, resource := range resources {
@@ -134,6 +102,31 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	}
 
 	if _, ok := resourceTypes[ResourceTypeGroup]; ok && resourceTypes[ResourceTypeGroup] {
+		databaseResourceMap := make(map[string]*domain.Resource, 0)
+		collectionResourceMap := make(map[string]*domain.Resource, 0)
+
+		if databases == nil {
+			databases, err = client.GetDatabases()
+			if err != nil {
+				return nil, err
+			}
+		}
+		for _, database := range databases {
+			resource := database.ToDomain()
+			databaseResourceMap[resource.URN] = resource
+		}
+
+		if collections == nil {
+			collections, err = client.GetCollections()
+			if err != nil {
+				return nil, err
+			}
+		}
+		for _, collection := range collections {
+			resource := collection.ToDomain()
+			collectionResourceMap[resource.URN] = resource
+		}
+
 		for _, g := range groups {
 			for _, groupResource := range g.DatabaseResources {
 				resourceId := groupResource.Urn
@@ -151,14 +144,51 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 				}
 			}
 
-			db := g.ToDomain()
-			db.ProviderType = pc.Type
-			db.ProviderURN = pc.URN
-			resources = append(resources, db)
+			group := g.ToDomain()
+			group.ProviderType = pc.Type
+			group.ProviderURN = pc.URN
+			resources = append(resources, group)
 		}
 	}
 
 	return resources, nil
+}
+
+func (p *provider) addCollection(pc *domain.ProviderConfig, collections []*Collection, resources []*domain.Resource) []*domain.Resource {
+	for _, c := range collections {
+		db := c.ToDomain()
+		db.ProviderType = pc.Type
+		db.ProviderURN = pc.URN
+		resources = append(resources, db)
+	}
+	return resources
+}
+
+func (p *provider) addDatabases(pc *domain.ProviderConfig, databases []*Database, resources []*domain.Resource) []*domain.Resource {
+	for _, d := range databases {
+		db := d.ToDomain()
+		db.ProviderType = pc.Type
+		db.ProviderURN = pc.URN
+		resources = append(resources, db)
+	}
+	return resources
+}
+
+func (p *provider) addTables(pc *domain.ProviderConfig, databases []*Database, resources []*domain.Resource) []*domain.Resource {
+	for _, d := range databases {
+		db := d.ToDomain()
+		db.ProviderType = pc.Type
+		db.ProviderURN = pc.URN
+
+		for _, t := range d.Tables {
+			t.Database = db
+			table := t.ToDomain()
+			table.ProviderType = pc.Type
+			table.ProviderURN = pc.URN
+			resources = append(resources, table)
+		}
+	}
+	return resources
 }
 
 func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {

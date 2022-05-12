@@ -173,6 +173,10 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 		nameValidation = "oneof=schemas:all native:write"
 	} else if resourceType == ResourceTypeCollection {
 		nameValidation = "oneof=read write"
+	} else if resourceType == ResourceTypeTable {
+		nameValidation = "oneof=all"
+	} else if resourceType == ResourceTypeGroup {
+		nameValidation = "len=0"
 	}
 
 	if err := c.validator.Var(pc, nameValidation); err != nil {

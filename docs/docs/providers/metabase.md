@@ -85,7 +85,9 @@ resources:
 ### `MetabaseResourceType`
 
 - `database`
+- `table`
 - `collection`
+- `group`
 
 ### `MetabaseResourcePermission`
 

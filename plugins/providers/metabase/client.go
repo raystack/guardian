@@ -123,10 +123,10 @@ type client struct {
 
 	userIDs map[string]int
 
-	logger *log.Logrus
+	logger log.Logger
 }
 
-func NewClient(config *ClientConfig, logger *log.Logrus) (*client, error) {
+func NewClient(config *ClientConfig, logger log.Logger) (*client, error) {
 	if err := validator.New().Struct(config); err != nil {
 		return nil, err
 	}
