@@ -42,7 +42,7 @@ func runJobCmd() *cobra.Command {
 			$ guardian job run appeal_expiration_reminder
 			$ guardian job run appeal_expiration_revocation
 		`),
-		Args: cobra.OnlyValidArgs,
+		Args: cobra.ExactValidArgs(1),
 		ValidArgs: []string{
 			"fetch_resources",
 			"appeal_expiration_reminder",
