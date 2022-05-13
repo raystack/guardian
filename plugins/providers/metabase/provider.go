@@ -16,7 +16,7 @@ type provider struct {
 	logger   log.Logger
 }
 
-func NewProvider(typeName string, crypto domain.Crypto, logger *log.Logrus) *provider {
+func NewProvider(typeName string, crypto domain.Crypto, logger log.Logger) *provider {
 	return &provider{
 		typeName: typeName,
 		Clients:  map[string]MetabaseClient{},

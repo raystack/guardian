@@ -21,7 +21,7 @@ type resourceService interface {
 
 // Service handling the business logics
 type Service struct {
-	logger             *log.Logrus
+	logger             log.Logger
 	validator          *validator.Validate
 	providerRepository store.ProviderRepository
 	resourceService    resourceService
@@ -31,7 +31,7 @@ type Service struct {
 
 // NewService returns service struct
 func NewService(
-	logger *log.Logrus,
+	logger log.Logger,
 	validator *validator.Validate,
 	pr store.ProviderRepository,
 	rs resourceService,
@@ -105,6 +105,10 @@ func (s *Service) Find() ([]*domain.Provider, error) {
 
 func (s *Service) GetByID(id string) (*domain.Provider, error) {
 	return s.providerRepository.GetByID(id)
+}
+
+func (s *Service) GetTypes() ([]domain.ProviderType, error) {
+	return s.providerRepository.GetTypes()
 }
 
 func (s *Service) GetOne(pType, urn string) (*domain.Provider, error) {

@@ -144,6 +144,13 @@ func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*guardianv1b
 	}, nil
 }
 
+func (a *adapter) ToProviderTypeProto(pt domain.ProviderType) (*guardianv1beta1.ProviderType, error) {
+	return &guardianv1beta1.ProviderType{
+		Name:          pt.Name,
+		ResourceTypes: pt.ResourceTypes,
+	}, nil
+}
+
 func (a *adapter) ToRole(role *domain.Role) (*guardianv1beta1.Role, error) {
 	permissions := []*structpb.Value{}
 	for _, p := range role.Permissions {

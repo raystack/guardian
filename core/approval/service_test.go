@@ -163,6 +163,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 			steps                    []*domain.Step
 			existingApprovalStatuses []string
 			expectedApprovalStatuses []string
+			expectedErrorStr         string
 		}{
 			{
 				name: "initial process, When on the first step",
@@ -211,21 +212,76 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 					domain.ApprovalStatusBlocked,
 				},
 			},
+			{
+				name: "should access nested fields properly in expression",
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{},
+				},
+				steps: []*domain.Step{
+					{
+						Strategy:  "manual",
+						When:      `$appeal.details != nil && $appeal.details.foo != nil && $appeal.details.bar != nil && ($appeal.details.foo.foo contains "foo" || $appeal.details.foo.bar contains "bar")`,
+						Approvers: []string{"approver1@email.com"},
+					},
+					{
+						Strategy:  "manual",
+						Approvers: []string{"approver2@email.com"},
+					},
+				},
+				existingApprovalStatuses: []string{
+					domain.ApprovalStatusPending,
+					domain.ApprovalStatusBlocked,
+				},
+				expectedApprovalStatuses: []string{
+					domain.ApprovalStatusSkipped,
+					domain.ApprovalStatusPending,
+				},
+			},
+			{
+				name: "should return error if failed when evaluating expression",
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{},
+				},
+				steps: []*domain.Step{
+					{
+						Strategy:  "manual",
+						When:      `$appeal.details != nil && $appeal.details.foo != nil && $appeal.details.bar != nil && $appeal.details.foo.foo contains "foo" || $appeal.details.foo.bar contains "bar"`,
+						Approvers: []string{"approver1@email.com"},
+					},
+					{
+						Strategy:  "manual",
+						Approvers: []string{"approver2@email.com"},
+					},
+				},
+				existingApprovalStatuses: []string{
+					domain.ApprovalStatusPending,
+					domain.ApprovalStatusPending,
+				},
+				expectedErrorStr: "evaluating expression ",
+			},
 		}
 
 		for _, tc := range testCases {
 			s.Run(tc.name, func() {
 				appeal := *tc.appeal
-				for _, s := range tc.existingApprovalStatuses {
+				for i, s := range tc.existingApprovalStatuses {
 					appeal.Approvals = append(appeal.Approvals, &domain.Approval{
 						Status: s,
+						Index:  i,
 					})
 				}
 				appeal.Policy = &domain.Policy{
 					Steps: tc.steps,
 				}
 				actualError := s.service.AdvanceApproval(&appeal)
-				s.Nil(actualError)
+				if tc.expectedErrorStr == "" {
+					s.Nil(actualError)
+					for i, a := range appeal.Approvals {
+						s.Equal(a.Status, tc.expectedApprovalStatuses[i])
+					}
+				} else {
+					s.Contains(actualError.Error(), tc.expectedErrorStr)
+				}
 			})
 		}
 	})

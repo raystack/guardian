@@ -174,6 +174,39 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 	})
 }
 
+func (s *ProviderRepositoryTestSuite) TestGetTypes() {
+	s.Run("should return error if results empty", func() {
+		expectedError := errors.New("no provider types found")
+
+		s.dbmock.ExpectQuery("select distinct provider_type, type as resource_type from resources").WillReturnRows(sqlmock.NewRows([]string{"provider_type", "resource_type"}))
+
+		actualResult, actualError := s.repository.GetTypes()
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return providerTypes and nil error on success", func() {
+		expectedResult := []domain.ProviderType{
+			{Name: "bigquery", ResourceTypes: []string{"dataset", "table"}},
+			{Name: "metabase", ResourceTypes: []string{"group", "collection", "database"}},
+		}
+		expectedRows := sqlmock.NewRows([]string{"provider_type", "resource_type"}).
+			AddRow("bigquery", "dataset").
+			AddRow("bigquery", "table").
+			AddRow("metabase", "group").
+			AddRow("metabase", "collection").
+			AddRow("metabase", "database")
+
+		s.dbmock.ExpectQuery("select distinct provider_type, type as resource_type from resources").WillReturnRows(expectedRows)
+
+		actualResult, actualError := s.repository.GetTypes()
+
+		s.ElementsMatch(expectedResult, actualResult)
+		s.Nil(actualError)
+	})
+}
+
 func (s *ProviderRepositoryTestSuite) TestUpdate() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := provider.ErrEmptyIDParam
