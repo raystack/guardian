@@ -44,6 +44,7 @@ func New(cfg *Config) *cobra.Command {
 	cmd.AddCommand(PolicyCmd(protoAdapter))
 	cmd.AddCommand(appealsCommand())
 	cmd.AddCommand(ServerCommand())
+	cmd.AddCommand(JobCmd())
 	cmd.AddCommand(configCommand())
 	cmd.AddCommand(VersionCmd())
 

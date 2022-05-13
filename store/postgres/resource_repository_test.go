@@ -251,6 +251,14 @@ func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
 			s.Equal(expectedIDs[i], r.ID)
 		}
 	})
+
+	s.Run("should return nil error if resources input is empty", func() {
+		var resources []*domain.Resource
+
+		err := s.repository.BulkUpsert(resources)
+
+		s.Nil(err)
+	})
 }
 
 func (s *ResourceRepositoryTestSuite) TestUpdate() {

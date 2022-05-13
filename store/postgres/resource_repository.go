@@ -122,30 +122,34 @@ func (r *ResourceRepository) BulkUpsert(resources []*domain.Resource) error {
 		models = append(models, m)
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		upsertClause := clause.OnConflict{
-			Columns: []clause.Column{
-				{Name: "provider_type"},
-				{Name: "provider_urn"},
-				{Name: "type"},
-				{Name: "urn"},
-			},
-			DoUpdates: clause.AssignmentColumns([]string{"name", "updated_at", "is_deleted"}),
-		}
-		if err := r.db.Clauses(upsertClause).Create(models).Error; err != nil {
-			return err
-		}
-
-		for i, m := range models {
-			r, err := m.ToDomain()
-			if err != nil {
+	if len(models) > 0 {
+		return r.db.Transaction(func(tx *gorm.DB) error {
+			upsertClause := clause.OnConflict{
+				Columns: []clause.Column{
+					{Name: "provider_type"},
+					{Name: "provider_urn"},
+					{Name: "type"},
+					{Name: "urn"},
+				},
+				DoUpdates: clause.AssignmentColumns([]string{"name", "updated_at", "is_deleted"}),
+			}
+			if err := r.db.Clauses(upsertClause).Create(models).Error; err != nil {
 				return err
 			}
-			*resources[i] = *r
-		}
 
-		return nil
-	})
+			for i, m := range models {
+				r, err := m.ToDomain()
+				if err != nil {
+					return err
+				}
+				*resources[i] = *r
+			}
+
+			return nil
+		})
+	}
+
+	return nil
 }
 
 // Update record by ID

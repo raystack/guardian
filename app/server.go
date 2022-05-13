@@ -17,23 +17,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/core/appeal"
-	"github.com/odpf/guardian/core/approval"
-	"github.com/odpf/guardian/core/policy"
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/core/resource"
-	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/crypto"
 	"github.com/odpf/guardian/internal/scheduler"
 	"github.com/odpf/guardian/jobs"
-	"github.com/odpf/guardian/plugins/identities"
 	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/guardian/plugins/providers"
-	"github.com/odpf/guardian/plugins/providers/bigquery"
-	"github.com/odpf/guardian/plugins/providers/gcloudiam"
-	"github.com/odpf/guardian/plugins/providers/grafana"
-	"github.com/odpf/guardian/plugins/providers/metabase"
-	"github.com/odpf/guardian/plugins/providers/tableau"
 	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/salt/log"
 	"github.com/sirupsen/logrus"
@@ -47,91 +34,46 @@ var (
 	ConfigFileName = "config"
 )
 
-type Jobs struct {
-	FetchResourcesInterval             string `mapstructure:"fetch_resources_interval" default:"0 */2 * * *"`
-	RevokeExpiredAccessInterval        string `mapstructure:"revoke_expired_access_interval" default:"*/20 * * * *"`
-	ExpiringAccessNotificationInterval string `mapstructure:"expiring_access_notification_interval" default:"0 9 * * *"`
-}
-
 // RunServer runs the application server
-func RunServer(c *Config) error {
-	store, err := getStore(c)
+func RunServer(config *Config) error {
+	logger := log.NewLogrus(log.LogrusWithLevel(config.LogLevel))
+	crypto := crypto.NewAES(config.EncryptionSecretKeyKey)
+	validator := validator.New()
+	notifier, err := notifiers.NewClient(&config.Notifier)
 	if err != nil {
 		return err
 	}
 
-	logger := log.NewLogrus(log.LogrusWithLevel(c.LogLevel))
-	crypto := crypto.NewAES(c.EncryptionSecretKeyKey)
-	v := validator.New()
-
-	db := store.DB()
-	providerRepository := postgres.NewProviderRepository(db)
-	policyRepository := postgres.NewPolicyRepository(db)
-	resourceRepository := postgres.NewResourceRepository(db)
-	appealRepository := postgres.NewAppealRepository(db)
-	approvalRepository := postgres.NewApprovalRepository(db)
-
-	providerClients := []providers.Client{
-		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
-		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
-		grafana.NewProvider(domain.ProviderTypeGrafana, crypto),
-		tableau.NewProvider(domain.ProviderTypeTableau, crypto),
-		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, crypto),
-	}
-
-	notifier, err := notifiers.NewClient(&c.Notifier)
+	services, err := InitServices(ServiceDeps{
+		Config:    config,
+		Logger:    logger,
+		Validator: validator,
+		Notifier:  notifier,
+		Crypto:    crypto,
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("initializing services: %w", err)
 	}
-
-	iamManager := identities.NewManager(crypto, v)
-
-	resourceService := resource.NewService(resourceRepository)
-	providerService := provider.NewService(
-		logger,
-		v,
-		providerRepository,
-		resourceService,
-		providerClients,
-	)
-	policyService := policy.NewService(
-		v,
-		policyRepository,
-		resourceService,
-		providerService,
-		iamManager,
-	)
-	approvalService := approval.NewService(approvalRepository, policyService)
-	appealService := appeal.NewService(
-		appealRepository,
-		approvalService,
-		resourceService,
-		providerService,
-		policyService,
-		iamManager,
-		notifier,
-		logger,
-	)
 
 	jobHandler := jobs.NewHandler(
 		logger,
-		appealService,
-		providerService,
+		services.AppealService,
+		services.ProviderService,
 		notifier,
 	)
 
 	// init scheduler
 	tasks := []*scheduler.Task{
 		{
-			CronTab: c.Jobs.FetchResourcesInterval,
+			CronTab: config.Jobs.FetchResourcesInterval,
 			Func:    jobHandler.FetchResources,
 		},
 		{
-			CronTab: c.Jobs.RevokeExpiredAccessInterval,
+			CronTab: config.Jobs.RevokeExpiredAccessInterval,
 			Func:    jobHandler.RevokeExpiredAppeals,
 		},
 		{
-			CronTab: c.Jobs.ExpiringAccessNotificationInterval,
+			CronTab: config.Jobs.ExpiringAccessNotificationInterval,
 			Func:    jobHandler.AppealExpirationReminder,
 		},
 	}
@@ -167,20 +109,20 @@ func RunServer(c *Config) error {
 	)
 	protoAdapter := handlerv1beta1.NewAdapter()
 	guardianv1beta1.RegisterGuardianServiceServer(grpcServer, handlerv1beta1.NewGRPCServer(
-		resourceService,
-		providerService,
-		policyService,
-		appealService,
-		approvalService,
+		services.ResourceService,
+		services.ProviderService,
+		services.PolicyService,
+		services.AppealService,
+		services.ApprovalService,
 		protoAdapter,
-		c.AuthenticatedUserHeaderKey,
+		config.AuthenticatedUserHeaderKey,
 	))
 
 	// init http proxy
 	timeoutGrpcDialCtx, grpcDialCancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer grpcDialCancel()
 
-	headerMatcher := makeHeaderMatcher(c)
+	headerMatcher := makeHeaderMatcher(config)
 	gwmux := runtime.NewServeMux(
 		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
 		runtime.WithIncomingHeaderMatcher(headerMatcher),
@@ -193,7 +135,7 @@ func RunServer(c *Config) error {
 			},
 		}),
 	)
-	address := fmt.Sprintf(":%d", c.Port)
+	address := fmt.Sprintf(":%d", config.Port)
 	grpcConn, err := grpc.DialContext(timeoutGrpcDialCtx, address, grpc.WithInsecure())
 	if err != nil {
 		return err
@@ -220,7 +162,7 @@ func RunServer(c *Config) error {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	logger.Info(fmt.Sprintf("server running on port: %d", c.Port))
+	logger.Info(fmt.Sprintf("server running on port: %d", config.Port))
 	if err := server.ListenAndServe(); err != nil {
 		if err != http.ErrServerClosed {
 			return err
