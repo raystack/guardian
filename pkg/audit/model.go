@@ -8,10 +8,10 @@ type AppDetails struct {
 }
 
 type Log struct {
-	TraceID   string
 	Timestamp time.Time
 	Action    string
 	Actor     string
 	App       *AppDetails
 	Data      interface{}
+	Metadata  map[string]interface{}
 }

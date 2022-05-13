@@ -12,11 +12,11 @@ import (
 )
 
 type auditPostgresModel struct {
-	TraceID   string
 	Timestamp time.Time
 	Action    string
 	Actor     string
 	Data      datatypes.JSON
+	Metadata  datatypes.JSON
 	App       datatypes.JSON
 }
 
@@ -44,16 +44,20 @@ func (r *PostgresRepository) Insert(ctx context.Context, l *audit.Log) error {
 	if err != nil {
 		return fmt.Errorf("marshaling data: %w", err)
 	}
+	metadata, err := json.Marshal(l.Metadata)
+	if err != nil {
+		return fmt.Errorf("marshaling metadata: %w", err)
+	}
 	app, err := json.Marshal(l.App)
 	if err != nil {
 		return fmt.Errorf("marshaling app: %w", err)
 	}
 	m := &auditPostgresModel{
-		TraceID:   l.TraceID,
 		Timestamp: l.Timestamp,
 		Action:    l.Action,
 		Actor:     l.Actor,
 		Data:      datatypes.JSON(data),
+		Metadata:  datatypes.JSON(metadata),
 		App:       datatypes.JSON(app),
 	}
 

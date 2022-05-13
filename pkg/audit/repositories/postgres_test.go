@@ -49,7 +49,7 @@ func (s *PostgresRepositoryTestSuite) TestInit() {
 		s.setupTest()
 		defer s.cleanupTest()
 
-		s.dbMock.ExpectExec(regexp.QuoteMeta(`CREATE TABLE "audit_logs" ("trace_id" text,"timestamp" timestamptz,"action" text,"actor" text,"data" JSONB,"app" JSONB)`)).
+		s.dbMock.ExpectExec(regexp.QuoteMeta(`CREATE TABLE "audit_logs" ("timestamp" timestamptz,"action" text,"actor" text,"data" JSONB,"metadata" JSONB,"app" JSONB)`)).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := s.repository.Init(context.Background())
@@ -77,8 +77,8 @@ func (s *PostgresRepositoryTestSuite) TestInsert() {
 
 		l := &audit.Log{}
 
-		s.dbMock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "audit_logs" ("trace_id","timestamp","action","actor","data","app") VALUES ($1,$2,$3,$4,$5,$6)`)).
-			WithArgs(l.TraceID, l.Timestamp, l.Action, l.Actor, `null`, `null`).
+		s.dbMock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "audit_logs" ("timestamp","action","actor","data","metadata","app") VALUES ($1,$2,$3,$4,$5,$6)`)).
+			WithArgs(l.Timestamp, l.Action, l.Actor, `null`, `null`, `null`).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		err := s.repository.Insert(context.Background(), l)
@@ -96,6 +96,20 @@ func (s *PostgresRepositoryTestSuite) TestInsert() {
 
 		err := s.repository.Insert(context.Background(), l)
 		s.EqualError(err, "marshaling data: json: unsupported type: chan int")
+	})
+
+	s.Run("should return error if metadata marshaling returns error", func() {
+		s.setupTest()
+		defer s.cleanupTest()
+
+		l := &audit.Log{
+			Metadata: map[string]interface{}{
+				"foo": make(chan int),
+			},
+		}
+
+		err := s.repository.Insert(context.Background(), l)
+		s.EqualError(err, "marshaling metadata: json: unsupported type: chan int")
 	})
 
 	s.Run("should return error if db insert returns error", func() {

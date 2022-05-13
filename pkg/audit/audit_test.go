@@ -46,11 +46,11 @@ func (s *AuditTestSuite) TestLog() {
 		s.setupTest()
 
 		s.mockRepository.On("Insert", mock.Anything, &audit.Log{
-			TraceID:   "test-trace-id",
 			Timestamp: s.now,
 			Action:    "action",
 			Actor:     "user@example.com",
 			Data:      map[string]interface{}{"foo": "bar"},
+			Metadata:  map[string]interface{}{"trace_id": "test-trace-id"},
 			App: &audit.AppDetails{
 				Name:    "guardian_test",
 				Version: "1",
@@ -71,7 +71,7 @@ func (s *AuditTestSuite) TestLog() {
 
 		s.mockRepository.On("Insert", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 			l := args.Get(1).(*audit.Log)
-			s.Empty(l.TraceID)
+			s.Empty(l.Metadata["trace_id"])
 		}).Return(nil)
 
 		err := s.service.Log(context.Background(), "", nil)
