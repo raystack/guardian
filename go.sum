@@ -425,8 +425,8 @@ github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRW
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/odpf/salt v0.0.0-20220123021549-36df4f993e88 h1:dLvtI0NXrULP6qc+tuPWDF89oGC4+MQGRVfPWxRCwSA=
-github.com/odpf/salt v0.0.0-20220123021549-36df4f993e88/go.mod h1:OHUG5EaKwQ7vbDP0cH2yj69xrMTc8tOsdARdwrvMJKo=
+github.com/odpf/salt v0.0.0-20220513084108-76bef6cde0d7 h1:r13wXvLGfOl5K1M2Rq2maqwLCOxPM43CEsJOpI+BJiw=
+github.com/odpf/salt v0.0.0-20220513084108-76bef6cde0d7/go.mod h1:ZY9yXIHZYlYbQGKV5WSGmyYnw+NtQEzl6z0Tj0dto8M=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=

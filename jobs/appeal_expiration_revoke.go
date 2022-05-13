@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/pkg/audit"
+	"github.com/odpf/salt/audit"
 )
 
 func (h *handler) RevokeExpiredAppeals(ctx context.Context) error {
