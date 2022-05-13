@@ -90,11 +90,16 @@ func runJobCmd() *cobra.Command {
 				"appeal_expiration_revocation": handler.RevokeExpiredAppeals,
 			}
 
-			job := jobs[args[0]]
+			jobName := args[0]
+			job := jobs[jobName]
 			if job == nil {
-				return fmt.Errorf("invalid job name: %s", args[0])
+				return fmt.Errorf("invalid job name: %s", jobName)
 			}
-			return job()
+			if err := job(); err != nil {
+				return fmt.Errorf(`failed to run job "%s": %w`, jobName, err)
+			}
+
+			return nil
 		},
 	}
 
