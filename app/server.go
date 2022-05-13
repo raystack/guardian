@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -96,12 +97,18 @@ func RunServer(c *Config) error {
 			Version: Version,
 		}),
 		audit.WithTraceIDExtractor(func(ctx context.Context) string {
+			var traceID string
 			if md, ok := metadata.FromIncomingContext(ctx); ok {
 				if rawTraceID := md.Get(c.AuditLogTraceIDHeaderKey); len(rawTraceID) > 0 {
-					return rawTraceID[0]
+					traceID = rawTraceID[0]
 				}
 			}
-			return "" // TODO: decide if trace ID should auto-generate on empty
+
+			if traceID == "" {
+				traceID = uuid.New().String()
+			}
+
+			return traceID
 		}),
 	)
 
