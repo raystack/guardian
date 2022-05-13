@@ -12,29 +12,16 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/core/appeal"
-	"github.com/odpf/guardian/core/approval"
-	"github.com/odpf/guardian/core/policy"
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/core/resource"
-	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/crypto"
 	"github.com/odpf/guardian/internal/scheduler"
 	"github.com/odpf/guardian/jobs"
-	"github.com/odpf/guardian/plugins/identities"
 	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/guardian/plugins/providers/bigquery"
-	"github.com/odpf/guardian/plugins/providers/gcloudiam"
-	"github.com/odpf/guardian/plugins/providers/grafana"
-	"github.com/odpf/guardian/plugins/providers/metabase"
-	"github.com/odpf/guardian/plugins/providers/tableau"
 	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/salt/audit"
 	audit_repos "github.com/odpf/salt/audit/repositories"
@@ -43,7 +30,6 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -51,110 +37,31 @@ var (
 	ConfigFileName = "config"
 )
 
-type Jobs struct {
-	FetchResourcesInterval             string `mapstructure:"fetch_resources_interval" default:"0 */2 * * *"`
-	RevokeExpiredAccessInterval        string `mapstructure:"revoke_expired_access_interval" default:"*/20 * * * *"`
-	ExpiringAccessNotificationInterval string `mapstructure:"expiring_access_notification_interval" default:"0 9 * * *"`
-}
-
 // RunServer runs the application server
-func RunServer(c *Config) error {
-	store, err := getStore(c)
+func RunServer(config *Config) error {
+	logger := log.NewLogrus(log.LogrusWithLevel(config.LogLevel))
+	crypto := crypto.NewAES(config.EncryptionSecretKeyKey)
+	validator := validator.New()
+	notifier, err := notifiers.NewClient(&config.Notifier)
 	if err != nil {
 		return err
 	}
 
-	logger := log.NewLogrus(log.LogrusWithLevel(c.LogLevel))
-	crypto := crypto.NewAES(c.EncryptionSecretKeyKey)
-	v := validator.New()
-
-	providerRepository := postgres.NewProviderRepository(store.DB())
-	policyRepository := postgres.NewPolicyRepository(store.DB())
-	resourceRepository := postgres.NewResourceRepository(store.DB())
-	appealRepository := postgres.NewAppealRepository(store.DB())
-	approvalRepository := postgres.NewApprovalRepository(store.DB())
-
-	providerClients := []provider.Client{
-		bigquery.NewProvider(domain.ProviderTypeBigQuery, crypto),
-		metabase.NewProvider(domain.ProviderTypeMetabase, crypto),
-		grafana.NewProvider(domain.ProviderTypeGrafana, crypto),
-		tableau.NewProvider(domain.ProviderTypeTableau, crypto),
-		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, crypto),
-	}
-
-	notifier, err := notifiers.NewClient(&c.Notifier)
+	services, err := InitServices(ServiceDeps{
+		Config:    config,
+		Logger:    logger,
+		Validator: validator,
+		Notifier:  notifier,
+		Crypto:    crypto,
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("initializing services: %w", err)
 	}
-
-	iamManager := identities.NewManager(crypto, v)
-
-	auditRepository := audit_repos.NewPostgresRepository(store.DB())
-	auditLogger := audit.New(
-		audit.WithRepository(auditRepository),
-		audit.WithAppDetails(audit.AppDetails{
-			Name:    "guardian",
-			Version: Version,
-		}),
-		audit.WithTraceIDExtractor(func(ctx context.Context) string {
-			var traceID string
-			if md, ok := metadata.FromIncomingContext(ctx); ok {
-				if rawTraceID := md.Get(c.AuditLogTraceIDHeaderKey); len(rawTraceID) > 0 {
-					traceID = rawTraceID[0]
-				}
-			}
-
-			if traceID == "" {
-				traceID = uuid.New().String()
-			}
-
-			return traceID
-		}),
-	)
-
-	resourceService := resource.NewService(resource.ServiceDeps{
-		Repository:  resourceRepository,
-		Logger:      logger,
-		AuditLogger: auditLogger,
-	})
-	providerService := provider.NewService(provider.ServiceDeps{
-		Repository:      providerRepository,
-		ResourceService: resourceService,
-		Clients:         providerClients,
-		Validator:       v,
-		Logger:          logger,
-		AuditLogger:     auditLogger,
-	})
-	policyService := policy.NewService(policy.ServiceDeps{
-		Repository:      policyRepository,
-		ResourceService: resourceService,
-		ProviderService: providerService,
-		IAMManager:      iamManager,
-		Validator:       v,
-		Logger:          logger,
-		AuditLogger:     auditLogger,
-	})
-	approvalService := approval.NewService(approval.ServiceDeps{
-		Repository:    approvalRepository,
-		PolicyService: policyService,
-	})
-	appealService := appeal.NewService(appeal.ServiceDeps{
-		Repository:      appealRepository,
-		ResourceService: resourceService,
-		ApprovalService: approvalService,
-		ProviderService: providerService,
-		PolicyService:   policyService,
-		IAMManager:      iamManager,
-		Notifier:        notifier,
-		Validator:       v,
-		Logger:          logger,
-		AuditLogger:     auditLogger,
-	})
 
 	jobHandler := jobs.NewHandler(
 		logger,
-		appealService,
-		providerService,
+		services.AppealService,
+		services.ProviderService,
 		notifier,
 	)
 
@@ -162,15 +69,15 @@ func RunServer(c *Config) error {
 	// TODO: allow timeout configuration for job handler context
 	tasks := []*scheduler.Task{
 		{
-			CronTab: c.Jobs.FetchResourcesInterval,
+			CronTab: config.Jobs.FetchResourcesInterval,
 			Func:    func() error { return jobHandler.FetchResources(context.Background()) },
 		},
 		{
-			CronTab: c.Jobs.RevokeExpiredAccessInterval,
+			CronTab: config.Jobs.RevokeExpiredAccessInterval,
 			Func:    func() error { return jobHandler.RevokeExpiredAppeals(context.Background()) },
 		},
 		{
-			CronTab: c.Jobs.ExpiringAccessNotificationInterval,
+			CronTab: config.Jobs.ExpiringAccessNotificationInterval,
 			Func:    func() error { return jobHandler.AppealExpirationReminder(context.Background()) },
 		},
 	}
@@ -194,25 +101,25 @@ func RunServer(c *Config) error {
 				}),
 			),
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
-			audit.UnaryServerInterceptor(c.AuthenticatedUserHeaderKey),
+			audit.UnaryServerInterceptor(config.AuthenticatedUserHeaderKey),
 		)),
 	)
 	protoAdapter := handlerv1beta1.NewAdapter()
 	guardianv1beta1.RegisterGuardianServiceServer(grpcServer, handlerv1beta1.NewGRPCServer(
-		resourceService,
-		providerService,
-		policyService,
-		appealService,
-		approvalService,
+		services.ResourceService,
+		services.ProviderService,
+		services.PolicyService,
+		services.AppealService,
+		services.ApprovalService,
 		protoAdapter,
-		c.AuthenticatedUserHeaderKey,
+		config.AuthenticatedUserHeaderKey,
 	))
 
 	// init http proxy
 	timeoutGrpcDialCtx, grpcDialCancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer grpcDialCancel()
 
-	headerMatcher := makeHeaderMatcher(c)
+	headerMatcher := makeHeaderMatcher(config)
 	gwmux := runtime.NewServeMux(
 		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
 		runtime.WithIncomingHeaderMatcher(headerMatcher),
@@ -225,7 +132,7 @@ func RunServer(c *Config) error {
 			},
 		}),
 	)
-	address := fmt.Sprintf(":%d", c.Port)
+	address := fmt.Sprintf(":%d", config.Port)
 	grpcConn, err := grpc.DialContext(timeoutGrpcDialCtx, address, grpc.WithInsecure())
 	if err != nil {
 		return err
@@ -252,7 +159,7 @@ func RunServer(c *Config) error {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	logger.Info(fmt.Sprintf("server running on port: %d", c.Port))
+	logger.Info(fmt.Sprintf("server running on port: %d", config.Port))
 	if err := server.ListenAndServe(); err != nil {
 		if err != http.ErrServerClosed {
 			return err
