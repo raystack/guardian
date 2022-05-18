@@ -138,7 +138,7 @@ func (s *Service) Update(p *domain.Policy) error {
 		return fmt.Errorf("policy validation: %w", err)
 	}
 
-	latestPolicy, err := s.GetOne(p.ID, p.Version)
+	latestPolicy, err := s.GetOne(p.ID, 0)
 	if err != nil {
 		return err
 	}
