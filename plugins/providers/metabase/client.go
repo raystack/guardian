@@ -185,7 +185,7 @@ func (c *client) GetDatabases() ([]*Database, error) {
 	if err != nil {
 		return databases, err
 	}
-	c.logger.Info(fmt.Sprintf("Fetch total %d database from request: %v", len(databases), req.URL))
+	c.logger.Info("Fetch database from request", "total", len(databases), req.URL)
 	return databases, err
 }
 
@@ -199,7 +199,7 @@ func (c *client) GetCollections() ([]*Collection, error) {
 	if _, err := c.do(req, &collection); err != nil {
 		return nil, err
 	}
-	c.logger.Info(fmt.Sprintf("Fetch total %d collections from request: %v", len(collection), req.URL))
+	c.logger.Info("Fetch collections from request", "total", len(collection), req.URL)
 	return collection, nil
 }
 
@@ -241,7 +241,7 @@ func (c *client) fetchGroups(wg *sync.WaitGroup, groups *[]*Group, err error) {
 	if err != nil {
 		return
 	}
-	c.logger.Info(fmt.Sprintf("Fetch total %d groups from request: %v", len(*groups), req.URL))
+	c.logger.Info("Fetch groups from request", "total", len(*groups), req.URL)
 }
 
 func (c *client) fetchDatabasePermissions(wg *sync.WaitGroup, resourceGroups ResourceGroupDetails, err error) {
