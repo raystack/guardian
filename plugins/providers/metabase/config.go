@@ -11,8 +11,11 @@ import (
 )
 
 const (
-	DatabaseRoleViewer = "schemas:all"
-	DatabaseRoleEditor = "native:write"
+	DatabaseRoleViewer   = "schemas:all"
+	DatabaseRoleEditor   = "native:write"
+	CollectionRoleViewer = "read"
+	CollectionRoleCurate = "write"
+	TableRoleViewer      = "all"
 
 	AccountTypeUser = "user"
 )
@@ -136,7 +139,7 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 }
 
 func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
-	resourceTypeValidation := fmt.Sprintf("oneof=%s %s", ResourceTypeCollection, ResourceTypeDatabase)
+	resourceTypeValidation := fmt.Sprintf("oneof=%s %s %s %s", ResourceTypeCollection, ResourceTypeDatabase, ResourceTypeTable, ResourceTypeGroup)
 	if err := c.validator.Var(resource.Type, resourceTypeValidation); err != nil {
 		return err
 	}
@@ -170,6 +173,10 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 		nameValidation = "oneof=schemas:all native:write"
 	} else if resourceType == ResourceTypeCollection {
 		nameValidation = "oneof=read write"
+	} else if resourceType == ResourceTypeTable {
+		nameValidation = "oneof=all"
+	} else if resourceType == ResourceTypeGroup {
+		nameValidation = "len=0"
 	}
 
 	if err := c.validator.Var(pc, nameValidation); err != nil {

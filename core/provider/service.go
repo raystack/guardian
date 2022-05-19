@@ -209,7 +209,7 @@ func (s *Service) ValidateAppeal(a *domain.Appeal, p *domain.Provider) error {
 		return err
 	}
 
-	isRoleExists := false
+	isRoleExists := len(roles) == 0
 	for _, role := range roles {
 		if a.Role == role.ID {
 			isRoleExists = true

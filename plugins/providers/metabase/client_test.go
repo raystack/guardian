@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/odpf/salt/log"
+
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/providers/metabase"
 	"github.com/stretchr/testify/assert"
@@ -13,8 +15,8 @@ import (
 func TestNewClient(t *testing.T) {
 	t.Run("should return error if config is invalid", func(t *testing.T) {
 		invalidConfig := &metabase.ClientConfig{}
-
-		actualClient, actualError := metabase.NewClient(invalidConfig)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		actualClient, actualError := metabase.NewClient(invalidConfig, logger)
 
 		assert.Nil(t, actualClient)
 		assert.Error(t, actualError)
@@ -26,8 +28,8 @@ func TestNewClient(t *testing.T) {
 			Password: "test-password",
 			Host:     "invalid-url",
 		}
-
-		actualClient, actualError := metabase.NewClient(invalidHostConfig)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		actualClient, actualError := metabase.NewClient(invalidHostConfig, logger)
 
 		assert.Nil(t, actualClient)
 		assert.Error(t, actualError)
@@ -41,11 +43,11 @@ func TestNewClient(t *testing.T) {
 			Host:       "http://localhost",
 			HTTPClient: mockHttpClient,
 		}
-
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
 		expectedError := errors.New("request error")
 		mockHttpClient.On("Do", mock.Anything).Return(nil, expectedError).Once()
 
-		actualClient, actualError := metabase.NewClient(config)
+		actualClient, actualError := metabase.NewClient(config, logger)
 
 		mockHttpClient.AssertExpectations(t)
 		assert.Nil(t, actualClient)

@@ -51,7 +51,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 
 	providerClients := []providers.Client{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, deps.Crypto),
-		metabase.NewProvider(domain.ProviderTypeMetabase, deps.Crypto),
+		metabase.NewProvider(domain.ProviderTypeMetabase, deps.Crypto, deps.Logger),
 		grafana.NewProvider(domain.ProviderTypeGrafana, deps.Crypto),
 		tableau.NewProvider(domain.ProviderTypeTableau, deps.Crypto),
 		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, deps.Crypto),
