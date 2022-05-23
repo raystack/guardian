@@ -49,7 +49,7 @@ func New(cfg *Config) *cobra.Command {
 	cmd.AddCommand(VersionCmd())
 
 	//Migration command
-	cmd.AddCommand(MigrationCmd())
+	cmd.AddCommand(MigrationCmd(cliConfig))
 
 	// Help topics
 	cmdx.SetHelp(cmd)

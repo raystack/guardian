@@ -2,26 +2,27 @@ package metabase
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/odpf/guardian/domain"
 	. "github.com/odpf/guardian/plugins/migrations"
-	"strconv"
 )
 
 type migration struct {
-	typeName       string
-	providerConfig domain.ProviderConfig
-	resources      []domain.Resource
-	pendingAppeals []domain.Appeal
+	typeName        string
+	providerConfig  *domain.ProviderConfig
+	resources       []domain.Resource
+	excludedAppeals []domain.Appeal
 }
 
-const typeName = "metabase"
+const typeName = Metabase
 
-func NewMigration(providerConfig domain.ProviderConfig, resources []domain.Resource, pendingAppeals []domain.Appeal) *migration {
+func NewMigration(providerConfig *domain.ProviderConfig, resources []domain.Resource, excludedAppeals []domain.Appeal) *migration {
 	return &migration{
-		typeName:       typeName,
-		providerConfig: providerConfig,
-		resources:      resources,
-		pendingAppeals: pendingAppeals,
+		typeName:        typeName,
+		providerConfig:  providerConfig,
+		resources:       resources,
+		excludedAppeals: excludedAppeals,
 	}
 }
 
@@ -37,7 +38,7 @@ func (p *migration) PopulateAccess() ([]AppealRequest, error) {
 		resourceMap[resource.URN] = resource
 	}
 
-	for _, appeal := range p.pendingAppeals {
+	for _, appeal := range p.excludedAppeals {
 		if m, ok := appealMap[appeal.ResourceID]; ok {
 			appealMap[appeal.ResourceID] = append(m, appeal)
 		} else {
@@ -47,44 +48,47 @@ func (p *migration) PopulateAccess() ([]AppealRequest, error) {
 
 	credentials := p.providerConfig.Credentials.(map[string]string)
 	c, err := NewClient(&ClientConfig{
-		Host:       credentials["host"],
-		Username:   credentials["username"],
-		Password:   credentials["password"],
+		Host:       credentials[Host],
+		Username:   credentials[Username],
+		Password:   credentials[Password],
 		HTTPClient: nil,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	userMap := make(map[int]user, 0)
-	groupMap := make(map[int]group, 0)
 	users, err := c.getUsers()
+	if err != nil {
+		return nil, err
+	}
 
 	for _, user := range users {
 		userMap[user.ID] = user
 	}
 
-	groups, err := c.getGroups()
-	for _, group := range groups {
-		groupMap[group.ID] = group
+	membership, err := c.getMembership()
+	if err != nil {
+		return nil, err
 	}
 
-	membership, err := c.getMembership()
 	appeals := make([]AppealRequest, 0)
 	for userID, members := range membership {
 		for _, m := range members {
 			userIdInt, _ := strconv.Atoi(userID)
 			if user, ok := userMap[userIdInt]; ok {
-				resourceUrn := fmt.Sprintf("group:%d", m.GroupId)
+				resourceUrn := fmt.Sprintf("%s:%d", Group, m.GroupId)
 				if resource, ok := resourceMap[resourceUrn]; ok {
 					if _, ok := appealMap[resource.ID]; !ok {
 						appeal := AppealRequest{
 							AccountID: user.Email,
 							User:      user.Email,
-							Resource:  ResourceRequest{ID: resource.ID, Duration: "30d"},
+							Resource:  ResourceRequest{ID: resource.ID, Name: resource.Name, Role: Member, Duration: DefaultDuration},
 						}
 						appeals = append(appeals, appeal)
 					}
 				}
 			}
-
 		}
 	}
 	return appeals, err

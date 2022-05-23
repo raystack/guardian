@@ -3,11 +3,11 @@ package metabase
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"github.com/go-playground/validator/v10"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type ClientConfig struct {
@@ -21,12 +21,6 @@ type user struct {
 	ID           int    `json:"id"`
 	Email        string `json:"email"`
 	MembershipID int    `json:"membership_id"`
-}
-
-type group struct {
-	ID      int    `json:"id,omitempty"`
-	Name    string `json:"name"`
-	Members []user `json:"members"`
 }
 
 type member struct {
@@ -47,23 +41,6 @@ type SessionResponse struct {
 type databasePermission struct {
 	Native  string `json:"native,omitempty" mapstructure:"native"`
 	Schemas string `json:"schemas" mapstructure:"schemas"`
-}
-
-type databaseGraph struct {
-	Revision int `json:"revision"`
-	// Groups is a map[group_id]map[database_id]databasePermission
-	Groups map[string]map[string]databasePermission `json:"groups"`
-}
-
-type collectionGraph struct {
-	Revision int `json:"revision"`
-	// Groups is a map[group_id]map[database_id]role string
-	Groups map[string]map[string]string `json:"groups"`
-}
-
-type membershipRequest struct {
-	GroupID int `json:"group_id"`
-	UserID  int `json:"user_id"`
 }
 
 var (
@@ -134,21 +111,6 @@ func (c *client) getUsers() ([]user, error) {
 	return users, nil
 }
 
-func (c *client) getGroups() ([]group, error) {
-	req, err := c.newRequest(http.MethodGet, "/api/permissions/group", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var groups []group
-
-	if _, err := c.do(req, &groups); err != nil {
-		return nil, err
-	}
-
-	return groups, nil
-}
-
 func (c *client) getMembership() (map[string][]member, error) {
 	req, err := c.newRequest(http.MethodGet, "/api/permissions/membership", nil)
 	if err != nil {
@@ -180,50 +142,6 @@ func (c *client) getSessionToken() (string, error) {
 	}
 
 	return sessionResponse.ID, nil
-}
-
-func (c *client) getCollectionAccess() (*collectionGraph, error) {
-	req, err := c.newRequest(http.MethodGet, "/api/collection/graph", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var graph collectionGraph
-	if _, err := c.do(req, &graph); err != nil {
-		return nil, err
-	}
-
-	return &graph, nil
-}
-
-func (c *client) getDatabaseAccess() (*databaseGraph, error) {
-	req, err := c.newRequest(http.MethodGet, "/api/permissions/graph", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var dbGraph databaseGraph
-	if _, err := c.do(req, &dbGraph); err != nil {
-		return nil, err
-	}
-
-	return &dbGraph, nil
-}
-
-func (c *client) getGroup(id int) (*group, error) {
-	url := fmt.Sprintf("/api/permissions/group/%d", id)
-	req, err := c.newRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var group group
-
-	if _, err := c.do(req, &group); err != nil {
-		return nil, err
-	}
-
-	return &group, nil
 }
 
 func (c *client) newRequest(method, path string, body interface{}) (*http.Request, error) {
