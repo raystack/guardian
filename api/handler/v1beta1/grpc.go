@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type ProtoAdapter interface {
@@ -184,6 +185,17 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.Up
 	return &guardianv1beta1.UpdateProviderResponse{
 		Provider: providerProto,
 	}, nil
+}
+
+func (s *GRPCServer) DeleteProvider(ctx context.Context, req *guardianv1beta1.DeleteProviderRequest) (*emptypb.Empty, error) {
+	if err := s.providerService.Delete(req.GetId()); err != nil {
+		if errors.Is(err, provider.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "provider not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to delete provider: %v", err)
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1beta1.ListRolesRequest) (*guardianv1beta1.ListRolesResponse, error) {
@@ -361,20 +373,31 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *guardianv1beta1.Up
 	r.ID = req.GetId()
 
 	if err := s.resourceService.Update(r); err != nil {
+		if errors.Is(err, resource.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "resource not found")
+		}
 		return nil, status.Errorf(codes.Internal, "failed to update resource: %v", err)
 	}
 
 	resourceProto, err := s.adapter.ToResourceProto(r)
 	if err != nil {
-		if errors.Is(err, resource.ErrRecordNotFound) {
-			return nil, status.Error(codes.NotFound, "resource not found")
-		}
 		return nil, status.Errorf(codes.Internal, "failed to parse resource: %v", err)
 	}
 
 	return &guardianv1beta1.UpdateResourceResponse{
 		Resource: resourceProto,
 	}, nil
+}
+
+func (s *GRPCServer) DeleteResource(ctx context.Context, req *guardianv1beta1.DeleteResourceRequest) (*emptypb.Empty, error) {
+	if err := s.resourceService.Delete(req.GetId()); err != nil {
+		if errors.Is(err, resource.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "resource not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to update resource: %v", err)
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.ListUserAppealsRequest) (*guardianv1beta1.ListUserAppealsResponse, error) {

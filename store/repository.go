@@ -35,4 +35,5 @@ type ResourceRepository interface {
 	GetOne(id string) (*domain.Resource, error)
 	BulkUpsert([]*domain.Resource) error
 	Update(*domain.Resource) error
+	Delete(id string) error
 }

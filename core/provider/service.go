@@ -276,6 +276,11 @@ func (s *Service) RevokeAccess(a *domain.Appeal) error {
 	// handle the resolution for the appeal status
 }
 
+func (s *Service) Delete(id string) error {
+	return s.providerRepository.Delete(id)
+	// TODO: delete related resources
+}
+
 func (s *Service) getResources(p *domain.Provider) ([]*domain.Resource, error) {
 	resources := []*domain.Resource{}
 	provider := s.getProvider(p.Type)

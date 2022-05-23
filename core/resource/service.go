@@ -85,3 +85,7 @@ func (s *Service) Get(ri *domain.ResourceIdentifier) (*domain.Resource, error) {
 	}
 	return resource, nil
 }
+
+func (s *Service) Delete(id string) error {
+	return s.repo.Delete(id)
+}

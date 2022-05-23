@@ -178,3 +178,19 @@ func (r *ResourceRepository) Update(res *domain.Resource) error {
 		return nil
 	})
 }
+
+func (r *ResourceRepository) Delete(id string) error {
+	if id == "" {
+		return resource.ErrEmptyIDParam
+	}
+
+	result := r.db.Where("id = ?", id).Delete(&model.Resource{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return resource.ErrRecordNotFound
+	}
+
+	return nil
+}
