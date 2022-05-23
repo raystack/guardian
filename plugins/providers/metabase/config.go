@@ -176,7 +176,7 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 	} else if resourceType == ResourceTypeTable {
 		nameValidation = "oneof=all"
 	} else if resourceType == ResourceTypeGroup {
-		nameValidation = "len=0"
+		nameValidation = "oneof=member"
 	}
 
 	if err := c.validator.Var(pc, nameValidation); err != nil {
