@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type ProtoAdapter interface {
@@ -187,7 +186,7 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.Up
 	}, nil
 }
 
-func (s *GRPCServer) DeleteProvider(ctx context.Context, req *guardianv1beta1.DeleteProviderRequest) (*emptypb.Empty, error) {
+func (s *GRPCServer) DeleteProvider(ctx context.Context, req *guardianv1beta1.DeleteProviderRequest) (*guardianv1beta1.DeleteProviderResponse, error) {
 	if err := s.providerService.Delete(req.GetId()); err != nil {
 		if errors.Is(err, provider.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "provider not found")
@@ -195,7 +194,7 @@ func (s *GRPCServer) DeleteProvider(ctx context.Context, req *guardianv1beta1.De
 		return nil, status.Errorf(codes.Internal, "failed to delete provider: %v", err)
 	}
 
-	return &emptypb.Empty{}, nil
+	return &guardianv1beta1.DeleteProviderResponse{}, nil
 }
 
 func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1beta1.ListRolesRequest) (*guardianv1beta1.ListRolesResponse, error) {
@@ -389,7 +388,7 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *guardianv1beta1.Up
 	}, nil
 }
 
-func (s *GRPCServer) DeleteResource(ctx context.Context, req *guardianv1beta1.DeleteResourceRequest) (*emptypb.Empty, error) {
+func (s *GRPCServer) DeleteResource(ctx context.Context, req *guardianv1beta1.DeleteResourceRequest) (*guardianv1beta1.DeleteResourceResponse, error) {
 	if err := s.resourceService.Delete(req.GetId()); err != nil {
 		if errors.Is(err, resource.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "resource not found")
@@ -397,7 +396,7 @@ func (s *GRPCServer) DeleteResource(ctx context.Context, req *guardianv1beta1.De
 		return nil, status.Errorf(codes.Internal, "failed to update resource: %v", err)
 	}
 
-	return &emptypb.Empty{}, nil
+	return &guardianv1beta1.DeleteResourceResponse{}, nil
 }
 
 func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.ListUserAppealsRequest) (*guardianv1beta1.ListUserAppealsResponse, error) {
