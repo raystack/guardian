@@ -36,4 +36,5 @@ type ResourceRepository interface {
 	BulkUpsert([]*domain.Resource) error
 	Update(*domain.Resource) error
 	Delete(id string) error
+	BatchDelete([]string) error
 }

@@ -194,3 +194,19 @@ func (r *ResourceRepository) Delete(id string) error {
 
 	return nil
 }
+
+func (r *ResourceRepository) BatchDelete(ids []string) error {
+	if ids == nil {
+		return resource.ErrEmptyIDParam
+	}
+
+	result := r.db.Delete(&model.Resource{}, ids)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return resource.ErrRecordNotFound
+	}
+
+	return nil
+}

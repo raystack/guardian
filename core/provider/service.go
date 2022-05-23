@@ -17,6 +17,7 @@ import (
 type resourceService interface {
 	Find(map[string]interface{}) ([]*domain.Resource, error)
 	BulkUpsert([]*domain.Resource) error
+	BatchDelete([]string) error
 }
 
 // Service handling the business logics
@@ -277,8 +278,28 @@ func (s *Service) RevokeAccess(a *domain.Appeal) error {
 }
 
 func (s *Service) Delete(id string) error {
+	p, err := s.providerRepository.GetByID(id)
+	if err != nil {
+		return fmt.Errorf("getting provider details: %w", err)
+	}
+
+	resources, err := s.resourceService.Find(map[string]interface{}{
+		"provider_type": p.Type,
+		"provider_urn":  p.URN,
+	})
+	if err != nil {
+		return fmt.Errorf("retrieving related resources: %w", err)
+	}
+	var resourceIds []string
+	for _, r := range resources {
+		resourceIds = append(resourceIds, r.ID)
+	}
+	// TODO: execute in transaction
+	if err := s.resourceService.BatchDelete(resourceIds); err != nil {
+		return fmt.Errorf("batch deleting resources: %w", err)
+	}
+
 	return s.providerRepository.Delete(id)
-	// TODO: delete related resources
 }
 
 func (s *Service) getResources(p *domain.Provider) ([]*domain.Resource, error) {
