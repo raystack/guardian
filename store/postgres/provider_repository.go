@@ -171,5 +171,17 @@ func (r *ProviderRepository) Update(p *domain.Provider) error {
 
 // Delete record by ID
 func (r *ProviderRepository) Delete(id string) error {
+	if id == "" {
+		return provider.ErrEmptyIDParam
+	}
+
+	result := r.db.Where("id = ?", id).Delete(&model.Provider{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return provider.ErrRecordNotFound
+	}
+
 	return nil
 }

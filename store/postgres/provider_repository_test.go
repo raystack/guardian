@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/store/postgres"
+	"github.com/odpf/guardian/utils"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 )
@@ -250,6 +251,45 @@ func (s *ProviderRepositoryTestSuite) TestUpdate() {
 
 		s.Nil(err)
 		s.Equal(expectedID, actualID)
+	})
+}
+
+func (s *ProviderRepositoryTestSuite) TestDelete() {
+	s.Run("should return error if ID param is empty", func() {
+		err := s.repository.Delete("")
+
+		s.Error(err)
+		s.ErrorIs(err, provider.ErrEmptyIDParam)
+	})
+
+	s.Run("should return error if db.Delete returns error", func() {
+		expectedError := errors.New("test error")
+		s.dbmock.ExpectExec(".*").WillReturnError(expectedError)
+
+		err := s.repository.Delete("abc")
+
+		s.Error(err)
+		s.ErrorIs(err, expectedError)
+	})
+
+	s.Run("should return error if resource not found", func() {
+		s.dbmock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 0))
+
+		err := s.repository.Delete("abc")
+
+		s.Error(err)
+		s.ErrorIs(err, provider.ErrRecordNotFound)
+	})
+
+	s.Run("should return nil on success", func() {
+		expectedID := "abcd"
+		s.dbmock.ExpectExec(regexp.QuoteMeta(`UPDATE "providers" SET "deleted_at"=$1 WHERE id = $2 AND "providers"."deleted_at" IS NULL`)).
+			WithArgs(utils.AnyTime{}, expectedID).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err := s.repository.Delete(expectedID)
+
+		s.Nil(err)
 	})
 }
 
