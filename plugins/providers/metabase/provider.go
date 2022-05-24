@@ -1,22 +1,27 @@
 package metabase
 
 import (
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 	pv "github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/salt/log"
 )
 
 type provider struct {
 	typeName string
 	Clients  map[string]MetabaseClient
 	crypto   domain.Crypto
+	logger   log.Logger
 }
 
-func NewProvider(typeName string, crypto domain.Crypto) *provider {
+func NewProvider(typeName string, crypto domain.Crypto, logger log.Logger) *provider {
 	return &provider{
 		typeName: typeName,
 		Clients:  map[string]MetabaseClient{},
 		crypto:   crypto,
+		logger:   logger,
 	}
 }
 
@@ -45,40 +50,151 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
-	var resourceTypes []string
+	var resourceTypes = make(map[string]bool, 0)
 	for _, rc := range pc.Resources {
-		resourceTypes = append(resourceTypes, rc.Type)
+		resourceTypes[rc.Type] = true
 	}
 
 	resources := []*domain.Resource{}
 
-	if containsString(resourceTypes, ResourceTypeDatabase) {
-		databases, err := client.GetDatabases()
+	var databases []*Database
+	var collections []*Collection
+	if _, ok := resourceTypes[ResourceTypeDatabase]; ok {
+		databases, err = client.GetDatabases()
 		if err != nil {
 			return nil, err
 		}
-		for _, d := range databases {
-			db := d.ToDomain()
-			db.ProviderType = pc.Type
-			db.ProviderURN = pc.URN
-			resources = append(resources, db)
+		resources = p.addDatabases(pc, databases, resources)
+	}
+
+	if _, ok := resourceTypes[ResourceTypeTable]; ok {
+		if databases == nil {
+			databases, err = client.GetDatabases()
+		}
+		if err != nil {
+			return nil, err
+		}
+		resources = p.addTables(pc, databases, resources)
+	}
+
+	if _, ok := resourceTypes[ResourceTypeCollection]; ok {
+		collections, err = client.GetCollections()
+		if err != nil {
+			return nil, err
+		}
+		resources = p.addCollection(pc, collections, resources)
+	}
+
+	groups, databaseResourceGroups, collectionResourceGroups, err := client.GetGroups()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, resource := range resources {
+		if resource.Type == ResourceTypeDatabase || resource.Type == ResourceTypeTable {
+			if groups, ok := databaseResourceGroups[resource.URN]; ok {
+				resource.Details["groups"] = groups
+			}
+		}
+		if resource.Type == ResourceTypeCollection {
+			if groups, ok := collectionResourceGroups[resource.URN]; ok {
+				resource.Details["groups"] = groups
+			}
 		}
 	}
 
-	if containsString(resourceTypes, ResourceTypeCollection) {
-		collections, err := client.GetCollections()
-		if err != nil {
-			return nil, err
+	if _, ok := resourceTypes[ResourceTypeGroup]; ok && resourceTypes[ResourceTypeGroup] {
+		databaseResourceMap := make(map[string]*domain.Resource, 0)
+		collectionResourceMap := make(map[string]*domain.Resource, 0)
+
+		if databases == nil {
+			databases, err = client.GetDatabases()
+			if err != nil {
+				return nil, err
+			}
 		}
-		for _, c := range collections {
-			db := c.ToDomain()
-			db.ProviderType = pc.Type
-			db.ProviderURN = pc.URN
-			resources = append(resources, db)
+		for _, database := range databases {
+			resource := database.ToDomain()
+			databaseResourceMap[resource.URN] = resource
+		}
+
+		if collections == nil {
+			collections, err = client.GetCollections()
+			if err != nil {
+				return nil, err
+			}
+		}
+		for _, collection := range collections {
+			resource := collection.ToDomain()
+			collectionResourceMap[resource.URN] = resource
+		}
+
+		for _, g := range groups {
+			if strings.HasPrefix(g.Name, GuardianGroupPrefix) {
+				continue
+			}
+
+			for _, groupResource := range g.DatabaseResources {
+				resourceId := groupResource.Urn
+				if resource, ok := databaseResourceMap[resourceId]; ok {
+					groupResource.Name = resource.Name
+					groupResource.Type = resource.Type
+				}
+			}
+
+			for _, groupResource := range g.CollectionResources {
+				resourceId := groupResource.Urn
+				if resource, ok := collectionResourceMap[resourceId]; ok {
+					groupResource.Name = resource.Name
+					groupResource.Type = resource.Type
+				}
+			}
+
+			group := g.ToDomain()
+			group.ProviderType = pc.Type
+			group.ProviderURN = pc.URN
+			resources = append(resources, group)
 		}
 	}
 
 	return resources, nil
+}
+
+func (p *provider) addCollection(pc *domain.ProviderConfig, collections []*Collection, resources []*domain.Resource) []*domain.Resource {
+	for _, c := range collections {
+		db := c.ToDomain()
+		db.ProviderType = pc.Type
+		db.ProviderURN = pc.URN
+		resources = append(resources, db)
+	}
+	return resources
+}
+
+func (p *provider) addDatabases(pc *domain.ProviderConfig, databases []*Database, resources []*domain.Resource) []*domain.Resource {
+	for _, d := range databases {
+		db := d.ToDomain()
+		db.ProviderType = pc.Type
+		db.ProviderURN = pc.URN
+		resources = append(resources, db)
+	}
+	return resources
+}
+
+func (p *provider) addTables(pc *domain.ProviderConfig, databases []*Database, resources []*domain.Resource) []*domain.Resource {
+	for _, d := range databases {
+		db := d.ToDomain()
+		db.ProviderType = pc.Type
+		db.ProviderURN = pc.URN
+
+		for _, t := range d.Tables {
+			t.Database = db
+			table := t.ToDomain()
+			table.ProviderType = pc.Type
+			table.ProviderURN = pc.URN
+			resources = append(resources, table)
+		}
+	}
+	return resources
 }
 
 func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
@@ -98,6 +214,16 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return err
 	}
 
+	groups, _, _, err := client.GetGroups()
+	if err != nil {
+		return err
+	}
+
+	groupMap := make(map[string]*Group, 0)
+	for _, group := range groups {
+		groupMap[group.Name] = group
+	}
+
 	if a.Resource.Type == ResourceTypeDatabase {
 		d := new(Database)
 		if err := d.FromDomain(a.Resource); err != nil {
@@ -105,7 +231,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 
 		for _, p := range permissions {
-			if err := client.GrantDatabaseAccess(d, a.AccountID, string(p)); err != nil {
+			if err := client.GrantDatabaseAccess(d, a.AccountID, string(p), groupMap); err != nil {
 				return err
 			}
 		}
@@ -123,6 +249,28 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 			}
 		}
 
+		return nil
+	} else if a.Resource.Type == ResourceTypeGroup {
+		g := new(Group)
+		if err := g.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		if err := client.GrantGroupAccess(g.ID, a.AccountID); err != nil {
+			return err
+		}
+		return nil
+	} else if a.Resource.Type == ResourceTypeTable {
+		t := new(Table)
+		if err := t.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if err := client.GrantTableAccess(t, a.AccountID, string(p), groupMap); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 
@@ -170,6 +318,29 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		}
 
 		return nil
+	} else if a.Resource.Type == ResourceTypeGroup {
+		g := new(Group)
+		if err := g.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		if err := client.RevokeGroupAccess(g.ID, a.AccountID); err != nil {
+			return err
+		}
+
+		return nil
+	} else if a.Resource.Type == ResourceTypeTable {
+		t := new(Table)
+		if err := t.FromDomain(a.Resource); err != nil {
+			return err
+		}
+
+		for _, p := range permissions {
+			if err := client.RevokeTableAccess(t, a.AccountID, string(p)); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	return ErrInvalidResourceType
@@ -197,7 +368,7 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Metab
 		Host:     credentials.Host,
 		Username: credentials.Username,
 		Password: credentials.Password,
-	})
+	}, p.logger)
 	if err != nil {
 		return nil, err
 	}
@@ -217,13 +388,18 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 		return nil, ErrInvalidResourceType
 	}
 
-	var role *domain.Role
-	for _, r := range resourceConfig.Roles {
-		if r.ID == a.Role {
+	roles := resourceConfig.Roles
+	role := &domain.Role{}
+	isRoleExists := len(roles) == 0
+	for _, r := range roles {
+		if a.Role == r.ID {
+			isRoleExists = true
 			role = r
+			break
 		}
 	}
-	if role == nil {
+
+	if !isRoleExists {
 		return nil, ErrInvalidRole
 	}
 
@@ -238,13 +414,4 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 	}
 
 	return permissions, nil
-}
-
-func containsString(arr []string, v string) bool {
-	for _, item := range arr {
-		if item == v {
-			return true
-		}
-	}
-	return false
 }

@@ -72,6 +72,22 @@ resources:
         name: Editor
         permissions:
           - write
+  - type: table
+    policy:
+      id: policy_id
+      version: 1
+    roles:
+      - id: viewer
+        name: Viewer
+        permissions:
+          - all
+  - type: group
+    policy:
+      id: policy_id
+      version: 1
+    roles:
+      - id: member
+        name: Member
 ```
 
 ### `MetabaseCredentials`
@@ -85,10 +101,12 @@ resources:
 ### `MetabaseResourceType`
 
 - `database`
+- `table`
 - `collection`
+- `group`
 
 ### `MetabaseResourcePermission`
 
-| Type               | Details                                                                                                                                                                                                                                                  |
-| :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Required. `string` | Metabase permission mapping **Possible values:** - `database`: `schemas:all` \(read table\), `native:write` \(run SQL query\) **Note**: Metabase requires `schemas:all` permission for `native:write` to be able to work - `collection`: `read`, `write` |
+| Type               | Details                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| :----------------- |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Required. `string` | Metabase permission mapping **Possible values:** - `database`: `schemas:all` \(read table\), `native:write` \(run SQL query\)  **Note**: Metabase requires `schemas:all` permission for `native:write` to be able to work - `collection`: `read`, `write`  **Note**: Metabase table requires `all` permission to read table, no write permission on table level **Note**: Metabase group requires no specific permission to be a member of group ||

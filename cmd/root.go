@@ -48,6 +48,9 @@ func New(cfg *Config) *cobra.Command {
 	cmd.AddCommand(configCommand())
 	cmd.AddCommand(VersionCmd())
 
+	//Migration command
+	cmd.AddCommand(MigrationCmd(cliConfig))
+
 	// Help topics
 	cmdx.SetHelp(cmd)
 	cmd.AddCommand(cmdx.SetCompletionCmd("guardian"))

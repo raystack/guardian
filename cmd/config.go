@@ -11,7 +11,8 @@ import (
 var cliConfig *Config
 
 type Config struct {
-	Host string `mapstructure:"host"`
+	Host                string `mapstructure:"host"`
+	EncryptionSecretKey string `mapstructure:"encryption_secret_key"`
 }
 
 func LoadConfig() (*Config, error) {
