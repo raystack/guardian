@@ -88,6 +88,8 @@ resources:
     roles:
       - id: member
         name: Member
+        permissions:
+          - member
 ```
 
 ### `MetabaseCredentials`
