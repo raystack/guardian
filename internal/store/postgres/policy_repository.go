@@ -5,7 +5,7 @@ import (
 
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/store/postgres/model"
+	"github.com/odpf/guardian/internal/store/postgres/model"
 	"gorm.io/gorm"
 )
 

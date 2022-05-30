@@ -1,4 +1,4 @@
-package app
+package server
 
 import (
 	"github.com/go-playground/validator/v10"
@@ -8,6 +8,7 @@ import (
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/guardian/plugins/identities"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/plugins/providers"
@@ -16,7 +17,6 @@ import (
 	"github.com/odpf/guardian/plugins/providers/grafana"
 	"github.com/odpf/guardian/plugins/providers/metabase"
 	"github.com/odpf/guardian/plugins/providers/tableau"
-	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/salt/log"
 )
 

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/odpf/guardian/store"
-	"github.com/odpf/guardian/store/postgres/model"
+	"github.com/odpf/guardian/internal/store"
+	"github.com/odpf/guardian/internal/store/postgres/model"
 	pg "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

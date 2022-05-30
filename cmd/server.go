@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/guardian/app"
+	"github.com/odpf/guardian/server"
 	"github.com/spf13/cobra"
 )
 
@@ -34,11 +34,11 @@ func startCommand() *cobra.Command {
 		Aliases: []string{"s"},
 		Short:   "Start the server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := app.LoadConfig(configFile)
+			cfg, err := server.LoadConfig(configFile)
 			if err != nil {
 				return err
 			}
-			return app.RunServer(&cfg)
+			return server.RunServer(&cfg)
 		},
 	}
 
@@ -53,11 +53,11 @@ func migrateCommand() *cobra.Command {
 		Use:   "migrate",
 		Short: "Run database migrations",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := app.LoadConfig(configFile)
+			cfg, err := server.LoadConfig(configFile)
 			if err != nil {
 				return err
 			}
-			return app.Migrate(&cfg)
+			return server.Migrate(&cfg)
 		},
 	}
 

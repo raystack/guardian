@@ -5,10 +5,10 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/app"
-	"github.com/odpf/guardian/internal/crypto"
 	"github.com/odpf/guardian/jobs"
+	"github.com/odpf/guardian/pkg/crypto"
 	"github.com/odpf/guardian/plugins/notifiers"
+	"github.com/odpf/guardian/server"
 	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
 )
@@ -53,7 +53,7 @@ func runJobCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("getting config flag value: %w", err)
 			}
-			config, err := app.LoadConfig(configFile)
+			config, err := server.LoadConfig(configFile)
 			if err != nil {
 				return fmt.Errorf("loading config: %w", err)
 			}
@@ -66,7 +66,7 @@ func runJobCmd() *cobra.Command {
 				return err
 			}
 
-			services, err := app.InitServices(app.ServiceDeps{
+			services, err := server.InitServices(server.ServiceDeps{
 				Config:    &config,
 				Logger:    logger,
 				Validator: validator,

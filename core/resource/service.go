@@ -3,7 +3,7 @@ package resource
 import (
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/store"
+	"github.com/odpf/guardian/internal/store"
 )
 
 // Service handles the business logic for resource

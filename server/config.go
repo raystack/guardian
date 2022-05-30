@@ -1,11 +1,11 @@
-package app
+package server
 
 import (
 	"errors"
 	"fmt"
 
+	"github.com/odpf/guardian/internal/store"
 	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/guardian/store"
 	"github.com/odpf/salt/config"
 )
 

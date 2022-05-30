@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/store/postgres/model"
+	"github.com/odpf/guardian/internal/store/postgres/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
 )

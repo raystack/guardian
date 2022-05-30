@@ -1,4 +1,4 @@
-package app
+package server
 
 import (
 	"context"
@@ -17,11 +17,11 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/internal/crypto"
-	"github.com/odpf/guardian/internal/scheduler"
+	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/guardian/jobs"
+	"github.com/odpf/guardian/pkg/crypto"
+	"github.com/odpf/guardian/pkg/scheduler"
 	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/salt/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
