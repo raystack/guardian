@@ -51,23 +51,31 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 	auditRepository := audit_repos.NewPostgresRepository(store.DB())
 	auditLogger := audit.New(
 		audit.WithRepository(auditRepository),
-		audit.WithAppDetails(audit.AppDetails{
-			Name:    "guardian",
-			Version: Version,
-		}),
-		audit.WithTraceIDExtractor(func(ctx context.Context) string {
+		audit.WithMetadataExtractor(func(ctx context.Context) map[string]interface{} {
+			md := map[string]interface{}{
+				"app_name":    "guardian",
+				"app_version": Version,
+			}
+
+			// trace id
 			var traceID string
 			if md, ok := metadata.FromIncomingContext(ctx); ok {
 				if rawTraceID := md.Get(deps.Config.AuditLogTraceIDHeaderKey); len(rawTraceID) > 0 {
 					traceID = rawTraceID[0]
 				}
 			}
-
 			if traceID == "" {
 				traceID = uuid.New().String()
 			}
+			md["trace_id"] = traceID
 
-			return traceID
+			return md
+		}),
+		audit.WithActorExtractor(func(ctx context.Context) (string, error) {
+			if actor, ok := ctx.Value(authenticatedUserEmailContextKey{}).(string); ok {
+				return actor, nil
+			}
+			return "", nil
 		}),
 	)
 

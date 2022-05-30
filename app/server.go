@@ -23,7 +23,6 @@ import (
 	"github.com/odpf/guardian/jobs"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/store/postgres"
-	"github.com/odpf/salt/audit"
 	audit_repos "github.com/odpf/salt/audit/repositories"
 	"github.com/odpf/salt/log"
 	"github.com/sirupsen/logrus"
@@ -101,7 +100,7 @@ func RunServer(config *Config) error {
 				}),
 			),
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
-			audit.UnaryServerInterceptor(config.AuthenticatedUserHeaderKey),
+			withAuthenticatedUserEmail(config.AuthenticatedUserHeaderKey),
 		)),
 	)
 	protoAdapter := handlerv1beta1.NewAdapter()
