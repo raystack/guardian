@@ -610,7 +610,8 @@ func (s *ServiceTestSuite) TestUpdate() {
 
 	s.Run("should return increment policy version", func() {
 		p := &domain.Policy{
-			ID: "id",
+			ID:      "id",
+			Version: 5,
 			Steps: []*domain.Step{
 				{
 					Name:     "test",
@@ -627,7 +628,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 			Version: 5,
 		}
 		expectedNewVersion := uint(6)
-		s.mockPolicyRepository.On("GetOne", p.ID, p.Version).Return(expectedLatestPolicy, nil).Once()
+		s.mockPolicyRepository.On("GetOne", p.ID, uint(0)).Return(expectedLatestPolicy, nil).Once()
 		s.mockPolicyRepository.On("Create", p).Return(nil)
 		s.mockAuditLogger.On("Log", mock.Anything, policy.AuditKeyPolicyUpdate, mock.Anything).Return(nil).Once()
 

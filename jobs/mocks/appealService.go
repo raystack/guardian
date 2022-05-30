@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	domain "github.com/odpf/guardian/domain"
 
 	mock "github.com/stretchr/testify/mock"
@@ -13,13 +15,13 @@ type AppealService struct {
 	mock.Mock
 }
 
-// Find provides a mock function with given fields: _a0
-func (_m *AppealService) Find(_a0 *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
-	ret := _m.Called(_a0)
+// Find provides a mock function with given fields: _a0, _a1
+func (_m *AppealService) Find(_a0 context.Context, _a1 *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 []*domain.Appeal
-	if rf, ok := ret.Get(0).(func(*domain.ListAppealsFilter) []*domain.Appeal); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.ListAppealsFilter) []*domain.Appeal); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*domain.Appeal)
@@ -27,8 +29,8 @@ func (_m *AppealService) Find(_a0 *domain.ListAppealsFilter) ([]*domain.Appeal, 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*domain.ListAppealsFilter) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, *domain.ListAppealsFilter) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -36,13 +38,13 @@ func (_m *AppealService) Find(_a0 *domain.ListAppealsFilter) ([]*domain.Appeal, 
 	return r0, r1
 }
 
-// Revoke provides a mock function with given fields: id, actor, reason
-func (_m *AppealService) Revoke(id string, actor string, reason string) (*domain.Appeal, error) {
-	ret := _m.Called(id, actor, reason)
+// Revoke provides a mock function with given fields: ctx, id, actor, reason
+func (_m *AppealService) Revoke(ctx context.Context, id string, actor string, reason string) (*domain.Appeal, error) {
+	ret := _m.Called(ctx, id, actor, reason)
 
 	var r0 *domain.Appeal
-	if rf, ok := ret.Get(0).(func(string, string, string) *domain.Appeal); ok {
-		r0 = rf(id, actor, reason)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *domain.Appeal); ok {
+		r0 = rf(ctx, id, actor, reason)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Appeal)
@@ -50,8 +52,8 @@ func (_m *AppealService) Revoke(id string, actor string, reason string) (*domain
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(id, actor, reason)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, id, actor, reason)
 	} else {
 		r1 = ret.Error(1)
 	}

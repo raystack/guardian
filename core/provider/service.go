@@ -24,6 +24,7 @@ import (
 const (
 	AuditKeyCreate = "provider.create"
 	AuditKeyUpdate = "provider.update"
+	AuditKeyDelete = "provider.delete"
 )
 
 type repository interface {
@@ -37,6 +38,7 @@ type Client interface {
 type resourceService interface {
 	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
 	BulkUpsert(context.Context, []*domain.Resource) error
+	BatchDelete(context.Context, []string) error
 }
 
 type auditLogger interface {
@@ -259,7 +261,7 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 		return err
 	}
 
-	isRoleExists := false
+	isRoleExists := len(roles) == 0
 	for _, role := range roles {
 		if a.Role == role.ID {
 			isRoleExists = true
@@ -324,6 +326,39 @@ func (s *Service) RevokeAccess(ctx context.Context, a *domain.Appeal) error {
 	return c.RevokeAccess(p.Config, a)
 	// TODO: handle if permission for the given user with the given role is not found
 	// handle the resolution for the appeal status
+}
+
+func (s *Service) Delete(ctx context.Context, id string) error {
+	p, err := s.repository.GetByID(id)
+	if err != nil {
+		return fmt.Errorf("getting provider details: %w", err)
+	}
+
+	resources, err := s.resourceService.Find(ctx, map[string]interface{}{
+		"provider_type": p.Type,
+		"provider_urn":  p.URN,
+	})
+	if err != nil {
+		return fmt.Errorf("retrieving related resources: %w", err)
+	}
+	var resourceIds []string
+	for _, r := range resources {
+		resourceIds = append(resourceIds, r.ID)
+	}
+	// TODO: execute in transaction
+	if err := s.resourceService.BatchDelete(ctx, resourceIds); err != nil {
+		return fmt.Errorf("batch deleting resources: %w", err)
+	}
+
+	if err := s.repository.Delete(id); err != nil {
+		return err
+	}
+
+	if err := s.auditLogger.Log(ctx, AuditKeyDelete, p); err != nil {
+		s.logger.Error("failed to record audit log", "error", err)
+	}
+
+	return nil
 }
 
 func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*domain.Resource, error) {

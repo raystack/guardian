@@ -303,6 +303,84 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 	})
 }
 
+func (s *ResourceRepositoryTestSuite) TestDelete() {
+	s.Run("should return error if ID param is empty", func() {
+		err := s.repository.Delete("")
+
+		s.Error(err)
+		s.ErrorIs(err, resource.ErrEmptyIDParam)
+	})
+
+	s.Run("should return error if db.Delete returns error", func() {
+		expectedError := errors.New("test error")
+		s.dbmock.ExpectExec(".*").WillReturnError(expectedError)
+
+		err := s.repository.Delete("abc")
+
+		s.Error(err)
+		s.ErrorIs(err, expectedError)
+	})
+
+	s.Run("should return error if resource not found", func() {
+		s.dbmock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 0))
+
+		err := s.repository.Delete("abc")
+
+		s.Error(err)
+		s.ErrorIs(err, resource.ErrRecordNotFound)
+	})
+
+	s.Run("should return nil on success", func() {
+		expectedID := "abcd"
+		s.dbmock.ExpectExec(regexp.QuoteMeta(`UPDATE "resources" SET "deleted_at"=$1 WHERE id = $2 AND "resources"."deleted_at" IS NULL`)).
+			WithArgs(utils.AnyTime{}, expectedID).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err := s.repository.Delete(expectedID)
+
+		s.Nil(err)
+	})
+}
+
+func (s *ResourceRepositoryTestSuite) TestBatchDelete() {
+	s.Run("should return error if ID param is empty", func() {
+		err := s.repository.BatchDelete(nil)
+
+		s.Error(err)
+		s.ErrorIs(err, resource.ErrEmptyIDParam)
+	})
+
+	s.Run("should return error if db.Delete returns error", func() {
+		expectedError := errors.New("test error")
+		s.dbmock.ExpectExec(".*").WillReturnError(expectedError)
+
+		err := s.repository.BatchDelete([]string{"abc"})
+
+		s.Error(err)
+		s.ErrorIs(err, expectedError)
+	})
+
+	s.Run("should return error if resource(s) not found", func() {
+		s.dbmock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 0))
+
+		err := s.repository.BatchDelete([]string{"abc"})
+
+		s.Error(err)
+		s.ErrorIs(err, resource.ErrRecordNotFound)
+	})
+
+	s.Run("should return nil on success", func() {
+		expectedIDs := []string{"abcd", "efgh"}
+		s.dbmock.ExpectExec(regexp.QuoteMeta(`UPDATE "resources" SET "deleted_at"=$1 WHERE "resources"."id" IN ($2,$3) AND "resources"."deleted_at" IS NULL`)).
+			WithArgs(utils.AnyTime{}, expectedIDs[0], expectedIDs[1]).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err := s.repository.BatchDelete(expectedIDs)
+
+		s.Nil(err)
+	})
+}
+
 func TestResourceRepository(t *testing.T) {
 	suite.Run(t, new(ResourceRepositoryTestSuite))
 }

@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	AuditKeyResoruceBulkUpsert = "resource.bulkUpsert"
-	AuditKeyResourceUpdate     = "resource.update"
+	AuditKeyResoruceBulkUpsert  = "resource.bulkUpsert"
+	AuditKeyResourceUpdate      = "resource.update"
+	AuditKeyResourceDelete      = "resource.delete"
+	AuditKeyResourceBatchDelete = "resource.batchDelete"
 )
 
 type repository interface {
@@ -131,4 +133,28 @@ func (s *Service) Get(ctx context.Context, ri *domain.ResourceIdentifier) (*doma
 		}
 	}
 	return resource, nil
+}
+
+func (s *Service) Delete(ctx context.Context, id string) error {
+	if err := s.repo.Delete(id); err != nil {
+		return err
+	}
+
+	if err := s.auditLogger.Log(ctx, AuditKeyResourceDelete, map[string]interface{}{"id": id}); err != nil {
+		s.logger.Error("failed to record audit log", "error", err)
+	}
+
+	return nil
+}
+
+func (s *Service) BatchDelete(ctx context.Context, ids []string) error {
+	if err := s.repo.BatchDelete(ids); err != nil {
+		return err
+	}
+
+	if err := s.auditLogger.Log(ctx, AuditKeyResourceBatchDelete, map[string]interface{}{"ids": ids}); err != nil {
+		s.logger.Error("failed to record audit log", "error", err)
+	}
+
+	return nil
 }

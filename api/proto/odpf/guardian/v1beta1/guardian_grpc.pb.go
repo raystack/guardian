@@ -23,6 +23,7 @@ type GuardianServiceClient interface {
 	GetProviderTypes(ctx context.Context, in *GetProviderTypesRequest, opts ...grpc.CallOption) (*GetProviderTypesResponse, error)
 	CreateProvider(ctx context.Context, in *CreateProviderRequest, opts ...grpc.CallOption) (*CreateProviderResponse, error)
 	UpdateProvider(ctx context.Context, in *UpdateProviderRequest, opts ...grpc.CallOption) (*UpdateProviderResponse, error)
+	DeleteProvider(ctx context.Context, in *DeleteProviderRequest, opts ...grpc.CallOption) (*DeleteProviderResponse, error)
 	ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error)
 	ListPolicies(ctx context.Context, in *ListPoliciesRequest, opts ...grpc.CallOption) (*ListPoliciesResponse, error)
 	GetPolicy(ctx context.Context, in *GetPolicyRequest, opts ...grpc.CallOption) (*GetPolicyResponse, error)
@@ -31,6 +32,7 @@ type GuardianServiceClient interface {
 	ListResources(ctx context.Context, in *ListResourcesRequest, opts ...grpc.CallOption) (*ListResourcesResponse, error)
 	GetResource(ctx context.Context, in *GetResourceRequest, opts ...grpc.CallOption) (*GetResourceResponse, error)
 	UpdateResource(ctx context.Context, in *UpdateResourceRequest, opts ...grpc.CallOption) (*UpdateResourceResponse, error)
+	DeleteResource(ctx context.Context, in *DeleteResourceRequest, opts ...grpc.CallOption) (*DeleteResourceResponse, error)
 	ListUserAppeals(ctx context.Context, in *ListUserAppealsRequest, opts ...grpc.CallOption) (*ListUserAppealsResponse, error)
 	ListAppeals(ctx context.Context, in *ListAppealsRequest, opts ...grpc.CallOption) (*ListAppealsResponse, error)
 	GetAppeal(ctx context.Context, in *GetAppealRequest, opts ...grpc.CallOption) (*GetAppealResponse, error)
@@ -89,6 +91,15 @@ func (c *guardianServiceClient) CreateProvider(ctx context.Context, in *CreatePr
 func (c *guardianServiceClient) UpdateProvider(ctx context.Context, in *UpdateProviderRequest, opts ...grpc.CallOption) (*UpdateProviderResponse, error) {
 	out := new(UpdateProviderResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/UpdateProvider", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) DeleteProvider(ctx context.Context, in *DeleteProviderRequest, opts ...grpc.CallOption) (*DeleteProviderResponse, error) {
+	out := new(DeleteProviderResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/DeleteProvider", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -161,6 +172,15 @@ func (c *guardianServiceClient) GetResource(ctx context.Context, in *GetResource
 func (c *guardianServiceClient) UpdateResource(ctx context.Context, in *UpdateResourceRequest, opts ...grpc.CallOption) (*UpdateResourceResponse, error) {
 	out := new(UpdateResourceResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/UpdateResource", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) DeleteResource(ctx context.Context, in *DeleteResourceRequest, opts ...grpc.CallOption) (*DeleteResourceResponse, error) {
+	out := new(DeleteResourceResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/DeleteResource", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -257,6 +277,7 @@ type GuardianServiceServer interface {
 	GetProviderTypes(context.Context, *GetProviderTypesRequest) (*GetProviderTypesResponse, error)
 	CreateProvider(context.Context, *CreateProviderRequest) (*CreateProviderResponse, error)
 	UpdateProvider(context.Context, *UpdateProviderRequest) (*UpdateProviderResponse, error)
+	DeleteProvider(context.Context, *DeleteProviderRequest) (*DeleteProviderResponse, error)
 	ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error)
 	ListPolicies(context.Context, *ListPoliciesRequest) (*ListPoliciesResponse, error)
 	GetPolicy(context.Context, *GetPolicyRequest) (*GetPolicyResponse, error)
@@ -265,6 +286,7 @@ type GuardianServiceServer interface {
 	ListResources(context.Context, *ListResourcesRequest) (*ListResourcesResponse, error)
 	GetResource(context.Context, *GetResourceRequest) (*GetResourceResponse, error)
 	UpdateResource(context.Context, *UpdateResourceRequest) (*UpdateResourceResponse, error)
+	DeleteResource(context.Context, *DeleteResourceRequest) (*DeleteResourceResponse, error)
 	ListUserAppeals(context.Context, *ListUserAppealsRequest) (*ListUserAppealsResponse, error)
 	ListAppeals(context.Context, *ListAppealsRequest) (*ListAppealsResponse, error)
 	GetAppeal(context.Context, *GetAppealRequest) (*GetAppealResponse, error)
@@ -296,6 +318,9 @@ func (UnimplementedGuardianServiceServer) CreateProvider(context.Context, *Creat
 func (UnimplementedGuardianServiceServer) UpdateProvider(context.Context, *UpdateProviderRequest) (*UpdateProviderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateProvider not implemented")
 }
+func (UnimplementedGuardianServiceServer) DeleteProvider(context.Context, *DeleteProviderRequest) (*DeleteProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteProvider not implemented")
+}
 func (UnimplementedGuardianServiceServer) ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRoles not implemented")
 }
@@ -319,6 +344,9 @@ func (UnimplementedGuardianServiceServer) GetResource(context.Context, *GetResou
 }
 func (UnimplementedGuardianServiceServer) UpdateResource(context.Context, *UpdateResourceRequest) (*UpdateResourceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateResource not implemented")
+}
+func (UnimplementedGuardianServiceServer) DeleteResource(context.Context, *DeleteResourceRequest) (*DeleteResourceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteResource not implemented")
 }
 func (UnimplementedGuardianServiceServer) ListUserAppeals(context.Context, *ListUserAppealsRequest) (*ListUserAppealsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUserAppeals not implemented")
@@ -446,6 +474,24 @@ func _GuardianService_UpdateProvider_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GuardianServiceServer).UpdateProvider(ctx, req.(*UpdateProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_DeleteProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).DeleteProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/DeleteProvider",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).DeleteProvider(ctx, req.(*DeleteProviderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -590,6 +636,24 @@ func _GuardianService_UpdateResource_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GuardianServiceServer).UpdateResource(ctx, req.(*UpdateResourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_DeleteResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteResourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).DeleteResource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/DeleteResource",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).DeleteResource(ctx, req.(*DeleteResourceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -784,6 +848,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _GuardianService_UpdateProvider_Handler,
 		},
 		{
+			MethodName: "DeleteProvider",
+			Handler:    _GuardianService_DeleteProvider_Handler,
+		},
+		{
 			MethodName: "ListRoles",
 			Handler:    _GuardianService_ListRoles_Handler,
 		},
@@ -814,6 +882,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateResource",
 			Handler:    _GuardianService_UpdateResource_Handler,
+		},
+		{
+			MethodName: "DeleteResource",
+			Handler:    _GuardianService_DeleteResource_Handler,
 		},
 		{
 			MethodName: "ListUserAppeals",

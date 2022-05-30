@@ -543,6 +543,72 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 	})
 }
 
+func (s *ServiceTestSuite) TestDelete() {
+	s.Run("should return error if provider repository returns error", func() {
+		expectedError := errors.New("random error")
+		s.mockProviderRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
+
+		err := s.service.Delete(context.Background(), "test-provider")
+
+		s.ErrorIs(err, expectedError)
+	})
+
+	s.Run("should return error if resourceService.Find returns error", func() {
+		s.mockProviderRepository.On("GetByID", mock.Anything).Return(&domain.Provider{}, nil).Once()
+		expectedError := errors.New("random error")
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(nil, expectedError).Once()
+
+		err := s.service.Delete(context.Background(), "test-provider")
+
+		s.ErrorIs(err, expectedError)
+	})
+
+	s.Run("should return error if resourceService.BatchDelete returns error", func() {
+		s.mockProviderRepository.On("GetByID", mock.Anything).Return(&domain.Provider{}, nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
+		expectedError := errors.New("random error")
+		s.mockResourceService.On("BatchDelete", mock.Anything, mock.Anything).Return(expectedError).Once()
+
+		err := s.service.Delete(context.Background(), "test-provider")
+
+		s.ErrorIs(err, expectedError)
+	})
+
+	s.Run("should return error if providerRepository.Delete returns error", func() {
+		s.mockProviderRepository.On("GetByID", mock.Anything).Return(&domain.Provider{}, nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
+		s.mockResourceService.On("BatchDelete", mock.Anything, mock.Anything).Return(nil).Once()
+		expectedError := errors.New("random error")
+		s.mockProviderRepository.On("Delete", mock.Anything).Return(expectedError).Once()
+
+		err := s.service.Delete(context.Background(), "test-provider")
+
+		s.ErrorIs(err, expectedError)
+	})
+
+	s.Run("should return nil on success", func() {
+		testID := "test-provider"
+		dummyProvider := &domain.Provider{
+			Type: "test-type",
+			URN:  "test-urn",
+		}
+		dummyResources := []*domain.Resource{{ID: "a"}, {ID: "b"}}
+
+		s.mockProviderRepository.On("GetByID", testID).Return(dummyProvider, nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, map[string]interface{}{
+			"provider_type": dummyProvider.Type,
+			"provider_urn":  dummyProvider.URN,
+		}).Return(dummyResources, nil).Once()
+		s.mockResourceService.On("BatchDelete", mock.Anything, []string{"a", "b"}).Return(nil).Once()
+		s.mockProviderRepository.On("Delete", testID).Return(nil).Once()
+		s.mockAuditLogger.On("Log", mock.Anything, provider.AuditKeyDelete, dummyProvider).Return(nil).Once()
+
+		err := s.service.Delete(context.Background(), "test-provider")
+
+		s.NoError(err)
+	})
+}
+
 func TestService(t *testing.T) {
 	suite.Run(t, new(ServiceTestSuite))
 }

@@ -23,7 +23,7 @@ func TestDatabase(t *testing.T) {
 					expectedResource: &domain.Resource{
 						Type: metabase.ResourceTypeDatabase,
 						Name: "database 1",
-						URN:  "1",
+						URN:  "database:1",
 					},
 				},
 			}
@@ -69,7 +69,7 @@ func TestDatabase(t *testing.T) {
 			}
 
 			r := &domain.Resource{
-				URN:  "1",
+				URN:  "database:1",
 				Type: metabase.ResourceTypeDatabase,
 				Name: "test-resource",
 			}
@@ -97,7 +97,7 @@ func TestCollection(t *testing.T) {
 					expectedResource: &domain.Resource{
 						Type: metabase.ResourceTypeCollection,
 						Name: "collection 1",
-						URN:  "root",
+						URN:  "collection:root",
 					},
 				},
 				{
@@ -108,7 +108,7 @@ func TestCollection(t *testing.T) {
 					expectedResource: &domain.Resource{
 						Type: metabase.ResourceTypeCollection,
 						Name: "collection 2",
-						URN:  "1",
+						URN:  "collection:1",
 					},
 				},
 			}
@@ -144,18 +144,18 @@ func TestCollection(t *testing.T) {
 			}{
 				{
 					expectedResource: &domain.Resource{
-						URN:  "non-numeric",
+						URN:  "collection:2",
 						Name: "test-collection",
 						Type: metabase.ResourceTypeCollection,
 					},
 					expectedCollection: &metabase.Collection{
-						ID:   "non-numeric",
+						ID:   2,
 						Name: "test-collection",
 					},
 				},
 				{
 					expectedResource: &domain.Resource{
-						URN:  "1",
+						URN:  "collection:1",
 						Name: "test-collection",
 						Type: metabase.ResourceTypeCollection,
 					},
