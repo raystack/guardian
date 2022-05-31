@@ -15,7 +15,6 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/providers"
-	"github.com/odpf/guardian/store"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/audit"
 	"github.com/odpf/salt/log"
@@ -28,7 +27,13 @@ const (
 )
 
 type repository interface {
-	store.ProviderRepository
+	Create(*domain.Provider) error
+	Update(*domain.Provider) error
+	Find() ([]*domain.Provider, error)
+	GetByID(id string) (*domain.Provider, error)
+	GetTypes() ([]domain.ProviderType, error)
+	GetOne(pType, urn string) (*domain.Provider, error)
+	Delete(id string) error
 }
 
 type Client interface {

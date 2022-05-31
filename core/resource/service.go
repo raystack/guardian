@@ -8,7 +8,6 @@ import (
 
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/store"
 	"github.com/odpf/salt/log"
 )
 
@@ -20,7 +19,12 @@ const (
 )
 
 type repository interface {
-	store.ResourceRepository
+	Find(filters map[string]interface{}) ([]*domain.Resource, error)
+	GetOne(id string) (*domain.Resource, error)
+	BulkUpsert([]*domain.Resource) error
+	Update(*domain.Resource) error
+	Delete(id string) error
+	BatchDelete([]string) error
 }
 
 type auditLogger interface {

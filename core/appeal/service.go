@@ -20,7 +20,6 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/evaluator"
 	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/guardian/store"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
@@ -37,7 +36,10 @@ const (
 var TimeNow = time.Now
 
 type repository interface {
-	store.AppealRepository
+	BulkUpsert([]*domain.Appeal) error
+	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
+	GetByID(id string) (*domain.Appeal, error)
+	Update(*domain.Appeal) error
 }
 
 type iamManager interface {

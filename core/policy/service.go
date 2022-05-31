@@ -16,7 +16,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/evaluator"
-	"github.com/odpf/guardian/store"
 	"github.com/odpf/salt/log"
 )
 
@@ -26,7 +25,9 @@ const (
 )
 
 type repository interface {
-	store.PolicyRepository
+	Create(*domain.Policy) error
+	Find() ([]*domain.Policy, error)
+	GetOne(id string, version uint) (*domain.Policy, error)
 }
 
 type providerService interface {
@@ -44,7 +45,7 @@ type auditLogger interface {
 
 // Service handling the business logics
 type Service struct {
-	repository      store.PolicyRepository
+	repository      repository
 	resourceService resourceService
 	providerService providerService
 	iam             domain.IAMManager

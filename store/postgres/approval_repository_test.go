@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/store"
 	"github.com/odpf/guardian/store/postgres"
 	"github.com/odpf/guardian/utils"
 	"github.com/stretchr/testify/suite"
@@ -22,7 +21,7 @@ type ApprovalRepositoryTestSuite struct {
 	suite.Suite
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
-	repository store.ApprovalRepository
+	repository *postgres.ApprovalRepository
 
 	approvalColumnNames []string
 	approverColumnNames []string

@@ -11,11 +11,11 @@ import (
 
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/evaluator"
-	"github.com/odpf/guardian/store"
 )
 
 type repository interface {
-	store.ApprovalRepository
+	BulkInsert([]*domain.Approval) error
+	ListApprovals(*domain.ListApprovalsFilter) ([]*domain.Approval, error)
 }
 
 type policyService interface {
