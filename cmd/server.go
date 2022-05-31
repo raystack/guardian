@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/guardian/server"
+	"github.com/odpf/guardian/internal/server"
 	"github.com/spf13/cobra"
 )
 

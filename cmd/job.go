@@ -5,10 +5,10 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/go-playground/validator/v10"
+	"github.com/odpf/guardian/internal/server"
 	"github.com/odpf/guardian/jobs"
 	"github.com/odpf/guardian/pkg/crypto"
 	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/guardian/server"
 	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
 )
