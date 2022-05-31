@@ -8,7 +8,6 @@ import (
 	ctx_logrus "github.com/grpc-ecosystem/go-grpc-middleware/tags/logrus"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/core/appeal"
-	"github.com/odpf/guardian/core/approval"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
@@ -39,12 +38,59 @@ type ProtoAdapter interface {
 	ToApprovalProto(*domain.Approval) (*guardianv1beta1.Approval, error)
 }
 
+type resourceService interface {
+	Find(map[string]interface{}) ([]*domain.Resource, error)
+	GetOne(string) (*domain.Resource, error)
+	BulkUpsert([]*domain.Resource) error
+	Update(*domain.Resource) error
+	Get(*domain.ResourceIdentifier) (*domain.Resource, error)
+	Delete(string) error
+	BatchDelete([]string) error
+}
+
+type providerService interface {
+	Create(*domain.Provider) error
+	Find() ([]*domain.Provider, error)
+	GetByID(string) (*domain.Provider, error)
+	GetTypes() ([]domain.ProviderType, error)
+	GetOne(pType, urn string) (*domain.Provider, error)
+	Update(*domain.Provider) error
+	FetchResources() error
+	GetRoles(id, resourceType string) ([]*domain.Role, error)
+	ValidateAppeal(*domain.Appeal, *domain.Provider) error
+	GrantAccess(*domain.Appeal) error
+	RevokeAccess(*domain.Appeal) error
+	Delete(string) error
+}
+
+type policyService interface {
+	Create(*domain.Policy) error
+	Find() ([]*domain.Policy, error)
+	GetOne(id string, version uint) (*domain.Policy, error)
+	Update(*domain.Policy) error
+}
+
+type appealService interface {
+	GetByID(string) (*domain.Appeal, error)
+	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
+	Create([]*domain.Appeal) error
+	MakeAction(domain.ApprovalAction) (*domain.Appeal, error)
+	Cancel(string) (*domain.Appeal, error)
+	Revoke(id, actor, reason string) (*domain.Appeal, error)
+}
+
+type approvalService interface {
+	ListApprovals(*domain.ListApprovalsFilter) ([]*domain.Approval, error)
+	BulkInsert([]*domain.Approval) error
+	AdvanceApproval(*domain.Appeal) error
+}
+
 type GRPCServer struct {
-	resourceService *resource.Service
-	providerService *provider.Service
-	policyService   *policy.Service
-	appealService   *appeal.Service
-	approvalService *approval.Service
+	resourceService resourceService
+	providerService providerService
+	policyService   policyService
+	appealService   appealService
+	approvalService approvalService
 	adapter         ProtoAdapter
 
 	authenticatedUserHeaderKey string
@@ -53,11 +99,11 @@ type GRPCServer struct {
 }
 
 func NewGRPCServer(
-	resourceService *resource.Service,
-	providerService *provider.Service,
-	policyService *policy.Service,
-	appealService *appeal.Service,
-	approvalService *approval.Service,
+	resourceService resourceService,
+	providerService providerService,
+	policyService policyService,
+	appealService appealService,
+	approvalService approvalService,
 	adapter ProtoAdapter,
 	authenticatedUserHeaderKey string,
 ) *GRPCServer {
