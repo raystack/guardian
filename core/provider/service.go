@@ -8,8 +8,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/internal/store"
 	"github.com/odpf/guardian/plugins/providers"
-	"github.com/odpf/guardian/store"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )

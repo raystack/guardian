@@ -6,8 +6,8 @@ import (
 	"reflect"
 
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/evaluator"
-	"github.com/odpf/guardian/store"
+	"github.com/odpf/guardian/internal/store"
+	"github.com/odpf/guardian/pkg/evaluator"
 )
 
 type policyService interface {
