@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
@@ -84,7 +85,7 @@ func runJobCmd() *cobra.Command {
 				notifier,
 			)
 
-			jobs := map[string]func() error{
+			jobs := map[string]func(context.Context) error{
 				"fetch_resources":              handler.FetchResources,
 				"appeal_expiration_reminder":   handler.AppealExpirationReminder,
 				"appeal_expiration_revocation": handler.RevokeExpiredAppeals,
@@ -95,7 +96,7 @@ func runJobCmd() *cobra.Command {
 			if job == nil {
 				return fmt.Errorf("invalid job name: %s", jobName)
 			}
-			if err := job(); err != nil {
+			if err := job(context.Background()); err != nil {
 				return fmt.Errorf(`failed to run job "%s": %w`, jobName, err)
 			}
 

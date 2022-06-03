@@ -17,15 +17,15 @@ var (
 	}
 )
 
-type approvalRepository struct {
+type ApprovalRepository struct {
 	db *gorm.DB
 }
 
-func NewApprovalRepository(db *gorm.DB) *approvalRepository {
-	return &approvalRepository{db}
+func NewApprovalRepository(db *gorm.DB) *ApprovalRepository {
+	return &ApprovalRepository{db}
 }
 
-func (r *approvalRepository) ListApprovals(conditions *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
+func (r *ApprovalRepository) ListApprovals(conditions *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
 	if err := utils.ValidateStruct(conditions); err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (r *approvalRepository) ListApprovals(conditions *domain.ListApprovalsFilte
 	return records, nil
 }
 
-func (r *approvalRepository) BulkInsert(approvals []*domain.Approval) error {
+func (r *ApprovalRepository) BulkInsert(approvals []*domain.Approval) error {
 	models := []*model.Approval{}
 	for _, a := range approvals {
 		m := new(model.Approval)

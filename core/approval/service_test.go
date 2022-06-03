@@ -1,30 +1,33 @@
 package approval_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/odpf/guardian/core/approval"
 	approvalmocks "github.com/odpf/guardian/core/approval/mocks"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockRepository    *mocks.ApprovalRepository
+	mockRepository    *approvalmocks.Repository
 	mockPolicyService *approvalmocks.PolicyService
 
 	service *approval.Service
 }
 
 func (s *ServiceTestSuite) SetupTest() {
-	s.mockRepository = new(mocks.ApprovalRepository)
+	s.mockRepository = new(approvalmocks.Repository)
 	s.mockPolicyService = new(approvalmocks.PolicyService)
 
-	s.service = approval.NewService(s.mockRepository, s.mockPolicyService)
+	s.service = approval.NewService(approval.ServiceDeps{
+		s.mockRepository,
+		s.mockPolicyService,
+	})
 }
 
 func (s *ServiceTestSuite) TestBulkInsert() {
@@ -32,7 +35,7 @@ func (s *ServiceTestSuite) TestBulkInsert() {
 		expectedError := errors.New("repository error")
 		s.mockRepository.On("BulkInsert", mock.Anything).Return(expectedError).Once()
 
-		actualError := s.service.BulkInsert([]*domain.Approval{})
+		actualError := s.service.BulkInsert(context.Background(), []*domain.Approval{})
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -45,8 +48,8 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 			PolicyVersion: 1,
 		}
 		expectedError := errors.New("policy error")
-		s.mockPolicyService.On("GetOne", mock.Anything, mock.Anything).Return(nil, expectedError).Once()
-		actualError := s.service.AdvanceApproval(&testappeal)
+		s.mockPolicyService.On("GetOne", mock.Anything, mock.Anything, mock.Anything).Return(nil, expectedError).Once()
+		actualError := s.service.AdvanceApproval(context.Background(), &testappeal)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
@@ -94,7 +97,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 			},
 		}
 
-		actualError := s.service.AdvanceApproval(&testappeal)
+		actualError := s.service.AdvanceApproval(context.Background(), &testappeal)
 		s.Nil(actualError)
 	})
 
@@ -136,7 +139,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 			},
 		}
 
-		actualError := s.service.AdvanceApproval(testAppeal)
+		actualError := s.service.AdvanceApproval(context.Background(), testAppeal)
 
 		s.Nil(actualError)
 		s.Equal(expectedApprovals, testAppeal.Approvals)
@@ -273,7 +276,7 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 				appeal.Policy = &domain.Policy{
 					Steps: tc.steps,
 				}
-				actualError := s.service.AdvanceApproval(&appeal)
+				actualError := s.service.AdvanceApproval(context.Background(), &appeal)
 				if tc.expectedErrorStr == "" {
 					s.Nil(actualError)
 					for i, a := range appeal.Approvals {

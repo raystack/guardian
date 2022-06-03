@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	domain "github.com/odpf/guardian/domain"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -12,13 +14,13 @@ type ResourceService struct {
 	mock.Mock
 }
 
-// BatchDelete provides a mock function with given fields: _a0
-func (_m *ResourceService) BatchDelete(_a0 []string) error {
-	ret := _m.Called(_a0)
+// BatchDelete provides a mock function with given fields: _a0, _a1
+func (_m *ResourceService) BatchDelete(_a0 context.Context, _a1 []string) error {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]string) error); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, []string) error); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -26,13 +28,13 @@ func (_m *ResourceService) BatchDelete(_a0 []string) error {
 	return r0
 }
 
-// BulkUpsert provides a mock function with given fields: _a0
-func (_m *ResourceService) BulkUpsert(_a0 []*domain.Resource) error {
-	ret := _m.Called(_a0)
+// BulkUpsert provides a mock function with given fields: _a0, _a1
+func (_m *ResourceService) BulkUpsert(_a0 context.Context, _a1 []*domain.Resource) error {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]*domain.Resource) error); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, []*domain.Resource) error); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -40,13 +42,13 @@ func (_m *ResourceService) BulkUpsert(_a0 []*domain.Resource) error {
 	return r0
 }
 
-// Find provides a mock function with given fields: _a0
-func (_m *ResourceService) Find(_a0 map[string]interface{}) ([]*domain.Resource, error) {
-	ret := _m.Called(_a0)
+// Find provides a mock function with given fields: _a0, _a1
+func (_m *ResourceService) Find(_a0 context.Context, _a1 map[string]interface{}) ([]*domain.Resource, error) {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 []*domain.Resource
-	if rf, ok := ret.Get(0).(func(map[string]interface{}) []*domain.Resource); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, map[string]interface{}) []*domain.Resource); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*domain.Resource)
@@ -54,8 +56,8 @@ func (_m *ResourceService) Find(_a0 map[string]interface{}) ([]*domain.Resource,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(map[string]interface{}) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, map[string]interface{}) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}

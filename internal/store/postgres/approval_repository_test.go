@@ -10,7 +10,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/store"
 	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/utils"
@@ -22,7 +21,7 @@ type ApprovalRepositoryTestSuite struct {
 	suite.Suite
 	sqldb      *sql.DB
 	dbmock     sqlmock.Sqlmock
-	repository store.ApprovalRepository
+	repository *postgres.ApprovalRepository
 
 	approvalColumnNames []string
 	approverColumnNames []string

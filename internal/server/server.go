@@ -14,6 +14,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
@@ -22,6 +23,7 @@ import (
 	"github.com/odpf/guardian/pkg/crypto"
 	"github.com/odpf/guardian/pkg/scheduler"
 	"github.com/odpf/guardian/plugins/notifiers"
+	audit_repos "github.com/odpf/salt/audit/repositories"
 	"github.com/odpf/salt/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
@@ -63,18 +65,19 @@ func RunServer(config *Config) error {
 	)
 
 	// init scheduler
+	// TODO: allow timeout configuration for job handler context
 	tasks := []*scheduler.Task{
 		{
 			CronTab: config.Jobs.FetchResourcesInterval,
-			Func:    jobHandler.FetchResources,
+			Func:    func() error { return jobHandler.FetchResources(context.Background()) },
 		},
 		{
 			CronTab: config.Jobs.RevokeExpiredAccessInterval,
-			Func:    jobHandler.RevokeExpiredAppeals,
+			Func:    func() error { return jobHandler.RevokeExpiredAppeals(context.Background()) },
 		},
 		{
 			CronTab: config.Jobs.ExpiringAccessNotificationInterval,
-			Func:    jobHandler.AppealExpirationReminder,
+			Func:    func() error { return jobHandler.AppealExpirationReminder(context.Background()) },
 		},
 	}
 	s, err := scheduler.New(tasks)
@@ -90,21 +93,14 @@ func RunServer(config *Config) error {
 			grpc_logrus.StreamServerInterceptor(logrusEntry),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-				panicked := true
-
-				defer func() {
-					if r := recover(); r != nil || panicked {
-						logger.Error(string(debug.Stack()))
-						err = status.Errorf(codes.Internal, "Internal error, please check log")
-					}
-				}()
-
-				resp, err = handler(ctx, req)
-				panicked = false
-				return resp, err
-			},
+			grpc_recovery.UnaryServerInterceptor(
+				grpc_recovery.WithRecoveryHandler(func(p interface{}) (err error) {
+					logger.Error(string(debug.Stack()))
+					return status.Errorf(codes.Internal, "Internal error, please check log")
+				}),
+			),
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
+			withAuthenticatedUserEmail(config.AuthenticatedUserHeaderKey),
 		)),
 	)
 	protoAdapter := handlerv1beta1.NewAdapter()
@@ -178,6 +174,12 @@ func Migrate(c *Config) error {
 	if err != nil {
 		return err
 	}
+
+	auditRepository := audit_repos.NewPostgresRepository(store.DB())
+	if err := auditRepository.Init(context.Background()); err != nil {
+		return fmt.Errorf("initializing audit repository: %w", err)
+	}
+
 	return store.Migrate()
 }
 
@@ -205,7 +207,9 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 func makeHeaderMatcher(c *Config) func(key string) (string, bool) {
 	return func(key string) (string, bool) {
 		switch strings.ToLower(key) {
-		case strings.ToLower(c.AuthenticatedUserHeaderKey):
+		case
+			strings.ToLower(c.AuthenticatedUserHeaderKey),
+			strings.ToLower(c.AuditLogTraceIDHeaderKey):
 			return key, true
 		default:
 			return runtime.DefaultHeaderMatcher(key)

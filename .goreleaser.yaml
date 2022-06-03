@@ -16,9 +16,9 @@ builds:
     flags:
       - -a
     ldflags:
-      - -X github.com/odpf/guardian/cli.Version={{.Tag}}
-      - -X github.com/odpf/guardian/cli.BuildCommit={{.FullCommit}}
-      - -X github.com/odpf/guardian/cli.BuildDate={{.Date}}
+      - -X github.com/odpf/guardian/core.Version={{.Tag}}
+      - -X github.com/odpf/guardian/core.BuildCommit={{.FullCommit}}
+      - -X github.com/odpf/guardian/core.BuildDate={{.Date}}
     goos: [darwin, linux, windows]
     goarch: [amd64, 386, arm, arm64]
     env:

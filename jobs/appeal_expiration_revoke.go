@@ -1,24 +1,23 @@
 package jobs
 
 import (
-	"encoding/json"
-	"fmt"
+	"context"
 	"time"
 
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/salt/audit"
 )
 
-func (h *handler) RevokeExpiredAppeals() error {
-	h.logger.Info("Revoke Expired Appeals")
+func (h *handler) RevokeExpiredAppeals(ctx context.Context) error {
+	h.logger.Info("running revoke expired appeals job")
 
 	filters := &domain.ListAppealsFilter{
 		Statuses:               []string{domain.AppealStatusActive},
 		ExpirationDateLessThan: time.Now(),
 	}
 
-	h.logger.Info("Retrieving active appeals...")
-
-	appeals, err := h.appealService.Find(filters)
+	h.logger.Info("retrieving active appeals...")
+	appeals, err := h.appealService.Find(ctx, filters)
 	if err != nil {
 		return err
 	}
@@ -26,38 +25,37 @@ func (h *handler) RevokeExpiredAppeals() error {
 	successRevoke := []string{}
 	failedRevoke := []map[string]interface{}{}
 	for _, a := range appeals {
-		h.logger.Info(fmt.Sprintf("Revoking appeal ID: %s", a.ID))
+		h.logger.Info("revoking appeal", "id", a.ID)
 
-		if _, err := h.appealService.Revoke(a.ID, domain.SystemActorName, "Automatically revoked"); err != nil {
-			h.logger.Info(fmt.Sprintf("Failed to revoke appeal ID: %s, error: %s", a.ID, err.Error()))
+		ctx = audit.WithActor(ctx, domain.SystemActorName)
+		if _, err := h.appealService.Revoke(ctx, a.ID, domain.SystemActorName, "Automatically revoked"); err != nil {
+			h.logger.Error("failed to revoke appeal",
+				"id", a.ID,
+				"error", err,
+			)
 
 			failedRevoke = append(failedRevoke, map[string]interface{}{
 				"id":    a.ID,
 				"error": err.Error(),
 			})
 		} else {
-			h.logger.Info(fmt.Sprintf("Appeal ID %s has been revoked successfully", a.ID))
+			h.logger.Info("appeal revoked", "id", a.ID)
 			successRevoke = append(successRevoke, a.ID)
 		}
 	}
 
-	result, err := json.Marshal(map[string]interface{}{
-		"success": successRevoke,
-		"failed":  failedRevoke,
-	})
 	if err != nil {
 		return err
 	}
 
-	if len(successRevoke) > 0 || len(failedRevoke) > 0 {
-		h.logger.Info(fmt.Sprintf("Done! %v appeals revoked", len(successRevoke)))
-		if len(failedRevoke) > 0 {
-			h.logger.Info(fmt.Sprintf("But unable to revoke %v appeals", len(failedRevoke)))
-		}
-		h.logger.Info(string(result))
-	} else {
-		h.logger.Info("Done! No active appeals revoked")
-	}
+	h.logger.Info("successful appeal revocation",
+		"count", len(successRevoke),
+		"ids", successRevoke,
+	)
+	h.logger.Info("failed appeal revocation",
+		"count", len(failedRevoke),
+		"ids", failedRevoke,
+	)
 
 	return nil
 }

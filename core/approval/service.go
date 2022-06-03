@@ -1,43 +1,55 @@
+//go:generate mockery --name=repository --exported
+//go:generate mockery --name=policyService --exported
+
 package approval
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
 
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/store"
 	"github.com/odpf/guardian/pkg/evaluator"
 )
 
-type policyService interface {
-	GetOne(string, uint) (*domain.Policy, error)
+type repository interface {
+	BulkInsert([]*domain.Approval) error
+	ListApprovals(*domain.ListApprovalsFilter) ([]*domain.Approval, error)
 }
 
+type policyService interface {
+	GetOne(context.Context, string, uint) (*domain.Policy, error)
+}
+
+type ServiceDeps struct {
+	Repository    repository
+	PolicyService policyService
+}
 type Service struct {
-	repo          store.ApprovalRepository
+	repo          repository
 	policyService policyService
 }
 
-func NewService(
-	ar store.ApprovalRepository,
-	ps policyService,
-) *Service {
-	return &Service{ar, ps}
+func NewService(deps ServiceDeps) *Service {
+	return &Service{
+		deps.Repository,
+		deps.PolicyService,
+	}
 }
 
-func (s *Service) ListApprovals(filters *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
+func (s *Service) ListApprovals(ctx context.Context, filters *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
 	return s.repo.ListApprovals(filters)
 }
 
-func (s *Service) BulkInsert(approvals []*domain.Approval) error {
+func (s *Service) BulkInsert(ctx context.Context, approvals []*domain.Approval) error {
 	return s.repo.BulkInsert(approvals)
 }
 
-func (s *Service) AdvanceApproval(appeal *domain.Appeal) error {
+func (s *Service) AdvanceApproval(ctx context.Context, appeal *domain.Appeal) error {
 	policy := appeal.Policy
 	if policy == nil {
-		p, err := s.policyService.GetOne(appeal.PolicyID, appeal.PolicyVersion)
+		p, err := s.policyService.GetOne(ctx, appeal.PolicyID, appeal.PolicyVersion)
 		if err != nil {
 			return err
 		}

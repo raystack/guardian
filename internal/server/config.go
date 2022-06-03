@@ -22,6 +22,7 @@ type Config struct {
 	LogLevel                   string           `mapstructure:"log_level" default:"info"`
 	DB                         store.Config     `mapstructure:"db"`
 	AuthenticatedUserHeaderKey string           `mapstructure:"authenticated_user_header_key"`
+	AuditLogTraceIDHeaderKey   string           `mapstructure:"audit_log_trace_id_header_key" default:"X-Trace-Id"`
 	Jobs                       Jobs             `mapstructure:"jobs"`
 }
 

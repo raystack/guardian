@@ -5,14 +5,12 @@ import (
 	"errors"
 	"strings"
 
-	ctx_logrus "github.com/grpc-ecosystem/go-grpc-middleware/tags/logrus"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -39,50 +37,50 @@ type ProtoAdapter interface {
 }
 
 type resourceService interface {
-	Find(map[string]interface{}) ([]*domain.Resource, error)
+	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
 	GetOne(string) (*domain.Resource, error)
-	BulkUpsert([]*domain.Resource) error
-	Update(*domain.Resource) error
-	Get(*domain.ResourceIdentifier) (*domain.Resource, error)
-	Delete(string) error
-	BatchDelete([]string) error
+	BulkUpsert(context.Context, []*domain.Resource) error
+	Update(context.Context, *domain.Resource) error
+	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
+	Delete(context.Context, string) error
+	BatchDelete(context.Context, []string) error
 }
 
 type providerService interface {
-	Create(*domain.Provider) error
-	Find() ([]*domain.Provider, error)
-	GetByID(string) (*domain.Provider, error)
-	GetTypes() ([]domain.ProviderType, error)
-	GetOne(pType, urn string) (*domain.Provider, error)
-	Update(*domain.Provider) error
-	FetchResources() error
-	GetRoles(id, resourceType string) ([]*domain.Role, error)
-	ValidateAppeal(*domain.Appeal, *domain.Provider) error
-	GrantAccess(*domain.Appeal) error
-	RevokeAccess(*domain.Appeal) error
-	Delete(string) error
+	Create(context.Context, *domain.Provider) error
+	Find(context.Context) ([]*domain.Provider, error)
+	GetByID(context.Context, string) (*domain.Provider, error)
+	GetTypes(context.Context) ([]domain.ProviderType, error)
+	GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error)
+	Update(context.Context, *domain.Provider) error
+	FetchResources(context.Context) error
+	GetRoles(ctx context.Context, id, resourceType string) ([]*domain.Role, error)
+	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
+	GrantAccess(context.Context, *domain.Appeal) error
+	RevokeAccess(context.Context, *domain.Appeal) error
+	Delete(context.Context, string) error
 }
 
 type policyService interface {
-	Create(*domain.Policy) error
-	Find() ([]*domain.Policy, error)
-	GetOne(id string, version uint) (*domain.Policy, error)
-	Update(*domain.Policy) error
+	Create(context.Context, *domain.Policy) error
+	Find(context.Context) ([]*domain.Policy, error)
+	GetOne(ctx context.Context, id string, version uint) (*domain.Policy, error)
+	Update(context.Context, *domain.Policy) error
 }
 
 type appealService interface {
-	GetByID(string) (*domain.Appeal, error)
-	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
-	Create([]*domain.Appeal) error
-	MakeAction(domain.ApprovalAction) (*domain.Appeal, error)
-	Cancel(string) (*domain.Appeal, error)
-	Revoke(id, actor, reason string) (*domain.Appeal, error)
+	GetByID(context.Context, string) (*domain.Appeal, error)
+	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
+	Create(context.Context, []*domain.Appeal) error
+	MakeAction(context.Context, domain.ApprovalAction) (*domain.Appeal, error)
+	Cancel(context.Context, string) (*domain.Appeal, error)
+	Revoke(ctx context.Context, id, actor, reason string) (*domain.Appeal, error)
 }
 
 type approvalService interface {
-	ListApprovals(*domain.ListApprovalsFilter) ([]*domain.Approval, error)
-	BulkInsert([]*domain.Approval) error
-	AdvanceApproval(*domain.Appeal) error
+	ListApprovals(context.Context, *domain.ListApprovalsFilter) ([]*domain.Approval, error)
+	BulkInsert(context.Context, []*domain.Approval) error
+	AdvanceApproval(context.Context, *domain.Appeal) error
 }
 
 type GRPCServer struct {
@@ -119,7 +117,7 @@ func NewGRPCServer(
 }
 
 func (s *GRPCServer) ListProviders(ctx context.Context, req *guardianv1beta1.ListProvidersRequest) (*guardianv1beta1.ListProvidersResponse, error) {
-	providers, err := s.providerService.Find()
+	providers, err := s.providerService.Find(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +138,7 @@ func (s *GRPCServer) ListProviders(ctx context.Context, req *guardianv1beta1.Lis
 }
 
 func (s *GRPCServer) GetProvider(ctx context.Context, req *guardianv1beta1.GetProviderRequest) (*guardianv1beta1.GetProviderResponse, error) {
-	p, err := s.providerService.GetByID(req.GetId())
+	p, err := s.providerService.GetByID(ctx, req.GetId())
 	if err != nil {
 		switch err {
 		case provider.ErrRecordNotFound:
@@ -161,7 +159,7 @@ func (s *GRPCServer) GetProvider(ctx context.Context, req *guardianv1beta1.GetPr
 }
 
 func (s *GRPCServer) GetProviderTypes(ctx context.Context, req *guardianv1beta1.GetProviderTypesRequest) (*guardianv1beta1.GetProviderTypesResponse, error) {
-	providerTypes, err := s.providerService.GetTypes()
+	providerTypes, err := s.providerService.GetTypes(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrieve provider types: %v", err)
 	}
@@ -191,7 +189,8 @@ func (s *GRPCServer) CreateProvider(ctx context.Context, req *guardianv1beta1.Cr
 		URN:    providerConfig.URN,
 		Config: providerConfig,
 	}
-	if err := s.providerService.Create(p); err != nil {
+
+	if err := s.providerService.Create(ctx, p); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
 	}
 
@@ -218,7 +217,8 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.Up
 		URN:    providerConfig.URN,
 		Config: providerConfig,
 	}
-	if err := s.providerService.Update(p); err != nil {
+
+	if err := s.providerService.Update(ctx, p); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update provider: %v", err)
 	}
 
@@ -233,7 +233,7 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.Up
 }
 
 func (s *GRPCServer) DeleteProvider(ctx context.Context, req *guardianv1beta1.DeleteProviderRequest) (*guardianv1beta1.DeleteProviderResponse, error) {
-	if err := s.providerService.Delete(req.GetId()); err != nil {
+	if err := s.providerService.Delete(ctx, req.GetId()); err != nil {
 		if errors.Is(err, provider.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "provider not found")
 		}
@@ -244,7 +244,7 @@ func (s *GRPCServer) DeleteProvider(ctx context.Context, req *guardianv1beta1.De
 }
 
 func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1beta1.ListRolesRequest) (*guardianv1beta1.ListRolesResponse, error) {
-	roles, err := s.providerService.GetRoles(req.GetId(), req.GetResourceType())
+	roles, err := s.providerService.GetRoles(ctx, req.GetId(), req.GetResourceType())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list roles: %v", err)
 	}
@@ -265,7 +265,7 @@ func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1beta1.ListRol
 }
 
 func (s *GRPCServer) ListPolicies(ctx context.Context, req *guardianv1beta1.ListPoliciesRequest) (*guardianv1beta1.ListPoliciesResponse, error) {
-	policies, err := s.policyService.Find()
+	policies, err := s.policyService.Find(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get policy list: %v", err)
 	}
@@ -285,7 +285,7 @@ func (s *GRPCServer) ListPolicies(ctx context.Context, req *guardianv1beta1.List
 }
 
 func (s *GRPCServer) GetPolicy(ctx context.Context, req *guardianv1beta1.GetPolicyRequest) (*guardianv1beta1.GetPolicyResponse, error) {
-	p, err := s.policyService.GetOne(req.GetId(), uint(req.GetVersion()))
+	p, err := s.policyService.GetOne(ctx, req.GetId(), uint(req.GetVersion()))
 	if err != nil {
 		switch err {
 		case policy.ErrPolicyNotFound:
@@ -311,7 +311,7 @@ func (s *GRPCServer) CreatePolicy(ctx context.Context, req *guardianv1beta1.Crea
 		return nil, status.Errorf(codes.Internal, "cannot deserialize policy: %v", err)
 	}
 
-	if err := s.policyService.Create(policy); err != nil {
+	if err := s.policyService.Create(ctx, policy); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create policy: %v", err)
 	}
 
@@ -332,7 +332,7 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *guardianv1beta1.Upda
 	}
 
 	p.ID = req.GetId()
-	if err := s.policyService.Update(p); err != nil {
+	if err := s.policyService.Update(ctx, p); err != nil {
 		if errors.Is(err, policy.ErrPolicyNotFound) {
 			return nil, status.Error(codes.NotFound, "policy not found")
 		} else if errors.Is(err, policy.ErrEmptyIDParam) {
@@ -365,7 +365,7 @@ func (s *GRPCServer) ListResources(ctx context.Context, req *guardianv1beta1.Lis
 			}
 		}
 	}
-	resources, err := s.resourceService.Find(map[string]interface{}{
+	resources, err := s.resourceService.Find(ctx, map[string]interface{}{
 		"is_deleted":    req.GetIsDeleted(),
 		"type":          req.GetType(),
 		"urn":           req.GetUrn(),
@@ -417,7 +417,7 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *guardianv1beta1.Up
 	r := s.adapter.FromResourceProto(req.GetResource())
 	r.ID = req.GetId()
 
-	if err := s.resourceService.Update(r); err != nil {
+	if err := s.resourceService.Update(ctx, r); err != nil {
 		if errors.Is(err, resource.ErrRecordNotFound) {
 			return nil, status.Error(codes.NotFound, "resource not found")
 		}
@@ -435,7 +435,7 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *guardianv1beta1.Up
 }
 
 func (s *GRPCServer) DeleteResource(ctx context.Context, req *guardianv1beta1.DeleteResourceRequest) (*guardianv1beta1.DeleteResourceResponse, error) {
-	if err := s.resourceService.Delete(req.GetId()); err != nil {
+	if err := s.resourceService.Delete(ctx, req.GetId()); err != nil {
 		if errors.Is(err, resource.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "resource not found")
 		}
@@ -448,7 +448,7 @@ func (s *GRPCServer) DeleteResource(ctx context.Context, req *guardianv1beta1.De
 func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.ListUserAppealsRequest) (*guardianv1beta1.ListUserAppealsResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
 	filters := &domain.ListAppealsFilter{
@@ -475,7 +475,7 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 	if req.GetOrderBy() != nil {
 		filters.OrderBy = req.GetOrderBy()
 	}
-	appeals, err := s.listAppeals(filters)
+	appeals, err := s.listAppeals(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
@@ -511,7 +511,7 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListA
 	if req.GetOrderBy() != nil {
 		filters.OrderBy = req.GetOrderBy()
 	}
-	appeals, err := s.listAppeals(filters)
+	appeals, err := s.listAppeals(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +524,7 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListA
 func (s *GRPCServer) CreateAppeal(ctx context.Context, req *guardianv1beta1.CreateAppealRequest) (*guardianv1beta1.CreateAppealResponse, error) {
 	authenticatedUser, err := s.getUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
 	appeals, err := s.adapter.FromCreateAppealProto(req, authenticatedUser)
@@ -532,7 +532,7 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *guardianv1beta1.Crea
 		return nil, status.Errorf(codes.Internal, "cannot deserialize payload: %v", err)
 	}
 
-	if err := s.appealService.Create(appeals); err != nil {
+	if err := s.appealService.Create(ctx, appeals); err != nil {
 		if errors.Is(err, appeal.ErrAppealDuplicate) {
 			return nil, status.Errorf(codes.AlreadyExists, "appeal already exists: %v", err)
 		}
@@ -556,10 +556,10 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *guardianv1beta1.Crea
 func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1beta1.ListUserApprovalsRequest) (*guardianv1beta1.ListUserApprovalsResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
-	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
+	approvals, err := s.listApprovals(ctx, &domain.ListApprovalsFilter{
 		AccountID: req.GetAccountId(),
 		CreatedBy: user,
 		Statuses:  req.GetStatuses(),
@@ -575,7 +575,7 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1beta1
 }
 
 func (s *GRPCServer) ListApprovals(ctx context.Context, req *guardianv1beta1.ListApprovalsRequest) (*guardianv1beta1.ListApprovalsResponse, error) {
-	approvals, err := s.listApprovals(&domain.ListApprovalsFilter{
+	approvals, err := s.listApprovals(ctx, &domain.ListApprovalsFilter{
 		AccountID: req.GetAccountId(),
 		CreatedBy: req.GetCreatedBy(),
 		Statuses:  req.GetStatuses(),
@@ -592,7 +592,7 @@ func (s *GRPCServer) ListApprovals(ctx context.Context, req *guardianv1beta1.Lis
 
 func (s *GRPCServer) GetAppeal(ctx context.Context, req *guardianv1beta1.GetAppealRequest) (*guardianv1beta1.GetAppealResponse, error) {
 	id := req.GetId()
-	appeal, err := s.appealService.GetByID(id)
+	appeal, err := s.appealService.GetByID(ctx, id)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to retrieve appeal: %v", err)
 	}
@@ -613,11 +613,11 @@ func (s *GRPCServer) GetAppeal(ctx context.Context, req *guardianv1beta1.GetAppe
 func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.UpdateApprovalRequest) (*guardianv1beta1.UpdateApprovalResponse, error) {
 	actor, err := s.getUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
 	id := req.GetId()
-	a, err := s.appealService.MakeAction(domain.ApprovalAction{
+	a, err := s.appealService.MakeAction(ctx, domain.ApprovalAction{
 		AppealID:     id,
 		ApprovalName: req.GetApprovalName(),
 		Actor:        actor,
@@ -660,7 +660,7 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 
 func (s *GRPCServer) CancelAppeal(ctx context.Context, req *guardianv1beta1.CancelAppealRequest) (*guardianv1beta1.CancelAppealResponse, error) {
 	id := req.GetId()
-	a, err := s.appealService.Cancel(id)
+	a, err := s.appealService.Cancel(ctx, id)
 	if err != nil {
 		switch err {
 		case appeal.ErrAppealNotFound:
@@ -694,7 +694,7 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 	}
 	reason := req.GetReason().GetReason()
 
-	a, err := s.appealService.Revoke(id, actor, reason)
+	a, err := s.appealService.Revoke(ctx, id, actor, reason)
 	if err != nil {
 		switch err {
 		case appeal.ErrAppealNotFound:
@@ -714,8 +714,8 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 	}, nil
 }
 
-func (s *GRPCServer) listAppeals(filters *domain.ListAppealsFilter) ([]*guardianv1beta1.Appeal, error) {
-	appeals, err := s.appealService.Find(filters)
+func (s *GRPCServer) listAppeals(ctx context.Context, filters *domain.ListAppealsFilter) ([]*guardianv1beta1.Appeal, error) {
+	appeals, err := s.appealService.Find(ctx, filters)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get appeal list: %s", err)
 	}
@@ -732,8 +732,8 @@ func (s *GRPCServer) listAppeals(filters *domain.ListAppealsFilter) ([]*guardian
 	return appealProtos, nil
 }
 
-func (s *GRPCServer) listApprovals(filters *domain.ListApprovalsFilter) ([]*guardianv1beta1.Approval, error) {
-	approvals, err := s.approvalService.ListApprovals(filters)
+func (s *GRPCServer) listApprovals(ctx context.Context, filters *domain.ListApprovalsFilter) ([]*guardianv1beta1.Approval, error) {
+	approvals, err := s.approvalService.ListApprovals(ctx, filters)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get approval list: %s", err)
 	}
@@ -751,16 +751,16 @@ func (s *GRPCServer) listApprovals(filters *domain.ListApprovalsFilter) ([]*guar
 }
 
 func (s *GRPCServer) getUser(ctx context.Context) (string, error) {
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		users := md.Get(s.authenticatedUserHeaderKey)
-		if len(users) > 0 {
-			currentUser := users[0]
-			ctx_logrus.AddFields(ctx, logrus.Fields{
-				s.authenticatedUserHeaderKey: currentUser,
-			})
-			return currentUser, nil
-		}
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", errors.New("unable to retrieve metadata from context")
 	}
 
-	return "", status.Error(codes.Unauthenticated, "user email not found")
+	users := md.Get(s.authenticatedUserHeaderKey)
+	if len(users) == 0 {
+		return "", errors.New("user email not found")
+	}
+
+	currentUser := users[0]
+	return currentUser, nil
 }

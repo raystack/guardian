@@ -10,7 +10,7 @@ all: build
 
 build: ## Build the guardian binary
 	@echo " > building guardian version ${APP_VERSION}"
-	go build -ldflags "-X ${NAME}/cmd.Version=${APP_VERSION} -X ${NAME}/cmd.BuildCommit=${LAST_COMMIT}" -o guardian .
+	go build -ldflags "-X ${NAME}/core.Version=${APP_VERSION} -X ${NAME}/core.BuildCommit=${LAST_COMMIT}" -o guardian .
 	@echo " - build complete"
 
 buildr: install ## Build with goreleaser
@@ -20,13 +20,16 @@ test: ## Run the tests
 	go test ./... -race -coverprofile=coverage.out
 
 coverage: ## Print code coverage
-	go test -race -coverprofile coverage.txt -covermode=atomic ./... & go tool cover -html=coverage.out
+	go test -race -coverprofile coverage.out -covermode=atomic ./... && go tool cover -html=coverage.out
 
 vet: ## Run the go vet tool
 	go vet ./...
 
 lint: ## Lint with golangci-lint
 	golangci-lint run
+
+generate: ## Generate mocks
+	go generate ./...
 
 proto: ## Generate the protobuf files
 	@echo " > generating protobuf from odpf/proton"
