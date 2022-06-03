@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/odpf/guardian/cmd"
+	"github.com/odpf/guardian/cli"
 )
 
 const (
@@ -14,12 +14,12 @@ const (
 )
 
 func main() {
-	cliConfig, err := cmd.LoadConfig()
+	cliConfig, err := cli.LoadConfig()
 	if err != nil {
-		cliConfig = &cmd.Config{}
+		cliConfig = &cli.Config{}
 	}
 
-	root := cmd.New(cliConfig)
+	root := cli.New(cliConfig)
 	if cmd, err := root.ExecuteC(); err != nil {
 		printError(err)
 

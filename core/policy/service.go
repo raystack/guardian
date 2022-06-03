@@ -15,7 +15,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/evaluator"
+	"github.com/odpf/guardian/pkg/evaluator"
 	"github.com/odpf/salt/log"
 )
 

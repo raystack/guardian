@@ -10,7 +10,7 @@ import (
 	"reflect"
 
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/evaluator"
+	"github.com/odpf/guardian/pkg/evaluator"
 )
 
 type repository interface {

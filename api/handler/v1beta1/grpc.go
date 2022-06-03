@@ -7,7 +7,6 @@ import (
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/core/appeal"
-	"github.com/odpf/guardian/core/approval"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
@@ -37,12 +36,59 @@ type ProtoAdapter interface {
 	ToApprovalProto(*domain.Approval) (*guardianv1beta1.Approval, error)
 }
 
+type resourceService interface {
+	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
+	GetOne(string) (*domain.Resource, error)
+	BulkUpsert(context.Context, []*domain.Resource) error
+	Update(context.Context, *domain.Resource) error
+	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
+	Delete(context.Context, string) error
+	BatchDelete(context.Context, []string) error
+}
+
+type providerService interface {
+	Create(context.Context, *domain.Provider) error
+	Find(context.Context) ([]*domain.Provider, error)
+	GetByID(context.Context, string) (*domain.Provider, error)
+	GetTypes(context.Context) ([]domain.ProviderType, error)
+	GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error)
+	Update(context.Context, *domain.Provider) error
+	FetchResources(context.Context) error
+	GetRoles(ctx context.Context, id, resourceType string) ([]*domain.Role, error)
+	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
+	GrantAccess(context.Context, *domain.Appeal) error
+	RevokeAccess(context.Context, *domain.Appeal) error
+	Delete(context.Context, string) error
+}
+
+type policyService interface {
+	Create(context.Context, *domain.Policy) error
+	Find(context.Context) ([]*domain.Policy, error)
+	GetOne(ctx context.Context, id string, version uint) (*domain.Policy, error)
+	Update(context.Context, *domain.Policy) error
+}
+
+type appealService interface {
+	GetByID(context.Context, string) (*domain.Appeal, error)
+	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
+	Create(context.Context, []*domain.Appeal) error
+	MakeAction(context.Context, domain.ApprovalAction) (*domain.Appeal, error)
+	Cancel(context.Context, string) (*domain.Appeal, error)
+	Revoke(ctx context.Context, id, actor, reason string) (*domain.Appeal, error)
+}
+
+type approvalService interface {
+	ListApprovals(context.Context, *domain.ListApprovalsFilter) ([]*domain.Approval, error)
+	BulkInsert(context.Context, []*domain.Approval) error
+	AdvanceApproval(context.Context, *domain.Appeal) error
+}
+
 type GRPCServer struct {
-	resourceService *resource.Service
-	providerService *provider.Service
-	policyService   *policy.Service
-	appealService   *appeal.Service
-	approvalService *approval.Service
+	resourceService resourceService
+	providerService providerService
+	policyService   policyService
+	appealService   appealService
+	approvalService approvalService
 	adapter         ProtoAdapter
 
 	authenticatedUserHeaderKey string
@@ -51,11 +97,11 @@ type GRPCServer struct {
 }
 
 func NewGRPCServer(
-	resourceService *resource.Service,
-	providerService *provider.Service,
-	policyService *policy.Service,
-	appealService *appeal.Service,
-	approvalService *approval.Service,
+	resourceService resourceService,
+	providerService providerService,
+	policyService policyService,
+	appealService appealService,
+	approvalService approvalService,
 	adapter ProtoAdapter,
 	authenticatedUserHeaderKey string,
 ) *GRPCServer {
