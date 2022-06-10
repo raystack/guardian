@@ -1,20 +1,16 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
-title: ''
-labels: ''
-assignees: ''
-
+title: ""
+labels: ""
+assignees: ""
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**Summary**
+A clear and concise description of what the feature or problem is.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
-
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**Proposed solution**
+How will it benefit CLI and its users?
 
 **Additional context**
-Add any other context or screenshots about the feature request here.
+Add any other context like screenshots or mockups are helpful, if applicable.
