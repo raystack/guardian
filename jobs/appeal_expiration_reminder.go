@@ -37,7 +37,7 @@ func (h *handler) AppealExpirationReminder(ctx context.Context) error {
 		var notifications []domain.Notification
 		for _, a := range appeals {
 			notifications = append(notifications, domain.Notification{
-				User: a.AccountID,
+				User: a.CreatedBy,
 				Message: domain.NotificationMessage{
 					Type: domain.NotificationTypeExpirationReminder,
 					Variables: map[string]interface{}{
