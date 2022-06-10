@@ -111,6 +111,7 @@ func (n *notifier) findSlackIDByEmail(email string) (string, error) {
 		return "", errors.New("user not found")
 	}
 
+	n.slackIDCache[email] = result.User.ID
 	return result.User.ID, nil
 }
 
