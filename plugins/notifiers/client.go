@@ -8,7 +8,7 @@ import (
 )
 
 type Client interface {
-	Notify([]domain.Notification) error
+	Notify([]domain.Notification) []error
 }
 
 const (

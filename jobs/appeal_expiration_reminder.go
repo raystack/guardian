@@ -49,9 +49,11 @@ func (h *handler) AppealExpirationReminder(ctx context.Context) error {
 			})
 		}
 
-		if err := h.notifier.Notify(notifications); err != nil {
-			h.logger.Error("failed to send notifications", "error", err)
-			return err
+		if errs := h.notifier.Notify(notifications); errs != nil {
+			for _, err1 := range errs {
+				h.logger.Error("failed to send notifications", "error", err1)
+			}
+			return nil
 		}
 	}
 

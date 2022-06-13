@@ -46,24 +46,25 @@ func New(config *Config) *notifier {
 	return &notifier{config.AccessToken, map[string]string{}, config.Messages}
 }
 
-func (n *notifier) Notify(items []domain.Notification) error {
+func (n *notifier) Notify(items []domain.Notification) []error {
+	errs := make([]error, 0)
 	for _, item := range items {
 		slackID, err := n.findSlackIDByEmail(item.User)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 
 		msg, err := parseMessage(item.Message, n.Messages)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 
 		if err := n.sendMessage(slackID, msg); err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
 
-	return nil
+	return errs
 }
 
 func (n *notifier) sendMessage(channel, text string) error {
