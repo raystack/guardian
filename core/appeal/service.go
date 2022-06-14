@@ -271,8 +271,10 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 	}
 
 	if len(notifications) > 0 {
-		if err := s.notifier.Notify(notifications); err != nil {
-			s.logger.Error("failed to send notifications", "error", err.Error())
+		if errs := s.notifier.Notify(notifications); errs != nil {
+			for _, err1 := range errs {
+				s.logger.Error("failed to send notifications", "error", err1.Error())
+			}
 		}
 	}
 
@@ -397,8 +399,10 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 				notifications = append(notifications, getApprovalNotifications(appeal)...)
 			}
 			if len(notifications) > 0 {
-				if err := s.notifier.Notify(notifications); err != nil {
-					s.logger.Error("failed to send notifications", "error", err.Error())
+				if errs := s.notifier.Notify(notifications); errs != nil {
+					for _, err1 := range errs {
+						s.logger.Error("failed to send notifications", "error", err1.Error())
+					}
 				}
 			}
 
@@ -471,7 +475,7 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 		return nil, err
 	}
 
-	if err := s.notifier.Notify([]domain.Notification{{
+	if errs := s.notifier.Notify([]domain.Notification{{
 		User: appeal.CreatedBy,
 		Message: domain.NotificationMessage{
 			Type: domain.NotificationTypeAccessRevoked,
@@ -480,8 +484,10 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 				"role":          appeal.Role,
 			},
 		},
-	}}); err != nil {
-		s.logger.Error("failed to send notifications", "error", err.Error())
+	}}); errs != nil {
+		for _, err1 := range errs {
+			s.logger.Error("failed to send notifications", "error", err1.Error())
+		}
 	}
 
 	if err := s.auditLogger.Log(ctx, AuditKeyRevoke, map[string]interface{}{
