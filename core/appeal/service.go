@@ -774,7 +774,7 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 					if errors.Is(err, ErrAppealDuplicate) {
 						continue
 					}
-					return fmt.Errorf("creating additional appeals: %v", err)
+					return fmt.Errorf("creating additional appeals: %w", err)
 				}
 			}
 		}
