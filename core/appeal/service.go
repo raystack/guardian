@@ -778,6 +778,14 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 				}
 				if err := s.Create(ctx, []*domain.Appeal{additionalAppeal}); err != nil {
 					if errors.Is(err, ErrAppealDuplicate) {
+						s.logger.Debug("skipping creating additional appeal",
+							"account_id", additionalAppeal.AccountID,
+							"account_type", additionalAppeal.AccountType,
+							"role", additionalAppeal.Role,
+							"resource_id", additionalAppeal.ResourceID,
+							"parent_role", a.Role,
+							"parent_resource_id", a.ResourceID,
+						)
 						continue
 					}
 					return fmt.Errorf("creating additional appeals: %w", err)
