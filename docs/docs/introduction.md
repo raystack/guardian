@@ -40,7 +40,7 @@ Explore the following resoruces to get started with Guardian:
 
 ## Where to go from here
 
-See the [installation](./Getting%20Started/Installation.md) page to install the `Guardian` CLI.
+See the [installation](../docs/getting_started/installation) page to install the `Guardian` CLI.
 
 Next, we recommend completing the `Guides`. The tour provides an overview of most of the existing functionality of Guardian and takes approximately 30 minutes to complete.
 
