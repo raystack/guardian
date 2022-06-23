@@ -9,23 +9,32 @@ Guardian CLI supports many commands. To get a list of all the commands, follow t
 Enter the following code into the terminal:
 
 ```text
-$ guardian
+$ guardian or $ guardian --help
 ```
 
-The output is the following:
+List of all availiable commands are as follows:
 
 ```text
-Available Commands:
-  appeals     manage appeals
-  config      manage guardian CLI configuration
+CORE COMMANDS
+  appeal      Manage appeals
+  policy      Manage policies
+  provider    Manage providers
+  resource    Manage resources
+
+ADDITIONAL COMMANDS
+  completion  Generate shell completion scripts
+  config      Manage client configurations
   help        Help about any command
-  migrate     Migrate database schema
-  policies    manage policies
-  providers   manage providers
-  resources   manage resources
-  serve       Run server
+  job         Manage jobs
+  reference   Show command reference
+  server      Server management
+  version     Print version information
 ```
 
+To know the usage of any of the core commands use the following syntax:
+```text
+$ guardian <command> <subcommand> --help
+```
 ## Config command
 
 Config command in Guardain's CLI is used to configure the command line tool. Following are a few examples of doing the same.
@@ -92,23 +101,31 @@ Available Commands:
 
 The create command is used to create a new policy. For this we have to define our policy file, which would be passed as a flag to the `create` command.
 
+Policy has `version` to ensure each appeal has a reference to an applied policy when it's created. A policy is created with an initial `version` equal to `1`.
+
+#### Example
+
+Check [policy reference](../reference/policy.md) for more details on the policy configuration
 For instance, we can create a policy file `policy.yaml` as shown below.
 
-```text
-id: policy_x
+```yaml
+# policy.yaml
+id: my_policy
 steps:
   - name: manager_approval
+    description: Manager approval for sensitive data
+    when: $appeal.resource.details.is_sensitive == true
     strategy: manual
     approvers:
-    - $appeal.resource.details.manager
-  - name: head_approval
+      - $appeal.creator.manager_email
+  - name: resource_owner_approval
+    description: Approval from resource admin/owner
     strategy: manual
     approvers:
-    - $appeal.resource.details.head
+      - $appeal.resource.details.owner
 ```
 
 Now, we can create a policy using the `create` command as demonstrated here.
-
 Enter the following code into the terminal:
 
 ```text
@@ -118,7 +135,7 @@ $ guardian policies create --file policy.yaml
 The output is the following:
 
 ```text
-policy created with id: policy_x
+policy created with id: my_policy
 ```
 
 * **list command**
@@ -335,6 +352,8 @@ ID    PROVIDER                              TYPE        URN                     
 ```
 
 * **metadata command**
+
+TODO 
 
 ## Appeals command
 
