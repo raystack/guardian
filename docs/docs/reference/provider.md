@@ -12,37 +12,38 @@ appeal: object
 resources: []object
 ```
 
-| Fields        |                                                                                                                                                                                          |
-| :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `type`        | `string` Required. Provider type Possible values: `google_bigquery`, `metabase`                                                                                                          |
-| `urn`         | `string` Required. Provider instance identifier                                                                                                                                          |
-| `allowed_account_types` | `[]string` Optional. List of allowed account types. Each provider could have different account types, but `user` account type is applicable for any provider type |
-| `credentials` | `object` Required. Credentials to setup connection and access the provider |
-| `appeal`      | [`object(AppealConfig)`](provider.md#appealconfig) Required. Appeal options                                                                                                       |
-| `resources[]` | [`object(ResourceConfig)`](provider.md#resourceconfig) Required. List of permission configurations for each resource type                                                         |
+| Field | Type | Description | Required | 
+| :----- | :---- | :------ | :------ | 
+| `type`| `string` | Required. Provider type Possible values: `google_bigquery`, `metabase` | YES |
+| `urn`| `string` |Required. Provider instance identifier   | YES | 
+| `allowed_account_types` | `[]string` | Optional. List of allowed account types. Each provider could have different account types, but `user` account type is applicable for any provider type | NO | 
+| `credentials` | `object`| Required. Credentials to setup connection and access the provider | YES | 
+| `appeal`      | [`object(AppealConfig)`](provider.md#appealconfig) | Required. Appeal options   | YES | 
+| `resources[]` | [`object(ResourceConfig)`](provider.md#resourceconfig) |Required. List of permission configurations for each resource type| YES |
+
 
 ### `AppealConfig`
 
-| Fields                             |                                                                                                                                                  |
-| :--------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `allow_permanent_access`           | `boolean` Set this to true if you want to allow users to have permanent access to the resources. Default: `false`                                |
-| `allow_active_access_extension_in` | `string` Duration before the access expiration date when the user allowed to create appeal to the same resource \(extend their current access\). |
+| Field | Type | Description | Required | 
+| :----- | :---- | :------ | :------ | 
+| `allow_permanent_access`| `boolean` | Set this to true if you want to allow users to have permanent access to the resources. Default: false ||
+| `allow_active_access_extension_in` | `string` | Duration before the access expiration date when the user allowed to create appeal to the same resource \(extend their current access\). ||
 
 ### `ResourceConfig`
 
-| Field     |                                                                                                                                                                   |
-| :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `type`    | `string` Required. Possible values: - BigQuery: `string(BigQueryResourceType)` - Metabase: `string(MetabaseResourceType)`                                         |
-| `policy`  | `object(id: string, version: int)` Required. Approval policy config that want to be applied to this resource config. Example: `id: approval_policy_x, version: 1` |
-| `roles[]` | [`object(Role)`](provider.md#role) Required. List of resource permissions mapping                                                                          |
+| Field | Type | Description | Required | 
+| :----- | :--------- | :---------- | :------ | 
+| `type`    | `string` | Required. Possible values: - BigQuery: `string(BigQueryResourceType)` - Metabase: `string(MetabaseResourceType)`||
+| `policy`  | `object(id: string, version: int)` |Required. Approval policy config that want to be applied to this resource config. Example: `id: approval_policy_x, version: 1` ||
+| `roles[]` | [`object(Role)`](provider.md#role) |Required. List of resource permissions mapping||
 
 ### `Role`
 
-| Fields          |                                                                                                                                                                                                                                                                                                                 |
-| :-------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`            | `string` Required. Role identifier                                                                                                                                                                                                                                                                              |
-| `name`          | `string` Display name for role                                                                                                                                                                                                                                                                                  |
-| `permissions[]` | `object or string` Required. Set of permissions that will be granted to the requested resource Possible values: - BigQuery: `object(BigQueryResourcePermission)` - Metabase: `object(MetabaseResourcePermission)` - Grafana: `object(GrafanaResourcePermission)` - Tableau: `object(TableauResourcePermission)` |
+| Field | Type | Description | Required | 
+| :----- | :---- | :------ | :------ | 
+| `id` | `string` |Required. Role identifier|  |
+| `name`| `string` | Display name for role| |
+| `permissions[]` | `object or string` | Set of permissions that will be granted to the requested resource          Possible values: - BigQuery: `object(BigQueryResourcePermission)` - Metabase: `object(MetabaseResourcePermission)` - Grafana: `object(GrafanaResourcePermission)` - Tableau: `object(TableauResourcePermission)`| YES |
 
 ## Providers
 
