@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/appeal"
 	appealmocks "github.com/odpf/guardian/core/appeal/mocks"
 	"github.com/odpf/guardian/core/provider"
@@ -767,6 +768,84 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		s.Equal(expectedResult, appeals)
 		s.Nil(actualError)
+	})
+
+	s.Run("additional appeal creation", func() {
+		s.Run("should use the overridding policy", func() {
+			ctx := context.WithValue(context.Background(), appeal.ContextKeyIsAdditionalAppealCreation{}, true)
+
+			input := &domain.Appeal{
+				ResourceID:    uuid.New().String(),
+				AccountID:     "user@example.com",
+				AccountType:   domain.DefaultAppealAccountType,
+				CreatedBy:     "user@example.com",
+				Role:          "test-role",
+				PolicyID:      "test-policy",
+				PolicyVersion: 99,
+			}
+			dummyResource := &domain.Resource{
+				ID:           input.ResourceID,
+				ProviderType: "test-provider-type",
+				ProviderURN:  "test-provider-urn",
+				Type:         "test-type",
+				URN:          "test-urn",
+			}
+			dummyProvider := &domain.Provider{
+				Type: dummyResource.ProviderType,
+				URN:  dummyResource.ProviderURN,
+				Config: &domain.ProviderConfig{
+					Type: dummyResource.ProviderType,
+					URN:  dummyResource.ProviderURN,
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: dummyResource.Type,
+							Policy: &domain.PolicyConfig{
+								ID:      "test-dummy-policy",
+								Version: 1,
+							},
+							Roles: []*domain.Role{
+								{
+									ID: input.Role,
+								},
+							},
+						},
+					},
+				},
+			}
+			dummyPolicy := &domain.Policy{
+				ID:      "test-dummy-policy",
+				Version: 1,
+			}
+			overriddingPolicy := &domain.Policy{
+				ID:      input.PolicyID,
+				Version: input.PolicyVersion,
+				Steps: []*domain.Step{
+					{
+						Name:      "test-approval",
+						Strategy:  "auto",
+						ApproveIf: "true",
+					},
+				},
+			}
+
+			s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{dummyResource}, nil).Once()
+			s.mockProviderService.On("Find", mock.Anything).Return([]*domain.Provider{dummyProvider}, nil).Once()
+			s.mockPolicyService.On("Find", mock.Anything).Return([]*domain.Policy{dummyPolicy, overriddingPolicy}, nil).Once()
+			s.mockRepository.On("Find", mock.Anything).Return([]*domain.Appeal{}, nil).Once()
+			s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
+			s.mockIAMManager.On("GetClient", mock.Anything, mock.Anything).Return(s.mockIAMClient, nil)
+			s.mockIAMClient.On("GetUser", input.AccountID).Return(map[string]interface{}{}, nil)
+			s.mockApprovalService.On("AdvanceApproval", mock.Anything, mock.Anything).Return(nil)
+			s.mockRepository.On("BulkUpsert", mock.Anything).Return(nil).Once()
+			s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
+			s.mockAuditLogger.On("Log", mock.Anything, appeal.AuditKeyBulkInsert, mock.Anything).Return(nil).Once()
+
+			err := s.service.Create(ctx, []*domain.Appeal{input})
+
+			s.NoError(err)
+			s.Equal("test-approval", input.Approvals[0].Name)
+		})
 	})
 }
 
