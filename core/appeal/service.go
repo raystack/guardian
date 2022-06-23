@@ -809,9 +809,11 @@ func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal) error {
 		policy = p
 	}
 
-	// TODO: don't handle appeal requirements if current appeal already an additional appeal
-	if err := s.handleAppealRequirements(ctx, a, policy); err != nil {
-		return fmt.Errorf("handling appeal requirements: %w", err)
+	isAdditionalAppealCreation, _ := ctx.Value(ContextKeyIsAdditionalAppealCreation{}).(bool)
+	if !isAdditionalAppealCreation {
+		if err := s.handleAppealRequirements(ctx, a, policy); err != nil {
+			return fmt.Errorf("handling appeal requirements: %w", err)
+		}
 	}
 
 	if err := s.providerService.GrantAccess(ctx, a); err != nil {
