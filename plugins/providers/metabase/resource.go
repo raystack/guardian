@@ -158,11 +158,12 @@ func (g *Group) ToDomain() *domain.Resource {
 }
 
 type Collection struct {
-	ID        interface{} `json:"id"`
-	Name      string      `json:"name"`
-	Slug      string      `json:"slug"`
-	Location  string      `json:"location,omitempty"`
-	Namespace string      `json:"namespace,omitempty"`
+	ID              interface{} `json:"id"`
+	Name            string      `json:"name"`
+	Slug            string      `json:"slug"`
+	Location        string      `json:"location,omitempty"`
+	Namespace       string      `json:"namespace,omitempty"`
+	PersonalOwnerId interface{} `json:"personal_owner_id,omitempty"`
 }
 
 func (c *Collection) FromDomain(r *domain.Resource) error {
