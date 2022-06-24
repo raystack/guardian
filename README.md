@@ -116,14 +116,14 @@ $ git clone git@github.com:odpf/guardian.git
 # Install all the golang dependencies
 $ make install
 
-# Check all build comamnds available
+# Check all build commands available
 $ make help
 
 # Build meteor binary file
 $ make build
 
 # Init config
-$ cp app/config.yaml config.yaml
+$ cp internal/server/config.yaml config.yaml
 $ ./guardian config init
 
 # Run database migrations
