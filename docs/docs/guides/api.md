@@ -112,6 +112,8 @@ To get the list of all the policies created by the user, use the ** `GET` ** Met
 | 200 | A successful response. | [[Policy]](../reference/policy.md#policy-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
+** Here is an example below: **
+
 ```console
 $ curl --request GET '{{HOST}}/api/v1beta1/policies'
 ```
@@ -133,6 +135,8 @@ Viewing a policy can be done by the ** `GET`** Method on **`{{HOST}}/api/v1beta1
 | ---- | ----------- | ------ |
 | 200 | A successful response. | [Policy](../reference/policy.md#policy-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+
+** Here is an example below: **
 
 ```console
 $ curl --request GET '{{HOST}}/api/v1beta1/policies/{{policy_id}}/versions/{{policy_version}}'
@@ -306,7 +310,7 @@ $ curl --request GET '{{HOST}}/api/v1beta1/providers/{{provider_id}}'
 
 ### Delete Provider
 
-To delete a particular provider from the database use the **`DELETE`** Method on **`{{HOST}}/v1beta1/providers/:id`** with the parameters as shown here:
+To delete a particular provider from the database use the **`DELETE`** Method on **`{{HOST}}/api/v1beta1/providers/:id`** with the parameters as shown here:
 
 ##### Parameters 
 
@@ -444,7 +448,7 @@ $ curl --request PUT '{{HOST}}/api/v1beta1/resources/{{resource_id}}' \
 ```
 
 ### Delete Resource
-To delete a particular provider from the database use the **`DELETE`** Method on **`{{HOST}}/v1beta1/resources/:id`** with the parameters as shown here:
+To delete a particular provider from the database use the **`DELETE`** Method on **`{{HOST}}/api/v1beta1/resources/:id`** with the parameters as shown here:
 
 ##### Parameters 
 
@@ -484,6 +488,7 @@ Appeals can be created by calling the **`POST`** Method on **`{{HOST}}/api/v1bet
 | 200 | A successful response. | [Appeal](../reference/appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
+** Here is an example below: **
 
 ```console
 $ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
@@ -502,22 +507,22 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
 
 ### List Appeals
 
-To get the list of all appeals with addtional queries on the result, use the ** `GET` ** Method on **`{{HOST}}/v1beta1/appeals`**
+To get the list of all appeals with addtional queries on the result, use the ** `GET` ** Method on **`{{HOST}}/api/v1beta1/appeals`**
 The request parameters associated with this is API are as follows:
 
 ##### Parameters
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
-| account_id | Query Parameter(End of URL)  | | Optional |string |
-| statuses | | | | [string] |
-| role | | | | string |
-| provider_types | | | | [string] |
-| provider_urns | | | | [string] |
-| resource_types | | | | [string] |
-| resource_urns | | | | [string] |
-| order_by | | | | [string] |
-| created_by | | | | [string] |
+| account_id |query | | |string |
+| statuses |query | | | [string] |
+| role |query | | | string |
+| provider_types |query | | | [string] |
+| provider_urns |query | | | [string] |
+| resource_types |query | | | [string] |
+| resource_urns |query | | | [string] |
+| order_by |query | | | [string] |
+| created_by |query | | | string |
 
 ##### Responses
 
@@ -528,20 +533,20 @@ The request parameters associated with this is API are as follows:
 
 ### List User Appeal
 
-To get the list of all the appeals by the current user, use the ** `GET` ** Method on **`{{HOST}}/v1beta1/me/appeals`**
+To get the list of all the appeals by the current user, use the ** `GET` ** Method on **`{{HOST}}/api/v1beta1/me/appeals`**
 The request parameters associated with this is API are as follows:
 
 ##### Parameters
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
-| statuses | Query Parameter(End of URL)  | | Optional | [string] |
-| role | | | | string |
-| provider_types | | | | [string] |
-| provider_urns | | | | [string] |
-| resource_types | | | | [string] |
-| resource_urns | | | | [string] |
-| order_by | | | | [string] |
+| statuses | query | |  | [string] |
+| role | query | | | string |
+| provider_types |query | | | [string] |
+| provider_urns |query | | | [string] |
+| resource_types |query | | | [string] |
+| resource_urns |query | | | [string] |
+| order_by |query | | | [string] |
 
 ##### Responses
 
@@ -552,7 +557,7 @@ The request parameters associated with this is API are as follows:
 
 ### Get Appeal
 
-To get a particular appeal by its **`id`** use the ** `GET`** Method on **`{{HOST}}/v1beta1/appeals/{id}`**
+To get a particular appeal by its **`id`** use the ** `GET`** Method on **`{{HOST}}/api/v1beta1/appeals/{id}`**
 using the parameters given below:
 
 ##### Parameters 
@@ -591,13 +596,54 @@ Appeals can be canceled by calling the **`PUT`** Method on **`{{HOST}}/api/v1bet
 | 200 | A successful response. | [Appeal](../reference/appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
+** Here is an example below: **
+
 ```console
 $ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
 ```
+### ListApprovals
 
-### Approving and Rejecting Appeals
+To get the list of all approvals, use the ** `GET` ** Method on **`{{HOST}}/api/v1beta1/approvals`** using the following parameters as given below:
 
-Appeals can be approved/rejected by calling the **`POST`** Method on **`{{HOST}}/api/v1beta1/appeals/:id/approvals/:approval_step_name/`** endpoint with the following parameters:
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| account_id |query | | |string |
+| statuses |query | | | [string] |
+| order_by |query | | | [string] |
+| created_by |query | | | string |
+
+##### Response
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | A successful response. | [[Approval]](../reference/appeal.md#approval) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+
+
+### List User Approvals
+
+To get the list of all approvals for the current user, use the ** `GET` ** Method on **`{{HOST}}/api/v1beta1/me/approvals`** using the following parameters as given below:
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| account_id |query | | |string |
+| statuses |query | | | [string] |
+| order_by |query | | | [string] |
+
+##### Response 
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | A successful response. | [[Approval]](../reference/appeal.md#approval) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+
+
+### Update Approval (Approving and Rejecting Appeals)
+
+Appeals can be approved/rejected by calling the **`POST`** Method on **`{{HOST}}/api/v1beta1/appeals/:id/approvals/:approval_name`** endpoint with the following parameters:
 
 ##### Parameters
 
@@ -605,16 +651,16 @@ Appeals can be approved/rejected by calling the **`POST`** Method on **`{{HOST}}
 | ---- | ---------- | ----------- | -------- | ---- |
 | id | path | | Yes | String|
 | approval_name | path || Yes | String| 
-| body | body |  | Yes | [Approval](../reference/appeal.md#approval) |
-
+| action | body |  | Yes | [Action](#action) |
 
 ##### Responses
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
+| 200 | A successful response. | [Appeal](../reference/appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
+** Here is an example below: **
 
 #### Approve an Appeal
 ```console
@@ -689,3 +735,10 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
 | ---- | ---- | ----------- |
 | expiration_date|dateTime| Timestamp when the appeal expires |
 | duration| string| Duration of the access to the resource |
+
+#### Action
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| action | string | Can be `Approve` or `Reject` the Appeal |
+| reason | string | In case an appeal is rejected, the reason is to be updated in this field |
