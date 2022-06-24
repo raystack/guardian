@@ -304,6 +304,22 @@ To see the details of a particular provider by id, call the **`GET`** Method on 
 $ curl --request GET '{{HOST}}/api/v1beta1/providers/{{provider_id}}'
 ```
 
+### Delete Provider
+
+To delete a particular provider from the database use the **`DELETE`** Method on **`{{HOST}}/v1beta1/providers/:id`** with the parameters as shown here:
+
+##### Parameters 
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| id   | path | |Yes| String|
+
+##### Response
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | A successful response. | |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+
 ### Listing Roles for a Resource Type
 
 Listing roles can be done by calling to **`GET`** Method **`{{HOST}}/api/v1beta1/providers/:id/resources/:resource_type/roles`**
@@ -354,6 +370,46 @@ Guardian collects resources from the provider automatically as soon as it regist
 }
 ```
 
+### Listing Resources
+
+To get the list of all the resources availiable, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/resources`**
+
+##### Responses
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | A successful response. | [[Resource]](../reference/resource.md#resource-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+
+** Here is an example below: **
+
+```console
+$ curl --request GET '{{HOST}}/api/v1beta1/resources'
+```
+
+### Viewing Resources
+
+To see the details of a particular resource by id, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/resources/:id`** using the following parameters:
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| id   | path | |Yes| String|
+
+
+##### Responses 
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | A successful response. | [Resource](../reference/resource.md#resource-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+
+** Here is an example below: **
+```console
+$ curl --request GET '{{HOST}}/api/v1beta1/resources/{{resource_id}}'
+```
+
 ### Updating Resources Metadata
 
 Guardian allows users to add metadata to the resources. This can be useful when configuring the approval steps in the policy that needs information from metadata e.g. “owners” as the approvers.
@@ -365,14 +421,14 @@ Update a resource can be done by calling to **`PUT`** Method **`{{HOST}}/api/v1b
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
 | id   | path | |Yes| String|
-| body | body |  | Yes | TODO |
+| body | body |  | Yes | [Resource](../reference/resource.md#resource-1) |
 
 
 ##### Responses - TODO
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
+| 200 | A successful response. | [Resource](../reference/resource.md#resource-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ** Here is an example below: **
@@ -387,45 +443,21 @@ $ curl --request PUT '{{HOST}}/api/v1beta1/resources/{{resource_id}}' \
 }'
 ```
 
-### Listing Resources
+### Delete Resource
+To delete a particular provider from the database use the **`DELETE`** Method on **`{{HOST}}/v1beta1/resources/:id`** with the parameters as shown here:
 
-To get the list of all the resources availiable, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/resources`**
-
-##### Responses - TODO
-
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
-
-** Here is an example below: **
-
-```console
-$ curl --request GET '{{HOST}}/api/v1beta1/resources'
-```
-
-### Viewing Resources
-
-To see the details of a particular resource by id, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/resources/:id`** using the following parameters:
-
-##### Parameters - TODO
+##### Parameters 
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
 | id   | path | |Yes| String|
 
-
-##### Responses - TODO
-
+##### Response
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
+| 200 | A successful response. | TODO |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
-** Here is an example below: **
-```console
-$ curl --request GET '{{HOST}}/api/v1beta1/resources/{{resource_id}}'
-```
 ---
 
 ## Managing Appeals
@@ -442,14 +474,14 @@ Appeals can be created by calling the **`POST`** Method on **`{{HOST}}/api/v1bet
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
-| body | body |  | Yes | [Appeal](../reference/appeal.md#appeal-1)|
+| body | body |  | Yes | [AppealConfig](#appealconfig)|
 
 
 ##### Responses
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
+| 200 | A successful response. | [Appeal](../reference/appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 
@@ -468,6 +500,78 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
 }'
 ```
 
+### List Appeals
+
+To get the list of all appeals with addtional queries on the result, use the ** `GET` ** Method on **`{{HOST}}/v1beta1/appeals`**
+The request parameters associated with this is API are as follows:
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| account_id | Query Parameter(End of URL)  | | Optional |string |
+| statuses | | | | [string] |
+| role | | | | string |
+| provider_types | | | | [string] |
+| provider_urns | | | | [string] |
+| resource_types | | | | [string] |
+| resource_urns | | | | [string] |
+| order_by | | | | [string] |
+| created_by | | | | [string] |
+
+##### Responses
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | A successful response. | [[Appeal]](../reference/appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+
+### List User Appeal
+
+To get the list of all the appeals by the current user, use the ** `GET` ** Method on **`{{HOST}}/v1beta1/me/appeals`**
+The request parameters associated with this is API are as follows:
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| statuses | Query Parameter(End of URL)  | | Optional | [string] |
+| role | | | | string |
+| provider_types | | | | [string] |
+| provider_urns | | | | [string] |
+| resource_types | | | | [string] |
+| resource_urns | | | | [string] |
+| order_by | | | | [string] |
+
+##### Responses
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | A successful response. | [[Appeal]](../reference/appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+
+### Get Appeal
+
+To get a particular appeal by its **`id`** use the ** `GET`** Method on **`{{HOST}}/v1beta1/appeals/{id}`**
+using the parameters given below:
+
+##### Parameters 
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| id | path |  | Yes | string |
+
+##### Responses 
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | A successful response. | [Appeal](../reference/appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+
+
+### Revoke Access
+Todo
+
 ### Canceling Appeals
 
 #### Appeal creator can cancel their appeal while it's status is still on `pending`.
@@ -484,7 +588,7 @@ Appeals can be canceled by calling the **`PUT`** Method on **`{{HOST}}/api/v1bet
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
+| 200 | A successful response. | [Appeal](../reference/appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ```console
@@ -555,9 +659,33 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
 
 | Name | Type | Description | 
 | ---- | ---- | ----------- |
-| ID | string |  | 
+| id | string |  | 
 | Type | string | Provider type Possible values: `google_bigquery`, `metabase` |
 | URN | string | Provider instance identifier | 
 | Config | [object(Provider Config)](../reference/provider.md#providerconfig) |  |  
-| CreatedAt | dateTime| |
-| UpdatedAt | dateTime| |
+| CreatedAt | dateTime| Timestamp when the resource is created. |
+| UpdatedAt | dateTime| Timestamp when the resource was last updated |
+
+#### AppealConfig
+
+| Name | Type | Description | 
+| ---- | ---- | ----------- |
+| id | string | Unique Email of the account to appeal | 
+| account_type | string |  |
+| resources | [[ Object(Resource) ]](#resource) | Provider instance identifier | 
+
+#### Resource
+
+| Name | Type | Description | 
+| ---- | ---- | ----------- |
+| id | string |  | 
+| role | string | Role to be assigned. Can be Viewer, Editor, Admin |
+| options | [Object (Appeal Options)](#appealoptions) |  | 
+| details | object | Additional information for the appeal. Details can be added from the appeal creation.|
+
+#### AppealOptions
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| expiration_date|dateTime| Timestamp when the appeal expires |
+| duration| string| Duration of the access to the resource |
