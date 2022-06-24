@@ -19,7 +19,7 @@ Policies can be created by calling with a **`POST`** Method on **`{{HOST}}/api/v
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response | CreatePolicyResponse |
+| 200 | A successful response | [Policy](../reference/policy.md#policy-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ** Here is an example below: **
@@ -60,7 +60,7 @@ Updating a policy actually means creating a new policy with the same `id` but th
 
 Policies can be updated by using the **`PUT`** Method on **`{{HOST}}/api/v1beta1/policies/:id`** 
 
-##### Parameters - TODO
+##### Parameters 
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
@@ -68,12 +68,12 @@ Policies can be updated by using the **`PUT`** Method on **`{{HOST}}/api/v1beta1
 | body | body |  | Yes | [Policy](../reference/policy.md#policy-1) |
 
 
-##### Responses - TODO
+##### Responses 
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| 200 | A successful response. | [Policy](../reference/policy.md#policy-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ** Here is an example below: **
 ```console
@@ -105,12 +105,12 @@ $ curl --request PUT '{{HOST}}/api/v1beta1/policies/{{policy_id}}' \
 
 To get the list of all the policies created by the user, use the ** `GET` ** Method on **`{{HOST}}/api/v1beta1/policies`**
 
-##### Responses - TODO
+##### Responses 
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| 200 | A successful response. | [[Policy]](../reference/policy.md#policy-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ```console
 $ curl --request GET '{{HOST}}/api/v1beta1/policies'
@@ -120,19 +120,19 @@ $ curl --request GET '{{HOST}}/api/v1beta1/policies'
 
 Viewing a policy can be done by the ** `GET`** Method on **`{{HOST}}/api/v1beta1/policies/:id/versions/:version`**
 
-##### Parameters - TODO
+##### Parameters 
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
 | id | path |  | Yes | string |
-| version | path | | Yes | string |
+| version | path | | Yes | uint32 |
 
-##### Responses - TODO
+##### Responses 
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| 200 | A successful response. | [Policy](../reference/policy.md#policy-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ```console
 $ curl --request GET '{{HOST}}/api/v1beta1/policies/{{policy_id}}/versions/{{policy_version}}'
@@ -148,19 +148,19 @@ Once a provider config is registered, Guardian will immediately fetch the resour
 
 Providers can be created by calling to **`POST`** Method **`{{HOST}}/api/v1beta1/providers`**
 
-##### Parameters - TODO
+##### Parameters 
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
-| body | body |  | Yes | [Provider](../reference/provider.md#provider-configurations) |
+| body | body |  | Yes | [Provider](../reference/provider.md#providerconfig) |
 
 
-##### Responses - TODO
+##### Responses 
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| 200 | A successful response. | [ProviderResponse](#providerresponse) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ** Here is an example below: **
 
@@ -239,20 +239,20 @@ Check [provider reference](../reference/provider.md) for more details on Provide
 
 Providers can be updated by calling to **`PUT`** Method **`{HOST}}/api/v1beta1/providers/:id`**
 
-##### Parameters - TODO
+##### Parameters 
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
-| provider_id   | path | |Yes| String|
-| body | body |  | Yes | [Provider](../reference/provider.md#provider-configurations) |
+| id   | path | |Yes| String|
+| body | body |  | Yes | [Provider](../reference/provider.md#providerconfig) |
 
 
-##### Responses - TODO
+##### Responses 
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| 200 | A successful response. | [ProviderResponse](#providerresponse) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ** Here is an example below: **
 ```console
@@ -269,12 +269,12 @@ $ curl --request PUT '{{HOST}}/api/v1beta1/providers/{{provider_id}}' \
 
 To get the list of all the providers avaliable, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/providers`**
 
-##### Responses - TODO
+##### Responses 
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| 200 | A successful response. | [[ProviderResponse]](#providerresponse) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ** Here is an example below: **
 ```console
@@ -285,19 +285,19 @@ $ curl --request GET '{{HOST}}/api/v1beta1/providers'
 
 To see the details of a particular provider by id, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/providers/:id`** with the following parameters:
 
-##### Parameters - TODO
+##### Parameters 
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
-| provider_id   | path | |Yes| String|
+| id   | path | |Yes| String|
 
 
-##### Responses - TODO
+##### Responses 
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| 200 | A successful response. |[ProviderResponse](#providerresponse) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ** Here is an example below: **
 ```console
@@ -308,19 +308,19 @@ $ curl --request GET '{{HOST}}/api/v1beta1/providers/{{provider_id}}'
 
 Listing roles can be done by calling to **`GET`** Method **`{{HOST}}/api/v1beta1/providers/:id/resources/:resource_type/roles`**
 
-##### Parameters - TODO
+##### Parameters
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
 | id | path |  | Yes | string |
 | resource_type | path | | Yes | string |
 
-##### Responses - TODO
+##### Responses
 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| 200 | A successful response. | [[Role]](../reference/provider.md#role) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ** Here is an example below: **
 ```console
@@ -364,7 +364,7 @@ Update a resource can be done by calling to **`PUT`** Method **`{{HOST}}/api/v1b
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
-| resource_id   | path | |Yes| String|
+| id   | path | |Yes| String|
 | body | body |  | Yes | TODO |
 
 
@@ -373,7 +373,7 @@ Update a resource can be done by calling to **`PUT`** Method **`{{HOST}}/api/v1b
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
 | 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ** Here is an example below: **
 ```console
@@ -396,7 +396,7 @@ To get the list of all the resources availiable, call the **`GET`** Method on **
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
 | 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ** Here is an example below: **
 
@@ -420,7 +420,7 @@ To see the details of a particular resource by id, call the **`GET`** Method on 
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
 | 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ** Here is an example below: **
 ```console
@@ -450,7 +450,7 @@ Appeals can be created by calling the **`POST`** Method on **`{{HOST}}/api/v1bet
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
 | 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 
 ```console
@@ -485,7 +485,7 @@ Appeals can be canceled by calling the **`PUT`** Method on **`{{HOST}}/api/v1bet
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
 | 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ```console
 $ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
@@ -509,7 +509,7 @@ Appeals can be approved/rejected by calling the **`POST`** Method on **`{{HOST}}
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
 | 200 | A successful response. | v1beta1CreatePolicyResponse |
-| default | An unexpected error response. | rpcStatus |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 
 #### Approve an Appeal
@@ -549,3 +549,15 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
 | ---- | ---- | ----------- | -------- |
 | typeUrl | string |  | No |
 | value | byte |  | No |
+
+
+#### providerResponse
+
+| Name | Type | Description | 
+| ---- | ---- | ----------- |
+| ID | string |  | 
+| Type | string | Provider type Possible values: `google_bigquery`, `metabase` |
+| URN | string | Provider instance identifier | 
+| Config | [object(Provider Config)](../reference/provider.md#providerconfig) |  |  
+| CreatedAt | dateTime| |
+| UpdatedAt | dateTime| |
