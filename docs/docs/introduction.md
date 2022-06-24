@@ -22,7 +22,7 @@ Users are required to raise an appeal in order to gain access to a particular re
 
 Explore the following resoruces to get started with Guardian:
 
-- [Guides](https://odpf.gitbook.io/guardian/guides/overview) provides guidance on usage.
-- [Concepts](https://odpf.gitbook.io/guardian/concepts/architecture) describes all important Guardian concepts including system architecture.
-- [Reference](https://odpf.gitbook.io/guardian/reference/overview) contains details about configurations and other aspects of Guardian.
-- [Contribute](https://odpf.gitbook.io/guardian/contribute/contribution) contains resources for anyone who wants to contribute to Guardian.
+- [Guides](https://odpf.github.io/guardian/docs/guides/overview) provides guidance on usage.
+- [Concepts](https://odpf.github.io/guardian/docs/concepts/architecture) describes all important Guardian concepts including system architecture.
+- [Reference](https://odpf.github.io/guardian/docs/reference/glossary) contains details about configurations and other aspects of Guardian.
+- [Contribute](https://odpf.github.io/guardian/docs/contribute/contribution) contains resources for anyone who wants to contribute to Guardian.
