@@ -12,14 +12,15 @@ appeal: object
 resources: []object
 ```
 
+### `ProviderConfig`
 | Field | Type | Description | Required | 
 | :----- | :---- | :------ | :------ | 
 | `type`| `string` | Required. Provider type Possible values: `google_bigquery`, `metabase` | YES |
 | `urn`| `string` |Required. Provider instance identifier   | YES | 
-| `allowed_account_types` | `[]string` | Optional. List of allowed account types. Each provider could have different account types, but `user` account type is applicable for any provider type | NO | 
+| `allowed_account_types` | `[string]` | Optional. List of allowed account types. Each provider could have different account types, but `user` account type is applicable for any provider type | NO | 
 | `credentials` | `object`| Required. Credentials to setup connection and access the provider | YES | 
 | `appeal`      | [`object(AppealConfig)`](provider.md#appealconfig) | Required. Appeal options   | YES | 
-| `resources[]` | [`object(ResourceConfig)`](provider.md#resourceconfig) |Required. List of permission configurations for each resource type| YES |
+| `resources` | [`[object(ResourceConfig)]`](provider.md#resourceconfig) |Required. List of permission configurations for each resource type| YES |
 
 
 ### `AppealConfig`
