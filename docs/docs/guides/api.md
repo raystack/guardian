@@ -4,7 +4,7 @@
 
 Policy controls how users or accounts can get access to a resource. Policy used by appeal to determine the approval flow, get creator's identity/profile, and decide whether it needs additional appeals. Policy is attached to a resource type in the provider config, thus a policy should be the first thing to setup before creating a provider and getting its resources.
 
-### Creating Policies
+### Create Policy
 
 Policies can be created by calling with a **`POST`** Method on **`{{HOST}}/api/v1beta1/policies`** 
 
@@ -13,6 +13,8 @@ Policies can be created by calling with a **`POST`** Method on **`{{HOST}}/api/v
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
 | body | body |  | Yes | [Policy](../reference/policy.md#policy-1) |
+| X-Auth-Email | header| | | string |
+| X-Trace-Id | header|  | | string |
 
 
 ##### Responses
@@ -321,7 +323,7 @@ To delete a particular provider from the database use the **`DELETE`** Method on
 ##### Response
 | Code | Description | Schema |
 | ---- | ----------- | ------ |
-| 200 | A successful response. | |
+| 200 | A successful response. | TODO |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ### Listing Roles for a Resource Type
@@ -378,6 +380,18 @@ Guardian collects resources from the provider automatically as soon as it regist
 
 To get the list of all the resources availiable, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/resources`**
 
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| provider_type | query |  |  | string |
+| provider_urn | query | |  | string |
+| type | query |  |  | string |
+| urn | query | |  | string |
+| name | query |  |  | string |
+| details | query | |  | [string] |
+| is_deleted | query | | bool|
+
 ##### Responses
 
 | Code | Description | Schema |
@@ -414,7 +428,7 @@ To see the details of a particular resource by id, call the **`GET`** Method on 
 $ curl --request GET '{{HOST}}/api/v1beta1/resources/{{resource_id}}'
 ```
 
-### Updating Resources Metadata
+### Update Resources
 
 Guardian allows users to add metadata to the resources. This can be useful when configuring the approval steps in the policy that needs information from metadata e.g. “owners” as the approvers.
 
@@ -426,6 +440,7 @@ Update a resource can be done by calling to **`PUT`** Method **`{{HOST}}/api/v1b
 | ---- | ---------- | ----------- | -------- | ---- |
 | id   | path | |Yes| String|
 | body | body |  | Yes | [Resource](../reference/resource.md#resource-1) |
+| X-Trace-Id | header|  | | string |
 
 
 ##### Responses - TODO
@@ -455,6 +470,7 @@ To delete a particular provider from the database use the **`DELETE`** Method on
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
 | id   | path | |Yes| String|
+| X-Trace-Id | header| | | string |
 
 ##### Response
 | Code | Description | Schema |
@@ -468,7 +484,7 @@ To delete a particular provider from the database use the **`DELETE`** Method on
 
 An appeal is essentially a request created by users to give them access to resources. In order to grant the access, an appeal has to be approved by approvers which is assigned based on the applied policy. Appeal contains information about the requested account, the creator, the selected resources, the specific role for accessing the resource, and options to determine the behaviour of the access e.g. permanent or temporary access.
 
-### Creating Appeals
+### Create Appeal
 
 Guardian creates access for users to resources with configurable approval flow. Appeal created by user with specifying which resource they want to access and also the role.
 
@@ -479,7 +495,7 @@ Appeals can be created by calling the **`POST`** Method on **`{{HOST}}/api/v1bet
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
 | body | body |  | Yes | [AppealConfig](#appealconfig)|
-
+| X-Auth-Email | header| | | string |
 
 ##### Responses
 
@@ -547,6 +563,7 @@ The request parameters associated with this is API are as follows:
 | resource_types |query | | | [string] |
 | resource_urns |query | | | [string] |
 | order_by |query | | | [string] |
+| X-Auth-Email | header| | | string |
 
 ##### Responses
 
@@ -575,7 +592,23 @@ using the parameters given below:
 
 
 ### Revoke Access
-Todo
+
+Access to a resource by a user can be revoked by calling the **`PUT`** Method on **`{{HOST}}/api/v1beta1/appeals/{id}/revoke`** using the following parameters:
+
+##### Parameters 
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| id | path |  | Yes | string |
+| reason | body | Contains the reason of revoking the access to a resource | | string |
+| X-Auth-Email | header| | | string |
+
+##### Responses 
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | A successful response. | [Appeal](../reference/appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ### Canceling Appeals
 
@@ -601,7 +634,7 @@ Appeals can be canceled by calling the **`PUT`** Method on **`{{HOST}}/api/v1bet
 ```console
 $ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
 ```
-### ListApprovals
+### List Approvals
 
 To get the list of all approvals, use the ** `GET` ** Method on **`{{HOST}}/api/v1beta1/approvals`** using the following parameters as given below:
 
@@ -633,6 +666,7 @@ To get the list of all approvals for the current user, use the ** `GET` ** Metho
 | account_id |query | | |string |
 | statuses |query | | | [string] |
 | order_by |query | | | [string] |
+| X-Auth-Email | header| | | string |
 
 ##### Response 
 | Code | Description | Schema |
@@ -652,6 +686,7 @@ Appeals can be approved/rejected by calling the **`POST`** Method on **`{{HOST}}
 | id | path | | Yes | String|
 | approval_name | path || Yes | String| 
 | action | body |  | Yes | [Action](#action) |
+| X-Auth-Email | header| | | string |
 
 ##### Responses
 
