@@ -9,10 +9,24 @@ import (
 	"github.com/odpf/salt/config"
 )
 
+type JobType string
+
+const (
+	FetchResources             JobType = "fetch_resources"
+	ExpiringAccessNotification JobType = "appeal_expiration_reminder"
+	RevokeExpiredAccess        JobType = "appeal_expiration_revocation"
+)
+
+type JobConfig struct {
+	JobType  JobType
+	Enabled  bool   `mapstructure:"enabled" default:"true"`
+	Interval string `mapstructure:"interval" default:"0 9 * * *"`
+}
+
 type Jobs struct {
-	FetchResourcesInterval             string `mapstructure:"fetch_resources_interval" default:"0 */2 * * *"`
-	RevokeExpiredAccessInterval        string `mapstructure:"revoke_expired_access_interval" default:"*/20 * * * *"`
-	ExpiringAccessNotificationInterval string `mapstructure:"expiring_access_notification_interval" default:"0 9 * * *"`
+	FetchResources             JobConfig `mapstructure:"fetch_resources"`
+	RevokeExpiredAccess        JobConfig `mapstructure:"revoke_expired_access"`
+	ExpiringAccessNotification JobConfig `mapstructure:"expiring_access_notification"`
 }
 
 type Config struct {
