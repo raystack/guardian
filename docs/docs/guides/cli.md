@@ -2,6 +2,8 @@
 
 `Guardian` is a command line tool used to interact with the main guardian service.
 
+Please follow [installation](../getting_started/installation) and [configuration](../getting_started/configuration) guides to set up the CLI tool for Guardian.
+
 ## List of Commands
 
 Guardian CLI supports many commands. To get a list of all the commands, follow these steps.
@@ -35,57 +37,18 @@ To know the usage of any of the core commands use the following syntax:
 ```text
 $ guardian <command> <subcommand> --help
 ```
-## Config command
-
-Config command in Guardain's CLI is used to configure the command line tool. Following are a few examples of doing the same.
-
-* **What is inside?**
-
-Enter the following code into the terminal:
-
-```text
-$ guardian config
-```
-
-The output is the following:
-
-```text
-Available Commands:
-  init        initialize CLI configuration
-```
-
-* **init command**
-
-This command is used to initialize the `.guardian.yaml` file as demonstrated below.
-
-Enter the following code into the terminal:
-
-```text
-$ guardian config init
-```
-
-The output is the following:
-
-```text
-config created: .guardian.yaml
-```
-
-Now, in the `.guardian.yaml` file we can set the configuartions as shown here.
-
-```text
-host: localhost:3000
-```
 
 ## Managing Policies
 
+Policies are used to define governance rules of the data access.
 Policies command allows us to list, create or update policies.
 
-* **What is inside?**
+**What is inside?**
 
 Enter the following code into the terminal:
 
 ```text
-$ guardian policies
+$ guardian policy
 ```
 
 The output is the following:
@@ -101,16 +64,19 @@ Available Commands:
   view        View a policy
 ```
 
-* **create command**
+### Policy Init
+Create a policy template with a given file name. Check [policy reference](../reference/policy.md) for more details on the policy configuration.
 
-The create command is used to create a new policy. For this we have to define our policy file, which would be passed as a flag to the `create` command.
-
-Policy has `version` to ensure each appeal has a reference to an applied policy when it's created. A policy is created with an initial `version` equal to `1`.
-
-#### Example
-
-Check [policy reference](../reference/policy.md) for more details on the policy configuration
-For instance, we can create a policy file `policy.yaml` as shown below.
+Usage Syntax for making the policy initialisation file. 
+```
+$ guardian policy init --file=<output-name>
+```
+flags
+```
+-f, --file string   File name for the policy config
+```
+#### Example 
+We can configure a policy file `policy.yaml` as shown below.
 
 ```yaml
 # policy.yaml
@@ -130,6 +96,23 @@ steps:
 ```
 
 Now, we can create a policy using the `create` command as demonstrated here.
+
+### Create Policy
+
+The create command is used to create a new policy. For this we have to define our policy file, which would be passed as a flag to the `create` command.
+
+Policy has `version` to ensure each appeal has a reference to an applied policy when it's created. A policy is created with an initial `version` equal to `1`.
+
+Usage
+```
+guardian policy create [flags] 
+$ guardian policy create --file=<file-path>
+```
+Flags
+```
+-f, --file string   Path to the policy config
+```
+
 Enter the following code into the terminal:
 
 ```text
@@ -142,14 +125,14 @@ The output is the following:
 policy created with id: my_policy
 ```
 
-* **list command**
+### List Policies
 
-To get a list of all the policies present in the Guardian' database, use the `list` command as explained here.
+To get a list and filter of all the avaliable access policies present in the Guardian database, use the `list` command as explained here.
 
 Enter the following code into the terminal:
 
 ```text
-$ guardian policies list
+$ guardian policy list
 ```
 
 The output is the following:
@@ -159,9 +142,9 @@ The output is the following:
   policy_x       1        two step policy for tableau workbooks   manager_approval,head_approval
 ```
 
-* **update command**
+### Edit Policy
 
-To update an existing policy present in the Guardian' database, use the `update` command as explained here.
+To update an existing policy present in the Guardian' database using a file, use the `update` command as explained here.
 
 For this first we update our `policy.yaml` file.
 
@@ -178,10 +161,14 @@ steps:
     - $appeal.resource.details.head
 ```
 
-Enter the following code into the terminal:
+Usage:
+```
+$ guardian policy edit --file=<file-path>
+```
+Example 
 
 ```text
-$ guardian policies update --file policy.yaml
+$ guardian policies edit --file policy.yaml
 ```
 
 The output is the following:
@@ -195,6 +182,43 @@ Note that on update of a policy it's version is also updated. We can verify this
 ```text
   ID             VERSION  DESCRIPTION                                       STEPS                 
   policy_01      2        two step policy for tableau workbooks             supervisor_approval,head_approval
+```
+
+### View Policy
+
+View a policy. Display the ID, name, and other information about a policy.
+
+Usgae:
+```
+$ guardian policy view <policy-id> --version=<policy-version>
+```
+Flags
+```
+-o, --output string    Print output with the selected format (default "yaml")
+-v, --version string   Version of the policy
+```
+
+### Apply Policy
+Apply a policy config.Create or edit a policy from a file.
+
+Usage:
+```
+$ guardian policy apply --file=<file-path>
+```
+Flags
+-f, --file string   Path to the policy config
+
+### Plan Policy
+
+Show changes from the new policy. This will not actually apply the policy config.
+
+Usage:
+```
+$ guardian policy plan --file=<file-path>
+```
+flags
+```
+-f, --file string   Path to the policy config
 ```
 
 ## Managing Providers
@@ -222,9 +246,9 @@ Available Commands:
   view        View a provider details
 ```
 
-* **create command**
+### Create Provider
 
-The create command is used to create a new provider. For this we have to define our provider's config file, which would be passed as a flag to the `create` command.
+The create command is used to register a new provider on the Guardian database. For this we have to define our provider's config file, which would be passed as a flag to the `create` command. Check [provider reference](../reference/provider.md#providerconfig) for more details on the configuration.
 
 For instance, we can create a config file `provider.yaml` for tableau provider as shown below.
 
@@ -271,7 +295,7 @@ The output is the following:
 provider created with id: 26
 ```
 
-* **list command**
+### List Providers
 
 To get a list of all the providers present in the Guardian' database, use the `list` command as explained here.
 
@@ -291,7 +315,7 @@ The output is the following:
   24  tableau  691acb66-27ef-4b4f-9222-f07052e6ffd0
 ```
 
-* **update command**
+### Edit Provider
 
 To update an existing provider present in the Guardian' database, use the `update` command as explained here.
 
@@ -513,15 +537,15 @@ flags
 ```
 ### Check Appeal Status
 
-Approval status of an appeal
+Status value of an appeal can either be one of these `pending`, `canceled`, `active`,`rejected`,`terminated`. To check the current Approval status of the appeal use the following command:
+
 ```
-$ guardian appeal revoke <appeal-id>
-$ guardian appeal revoke <appeal-id> --reason=<reason>
+$ guardian appeal status <appeal-id>
 ```
 
 ### Cancel Appeal
 
-Cancel an appeal
+Cancel an appeal. **Appeal creator can cancel their appeal while it's status is still on `pending`**
 ```
 $ guardian appeal cancel <appeal-id>
 ```
