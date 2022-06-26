@@ -76,7 +76,7 @@ Now, in the `.guardian.yaml` file we can set the configuartions as shown here.
 host: localhost:3000
 ```
 
-## Policies command
+## Managing Policies
 
 Policies command allows us to list, create or update policies.
 
@@ -92,9 +92,13 @@ The output is the following:
 
 ```text
 Available Commands:
-  create      create policy
-  list        list policies
-  update      update policy
+  apply       Apply a policy config
+  create      Create a new policy
+  edit        Edit a policy
+  init        Creates a policy template
+  list        List and filter access policies
+  plan        Show changes from the new policy
+  view        View a policy
 ```
 
 * **create command**
@@ -193,7 +197,7 @@ Note that on update of a policy it's version is also updated. We can verify this
   policy_01      2        two step policy for tableau workbooks             supervisor_approval,head_approval
 ```
 
-## Providers command
+## Managing Providers
 
 Providers command allows us to list, create or update providers.
 
@@ -209,9 +213,13 @@ The output is the following:
 
 ```text
 Available Commands:
-  create      register provider configuration
-  list        list providers
-  update      update provider configuration
+  apply       Apply a provider
+  create      Register a new provider
+  edit        Edit a provider
+  init        Creates a provider template
+  list        List and filter providers
+  plan        Show changes from the new provider
+  view        View a provider details
 ```
 
 * **create command**
@@ -303,7 +311,7 @@ The output is the following:
 provider updated
 ```
 
-## Resources command
+## Managing Resources
 
 Resources command allows us to list and set metadat of resoirces.
 
@@ -319,21 +327,35 @@ The output is the following:
 
 ```text
 Available Commands:
-  list        list resources
-  metadata    manage resource's metadata
+  list        List resources
+  set         Store new metadata for a resource
+  view        View a resource details
 ```
 
-* **list command**
+### List Resources
 
 It fetches the list of all the resources in the Guardian's database.
 
 Enter the following code into the terminal:
 
 ```text
-$ guardian resources list
+$ guardian resource list
+$ guardian resource list --provider-type=bigquery --type=dataset
+$ guardian resource list --details=key1.key2:value --details=key1.key3:value
 ```
 
-The output is the following:
+List resources flags
+```
+-D, --deleted                Show deleted resources
+-d, --details stringArray    Filter by details object values. Example: --details=key1.key2:value
+-n, --name string            Filter by name
+-T, --provider-type string   Filter by provider type
+-U, --provider-urn string    Filter by provider urn
+-t, --type string            Filter by type
+-u, --urn string             Filter by urn
+```
+
+The output is the following form: 
 
 ```text
 ID    PROVIDER                              TYPE        URN                                   NAME                   
@@ -351,15 +373,33 @@ ID    PROVIDER                              TYPE        URN                     
       691acb66-27ef-4b4f-9222-f07052e6ffd0
 ```
 
-* **metadata command**
+### Set Resource
 
-TODO 
+Store new metadata for a resource
+```
+$ guardian resource set <resource-id> --filePath=<file-path>
+```
+Flags
+```
+-f, --file string   updated resource file path
+```
 
-## Appeals command
+### View Resource 
+View a resource details
+```
+$ guardian resource view <resource-id> --output=json --metadata=true
+```
+
+Flags
+```
+-m, --metadata   Set if you want to see metadata, default: false
+```
+
+## Managing Appeals
 
 Appeals command allows us to list, create, list and reject appeal.
 
-* **What is inside?**
+**What is inside?**
 
 Enter the following code into the terminal:
 
@@ -371,17 +411,33 @@ The output is the following:
 
 ```text
 Available Commands:
-  approve     approve an approval step
-  create      create appeal
-  list        list appeals
-  reject      reject an approval step
+  approve     Approve an approval step
+  cancel      Cancel an appeal
+  create      Create a new appeal
+  list        List and filter appeals
+  reject      Reject an approval step
+  revoke      Revoke an active access/appeal
+  status      Approval status of an appeal
 ```
 
-* **create command**
+### Create Appeal
 
 It helps us to create a new appeal.
 
-Enter the following code into the terminal:
+** Here are some examples given below: **
+
+```
+$ guardian appeal create
+$ guardian appeal create --account=<account-id> --type=<account-type> --resource=<resource-id> --role=<role>
+```
+Flags
+```
+-a, --account string    Email of the account to appeal
+-d, --duration string   Duration of the access
+-R, --resource string   ID of the resource
+-r, --role string       Role to be assigned
+-t, --type string       Type of the account
+```
 
 ```text
 $ guardian appeals create --resource-id 5624 --role write --user test-user@email.com --options.duration "24h"
@@ -393,28 +449,79 @@ The output is the following:
 appeal created with id: 13
 ```
 
-* **list command**
+### List Appeals
 
-It helps us to get the list of all the appeals in the Guardian's database.
+This command helps us to list appeals in the Guardian's database, we can also filter the appeals with some additional queries flags.
 
-Enter the following code into the terminal:
+To filter the list of appeals by Role, Status or Account use the following flags:
 
-```text
-$ guardian appeals list
+```
+-a, --account string       Filter by account
+-r, --role string          Filter by role
+-s, --status stringArray   Filter by status(es)
 ```
 
-The output is the following:
+** Here are some examples below: **
+
+```text
+$ guardian appeal list
+$ guardian appeal list --status=pending
+$ guardian appeal list --role=viewer
+```
+
+The output is of the form :
 
 ```text
   ID  USER                  RESOURCE ID  ROLE   STATUS
   13  test-user@email.com   5624         write  pending
 ```
 
-* **approve command**
+
+### Approve Appeals
 
 It's used to approve an appeal.
+Approve an approval step
+```
+$ guardian appeal approve <appeal-id> --step=<step-name>
+```
+flags
+```
 
-* **reject command**
+-s, --step string   Name of approval step
+```
+
+### Reject Appeals
 
 It's used to reject an appeal.
 
+Reject an approval step
+```
+$ guardian appeal reject <appeal-id> --step=<step-name>
+```
+
+### Revoke Appeal
+
+Revoke an active access/appeal
+
+```
+$ guardian appeal revoke <appeal-id>
+$ guardian appeal revoke <appeal-id> --reason=<reason>
+```
+flags
+```
+-r, --reason string   Reason of the revocation
+```
+### Check Appeal Status
+
+Approval status of an appeal
+```
+$ guardian appeal revoke <appeal-id>
+$ guardian appeal revoke <appeal-id> --reason=<reason>
+```
+
+### Cancel Appeal
+
+Cancel an appeal
+```
+$ guardian appeal cancel <appeal-id>
+```
