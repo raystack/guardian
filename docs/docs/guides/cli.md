@@ -1,13 +1,10 @@
 # CLI
 
-`Guardian` is a command line tool used to interact with the main guardian service.
-
-Please follow [installation](../getting_started/installation) and [configuration](../getting_started/configuration) guides to set up the CLI tool for Guardian.
+`Guardian` is a command line tool used to interact with the main guardian service. Follow the [installation](../getting_started/installation) and [configuration](../getting_started/configuration) guides to set up the CLI tool for Guardian.
 
 ## List of Commands
 
 Guardian CLI supports many commands. To get a list of all the commands, follow these steps.
-
 Enter the following code into the terminal:
 
 ```text
@@ -65,17 +62,17 @@ Available Commands:
 ```
 
 ### Policy Init
-Create a policy template with a given file name. Check [policy reference](../reference/policy.md) for more details on the policy configuration.
+This command is used to create a policy template with a given file name. Check [policy reference](../reference/policy.md) for more details on the policy configuration.
 
-Usage Syntax for making the policy initialisation file. 
+Syntax for making the policy initialization file. 
 ```
 $ guardian policy init --file=<output-name>
 ```
-flags
+flags required
 ```
 -f, --file string   File name for the policy config
 ```
-#### Example 
+#### Example Configurations
 We can configure a policy file `policy.yaml` as shown below.
 
 ```yaml
@@ -95,28 +92,21 @@ steps:
       - $appeal.resource.details.owner
 ```
 
-Now, we can create a policy using the `create` command as demonstrated here.
+Now, we can create a policy using the `create` command as given below.
 
 ### Create Policy
 
-The create command is used to create a new policy. For this we have to define our policy file, which would be passed as a flag to the `create` command.
+The create command is used to register a new policy. For this we have to define our policy file, which would be passed as a flag to the `create` command.
 
 Policy has `version` to ensure each appeal has a reference to an applied policy when it's created. A policy is created with an initial `version` equal to `1`.
 
-Usage
-```
-guardian policy create [flags] 
-$ guardian policy create --file=<file-path>
-```
-Flags
+Usage  `guardian policy create [flags]`
+
+Flags required:
 ```
 -f, --file string   Path to the policy config
-```
 
-Enter the following code into the terminal:
-
-```text
-$ guardian policies create --file policy.yaml
+$ guardian policy create --file=<file-path>
 ```
 
 The output is the following:
@@ -139,7 +129,7 @@ The output is the following:
 
 ```text
   ID             VERSION  DESCRIPTION                             STEPS                 
-  policy_x       1        two step policy for tableau workbooks   manager_approval,head_approval
+  my_policy       1        two step policy for tableau workbooks   manager_approval,resource_owner_approval
 ```
 
 ### Edit Policy
@@ -149,7 +139,7 @@ To update an existing policy present in the Guardian' database using a file, use
 For this first we update our `policy.yaml` file.
 
 ```text
-id: policy_x
+id: my_policy
 steps:
   - name: supervisor_approval
     strategy: manual
@@ -158,7 +148,7 @@ steps:
   - name: head_approval
     strategy: manual
     approvers:
-    - $appeal.resource.details.head
+    - $appeal.resource.details.owner
 ```
 
 Usage:
@@ -181,7 +171,7 @@ Note that on update of a policy it's version is also updated. We can verify this
 
 ```text
   ID             VERSION  DESCRIPTION                                       STEPS                 
-  policy_01      2        two step policy for tableau workbooks             supervisor_approval,head_approval
+  my_policy     2        two step policy for tableau workbooks             supervisor_approval,resource_owner_approval
 ```
 
 ### View Policy
@@ -245,12 +235,21 @@ Available Commands:
   plan        Show changes from the new provider
   view        View a provider details
 ```
+### Provider Init 
 
-### Create Provider
+This command is used to creates a provider template. Following this define the provider's config file, which would be passed as a flag to the `create` command. Check [provider reference](../reference/provider.md#providerconfig) for more details on the configuration.
 
-The create command is used to register a new provider on the Guardian database. For this we have to define our provider's config file, which would be passed as a flag to the `create` command. Check [provider reference](../reference/provider.md#providerconfig) for more details on the configuration.
+Syntax for making the initialization file. 
+```
+guardian provider init [flags] 
+```
+Flags required :
+```
+-f, --file string   File name for the policy config
+```
 
-For instance, we can create a config file `provider.yaml` for tableau provider as shown below.
+#### Example Configurations
+We can configure a `provider.yaml` file for tableau provider as shown below.
 
 ```text
 type: tableau
@@ -281,16 +280,22 @@ resources:
           - name: Write:Allow
 ```
 
-Now, we can create a provider using the `create` command as demonstrated here.
+To register a new provider use the `create` command as shown below.
 
-Enter the following code into the terminal:
+### Create Provider
 
+The create command is used to register a new provider on the Guardian database.
+
+Usage ` guardian provider create [flags]`
+
+Flags required and usage: 
 ```text
+-f, --file string   Path to the provider config
+
 $ guardian providers create --file provider.yaml
 ```
 
-The output is the following:
-
+Output is of the following form:
 ```text
 provider created with id: 26
 ```
@@ -317,22 +322,52 @@ The output is the following:
 
 ### Edit Provider
 
-To update an existing provider present in the Guardian' database, use the `update` command as explained here.
+To update an existing provider present in the Guardian' database, use the `edit` command as explained here. Update the `provider.yaml` file with required changes.
 
-For this first we update our `provider.yaml` file.
+Usage : `$ guardian provider edit <provider-id> --file <file-path>`
 
-After that, we can execute the update command as explained here.
-
-Enter the following code into the terminal:
-
-```text
-$ guardian providers update --file provider.yaml --id 26
+Flags required :
+```
+-f, --file string   Path to the provider config
 ```
 
 The output is the following:
-
 ```text
 provider updated
+```
+
+###  Plan Provider
+
+This command is to show the changes from the new provider. This command will not actually apply the provider config.
+
+Usage : `$ guardian provider plan [flags]`
+
+Flags required :
+```
+-f, --file string   Path to the provider config
+```
+
+### View Provider 
+This command is used to view a provider details. Displays the ID, name, and other information about a provider.
+
+Usage : `$ guardian provider view <provider-id> [flags]`
+
+Flags required :
+```
+-o, --output string   Print output with the selected format (default "yaml")
+```
+
+### Apply Provider
+
+Apply a provider. It is used to create or edit a provider from a file.
+
+Usage : `$ guardian provider apply [flags]` 
+
+Flags required :
+```
+-f, --file string   Path to the provider config
+
+$ guardian provider apply --file <file-path>
 ```
 
 ## Managing Resources
