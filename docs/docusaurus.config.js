@@ -21,8 +21,10 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/odpf/guardian/edit/master/docs/',
+          sidebarCollapsed: false,
         },
         blog: false,
+
         theme: {
           customCss: [
             require.resolve('./src/css/theme.css'),
@@ -45,6 +47,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       navbar: {
         title: 'Guardian',
         logo: { src: 'img/logo.svg', },
+        hideOnScroll: true,
         items: [
           {
             type: 'doc',
@@ -98,7 +101,6 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
-
       announcementBar: {
         id: 'star-repo',
         content: '⭐️ If you like Guardian, give it a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/odpf/guardian">GitHub</a>! ⭐',

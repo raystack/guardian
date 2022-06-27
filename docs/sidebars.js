@@ -33,13 +33,12 @@ module.exports = {
         "providers/grafana",
       ],
     },
-    {
-      type: "category",
-      label: "Concepts",
-      items: [
-        "concepts/architecture",
-      ],
-    },
+    // {
+    //   type: "category",
+    //   label: "Concepts",
+    //   items: [
+    //   ],
+    // },
     {
       type: "category",
       label: "Reference",
@@ -55,6 +54,7 @@ module.exports = {
       type: "category",
       label: "Contribute",
       items: [
+        "contribute/architecture",
         "contribute/contribution",
         "contribute/development",
       ],
