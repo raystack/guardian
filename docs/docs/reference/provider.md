@@ -1,4 +1,4 @@
-# Provider Configurations
+# Provider
 
 A provider configuration is required when we want to register a provider instance to Guardian.
 
@@ -15,12 +15,12 @@ resources: []object
 ### `ProviderConfig`
 | Field | Type | Description | Required | 
 | :----- | :---- | :------ | :------ | 
-| `type`| `string` | Required. Provider type Possible values: `google_bigquery`, `metabase` | YES |
-| `urn`| `string` |Required. Provider instance identifier   | YES | 
-| `allowed_account_types` | `[string]` | Optional. List of allowed account types. Each provider could have different account types, but `user` account type is applicable for any provider type | NO | 
-| `credentials` | `object`| Required. Credentials to setup connection and access the provider | YES | 
-| `appeal`      | [`object(AppealConfig)`](provider.md#appealconfig) | Required. Appeal options   | YES | 
-| `resources` | [`[object(ResourceConfig)]`](provider.md#resourceconfig) |Required. List of permission configurations for each resource type| YES |
+| `type`| `string` | This field conatains the name of the Resource Provider<br/><br/> Possible values can be:<br/> - BigQuery : **google_bigquery** <br/> - Tableau : **tableau** <br/> - Grafana : **grafana** <br/> - Metabase : **metabase** | Yes |
+| `urn`| `string` | Provider instance identifier   | Yes | 
+| `allowed_account_types` | `[string]` | Optional. List of allowed account types. Each provider could have different account types, but `user` account type is applicable for any provider type | No | 
+| `credentials` | `object`| Credentials required to setup connection and access the provider <br/> <br/>  Possible values: <br/> BigQuery: [object(BigQuery)](../providers/bigquery.md#bigquerycredentials) <br/> Metabase: [object(Metabase)](../providers/metabase.md#metabasecredentials) <br/>Tableau: [object(Tableau)](../providers/tableau.md#tableau-credentials)<br/>Grafana:[object(Grafana)](../providers/grafana.md#grafanacredentials)| Yes | 
+| `appeal`      | [`object(AppealConfig)`](provider.md#appealconfig) | Contains details of the tenure for which an access for a resource is provided. Contains two fields `allow_permanent_access` and `allow_active_access_extension_in` for permanent access and time before which the user can appeal for an extention | Yes | 
+| `resources` | [`[object(ResourceConfig)]`](provider.md#resourceconfig) | Contains the configurations for each resource . The fields `type` and `policy` stores the type of resource and the policy associated with it. `Roles` conatins the role (say Viewer, Editor, Writer) which the resource supports | Yes |
 
 
 ### `AppealConfig`
@@ -34,24 +34,14 @@ resources: []object
 
 | Field | Type | Description | Required | 
 | :----- | :--------- | :---------- | :------ | 
-| `type`    | `string` | Required. Possible values: - BigQuery: `string(BigQueryResourceType)` - Metabase: `string(MetabaseResourceType)`||
-| `policy`  | `object(id: string, version: int)` |Required. Approval policy config that want to be applied to this resource config. Example: `id: approval_policy_x, version: 1` ||
-| `roles[]` | [`object(Role)`](provider.md#role) |Required. List of resource permissions mapping||
+| `type`    | `string` | Possible values for the Resource Type:<br/> - BigQuery: [string(BigQuery)](../providers/bigquery.md#bigqueryresourcetype) <br/> - Metabase: [string(Metabase)](../providers/metabase.md#metabaseresourcetype) <br/> - Graffana: [string(Graffana)](../providers/grafana.md#grafanaresourcetype) <br/> - Tableau: [string(Tableau)](../providers/tableau.md#grafana-resource-type) | Yes|
+| `policy`  | `object(id: string, version: int)` | Approval policy config that want to be applied to this resource config. Example: `id: approval_policy_x, version: 1` |Yes|
+| `roles[]` | [`object(Role)`](provider.md#role) |List of resource permissions mapping|Yes|
 
 ### `Role`
 
 | Field | Type | Description | Required | 
 | :----- | :---- | :------ | :------ | 
-| `id` | `string` |Required. Role identifier|  |
+| `id` | `string` | Role identifier| Yes |
 | `name`| `string` | Display name for role| |
-| `permissions[]` | `object or string` | Set of permissions that will be granted to the requested resource          Possible values: - BigQuery: `object(BigQueryResourcePermission)` - Metabase: `object(MetabaseResourcePermission)` - Grafana: `object(GrafanaResourcePermission)` - Tableau: `object(TableauResourcePermission)`| YES |
-
-## Providers
-
-Here are the available providers in Guardian. Currently we only have Google BigQuery, but we will ad more soon.
-
-| Google BigQuery          |                                                                                                                                                     |
-| :----------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Provider type            | `google_bigquery`                                                                                                                                   |
-| Credentials value        | 1) service_account_key - Base64 encrypted value of a service account key JSON 2) resource_name - Name of bigquery project appended with "projects/" |
-| Available resource types | `dataset`, `table`                                                                                                                                  |
+| `permissions[]` | `object or string` | Set of permissions that will be granted to the requested resource.<br/> Possible values for Resource Permissions :<br/> - BigQuery: [object(BigQuery)](../providers/bigquery.md#bigqueryresourcepermission) <br/>- Metabase: [object(Metabase)](../providers/metabase.md#metabaseresourcepermission) <br/>- Grafana: [object(Grafana)](../providers/grafana.md#grafanaresourcepermission) <br/>- Tableau: [object(Tableau)](../providers/tableau.md#table-resource-permission)| Yes |
