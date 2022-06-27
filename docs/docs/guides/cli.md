@@ -134,9 +134,14 @@ The output is the following:
 
 ### Edit Policy
 
-To update an existing policy present in the Guardian' database using a file, use the `update` command as explained here.
+To update an existing policy present in the Guardian' database using a file, use the `edit` command as explained here. Updating a policy actually means creating a new policy with the same id but the version gets incremented by 1. Both the new and previous policies still can be used by providers.
 
-For this first we update our `policy.yaml` file.
+Usage :
+```
+$ guardian policy edit --file=<file-path>
+```
+
+An example update of the `policy.yaml` file is given below:
 
 ```text
 id: my_policy
@@ -151,12 +156,7 @@ steps:
     - $appeal.resource.details.owner
 ```
 
-Usage:
-```
-$ guardian policy edit --file=<file-path>
-```
-Example 
-
+Now to update the policy defined here.
 ```text
 $ guardian policies edit --file policy.yaml
 ```
