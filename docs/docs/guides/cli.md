@@ -372,7 +372,7 @@ $ guardian provider apply --file <file-path>
 
 ## Managing Resources
 
-Resources command allows us to list and set metadat of resoirces.
+Resources command allows us to list and set metadata of resources.
 
 * **What is inside?**
 

@@ -24,7 +24,7 @@ We are always interested in adding new maintainers. What we look for is a series
 * Maintainers will have write access to the Guardian repository.
 * There is no strict protocol for becoming a maintainer. Candidates for new maintainers are typically people that are active contributors and community members.
 * Candidates for new maintainers can also be suggested by current maintainers.
-* If you would like to become a maintainer, you should start contributing to Guardian in any of the ways mentioned. Youc might also want to talk to other maintainers and ask for their advice and guidance.
+* If you would like to become a maintainer, you should start contributing to Guardian in any of the ways mentioned. You might also want to talk to other maintainers and ask for their advice and guidance.
 
 ## Guidelines
 

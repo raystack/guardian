@@ -29,15 +29,6 @@ Users are required to raise an appeal in order to gain access to a particular re
 - **Configurable approval flow**: Approval flow configures what are needed for an appeal to get approved and who are eligible to approve/reject. It can be configured and linked to a provider so that every appeal created to their resources will follow the procedure in order to get approved.
 - **External Identity Manager**: This gives the flexibility to use any third-party identity manager. User properties.
 
-## Usage
-
-Explore the following resoruces to get started with Guardian:
-
-- [Guides](./guides/overview.md) provides guidance on usage.
-- [Concepts](./concepts/architecture.md) describes all important Guardian concepts including system architecture.
-- [Reference](./reference/glossary.md) contains details about configurations and other aspects of Guardian.
-- [Contribute](./contribute/contribution.md) contains resources for anyone who wants to contribute to Guardian.
-
 ## Where to go from here
 
 See the [installation](../docs/getting_started/installation) page to install the `Guardian` CLI.

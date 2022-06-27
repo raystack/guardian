@@ -12,6 +12,7 @@ package appeal
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"time"
@@ -744,7 +745,6 @@ func (s *Service) fillApprovals(a *domain.Appeal, p *domain.Policy) error {
 }
 
 func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal, p *domain.Policy) error {
-	additionalAppeals := []*domain.Appeal{}
 	if p.Requirements != nil && len(p.Requirements) > 0 {
 		for reqIndex, r := range p.Requirements {
 			isAppealMatchesRequirement, err := r.On.IsMatch(a)
@@ -776,13 +776,13 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 					additionalAppeal.PolicyID = aa.Policy.ID
 					additionalAppeal.PolicyVersion = uint(aa.Policy.Version)
 				}
-				additionalAppeals = append(additionalAppeals, additionalAppeal)
+				if err := s.Create(ctx, []*domain.Appeal{additionalAppeal}); err != nil {
+					if errors.Is(err, ErrAppealDuplicate) {
+						continue
+					}
+					return fmt.Errorf("creating additional appeals: %w", err)
+				}
 			}
-		}
-	}
-	if len(additionalAppeals) > 0 {
-		if err := s.Create(ctx, additionalAppeals); err != nil {
-			return fmt.Errorf("creating additional appeals: %v", err)
 		}
 	}
 	return nil

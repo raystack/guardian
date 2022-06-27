@@ -36,6 +36,10 @@ var (
 	ConfigFileName = "config"
 )
 
+const (
+	GRPCMaxClientSendSize = 32 << 20
+)
+
 // RunServer runs the application server
 func RunServer(config *Config) error {
 	logger := log.NewLogrus(log.LogrusWithLevel(config.LogLevel))
@@ -132,7 +136,15 @@ func RunServer(config *Config) error {
 		}),
 	)
 	address := fmt.Sprintf(":%d", config.Port)
-	grpcConn, err := grpc.DialContext(timeoutGrpcDialCtx, address, grpc.WithInsecure())
+	grpcConn, err := grpc.DialContext(
+		timeoutGrpcDialCtx,
+		address,
+		grpc.WithInsecure(),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(GRPCMaxClientSendSize),
+			grpc.MaxCallSendMsgSize(GRPCMaxClientSendSize),
+		),
+	)
 	if err != nil {
 		return err
 	}
