@@ -22,16 +22,15 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/odpf/guardian/edit/master/docs/',
         },
-        blog: {
-          showReadingTime: true,
-          editUrl:
-            'https://github.com/odpf/guardian/edit/master/docs/blog/',
-        },
+        blog: false,
         theme: {
           customCss: [
             require.resolve('./src/css/theme.css'),
             require.resolve('./src/css/custom.css')
           ],
+        },
+        gtag: {
+          trackingID: 'G-EPXDLH6V72',
         },
       }),
     ],
@@ -42,10 +41,6 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       colorMode: {
         defaultMode: 'light',
         respectPrefersColorScheme: true,
-        switchConfig: {
-          darkIcon: '☾',
-          lightIcon: '☀️',
-        },
       },
       navbar: {
         title: 'Guardian',
@@ -57,7 +52,6 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
             position: 'left',
             label: 'Docs',
           },
-          { to: '/blog', label: 'Blog', position: 'left' },
           { to: '/help', label: 'Help', position: 'left' },
           {
             href: 'https://bit.ly/2RzPbtn',
@@ -104,9 +98,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
-      gtag: {
-        trackingID: 'G-EPXDLH6V72',
-      },
+
       announcementBar: {
         id: 'star-repo',
         content: '⭐️ If you like Guardian, give it a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/odpf/guardian">GitHub</a>! ⭐',
