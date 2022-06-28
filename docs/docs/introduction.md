@@ -6,9 +6,9 @@ Welcome to the introductory guide to Guardian! This guide is the best place to s
 
 Guardian is an on-demand access management tool with automated access workflows and security controls across data stores, analytical systems, and cloud products. It allows you to manage secure and compliant self-service data access for multiple resources with multiple stakeholders. Users are required to raise an appeal to gain access to a particular resource. The appeal will go through several approvals before it gets approved and grants access to the user.
 
-![](/assets/overview.svg)
+![](/assets/overview-bordered.svg)
 
-## The Problem we aim to solve!
+## The problem we aim to solve
 
 Organizational teams in charge of authenticating user identities and managing access to corporate resources require the IT staff to provision access manually. The longer it takes for a user to gain access to crucial business data, the less productive that user will be. On the flip side, failing to revoke the access rights of employees who have left the organization or transferred to different departments can have serious security consequences. To close this window of exposure and risk, IT staff must de-provision access to corporate data as quickly as possible. Manual provisioning and de-provisioning of access are labor-intensive and prone to human error or oversights. Especially for large organizations, it is not an efficient or sustainable way to manage user identities and access.
 
