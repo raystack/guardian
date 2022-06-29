@@ -73,7 +73,7 @@ $ guardian server start -c <path to the server.yml file>
 ---
 ### 2. Using environment variable
 
-All the configs can be passed as environment variables using `GUARDIAN_<CONFIG_NAME>` convention. `<CONFIG_NAME>` is the key name of config using _ as the path delimiter to concatenate between keys.
+All the configs can be passed as environment variables using `<CONFIG_NAME>` convention. `<CONFIG_NAME>` is the key name of config using _ as the path delimiter to concatenate between keys. 
 
 For example, to use environment variable, assuming the following configuration layout:
 
@@ -87,13 +87,13 @@ Here is the corresponding environment variable for the above
 
 Configuration key | Environment variable |
 ------------------|----------------------|
-PORT              | GUARDIAN_PORT        |
-DB.HOST           | GUARDIAN_DB_HOST     |
-DB.USER           | GUARDIAN_DB_USER     |
+PORT              | PORT                 |
+DB.HOST           | DB_HOST              |
+DB.USER           | DB_USER              |
 
 Set the env variable using export
 ```
-$ export GUARDIAN_PORT=8080
+$ export PORT=8080
 ```
 
 

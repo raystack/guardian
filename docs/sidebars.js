@@ -15,8 +15,6 @@ module.exports = {
       items: [
         "guides/introduction",
         "guides/overview",
-        "guides/cli",
-        "guides/api",
         "guides/managing-policies",
         "guides/managing-providers",
         "guides/managing-resources",
@@ -28,6 +26,7 @@ module.exports = {
       label: "Providers",
       items: [
         "providers/bigquery",
+        "providers/gcloud_iam",
         "providers/tableau",
         "providers/metabase",
         "providers/grafana",
@@ -43,11 +42,13 @@ module.exports = {
       type: "category",
       label: "Reference",
       items: [
-        "reference/glossary",
+        "reference/api",
+        "reference/cli",
         "reference/appeal",
         "reference/policy",
         "reference/provider",
         "reference/resource",
+        "reference/glossary",
       ],
     },
     {
