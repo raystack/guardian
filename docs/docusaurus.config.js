@@ -22,6 +22,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/odpf/guardian/edit/master/docs/',
           sidebarCollapsed: false,
+          breadcrumbs: false,
         },
         blog: false,
 
@@ -100,7 +101,6 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-        // additionalLanguages: ['yml'],
       },
       announcementBar: {
         id: 'star-repo',
