@@ -19,7 +19,7 @@
   --ifm-code-font-size: 80%;
   --ifm-font-family-base: "Inter", sans-serif;
   --ifm-table-cell-padding: 0.5rem;
-  --ifm-table-stripe-background:rgba(0, 0, 0, 0);;
+  --ifm-table-stripe-background:none;
   --ifm-table-border-color: var(--ifm-color-emphasis-200);
   --ifm-toc-border-color: var(--ifm-color-emphasis-200);
   --ifm-breadcrumb-item-background-active: none;
@@ -35,6 +35,10 @@
 
 html[data-theme="dark"] .docusaurus-highlight-code-line {
   background-color: rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme='dark'] {
+  --ifm-table-stripe-background:none;
 }
 
 html[data-theme="light"] {
@@ -149,4 +153,14 @@ code {
 }
 .navbar{
   box-shadow:0 1px 1px 0 rgba(0, 0, 0, 0.08);
+}
+
+.tabs{
+  border-bottom: 1px solid var(--ifm-color-emphasis-100);
+}
+
+.tabs__item {
+  border-bottom-width: 1px;
+  padding:0.7rem 1rem;
+  font-size: 80%;
 }
