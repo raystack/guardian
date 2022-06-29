@@ -56,7 +56,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
             position: 'right',
             label: 'Documentation',
           },
-          { to: '/help', label: 'Support', position: 'right' },
+          { to: 'docs/support', label: 'Support', position: 'right' },
           {
             href: 'https://bit.ly/2RzPbtn',
             position: 'right',
@@ -71,32 +71,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       },
       footer: {
         style: 'light',
-        links: [
-          {
-            title: 'Products',
-            items: [
-              { label: 'Optimus', href: 'https://github.com/odpf/optimus' },
-              { label: 'Firehose', href: 'https://github.com/odpf/firehose' },
-              { label: 'Raccoon', href: 'https://github.com/odpf/raccoon' },
-              { label: 'Dagger', href: 'https://odpf.github.io/dagger/' },
-            ],
-          },
-          {
-            title: 'Resources',
-            items: [
-              { label: 'Docs', to: '/docs/introduction' },
-              { label: 'Blog', to: '/blog', },
-              { label: 'Help', to: '/help', },
-            ],
-          },
-          {
-            title: 'Community',
-            items: [
-              { label: 'Slack', href: 'https://bit.ly/2RzPbtn' },
-              { label: 'GitHub', href: 'https://github.com/odpf/guardian' }
-            ],
-          },
-        ],
+        links: [],
       },
       prism: {
         theme: lightCodeTheme,

@@ -172,3 +172,7 @@ code {
   padding:0.7rem 1rem;
   font-size: 80%;
 }
+
+.theme-doc-footer .col {
+  padding: 1rem;
+}
