@@ -481,8 +481,6 @@ To delete a particular provider from the database use the **`DELETE`** Method on
 | 200     | A successful response.        | TODO                    |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
----
-
 ## Managing Appeals
 
 An appeal is essentially a request created by users to give them access to resources. In order to grant the access, an appeal has to be approved by approvers which is assigned based on the applied policy. Appeal contains information about the requested account, the creator, the selected resources, the specific role for accessing the resource, and options to determine the behaviour of the access e.g. permanent or temporary access.
