@@ -117,6 +117,10 @@ table{
   display: table;
 }
 
+table code {
+  font-size: 95%;
+}
+
 table thead{
   text-align: left;
 }
@@ -137,6 +141,10 @@ table th{
   font-weight: 400;
   font-size: 80%;
   color: var(--ifm-color-gray-700);
+}
+
+pre{
+  font-size: 80%;
 }
 
 code {
