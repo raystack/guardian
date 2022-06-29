@@ -51,7 +51,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         items: [
           {
             type: 'doc',
-            docId: 'introduction',
+            docId: 'overview/introduction',
             position: 'left',
             label: 'Docs',
           },
@@ -100,6 +100,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
+        // additionalLanguages: ['yml'],
       },
       announcementBar: {
         id: 'star-repo',

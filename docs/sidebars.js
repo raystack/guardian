@@ -1,6 +1,13 @@
 module.exports = {
   docsSidebar: [
-    'introduction',
+    {
+      type: "category",
+      label: "Overview",
+      items: [
+        "overview/introduction",
+        "overview/roadmap",
+      ],
+    },
     {
       type: "category",
       label: "Getting Started",
@@ -60,7 +67,5 @@ module.exports = {
         "contribute/development",
       ],
     },
-    'roadmap'
-
   ],
 };

@@ -1,5 +1,5 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 # Managing Providers
 
@@ -10,6 +10,7 @@ Provider manages roles, resources, provider credentials and also points each res
 Once a provider config is registered, Guardian will immediately fetch the resources and store it in the database.
 
 #### Example
+
 ```yaml
 # provider.yaml
 type: bigquery
@@ -18,7 +19,7 @@ allowed_account_types:
   - user
   - serviceAccount
 credentials:
-  service_account_key: {{base64 encoded service account key json}}
+  service_account_key: { { base64 encoded service account key json } }
   resource_name: projects/gcp-project-id
 appeal:
   allow_permanent_access: false
@@ -55,20 +56,21 @@ resources:
 Check [provider reference](../reference/provider.md) for more details.
 
 #### Providers can be created in the following ways:
+
 1. Using `guardian provider create` CLI command
 2. Calling to `POST /api/v1beta1/providers` API
 
 <Tabs groupId="api">
   <TabItem value="cli" label="CLI" default>
 
-```console
+```bash
 $ guardian provider create --file=provider.yaml
 ```
 
   </TabItem>
   <TabItem value="http" label="HTTP">
 
-```console
+```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/providers' \
 --header 'Content-Type: application/json' \
 --data-raw '{
@@ -143,20 +145,21 @@ $ curl --request POST '{{HOST}}/api/v1beta1/providers' \
 ## Updating Providers
 
 #### Providers can be updated in the following ways:
+
 1. Using `guardian provider edit` CLI command
 2. Calling to `PUT /api/v1beta1/providers/:id` API
 
 <Tabs groupId="api">
   <TabItem value="cli" label="CLI" default>
 
-```console
+```bash
 $ guardian provider edit {{provider_id}} --file=provider.yaml
 ```
 
   </TabItem>
   <TabItem value="http" label="HTTP">
 
-```console
+```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/providers/{{provider_id}}' \
 --header 'Content-Type: application/json' \
 --data-raw '{
@@ -172,20 +175,21 @@ $ curl --request PUT '{{HOST}}/api/v1beta1/providers/{{provider_id}}' \
 ## Listing Providers
 
 #### Listing providers can be done in the following ways:
+
 1. Using `guardian provider list` CLI command
 2. Calling to `GET /api/v1beta1/providers` API
 
 <Tabs groupId="api">
   <TabItem value="cli" label="CLI" default>
 
-```console
+```bash
 $ guardian provider list --output=yaml
 ```
 
   </TabItem>
   <TabItem value="http" label="HTTP">
 
-```console
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/providers'
 ```
 
@@ -195,20 +199,21 @@ $ curl --request GET '{{HOST}}/api/v1beta1/providers'
 ## Viewing Providers
 
 #### Viewing a provider can be done in the following ways:
+
 1. Using `guardian provider view` CLI command
 2. Calling to `GET /api/v1beta1/providers/:id` API
 
 <Tabs groupId="api">
   <TabItem value="cli" label="CLI" default>
 
-```console
+```bash
 $ guardian provider view {{provider_id}}
 ```
 
   </TabItem>
   <TabItem value="http" label="HTTP">
 
-```console
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/providers/{{provider_id}}'
 ```
 
@@ -224,7 +229,7 @@ Listing roles can be done in the following ways:
 <Tabs groupId="api">
   <TabItem value="http" label="HTTP" default>
 
-```console
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/providers/{{provider_id}}/resources/{{resource_type}}/roles'
 ```
 

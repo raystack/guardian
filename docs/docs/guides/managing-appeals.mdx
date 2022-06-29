@@ -1,5 +1,5 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 # Managing Appeals
 
@@ -30,20 +30,21 @@ Guardian creates access for users to resources with configurable approval flow. 
 - Recreate: Possible for appeals that are currently still active, rejected, or terminated. This action will create a new appeal based on the previous one. For the appeal coming from active status, there is a policy related to access extension.
 
 #### Appeals can be created in the following ways:
+
 1. Using `guardian appeal create` CLI command
 2. Calling to `POST /api/v1beta1/appeals` API
 
 <Tabs groupId="api">
   <TabItem value="cli" label="CLI" default>
 
-```console
+```bash
 $ guardian appeal create --account-id=user@example.com --resource=a32b702a-029d-4d76-90c4-c3b8cc52941b --role=viewer
 ```
 
   </TabItem>
   <TabItem value="http" label="HTTP">
 
-```console
+```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
 --header 'X-Auth-Email: user@example.com' \
 --header 'Content-Type: application/json' \
@@ -66,24 +67,25 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
 #### Appeal creator can cancel their appeal while it's status is still on `pending`.
 
 Appeals can be canceled in the following ways:
+
 1. Calling to `PUT /api/v1beta1/appeals/:id/cancel` API
 
 <Tabs groupId="api">
   <TabItem value="cli" label="CLI" default>
 
-```console
+```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
 ```
 
   </TabItem>
 </Tabs>
 
-
 ## Approving and Rejecting Appeals
 
 ![](/assets/approval-flow.png)
 
 #### Appeals can be approved/rejected in the following ways:
+
 1. Using `guardian appeal approve/reject` CLI command
 2. Calling to `POST /api/v1beta1/appeals/:id/approvals/:approval_step_name/` API
 
@@ -91,12 +93,14 @@ $ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
   <TabItem value="cli" label="CLI" default>
 
 #### Approve an Appeal
-```console
+
+```bash
 $ guardian appeal approve --id={{appeal_id}} --step={{approval_step_name}}
 ```
 
 #### Reject an Appeal
-```console
+
+```bash
 $ guardian appeal reject --id={{appeal_id}} --step={{approval_step_name}} --reason={{rejection_message}}
 ```
 
@@ -104,7 +108,8 @@ $ guardian appeal reject --id={{appeal_id}} --step={{approval_step_name}} --reas
   <TabItem value="http" label="HTTP">
 
 #### Approve an Appeal
-```console
+
+```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{approval_step_name}}' \
 --header 'X-Auth-Email: user@example.com' \
 --header 'Content-Type: application/json' \
@@ -114,7 +119,8 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
 ```
 
 #### Reject an Appeal
-```console
+
+```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{approval_step_name}}' \
 --header 'X-Auth-Email: user@example.com' \
 --header 'Content-Type: application/json' \

@@ -6,27 +6,26 @@ Policy controls how users or accounts can get access to a resource. Policy used 
 
 ### Create Policy
 
-Policies can be created by calling with a **`POST`** Method on **`{{HOST}}/api/v1beta1/policies`** 
+Policies can be created by calling with a **`POST`** Method on **`{{HOST}}/api/v1beta1/policies`**
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| body | body |  | Yes | [Policy](./reference/policy.md#policy-1) |
-| X-Auth-Email | header| | | string |
-| X-Trace-Id | header|  | | string |
-
+| Name         | Located in | Description | Required | Schema                                   |
+| ------------ | ---------- | ----------- | -------- | ---------------------------------------- |
+| body         | body       |             | Yes      | [Policy](./reference/policy.md#policy-1) |
+| X-Auth-Email | header     |             |          | string                                   |
+| X-Trace-Id   | header     |             |          | string                                   |
 
 ##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response | [Policy](./reference/policy.md#policy-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                   |
+| ------- | ----------------------------- | ---------------------------------------- |
+| 200     | A successful response         | [Policy](./reference/policy.md#policy-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                  |
 
 ** Here is an example below: **
 
-```console
+```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/policies' \
 --header 'Content-Type: application/json' \
 --data-raw '{
@@ -58,27 +57,28 @@ Policy has `version` to ensure each appeal has a reference to an applied policy 
 Check [policy reference](./reference/policy.md) for more details on the policy configuration.
 
 ### Updating Policy
+
 Updating a policy actually means creating a new policy with the same `id` but the `version` gets incremented by `1`. Both the new and previous policies still can be used by providers.
 
-Policies can be updated by using the **`PUT`** Method on **`{{HOST}}/api/v1beta1/policies/:id`** 
+Policies can be updated by using the **`PUT`** Method on **`{{HOST}}/api/v1beta1/policies/:id`**
 
-##### Parameters 
+##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id   | path | |Yes| String|
-| body | body |  | Yes | [Policy](./reference/policy.md#policy-1) |
+| Name | Located in | Description | Required | Schema                                   |
+| ---- | ---------- | ----------- | -------- | ---------------------------------------- |
+| id   | path       |             | Yes      | String                                   |
+| body | body       |             | Yes      | [Policy](./reference/policy.md#policy-1) |
 
+##### Responses
 
-##### Responses 
-
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [Policy](./reference/policy.md#policy-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                   |
+| ------- | ----------------------------- | ---------------------------------------- |
+| 200     | A successful response.        | [Policy](./reference/policy.md#policy-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                  |
 
 ** Here is an example below: **
-```console
+
+```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/policies/{{policy_id}}' \
 --header 'Content-Type: application/json' \
 --data-raw '{
@@ -103,20 +103,21 @@ $ curl --request PUT '{{HOST}}/api/v1beta1/policies/{{policy_id}}' \
   ]
 }'
 ```
+
 ### Listing Policies
 
 To get the list of all the policies created by the user, use the ** `GET` ** Method on **`{{HOST}}/api/v1beta1/policies`**
 
-##### Responses 
+##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [[Policy]](./reference/policy.md#policy-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                     |
+| ------- | ----------------------------- | ------------------------------------------ |
+| 200     | A successful response.        | [[Policy]](./reference/policy.md#policy-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                    |
 
 ** Here is an example below: **
 
-```console
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/policies'
 ```
 
@@ -124,23 +125,23 @@ $ curl --request GET '{{HOST}}/api/v1beta1/policies'
 
 Viewing a policy can be done by the ** `GET`** Method on **`{{HOST}}/api/v1beta1/policies/:id/versions/:version`**
 
-##### Parameters 
+##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id | path |  | Yes | string |
-| version | path | | Yes | uint32 |
+| Name    | Located in | Description | Required | Schema |
+| ------- | ---------- | ----------- | -------- | ------ |
+| id      | path       |             | Yes      | string |
+| version | path       |             | Yes      | uint32 |
 
-##### Responses 
+##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [Policy](./reference/policy.md#policy-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                   |
+| ------- | ----------------------------- | ---------------------------------------- |
+| 200     | A successful response.        | [Policy](./reference/policy.md#policy-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                  |
 
 ** Here is an example below: **
 
-```console
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/policies/{{policy_id}}/versions/{{policy_version}}'
 ```
 
@@ -154,23 +155,22 @@ Once a provider config is registered, Guardian will immediately fetch the resour
 
 Providers can be created by calling to **`POST`** Method **`{{HOST}}/api/v1beta1/providers`**
 
-##### Parameters 
+##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| body | body |  | Yes | [Provider](./reference/provider.md#providerconfig) |
+| Name | Located in | Description | Required | Schema                                             |
+| ---- | ---------- | ----------- | -------- | -------------------------------------------------- |
+| body | body       |             | Yes      | [Provider](./reference/provider.md#providerconfig) |
 
+##### Responses
 
-##### Responses 
-
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [ProviderResponse](#providerresponse) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                |
+| ------- | ----------------------------- | ------------------------------------- |
+| 200     | A successful response.        | [ProviderResponse](#providerresponse) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)               |
 
 ** Here is an example below: **
 
-```console
+```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/providers' \
 --header 'Content-Type: application/json' \
 --data-raw '{
@@ -245,23 +245,23 @@ Check [provider reference](./reference/provider.md) for more details on Provider
 
 Providers can be updated by calling to **`PUT`** Method **`{HOST}}/api/v1beta1/providers/:id`**
 
-##### Parameters 
+##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id   | path | |Yes| String|
-| body | body |  | Yes | [Provider](./reference/provider.md#providerconfig) |
+| Name | Located in | Description | Required | Schema                                             |
+| ---- | ---------- | ----------- | -------- | -------------------------------------------------- |
+| id   | path       |             | Yes      | String                                             |
+| body | body       |             | Yes      | [Provider](./reference/provider.md#providerconfig) |
 
+##### Responses
 
-##### Responses 
-
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [ProviderResponse](#providerresponse) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                |
+| ------- | ----------------------------- | ------------------------------------- |
+| 200     | A successful response.        | [ProviderResponse](#providerresponse) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)               |
 
 ** Here is an example below: **
-```console
+
+```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/providers/{{provider_id}}' \
 --header 'Content-Type: application/json' \
 --data-raw '{
@@ -275,15 +275,16 @@ $ curl --request PUT '{{HOST}}/api/v1beta1/providers/{{provider_id}}' \
 
 To get the list of all the providers avaliable, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/providers`**
 
-##### Responses 
+##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [[ProviderResponse]](#providerresponse) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                  |
+| ------- | ----------------------------- | --------------------------------------- |
+| 200     | A successful response.        | [[ProviderResponse]](#providerresponse) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                 |
 
 ** Here is an example below: **
-```console
+
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/providers'
 ```
 
@@ -291,22 +292,22 @@ $ curl --request GET '{{HOST}}/api/v1beta1/providers'
 
 To see the details of a particular provider by id, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/providers/:id`** with the following parameters:
 
-##### Parameters 
+##### Parameters
 
 | Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id   | path | |Yes| String|
+| ---- | ---------- | ----------- | -------- | ------ |
+| id   | path       |             | Yes      | String |
 
+##### Responses
 
-##### Responses 
-
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. |[ProviderResponse](#providerresponse) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                |
+| ------- | ----------------------------- | ------------------------------------- |
+| 200     | A successful response.        | [ProviderResponse](#providerresponse) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)               |
 
 ** Here is an example below: **
-```console
+
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/providers/{{provider_id}}'
 ```
 
@@ -314,16 +315,17 @@ $ curl --request GET '{{HOST}}/api/v1beta1/providers/{{provider_id}}'
 
 To delete a particular provider from the database use the **`DELETE`** Method on **`{{HOST}}/api/v1beta1/providers/:id`** with the parameters as shown here:
 
-##### Parameters 
+##### Parameters
 
 | Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id   | path | |Yes| String|
+| ---- | ---------- | ----------- | -------- | ------ |
+| id   | path       |             | Yes      | String |
 
 ##### Response
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | TODO |
+
+| Code    | Description                   | Schema                  |
+| ------- | ----------------------------- | ----------------------- |
+| 200     | A successful response.        | TODO                    |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ### Listing Roles for a Resource Type
@@ -332,20 +334,21 @@ Listing roles can be done by calling to **`GET`** Method **`{{HOST}}/api/v1beta1
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id | path |  | Yes | string |
-| resource_type | path | | Yes | string |
+| Name          | Located in | Description | Required | Schema |
+| ------------- | ---------- | ----------- | -------- | ------ |
+| id            | path       |             | Yes      | string |
+| resource_type | path       |             | Yes      | string |
 
 ##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [[Role]](./reference/provider.md#role) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                 |
+| ------- | ----------------------------- | -------------------------------------- |
+| 200     | A successful response.        | [[Role]](./reference/provider.md#role) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                |
 
 ** Here is an example below: **
-```console
+
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/providers/{{provider_id}}/resources/{{resource_type}}/roles'
 ```
 
@@ -358,6 +361,7 @@ Resource in Guardian represents the actual resource in the provider e.g. for Big
 Guardian collects resources from the provider automatically as soon as it registered. While in parallel, Guardian also has a job for continously syncing resources.
 
 #### Example
+
 ```json
 {
   "id": "a32b702a-029d-4d76-90c4-c3b8cc52941b",
@@ -368,10 +372,7 @@ Guardian collects resources from the provider automatically as soon as it regist
   "name": "table_name",
   "details": {
     "is_sensitive": false,
-    "owner": [
-      "john.doe@example.com",
-      "john.smith@example.com"
-    ]
+    "owner": ["john.doe@example.com", "john.smith@example.com"]
   }
 }
 ```
@@ -382,26 +383,26 @@ To get the list of all the resources availiable, call the **`GET`** Method on **
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| provider_type | query |  |  | string |
-| provider_urn | query | |  | string |
-| type | query |  |  | string |
-| urn | query | |  | string |
-| name | query |  |  | string |
-| details | query | |  | [string] |
-| is_deleted | query | | bool|
+| Name          | Located in | Description | Required | Schema   |
+| ------------- | ---------- | ----------- | -------- | -------- |
+| provider_type | query      |             |          | string   |
+| provider_urn  | query      |             |          | string   |
+| type          | query      |             |          | string   |
+| urn           | query      |             |          | string   |
+| name          | query      |             |          | string   |
+| details       | query      |             |          | [string] |
+| is_deleted    | query      |             | bool     |
 
 ##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [[Resource]](./reference/resource.md#resource-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                           |
+| ------- | ----------------------------- | ------------------------------------------------ |
+| 200     | A successful response.        | [[Resource]](./reference/resource.md#resource-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                          |
 
 ** Here is an example below: **
 
-```console
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/resources'
 ```
 
@@ -412,19 +413,19 @@ To see the details of a particular resource by id, call the **`GET`** Method on 
 ##### Parameters
 
 | Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id   | path | |Yes| String|
+| ---- | ---------- | ----------- | -------- | ------ |
+| id   | path       |             | Yes      | String |
 
+##### Responses
 
-##### Responses 
-
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [Resource](./reference/resource.md#resource-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                         |
+| ------- | ----------------------------- | ---------------------------------------------- |
+| 200     | A successful response.        | [Resource](./reference/resource.md#resource-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                        |
 
 ** Here is an example below: **
-```console
+
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/resources/{{resource_id}}'
 ```
 
@@ -436,22 +437,22 @@ Update a resource can be done by calling to **`PUT`** Method **`{{HOST}}/api/v1b
 
 ##### Parameters - TODO
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id   | path | |Yes| String|
-| body | body |  | Yes | [Resource](./reference/resource.md#resource-1) |
-| X-Trace-Id | header|  | | string |
-
+| Name       | Located in | Description | Required | Schema                                         |
+| ---------- | ---------- | ----------- | -------- | ---------------------------------------------- |
+| id         | path       |             | Yes      | String                                         |
+| body       | body       |             | Yes      | [Resource](./reference/resource.md#resource-1) |
+| X-Trace-Id | header     |             |          | string                                         |
 
 ##### Responses - TODO
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [Resource](./reference/resource.md#resource-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                         |
+| ------- | ----------------------------- | ---------------------------------------------- |
+| 200     | A successful response.        | [Resource](./reference/resource.md#resource-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                        |
 
 ** Here is an example below: **
-```console
+
+```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/resources/{{resource_id}}' \
 --header 'Content-Type: application/json' \
 --data-raw '{
@@ -463,19 +464,21 @@ $ curl --request PUT '{{HOST}}/api/v1beta1/resources/{{resource_id}}' \
 ```
 
 ### Delete Resource
+
 To delete a particular provider from the database use the **`DELETE`** Method on **`{{HOST}}/api/v1beta1/resources/:id`** with the parameters as shown here:
 
-##### Parameters 
+##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id   | path | |Yes| String|
-| X-Trace-Id | header| | | string |
+| Name       | Located in | Description | Required | Schema |
+| ---------- | ---------- | ----------- | -------- | ------ |
+| id         | path       |             | Yes      | String |
+| X-Trace-Id | header     |             |          | string |
 
 ##### Response
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | TODO |
+
+| Code    | Description                   | Schema                  |
+| ------- | ----------------------------- | ----------------------- |
+| 200     | A successful response.        | TODO                    |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ---
@@ -492,21 +495,21 @@ Appeals can be created by calling the **`POST`** Method on **`{{HOST}}/api/v1bet
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| body | body |  | Yes | [AppealConfig](#appealconfig)|
-| X-Auth-Email | header| | | string |
+| Name         | Located in | Description | Required | Schema                        |
+| ------------ | ---------- | ----------- | -------- | ----------------------------- |
+| body         | body       |             | Yes      | [AppealConfig](#appealconfig) |
+| X-Auth-Email | header     |             |          | string                        |
 
 ##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [Appeal](./reference/appeal.md#appeal-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                   |
+| ------- | ----------------------------- | ---------------------------------------- |
+| 200     | A successful response.        | [Appeal](./reference/appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                  |
 
 ** Here is an example below: **
 
-```console
+```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
 --header 'X-Auth-Email: user@example.com' \
 --header 'Content-Type: application/json' \
@@ -528,24 +531,24 @@ The request parameters associated with this is API are as follows:
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| account_id |query | | |string |
-| statuses |query | | | [string] |
-| role |query | | | string |
-| provider_types |query | | | [string] |
-| provider_urns |query | | | [string] |
-| resource_types |query | | | [string] |
-| resource_urns |query | | | [string] |
-| order_by |query | | | [string] |
-| created_by |query | | | string |
+| Name           | Located in | Description | Required | Schema   |
+| -------------- | ---------- | ----------- | -------- | -------- |
+| account_id     | query      |             |          | string   |
+| statuses       | query      |             |          | [string] |
+| role           | query      |             |          | string   |
+| provider_types | query      |             |          | [string] |
+| provider_urns  | query      |             |          | [string] |
+| resource_types | query      |             |          | [string] |
+| resource_urns  | query      |             |          | [string] |
+| order_by       | query      |             |          | [string] |
+| created_by     | query      |             |          | string   |
 
 ##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [[Appeal]](./reference/appeal.md#appeal-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                     |
+| ------- | ----------------------------- | ------------------------------------------ |
+| 200     | A successful response.        | [[Appeal]](./reference/appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                    |
 
 ### List User Appeal
 
@@ -554,61 +557,60 @@ The request parameters associated with this is API are as follows:
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| statuses | query | |  | [string] |
-| role | query | | | string |
-| provider_types |query | | | [string] |
-| provider_urns |query | | | [string] |
-| resource_types |query | | | [string] |
-| resource_urns |query | | | [string] |
-| order_by |query | | | [string] |
-| X-Auth-Email | header| | | string |
+| Name           | Located in | Description | Required | Schema   |
+| -------------- | ---------- | ----------- | -------- | -------- |
+| statuses       | query      |             |          | [string] |
+| role           | query      |             |          | string   |
+| provider_types | query      |             |          | [string] |
+| provider_urns  | query      |             |          | [string] |
+| resource_types | query      |             |          | [string] |
+| resource_urns  | query      |             |          | [string] |
+| order_by       | query      |             |          | [string] |
+| X-Auth-Email   | header     |             |          | string   |
 
 ##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [[Appeal]](./reference/appeal.md#appeal-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                     |
+| ------- | ----------------------------- | ------------------------------------------ |
+| 200     | A successful response.        | [[Appeal]](./reference/appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                    |
 
 ### Get Appeal
 
 To get a particular appeal by its **`id`** use the ** `GET`** Method on **`{{HOST}}/api/v1beta1/appeals/{id}`**
 using the parameters given below:
 
-##### Parameters 
+##### Parameters
 
 | Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id | path |  | Yes | string |
+| ---- | ---------- | ----------- | -------- | ------ |
+| id   | path       |             | Yes      | string |
 
-##### Responses 
+##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [Appeal](./reference/appeal.md#appeal-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
-
+| Code    | Description                   | Schema                                   |
+| ------- | ----------------------------- | ---------------------------------------- |
+| 200     | A successful response.        | [Appeal](./reference/appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                  |
 
 ### Revoke Access
 
 Access to a resource by a user can be revoked by calling the **`PUT`** Method on **`{{HOST}}/api/v1beta1/appeals/{id}/revoke`** using the following parameters:
 
-##### Parameters 
+##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id | path |  | Yes | string |
-| reason | body | Contains the reason of revoking the access to a resource | | string |
-| X-Auth-Email | header| | | string |
+| Name         | Located in | Description                                              | Required | Schema |
+| ------------ | ---------- | -------------------------------------------------------- | -------- | ------ |
+| id           | path       |                                                          | Yes      | string |
+| reason       | body       | Contains the reason of revoking the access to a resource |          | string |
+| X-Auth-Email | header     |                                                          |          | string |
 
-##### Responses 
+##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [Appeal](./reference/appeal.md#appeal-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                   |
+| ------- | ----------------------------- | ---------------------------------------- |
+| 200     | A successful response.        | [Appeal](./reference/appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                  |
 
 ### Canceling Appeals
 
@@ -619,41 +621,41 @@ Appeals can be canceled by calling the **`PUT`** Method on **`{{HOST}}/api/v1bet
 ##### Parameters
 
 | Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id   | path | | Yes | String|
+| ---- | ---------- | ----------- | -------- | ------ |
+| id   | path       |             | Yes      | String |
 
 ##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [Appeal](./reference/appeal.md#appeal-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                   |
+| ------- | ----------------------------- | ---------------------------------------- |
+| 200     | A successful response.        | [Appeal](./reference/appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                  |
 
 ** Here is an example below: **
 
-```console
+```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
 ```
+
 ### List Approvals
 
 To get the list of all approvals, use the ** `GET` ** Method on **`{{HOST}}/api/v1beta1/approvals`** using the following parameters as given below:
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| account_id |query | | |string |
-| statuses |query | | | [string] |
-| order_by |query | | | [string] |
-| created_by |query | | | string |
+| Name       | Located in | Description | Required | Schema   |
+| ---------- | ---------- | ----------- | -------- | -------- |
+| account_id | query      |             |          | string   |
+| statuses   | query      |             |          | [string] |
+| order_by   | query      |             |          | [string] |
+| created_by | query      |             |          | string   |
 
 ##### Response
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [[Approval]](./reference/appeal.md#approval) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
-
+| Code    | Description                   | Schema                                       |
+| ------- | ----------------------------- | -------------------------------------------- |
+| 200     | A successful response.        | [[Approval]](./reference/appeal.md#approval) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                      |
 
 ### List User Approvals
 
@@ -661,19 +663,19 @@ To get the list of all approvals for the current user, use the ** `GET` ** Metho
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| account_id |query | | |string |
-| statuses |query | | | [string] |
-| order_by |query | | | [string] |
-| X-Auth-Email | header| | | string |
+| Name         | Located in | Description | Required | Schema   |
+| ------------ | ---------- | ----------- | -------- | -------- |
+| account_id   | query      |             |          | string   |
+| statuses     | query      |             |          | [string] |
+| order_by     | query      |             |          | [string] |
+| X-Auth-Email | header     |             |          | string   |
 
-##### Response 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [[Approval]](./reference/appeal.md#approval) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+##### Response
 
+| Code    | Description                   | Schema                                       |
+| ------- | ----------------------------- | -------------------------------------------- |
+| 200     | A successful response.        | [[Approval]](./reference/appeal.md#approval) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                      |
 
 ### Update Approval (Approving and Rejecting Appeals)
 
@@ -681,24 +683,25 @@ Appeals can be approved/rejected by calling the **`POST`** Method on **`{{HOST}}
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
-| ---- | ---------- | ----------- | -------- | ---- |
-| id | path | | Yes | String|
-| approval_name | path || Yes | String| 
-| action | body |  | Yes | [Action](#action) |
-| X-Auth-Email | header| | | string |
+| Name          | Located in | Description | Required | Schema            |
+| ------------- | ---------- | ----------- | -------- | ----------------- |
+| id            | path       |             | Yes      | String            |
+| approval_name | path       |             | Yes      | String            |
+| action        | body       |             | Yes      | [Action](#action) |
+| X-Auth-Email  | header     |             |          | string            |
 
 ##### Responses
 
-| Code | Description | Schema |
-| ---- | ----------- | ------ |
-| 200 | A successful response. | [Appeal](./reference/appeal.md#appeal-1) |
-| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+| Code    | Description                   | Schema                                   |
+| ------- | ----------------------------- | ---------------------------------------- |
+| 200     | A successful response.        | [Appeal](./reference/appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)                  |
 
 ** Here is an example below: **
 
 #### Approve an Appeal
-```console
+
+```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{approval_step_name}}' \
 --header 'X-Auth-Email: user@example.com' \
 --header 'Content-Type: application/json' \
@@ -708,7 +711,8 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
 ```
 
 #### Reject an Appeal
-```console
+
+```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{approval_step_name}}' \
 --header 'X-Auth-Email: user@example.com' \
 --header 'Content-Type: application/json' \
@@ -722,58 +726,57 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
 
 #### rpcStatus
 
-| Name | Type | Description | Required |
-| ---- | ---- | ----------- | -------- |
-| code | integer |  | No |
-| message | string |  | No |
-| details | [ [protobufAny](#protobufany) ] |  | No |
+| Name    | Type                            | Description | Required |
+| ------- | ------------------------------- | ----------- | -------- |
+| code    | integer                         |             | No       |
+| message | string                          |             | No       |
+| details | [ [protobufAny](#protobufany) ] |             | No       |
 
 #### protobufAny
 
-| Name | Type | Description | Required |
-| ---- | ---- | ----------- | -------- |
-| typeUrl | string |  | No |
-| value | byte |  | No |
-
+| Name    | Type   | Description | Required |
+| ------- | ------ | ----------- | -------- |
+| typeUrl | string |             | No       |
+| value   | byte   |             | No       |
 
 #### providerResponse
 
-| Name | Type | Description | 
-| ---- | ---- | ----------- |
-| id | string |  | 
-| Type | string | Provider type Possible values: `google_bigquery`, `metabase` |
-| URN | string | Provider instance identifier | 
-| Config | [object(Provider Config)](./reference/provider.md#providerconfig) |  |  
-| CreatedAt | dateTime| Timestamp when the resource is created. |
-| UpdatedAt | dateTime| Timestamp when the resource was last updated |
+| Name      | Type                                                              | Description                                                  |
+| --------- | ----------------------------------------------------------------- | ------------------------------------------------------------ |
+| id        | string                                                            |                                                              |
+| Type      | string                                                            | Provider type Possible values: `google_bigquery`, `metabase` |
+| URN       | string                                                            | Provider instance identifier                                 |
+| Config    | [object(Provider Config)](./reference/provider.md#providerconfig) |                                                              |
+| CreatedAt | dateTime                                                          | Timestamp when the resource is created.                      |
+| UpdatedAt | dateTime                                                          | Timestamp when the resource was last updated                 |
 
 #### AppealConfig
 
-| Name | Type | Description | 
-| ---- | ---- | ----------- |
-| id | string | Unique Email of the account to appeal | 
-| account_type | string |  |
-| resources | [[ Object(Resource) ]](#resource) | Provider instance identifier | 
+| Name         | Type                            | Description                           |
+| ------------ | ------------------------------- | ------------------------------------- |
+| id           | string                          | Unique Email of the account to appeal |
+| account_type | string                          |                                       |
+| resources    | [[Object(Resource)]](#resource) | Provider instance identifier          |
 
 #### Resource
 
-| Name | Type | Description | 
-| ---- | ---- | ----------- |
-| id | string |  | 
-| role | string | Role to be assigned. Can be Viewer, Editor, Admin |
-| options | [Object (Appeal Options)](#appealoptions) |  | 
-| details | object | Additional information for the appeal. Details can be added from the appeal creation.|
+| Name    | Type                                      | Description                                                                           |
+| ------- | ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| id      | string                                    |                                                                                       |
+| role    | string                                    | Role to be assigned. Can be Viewer, Editor, Admin                                     |
+| options | [Object (Appeal Options)](#appealoptions) |                                                                                       |
+| details | object                                    | Additional information for the appeal. Details can be added from the appeal creation. |
 
 #### AppealOptions
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| expiration_date|dateTime| Timestamp when the appeal expires |
-| duration| string| Duration of the access to the resource |
+| Name            | Type     | Description                            |
+| --------------- | -------- | -------------------------------------- |
+| expiration_date | dateTime | Timestamp when the appeal expires      |
+| duration        | string   | Duration of the access to the resource |
 
 #### Action
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| action | string | Can be `Approve` or `Reject` the Appeal |
+| Name   | Type   | Description                                                              |
+| ------ | ------ | ------------------------------------------------------------------------ |
+| action | string | Can be `Approve` or `Reject` the Appeal                                  |
 | reason | string | In case an appeal is rejected, the reason is to be updated in this field |

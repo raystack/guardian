@@ -16,9 +16,11 @@
   --ifm-color-primary-light: #c5331d;
   --ifm-color-primary-lighter: #ce351e;
   --ifm-color-primary-lightest: #e0422a;
-  --ifm-code-font-size: 95%;
-  --ifm-code-font-size: 90%;
+  --ifm-code-font-size: 80%;
   --ifm-font-family-base: "Inter", sans-serif;
+  --ifm-table-cell-padding: 0.5rem;
+  --ifm-table-stripe-background:none;
+  --ifm-table-border-color: var(--ifm-color-emphasis-200)
 }
 
 .docusaurus-highlight-code-line {
@@ -44,12 +46,34 @@ html[data-theme="dark"] {
   --dark-bg-color: #131313;
 }
 
+.container{
+  margin-top: 1rem;
+}
+
 .menu {
   font-size: 90%;
+  margin-top: 1rem;
+}
+
+.menu__link{
+  font-weight: 400;
 }
 
 .menu__link--sublist-caret:after {
   background: var(--ifm-menu-link-sublist-icon) 50% / 1rem 1rem;
+}
+
+.menu__list .menu__list {
+  padding-left: 0;
+}
+
+.menu__link--sublist-caret{
+  font-weight: 600;
+  color: var(--ifm-color-grey-darkest) !important;
+}
+
+.theme-doc-sidebar-item-category{
+  padding-top: .3rem;
 }
 
 .markdown h1 {
@@ -70,10 +94,45 @@ html[data-theme="dark"] {
 .pagination-nav__link{
   border: 1px solid var(--ifm-color-emphasis-200)
 }
+
 .pagination-nav__sublabel{
   font-size: 60%;
 }
+
 .pagination-nav__label{
   font-size: 80%;
   font-weight: normal;
+}
+
+table{
+  font-size: 85%;
+  width: 100%;
+  display: table;
+}
+
+table thead{
+  text-align: left;
+}
+table th, table td{
+  border: 0;
+  padding: .8rem 0.3rem;
+}
+
+table thead tr {
+  border-bottom: 1px solid var(--ifm-table-border-color);
+  border-top: none;
+}
+tbody{
+  border-bottom: solid 1px var(--ifm-table-border-color);
+}
+
+table th{
+  font-weight: 400;
+  font-size: 80%;
+  color: var(--ifm-color-gray-700);
+}
+
+code {
+  border-radius: 0;
+  border: none;
 }

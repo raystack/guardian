@@ -8,7 +8,11 @@ Guardian CLI supports many commands. To get a list of all the commands, follow t
 Enter the following code into the terminal:
 
 ```text
-$ guardian or $ guardian --help
+$ guardian
+
+# or
+
+$ guardian --help
 ```
 
 List of all availiable commands are as follows:
@@ -31,6 +35,7 @@ ADDITIONAL COMMANDS
 ```
 
 To know the usage of any of the core commands use the following syntax:
+
 ```text
 $ guardian <command> <subcommand> --help
 ```
@@ -62,17 +67,23 @@ Available Commands:
 ```
 
 ### Policy Init
+
 This command is used to create a policy template with a given file name. Check [policy reference](../reference/policy.md) for more details on the policy configuration.
 
-Syntax for making the policy initialization file. 
+Syntax for making the policy initialization file.
+
 ```
 $ guardian policy init --file=<output-name>
 ```
+
 flags required
+
 ```
 -f, --file string   File name for the policy config
 ```
+
 #### Example Configurations
+
 We can configure a policy file `policy.yaml` as shown below.
 
 ```yaml
@@ -100,9 +111,10 @@ The create command is used to register a new policy. For this we have to define 
 
 Policy has `version` to ensure each appeal has a reference to an applied policy when it's created. A policy is created with an initial `version` equal to `1`.
 
-Usage  `guardian policy create [flags]`
+Usage `guardian policy create [flags]`
 
 Flags required:
+
 ```
 -f, --file string   Path to the policy config
 
@@ -128,7 +140,7 @@ $ guardian policy list
 The output is the following:
 
 ```text
-  ID             VERSION  DESCRIPTION                             STEPS                 
+  ID             VERSION  DESCRIPTION                             STEPS
   my_policy       1        two step policy for tableau workbooks   manager_approval,resource_owner_approval
 ```
 
@@ -137,6 +149,7 @@ The output is the following:
 To update an existing policy present in the Guardian' database using a file, use the `edit` command as explained here. Updating a policy actually means creating a new policy with the same id but the version gets incremented by 1. Both the new and previous policies still can be used by providers.
 
 Usage :
+
 ```
 $ guardian policy edit --file=<file-path>
 ```
@@ -157,6 +170,7 @@ steps:
 ```
 
 Now to update the policy defined here.
+
 ```text
 $ guardian policies edit --file policy.yaml
 ```
@@ -170,7 +184,7 @@ policy updated
 Note that on update of a policy it's version is also updated. We can verify this by listing all the policies.
 
 ```text
-  ID             VERSION  DESCRIPTION                                       STEPS                 
+  ID             VERSION  DESCRIPTION                                       STEPS
   my_policy     2        two step policy for tableau workbooks             supervisor_approval,resource_owner_approval
 ```
 
@@ -179,34 +193,43 @@ Note that on update of a policy it's version is also updated. We can verify this
 View a policy. Display the ID, name, and other information about a policy.
 
 Usgae:
+
 ```
 $ guardian policy view <policy-id> --version=<policy-version>
 ```
+
 Flags
+
 ```
 -o, --output string    Print output with the selected format (default "yaml")
 -v, --version string   Version of the policy
 ```
 
 ### Apply Policy
+
 Apply a policy config.Create or edit a policy from a file.
 
 Usage:
+
 ```
 $ guardian policy apply --file=<file-path>
 ```
+
 Flags
--f, --file string   Path to the policy config
+-f, --file string Path to the policy config
 
 ### Plan Policy
 
 Show changes from the new policy. This will not actually apply the policy config.
 
 Usage:
+
 ```
 $ guardian policy plan --file=<file-path>
 ```
+
 flags
+
 ```
 -f, --file string   Path to the policy config
 ```
@@ -215,7 +238,7 @@ flags
 
 Providers command allows us to list, create or update providers.
 
-* **What is inside?**
+- **What is inside?**
 
 Enter the following code into the terminal:
 
@@ -235,23 +258,28 @@ Available Commands:
   plan        Show changes from the new provider
   view        View a provider details
 ```
-### Provider Init 
+
+### Provider Init
 
 This command is used to creates a provider template. Following this define the provider's config file, which would be passed as a flag to the `create` command. Check [provider reference](../reference/provider.md#providerconfig) for more details on the configuration.
 
-Syntax for making the initialization file. 
+Syntax for making the initialization file.
+
 ```
-guardian provider init [flags] 
+guardian provider init [flags]
 ```
+
 Flags required :
+
 ```
 -f, --file string   File name for the policy config
 ```
 
 #### Example Configurations
+
 We can configure a `provider.yaml` file for tableau provider as shown below.
 
-```text
+```yaml
 type: tableau
 urn: 691acb66-27ef-4b4f-9222-f07052e6ffg0
 labels:
@@ -288,7 +316,8 @@ The create command is used to register a new provider on the Guardian database.
 
 Usage ` guardian provider create [flags]`
 
-Flags required and usage: 
+Flags required and usage:
+
 ```text
 -f, --file string   Path to the provider config
 
@@ -296,6 +325,7 @@ $ guardian providers create --file provider.yaml
 ```
 
 Output is of the following form:
+
 ```text
 provider created with id: 26
 ```
@@ -313,10 +343,10 @@ $ guardian providers list
 The output is the following:
 
 ```text
-  ID  TYPE     URN                                   
-  21  tableau  691acb66-27ef-4b4f-9222-f07052e6ffc2  
-  22  tableau  691acb66-27ef-4b4f-9222-f07052e6ffc8  
-  26  tableau  691acb66-27ef-4b4f-9222-f07052e6ffg0  
+  ID  TYPE     URN
+  21  tableau  691acb66-27ef-4b4f-9222-f07052e6ffc2
+  22  tableau  691acb66-27ef-4b4f-9222-f07052e6ffc8
+  26  tableau  691acb66-27ef-4b4f-9222-f07052e6ffg0
   24  tableau  691acb66-27ef-4b4f-9222-f07052e6ffd0
 ```
 
@@ -327,32 +357,37 @@ To update an existing provider present in the Guardian' database, use the `edit`
 Usage : `$ guardian provider edit <provider-id> --file <file-path>`
 
 Flags required :
+
 ```
 -f, --file string   Path to the provider config
 ```
 
 The output is the following:
+
 ```text
 provider updated
 ```
 
-###  Plan Provider
+### Plan Provider
 
 This command is to show the changes from the new provider. This command will not actually apply the provider config.
 
 Usage : `$ guardian provider plan [flags]`
 
 Flags required :
+
 ```
 -f, --file string   Path to the provider config
 ```
 
-### View Provider 
+### View Provider
+
 This command is used to view a provider details. Displays the ID, name, and other information about a provider.
 
 Usage : `$ guardian provider view <provider-id> [flags]`
 
 Flags required :
+
 ```
 -o, --output string   Print output with the selected format (default "yaml")
 ```
@@ -361,9 +396,10 @@ Flags required :
 
 Apply a provider. It is used to create or edit a provider from a file.
 
-Usage : `$ guardian provider apply [flags]` 
+Usage : `$ guardian provider apply [flags]`
 
 Flags required :
+
 ```
 -f, --file string   Path to the provider config
 
@@ -374,7 +410,7 @@ $ guardian provider apply --file <file-path>
 
 Resources command allows us to list and set metadata of resources.
 
-* **What is inside?**
+- **What is inside?**
 
 Enter the following code into the terminal:
 
@@ -404,6 +440,7 @@ $ guardian resource list --details=key1.key2:value --details=key1.key3:value
 ```
 
 List resources flags
+
 ```
 -D, --deleted                Show deleted resources
 -d, --details stringArray    Filter by details object values. Example: --details=key1.key2:value
@@ -414,42 +451,48 @@ List resources flags
 -u, --urn string             Filter by urn
 ```
 
-The output is the following form: 
+The output is the following form:
 
 ```text
-ID    PROVIDER                              TYPE        URN                                   NAME                   
-3552  tableau                               view        8a48df6d-bb5c-438f-a038-35149011e1b5  Flight Delays          
-      691acb66-27ef-4b4f-9222-f07052e6ffc2                                                                           
-4704  tableau                               metric      a408051f-c394-4a73-8f33-7bf7ba001d99  my-test-metric-ishan   
-      691acb66-27ef-4b4f-9222-f07052e6ffc2                                                                           
-3792  tableau                               workbook    7c940f8b-34c7-44af-9998-b95deef54edd  Regional               
-      691acb66-27ef-4b4f-9222-f07052e6ffc8                                                                           
-3802  tableau                               view        3bd3acd1-0681-458b-9566-0519ba844519  Overview               
-      691acb66-27ef-4b4f-9222-f07052e6ffc8                                                                           
-3807  tableau                               view        703c58f2-5b7f-46ba-bf96-9f4b473e4da8  Commission Model       
-      691acb66-27ef-4b4f-9222-f07052e6ffc8                                                                           
-5614  tableau                               view        7342fec1-4092-4bd4-abf4-8e531fe0f8ad  Stocks                 
+ID    PROVIDER                              TYPE        URN                                   NAME
+3552  tableau                               view        8a48df6d-bb5c-438f-a038-35149011e1b5  Flight Delays
+      691acb66-27ef-4b4f-9222-f07052e6ffc2
+4704  tableau                               metric      a408051f-c394-4a73-8f33-7bf7ba001d99  my-test-metric-ishan
+      691acb66-27ef-4b4f-9222-f07052e6ffc2
+3792  tableau                               workbook    7c940f8b-34c7-44af-9998-b95deef54edd  Regional
+      691acb66-27ef-4b4f-9222-f07052e6ffc8
+3802  tableau                               view        3bd3acd1-0681-458b-9566-0519ba844519  Overview
+      691acb66-27ef-4b4f-9222-f07052e6ffc8
+3807  tableau                               view        703c58f2-5b7f-46ba-bf96-9f4b473e4da8  Commission Model
+      691acb66-27ef-4b4f-9222-f07052e6ffc8
+5614  tableau                               view        7342fec1-4092-4bd4-abf4-8e531fe0f8ad  Stocks
       691acb66-27ef-4b4f-9222-f07052e6ffd0
 ```
 
 ### Set Resource
 
 Store new metadata for a resource
+
 ```
 $ guardian resource set <resource-id> --filePath=<file-path>
 ```
+
 Flags
+
 ```
 -f, --file string   updated resource file path
 ```
 
-### View Resource 
+### View Resource
+
 View a resource details
+
 ```
 $ guardian resource view <resource-id> --output=json --metadata=true
 ```
 
 Flags
+
 ```
 -m, --metadata   Set if you want to see metadata, default: false
 ```
@@ -489,7 +532,9 @@ It helps us to create a new appeal.
 $ guardian appeal create
 $ guardian appeal create --account=<account-id> --type=<account-type> --resource=<resource-id> --role=<role>
 ```
+
 Flags
+
 ```
 -a, --account string    Email of the account to appeal
 -d, --duration string   Duration of the access
@@ -535,15 +580,17 @@ The output is of the form :
   13  test-user@email.com   5624         write  pending
 ```
 
-
 ### Approve Appeals
 
 It's used to approve an appeal.
 Approve an approval step
+
 ```
 $ guardian appeal approve <appeal-id> --step=<step-name>
 ```
+
 flags
+
 ```
 
 -s, --step string   Name of approval step
@@ -554,6 +601,7 @@ flags
 It's used to reject an appeal.
 
 Reject an approval step
+
 ```
 $ guardian appeal reject <appeal-id> --step=<step-name>
 ```
@@ -566,10 +614,13 @@ Revoke an active access/appeal
 $ guardian appeal revoke <appeal-id>
 $ guardian appeal revoke <appeal-id> --reason=<reason>
 ```
+
 flags
+
 ```
 -r, --reason string   Reason of the revocation
 ```
+
 ### Check Appeal Status
 
 Status value of an appeal can either be one of these `pending`, `canceled`, `active`,`rejected`,`terminated`. To check the current Approval status of the appeal use the following command:
@@ -581,6 +632,7 @@ $ guardian appeal status <appeal-id>
 ### Cancel Appeal
 
 Cancel an appeal. **Appeal creator can cancel their appeal while it's status is still on `pending`**
+
 ```
 $ guardian appeal cancel <appeal-id>
 ```

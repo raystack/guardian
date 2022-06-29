@@ -1,5 +1,5 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 # Managing Policies
 
@@ -10,6 +10,7 @@ Policy controls how users or accounts can get access to a resource. Policy used 
 Policy has `version` to ensure each appeal has a reference to an applied policy when it's created. A policy is created with an initial `version` equal to `1`.
 
 #### Example
+
 ```yaml
 # policy.yaml
 id: my_policy
@@ -30,20 +31,21 @@ steps:
 Check [policy reference](../reference/policy.md) for more details on the policy configuration
 
 #### Policies can be created in the following ways:
+
 1. Using `guardian policy create` CLI command
 2. Calling to `POST /api/v1beta1/policies` API
 
 <Tabs groupId="api">
   <TabItem value="cli" label="CLI" default>
 
-```console
+```bash
 $ guardian policy create --file=policy.yaml
 ```
 
   </TabItem>
   <TabItem value="http" label="HTTP">
 
-```console
+```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/policies' \
 --header 'Content-Type: application/json' \
 --data-raw '{
@@ -78,20 +80,21 @@ $ curl --request POST '{{HOST}}/api/v1beta1/policies' \
 Updating a policy actually means creating a new policy with the same `id` but the `version` gets incremented by `1`. Both the new and previous policies still can be used by providers.
 
 #### Policies can be updated in the following ways:
+
 1. Using `guardian policy edit` CLI command
 2. Calling to `PUT /api/v1beta1/policies/:id` API
 
 <Tabs groupId="api">
   <TabItem value="cli" label="CLI" default>
 
-```console
+```bash
 $ guardian policy edit --file=policy.yaml
 ```
 
   </TabItem>
   <TabItem value="http" label="HTTP">
 
-```console
+```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/policies/{{policy_id}}' \
 --header 'Content-Type: application/json' \
 --data-raw '{
@@ -123,20 +126,21 @@ $ curl --request PUT '{{HOST}}/api/v1beta1/policies/{{policy_id}}' \
 ## Listing Policies
 
 #### Listing policies can be done in the following ways:
+
 1. Using `guardian policy list` CLI command
 2. Calling to `GET /api/v1beta1/policies` API
 
 <Tabs groupId="api">
   <TabItem value="cli" label="CLI" default>
 
-```console
+```bash
 $ guardian policy list --output=yaml
 ```
 
   </TabItem>
   <TabItem value="http" label="HTTP">
 
-```console
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/policies'
 ```
 
@@ -153,14 +157,14 @@ $ curl --request GET '{{HOST}}/api/v1beta1/policies'
 <Tabs groupId="api">
   <TabItem value="cli" label="CLI" default>
 
-```console
+```bash
 $ guardian policy view {{policy_id}} --version={{policy_version}}
 ```
 
   </TabItem>
   <TabItem value="http" label="HTTP">
 
-```console
+```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/policies/{{policy_id}}/versions/{{policy_version}}'
 ```
 
