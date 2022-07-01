@@ -36,6 +36,8 @@ const (
 
 var TimeNow = time.Now
 
+type ContextKeyIsAdditionalAppealCreation struct{}
+
 type repository interface {
 	BulkUpsert([]*domain.Appeal) error
 	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
@@ -141,6 +143,8 @@ func (s *Service) Find(ctx context.Context, filters *domain.ListAppealsFilter) (
 
 // Create record
 func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
+	isAdditionalAppealCreation, _ := ctx.Value(ContextKeyIsAdditionalAppealCreation{}).(bool)
+
 	resourceIDs := []string{}
 	for _, a := range appeals {
 		resourceIDs = append(resourceIDs, a.ResourceID)
@@ -197,9 +201,15 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 			return fmt.Errorf("validating appeal based on provider: %w", err)
 		}
 
-		policy, err := getPolicy(appeal, provider, policies)
-		if err != nil {
-			return fmt.Errorf("retrieving policy: %w", err)
+		var policy *domain.Policy
+		if isAdditionalAppealCreation && appeal.PolicyID != "" && appeal.PolicyVersion != 0 {
+			policy = policies[appeal.PolicyID][appeal.PolicyVersion]
+		} else {
+			var err error
+			policy, err = getPolicy(appeal, provider, policies)
+			if err != nil {
+				return fmt.Errorf("retrieving policy: %w", err)
+			}
 		}
 
 		if err := s.addCreatorDetails(appeal, policy); err != nil {
@@ -776,6 +786,7 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 					additionalAppeal.PolicyID = aa.Policy.ID
 					additionalAppeal.PolicyVersion = uint(aa.Policy.Version)
 				}
+				ctx = context.WithValue(ctx, ContextKeyIsAdditionalAppealCreation{}, true)
 				if err := s.Create(ctx, []*domain.Appeal{additionalAppeal}); err != nil {
 					if errors.Is(err, ErrAppealDuplicate) {
 						continue
@@ -798,8 +809,11 @@ func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal) error {
 		policy = p
 	}
 
-	if err := s.handleAppealRequirements(ctx, a, policy); err != nil {
-		return fmt.Errorf("handling appeal requirements: %w", err)
+	isAdditionalAppealCreation, _ := ctx.Value(ContextKeyIsAdditionalAppealCreation{}).(bool)
+	if !isAdditionalAppealCreation {
+		if err := s.handleAppealRequirements(ctx, a, policy); err != nil {
+			return fmt.Errorf("handling appeal requirements: %w", err)
+		}
 	}
 
 	if err := s.providerService.GrantAccess(ctx, a); err != nil {
