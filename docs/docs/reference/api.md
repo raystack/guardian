@@ -10,11 +10,10 @@ Policies can be created by calling with a **`POST`** Method on **`{{HOST}}/api/v
 
 ##### Parameters
 
-| Name         | Located in | Description | Required | Schema                         |
-| ------------ | ---------- | ----------- | -------- | ------------------------------ |
-| body         | body       |             | Yes      | [Policy](./policy.md#policy-1) |
-| X-Auth-Email | header     |             |          | string                         |
-| X-Trace-Id   | header     |             |          | string                         |
+| Name         | Located in     | Description | Required | Schema                         |
+| ------------ | -------------- | ----------- | -------- | ------------------------------ |
+| body         | body           | Contains a policy name, steps for approval flow, External identity manager(IAM)<br/> details for authorization required for the accessing the resource            | Yes      | [Policy](./policy.md#policy-1) |
+| X-Auth-Email | header         | Contains the user/service account email used for authorization          | Yes      | string                         |
 
 ##### Responses
 
@@ -64,10 +63,10 @@ Policies can be updated by using the **`PUT`** Method on **`{{HOST}}/api/v1beta1
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema                         |
-| ---- | ---------- | ----------- | -------- | ------------------------------ |
-| id   | path       |             | Yes      | String                         |
-| body | body       |             | Yes      | [Policy](./policy.md#policy-1) |
+| Name     | Located in   | Description | Required | Schema                         |
+| -------- | ------------ | ----------- | -------- | ------------------------------ |
+| id       | path         | Unique identifier for policy to be updated           | Yes      | String                         |
+| body     | body         | Contains the fields reuired to be added/updated in the policy           | Yes      | [Policy](./policy.md#policy-1) |
 
 ##### Responses
 
@@ -325,7 +324,7 @@ To delete a particular provider from the database use the **`DELETE`** Method on
 
 | Code    | Description                   | Schema                  |
 | ------- | ----------------------------- | ----------------------- |
-| 200     | A successful response.        | TODO                    |
+| 200     | A successful response.        | NIL                     |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ### Listing Roles for a Resource Type
@@ -391,7 +390,7 @@ To get the list of all the resources availiable, call the **`GET`** Method on **
 | urn           | query      |             |          | string   |
 | name          | query      |             |          | string   |
 | details       | query      |             |          | [string] |
-| is_deleted    | query      |             | bool     |
+| is_deleted    | query      |             |          | bool     |
 
 ##### Responses
 
@@ -435,15 +434,14 @@ Guardian allows users to add metadata to the resources. This can be useful when 
 
 Update a resource can be done by calling to **`PUT`** Method **`{{HOST}}/api/v1beta1/resources/:id`**
 
-##### Parameters - TODO
+##### Parameters 
 
 | Name       | Located in | Description | Required | Schema                               |
 | ---------- | ---------- | ----------- | -------- | ------------------------------------ |
 | id         | path       |             | Yes      | String                               |
 | body       | body       |             | Yes      | [Resource](./resource.md#resource-1) |
-| X-Trace-Id | header     |             |          | string                               |
 
-##### Responses - TODO
+##### Responses 
 
 | Code    | Description                   | Schema                               |
 | ------- | ----------------------------- | ------------------------------------ |
@@ -472,13 +470,12 @@ To delete a particular provider from the database use the **`DELETE`** Method on
 | Name       | Located in | Description | Required | Schema |
 | ---------- | ---------- | ----------- | -------- | ------ |
 | id         | path       |             | Yes      | String |
-| X-Trace-Id | header     |             |          | string |
 
 ##### Response
 
 | Code    | Description                   | Schema                  |
 | ------- | ----------------------------- | ----------------------- |
-| 200     | A successful response.        | TODO                    |
+| 200     | A successful response.        | NIL                     |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ## Managing Appeals
@@ -495,8 +492,8 @@ Appeals can be created by calling the **`POST`** Method on **`{{HOST}}/api/v1bet
 
 | Name         | Located in | Description | Required | Schema                        |
 | ------------ | ---------- | ----------- | -------- | ----------------------------- |
-| body         | body       |             | Yes      | [AppealConfig](#appealconfig) |
-| X-Auth-Email | header     |             |          | string                        |
+| body         | body       | Contains account id and type of the user creating appeal.<br/> It also contains a list of resources for which request is created  | Yes      | [Appeal Request](#appeal-request-config) |
+| X-Auth-Email | header     | Contains the user email creating the appeal       |  Yes        | string                        |
 
 ##### Responses
 
@@ -564,7 +561,7 @@ The request parameters associated with this is API are as follows:
 | resource_types | query      |             |          | [string] |
 | resource_urns  | query      |             |          | [string] |
 | order_by       | query      |             |          | [string] |
-| X-Auth-Email   | header     |             |          | string   |
+| X-Auth-Email   | header     | Contains the user email who is requesting for the list of all its appeals             | Yes         | string   |
 
 ##### Responses
 
@@ -582,7 +579,7 @@ using the parameters given below:
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ------ |
-| id   | path       |             | Yes      | string |
+| id   | path       | Unique Identifier for the Appeal   | Yes      | string |
 
 ##### Responses
 
@@ -599,9 +596,9 @@ Access to a resource by a user can be revoked by calling the **`PUT`** Method on
 
 | Name         | Located in | Description                                              | Required | Schema |
 | ------------ | ---------- | -------------------------------------------------------- | -------- | ------ |
-| id           | path       |                                                          | Yes      | string |
-| reason       | body       | Contains the reason of revoking the access to a resource |          | string |
-| X-Auth-Email | header     |                                                          |          | string |
+| id           | path       | Unique Identifier for the Appeal                        | Yes      | string |
+| reason       | body       | Contains the reason of revoking the access              |          | string |
+| X-Auth-Email | header     | Contains the user/service account email of the person revoking the access                                                          | Yes         | string |
 
 ##### Responses
 
@@ -620,7 +617,7 @@ Appeals can be canceled by calling the **`PUT`** Method on **`{{HOST}}/api/v1bet
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ------ |
-| id   | path       |             | Yes      | String |
+| id   | path       | Unique Identifier for the Appeal | Yes      | String |
 
 ##### Responses
 
@@ -666,7 +663,7 @@ To get the list of all approvals for the current user, use the ** `GET` ** Metho
 | account_id   | query      |             |          | string   |
 | statuses     | query      |             |          | [string] |
 | order_by     | query      |             |          | [string] |
-| X-Auth-Email | header     |             |          | string   |
+| X-Auth-Email | header     | Contains the user/service account email used for authorization             | Yes      | string   |
 
 ##### Response
 
@@ -683,10 +680,10 @@ Appeals can be approved/rejected by calling the **`POST`** Method on **`{{HOST}}
 
 | Name          | Located in | Description | Required | Schema            |
 | ------------- | ---------- | ----------- | -------- | ----------------- |
-| id            | path       |             | Yes      | String            |
-| approval_name | path       |             | Yes      | String            |
-| action        | body       |             | Yes      | [Action](#action) |
-| X-Auth-Email  | header     |             |          | string            |
+| id            | path       | Unique Identifier for the Appeal            | Yes      | String            |
+| approval_name | path       | Name of the approval step. <br/> <br/>For instance **`resource_owner_approval`** or **`admin_approval`**<br/> in this [Example](../guides/create-policy#example-policy)           | Yes      | String            |
+| action        | body       | Action which the approver wants to take(`Approve` or `Reject`)            | Yes      | [Object(Action)](#action) |
+| X-Auth-Email  | header     | Contains the approver's email id         | Yes         | string            |
 
 ##### Responses
 
@@ -739,31 +736,31 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
 
 #### providerResponse
 
-| Name      | Type                                                    | Description                                                  |
-| --------- | ------------------------------------------------------- | ------------------------------------------------------------ |
-| id        | string                                                  |                                                              |
-| Type      | string                                                  | Provider type Possible values: `google_bigquery`, `metabase` |
-| URN       | string                                                  | Provider instance identifier                                 |
-| Config    | [object(Provider Config)](./provider.md#providerconfig) |                                                              |
-| CreatedAt | dateTime                                                | Timestamp when the resource is created.                      |
-| UpdatedAt | dateTime                                                | Timestamp when the resource was last updated                 |
+| Name        | Type                                                    | Description                                                  |
+| ----------- | ------------------------------------------------------- | ------------------------------------------------------------ |
+| id          | string                                                  | Unique identifier for the Provider                                                            |
+| Type        | string                                                  | Name of the Provider type.<br/><br/> Possible values: **`google_bigquery`, `metabase`, `tableau`, `gcloud_iam`, `grafana`** |
+| URN         | string                                                  | Provider instance identifier                                 |
+| Config      | [object(Provider Config)](./provider.md#providerconfig) | Contains the credentials, provider type and URN, allowed account types and other info about the Provider                                                             |
+| CreatedAt   | dateTime                                                | Timestamp when the resource is created.                      |
+| UpdatedAt   | dateTime                                                | Timestamp when the resource was last updated                 |
 
-#### AppealConfig
+#### Appeal Request Config
 
-| Name         | Type                            | Description                           |
-| ------------ | ------------------------------- | ------------------------------------- |
-| id           | string                          | Unique Email of the account to appeal |
-| account_type | string                          |                                       |
-| resources    | [[Object(Resource)]](#resource) | Provider instance identifier          |
+| Name          | Type                            | Description                           |
+| ------------- | ------------------------------- | ------------------------------------- |
+| id            | string                          | User/Service Account Email creating the appeal |
+| account_type  | [string]                          | Contains the allowed account type for the provider. <br/>For example, the possible values for BigQuery Provider and Google Cloud IAM is **`user`** and **`serviceAccount`**                                      |
+| resources     | [[Object(Resource)]](#resource) | List of resource objects         |
 
 #### Resource
 
-| Name    | Type                                      | Description                                                                           |
-| ------- | ----------------------------------------- | ------------------------------------------------------------------------------------- |
-| id      | string                                    |                                                                                       |
-| role    | string                                    | Role to be assigned. Can be Viewer, Editor, Admin                                     |
-| options | [Object (Appeal Options)](#appealoptions) |                                                                                       |
-| details | object                                    | Additional information for the appeal. Details can be added from the appeal creation. |
+| Name    | Type      | Description    |
+| ------- | ----------| ---------------|
+| id      | string    |                |
+| role    | string    | Role to be assigned. Can be `Viewer`, `Editor`, `Admin` depending on the Provider   |
+| options | [Object (Appeal Options)](#appealoptions)|        |
+| details | object  | Additional information for the appeal. Details can be added from the appeal creation. |
 
 #### AppealOptions
 
@@ -776,5 +773,5 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
 
 | Name   | Type   | Description                                                              |
 | ------ | ------ | ------------------------------------------------------------------------ |
-| action | string | Can be `Approve` or `Reject` the Appeal                                  |
+| action | string | Can be **`Approve`** or **`Reject`** the Appeal                                  |
 | reason | string | In case an appeal is rejected, the reason is to be updated in this field |

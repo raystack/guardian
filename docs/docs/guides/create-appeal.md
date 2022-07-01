@@ -6,7 +6,7 @@
 
 ** Here is an example below: **
 
-```json
+```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
 --header 'X-Auth-Email: user@company.com' \
 --header 'Content-Type: application/json' \
@@ -20,6 +20,7 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
   ]
 }'
 ```
+**Note:** Refer to the [Appeal Request](../reference/api#appeal-request-config) Configurations for more details
 
 **The Response after creating the appeal is as follows:**
 
