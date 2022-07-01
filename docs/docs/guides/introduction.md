@@ -50,3 +50,7 @@ Check the reference for Guardian cli commands.
 ```
 $ guardian reference
 ```
+
+### Background for this tutorial
+
+We have 1 BigQuery project named `my-bq-project` and we want to manage user access using Guardian. We allow user to have access to datasets and tables with either `Viewer`, `Editor`, or `Owner` roles. We will also be defining certain rules to manage the approval, updating resource metadata, creating an appeal, approving and rejecting the appeal in this example guide.

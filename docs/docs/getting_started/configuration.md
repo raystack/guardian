@@ -58,7 +58,7 @@ JOBS:
 The [Crontab schedule](https://crontab.guru) of Jobs is as per UTC timezone. With the above prompt, we have created a Job which fetches the resources every two hours. In case the access is revoked it will be checked every 20 minutes and lastly, if an access for a resources is getting expired, the user will be notified at 09:00 UTC everyday.
 
 ---
-
+#### Starting the server
 To initialize the database schema, Run Migrations with the following command:
 ```sh
 $ guardian server migrate -c <path to the server.yml file>
