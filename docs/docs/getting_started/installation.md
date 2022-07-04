@@ -54,7 +54,7 @@ $ make build
 
 ### Verifying the installation​
 
-To verify Guardian is properly installed, run `guardian --help` on your system. You should see help output. If you are executing it from the command line, make sure it is on your PATH or you may get an error about Guardian not being found.
+To verify if Guardian is properly installed, run `guardian --help` on your system. You should see help output. If you are executing it from the command line, make sure it is on your PATH or you may get an error about Guardian not being found.
 
 ```
 $ guardian --help
