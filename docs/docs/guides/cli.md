@@ -288,7 +288,7 @@ provider updated
 
 ## Resources command
 
-Resources command allows us to list and set metadat of resoirces.
+Resources command allows us to list and set metadata of resources.
 
 * **What is inside?**
 
