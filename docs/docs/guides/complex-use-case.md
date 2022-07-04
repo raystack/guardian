@@ -1,4 +1,4 @@
-# Create Your Second Policy 
+# More Complex Use Case Example
 In this example we will explain some more details around the policy configuartions. Guardian can connect to an external identity manager to retrieve user details information. When a user creates an appeal using the policy given below, Guardian will connect to **`http://youridentitymanager.com/api/users/{user_id}`** for taking the user information defined in the **`iam_schema`** within the policy. 
 
 ### Policy Example
