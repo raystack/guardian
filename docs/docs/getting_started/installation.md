@@ -8,7 +8,7 @@ There are several approaches to install Guardian CLI
 
 ### Binary (Cross-platform)
 
-The client and server binaries are downloadable at the releases tab. Currently the installer is not available. Download the appropriate version for your platform from the [releases](https://github.com/odpf/guardian/releases) page. Once downloaded, the binary can be run from anywhere. You don’t need to install it into a global location. This works well for shared hosts and other systems where you don’t have a privileged account. Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
+Guardian binaries are downloadable on the [Releases page](https://github.com/odpf/guardian/releases). Currently, the installer is not available. Once downloaded, the binary can be run from anywhere. You don’t need to install it in a global location. This works well for shared hosts and other systems where you don’t have a privileged account. Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
 
 ### Homebrew Installation
 
