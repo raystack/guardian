@@ -1,6 +1,6 @@
 # Installation
 
-Guardian installation is quite simple. You can install Guardian on macOS, Windows, Linux, OpenBSD, FreeBSD, and on any machine. There are several approaches to installing Guardian.
+There are several approaches to install Guardian CLI
 
 1. [Using a pre-compiled binary](#binary-cross-platform)
 2. [Installing with package manager](#homebrew-installation)
