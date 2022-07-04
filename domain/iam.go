@@ -21,4 +21,5 @@ type IAMManager interface {
 // IAMClient interface
 type IAMClient interface {
 	GetUser(id string) (interface{}, error)
+	IsActiveUser(id string) (bool, error)
 }

@@ -14,16 +14,16 @@ var (
 	ErrUnknownProviderType = errors.New("unknown provider type")
 )
 
-type manager struct {
+type Manager struct {
 	crypto    domain.Crypto
 	validator *validator.Validate
 }
 
-func NewManager(crypto domain.Crypto, validator *validator.Validate) *manager {
-	return &manager{crypto, validator}
+func NewManager(crypto domain.Crypto, validator *validator.Validate) *Manager {
+	return &Manager{crypto, validator}
 }
 
-func (m *manager) ParseConfig(iamConfig *domain.IAMConfig) (domain.SensitiveConfig, error) {
+func (m *Manager) ParseConfig(iamConfig *domain.IAMConfig) (domain.SensitiveConfig, error) {
 	switch iamConfig.Provider {
 	case domain.IAMProviderTypeHTTP:
 		var clientConfig HTTPClientConfig
@@ -45,7 +45,7 @@ func (m *manager) ParseConfig(iamConfig *domain.IAMConfig) (domain.SensitiveConf
 	return nil, ErrUnknownProviderType
 }
 
-func (m *manager) GetClient(config domain.SensitiveConfig) (domain.IAMClient, error) {
+func (m *Manager) GetClient(config domain.SensitiveConfig) (domain.IAMClient, error) {
 	if clientConfig, ok := config.(*HTTPClientConfig); ok {
 		return NewHTTPClient(clientConfig)
 	}

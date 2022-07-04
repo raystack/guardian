@@ -42,12 +42,14 @@ func runJobCmd() *cobra.Command {
 			$ guardian job run fetch_resources
 			$ guardian job run appeal_expiration_reminder
 			$ guardian job run appeal_expiration_revocation
+			$ guardian job run dormant_account_appeal_revocation
 		`),
 		Args: cobra.ExactValidArgs(1),
 		ValidArgs: []string{
 			"fetch_resources",
 			"appeal_expiration_reminder",
 			"appeal_expiration_revocation",
+			"dormant_account_appeal_revocation",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configFile, err := cmd.Flags().GetString("config")
@@ -82,13 +84,17 @@ func runJobCmd() *cobra.Command {
 				logger,
 				services.AppealService,
 				services.ProviderService,
+				services.PolicyService,
 				notifier,
+				validator,
+				crypto,
 			)
 
 			jobs := map[string]func(context.Context) error{
-				"fetch_resources":              handler.FetchResources,
-				"appeal_expiration_reminder":   handler.AppealExpirationReminder,
-				"appeal_expiration_revocation": handler.RevokeExpiredAppeals,
+				"fetch_resources":                   handler.FetchResources,
+				"appeal_expiration_reminder":        handler.AppealExpirationReminder,
+				"appeal_expiration_revocation":      handler.RevokeExpiredAppeals,
+				"dormant_account_appeal_revocation": handler.DormantAccountAppealRevoke,
 			}
 
 			jobName := args[0]

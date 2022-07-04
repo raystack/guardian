@@ -65,7 +65,10 @@ func RunServer(config *Config) error {
 		logger,
 		services.AppealService,
 		services.ProviderService,
+		services.PolicyService,
 		notifier,
+		validator,
+		crypto,
 	)
 
 	// init scheduler
@@ -82,6 +85,9 @@ func RunServer(config *Config) error {
 		{
 			CronTab: config.Jobs.ExpiringAccessNotificationInterval,
 			Func:    func() error { return jobHandler.AppealExpirationReminder(context.Background()) },
+		}, {
+			CronTab: config.Jobs.RevokeDormantAccountAppealExpiredInterval,
+			Func:    func() error { return jobHandler.DormantAccountAppealRevoke(context.Background()) },
 		},
 	}
 	s, err := scheduler.New(tasks)

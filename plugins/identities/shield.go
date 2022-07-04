@@ -13,8 +13,14 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
+const (
+	active        = "active"
+	accountStatus = "accountStatus"
+)
+
 type ShieldClientConfig struct {
-	Host string `mapstructure:"host" json:"host" yaml:"host" validate:"required,url"`
+	Host                string `mapstructure:"host" json:"host" yaml:"host" validate:"required,url"`
+	IdentityProxyHeader string `mapstructure:"identity_proxy_header" json:"identity_proxy_header" yaml:"identity_proxy_header" validate:"required,url"`
 
 	validator *validator.Validate
 	crypto    domain.Crypto
@@ -64,6 +70,8 @@ type shieldClient struct {
 	userEmail       string
 	users           map[string]user
 
+	identityProxyHeader string
+
 	httpClient *http.Client
 }
 
@@ -78,8 +86,9 @@ func NewShieldClient(config *ShieldClientConfig) (*shieldClient, error) {
 	}
 
 	return &shieldClient{
-		baseURL:    baseURL,
-		httpClient: http.DefaultClient,
+		baseURL:             baseURL,
+		httpClient:          http.DefaultClient,
+		identityProxyHeader: config.IdentityProxyHeader,
 	}, nil
 }
 
@@ -149,6 +158,17 @@ func (c *shieldClient) GetUser(userEmail string) (interface{}, error) {
 	return result, nil
 }
 
+func (c *shieldClient) IsActiveUser(userEmail string) (bool, error) {
+	user, err := c.getCurrentUser(userEmail)
+	if err != nil {
+		return false, err
+	}
+	if accountStatus, ok := user.Metadata[accountStatus]; ok {
+		return accountStatus == active, nil
+	}
+	return false, ErrUserActiveEmptyMetadata
+}
+
 func (c *shieldClient) getRoles() ([]role, error) {
 	req, err := c.newRequest(http.MethodGet, "/api/roles", nil)
 	if err != nil {
@@ -195,6 +215,22 @@ func (c *shieldClient) getUsers() ([]user, error) {
 	return users, nil
 }
 
+func (c *shieldClient) getCurrentUser(userEmail string) (user, error) {
+	c.userEmail = userEmail
+	req, err := c.newRequest(http.MethodGet, "/api/users/self", nil)
+	if err != nil {
+		return user{}, err
+	}
+
+	var currentUser user
+	_, err = c.do(req, &currentUser)
+	if err != nil {
+		return user{}, err
+	}
+
+	return currentUser, nil
+}
+
 func (c *shieldClient) newRequest(method, path string, body interface{}) (*http.Request, error) {
 	u, err := c.baseURL.Parse(path)
 	if err != nil {
@@ -216,7 +252,7 @@ func (c *shieldClient) newRequest(method, path string, body interface{}) (*http.
 		req.Header.Set("Content-Type", "application/json")
 	}
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Goog-Authenticated-User-Email", c.userEmail)
+	req.Header.Set(c.identityProxyHeader, c.userEmail)
 	return req, nil
 }
 

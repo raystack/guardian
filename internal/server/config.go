@@ -10,9 +10,10 @@ import (
 )
 
 type Jobs struct {
-	FetchResourcesInterval             string `mapstructure:"fetch_resources_interval" default:"0 */2 * * *"`
-	RevokeExpiredAccessInterval        string `mapstructure:"revoke_expired_access_interval" default:"*/20 * * * *"`
-	ExpiringAccessNotificationInterval string `mapstructure:"expiring_access_notification_interval" default:"0 9 * * *"`
+	FetchResourcesInterval                    string `mapstructure:"fetch_resources_interval" default:"0 */2 * * *"`
+	RevokeExpiredAccessInterval               string `mapstructure:"revoke_expired_access_interval" default:"*/20 * * * *"`
+	ExpiringAccessNotificationInterval        string `mapstructure:"expiring_access_notification_interval" default:"0 9 * * *"`
+	RevokeDormantAccountAppealExpiredInterval string `mapstructure:"expiring_access_notification_interval" default:"0 0 * * *"`
 }
 
 type Config struct {

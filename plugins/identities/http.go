@@ -148,6 +148,20 @@ func (c *HTTPClient) GetUser(userID string) (interface{}, error) {
 	return res, nil
 }
 
+func (c *HTTPClient) IsActiveUser(userID string) (bool, error) {
+	userDetails, err := c.GetUser(userID)
+	if err != nil {
+		return false, err
+	}
+
+	if userDetailsMap, ok := userDetails.(map[string]interface{}); ok {
+		if accountStatus, ok := userDetailsMap[accountStatus]; ok {
+			return accountStatus == active, nil
+		}
+	}
+	return false, ErrUserActiveEmptyMetadata
+}
+
 func (c *HTTPClient) createRequest(userID string) (*http.Request, error) {
 	url := strings.Replace(c.config.URL, UserIDWildcard, userID, -1)
 
