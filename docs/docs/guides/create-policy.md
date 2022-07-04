@@ -24,7 +24,7 @@ steps:
   approvers:
   - john.doe@company.com
 ```
-**Note**: For using the CLI tool, create a Policy.yaml file using the example configurations shown above
+Check [policy reference](../reference/policy.md) for more details on the policy configuration.<br/>
 
 **Explanation of this Policy example**<br/>
 When a Guardian user creates an appeal to the BigQuery resource (Playground here), this policy will applied, and the approvals required to approve that appeal are in the order as follows: <br/> 
@@ -74,3 +74,5 @@ $ curl --request POST '{{HOST}}/api/v1beta1/policies' \
 
   </TabItem>
 </Tabs>
+
+**Note** : For using the CLI tool, create a Policy.yaml file using the example configurations shown above and provide the path to it here.

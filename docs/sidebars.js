@@ -28,10 +28,6 @@ module.exports = {
         "guides/create-appeal",
         "guides/approve-reject-appeal",
         "guides/complex-use-case",
-        "guides/managing-policies",
-        "guides/managing-providers",
-        "guides/managing-resources",
-        "guides/managing-appeals",
       ],
     },
     {
