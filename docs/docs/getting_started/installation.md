@@ -34,7 +34,7 @@ Guardian requires the following dependencies:
 
 #### Build
 
-Run either of the following commands to compile Guardian from source
+Run either of the following commands to clone and compile Guardian from source
 
 ```sh
 $ git clone git@github.com:odpf/guardian.git  (Using SSH Protocol) Or
