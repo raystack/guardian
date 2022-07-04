@@ -739,7 +739,7 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
 | Name        | Type                                                    | Description                                                  |
 | ----------- | ------------------------------------------------------- | ------------------------------------------------------------ |
 | id          | string                                                  | Unique identifier for the Provider                                                            |
-| Type        | string                                                  | Name of the Provider type.<br/><br/> Possible values: **`google_bigquery`, `metabase`, `tableau`, `gcloud_iam`, `grafana`** |
+| Type        | string                                                  | Name of the Provider type.<br/><br/> Possible values: **`bigquery`, `metabase`, `tableau`, `gcloud_iam`, `grafana`** |
 | URN         | string                                                  | Provider instance identifier                                 |
 | Config      | [object(Provider Config)](./provider.md#providerconfig) | Contains the credentials, provider type and URN, allowed account types and other info about the Provider                                                             |
 | CreatedAt   | dateTime                                                | Timestamp when the resource is created.                      |

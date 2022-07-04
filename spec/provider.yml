@@ -3,7 +3,7 @@
 # -- This is a YAML-formatted file.
 
 type:
-# -- provider type. Possible values: google_bigquery, metabase
+# -- provider type. Possible values: bigquery, metabase
 
 urn:
 # -- urn of the provider

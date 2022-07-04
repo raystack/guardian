@@ -15,7 +15,7 @@ resources: []object
 ### `ProviderConfig`
 | Field | Type | Description | Required | 
 | :----- | :---- | :------ | :------ | 
-| `type`| `string` | This field conatains the name of the Resource Provider<br/><br/> Possible values can be:<br/> - BigQuery : **google_bigquery** <br/> - Tableau : **tableau** <br/> - Grafana : **grafana** <br/> - Metabase : **metabase** <br/> - Google Cloud IAM : **gcloud_iam**| Yes |
+| `type`| `string` | This field conatains the name of the Resource Provider<br/><br/> Possible values can be:<br/> - BigQuery : **bigquery** <br/> - Tableau : **tableau** <br/> - Grafana : **grafana** <br/> - Metabase : **metabase** <br/> - Google Cloud IAM : **gcloud_iam**| Yes |
 | `urn`| `string` | Provider instance identifier   | Yes | 
 | `allowed_account_types` | `[string]` | Optional. List of allowed account types. Each provider could have different account types, but `user` account type is applicable for any provider type | No | 
 | `credentials` | `object`| Credentials required to setup connection and access the provider <br/> <br/>  Possible values: <br/> BigQuery: [object(BigQuery)](../providers/bigquery.md#bigquerycredentials) <br/> Metabase: [object(Metabase)](../providers/metabase.md#metabasecredentials) <br/>Tableau: [object(Tableau)](../providers/tableau.md#tableau-credentials)<br/>Grafana:[object(Grafana)](../providers/grafana.md#grafanacredentials)<br/>Google Cloud IAM: [object(GCloudIAM)](../providers/gcloud_iam.md#gcloudiamcredentials)| Yes | 

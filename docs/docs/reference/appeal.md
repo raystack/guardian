@@ -8,7 +8,7 @@
   "resource_id": 1,
   "resource": {
     "id": 1,
-    "provider_type": "google_bigquery",
+    "provider_type": "bigquery",
     "provider_urn": "gcp-project-id",
     "type": "dataset",
     "urn": "gcp-project-id:dataset_name",
