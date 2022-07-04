@@ -36,7 +36,7 @@ resources:
     - roles/bigquery.dataOwner
 - type: dataset
   policy:
-    id: my-second-policy
+    id: my-first-policy
     version: 1
   roles: 
   - id: viewer

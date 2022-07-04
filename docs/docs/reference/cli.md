@@ -439,7 +439,7 @@ $ guardian resource list --provider-type=bigquery --type=dataset
 $ guardian resource list --details=key1.key2:value --details=key1.key3:value
 ```
 
-List resources flags
+List resources flags:
 
 ```
 -D, --deleted                Show deleted resources
@@ -471,18 +471,21 @@ ID    PROVIDER                              TYPE        URN                     
 
 ### Set Resource
 
-Store new metadata for a resource
+Store new metadata for a resource. Guardian allows users to add metadata to the resources. This can be useful when configuring the approval steps in the policy that needs information from metadata e.g. “owners” as the approvers.
 
 ```
 $ guardian resource set <resource-id> --filePath=<file-path>
 ```
 
-Flags
+This command supports the following flags:
 
 ```
 -f, --file string   updated resource file path
 ```
-
+** Here is an example below:**
+```bash
+$ guardian resource set --id={{resource_id}} --values=<key1>=<value1> --values=<key2>=<value2>
+```
 ### View Resource
 
 View a resource details
@@ -491,7 +494,7 @@ View a resource details
 $ guardian resource view <resource-id> --output=json --metadata=true
 ```
 
-Flags
+This command supports the following flags:
 
 ```
 -m, --metadata   Set if you want to see metadata, default: false
@@ -533,7 +536,7 @@ $ guardian appeal create
 $ guardian appeal create --account=<account-id> --type=<account-type> --resource=<resource-id> --role=<role>
 ```
 
-Flags
+This command supports the following flags:
 
 ```
 -a, --account string    Email of the account to appeal
@@ -589,7 +592,7 @@ Approve an approval step
 $ guardian appeal approve <appeal-id> --step=<step-name>
 ```
 
-flags
+This command supports the following flags:
 
 ```
 
@@ -615,7 +618,7 @@ $ guardian appeal revoke <appeal-id>
 $ guardian appeal revoke <appeal-id> --reason=<reason>
 ```
 
-flags
+This command supports the following flags:
 
 ```
 -r, --reason string   Reason of the revocation
