@@ -2,9 +2,9 @@
 
 Guardian installation is quite simple. You can install Guardian on macOS, Windows, Linux, OpenBSD, FreeBSD, and on any machine. There are several approaches to installing Guardian.
 
-1. Using a [pre-compiled binary](#binary-cross-platform)
-2. Installing with [package manager](#homebrew-installation)
-3. Installing from [source](#building-from-source)
+1. [Using a pre-compiled binary](#binary-cross-platform)
+2. [Installing with package manager](#homebrew-installation)
+3. [Installing from source](#building-from-source)
 
 ### Binary (Cross-platform)
 
