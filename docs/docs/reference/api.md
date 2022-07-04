@@ -10,14 +10,14 @@ Policies can be created by calling with a **`POST`** Method on **`{{HOST}}/api/v
 
 ##### Parameters
 
-| Name         | Located in     | Description | Required | Schema                         |
+| Name         | Located in     | Description | Required | Type                         |
 | ------------ | -------------- | ----------- | -------- | ------------------------------ |
 | body         | body           | Contains a policy name, steps for approval flow, External identity manager(IAM)<br/> details for authorization required for the accessing the resource            | Yes      | [Policy](./policy.md#policy-1) |
 | X-Auth-Email | header         | Contains the user/service account email used for authorization          | Yes      | string                         |
 
 ##### Responses
 
-| Code    | Description                   | Schema                         |
+| Code    | Description                   | Type                         |
 | ------- | ----------------------------- | ------------------------------ |
 | 200     | A successful response         | [Policy](./policy.md#policy-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
@@ -63,14 +63,14 @@ Policies can be updated by using the **`PUT`** Method on **`{{HOST}}/api/v1beta1
 
 ##### Parameters
 
-| Name     | Located in   | Description | Required | Schema                         |
+| Name     | Located in   | Description | Required | Type                         |
 | -------- | ------------ | ----------- | -------- | ------------------------------ |
 | id       | path         | Unique identifier for policy to be updated           | Yes      | String                         |
 | body     | body         | Contains the fields reuired to be added/updated in the policy           | Yes      | [Policy](./policy.md#policy-1) |
 
 ##### Responses
 
-| Code    | Description                   | Schema                         |
+| Code    | Description                   | Type                         |
 | ------- | ----------------------------- | ------------------------------ |
 | 200     | A successful response.        | [Policy](./policy.md#policy-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
@@ -109,7 +109,7 @@ To get the list of all the policies created by the user, use the ** `GET` ** Met
 
 ##### Responses
 
-| Code    | Description                   | Schema                           |
+| Code    | Description                   | Type                           |
 | ------- | ----------------------------- | -------------------------------- |
 | 200     | A successful response.        | [[Policy]](./policy.md#policy-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)          |
@@ -126,14 +126,14 @@ Viewing a policy can be done by the ** `GET`** Method on **`{{HOST}}/api/v1beta1
 
 ##### Parameters
 
-| Name    | Located in | Description | Required | Schema |
+| Name    | Located in | Description | Required | Type |
 | ------- | ---------- | ----------- | -------- | ------ |
-| id      | path       |             | Yes      | string |
-| version | path       |             | Yes      | uint32 |
+| id      | path       | Policy unique identifier | Yes      | string |
+| version | path       | Policy version | Yes      | uint32 |
 
 ##### Responses
 
-| Code    | Description                   | Schema                         |
+| Code    | Description                   | Type                         |
 | ------- | ----------------------------- | ------------------------------ |
 | 200     | A successful response.        | [Policy](./policy.md#policy-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
@@ -156,13 +156,13 @@ Providers can be created by calling to **`POST`** Method **`{{HOST}}/api/v1beta1
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema                                   |
+| Name | Located in | Description | Required | Type                                   |
 | ---- | ---------- | ----------- | -------- | ---------------------------------------- |
-| body | body       |             | Yes      | [Provider](./provider.md#providerconfig) |
+| body | body       | Provider config data | Yes      | [ProviderConfig](./provider.md#providerconfig) |
 
 ##### Responses
 
-| Code    | Description                   | Schema                                |
+| Code    | Description                   | Type                                |
 | ------- | ----------------------------- | ------------------------------------- |
 | 200     | A successful response.        | [ProviderResponse](#providerresponse) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)               |
@@ -246,14 +246,14 @@ Providers can be updated by calling to **`PUT`** Method **`{HOST}}/api/v1beta1/p
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema                                   |
+| Name | Located in | Description | Required | Type                                   |
 | ---- | ---------- | ----------- | -------- | ---------------------------------------- |
-| id   | path       |             | Yes      | String                                   |
-| body | body       |             | Yes      | [Provider](./provider.md#providerconfig) |
+| id   | path       | Unique identifier of the provider to be updated | Yes | String |
+| body | body       | Provider config update payload | Yes      | [ProviderConfig](./provider.md#providerconfig) |
 
 ##### Responses
 
-| Code    | Description                   | Schema                                |
+| Code    | Description                   | Type                                |
 | ------- | ----------------------------- | ------------------------------------- |
 | 200     | A successful response.        | [ProviderResponse](#providerresponse) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)               |
@@ -276,7 +276,7 @@ To get the list of all the providers avaliable, call the **`GET`** Method on **`
 
 ##### Responses
 
-| Code    | Description                   | Schema                                  |
+| Code    | Description                   | Type                                  |
 | ------- | ----------------------------- | --------------------------------------- |
 | 200     | A successful response.        | [[ProviderResponse]](#providerresponse) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)                 |
@@ -293,13 +293,13 @@ To see the details of a particular provider by id, call the **`GET`** Method on 
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
+| Name | Located in | Description | Required | Type |
 | ---- | ---------- | ----------- | -------- | ------ |
 | id   | path       |             | Yes      | String |
 
 ##### Responses
 
-| Code    | Description                   | Schema                                |
+| Code    | Description                   | Type                                |
 | ------- | ----------------------------- | ------------------------------------- |
 | 200     | A successful response.        | [ProviderResponse](#providerresponse) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)               |
@@ -316,13 +316,13 @@ To delete a particular provider from the database use the **`DELETE`** Method on
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
+| Name | Located in | Description | Required | Type |
 | ---- | ---------- | ----------- | -------- | ------ |
 | id   | path       |             | Yes      | String |
 
 ##### Response
 
-| Code    | Description                   | Schema                  |
+| Code    | Description                   | Type                  |
 | ------- | ----------------------------- | ----------------------- |
 | 200     | A successful response.        | NIL                     |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
@@ -333,14 +333,14 @@ Listing roles can be done by calling to **`GET`** Method **`{{HOST}}/api/v1beta1
 
 ##### Parameters
 
-| Name          | Located in | Description | Required | Schema |
+| Name          | Located in | Description | Required | Type |
 | ------------- | ---------- | ----------- | -------- | ------ |
 | id            | path       |             | Yes      | string |
 | resource_type | path       |             | Yes      | string |
 
 ##### Responses
 
-| Code    | Description                   | Schema                       |
+| Code    | Description                   | Type                       |
 | ------- | ----------------------------- | ---------------------------- |
 | 200     | A successful response.        | [[Role]](./provider.md#role) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)      |
@@ -382,19 +382,19 @@ To get the list of all the resources availiable, call the **`GET`** Method on **
 
 ##### Parameters
 
-| Name          | Located in | Description | Required | Schema   |
+| Name          | Located in | Description | Required | Type   |
 | ------------- | ---------- | ----------- | -------- | -------- |
-| provider_type | query      |             |          | string   |
-| provider_urn  | query      |             |          | string   |
-| type          | query      |             |          | string   |
-| urn           | query      |             |          | string   |
-| name          | query      |             |          | string   |
-| details       | query      |             |          | [string] |
-| is_deleted    | query      |             |          | bool     |
+| provider_type | query      |             | No | string   |
+| provider_urn  | query      |             | No | string   |
+| type          | query      |             | No | string   |
+| urn           | query      |             | No | string   |
+| name          | query      |             | No | string   |
+| details       | query      |             | No | [string] |
+| is_deleted    | query      |             | No | bool     |
 
 ##### Responses
 
-| Code    | Description                   | Schema                                 |
+| Code    | Description                   | Type                                 |
 | ------- | ----------------------------- | -------------------------------------- |
 | 200     | A successful response.        | [[Resource]](./resource.md#resource-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)                |
@@ -411,13 +411,13 @@ To see the details of a particular resource by id, call the **`GET`** Method on 
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
+| Name | Located in | Description | Required | Type |
 | ---- | ---------- | ----------- | -------- | ------ |
 | id   | path       |             | Yes      | String |
 
 ##### Responses
 
-| Code    | Description                   | Schema                               |
+| Code    | Description                   | Type                               |
 | ------- | ----------------------------- | ------------------------------------ |
 | 200     | A successful response.        | [Resource](./resource.md#resource-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)              |
@@ -436,14 +436,14 @@ Update a resource can be done by calling to **`PUT`** Method **`{{HOST}}/api/v1b
 
 ##### Parameters 
 
-| Name       | Located in | Description | Required | Schema                               |
+| Name       | Located in | Description | Required | Type                               |
 | ---------- | ---------- | ----------- | -------- | ------------------------------------ |
 | id         | path       |             | Yes      | String                               |
 | body       | body       |             | Yes      | [Resource](./resource.md#resource-1) |
 
 ##### Responses 
 
-| Code    | Description                   | Schema                               |
+| Code    | Description                   | Type                               |
 | ------- | ----------------------------- | ------------------------------------ |
 | 200     | A successful response.        | [Resource](./resource.md#resource-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)              |
@@ -467,13 +467,13 @@ To delete a particular provider from the database use the **`DELETE`** Method on
 
 ##### Parameters
 
-| Name       | Located in | Description | Required | Schema |
+| Name       | Located in | Description | Required | Type |
 | ---------- | ---------- | ----------- | -------- | ------ |
 | id         | path       |             | Yes      | String |
 
 ##### Response
 
-| Code    | Description                   | Schema                  |
+| Code    | Description                   | Type                  |
 | ------- | ----------------------------- | ----------------------- |
 | 200     | A successful response.        | NIL                     |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus) |
@@ -490,14 +490,14 @@ Appeals can be created by calling the **`POST`** Method on **`{{HOST}}/api/v1bet
 
 ##### Parameters
 
-| Name         | Located in | Description | Required | Schema                        |
+| Name         | Located in | Description | Required | Type                        |
 | ------------ | ---------- | ----------- | -------- | ----------------------------- |
 | body         | body       | Contains account id and type of the user creating appeal.<br/> It also contains a list of resources for which request is created  | Yes      | [Appeal Request](#appeal-request-config) |
 | X-Auth-Email | header     | Contains the user email creating the appeal       |  Yes        | string                        |
 
 ##### Responses
 
-| Code    | Description                   | Schema                         |
+| Code    | Description                   | Type                         |
 | ------- | ----------------------------- | ------------------------------ |
 | 200     | A successful response.        | [Appeal](./appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
@@ -526,21 +526,21 @@ The request parameters associated with this is API are as follows:
 
 ##### Parameters
 
-| Name           | Located in | Description | Required | Schema   |
+| Name           | Located in | Description | Required | Type   |
 | -------------- | ---------- | ----------- | -------- | -------- |
-| account_id     | query      |             |          | string   |
-| statuses       | query      |             |          | [string] |
-| role           | query      |             |          | string   |
-| provider_types | query      |             |          | [string] |
-| provider_urns  | query      |             |          | [string] |
-| resource_types | query      |             |          | [string] |
-| resource_urns  | query      |             |          | [string] |
-| order_by       | query      |             |          | [string] |
-| created_by     | query      |             |          | string   |
+| account_id     | query      |             | No | string   |
+| statuses       | query      |             | No | [string] |
+| role           | query      |             | No | string   |
+| provider_types | query      |             | No | [string] |
+| provider_urns  | query      |             | No | [string] |
+| resource_types | query      |             | No | [string] |
+| resource_urns  | query      |             | No | [string] |
+| order_by       | query      |             | No | [string] |
+| created_by     | query      |             | No | string   |
 
 ##### Responses
 
-| Code    | Description                   | Schema                           |
+| Code    | Description                   | Type                           |
 | ------- | ----------------------------- | -------------------------------- |
 | 200     | A successful response.        | [[Appeal]](./appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)          |
@@ -552,20 +552,20 @@ The request parameters associated with this is API are as follows:
 
 ##### Parameters
 
-| Name           | Located in | Description | Required | Schema   |
+| Name           | Located in | Description | Required | Type   |
 | -------------- | ---------- | ----------- | -------- | -------- |
-| statuses       | query      |             |          | [string] |
-| role           | query      |             |          | string   |
-| provider_types | query      |             |          | [string] |
-| provider_urns  | query      |             |          | [string] |
-| resource_types | query      |             |          | [string] |
-| resource_urns  | query      |             |          | [string] |
-| order_by       | query      |             |          | [string] |
+| statuses       | query      |             | No | [string] |
+| role           | query      |             | No | string   |
+| provider_types | query      |             | No | [string] |
+| provider_urns  | query      |             | No | [string] |
+| resource_types | query      |             | No | [string] |
+| resource_urns  | query      |             | No | [string] |
+| order_by       | query      |             | No | [string] |
 | X-Auth-Email   | header     | Contains the user email who is requesting for the list of all its appeals             | Yes         | string   |
 
 ##### Responses
 
-| Code    | Description                   | Schema                           |
+| Code    | Description                   | Type                           |
 | ------- | ----------------------------- | -------------------------------- |
 | 200     | A successful response.        | [[Appeal]](./appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)          |
@@ -577,13 +577,13 @@ using the parameters given below:
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
+| Name | Located in | Description | Required | Type |
 | ---- | ---------- | ----------- | -------- | ------ |
 | id   | path       | Unique Identifier for the Appeal   | Yes      | string |
 
 ##### Responses
 
-| Code    | Description                   | Schema                         |
+| Code    | Description                   | Type                         |
 | ------- | ----------------------------- | ------------------------------ |
 | 200     | A successful response.        | [Appeal](./appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
@@ -594,15 +594,15 @@ Access to a resource by a user can be revoked by calling the **`PUT`** Method on
 
 ##### Parameters
 
-| Name         | Located in | Description                                              | Required | Schema |
+| Name         | Located in | Description                                              | Required | Type |
 | ------------ | ---------- | -------------------------------------------------------- | -------- | ------ |
 | id           | path       | Unique Identifier for the Appeal                        | Yes      | string |
-| reason       | body       | Contains the reason of revoking the access              |          | string |
+| reason       | body       | Contains the reason of revoking the access              | No | string |
 | X-Auth-Email | header     | Contains the user/service account email of the person revoking the access                                                          | Yes         | string |
 
 ##### Responses
 
-| Code    | Description                   | Schema                         |
+| Code    | Description                   | Type                         |
 | ------- | ----------------------------- | ------------------------------ |
 | 200     | A successful response.        | [Appeal](./appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
@@ -615,13 +615,13 @@ Appeals can be canceled by calling the **`PUT`** Method on **`{{HOST}}/api/v1bet
 
 ##### Parameters
 
-| Name | Located in | Description | Required | Schema |
+| Name | Located in | Description | Required | Type |
 | ---- | ---------- | ----------- | -------- | ------ |
 | id   | path       | Unique Identifier for the Appeal | Yes      | String |
 
 ##### Responses
 
-| Code    | Description                   | Schema                         |
+| Code    | Description                   | Type                         |
 | ------- | ----------------------------- | ------------------------------ |
 | 200     | A successful response.        | [Appeal](./appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
@@ -638,16 +638,16 @@ To get the list of all approvals, use the ** `GET` ** Method on **`{{HOST}}/api/
 
 ##### Parameters
 
-| Name       | Located in | Description | Required | Schema   |
+| Name       | Located in | Description | Required | Type   |
 | ---------- | ---------- | ----------- | -------- | -------- |
-| account_id | query      |             |          | string   |
-| statuses   | query      |             |          | [string] |
-| order_by   | query      |             |          | [string] |
-| created_by | query      |             |          | string   |
+| account_id | query      |             | No | string   |
+| statuses   | query      |             | No | [string] |
+| order_by   | query      |             | No | [string] |
+| created_by | query      |             | No | string   |
 
 ##### Response
 
-| Code    | Description                   | Schema                             |
+| Code    | Description                   | Type                             |
 | ------- | ----------------------------- | ---------------------------------- |
 | 200     | A successful response.        | [[Approval]](./appeal.md#approval) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)            |
@@ -658,16 +658,16 @@ To get the list of all approvals for the current user, use the ** `GET` ** Metho
 
 ##### Parameters
 
-| Name         | Located in | Description | Required | Schema   |
+| Name         | Located in | Description | Required | Type   |
 | ------------ | ---------- | ----------- | -------- | -------- |
-| account_id   | query      |             |          | string   |
-| statuses     | query      |             |          | [string] |
-| order_by     | query      |             |          | [string] |
+| account_id   | query      |             | No | string   |
+| statuses     | query      |             | No | [string] |
+| order_by     | query      |             | No | [string] |
 | X-Auth-Email | header     | Contains the user/service account email used for authorization             | Yes      | string   |
 
 ##### Response
 
-| Code    | Description                   | Schema                             |
+| Code    | Description                   | Type                             |
 | ------- | ----------------------------- | ---------------------------------- |
 | 200     | A successful response.        | [[Approval]](./appeal.md#approval) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)            |
@@ -678,7 +678,7 @@ Appeals can be approved/rejected by calling the **`POST`** Method on **`{{HOST}}
 
 ##### Parameters
 
-| Name          | Located in | Description | Required | Schema            |
+| Name          | Located in | Description | Required | Type            |
 | ------------- | ---------- | ----------- | -------- | ----------------- |
 | id            | path       | Unique Identifier for the Appeal            | Yes      | String            |
 | approval_name | path       | Name of the approval step. <br/> <br/>For instance **`resource_owner_approval`** or **`admin_approval`**<br/> in this [Example](../guides/create-policy#example-policy)           | Yes      | String            |
@@ -687,7 +687,7 @@ Appeals can be approved/rejected by calling the **`POST`** Method on **`{{HOST}}
 
 ##### Responses
 
-| Code    | Description                   | Schema                         |
+| Code    | Description                   | Type                         |
 | ------- | ----------------------------- | ------------------------------ |
 | 200     | A successful response.        | [Appeal](./appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |

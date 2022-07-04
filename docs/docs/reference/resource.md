@@ -20,14 +20,14 @@
 
 ### `Resource`
 
-| Field | Type | Description | Required |
-| :----- | :---- | :------ | :------ |
-| `id` | `uint`| Resource unique identifier ||
-| `provider_type` | `string` |Type of the provider that manages this resource | |
-| `provider_urn` | `string` | Provider URN ||
-| `type` | `string`| Type of the resource according to `provider_type` ||
-| `urn` | `string` |Resource URN ||
-| `name` | `string` |Display name ||
-| `details` | `object` |Additional information of the resource that can be updated from Guardian ||
-| `created_at` | `string`| Timestamp when the resource created ||
-| `updated_at` | `string` | Timestamp when the resource last modified ||
+| Field | Type | Description |
+| :----- | :---- | :------ |
+| `id` | `uint`| Resource unique identifier |
+| `provider_type` | `string` |Type of the provider that manages this resource |
+| `provider_urn` | `string` | Provider URN |
+| `type` | `string`| Type of the resource according to `provider_type` |
+| `urn` | `string` |Resource URN |
+| `name` | `string` |Display name |
+| `details` | `object` |Additional information of the resource that can be updated from Guardian |
+| `created_at` | `string`| Timestamp when the resource created |
+| `updated_at` | `string` | Timestamp when the resource last modified |

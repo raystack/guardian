@@ -67,42 +67,42 @@
 
 ### `Appeal`
 
-| Field | Type | Description | Required |
-| :----- | :---- | :------ | :------ |
-| `id` | `uint` | Unique identifier of appeal. | |
-| `resource_id` | `uint` | Resource identifier. | |
-| `resource` | [`object(Resource)`](resource.md#resource-1)| Complete resource information. ||
-| `role` | `string` |Permission type chosen by the creator to access the resource. ||
-| `options` | `object`| Options for the appeal. ||
-| `options.duration` | `string`| This field is for specifying how long the access would be granted until it automatically gets revoked by the system. Only time units like `h`, `m`, `s`, and `ms` are supported. Examples: `48h`, `48h30m`, `20m`. ||
-| `options.expiration_date` | `string`| Timestamp for when the appeal will expire. This field is automatically filled by Guardian by calculating the activation time plus the `duration`. ||
-| `details` | `object` |Additional information for the appeal. Details can be added from the appeal creation. |
-| `approvals` | [`[]object(Approval)`](#approval)| Approval steps applied for current appeal based on the applicable policy. ||
-| `policy_id` | `string`| Policy identifier ||
-| `policy_version` | `uint` | Policy version identifier. Used together with `policy_id` to reference to a policy.| |
-| `status` | `string` | Current status of the appeal. The initial status is `pending`. If the appeal creator canceled/removed the appeal while its on pending, the status is become `canceled`. After the approval steps completed, the status either become `active` or `rejected`. And if it gets expired or an admin revoked the status become `terminated`. ||
-| `account_type` | `string` | Type of the account based on the Provider of the selected `resource`. Default value is `user` ||
-| `account_id` | `string` |An account identifier related to `account_type` that will get the permission to the targetted resource once the appeal is approved. ||
-| `created_by` | `string`| Email address of the appeal creator.| |
-| `creator` | `object`| Creator user details information fetched from the configured identity manager as in the [Policy Config](policy.md). ||
-| `created_at` | `string`| Timestamp when the appeal created. ||
-| `updated_at` | `string` |Timestamp when the appeal last modified. ||
-| `revoked_at` | `string` |Timestamp when the appeal gets revoked. ||
-| `revoked_by` | `string` |Email address of the user who revoke the appeal. ||
-| `revoke_reason` | `string` | Reason filled by the revoking user to inform the appeal creator why the appeal gets revoked. ||
+| Field | Type | Description |
+| :----- | :---- | :------ |
+| `id` | `uint` | Unique identifier of appeal. |
+| `resource_id` | `uint` | Resource identifier. |
+| `resource` | [`object(Resource)`](resource.md#resource-1)| Complete resource information. |
+| `role` | `string` |Permission type chosen by the creator to access the resource. |
+| `options` | `object`| Options for the appeal. |
+| `options.duration` | `string`| This field is for specifying how long the access would be granted until it automatically gets revoked by the system. Only time units like `h`, `m`, `s`, and `ms` are supported. Examples: `48h`, `48h30m`, `20m`. |
+| `options.expiration_date` | `string`| Timestamp for when the appeal will expire. This field is automatically filled by Guardian by calculating the activation time plus the `duration`. |
+| `details` | `object` |Additional information for the appeal. Details can be added from the appeal creation.
+| `approvals` | [`[]object(Approval)`](#approval)| Approval steps applied for current appeal based on the applicable policy. |
+| `policy_id` | `string`| Policy identifier |
+| `policy_version` | `uint` | Policy version identifier. Used together with `policy_id` to reference to a policy.|
+| `status` | `string` | Current status of the appeal. The initial status is `pending`. If the appeal creator canceled/removed the appeal while its on pending, the status is become `canceled`. After the approval steps completed, the status either become `active` or `rejected`. And if it gets expired or an admin revoked the status become `terminated`. |
+| `account_type` | `string` | Type of the account based on the Provider of the selected `resource`. Default value is `user` |
+| `account_id` | `string` |An account identifier related to `account_type` that will get the permission to the targetted resource once the appeal is approved. |
+| `created_by` | `string`| Email address of the appeal creator.|
+| `creator` | `object`| Creator user details information fetched from the configured identity manager as in the [Policy Config](policy.md). |
+| `created_at` | `string`| Timestamp when the appeal created. |
+| `updated_at` | `string` |Timestamp when the appeal last modified. |
+| `revoked_at` | `string` |Timestamp when the appeal gets revoked. |
+| `revoked_by` | `string` |Email address of the user who revoke the appeal. |
+| `revoke_reason` | `string` | Reason filled by the revoking user to inform the appeal creator why the appeal gets revoked. |
 
 ### `Approval`
 
-| Field | Type | Description | Required |
-| :----- | :---- | :------ | :------ |
-| `id` | `uint` |Approval step unique identifier ||
-| `name` | `string`| Unique approval step name ||
-| `appeal_id` | `uint` |Appeal identifier ||
-| `status` | `string` |||
-| `policy_id` | `string`| Policy identifier ||
-| `policy_version` | `uint`| Policy version identifier. Used together with `policy_id` to reference to a policy. ||
-| `approvers` | `[]string` |List of email address of eligible approvers if require manual approval. ||
-| `actor` | `string` |Email address of the approver who resolve the status of current approval step. ||
-| `reason` | `string` |Rejection reason filled by the actor if they rejecting current approval step. ||
-| `created_at` | `string` |Timestamp when the appeal created. ||
-| `updated_at` | `string` |Timestamp when the appeal last modified. ||
+| Field | Type | Description |
+| :----- | :---- | :------ |
+| `id` | `uint` |Approval step unique identifier |
+| `name` | `string`| Unique approval step name |
+| `appeal_id` | `uint` |Appeal identifier |
+| `status` | `string` ||
+| `policy_id` | `string`| Policy identifier |
+| `policy_version` | `uint`| Policy version identifier. Used together with `policy_id` to reference to a policy. |
+| `approvers` | `[]string` |List of email address of eligible approvers if require manual approval. |
+| `actor` | `string` |Email address of the approver who resolve the status of current approval step. |
+| `reason` | `string` |Rejection reason filled by the actor if they rejecting current approval step. |
+| `created_at` | `string` |Timestamp when the appeal created. |
+| `updated_at` | `string` |Timestamp when the appeal last modified. |
