@@ -3,6 +3,7 @@ package noop_test
 import (
 	"testing"
 
+	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/providers/noop"
 	"github.com/odpf/salt/log"
@@ -214,6 +215,94 @@ func TestGetResources(t *testing.T) {
 
 		assert.NoError(t, actualError)
 		assert.Equal(t, []*domain.Resource{expectedResource}, actualResources)
+	})
+}
+
+func TestGrantAccess(t *testing.T) {
+	t.Run("should return nil", func(t *testing.T) {
+		p := initProvider()
+
+		actualError := p.GrantAccess(nil, nil)
+
+		assert.NoError(t, actualError)
+	})
+}
+
+func TestRevokeAccess(t *testing.T) {
+	t.Run("should return nil", func(t *testing.T) {
+		p := initProvider()
+
+		actualError := p.RevokeAccess(nil, nil)
+
+		assert.NoError(t, actualError)
+	})
+}
+
+func TestGetRoles(t *testing.T) {
+	t.Run("should return error if resource type is invalid", func(t *testing.T) {
+		p := initProvider()
+
+		validConfig := &domain.ProviderConfig{
+			Type:                "no_op",
+			URN:                 "test-URN",
+			AllowedAccountTypes: []string{"user"},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "no_op",
+					Policy: &domain.PolicyConfig{
+						ID:      "test-policy",
+						Version: 1,
+					},
+				},
+			},
+		}
+
+		actualRoles, actualError := p.GetRoles(validConfig, "wrong_resource_type")
+
+		assert.Nil(t, actualRoles)
+		assert.ErrorIs(t, actualError, provider.ErrInvalidResourceType)
+	})
+
+	t.Run("should return roles specified in the provider config", func(t *testing.T) {
+		p := initProvider()
+		expectedRoles := []*domain.Role{
+			{
+				ID:   "test-role",
+				Name: "Test Role",
+			},
+		}
+
+		validConfig := &domain.ProviderConfig{
+			Type:                "no_op",
+			URN:                 "test-URN",
+			AllowedAccountTypes: []string{"user"},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "no_op",
+					Policy: &domain.PolicyConfig{
+						ID:      "test-policy",
+						Version: 1,
+					},
+					Roles: expectedRoles,
+				},
+			},
+		}
+
+		actualRoles, actualError := p.GetRoles(validConfig, "no_op")
+
+		assert.Equal(t, expectedRoles, actualRoles)
+		assert.NoError(t, actualError)
+	})
+}
+
+func TestGetAccountTypes(t *testing.T) {
+	t.Run("should return one role \"user\"", func(t *testing.T) {
+		p := initProvider()
+		expectedAccountTypes := []string{"user"}
+
+		actualAccountTypes := p.GetAccountTypes()
+
+		assert.Equal(t, expectedAccountTypes, actualAccountTypes)
 	})
 }
 

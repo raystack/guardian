@@ -3,6 +3,7 @@ package noop
 import (
 	"errors"
 
+	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/log"
 )
@@ -84,11 +85,9 @@ func (p *Provider) RevokeAccess(*domain.ProviderConfig, *domain.Appeal) error {
 }
 
 func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {
-	// TODO
-	return nil, nil
+	return provider.GetRoles(pc, resourceType)
 }
 
 func (p *Provider) GetAccountTypes() []string {
-	// TODO
-	return nil
+	return []string{"user"}
 }
