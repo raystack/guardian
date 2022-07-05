@@ -1,13 +1,11 @@
 //go:generate mockery --name=appealService --exported
 //go:generate mockery --name=providerService --exported
+//go:generate mockery --name=policyService --exported
 
 package jobs
 
 import (
 	"context"
-
-	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/plugins/identities"
 
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/notifiers"
@@ -27,13 +25,17 @@ type policyService interface {
 	GetOne(ctx context.Context, id string, version uint) (*domain.Policy, error)
 }
 
+type iamManager interface {
+	domain.IAMManager
+}
+
 type handler struct {
 	logger          log.Logger
 	appealService   appealService
 	providerService providerService
 	policyService   policyService
 	notifier        notifiers.Client
-	iam             *identities.Manager
+	iam             domain.IAMManager
 }
 
 func NewHandler(
@@ -42,8 +44,7 @@ func NewHandler(
 	providerService providerService,
 	policyService policyService,
 	notifier notifiers.Client,
-	validator *validator.Validate,
-	crypto domain.Crypto,
+	manager iamManager,
 ) *handler {
 	return &handler{
 		logger:          logger,
@@ -51,6 +52,6 @@ func NewHandler(
 		providerService: providerService,
 		policyService:   policyService,
 		notifier:        notifier,
-		iam:             identities.NewManager(crypto, validator),
+		iam:             manager,
 	}
 }

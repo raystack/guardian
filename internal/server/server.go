@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/odpf/guardian/plugins/identities"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -67,8 +69,7 @@ func RunServer(config *Config) error {
 		services.ProviderService,
 		services.PolicyService,
 		notifier,
-		validator,
-		crypto,
+		identities.NewManager(crypto, validator),
 	)
 
 	// init scheduler

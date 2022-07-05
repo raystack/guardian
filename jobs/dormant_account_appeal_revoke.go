@@ -67,10 +67,9 @@ func (h *handler) DormantAccountAppealRevoke(ctx context.Context) error {
 	done := make(chan string, totalRequests)
 	for key, appealList := range accountAppealsMap {
 		if len(appealList) > 0 {
-			appeal := appeals[0]
-			policy, err := h.policyService.GetOne(ctx, appeal.PolicyID, appeal.PolicyVersion)
+			policy, err := h.policyService.GetOne(ctx, key.PolicyId, key.PolicyVersion)
 			if err != nil {
-				h.logger.Error("failed to get policy", "policy_id", appeal.PolicyID, "policy_version", appeal.PolicyVersion, "error", err)
+				h.logger.Error("failed to get policy", "policy_id", key.PolicyId, "policy_version", key.PolicyVersion, "error", err)
 			} else {
 				iamConfig, err := h.iam.ParseConfig(policy.IAM)
 				if err != nil {
@@ -104,7 +103,7 @@ func (h *handler) expiredDormantUserAppeal(ctx context.Context, iamClient domain
 
 	if !isActive {
 		for _, appeal := range appeals {
-			if _, err := h.appealService.Revoke(ctx, appeal.ID, domain.SystemActorName, "Automatically revoked"); err != nil {
+			if _, err := h.appealService.Revoke(ctx, appeal.ID, domain.SystemActorName, "Automatically revoked since account is dormant"); err != nil {
 				h.logger.Error("failed to revoke appeal", "id", appeal.ID, "error", err)
 				failedRevoke = append(failedRevoke, map[string]interface{}{"id": appeal.ID, "error": err.Error()})
 			} else {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/odpf/guardian/plugins/identities"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/internal/server"
@@ -86,8 +88,7 @@ func runJobCmd() *cobra.Command {
 				services.ProviderService,
 				services.PolicyService,
 				notifier,
-				validator,
-				crypto,
+				identities.NewManager(crypto, validator),
 			)
 
 			jobs := map[string]func(context.Context) error{
