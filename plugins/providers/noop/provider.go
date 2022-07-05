@@ -56,7 +56,7 @@ func (p *Provider) CreateConfig(cfg *domain.ProviderConfig) error {
 	}
 
 	for _, r := range cfg.Resources[0].Roles {
-		if r.Permissions != nil || len(r.Permissions) != 0 {
+		if len(r.Permissions) != 0 {
 			return ErrInvalidRolePermissions
 		}
 	}

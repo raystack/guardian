@@ -158,8 +158,9 @@ func TestCreateConfig(t *testing.T) {
 						},
 						Roles: []*domain.Role{
 							{
-								ID:   "test-role",
-								Name: "Test Role",
+								ID:          "test-role",
+								Name:        "Test Role",
+								Permissions: []interface{}{},
 							},
 						},
 					},
