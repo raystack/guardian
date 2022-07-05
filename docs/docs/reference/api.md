@@ -355,27 +355,6 @@ $ curl --request GET '{{HOST}}/api/v1beta1/providers/{{provider_id}}/resources/{
 
 Resource in Guardian represents the actual resource in the provider e.g. for BigQuery provider, a resource represents a dataset or a table. One of Guardian's responsibility is to manage the access to resources, and in order to do that Guardian needs to be able to manage the resources as well.
 
-#### Collecting Resources
-
-Guardian collects resources from the provider automatically as soon as it registered. While in parallel, Guardian also has a job for continously syncing resources.
-
-#### Example
-
-```json
-{
-  "id": "a32b702a-029d-4d76-90c4-c3b8cc52941b",
-  "provider_type": "bigquery",
-  "provider_urn": "gcp-project-id-bigquery",
-  "type": "table",
-  "urn": "gcp-project-id:dataset_name.table_name",
-  "name": "table_name",
-  "details": {
-    "is_sensitive": false,
-    "owner": ["john.doe@example.com", "john.smith@example.com"]
-  }
-}
-```
-
 ### Listing Resources
 
 To get the list of all the resources availiable, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/resources`**
