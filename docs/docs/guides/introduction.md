@@ -1,6 +1,6 @@
 # Introduction
 
-This tour introduces you to Guardian schema registry. Along the way you will learn how to manage schemas, enforce rules, serialise and deserialise data using Guardian clients.
+This tour introduces you to Guardian. Along the way you will learn how to manage create policies, resources and manage appeals.
 
 ### Prerequisites
 
