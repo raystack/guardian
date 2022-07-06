@@ -30,7 +30,7 @@ Users are required to raise an appeal to gain access to a particular resource. T
 
 ## Where to go from here
 
-See the [installation](../getting_started/installation) page to install the Guardian CLI. Next, we recommend completing the guides. The tour provides an overview of most of the existing functionality of Guardian and takes approximately 30 minutes to complete.
+See the [installation](./installation) page to install the Guardian CLI. Next, we recommend completing the guides. The tour provides an overview of most of the existing functionality of Guardian and takes approximately 30 minutes to complete.
 
 After completing the tour, check out the remainder of the documentation in the reference and concepts sections for your specific areas of interest. We've aimed to provide as much documentation as we can for the various components of Guardian to give you a full understanding of Guardian's surface area.
 

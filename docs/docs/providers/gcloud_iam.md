@@ -1,4 +1,4 @@
-# Google Cloud IAM
+# GCP
 
 ## Prerequisites
 
@@ -57,9 +57,9 @@ resources:
 
 ### `GCloudIAMCredentials`
 
-| Fields | |
-| :--- | :--- |
-| `resource_name` | `string` GCP Project ID in resource name format. Example: `projects/my-project-id`, `organizations/my-org-id`|
+| Fields                |                                                                                                                                                               |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `resource_name`       | `string` GCP Project ID in resource name format. Example: `projects/my-project-id`, `organizations/my-org-id`                                                 |
 | `service_account_key` | `string` Service account key JSON that has [prerequisites permissions](#prerequisites). On provider creation, the value should be an base64 encoded JSON key. |
 
 ### `GCloudIAMResourceType`
