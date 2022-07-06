@@ -37,6 +37,8 @@ const (
 	name             = "name"
 	permissionsConst = "permissions"
 	groupConst       = "group"
+
+	pathSeparator = "/"
 )
 
 type ResourceGroupDetails map[string][]map[string]interface{}
@@ -195,12 +197,37 @@ func (c *client) GetCollections() ([]*Collection, error) {
 		return nil, err
 	}
 
-	var collection []*Collection
-	if _, err := c.do(req, &collection); err != nil {
+	var collections []*Collection
+	result := make([]*Collection, 0)
+	if _, err := c.do(req, &collections); err != nil {
 		return nil, err
 	}
-	c.logger.Info("Fetch collections from request", "total", len(collection), req.URL)
-	return collection, nil
+	c.logger.Info("Fetch collections from request", "total", len(collections), req.URL)
+
+	collectionIdNameMap := make(map[string]string, 0)
+	for _, collection := range collections {
+		collectionIdNameMap[fmt.Sprintf("%v", collection.ID)] = collection.Name
+	}
+
+	for _, collection := range collections {
+		// don't add personal collection
+		if collection.PersonalOwnerId == nil {
+			locationPath := ""
+			locations := strings.Split(collection.Location, pathSeparator)
+			if len(locations) > 1 {
+				for _, id := range locations {
+					if name, ok := collectionIdNameMap[id]; ok && len(id) > 0 {
+						locationPath = locationPath + name + pathSeparator
+					}
+				}
+				//populate resource name as hierarchy of its parent name
+				collection.Name = locationPath + collection.Name
+				result = append(result, collection)
+			}
+		}
+	}
+
+	return result, nil
 }
 
 func (c *client) GetGroups() ([]*Group, ResourceGroupDetails, ResourceGroupDetails, error) {

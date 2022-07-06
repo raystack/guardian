@@ -12,11 +12,11 @@ Guardian is a on-demand access management tool. It manages resources from variou
 
 ## Key Features
 
-- **Provider Management**: Support various providers (currently only BigQuery, more coming up!) and multiple instances for each provider type
-- **Resource Management**: Resources from a provider are managed in Guardian's database. There is also an API to update resource's metadata to add additional information.
+- **Provider management**: Support various providers (currently only BigQuery, more coming up!) and multiple instances for each provider type
+- **Resource management**: Resources from a provider are managed in Guardian's database. There is also an API to update resource's metadata to add additional information.
 - **Appeal-based access**: Users are expected to create an appeal for accessing data from registered providers. The appeal will get reviewed by the configured approvers before it gives the access to the user.
 - **Configurable approval flow**: Approval flow configures what are needed for an appeal to get approved and who are eligible to approve/reject. It can be configured and linked to a provider so that every appeal created to their resources will follow the procedure in order to get approved.
-- **External Identity Manager**: This gives the flexibility to use any third-party identity manager. User properties.
+- **External identity managers**: This gives the flexibility to use any third-party identity manager. User properties.
 
 ## Documentation
 
@@ -52,51 +52,23 @@ $ guardian version
 
 ## Usage
 
-Guardian CLI is fully featured but simple to use, even for those who have very limited experience working from the command line. Run `guardian --help` to see list of all available commands and instructions to use.
+Guardian is purely API-driven. It is very easy to get started with Guardian. It provides CLI, HTTP and GRPC APIs for simpler developer experience.
+
+### CLI
+
+Guardian CLI is fully featured and simple to use, even for those who have very limited experience working from the command line. Run `guardian --help` to see list of all available commands and instructions to use.
 
 ```
+# List of commands
 $ guardian --help
-Universal access control to cloud apps and infrastructure.
 
-USAGE
-  guardian <command> <subcommand> [flags]
-
-CORE COMMANDS
-  appeal      Manage appeals
-  policy      Manage policies
-  provider    Manage providers
-  resource    Manage resources
-
-DEV COMMANDS
-  migrate     Run database migrations
-  serve       Run guardian server
-
-ADDITIONAL COMMANDS
-  completion  generate the autocompletion script for the specified shell
-  config      Manage client configuration settings
-  help        Help about any command
-  version     Print version information
-
-FLAGS
-  --help   Show help for command
-
-EXAMPLES
-  $ guardian appeal create
-  $ guardian policy list
-  $ guardian provider list
-  $ guardian resource list
-  $ guardian policy create --file policy.yaml
-
-ENVIRONMENT VARIABLES
-  See 'guardian help environment' for the list of supported environment variables.
-
-LEARN MORE
-  Use 'guardian <command> <subcommand> --help' for more information about a command.
-  Read the manual at https://odpf.github.io/guardian/
-
-FEEDBACK
-  Open an issue here https://github.com/odpf/guardian/issues
+# Print command reference
+$ guardian reference
 ```
+
+### API
+
+Guardian provides a fully-featured GRPC and HTTP API to interact with Guardian server. Both APIs adheres to a set of standards that are rigidly followed. Please refer to [proton](https://github.com/odpf/proton/tree/main/odpf/guardian/v1beta1) for GRPC API definitions.
 
 ## Running locally
 
@@ -116,21 +88,21 @@ $ git clone git@github.com:odpf/guardian.git
 # Install all the golang dependencies
 $ make install
 
-# Check all build comamnds available
+# Check all build commands available
 $ make help
 
 # Build meteor binary file
 $ make build
 
 # Init config
-$ cp app/config.yaml config.yaml
+$ cp internal/server/config.yaml config.yaml
 $ ./guardian config init
 
 # Run database migrations
-$ ./guardian migrate
+$ ./guardian server migrate
 
 # Start guardian server
-$ ./guardian serve
+$ ./guardian server start
 ```
 
 ## Running tests
