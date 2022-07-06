@@ -4,7 +4,7 @@ This tour introduces you to Guardian. Along the way you will learn how to manage
 
 ### Prerequisites
 
-This tour requires you to have Guardian CLI tool installed on your local machine. You can run `guardian version` to verify the installation. Please follow [installation](../getting_started/installation) and [configuration](../getting_started/configuration) guides if you do not have it installed already.
+This tour requires you to have Guardian CLI tool installed on your local machine. You can run `guardian version` to verify the installation. Please follow [installation](../installation) and [configuration](./configuration) guides if you do not have it installed already.
 
 Guardian CLI and clients talks to Guardian server to publish and fetch policies, appeals and resources. Please make sure you also have a Guardian server running. You can also run server locally with `Guardian server start` command. For more details check deployment guide.
 

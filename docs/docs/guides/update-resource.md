@@ -1,7 +1,7 @@
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-# Update Resource Metadata
+# Update resource
 
 We will try to update a resource information in this example exercise. Let's say we want to add owner's information to the `playground` dataset.
 
@@ -49,10 +49,12 @@ $ guardian resource view {{resource_id}}
 ```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/resources/{{resource_id}}'
 ```
+
   </TabItem>
 </Tabs>
 
 To update the resource metadata with this information add this to the resource file or request body
+
 ```yaml
 details:
   owner: owner.guy@company.com
