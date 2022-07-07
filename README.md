@@ -22,14 +22,14 @@ Guardian is a on-demand access management tool. It manages resources from variou
 
 Explore the following resoruces to get started with Guardian:
 
-- [Guides](https://odpf.github.io/guardian/docs/guides/cli) provides guidance on usage.
-- [Concepts](https://odpf.github.io/guardian/docs/concepts/architecture) describes all important Guardian concepts including system architecture.
-- [Reference](https://odpf.github.io/guardian/docs/reference/glossary) contains details about configurations and other aspects of Guardian.
+- [Guides](https://odpf.github.io/guardian/docs/guides/introduction) provides guidance on usage.
+- [Concepts](https://odpf.github.io/guardian/docs/concepts/overview) describes all important Guardian concepts including system architecture.
+- [Reference](https://odpf.github.io/guardian/docs/reference/api) contains details about configurations and other aspects of Guardian.
 - [Contribute](https://odpf.github.io/guardian/docs/contribute/contribution) contains resources for anyone who wants to contribute to Guardian.
 
 ## Installation
 
-Install Guardian on macOS, Windows, Linux, OpenBSD, FreeBSD, and on any machine.
+Install Guardian on macOS, Windows, Linux, OpenBSD, FreeBSD, and on any machine. <br/>Refer this for [installations](https://odpf.github.io/guardian/docs/installation) and [configurations](https://odpf.github.io/guardian/docs/guides/configuration) 
 
 #### Binary (Cross-platform)
 

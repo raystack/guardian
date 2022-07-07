@@ -16,7 +16,7 @@ const Hero = () => {
           <div className={clsx('col col--5')}>
             <div className="homeTitle">{siteConfig.tagline}</div>
             <small className="homeSubTitle">Guardian is a tool for extensible and universal data access with automated access workflows and security controls across data stores, analytical systems, and cloud products.</small>
-            <a className="button" href="docs/overview/introduction">Documentation</a>
+            <a className="button" href="docs/introduction">Documentation</a>
           </div>
           <div className={clsx('col col--1')}></div>
           <div className={clsx('col col--6')}>
