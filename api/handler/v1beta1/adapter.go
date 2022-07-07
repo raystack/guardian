@@ -361,48 +361,59 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 }
 
 func (a *adapter) FromResourceProto(r *guardianv1beta1.Resource) *domain.Resource {
-	details := map[string]interface{}{}
-	if r.GetDetails() != nil {
-		details = r.GetDetails().AsMap()
-	}
-	return &domain.Resource{
+	resource := &domain.Resource{
 		ID:           r.GetId(),
 		ProviderType: r.GetProviderType(),
 		ProviderURN:  r.GetProviderUrn(),
 		Type:         r.GetType(),
 		URN:          r.GetUrn(),
 		Name:         r.GetName(),
-		Details:      details,
 		Labels:       r.GetLabels(),
-		CreatedAt:    r.GetCreatedAt().AsTime(),
-		UpdatedAt:    r.GetUpdatedAt().AsTime(),
 		IsDeleted:    r.GetIsDeleted(),
 	}
+
+	if r.GetDetails() != nil {
+		resource.Details = r.GetDetails().AsMap()
+	}
+
+	if r.GetCreatedAt() != nil {
+		resource.CreatedAt = r.GetCreatedAt().AsTime()
+	}
+	if r.GetUpdatedAt() != nil {
+		resource.UpdatedAt = r.GetUpdatedAt().AsTime()
+	}
+
+	return resource
 }
 
 func (a *adapter) ToResourceProto(r *domain.Resource) (*guardianv1beta1.Resource, error) {
-	var detailsProto *structpb.Struct
-	if r.Details != nil {
-		details, err := structpb.NewStruct(r.Details)
-		if err != nil {
-			return nil, err
-		}
-		detailsProto = details
-	}
-
-	return &guardianv1beta1.Resource{
+	resourceProto := &guardianv1beta1.Resource{
 		Id:           r.ID,
 		ProviderType: r.ProviderType,
 		ProviderUrn:  r.ProviderURN,
 		Type:         r.Type,
 		Urn:          r.URN,
 		Name:         r.Name,
-		Details:      detailsProto,
 		Labels:       r.Labels,
-		CreatedAt:    timestamppb.New(r.CreatedAt),
-		UpdatedAt:    timestamppb.New(r.UpdatedAt),
 		IsDeleted:    r.IsDeleted,
-	}, nil
+	}
+
+	if r.Details != nil {
+		details, err := structpb.NewStruct(r.Details)
+		if err != nil {
+			return nil, err
+		}
+		resourceProto.Details = details
+	}
+
+	if !r.CreatedAt.IsZero() {
+		resourceProto.CreatedAt = timestamppb.New(r.CreatedAt)
+	}
+	if !r.UpdatedAt.IsZero() {
+		resourceProto.UpdatedAt = timestamppb.New(r.UpdatedAt)
+	}
+
+	return resourceProto, nil
 }
 
 func (a *adapter) FromAppealProto(appeal *guardianv1beta1.Appeal) (*domain.Appeal, error) {
