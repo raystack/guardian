@@ -159,10 +159,7 @@ func getPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 				return err
 			}
 
-			p, err := adapter.FromPolicyProto(res.GetPolicy())
-			if err != nil {
-				return fmt.Errorf("failed to parse policy: %v", err)
-			}
+			p := adapter.FromPolicyProto(res.GetPolicy())
 
 			spinner.Stop()
 
@@ -453,10 +450,7 @@ func planPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 				return err
 			}
 
-			existingPolicy, err := adapter.FromPolicyProto(res.GetPolicy())
-			if err != nil {
-				return fmt.Errorf("unable to parse existing policy: %w", err)
-			}
+			existingPolicy := adapter.FromPolicyProto(res.GetPolicy())
 			if existingPolicy != nil {
 				newPolicy.Version = existingPolicy.Version + 1
 				newPolicy.CreatedAt = existingPolicy.CreatedAt

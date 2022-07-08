@@ -169,9 +169,16 @@ func (a *adapter) ToRole(role *domain.Role) (*guardianv1beta1.Role, error) {
 	}, nil
 }
 
-func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, error) {
-	var steps []*domain.Step
+func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
+	policy := &domain.Policy{
+		ID:          p.GetId(),
+		Version:     uint(p.GetVersion()),
+		Description: p.GetDescription(),
+		Labels:      p.GetLabels(),
+	}
+
 	if p.GetSteps() != nil {
+		var steps []*domain.Step
 		for _, s := range p.GetSteps() {
 			steps = append(steps, &domain.Step{
 				Name:            s.GetName(),
@@ -184,10 +191,11 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, er
 				Approvers:       s.GetApprovers(),
 			})
 		}
+		policy.Steps = steps
 	}
 
-	var requirements []*domain.Requirement
 	if p.GetRequirements() != nil {
+		var requirements []*domain.Requirement
 		for _, r := range p.GetRequirements() {
 			var on *domain.RequirementTrigger
 			if r.GetOn() != nil {
@@ -235,34 +243,38 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, er
 				On:      on,
 				Appeals: additionalAppeals,
 			})
+			policy.Requirements = requirements
 		}
 	}
 
-	var iam *domain.IAMConfig
 	if p.GetIam() != nil {
-		iam = &domain.IAMConfig{
+		policy.IAM = &domain.IAMConfig{
 			Provider: domain.IAMProviderType(p.GetIam().GetProvider()),
 			Config:   p.GetIam().GetConfig().AsInterface(),
 			Schema:   p.GetIam().GetSchema(),
 		}
 	}
 
-	return &domain.Policy{
-		ID:           p.GetId(),
-		Version:      uint(p.GetVersion()),
-		Description:  p.GetDescription(),
-		Steps:        steps,
-		Requirements: requirements,
-		Labels:       p.GetLabels(),
-		IAM:          iam,
-		CreatedAt:    p.GetCreatedAt().AsTime(),
-		UpdatedAt:    p.GetUpdatedAt().AsTime(),
-	}, nil
+	if p.GetCreatedAt() != nil {
+		policy.CreatedAt = p.GetCreatedAt().AsTime()
+	}
+	if p.GetUpdatedAt() != nil {
+		policy.UpdatedAt = p.GetUpdatedAt().AsTime()
+	}
+
+	return policy
 }
 
 func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, error) {
-	var steps []*guardianv1beta1.Policy_ApprovalStep
+	policyProto := &guardianv1beta1.Policy{
+		Id:          p.ID,
+		Version:     uint32(p.Version),
+		Description: p.Description,
+		Labels:      p.Labels,
+	}
+
 	if p.Steps != nil {
+		var steps []*guardianv1beta1.Policy_ApprovalStep
 		for _, s := range p.Steps {
 			steps = append(steps, &guardianv1beta1.Policy_ApprovalStep{
 				Name:            s.Name,
@@ -275,10 +287,11 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 				Approvers:       s.Approvers,
 			})
 		}
+		policyProto.Steps = steps
 	}
 
-	var requirements []*guardianv1beta1.Policy_Requirement
 	if p.Requirements != nil {
+		var requirements []*guardianv1beta1.Policy_Requirement
 		for _, r := range p.Requirements {
 			var on *guardianv1beta1.Policy_Requirement_RequirementTrigger
 			if r.On != nil {
@@ -330,34 +343,31 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 				On:      on,
 				Appeals: additionalAppeals,
 			})
+			policyProto.Requirements = requirements
 		}
 	}
 
-	var iam *guardianv1beta1.Policy_IAM
 	if p.HasIAMConfig() {
 		config, err := structpb.NewValue(p.IAM.Config)
 		if err != nil {
 			return nil, err
 		}
 
-		iam = &guardianv1beta1.Policy_IAM{
+		policyProto.Iam = &guardianv1beta1.Policy_IAM{
 			Provider: string(p.IAM.Provider),
 			Config:   config,
 			Schema:   p.IAM.Schema,
 		}
 	}
 
-	return &guardianv1beta1.Policy{
-		Id:           p.ID,
-		Version:      uint32(p.Version),
-		Description:  p.Description,
-		Steps:        steps,
-		Requirements: requirements,
-		Labels:       p.Labels,
-		Iam:          iam,
-		CreatedAt:    timestamppb.New(p.CreatedAt),
-		UpdatedAt:    timestamppb.New(p.UpdatedAt),
-	}, nil
+	if !p.CreatedAt.IsZero() {
+		policyProto.CreatedAt = timestamppb.New(p.CreatedAt)
+	}
+	if !p.UpdatedAt.IsZero() {
+		policyProto.UpdatedAt = timestamppb.New(p.UpdatedAt)
+	}
+
+	return policyProto, nil
 }
 
 func (a *adapter) FromResourceProto(r *guardianv1beta1.Resource) *domain.Resource {
