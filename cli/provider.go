@@ -424,11 +424,7 @@ func planProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 					return err
 				}
 
-				pc, err := adapter.FromProviderConfigProto(getRes.GetProvider().GetConfig())
-				if err != nil {
-					return fmt.Errorf("unable to parse existing provider: %w", err)
-				}
-				existingProvider = pc
+				existingProvider = adapter.FromProviderConfigProto(getRes.GetProvider().GetConfig())
 			}
 
 			existingProvider.Credentials = nil

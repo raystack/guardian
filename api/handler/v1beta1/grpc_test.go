@@ -12,6 +12,7 @@ type GrpcHandlersSuite struct {
 	suite.Suite
 
 	resourceService *mocks.ResourceService
+	providerService *mocks.ProviderService
 	policyService   *mocks.PolicyService
 	grpcServer      *v1beta1.GRPCServer
 }
@@ -22,10 +23,11 @@ func TestGrpcHandler(t *testing.T) {
 
 func (s *GrpcHandlersSuite) setup() {
 	s.resourceService = new(mocks.ResourceService)
+	s.providerService = new(mocks.ProviderService)
 	s.policyService = new(mocks.PolicyService)
 	s.grpcServer = v1beta1.NewGRPCServer(
 		s.resourceService,
-		nil,
+		s.providerService,
 		s.policyService,
 		nil,
 		nil,

@@ -17,156 +17,181 @@ func NewAdapter() *adapter {
 }
 
 func (a *adapter) FromProviderProto(p *guardianv1beta1.Provider) (*domain.Provider, error) {
-	providerConfig, err := a.FromProviderConfigProto(p.GetConfig())
-	if err != nil {
-		return nil, err
+	provider := &domain.Provider{
+		ID:   p.GetId(),
+		Type: p.GetType(),
+		URN:  p.GetUrn(),
 	}
 
-	return &domain.Provider{
-		ID:        p.GetId(),
-		Type:      p.GetType(),
-		URN:       p.GetUrn(),
-		Config:    providerConfig,
-		CreatedAt: p.GetCreatedAt().AsTime(),
-		UpdatedAt: p.GetUpdatedAt().AsTime(),
-	}, nil
+	if p.GetConfig() != nil {
+		provider.Config = a.FromProviderConfigProto(p.GetConfig())
+	}
+
+	if p.GetCreatedAt() != nil {
+		provider.CreatedAt = p.GetCreatedAt().AsTime()
+	}
+	if p.GetUpdatedAt() != nil {
+		provider.UpdatedAt = p.GetUpdatedAt().AsTime()
+	}
+
+	return provider, nil
 }
 
-func (a *adapter) FromProviderConfigProto(pc *guardianv1beta1.ProviderConfig) (*domain.ProviderConfig, error) {
-	var appealConfig *domain.AppealConfig
+func (a *adapter) FromProviderConfigProto(pc *guardianv1beta1.ProviderConfig) *domain.ProviderConfig {
+	providerConfig := &domain.ProviderConfig{
+		Type:        pc.GetType(),
+		URN:         pc.GetUrn(),
+		Labels:      pc.GetLabels(),
+		Credentials: pc.GetCredentials().AsInterface(),
+	}
+
 	if pc.GetAppeal() != nil {
-		appealConfig = &domain.AppealConfig{}
+		appealConfig := &domain.AppealConfig{}
 		appealConfig.AllowPermanentAccess = pc.GetAppeal().GetAllowPermanentAccess()
 		appealConfig.AllowActiveAccessExtensionIn = pc.GetAppeal().GetAllowActiveAccessExtensionIn()
+		providerConfig.Appeal = appealConfig
 	}
 
-	resources := []*domain.ResourceConfig{}
-	for _, r := range pc.GetResources() {
-		roles := []*domain.Role{}
-		for _, role := range r.GetRoles() {
-			permissions := []interface{}{}
-			for _, p := range role.GetPermissions() {
-				permissions = append(permissions, p.AsInterface())
+	if pc.GetResources() != nil {
+		resources := []*domain.ResourceConfig{}
+		for _, r := range pc.GetResources() {
+			roles := []*domain.Role{}
+			for _, roleProto := range r.GetRoles() {
+				role := &domain.Role{
+					ID:          roleProto.GetId(),
+					Name:        roleProto.GetName(),
+					Description: roleProto.GetDescription(),
+				}
+
+				if roleProto.Permissions != nil {
+					permissions := []interface{}{}
+					for _, p := range roleProto.GetPermissions() {
+						permissions = append(permissions, p.AsInterface())
+					}
+					role.Permissions = permissions
+				}
+
+				roles = append(roles, role)
 			}
 
-			roles = append(roles, &domain.Role{
-				ID:          role.GetId(),
-				Name:        role.GetName(),
-				Description: role.GetDescription(),
-				Permissions: permissions,
+			resources = append(resources, &domain.ResourceConfig{
+				Type:   r.GetType(),
+				Policy: a.fromPolicyConfigProto(r.GetPolicy()),
+				Roles:  roles,
 			})
 		}
-
-		resources = append(resources, &domain.ResourceConfig{
-			Type:   r.GetType(),
-			Policy: a.fromPolicyConfigProto(r.GetPolicy()),
-			Roles:  roles,
-		})
+		providerConfig.Resources = resources
 	}
 
-	var allowedAccountTypes []string
 	if pc.GetAllowedAccountTypes() != nil {
-		allowedAccountTypes = pc.GetAllowedAccountTypes()
+		providerConfig.AllowedAccountTypes = pc.GetAllowedAccountTypes()
 	}
 
-	return &domain.ProviderConfig{
-		Type:                pc.GetType(),
-		URN:                 pc.GetUrn(),
-		Labels:              pc.GetLabels(),
-		Credentials:         pc.GetCredentials().AsInterface(),
-		Appeal:              appealConfig,
-		Resources:           resources,
-		AllowedAccountTypes: allowedAccountTypes,
-	}, nil
+	return providerConfig
 }
 
 func (a *adapter) ToProviderProto(p *domain.Provider) (*guardianv1beta1.Provider, error) {
-	config, err := a.ToProviderConfigProto(p.Config)
-	if err != nil {
-		return nil, err
+	providerProto := &guardianv1beta1.Provider{
+		Id:   p.ID,
+		Type: p.Type,
+		Urn:  p.URN,
 	}
 
-	return &guardianv1beta1.Provider{
-		Id:        p.ID,
-		Type:      p.Type,
-		Urn:       p.URN,
-		Config:    config,
-		CreatedAt: timestamppb.New(p.CreatedAt),
-		UpdatedAt: timestamppb.New(p.UpdatedAt),
-	}, nil
+	if p.Config != nil {
+		config, err := a.ToProviderConfigProto(p.Config)
+		if err != nil {
+			return nil, err
+		}
+		providerProto.Config = config
+	}
+
+	if !p.CreatedAt.IsZero() {
+		providerProto.CreatedAt = timestamppb.New(p.CreatedAt)
+	}
+	if !p.UpdatedAt.IsZero() {
+		providerProto.UpdatedAt = timestamppb.New(p.UpdatedAt)
+	}
+
+	return providerProto, nil
 }
 
 func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*guardianv1beta1.ProviderConfig, error) {
-	credentials, err := structpb.NewValue(pc.Credentials)
-	if err != nil {
-		return nil, err
+	providerConfigProto := &guardianv1beta1.ProviderConfig{
+		Type:   pc.Type,
+		Urn:    pc.URN,
+		Labels: pc.Labels,
 	}
 
-	var appeal *guardianv1beta1.ProviderConfig_AppealConfig
+	if pc.Credentials != nil {
+		credentials, err := structpb.NewValue(pc.Credentials)
+		if err != nil {
+			return nil, err
+		}
+		providerConfigProto.Credentials = credentials
+	}
+
 	if pc.Appeal != nil {
-		appeal = &guardianv1beta1.ProviderConfig_AppealConfig{
+		providerConfigProto.Appeal = &guardianv1beta1.ProviderConfig_AppealConfig{
 			AllowPermanentAccess:         pc.Appeal.AllowPermanentAccess,
 			AllowActiveAccessExtensionIn: pc.Appeal.AllowActiveAccessExtensionIn,
 		}
 	}
 
-	resources := []*guardianv1beta1.ProviderConfig_ResourceConfig{}
-	for _, rc := range pc.Resources {
-		roles := []*guardianv1beta1.Role{}
-		for _, role := range rc.Roles {
-			roleProto, err := a.ToRole(role)
-			if err != nil {
-				return nil, err
+	if pc.Resources != nil {
+		resources := []*guardianv1beta1.ProviderConfig_ResourceConfig{}
+		for _, rc := range pc.Resources {
+			roles := []*guardianv1beta1.Role{}
+			for _, role := range rc.Roles {
+				roleProto, err := a.ToRole(role)
+				if err != nil {
+					return nil, err
+				}
+				roles = append(roles, roleProto)
 			}
-			roles = append(roles, roleProto)
+
+			resources = append(resources, &guardianv1beta1.ProviderConfig_ResourceConfig{
+				Type:   rc.Type,
+				Policy: a.toPolicyConfigProto(rc.Policy),
+				Roles:  roles,
+			})
 		}
-
-		resources = append(resources, &guardianv1beta1.ProviderConfig_ResourceConfig{
-			Type:   rc.Type,
-			Policy: a.toPolicyConfigProto(rc.Policy),
-			Roles:  roles,
-		})
+		providerConfigProto.Resources = resources
 	}
 
-	var allowedAccountTypes []string
 	if pc.AllowedAccountTypes != nil {
-		allowedAccountTypes = pc.AllowedAccountTypes
+		providerConfigProto.AllowedAccountTypes = pc.AllowedAccountTypes
 	}
 
-	return &guardianv1beta1.ProviderConfig{
-		Type:                pc.Type,
-		Urn:                 pc.URN,
-		Labels:              pc.Labels,
-		Credentials:         credentials,
-		Appeal:              appeal,
-		Resources:           resources,
-		AllowedAccountTypes: allowedAccountTypes,
-	}, nil
+	return providerConfigProto, nil
 }
 
-func (a *adapter) ToProviderTypeProto(pt domain.ProviderType) (*guardianv1beta1.ProviderType, error) {
+func (a *adapter) ToProviderTypeProto(pt domain.ProviderType) *guardianv1beta1.ProviderType {
 	return &guardianv1beta1.ProviderType{
 		Name:          pt.Name,
 		ResourceTypes: pt.ResourceTypes,
-	}, nil
+	}
 }
 
 func (a *adapter) ToRole(role *domain.Role) (*guardianv1beta1.Role, error) {
-	permissions := []*structpb.Value{}
-	for _, p := range role.Permissions {
-		permission, err := structpb.NewValue(p)
-		if err != nil {
-			return nil, err
-		}
-		permissions = append(permissions, permission)
-	}
-
-	return &guardianv1beta1.Role{
+	roleProto := &guardianv1beta1.Role{
 		Id:          role.ID,
 		Name:        role.Name,
 		Description: role.Description,
-		Permissions: permissions,
-	}, nil
+	}
+
+	if role.Permissions != nil {
+		permissions := []*structpb.Value{}
+		for _, p := range role.Permissions {
+			permission, err := structpb.NewValue(p)
+			if err != nil {
+				return nil, err
+			}
+			permissions = append(permissions, permission)
+		}
+		roleProto.Permissions = permissions
+	}
+
+	return roleProto, nil
 }
 
 func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
