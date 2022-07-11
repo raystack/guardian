@@ -23,6 +23,84 @@ func TestGetType(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
+
+	t.Run("should return error if Provider Config or Appeal doesn't have required paramters", func(t *testing.T) {
+		testCases := []struct {
+			providerConfig *domain.ProviderConfig
+			appeal         *domain.Appeal
+			expectedError  error
+		}{
+			{
+				providerConfig: nil,
+				expectedError:  bigquery.ErrNilProviderConfig,
+			},
+			{
+				providerConfig: &domain.ProviderConfig{
+					Type:                "bigquery",
+					URN:                 "test-URN",
+					AllowedAccountTypes: []string{"user", "serviceAccount"},
+				},
+				appeal:        nil,
+				expectedError: bigquery.ErrNilAppeal,
+			},
+			{
+				providerConfig: &domain.ProviderConfig{
+					Type:                "bigquery",
+					URN:                 "test-URN",
+					AllowedAccountTypes: []string{"user", "serviceAccount"},
+				},
+				appeal: &domain.Appeal{
+					ID:          "test-appeal-id",
+					AccountType: "user",
+				},
+				expectedError: bigquery.ErrNilResource,
+			},
+			{
+				providerConfig: &domain.ProviderConfig{
+					Type:                "bigquery",
+					URN:                 "test-URN-1",
+					AllowedAccountTypes: []string{"user", "serviceAccount"},
+				},
+				appeal: &domain.Appeal{
+					ID:          "test-appeal-id",
+					AccountType: "user",
+					Resource: &domain.Resource{
+						ID:           "test-resource-id",
+						ProviderType: "metabase",
+					},
+				},
+				expectedError: bigquery.ErrProviderTypeMismatch,
+			},
+			{
+				providerConfig: &domain.ProviderConfig{
+					Type:                "bigquery",
+					URN:                 "test-URN-1",
+					AllowedAccountTypes: []string{"user", "serviceAccount"},
+				},
+				appeal: &domain.Appeal{
+					ID:          "test-appeal-id",
+					AccountType: "user",
+					Resource: &domain.Resource{
+						ID:           "test-resource-id",
+						ProviderType: "bigquery",
+						ProviderURN:  "not-test-URN-1",
+					},
+				},
+				expectedError: bigquery.ErrProviderURNMismatch,
+			},
+		}
+
+		for _, tc := range testCases {
+
+			p := initProvider()
+			pc := tc.providerConfig
+			a := tc.appeal
+
+			actualError := p.GrantAccess(pc, a)
+			assert.EqualError(t, actualError, tc.expectedError.Error())
+		}
+	})
+
 	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
 		var permission bigquery.Permission
 		invalidPermissionConfig := map[string]interface{}{}
@@ -125,6 +203,46 @@ func TestGrantAccess(t *testing.T) {
 		actualError := p.GrantAccess(pc, a)
 		assert.Error(t, actualError)
 	})
+
+	// t.Run("should return an error if resource type is not dataset or table", func(t *testing.T) {
+	// 	password := "test-password"
+	// 	crypto := new(mocks.Crypto)
+	// 	p := bigquery.NewProvider("bigquery", crypto)
+	// 	expectedError := bigquery.ErrInvalidResourceType
+	// 	crypto.On("Decrypt", password).Return("", expectedError).Once()
+
+	// 	pc := &domain.ProviderConfig{
+	// 		Type: "bigquery",
+	// 		URN:  "test-URN",
+	// 		Credentials: bigquery.Credentials{
+	// 			ServiceAccountKey: "test-password",
+	// 			ResourceName:      "projects/resource-name",
+	// 		},
+	// 		Resources: []*domain.ResourceConfig{
+	// 			{
+	// 				Type: "dataset",
+	// 				Roles: []*domain.Role{
+	// 					{
+	// 						ID:          "VIEWER",
+	// 						Permissions: []interface{}{"VIEWER"},
+	// 					},
+	// 				},
+	// 			},
+	// 		},
+	// 	}
+	// 	a := &domain.Appeal{
+	// 		Role: "VIEWER",
+	// 		Resource: &domain.Resource{
+	// 			ProviderType: "bigquery",
+	// 			ProviderURN:  "test-URN",
+	// 			Type:         "dataset",
+	// 		},
+	// 	}
+
+	// 	actualError := p.GrantAccess(pc, a)
+
+	// 	assert.Equal(t, expectedError, actualError)
+	// })
 }
 
 func TestGetAccountTypes(t *testing.T) {
@@ -203,6 +321,85 @@ func TestGetRoles(t *testing.T) {
 		assert.Equal(t, expectedRoles, actualRoles)
 	})
 }
+
+// func TestvalidateProviderAndAppealParams(t *testing.T) {
+// 	t.Run("should return error if Provider Config or Appeal doesn't have required paramters", func(t *testing.T) {
+// 		testCases := []struct {
+// 			providerConfig *domain.ProviderConfig
+// 			appeal         *domain.Appeal
+// 			expectedError  error
+// 		}{
+// 			{
+// 				providerConfig: nil,
+// 				expectedError:  bigquery.ErrNilProviderConfig,
+// 			},
+// 			{
+// 				providerConfig: &domain.ProviderConfig{
+// 					Type:                "bigquery",
+// 					URN:                 "test-URN",
+// 					AllowedAccountTypes: []string{"user", "serviceAccount"},
+// 				},
+// 				appeal:        nil,
+// 				expectedError: bigquery.ErrNilAppeal,
+// 			},
+// 			{
+// 				providerConfig: &domain.ProviderConfig{
+// 					Type:                "bigquery",
+// 					URN:                 "test-URN",
+// 					AllowedAccountTypes: []string{"user", "serviceAccount"},
+// 				},
+// 				appeal: &domain.Appeal{
+// 					ID:          "test-appeal-id",
+// 					AccountType: "user",
+// 				},
+// 				expectedError: bigquery.ErrNilResource,
+// 			},
+// 			{
+// 				providerConfig: &domain.ProviderConfig{
+// 					Type:                "bigquery",
+// 					URN:                 "test-URN-1",
+// 					AllowedAccountTypes: []string{"user", "serviceAccount"},
+// 				},
+// 				appeal: &domain.Appeal{
+// 					ID:          "test-appeal-id",
+// 					AccountType: "user",
+// 					Resource: &domain.Resource{
+// 						ID:           "test-resource-id",
+// 						ProviderType: "metabase",
+// 					},
+// 				},
+// 				expectedError: bigquery.ErrProviderTypeMismatch,
+// 			},
+// 			{
+// 				providerConfig: &domain.ProviderConfig{
+// 					Type:                "bigquery",
+// 					URN:                 "test-URN-1",
+// 					AllowedAccountTypes: []string{"user", "serviceAccount"},
+// 				},
+// 				appeal: &domain.Appeal{
+// 					ID:          "test-appeal-id",
+// 					AccountType: "user",
+// 					Resource: &domain.Resource{
+// 						ID:           "test-resource-id",
+// 						ProviderType: "bigquery",
+// 						ProviderURN:  "not-test-URN-1",
+// 					},
+// 				},
+// 				expectedError: bigquery.ErrProviderURNMismatch,
+// 			},
+// 		}
+
+// 		for _, tc := range testCases {
+
+// 			pc := tc.providerConfig
+// 			a := tc.appeal
+
+// 			actualError := bigquery.validateProviderConfigAndAppealParams(pc, a)
+// 			assert.EqualError(t, actualError, tc.expectedError.Error())
+// 		}
+// 	},
+// 	)
+// }
 
 func initProvider() *bigquery.Provider {
 	crypto := new(mocks.Crypto)
