@@ -29,7 +29,7 @@ Explore the following resoruces to get started with Guardian:
 
 ## Installation
 
-Install Guardian on macOS, Windows, Linux, OpenBSD, FreeBSD, and on any machine. <br/>Refer this for [installations](https://odpf.github.io/guardian/docs/installation) and [configurations](https://odpf.github.io/guardian/docs/guides/configuration) 
+Install Guardian on macOS, Windows, Linux, OpenBSD, FreeBSD, and on any machine. <br/>Refer this for [installations](https://odpf.github.io/guardian/docs/installation) and [configurations](https://odpf.github.io/guardian/docs/guides/configuration)
 
 #### Binary (Cross-platform)
 
@@ -41,7 +41,7 @@ Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/
 
 ```sh
 # Install guardian (requires homebrew installed)
-$ brew install odpf/taps/guardian
+$ brew install odpf/tap/guardian
 
 # Upgrade guardian (requires homebrew installed)
 $ brew upgrade guardian
