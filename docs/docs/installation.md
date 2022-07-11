@@ -14,7 +14,7 @@ Guardian binaries are downloadable on the [Releases page](https://github.com/odp
 
 ```sh
 # Install guardian (requires homebrew installed)
-$ brew install odpf/taps/guardian
+$ brew install odpf/tap/guardian
 
 # Upgrade guardian (requires homebrew installed)
 $ brew upgrade guardian
