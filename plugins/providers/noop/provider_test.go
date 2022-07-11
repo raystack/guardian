@@ -24,7 +24,7 @@ func TestGetType(t *testing.T) {
 }
 
 func TestCreateConfig(t *testing.T) {
-	t.Run("should have config type equal to no_op", func(t *testing.T) {
+	t.Run("should have config type equal to noop", func(t *testing.T) {
 		p := initProvider()
 
 		config := &domain.ProviderConfig{
@@ -42,7 +42,7 @@ func TestCreateConfig(t *testing.T) {
 		p := initProvider()
 
 		config := &domain.ProviderConfig{
-			Type:                "no_op",
+			Type:                domain.ProviderTypeNoOp,
 			AllowedAccountTypes: []string{"invalid-account-type"},
 		}
 
@@ -57,7 +57,7 @@ func TestCreateConfig(t *testing.T) {
 		p := initProvider()
 
 		config := &domain.ProviderConfig{
-			Type:                "no_op",
+			Type:                domain.ProviderTypeNoOp,
 			AllowedAccountTypes: []string{"user"},
 			Credentials:         "test-creds",
 		}
@@ -74,7 +74,7 @@ func TestCreateConfig(t *testing.T) {
 			p := initProvider()
 
 			config := &domain.ProviderConfig{
-				Type:                "no_op",
+				Type:                domain.ProviderTypeNoOp,
 				AllowedAccountTypes: []string{"user"},
 				Resources: []*domain.ResourceConfig{
 					{Type: "test-type"},
@@ -89,11 +89,11 @@ func TestCreateConfig(t *testing.T) {
 			assert.ErrorIs(t, actualError, noop.ErrInvalidResourceConfigLength)
 		})
 
-		t.Run("should have 'no_op' resource config type", func(t *testing.T) {
+		t.Run("should have 'noop' resource config type", func(t *testing.T) {
 			p := initProvider()
 
 			config := &domain.ProviderConfig{
-				Type:                "no_op",
+				Type:                domain.ProviderTypeNoOp,
 				AllowedAccountTypes: []string{"user"},
 				Resources: []*domain.ResourceConfig{
 					{Type: "test-type"},
@@ -112,11 +112,11 @@ func TestCreateConfig(t *testing.T) {
 				p := initProvider()
 
 				config := &domain.ProviderConfig{
-					Type:                "no_op",
+					Type:                domain.ProviderTypeNoOp,
 					AllowedAccountTypes: []string{"user"},
 					Resources: []*domain.ResourceConfig{
 						{
-							Type: "no_op",
+							Type: noop.ResourceTypeNoOp,
 							Roles: []*domain.Role{
 								{
 									ID:          "test-role",
@@ -139,9 +139,9 @@ func TestCreateConfig(t *testing.T) {
 		t.Run("should return nil error if the provider config is all valid", func(t *testing.T) {
 			p := initProvider()
 
-			expectedResourceType := "no_op"
+			expectedResourceType := noop.ResourceTypeNoOp
 			validConfig := &domain.ProviderConfig{
-				Type:                "no_op",
+				Type:                domain.ProviderTypeNoOp,
 				URN:                 "test-noop",
 				AllowedAccountTypes: []string{"user"},
 				Credentials:         nil,
@@ -179,7 +179,7 @@ func TestGetResources(t *testing.T) {
 	t.Run("should return one no-op resource", func(t *testing.T) {
 		p := initProvider()
 		validConfig := &domain.ProviderConfig{
-			Type:                "no_op",
+			Type:                domain.ProviderTypeNoOp,
 			URN:                 "test-noop",
 			AllowedAccountTypes: []string{"user"},
 			Credentials:         nil,
@@ -189,7 +189,7 @@ func TestGetResources(t *testing.T) {
 			},
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: "no_op",
+					Type: noop.ResourceTypeNoOp,
 					Policy: &domain.PolicyConfig{
 						ID:      "test-policy",
 						Version: 1,
@@ -205,9 +205,9 @@ func TestGetResources(t *testing.T) {
 		}
 
 		expectedResource := &domain.Resource{
-			ProviderType: "no_op",
+			ProviderType: domain.ProviderTypeNoOp,
 			ProviderURN:  validConfig.URN,
-			Type:         "no_op",
+			Type:         noop.ResourceTypeNoOp,
 			URN:          validConfig.URN,
 			Name:         validConfig.URN,
 		}
@@ -244,12 +244,12 @@ func TestGetRoles(t *testing.T) {
 		p := initProvider()
 
 		validConfig := &domain.ProviderConfig{
-			Type:                "no_op",
+			Type:                domain.ProviderTypeNoOp,
 			URN:                 "test-URN",
 			AllowedAccountTypes: []string{"user"},
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: "no_op",
+					Type: noop.ResourceTypeNoOp,
 					Policy: &domain.PolicyConfig{
 						ID:      "test-policy",
 						Version: 1,
@@ -274,12 +274,12 @@ func TestGetRoles(t *testing.T) {
 		}
 
 		validConfig := &domain.ProviderConfig{
-			Type:                "no_op",
+			Type:                domain.ProviderTypeNoOp,
 			URN:                 "test-URN",
 			AllowedAccountTypes: []string{"user"},
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: "no_op",
+					Type: noop.ResourceTypeNoOp,
 					Policy: &domain.PolicyConfig{
 						ID:      "test-policy",
 						Version: 1,
@@ -289,7 +289,7 @@ func TestGetRoles(t *testing.T) {
 			},
 		}
 
-		actualRoles, actualError := p.GetRoles(validConfig, "no_op")
+		actualRoles, actualError := p.GetRoles(validConfig, noop.ResourceTypeNoOp)
 
 		assert.Equal(t, expectedRoles, actualRoles)
 		assert.NoError(t, actualError)

@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	ErrInvalidProviderType         = errors.New("provider type not equal to no_op")
-	ErrInvalidAllowedAccountTypes  = errors.New("allowed account types for no_op provider is only \"user\"")
+	ErrInvalidProviderType         = errors.New("provider type not equal to noop")
+	ErrInvalidAllowedAccountTypes  = errors.New("allowed account types for noop provider is only \"user\"")
 	ErrInvalidCredentials          = errors.New("credentials should be empty")
 	ErrInvalidResourceConfigLength = errors.New("resource config length should be 1")
-	ErrInvalidResourceConfigType   = errors.New("resouce config type should be \"no_op\"")
+	ErrInvalidResourceConfigType   = errors.New("resouce config type should be \"noop\"")
 	ErrInvalidRolePermissions      = errors.New("permissions should be empty")
 )
 
@@ -36,7 +36,7 @@ func (p *Provider) GetType() string {
 }
 
 func (p *Provider) CreateConfig(cfg *domain.ProviderConfig) error {
-	if cfg.Type != "no_op" {
+	if cfg.Type != domain.ProviderTypeNoOp {
 		return ErrInvalidProviderType
 	}
 
@@ -51,7 +51,7 @@ func (p *Provider) CreateConfig(cfg *domain.ProviderConfig) error {
 	if len(cfg.Resources) != 1 {
 		return ErrInvalidResourceConfigLength
 	}
-	if cfg.Resources[0].Type != "no_op" {
+	if cfg.Resources[0].Type != ResourceTypeNoOp {
 		return ErrInvalidResourceConfigType
 	}
 
@@ -67,9 +67,9 @@ func (p *Provider) CreateConfig(cfg *domain.ProviderConfig) error {
 func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
 	return []*domain.Resource{
 		{
-			ProviderType: "no_op",
+			ProviderType: domain.ProviderTypeNoOp,
 			ProviderURN:  pc.URN,
-			Type:         "no_op",
+			Type:         ResourceTypeNoOp,
 			URN:          pc.URN,
 			Name:         pc.URN,
 		},
