@@ -15,6 +15,8 @@ const (
 	ProviderTypeTableau = "tableau"
 	// ProviderTypeGCloudIAM is the type name for Google Cloud IAM provider
 	ProviderTypeGCloudIAM = "gcloud_iam"
+	// ProviderTypeNoOp is the type name for No-Op provider
+	ProviderTypeNoOp = "noop"
 )
 
 // Role is the configuration to define a role and mapping the permissions in the provider
@@ -46,7 +48,7 @@ type AppealConfig struct {
 
 // ProviderConfig is the configuration for a data provider
 type ProviderConfig struct {
-	Type                string            `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana tableau gcloud_iam"`
+	Type                string            `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana tableau gcloud_iam noop"`
 	URN                 string            `json:"urn" yaml:"urn" validate:"required"`
 	AllowedAccountTypes []string          `json:"allowed_account_types" yaml:"allowed_account_types" validate:"omitempty,min=1"`
 	Labels              map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
