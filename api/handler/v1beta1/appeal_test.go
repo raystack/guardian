@@ -379,6 +379,10 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 			CreatedAt:     timeNow,
 			UpdatedAt:     timeNow,
 		}
+		expectedOptions := &domain.AppealOptions{
+			ExpirationDate: &timeNow,
+			Duration:       "24h",
+		}
 		expectedAppeals := []*domain.Appeal{
 			{
 				AccountID:   expectedUser,
@@ -386,8 +390,18 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 				CreatedBy:   expectedUser,
 				ResourceID:  "test-resource-id",
 				Role:        "test-role",
+				Options: &domain.AppealOptions{
+					Duration: "24h",
+				},
+				Details: map[string]interface{}{
+					"foo": "bar",
+				},
 			},
 		}
+		expectedDetails, err := structpb.NewStruct(map[string]interface{}{
+			"foo": "bar",
+		})
+		s.Require().NoError(err)
 		expectedResponse := &guardianv1beta1.CreateAppealResponse{
 			Appeals: []*guardianv1beta1.Appeal{
 				{
@@ -421,6 +435,11 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 							UpdatedAt:     timestamppb.New(timeNow),
 						},
 					},
+					Options: &guardianv1beta1.AppealOptions{
+						ExpirationDate: timestamppb.New(timeNow),
+						Duration:       "24h",
+					},
+					Details:   expectedDetails,
 					CreatedAt: timestamppb.New(timeNow),
 					UpdatedAt: timestamppb.New(timeNow),
 				},
@@ -437,17 +456,25 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 					a.Approvals = []*domain.Approval{expectedApproval}
 					a.CreatedAt = timeNow
 					a.UpdatedAt = timeNow
+					a.Options = expectedOptions
 				}
 			}).
 			Return(nil).Once()
+
+		reqOptions, err := structpb.NewStruct(map[string]interface{}{
+			"duration": "24h",
+		})
+		s.Require().NoError(err)
 
 		req := &guardianv1beta1.CreateAppealRequest{
 			AccountId:   expectedUser,
 			AccountType: "user",
 			Resources: []*guardianv1beta1.CreateAppealRequest_Resource{
 				{
-					Id:   "test-resource-id",
-					Role: "test-role",
+					Id:      "test-resource-id",
+					Role:    "test-role",
+					Options: reqOptions,
+					Details: expectedDetails,
 				},
 			},
 		}

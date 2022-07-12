@@ -1,8 +1,6 @@
 package v1beta1
 
 import (
-	"time"
-
 	"github.com/mitchellh/mapstructure"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/domain"
@@ -630,15 +628,16 @@ func (a *adapter) fromAppealOptionsProto(o *guardianv1beta1.AppealOptions) *doma
 		return nil
 	}
 
-	var expirationDate time.Time
-	if o.GetExpirationDate() != nil {
-		expirationDate = o.GetExpirationDate().AsTime()
+	options := &domain.AppealOptions{
+		Duration: o.GetDuration(),
 	}
 
-	return &domain.AppealOptions{
-		Duration:       o.GetDuration(),
-		ExpirationDate: &expirationDate,
+	if o.GetExpirationDate() != nil {
+		expDate := o.GetExpirationDate().AsTime()
+		options.ExpirationDate = &expDate
 	}
+
+	return options
 }
 
 func (a *adapter) toAppealOptionsProto(o *domain.AppealOptions) *guardianv1beta1.AppealOptions {
@@ -646,15 +645,15 @@ func (a *adapter) toAppealOptionsProto(o *domain.AppealOptions) *guardianv1beta1
 		return nil
 	}
 
-	var expirationDate *timestamppb.Timestamp
-	if o.ExpirationDate != nil {
-		expirationDate = timestamppb.New(*o.ExpirationDate)
+	optionsProto := &guardianv1beta1.AppealOptions{
+		Duration: o.Duration,
 	}
 
-	return &guardianv1beta1.AppealOptions{
-		Duration:       o.Duration,
-		ExpirationDate: expirationDate,
+	if o.ExpirationDate != nil {
+		optionsProto.ExpirationDate = timestamppb.New(*o.ExpirationDate)
 	}
+
+	return optionsProto
 }
 
 func (a *adapter) fromPolicyConfigProto(c *guardianv1beta1.PolicyConfig) *domain.PolicyConfig {

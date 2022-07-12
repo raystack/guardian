@@ -3,7 +3,6 @@ package v1beta1_test
 import (
 	"context"
 	"errors"
-	"testing"
 	"time"
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
@@ -15,10 +14,6 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-func TestListProvider(t *testing.T) {
-
-}
 
 func (s *GrpcHandlersSuite) TestListProvider() {
 	s.Run("should return list of providers on success", func() {
@@ -345,6 +340,10 @@ func (s *GrpcHandlersSuite) TestCreateProvider() {
 						},
 					},
 				},
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess:         true,
+					AllowActiveAccessExtensionIn: "24h",
+				},
 			},
 		}
 		expectedResponse := &guardianv1beta1.CreateProviderResponse{
@@ -370,6 +369,10 @@ func (s *GrpcHandlersSuite) TestCreateProvider() {
 								},
 							},
 						},
+					},
+					Appeal: &guardianv1beta1.ProviderConfig_AppealConfig{
+						AllowPermanentAccess:         true,
+						AllowActiveAccessExtensionIn: "24h",
 					},
 				},
 				CreatedAt: timestamppb.New(timeNow),
@@ -402,6 +405,10 @@ func (s *GrpcHandlersSuite) TestCreateProvider() {
 							},
 						},
 					},
+				},
+				Appeal: &guardianv1beta1.ProviderConfig_AppealConfig{
+					AllowPermanentAccess:         true,
+					AllowActiveAccessExtensionIn: "24h",
 				},
 			},
 		}

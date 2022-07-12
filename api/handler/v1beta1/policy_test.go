@@ -261,6 +261,9 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 								ID:      "test-policy",
 								Version: 1,
 							},
+							Options: &domain.AppealOptions{
+								Duration: "24h",
+							},
 						},
 					},
 				},
@@ -302,6 +305,9 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 								Policy: &guardianv1beta1.PolicyConfig{
 									Id:      "test-policy",
 									Version: 1,
+								},
+								Options: &guardianv1beta1.AppealOptions{
+									Duration: "24h",
 								},
 							},
 						},
@@ -350,6 +356,9 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 								Policy: &guardianv1beta1.PolicyConfig{
 									Id:      "test-policy",
 									Version: 1,
+								},
+								Options: &guardianv1beta1.AppealOptions{
+									Duration: "24h",
 								},
 							},
 						},
