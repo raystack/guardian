@@ -28,6 +28,215 @@ func TestGetType(t *testing.T) {
 	})
 }
 
+func TestCreateConfig(t *testing.T) {
+
+	t.Run("should return error if there credentials are invalid", func(t *testing.T) {
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.MetabaseClient)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		p := metabase.NewProvider("", crypto, logger)
+		p.Clients = map[string]metabase.MetabaseClient{
+			providerURN: client,
+		}
+
+		testcases := []struct {
+			pc   *domain.ProviderConfig
+			name string
+		}{
+			{
+				name: "invalid credentials struct",
+				pc: &domain.ProviderConfig{
+					Credentials: "invalid-credential-structure"},
+			},
+			{
+				name: "empty mandatory credentials",
+				pc: &domain.ProviderConfig{
+					Credentials: metabase.Credentials{
+						Host:     "",
+						Username: "",
+						Password: "",
+					},
+				},
+			},
+		}
+
+		for _, tc := range testcases {
+			t.Run(tc.name, func(t *testing.T) {
+				actualError := p.CreateConfig(tc.pc)
+				assert.Error(t, actualError)
+			})
+		}
+	})
+
+	t.Run("should return error if there resource config is invalid", func(t *testing.T) {
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.MetabaseClient)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		p := metabase.NewProvider("", crypto, logger)
+		p.Clients = map[string]metabase.MetabaseClient{
+			providerURN: client,
+		}
+
+		testcases := []struct {
+			pc *domain.ProviderConfig
+		}{
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: metabase.Credentials{
+						Host:     "localhost",
+						Username: "test-username",
+						Password: "test-password",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: "invalid resource type",
+						},
+					},
+				},
+			},
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: metabase.Credentials{
+						Host:     "localhost",
+						Username: "test-username",
+						Password: "test-password",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: metabase.ResourceTypeDatabase,
+							Roles: []*domain.Role{
+								{
+									ID:          "viewer",
+									Permissions: []interface{}{"wrong permissions"},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		for _, tc := range testcases {
+			actualError := p.CreateConfig(tc.pc)
+			assert.Error(t, actualError)
+		}
+	})
+
+	t.Run("should not return error if parse and valid of Credentials are correct", func(t *testing.T) {
+
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.MetabaseClient)
+		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		p := metabase.NewProvider("", crypto, logger)
+		crypto.On("Encrypt", "test-password").Return("encrypted-test-pasword", nil)
+		p.Clients = map[string]metabase.MetabaseClient{
+			providerURN: client,
+		}
+
+		testcases := []struct {
+			pc            *domain.ProviderConfig
+			expectedError error
+		}{
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: metabase.Credentials{
+						Host:     "localhost",
+						Username: "test-username",
+						Password: "test-password",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: metabase.ResourceTypeCollection,
+							Roles: []*domain.Role{
+								{
+									ID:          "viewer",
+									Permissions: []interface{}{"write"},
+								},
+							},
+						},
+					},
+					URN: providerURN,
+				},
+				expectedError: nil,
+			},
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: metabase.Credentials{
+						Host:     "localhost",
+						Username: "test-username",
+						Password: "test-password",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: metabase.ResourceTypeDatabase,
+							Roles: []*domain.Role{
+								{
+									ID:          "viewer",
+									Permissions: []interface{}{"native:write"},
+								},
+							},
+						},
+					},
+					URN: providerURN,
+				},
+				expectedError: nil,
+			},
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: metabase.Credentials{
+						Host:     "localhost",
+						Username: "test-username",
+						Password: "test-password",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: metabase.ResourceTypeTable,
+							Roles: []*domain.Role{
+								{
+									ID:          "viewer",
+									Permissions: []interface{}{"all"},
+								},
+							},
+						},
+					},
+					URN: providerURN,
+				},
+				expectedError: nil,
+			},
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: metabase.Credentials{
+						Host:     "localhost",
+						Username: "test-username",
+						Password: "test-password",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: metabase.ResourceTypeGroup,
+							Roles: []*domain.Role{
+								{
+									ID:          "viewer",
+									Permissions: []interface{}{"member"},
+								},
+							},
+						},
+					},
+					URN: providerURN,
+				},
+				expectedError: nil,
+			},
+		}
+
+		for _, tc := range testcases {
+			actualError := p.CreateConfig(tc.pc)
+			assert.Equal(t, tc.expectedError, actualError)
+		}
+	})
+}
+
 func TestGetResources(t *testing.T) {
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)

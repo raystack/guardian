@@ -24,6 +24,161 @@ func TestGetType(t *testing.T) {
 	})
 }
 
+func TestCreateConfig(t *testing.T) {
+
+	t.Run("should return error if there credentials are invalid", func(t *testing.T) {
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.TableauClient)
+		p := tableau.NewProvider("", crypto)
+		p.Clients = map[string]tableau.TableauClient{
+			providerURN: client,
+		}
+
+		testcases := []struct {
+			pc *domain.ProviderConfig
+		}{
+			{ //invalid credentials struct
+				pc: &domain.ProviderConfig{
+					Credentials: "invalid-credential-structure"},
+			},
+			{ //empty mandatory credentials
+				pc: &domain.ProviderConfig{
+					Credentials: tableau.Credentials{
+						Host:       "",
+						Username:   "",
+						Password:   "",
+						ContentURL: "",
+					},
+				},
+			},
+		}
+
+		for _, tc := range testcases {
+			actualError := p.CreateConfig(tc.pc)
+			assert.Error(t, actualError)
+		}
+	})
+
+	t.Run("should return error if there resource config is invalid", func(t *testing.T) {
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.TableauClient)
+		p := tableau.NewProvider("", crypto)
+		p.Clients = map[string]tableau.TableauClient{
+			providerURN: client,
+		}
+
+		testcases := []struct {
+			pc *domain.ProviderConfig
+		}{
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: tableau.Credentials{
+						Host:       "localhost",
+						Username:   "test-username",
+						Password:   "test-password",
+						ContentURL: "test-content-url",
+					},
+					Resources: []*domain.ResourceConfig{ //resource type wrong requires one of "workbook" or "flow" or "datasource" or "view" or "metric"
+						{
+							Type: "invalid resource type",
+						},
+					},
+				},
+			},
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: tableau.Credentials{
+						Host:       "localhost",
+						Username:   "test-username",
+						Password:   "test-password",
+						ContentURL: "test-content-url",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: tableau.ResourceTypeWorkbook, // Workbook resource type
+							Roles: []*domain.Role{
+								{
+									ID:          "viewer",
+									Permissions: []interface{}{"wrong permissions"}, // requires "view" or "edit" or "admin" permissions
+								},
+								// Permissions for site-role are 	"Creator", "Explorer", "ExplorerCanPublish", "SiteAdministratorExplorer", "SiteAdministratorCreator", "Unlicensed", "Viewer",
+								// Permission modes are "Allow" and "Deny"
+							},
+						},
+					},
+				},
+			},
+		}
+
+		for _, tc := range testcases {
+			actualError := p.CreateConfig(tc.pc)
+			assert.Error(t, actualError)
+		}
+	})
+
+	// ResourceTypeWorkbook:   {"AddComment", "ChangeHierarchy", "ChangePermissions", "Delete", "ExportData", "ExportImage", "ExportXml", "Filter", "Read", "ShareView", "ViewComments", "ViewUnderlyingData", "WebAuthoring", "Write"},
+	// ResourceTypeFlow:       {"ChangeHierarchy", "ChangePermissions", "Delete", "Execute", "ExportXml", "Read", "Write"},
+	// ResourceTypeDataSource: {"ChangePermissions", "Connect", "Delete", "ExportXml", "Read", "Write"},
+	// ResourceTypeView:       {"AddComment", "ChangePermissions", "Delete", "ExportData", "ExportImage", "ExportXml", "Filter", "Read", "ShareView", "ViewComments", "ViewUnderlyingData", "WebAuthoring", "Write"},
+	// ResourceTypeMetric:     {"Delete", "Read", "Write"},
+
+	t.Run("should not return error if parse and valid of Credentials are correct", func(t *testing.T) {
+
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.TableauClient)
+		//expectedRole := tableau.PermissionNames[tableau.ResourceTypeWorkbook][0] + ":" + tableau.PermissionModes[0]
+
+		p := tableau.NewProvider("", crypto)
+		p.Clients = map[string]tableau.TableauClient{
+			providerURN: client,
+		}
+		crypto.On("Encrypt", "test-password").Return("encrypted-test-pasword", nil)
+
+		testcases := []struct {
+			pc            *domain.ProviderConfig
+			expectedError error
+		}{
+			{
+				pc: &domain.ProviderConfig{
+					Type: "tableau",
+					Credentials: tableau.Credentials{
+						Host:       "http://localhost",
+						Username:   "test-username",
+						Password:   "test-password",
+						ContentURL: "test-content-url",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: tableau.ResourceTypeWorkbook,
+							Roles: []*domain.Role{
+								{
+									ID:   "read",
+									Name: "Read",
+									Permissions: []interface{}{
+										map[string]interface{}{
+											"name": "Read:Allow",
+										},
+									},
+								},
+							},
+						},
+					},
+					URN: providerURN,
+				},
+				expectedError: nil,
+			},
+		}
+
+		for _, tc := range testcases {
+			actualError := p.CreateConfig(tc.pc)
+			assert.Equal(t, tc.expectedError, actualError)
+		}
+	})
+}
+
 func TestGetResources(t *testing.T) {
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
@@ -1081,5 +1236,797 @@ func TestGrantAccess(t *testing.T) {
 
 			assert.Nil(t, actualError)
 		})
+	})
+}
+
+func TestRevokeAccess(t *testing.T) {
+	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
+		var permission tableau.Permission
+		invalidPermissionConfig := "invalid-permisiion-config"
+		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
+
+		testcases := []struct {
+			resourceConfigs []*domain.ResourceConfig
+			appeal          *domain.Appeal
+			expectedError   error
+		}{
+			{
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Type: "test-type",
+					},
+				},
+				expectedError: tableau.ErrInvalidResourceType,
+			},
+			{
+				resourceConfigs: []*domain.ResourceConfig{
+					{
+						Type: "test-type",
+						Roles: []*domain.Role{
+							{
+								ID: "not-test-role",
+							},
+						},
+					},
+				},
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Type: "test-type",
+					},
+					Role: "test-role",
+				},
+				expectedError: tableau.ErrInvalidRole,
+			},
+			{
+				resourceConfigs: []*domain.ResourceConfig{
+					{
+						Type: "test-type",
+						Roles: []*domain.Role{
+							{
+								ID: "test-role",
+								Permissions: []interface{}{
+									invalidPermissionConfig,
+								},
+							},
+						},
+					},
+				},
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Type: "test-type",
+					},
+					Role: "test-role",
+				},
+				expectedError: invalidPermissionConfigError,
+			},
+		}
+
+		for _, tc := range testcases {
+			crypto := new(mocks.Crypto)
+			p := tableau.NewProvider("", crypto)
+
+			providerConfig := &domain.ProviderConfig{
+				Resources: tc.resourceConfigs,
+			}
+
+			actualError := p.RevokeAccess(providerConfig, tc.appeal)
+			assert.EqualError(t, actualError, tc.expectedError.Error())
+		}
+	})
+
+	t.Run("should return error if credentials is invalid", func(t *testing.T) {
+		crypto := new(mocks.Crypto)
+		p := tableau.NewProvider("", crypto)
+
+		pc := &domain.ProviderConfig{
+			Credentials: "invalid-credentials",
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "test-type",
+					Roles: []*domain.Role{
+						{
+							ID: "test-role",
+							Permissions: []interface{}{
+								tableau.Permission{
+									Name: "test-permission-config",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		a := &domain.Appeal{
+			Resource: &domain.Resource{
+				Type: "test-type",
+			},
+			Role: "test-role",
+		}
+
+		actualError := p.RevokeAccess(pc, a)
+		assert.Error(t, actualError)
+	})
+
+	t.Run("should return error if there are any on client initialization", func(t *testing.T) {
+		crypto := new(mocks.Crypto)
+		p := tableau.NewProvider("", crypto)
+		expectedError := errors.New("decrypt error")
+		crypto.On("Decrypt", "test-password").Return("", expectedError).Once()
+
+		pc := &domain.ProviderConfig{
+			Credentials: tableau.Credentials{
+				Host:       "localhost",
+				Username:   "test-username",
+				Password:   "test-password",
+				ContentURL: "test-content-url",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "test-type",
+					Roles: []*domain.Role{
+						{
+							ID: "test-role",
+							Permissions: []interface{}{
+								tableau.Permission{
+									Name: "test-permission-config",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		a := &domain.Appeal{
+			Resource: &domain.Resource{
+				Type: "test-type",
+			},
+			Role: "test-role",
+		}
+
+		actualError := p.RevokeAccess(pc, a)
+
+		assert.EqualError(t, actualError, expectedError.Error())
+	})
+
+	t.Run("should return error if resource type in unknown", func(t *testing.T) {
+		crypto := new(mocks.Crypto)
+		p := tableau.NewProvider("", crypto)
+		expectedError := errors.New("invalid resource type")
+		crypto.On("Decrypt", "test-password").Return("", expectedError).Once()
+
+		pc := &domain.ProviderConfig{
+			Credentials: tableau.Credentials{
+				Host:       "localhost",
+				Username:   "test-username",
+				Password:   "test-password",
+				ContentURL: "test-content-url",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "test-type",
+					Roles: []*domain.Role{
+						{
+							ID: "test-role",
+							Permissions: []interface{}{
+								tableau.Permission{
+									Name: "test-permission-config",
+								},
+							},
+						},
+					},
+				},
+			},
+			URN: "test-urn",
+		}
+		a := &domain.Appeal{
+			Resource: &domain.Resource{
+				Type: "test-type",
+			},
+			Role: "test-role",
+		}
+
+		actualError := p.RevokeAccess(pc, a)
+
+		assert.EqualError(t, actualError, expectedError.Error())
+	})
+
+	t.Run("given workflow resource", func(t *testing.T) {
+		t.Run("should return error if there is an error in revoking workflow access", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			expectedError := errors.New("client error")
+			crypto := new(mocks.Crypto)
+			client := new(mocks.TableauClient)
+			p := tableau.NewProvider("", crypto)
+			p.Clients = map[string]tableau.TableauClient{
+				providerURN: client,
+			}
+			client.On("RevokeWorkbookAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: tableau.Credentials{
+					Host:       "localhost",
+					Username:   "test-username",
+					Password:   "test-password",
+					ContentURL: "test-content-url",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: tableau.ResourceTypeWorkbook,
+						Roles: []*domain.Role{
+							{
+								ID: "test-role",
+								Permissions: []interface{}{
+									tableau.Permission{
+										Name: "test-permission-config",
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: tableau.ResourceTypeWorkbook,
+					URN:  "999",
+					Name: "test-workbook",
+				},
+				Role: "test-role",
+			}
+
+			actualError := p.RevokeAccess(pc, a)
+
+			assert.EqualError(t, actualError, expectedError.Error())
+		})
+
+		t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			crypto := new(mocks.Crypto)
+			client := new(mocks.TableauClient)
+			expectedWorkbook := &tableau.Workbook{
+				Name: "test-workbook",
+				ID:   "workbook-id",
+			}
+			expectedUser := "test@email.com"
+			expectedRole := tableau.PermissionNames[tableau.ResourceTypeWorkbook][0] + ":" + tableau.PermissionModes[0]
+			p := tableau.NewProvider("", crypto)
+			p.Clients = map[string]tableau.TableauClient{
+				providerURN: client,
+			}
+			client.On("RevokeWorkbookAccess", expectedWorkbook, expectedUser, expectedRole).Return(nil).Once()
+			client.On("UpdateSiteRole", expectedUser, "Unlicensed").Return(nil).Once()
+			pc := &domain.ProviderConfig{
+				Credentials: tableau.Credentials{
+					Host:       "localhost",
+					Username:   "test-username",
+					Password:   "test-password",
+					ContentURL: "test-content-url",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: tableau.ResourceTypeWorkbook,
+						Roles: []*domain.Role{
+							{
+								ID: "viewer",
+								Permissions: []interface{}{
+									tableau.Permission{
+										Name: expectedRole,
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: tableau.ResourceTypeWorkbook,
+					URN:  "workbook-id",
+					Name: "test-workbook",
+				},
+				Role:       "viewer",
+				AccountID:  expectedUser,
+				ResourceID: "999",
+				ID:         "999",
+			}
+
+			actualError := p.RevokeAccess(pc, a)
+
+			assert.Nil(t, actualError)
+		})
+	})
+
+	t.Run("given flow resource", func(t *testing.T) {
+		t.Run("should return error if there is an error in revoking flow access", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			expectedError := errors.New("client error")
+			crypto := new(mocks.Crypto)
+			client := new(mocks.TableauClient)
+			p := tableau.NewProvider("", crypto)
+			p.Clients = map[string]tableau.TableauClient{
+				providerURN: client,
+			}
+			client.On("RevokeFlowAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: tableau.Credentials{
+					Host:       "localhost",
+					Username:   "test-username",
+					Password:   "test-password",
+					ContentURL: "test-content-url",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: tableau.ResourceTypeFlow,
+						Roles: []*domain.Role{
+							{
+								ID: "test-role",
+								Permissions: []interface{}{
+									tableau.Permission{
+										Name: "test-permission-config",
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: tableau.ResourceTypeFlow,
+					URN:  "999",
+					Name: "test-flow",
+				},
+				Role: "test-role",
+			}
+
+			actualError := p.RevokeAccess(pc, a)
+
+			assert.EqualError(t, actualError, expectedError.Error())
+		})
+
+		t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			crypto := new(mocks.Crypto)
+			client := new(mocks.TableauClient)
+			expectedFlow := &tableau.Flow{
+				Name: "test-flow",
+				ID:   "flow-id",
+			}
+			expectedUser := "test@email.com"
+			expectedRole := tableau.PermissionNames[tableau.ResourceTypeFlow][0] + ":" + tableau.PermissionModes[0]
+			p := tableau.NewProvider("", crypto)
+			p.Clients = map[string]tableau.TableauClient{
+				providerURN: client,
+			}
+			client.On("RevokeFlowAccess", expectedFlow, expectedUser, expectedRole).Return(nil).Once()
+			client.On("UpdateSiteRole", expectedUser, "Unlicensed").Return(nil).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: tableau.Credentials{
+					Host:       "localhost",
+					Username:   "test-username",
+					Password:   "test-password",
+					ContentURL: "test-content-url",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: tableau.ResourceTypeFlow,
+						Roles: []*domain.Role{
+							{
+								ID: "viewer",
+								Permissions: []interface{}{
+									tableau.Permission{
+										Name: expectedRole,
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: tableau.ResourceTypeFlow,
+					URN:  "flow-id",
+					Name: "test-flow",
+				},
+				Role:       "viewer",
+				AccountID:  expectedUser,
+				ResourceID: "999",
+				ID:         "999",
+			}
+
+			actualError := p.RevokeAccess(pc, a)
+
+			assert.Nil(t, actualError)
+		})
+	})
+
+	t.Run("given view resource", func(t *testing.T) {
+		t.Run("should return error if there is an error in revoking view access", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			expectedError := errors.New("client error")
+			crypto := new(mocks.Crypto)
+			client := new(mocks.TableauClient)
+			p := tableau.NewProvider("", crypto)
+			p.Clients = map[string]tableau.TableauClient{
+				providerURN: client,
+			}
+			client.On("RevokeViewAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: tableau.Credentials{
+					Host:       "localhost",
+					Username:   "test-username",
+					Password:   "test-password",
+					ContentURL: "test-content-url",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: tableau.ResourceTypeView,
+						Roles: []*domain.Role{
+							{
+								ID: "test-role",
+								Permissions: []interface{}{
+									tableau.Permission{
+										Name: "test-permission-config",
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: tableau.ResourceTypeView,
+					URN:  "99",
+					Name: "test-view",
+				},
+				Role: "test-role",
+			}
+
+			actualError := p.RevokeAccess(pc, a)
+
+			assert.EqualError(t, actualError, expectedError.Error())
+		})
+
+		t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			crypto := new(mocks.Crypto)
+			client := new(mocks.TableauClient)
+			expectedView := &tableau.View{
+				Name: "test-view",
+				ID:   "view-id",
+			}
+			expectedUser := "test@email.com"
+			expectedRole := tableau.PermissionNames[tableau.ResourceTypeView][0] + ":" + tableau.PermissionModes[0]
+			p := tableau.NewProvider("", crypto)
+			p.Clients = map[string]tableau.TableauClient{
+				providerURN: client,
+			}
+			client.On("RevokeViewAccess", expectedView, expectedUser, expectedRole).Return(nil).Once()
+			client.On("UpdateSiteRole", expectedUser, "Unlicensed").Return(nil).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: tableau.Credentials{
+					Host:       "localhost",
+					Username:   "test-username",
+					Password:   "test-password",
+					ContentURL: "test-content-url",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: tableau.ResourceTypeView,
+						Roles: []*domain.Role{
+							{
+								ID: "viewer",
+								Permissions: []interface{}{
+									tableau.Permission{
+										Name: expectedRole,
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: tableau.ResourceTypeView,
+					URN:  "view-id",
+					Name: "test-view",
+				},
+				Role:       "viewer",
+				AccountID:  expectedUser,
+				ResourceID: "99",
+				ID:         "99",
+			}
+
+			actualError := p.RevokeAccess(pc, a)
+
+			assert.Nil(t, actualError)
+		})
+	})
+
+	t.Run("given metric resource", func(t *testing.T) {
+		t.Run("should return error if there is an error in revoking metric access", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			expectedError := errors.New("client error")
+			crypto := new(mocks.Crypto)
+			client := new(mocks.TableauClient)
+			p := tableau.NewProvider("", crypto)
+			p.Clients = map[string]tableau.TableauClient{
+				providerURN: client,
+			}
+			client.On("RevokeMetricAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: tableau.Credentials{
+					Host:       "localhost",
+					Username:   "test-username",
+					Password:   "test-password",
+					ContentURL: "test-content-url",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: tableau.ResourceTypeMetric,
+						Roles: []*domain.Role{
+							{
+								ID: "test-role",
+								Permissions: []interface{}{
+									tableau.Permission{
+										Name: "test-permission-config",
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: tableau.ResourceTypeMetric,
+					URN:  "99",
+					Name: "test-metric",
+				},
+				Role: "test-role",
+			}
+
+			actualError := p.RevokeAccess(pc, a)
+
+			assert.EqualError(t, actualError, expectedError.Error())
+		})
+
+		t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			crypto := new(mocks.Crypto)
+			client := new(mocks.TableauClient)
+			expectedMetric := &tableau.Metric{
+				Name: "test-metric",
+				ID:   "metric-id",
+			}
+			expectedUser := "test@email.com"
+			expectedRole := tableau.PermissionNames[tableau.ResourceTypeMetric][0] + ":" + tableau.PermissionModes[0]
+			p := tableau.NewProvider("", crypto)
+			p.Clients = map[string]tableau.TableauClient{
+				providerURN: client,
+			}
+			client.On("RevokeMetricAccess", expectedMetric, expectedUser, expectedRole).Return(nil).Once()
+			client.On("UpdateSiteRole", expectedUser, "Unlicensed").Return(nil).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: tableau.Credentials{
+					Host:       "localhost",
+					Username:   "test-username",
+					Password:   "test-password",
+					ContentURL: "test-content-url",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: tableau.ResourceTypeMetric,
+						Roles: []*domain.Role{
+							{
+								ID: "viewer",
+								Permissions: []interface{}{
+									tableau.Permission{
+										Name: expectedRole,
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: tableau.ResourceTypeMetric,
+					URN:  "metric-id",
+					Name: "test-metric",
+				},
+				Role:       "viewer",
+				AccountID:  expectedUser,
+				ResourceID: "99",
+				ID:         "99",
+			}
+
+			actualError := p.RevokeAccess(pc, a)
+
+			assert.Nil(t, actualError)
+		})
+	})
+
+	t.Run("given datasource resource", func(t *testing.T) {
+		t.Run("should return error if there is an error in revoking datasource access", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			expectedError := errors.New("client error")
+			crypto := new(mocks.Crypto)
+			client := new(mocks.TableauClient)
+			p := tableau.NewProvider("", crypto)
+			p.Clients = map[string]tableau.TableauClient{
+				providerURN: client,
+			}
+			client.On("RevokeDataSourceAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: tableau.Credentials{
+					Host:       "localhost",
+					Username:   "test-username",
+					Password:   "test-password",
+					ContentURL: "test-content-url",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: tableau.ResourceTypeDataSource,
+						Roles: []*domain.Role{
+							{
+								ID: "test-role",
+								Permissions: []interface{}{
+									tableau.Permission{
+										Name: "test-permission-config",
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: tableau.ResourceTypeDataSource,
+					URN:  "99",
+					Name: "test-datasource",
+				},
+				Role: "test-role",
+			}
+
+			actualError := p.RevokeAccess(pc, a)
+
+			assert.EqualError(t, actualError, expectedError.Error())
+		})
+
+		t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
+			providerURN := "test-provider-urn"
+			crypto := new(mocks.Crypto)
+			client := new(mocks.TableauClient)
+			expectedDatasource := &tableau.DataSource{
+				Name: "test-datasource",
+				ID:   "datasource-id",
+			}
+			expectedUser := "test@email.com"
+			expectedRole := tableau.PermissionNames[tableau.ResourceTypeDataSource][0] + ":" + tableau.PermissionModes[0]
+			p := tableau.NewProvider("", crypto)
+			p.Clients = map[string]tableau.TableauClient{
+				providerURN: client,
+			}
+			client.On("RevokeDataSourceAccess", expectedDatasource, expectedUser, expectedRole).Return(nil).Once()
+			client.On("UpdateSiteRole", expectedUser, "Unlicensed").Return(nil).Once()
+
+			pc := &domain.ProviderConfig{
+				Credentials: tableau.Credentials{
+					Host:       "localhost",
+					Username:   "test-username",
+					Password:   "test-password",
+					ContentURL: "test-content-url",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: tableau.ResourceTypeDataSource,
+						Roles: []*domain.Role{
+							{
+								ID: "viewer",
+								Permissions: []interface{}{
+									tableau.Permission{
+										Name: expectedRole,
+									},
+								},
+							},
+						},
+					},
+				},
+				URN: providerURN,
+			}
+			a := &domain.Appeal{
+				Resource: &domain.Resource{
+					Type: tableau.ResourceTypeDataSource,
+					URN:  "datasource-id",
+					Name: "test-datasource",
+				},
+				Role:       "viewer",
+				AccountID:  expectedUser,
+				ResourceID: "99",
+				ID:         "99",
+			}
+
+			actualError := p.RevokeAccess(pc, a)
+
+			assert.Nil(t, actualError)
+		})
+	})
+}
+
+func TestGetAccountTypes(t *testing.T) {
+	t.Run("should return the valid Account Types \"user\"", func(t *testing.T) {
+		expectedAccountTypes := []string{"user"}
+		crypto := new(mocks.Crypto)
+		p := tableau.NewProvider("", crypto)
+
+		actualAccountTypes := p.GetAccountTypes()
+
+		assert.Equal(t, expectedAccountTypes, actualAccountTypes)
+	})
+}
+
+func TestGetRoles(t *testing.T) {
+	t.Run("should return error if resource type is invalid", func(t *testing.T) {
+
+	})
+
+	t.Run("should return roles specified in the provider config", func(t *testing.T) {
+		crypto := new(mocks.Crypto)
+		p := tableau.NewProvider("", crypto)
+		expectedRoles := []*domain.Role{
+			{
+				ID:   "read",
+				Name: "Read",
+				Permissions: []interface{}{
+					map[string]interface{}{
+						"name": "Read:Allow",
+					},
+				},
+			},
+		}
+
+		validConfig := &domain.ProviderConfig{
+			Type: "tableau",
+			Credentials: tableau.Credentials{
+				Host:       "http://localhost",
+				Username:   "test-username",
+				Password:   "test-password",
+				ContentURL: "test-content-url",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type:  tableau.ResourceTypeWorkbook,
+					Roles: expectedRoles,
+				},
+			},
+			URN: "test-URN",
+		}
+
+		actualRoles, actualError := p.GetRoles(validConfig, "workbook")
+
+		assert.NoError(t, actualError)
+		assert.Equal(t, expectedRoles, actualRoles)
 	})
 }

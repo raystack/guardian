@@ -205,7 +205,7 @@ func TestGrantAccess(t *testing.T) {
 	})
 
 	// t.Run("should return an error if resource type is not dataset or table", func(t *testing.T) {
-	// 	password := "test-password"
+	// 	password := base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
 	// 	crypto := new(mocks.Crypto)
 	// 	p := bigquery.NewProvider("bigquery", crypto)
 	// 	expectedError := bigquery.ErrInvalidResourceType
@@ -215,7 +215,7 @@ func TestGrantAccess(t *testing.T) {
 	// 		Type: "bigquery",
 	// 		URN:  "test-URN",
 	// 		Credentials: bigquery.Credentials{
-	// 			ServiceAccountKey: "test-password",
+	// 			ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
 	// 			ResourceName:      "projects/resource-name",
 	// 		},
 	// 		Resources: []*domain.ResourceConfig{

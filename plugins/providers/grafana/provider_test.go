@@ -24,6 +24,163 @@ func TestGetType(t *testing.T) {
 	})
 }
 
+func TestCreateConfig(t *testing.T) {
+
+	t.Run("should return error if there credentials are invalid", func(t *testing.T) {
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GrafanaClient)
+		p := grafana.NewProvider("", crypto)
+		p.Clients = map[string]grafana.GrafanaClient{
+			providerURN: client,
+		}
+
+		testcases := []struct {
+			pc *domain.ProviderConfig
+		}{
+			{ //invalid credentials struct
+				pc: &domain.ProviderConfig{
+					Credentials: "invalid-credential-structure"},
+			},
+			{ //empty mandatory credentials
+				pc: &domain.ProviderConfig{
+					Credentials: grafana.Credentials{
+						Host:     "",
+						Username: "",
+						Password: "",
+					},
+				},
+			},
+		}
+
+		for _, tc := range testcases {
+			actualError := p.CreateConfig(tc.pc)
+			assert.Error(t, actualError)
+		}
+	})
+
+	t.Run("should return error if there resource config is invalid", func(t *testing.T) {
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GrafanaClient)
+		p := grafana.NewProvider("", crypto)
+		p.Clients = map[string]grafana.GrafanaClient{
+			providerURN: client,
+		}
+
+		testcases := []struct {
+			pc *domain.ProviderConfig
+		}{
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: grafana.Credentials{
+						Host:     "localhost",
+						Username: "test-username",
+						Password: "test-password",
+					},
+					Resources: []*domain.ResourceConfig{ //resource type wrong requires one of "folder" or "dashboard"
+						{
+							Type: "invalid resource type",
+						},
+					},
+				},
+			},
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: grafana.Credentials{
+						Host:     "localhost",
+						Username: "test-username",
+						Password: "test-password",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: grafana.ResourceTypeFolder, // Folder resource type
+							Roles: []*domain.Role{
+								{
+									ID:          "viewer",
+									Permissions: []interface{}{"wrong permissions"}, // requires "view" or "edit" or "admin" permissions
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		for _, tc := range testcases {
+			actualError := p.CreateConfig(tc.pc)
+			assert.Error(t, actualError)
+		}
+	})
+
+	t.Run("should not return error if parse and valid of Credentials are correct", func(t *testing.T) {
+
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GrafanaClient)
+		p := grafana.NewProvider("", crypto)
+		p.Clients = map[string]grafana.GrafanaClient{
+			providerURN: client,
+		}
+		crypto.On("Encrypt", "test-password").Return("encrypted-test-pasword", nil)
+
+		testcases := []struct {
+			pc            *domain.ProviderConfig
+			expectedError error
+		}{
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: grafana.Credentials{
+						Host:     "http://localhost",
+						Username: "test-username",
+						Password: "test-password",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: grafana.ResourceTypeFolder,
+							Roles: []*domain.Role{
+								{
+									ID:          "viewer",
+									Permissions: []interface{}{"view"},
+								},
+							},
+						},
+					},
+					URN: providerURN,
+				},
+				expectedError: nil,
+			},
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: grafana.Credentials{
+						Host:     "http://localhost",
+						Username: "test-username",
+						Password: "test-password",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: grafana.ResourceTypeDashboard,
+							Roles: []*domain.Role{
+								{
+									ID:          "admin",
+									Permissions: []interface{}{"admin"},
+								},
+							},
+						},
+					},
+					URN: providerURN,
+				},
+				expectedError: nil,
+			},
+		}
+
+		for _, tc := range testcases {
+			actualError := p.CreateConfig(tc.pc)
+			assert.Equal(t, tc.expectedError, actualError)
+		}
+	})
+}
+
 func TestGetResources(t *testing.T) {
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)

@@ -16,6 +16,7 @@ import (
 	"github.com/odpf/guardian/plugins/providers/metabase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 )
 
 func TestNewClient(t *testing.T) {
@@ -80,29 +81,53 @@ func TestNewClient(t *testing.T) {
 		mockHttpClient.AssertExpectations(t)
 		assert.Nil(t, actualError)
 	})
+}
 
-	t.Run("should get collections and nil error on success", func(t *testing.T) {
-		mockHttpClient := new(mocks.HTTPClient)
-		config := getTestClientConfig()
-		config.HTTPClient = mockHttpClient
-		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+type ClientTestSuite struct {
+	suite.Suite
 
-		sessionToken := "93df71b4-6887-46bd-b4bf-7ad3b94bd6fe"
-		responseJSON := `{"id":"` + sessionToken + `"}`
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJSON)))}
+	mockHttpClient *mocks.HTTPClient
+	client         metabase.MetabaseClient
+	sessionToken   string
+	host           string
+}
 
-		mockHttpClient.On("Do", mock.Anything).Return(&response, nil).Once()
+func TestClient(t *testing.T) {
+	suite.Run(t, new(ClientTestSuite))
+}
 
-		client, err := metabase.NewClient(config, logger)
-		assert.Nil(t, err)
-		assert.NotNil(t, client)
+func (s *ClientTestSuite) setup() {
+	logger := log.NewNoop()
+	s.mockHttpClient = new(mocks.HTTPClient)
 
-		testRequest, err := getTestRequest(sessionToken, http.MethodGet, fmt.Sprintf("%s%s", config.Host, "/api/collection"), nil)
-		assert.Nil(t, err)
+	s.sessionToken = "93df71b4-6887-46bd-b4bf-7ad3b94bd6fe"
+	sessionResponse := http.Response{
+		StatusCode: 200,
+		Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{"id":"` + s.sessionToken + `"}`))),
+	}
+	s.mockHttpClient.On("Do", mock.Anything).Return(&sessionResponse, nil).Once()
+
+	s.host = "http://localhost"
+	client, err := metabase.NewClient(&metabase.ClientConfig{
+		Username:   "test-username",
+		Password:   "test-password",
+		Host:       s.host,
+		HTTPClient: s.mockHttpClient,
+	}, logger)
+	s.Require().NoError(err)
+	s.client = client
+}
+
+func (s *ClientTestSuite) TestGetCollections() {
+	s.Run("should get collections and nil error on success", func() {
+		s.setup()
+
+		testRequest, err := s.getTestRequest(http.MethodGet, "/api/collection", nil)
+		s.Require().NoError(err)
 
 		collectionResponseJSON := `[{"authority_level":null,"name":"Our analytics","id":"root","parent_id":null,"effective_location":null,"effective_ancestors":[],"can_write":true},{"authority_level":null,"description":null,"archived":false,"slug":"cabfares","color":"#509EE3","can_write":true,"name":"CabFares","personal_owner_id":null,"id":2,"location":"/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"countries","color":"#509EE3","can_write":true,"name":"Countries","personal_owner_id":null,"id":5,"location":"/4/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"ds_analysis","color":"#509EE3","can_write":true,"name":"DS Analysis","personal_owner_id":null,"id":3,"location":"/2/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"ds_analysis","color":"#509EE3","can_write":true,"name":"DS Analysis","personal_owner_id":null,"id":6,"location":"/4/5/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"spending","color":"#509EE3","can_write":true,"name":"Spending","personal_owner_id":null,"id":4,"location":"/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"summary","color":"#509EE3","can_write":true,"name":"Summary","personal_owner_id":null,"id":7,"location":"/2/3/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"alex_s_personal_collection","color":"#31698A","can_write":true,"name":"Alex's Personal Collection","personal_owner_id":1,"id":1,"location":"/","namespace":null}]`
 		collectionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(collectionResponseJSON)))}
-		mockHttpClient.On("Do", testRequest).Return(&collectionResponse, nil).Once()
+		s.mockHttpClient.On("Do", testRequest).Return(&collectionResponse, nil).Once()
 
 		expectedCollections := []metabase.Collection{
 			{ID: float64(2), Name: "CabFares", Slug: "cabfares", Location: "/"},
@@ -113,13 +138,13 @@ func TestNewClient(t *testing.T) {
 			{ID: float64(7), Name: "CabFares/DS Analysis/Summary", Slug: "summary", Location: "/2/3/"},
 		}
 
-		result, err1 := client.GetCollections()
+		result, err1 := s.client.GetCollections()
 		var collections []metabase.Collection
 		for _, coll := range result {
 			collections = append(collections, *coll)
 		}
-		assert.Nil(t, err1)
-		assert.ElementsMatch(t, expectedCollections, collections)
+		s.Nil(err1)
+		s.ElementsMatch(expectedCollections, collections)
 	})
 }
 
@@ -131,7 +156,7 @@ func getTestClientConfig() *metabase.ClientConfig {
 	}
 }
 
-func getTestRequest(sessionToken, method, url string, body interface{}) (*http.Request, error) {
+func (s *ClientTestSuite) getTestRequest(method, path string, body interface{}) (*http.Request, error) {
 	var buf io.ReadWriter
 	if body != nil {
 		buf = new(bytes.Buffer)
@@ -140,6 +165,7 @@ func getTestRequest(sessionToken, method, url string, body interface{}) (*http.R
 			return nil, err
 		}
 	}
+	url := fmt.Sprintf("%s%s", s.host, path)
 	req, err := http.NewRequest(method, url, buf)
 	if err != nil {
 		return nil, err
@@ -148,6 +174,6 @@ func getTestRequest(sessionToken, method, url string, body interface{}) (*http.R
 		req.Header.Set("Content-Type", "application/json")
 	}
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-Metabase-Session", sessionToken)
+	req.Header.Set("X-Metabase-Session", s.sessionToken)
 	return req, nil
 }
