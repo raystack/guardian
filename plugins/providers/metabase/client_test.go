@@ -148,13 +148,13 @@ func (s *ClientTestSuite) TestGetCollections() {
 	})
 }
 
-func getTestClientConfig() *metabase.ClientConfig {
-	return &metabase.ClientConfig{
-		Username: "test-username",
-		Password: "test-password",
-		Host:     "http://localhost",
-	}
-}
+// func getTestClientConfig() *metabase.ClientConfig {
+// 	return &metabase.ClientConfig{
+// 		Username: "test-username",
+// 		Password: "test-password",
+// 		Host:     "http://localhost",
+// 	}
+// }
 
 func (s *ClientTestSuite) getTestRequest(method, path string, body interface{}) (*http.Request, error) {
 	var buf io.ReadWriter
