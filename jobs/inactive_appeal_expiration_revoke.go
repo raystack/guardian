@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/odpf/guardian/plugins/identities"
+
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/audit"
 )
@@ -15,8 +17,8 @@ type Key struct {
 	PolicyVersion uint
 }
 
-func (h *handler) DormantAccountAppealRevoke(ctx context.Context) error {
-	h.logger.Info("running dormant account appeal revoke job")
+func (h *handler) RevokeInActiveUserAccess(ctx context.Context) error {
+	h.logger.Info("running inactive user appeal revoke job")
 	ctx = audit.WithActor(ctx, domain.SystemActorName)
 
 	filters := &domain.ListAppealsFilter{
@@ -79,7 +81,7 @@ func (h *handler) DormantAccountAppealRevoke(ctx context.Context) error {
 				if err != nil {
 					return fmt.Errorf("getting iam client: %w", err)
 				}
-				go h.expiredDormantUserAppeal(ctx, iamClient, timeLimiter, done, key.AccountId, appealList)
+				go h.expiredInActiveUserAppeal(ctx, iamClient, policy.IAM, timeLimiter, done, key.AccountId, appealList)
 			}
 		}
 	}
@@ -92,11 +94,15 @@ func (h *handler) DormantAccountAppealRevoke(ctx context.Context) error {
 	return nil
 }
 
-func (h *handler) expiredDormantUserAppeal(ctx context.Context, iamClient domain.IAMClient, timeLimiter chan int, done chan string, accountId string, appeals []*domain.Appeal) {
+func (h *handler) expiredInActiveUserAppeal(ctx context.Context, iamClient domain.IAMClient, iamConfig *domain.IAMConfig, timeLimiter chan int, done chan string, accountId string, appeals []*domain.Appeal) {
 	<-timeLimiter
 	var successRevoke []string
 	var failedRevoke []map[string]interface{}
-	isActive, err := iamClient.IsActiveUser(accountId)
+	userDetails, err := iamClient.GetUser(accountId)
+	if err != nil {
+		h.logger.Error("failed to fetch user profile", "user", accountId, "error", err)
+	}
+	isActive, err := identities.IsActiveUser(userDetails, iamConfig)
 	if err != nil {
 		h.logger.Error("failed to revoke appeal", "user", accountId, "error", err)
 	}

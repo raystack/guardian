@@ -8,9 +8,10 @@ const (
 )
 
 type IAMConfig struct {
-	Provider IAMProviderType   `json:"provider" yaml:"provider" validate:"required,oneof=http shield"`
-	Config   interface{}       `json:"config" yaml:"config" validate:"required"`
-	Schema   map[string]string `json:"schema" yaml:"schema"`
+	Provider      IAMProviderType   `json:"provider" yaml:"provider" validate:"required,oneof=http shield"`
+	Config        interface{}       `json:"config" yaml:"config" validate:"required"`
+	Schema        map[string]string `json:"schema" yaml:"schema"`
+	AccountStatus string            `json:"account_status" yaml:"account_status"`
 }
 
 type IAMManager interface {
@@ -21,5 +22,4 @@ type IAMManager interface {
 // IAMClient interface
 type IAMClient interface {
 	GetUser(id string) (interface{}, error)
-	IsActiveUser(id string) (bool, error)
 }

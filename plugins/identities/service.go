@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/pkg/evaluator"
 )
 
 var (
@@ -54,4 +55,26 @@ func (m *Manager) GetClient(config domain.SensitiveConfig) (domain.IAMClient, er
 	}
 
 	return nil, ErrInvalidConfig
+}
+
+func IsActiveUser(userDetails interface{}, config *domain.IAMConfig) (bool, error) {
+	expr := config.AccountStatus
+	if len(expr) > 0 {
+		if userMap, ok := userDetails.(map[string]interface{}); ok {
+			params := map[string]interface{}{
+				"user": userMap,
+			}
+
+			accountStatus, err := evaluator.Expression(expr).EvaluateWithVars(params)
+			if err != nil {
+				return false, fmt.Errorf("evaluating aprrovers expression: %w", err)
+			}
+			if _, ok := accountStatus.(bool); !ok {
+				return false, ErrUserAccountStatusKeyShouldBeBool
+			}
+			return accountStatus.(bool), nil
+		}
+	}
+
+	return false, ErrUserActiveEmptyMetadata
 }

@@ -88,7 +88,7 @@ func RunServer(config *Config) error {
 			Func:    func() error { return jobHandler.AppealExpirationReminder(context.Background()) },
 		}, {
 			CronTab: config.Jobs.RevokeDormantAccountAppealExpiredInterval,
-			Func:    func() error { return jobHandler.DormantAccountAppealRevoke(context.Background()) },
+			Func:    func() error { return jobHandler.RevokeInActiveUserAccess(context.Background()) },
 		},
 	}
 	s, err := scheduler.New(tasks)
