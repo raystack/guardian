@@ -21,17 +21,19 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/odpf/guardian/edit/master/docs/',
+          sidebarCollapsed: true,
+          breadcrumbs: false,
         },
-        blog: {
-          showReadingTime: true,
-          editUrl:
-            'https://github.com/odpf/guardian/edit/master/docs/blog/',
-        },
+        blog: false,
+
         theme: {
           customCss: [
             require.resolve('./src/css/theme.css'),
             require.resolve('./src/css/custom.css')
           ],
+        },
+        gtag: {
+          trackingID: 'G-EPXDLH6V72',
         },
       }),
     ],
@@ -42,23 +44,19 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       colorMode: {
         defaultMode: 'light',
         respectPrefersColorScheme: true,
-        switchConfig: {
-          darkIcon: '☾',
-          lightIcon: '☀️',
-        },
       },
       navbar: {
         title: 'Guardian',
         logo: { src: 'img/logo.svg', },
+        hideOnScroll: true,
         items: [
           {
             type: 'doc',
             docId: 'introduction',
-            position: 'left',
+            position: 'right',
             label: 'Docs',
           },
-          { to: '/blog', label: 'Blog', position: 'left' },
-          { to: '/help', label: 'Help', position: 'left' },
+          { to: 'docs/support', label: 'Support', position: 'right' },
           {
             href: 'https://bit.ly/2RzPbtn',
             position: 'right',
@@ -73,39 +71,11 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       },
       footer: {
         style: 'light',
-        links: [
-          {
-            title: 'Products',
-            items: [
-              { label: 'Optimus', href: 'https://github.com/odpf/optimus' },
-              { label: 'Firehose', href: 'https://github.com/odpf/firehose' },
-              { label: 'Raccoon', href: 'https://github.com/odpf/raccoon' },
-              { label: 'Dagger', href: 'https://odpf.github.io/dagger/' },
-            ],
-          },
-          {
-            title: 'Resources',
-            items: [
-              { label: 'Docs', to: '/docs/introduction' },
-              { label: 'Blog', to: '/blog', },
-              { label: 'Help', to: '/help', },
-            ],
-          },
-          {
-            title: 'Community',
-            items: [
-              { label: 'Slack', href: 'https://bit.ly/2RzPbtn' },
-              { label: 'GitHub', href: 'https://github.com/odpf/guardian' }
-            ],
-          },
-        ],
+        links: [],
       },
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-      },
-      gtag: {
-        trackingID: 'G-EPXDLH6V72',
       },
       announcementBar: {
         id: 'star-repo',

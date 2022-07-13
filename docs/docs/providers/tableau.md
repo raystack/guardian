@@ -36,9 +36,7 @@ credentials:
 
 In Guardian, user access can be given at the workbook, views, metrics, data sources or flow level.
 
-## 1. Config
-
-### Example
+#### Config Example
 
 ```yaml
 type: tableau
@@ -137,7 +135,7 @@ resources:
             type: site_role
 ```
 
-## `Tableau Credentials`
+## Tableau Credentials
 
 | Fields        | Deatils                                                                                                                                                         |
 | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -146,7 +144,7 @@ resources:
 | `password`    | `string` Required. Account's password.                                                                                                                          |
 | `content_url` | `string` Required. Site's content url aka slug. Example: In `https://10ay.online.tableau.com/#/site/MarketingTeam/workbooks` the content url is `MarketingTeam` |
 
-## `Grafana Resource Type`
+## Tableau Resource Type
 
 - `Workbook`
 - `View`
@@ -154,23 +152,23 @@ resources:
 - `Data Source`
 - `Flow`
 
-## `Tableau Permissions`
+## Tableau Permissions
 
 | Fields        | Permissions                                                                                                                                                                              |
 | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Workbook`    | AddComment, ChangeHierarchy, ChangePermissions, Delete, ExportData, ExportImage, ExportXml, Filter, Read \(view\), ShareView, ViewComments, ViewUnderlyingData, WebAuthoring, and Write. |
-| `View`        | AddComment, ChangePermissions, Delete, ExportData, ExportImage, ExportXml, Filter, Read \(view\), ShareView, ViewComments, ViewUnderlyingData, WebAuthoring, and Write.                  |
-| `Metric`      | Read,Write,Delete,ChangeHierarchy,ChangePermissions.                                                                                                                                     |
-| `Data Source` | ChangePermissions, Connect, Delete, ExportXml, Read \(view\), and Write.                                                                                                                 |
-| `Flow`        | ChangeHierarchy, ChangePermissions, Delete, Execute, ExportXml \(Download\), Read \(view\), and Write.                                                                                   |
-| `Site Roles`  | Creator, Explorer, ExplorerCanPublish, ServerAdministrator, SiteAdministratorExplorer, SiteAdministratorCreator, Unlicensed, ReadOnly, or Viewer.                                        |
+| **Workbook**    | AddComment, ChangeHierarchy, ChangePermissions, Delete, ExportData, ExportImage, ExportXml, Filter, Read \(view\), ShareView, ViewComments, ViewUnderlyingData, WebAuthoring, and Write. |
+| **View**        | AddComment, ChangePermissions, Delete, ExportData, ExportImage, ExportXml, Filter, Read \(view\), ShareView, ViewComments, ViewUnderlyingData, WebAuthoring, and Write.                  |
+| **Metric**      | Read, Write, Delete, ChangeHierarchy, ChangePermissions.                                                                                                                                     |
+| **Data Source** | ChangePermissions, Connect, Delete, ExportXml, Read \(view\), and Write.                                                                                                                 |
+| **Flow**        | ChangeHierarchy, ChangePermissions, Delete, Execute, ExportXml \(Download\), Read \(view\), and Write.                                                                                   |
+| **Site Roles**  | Creator, Explorer, ExplorerCanPublish, ServerAdministrator, SiteAdministratorExplorer, SiteAdministratorCreator, Unlicensed, Read only, or Viewer.                                        |
 
-## `Table Resource Permission`
+## Table Resource Permission
 
 | Fields                          | Type                                     | Details                                                                                                                                                                                                                         |
 | :------------------------------ | :--------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `urn`                           | Required. `string`                       | Tableau Site Id.                                                                                                                                                                                                                |
-| `resources: type`               | Required. `string`                       | Must be one of `workbook, view, metric, datasource and flow`.                                                                                                                                                                   |
-| `resources: policy`             | Required. `string & string`              | Must have id as policy name. Must have a version number.                                                                                                                                                                        |
-| `resources: roles`              | Required. `string ,string & permissions` | Must have a role id . Must have a role name. Must have a list of permissions required.                                                                                                                                          |
-| `resources: roles: permissions` | Required. `string & string`              | Must have a name in format `<permission-name>:<permission-mode>` or just `<permission-name>` in case of site role . `Optional:` If this is a site role, it should have a type attribute with value always equal to `site_role`. |
+| **urn**                           | Required. `string`                       | Tableau Site Id.                                                                                                                                                                                                                |
+| **resources: type**               | Required. `string`                       | Must be one of `workbook, view, metric, datasource and flow`.                                                                                                                                                                   |
+| **resources: policy**             | Required. `string & string`              | Must have id as policy name. Must have a version number.                                                                                                                                                                        |
+| **resources: roles**              | Required. `string ,string & permissions` | Must have a role id . Must have a role name. Must have a list of permissions required.                                                                                                                                          |
+| **resources: roles: permissions** | Required. `string & string`              | Must have a name in format `<permission-name>:<permission-mode>` or just `<permission-name>` in case of site role . `Optional:` If this is a site role, it should have a type attribute with value always equal to `site_role`. |
