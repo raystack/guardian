@@ -209,15 +209,16 @@ func TestGrantAccess(t *testing.T) {
 	// 	crypto := new(mocks.Crypto)
 	// 	p := bigquery.NewProvider("bigquery", crypto)
 	// 	expectedError := bigquery.ErrInvalidResourceType
-	// 	crypto.On("Decrypt", password).Return("", expectedError).Once()
+	// 	crypto.On("Decrypt", password).Return(password, nil).Once()
+	// 	validCredentials := bigquery.Credentials{
+	// 		ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+	// 		ResourceName:      "projects/resource-name",
+	// 	}
 
 	// 	pc := &domain.ProviderConfig{
-	// 		Type: "bigquery",
-	// 		URN:  "test-URN",
-	// 		Credentials: bigquery.Credentials{
-	// 			ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
-	// 			ResourceName:      "projects/resource-name",
-	// 		},
+	// 		Type:        "bigquery",
+	// 		URN:         "test-URN",
+	// 		Credentials: validCredentials,
 	// 		Resources: []*domain.ResourceConfig{
 	// 			{
 	// 				Type: "dataset",
