@@ -1,39 +1,41 @@
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-# Create Your First Policy
+# Create a policy
 
-### Pre-Requisites 
+### Pre-Requisites
 
-1. [Setting up server](../getting_started/configuration.md#starting-the-server)
-2. [Setting up the CLI](../getting_started/configuration.md#client-configuration) (if you want to create policy using CLI)
+1. [Setting up server](./configuration.md#starting-the-server)
+2. [Setting up the CLI](./configuration.md#client-configuration) (if you want to create policy using CLI)
 
 ### Example Policy
 
 ```yaml
 id: my-first-policy
 steps:
-- name: resource_owner_approval
-  description: approval from resource owner
-  strategy: manual
-  approvers:
-  - $appeal.resource.details.owner
-- name: admin_approval
-  description: approval from admin (John Doe)
-  strategy: manual
-  approvers:
-  - john.doe@company.com
+  - name: resource_owner_approval
+    description: approval from resource owner
+    strategy: manual
+    approvers:
+      - $appeal.resource.details.owner
+  - name: admin_approval
+    description: approval from admin (John Doe)
+    strategy: manual
+    approvers:
+      - john.doe@company.com
 ```
+
 Check [policy reference](../reference/policy.md) for more details on the policy configuration.<br/>
 
 **Explanation of this Policy example**<br/>
-When a Guardian user creates an appeal to the BigQuery resource (Playground here), this policy will applied, and the approvals required to approve that appeal are in the order as follows: <br/> 
+When a Guardian user creates an appeal to the BigQuery resource (Playground here), this policy will applied, and the approvals required to approve that appeal are in the order as follows: <br/>
+
 1. Approval from the resource owner ( this information is contained in the resource details object), and
 2. Approval from John Doe as an admin
 
 #### Policies can be created in the following ways:
 
-1. Using `guardian policy create` CLI command 
+1. Using `guardian policy create` CLI command
 2. Calling to `POST /api/v1beta1/policies` API
 
 <Tabs groupId="api">

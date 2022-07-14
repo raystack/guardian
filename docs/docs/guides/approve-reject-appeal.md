@@ -1,7 +1,7 @@
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-# Approve/Reject Appeal
+# Manage appeal
 
 Note: Approve/reject still not supported from the CLI currently.
 

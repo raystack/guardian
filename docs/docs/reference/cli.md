@@ -1,6 +1,6 @@
 # CLI
 
-`Guardian` is a command line tool used to interact with the main guardian service. Follow the [installation](../getting_started/installation) and [configuration](../getting_started/configuration) guides to set up the CLI tool for Guardian.
+`Guardian` is a command line tool used to interact with the main guardian service. Follow the [installation](../installation) and [configuration](../guides/configuration) guides to set up the CLI tool for Guardian.
 
 ## List of Commands
 
@@ -482,10 +482,13 @@ This command supports the following flags:
 ```
 -f, --file string   updated resource file path
 ```
+
 ** Here is an example below:**
+
 ```bash
 $ guardian resource set --id={{resource_id}} --values=<key1>=<value1> --values=<key2>=<value2>
 ```
+
 ### View Resource
 
 View a resource details

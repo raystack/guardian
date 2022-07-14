@@ -21,7 +21,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/odpf/guardian/edit/master/docs/',
-          sidebarCollapsed: false,
+          sidebarCollapsed: true,
           breadcrumbs: false,
         },
         blog: false,
@@ -52,9 +52,9 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         items: [
           {
             type: 'doc',
-            docId: 'overview/introduction',
+            docId: 'introduction',
             position: 'right',
-            label: 'Documentation',
+            label: 'Docs',
           },
           { to: 'docs/support', label: 'Support', position: 'right' },
           {
