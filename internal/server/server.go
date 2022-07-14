@@ -232,26 +232,42 @@ func makeHeaderMatcher(c *Config) func(key string) (string, bool) {
 	}
 }
 
-func fetchJobsToRun(config *Config) []JobConfig {
-	jobsToRun := make([]JobConfig, 0)
+func fetchJobsToRun(config *Config) []*JobConfig {
+	jobsToRun := make([]*JobConfig, 0)
 
 	if config.Jobs.FetchResources.Enabled {
 		job := config.Jobs.FetchResources
 		job.JobType = FetchResources
-		jobsToRun = append(jobsToRun, job)
+		jobsToRun = append(jobsToRun, &job)
 	}
 
 	if config.Jobs.ExpiringAccessNotification.Enabled {
 		job := config.Jobs.ExpiringAccessNotification
 		job.JobType = ExpiringAccessNotification
-		jobsToRun = append(jobsToRun, job)
+		jobsToRun = append(jobsToRun, &job)
 	}
 
 	if config.Jobs.RevokeExpiredAccess.Enabled {
 		job := config.Jobs.RevokeExpiredAccess
 		job.JobType = RevokeExpiredAccess
-		jobsToRun = append(jobsToRun, job)
+		jobsToRun = append(jobsToRun, &job)
+	}
+
+	jobScheduleMapping := fetchDefaultJobScheduleMapping()
+	for _, jobConfig := range jobsToRun {
+		schedule, ok := jobScheduleMapping[jobConfig.JobType]
+		if ok && jobConfig.Interval == "" {
+			jobConfig.Interval = schedule
+		}
 	}
 
 	return jobsToRun
+}
+
+func fetchDefaultJobScheduleMapping() map[JobType]string {
+	return map[JobType]string{
+		FetchResources:             "0 */2 * * *",
+		RevokeExpiredAccess:        "*/20 * * * *",
+		ExpiringAccessNotification: "0 9 * * *",
+	}
 }

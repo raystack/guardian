@@ -20,7 +20,7 @@ const (
 type JobConfig struct {
 	JobType  JobType
 	Enabled  bool   `mapstructure:"enabled" default:"true"`
-	Interval string `mapstructure:"interval" default:"0 9 * * *"`
+	Interval string `mapstructure:"interval"`
 }
 
 type Jobs struct {
