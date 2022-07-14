@@ -1,19 +1,13 @@
 module.exports = {
   docsSidebar: [
+    'introduction',
+    'installation',
+    'roadmap',
     {
       type: "category",
-      label: "Overview",
+      label: "Concepts",
       items: [
-        "overview/introduction",
-        "overview/roadmap",
-      ],
-    },
-    {
-      type: "category",
-      label: "Getting Started",
-      items: [
-        "getting_started/installation",
-        "getting_started/configuration",
+        "concepts/overview",
       ],
     },
     {
@@ -21,7 +15,7 @@ module.exports = {
       label: "Guides",
       items: [
         "guides/introduction",
-        "guides/overview",
+        "guides/configuration",
         "guides/create-policy",
         "guides/create-provider",
         "guides/update-resource",
@@ -34,19 +28,13 @@ module.exports = {
       type: "category",
       label: "Providers",
       items: [
-        "providers/bigquery",
         "providers/gcloud_iam",
+        "providers/bigquery",
         "providers/tableau",
         "providers/metabase",
         "providers/grafana",
       ],
     },
-    // {
-    //   type: "category",
-    //   label: "Concepts",
-    //   items: [
-    //   ],
-    // },
     {
       type: "category",
       label: "Reference",

@@ -1,7 +1,7 @@
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-# Create BigQuery Provider
+# Create a provider
 
 We are going to register a Google Cloud Bigquery provider with a dataset named `Playground` in this example.
 
