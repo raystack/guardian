@@ -13,36 +13,187 @@ import (
 )
 
 func TestCreateConfig(t *testing.T) {
-	providerURN := "test-URN"
-	crypto := new(mocks.Crypto)
-	client := new(mocks.GcloudIamClient)
-	p := gcloudiam.NewProvider("", crypto)
-	p.Clients = map[string]gcloudiam.GcloudIamClient{
-		providerURN: client,
-	}
-	crypto.On("Encrypt", "service-account-key-json").Return("encrypted-SAK", nil)
-	pc := &domain.ProviderConfig{
-		Resources: []*domain.ResourceConfig{
+
+	t.Run("should return error if error in credentials are invalid/mandatory fields are missing", func(t *testing.T) {
+		providerURN := "test-URN"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GcloudIamClient)
+		p := gcloudiam.NewProvider("", crypto)
+		p.Clients = map[string]gcloudiam.GcloudIamClient{
+			providerURN: client,
+		}
+
+		testcases := []struct {
+			pc   *domain.ProviderConfig
+			name string
+		}{
 			{
-				Type:  gcloudiam.ResourceTypeProject,
-				Roles: []*domain.Role{},
+				name: "invalid credentials struct",
+				pc: &domain.ProviderConfig{
+					Credentials: "invalid-credential-structure",
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: gcloudiam.ResourceTypeProject,
+						},
+					},
+				},
 			},
-		},
-		//	base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
+			{
+				name: "empty mandatory credentials",
+				pc: &domain.ProviderConfig{
+					Credentials: gcloudiam.Credentials{
+						ServiceAccountKey: "",
+						ResourceName:      "",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: gcloudiam.ResourceTypeProject,
+						},
+					},
+				},
+			},
+			// {
+			// 	name: "decoding SAKey base64 to Json gives an error",
+			// 	pc: &domain.ProviderConfig{
+			// 		Credentials: gcloudiam.Credentials{
+			// 			ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+			// 			ResourceName:      "projects/test-resource-name",
+			// 		},
+			// 		Resources: []*domain.ResourceConfig{
+			// 			{
+			// 				Type: gcloudiam.ResourceTypeProject,
+			// 			},
+			// 		},
+			// 	},
+			// },
+		}
 
-		// Credentials: map[string]interface{}{
-		// 	"resource_name": "projects/test-resource-name",
-		// },
-		Credentials: gcloudiam.Credentials{
-			ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
-			ResourceName:      "projects/test-resource-name",
-		},
-		URN: providerURN,
-	}
+		for _, tc := range testcases {
+			t.Run(tc.name, func(t *testing.T) {
+				actualError := p.CreateConfig(tc.pc)
+				assert.Error(t, actualError)
+			})
+		}
+	})
 
-	actualError := p.CreateConfig(pc)
+	t.Run("should return error if there resource config is invalid", func(t *testing.T) {
+		providerURN := "test-URN"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GcloudIamClient)
+		p := gcloudiam.NewProvider("", crypto)
+		p.Clients = map[string]gcloudiam.GcloudIamClient{
+			providerURN: client,
+		}
 
-	assert.NoError(t, actualError)
+		testcases := []struct {
+			pc *domain.ProviderConfig
+		}{
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: gcloudiam.Credentials{
+						ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+						ResourceName:      "projects/test-resource-name",
+					},
+				},
+			},
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: gcloudiam.Credentials{
+						ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+						ResourceName:      "projects/test-resource-name",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: "invalid resource type",
+						},
+					},
+				},
+			},
+			{
+				pc: &domain.ProviderConfig{
+					Credentials: gcloudiam.Credentials{
+						ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+						ResourceName:      "projects/test-resource-name",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: gcloudiam.ResourceTypeProject,
+							Roles: []*domain.Role{
+								{
+									ID:          "viewer",
+									Permissions: []interface{}{"wrong permissions"},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		for _, tc := range testcases {
+			actualError := p.CreateConfig(tc.pc)
+			assert.Error(t, actualError)
+		}
+	})
+
+	t.Run("should return error if error in encrypting the credentials", func(t *testing.T) {
+		providerURN := "test-URN"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GcloudIamClient)
+		p := gcloudiam.NewProvider("", crypto)
+		p.Clients = map[string]gcloudiam.GcloudIamClient{
+			providerURN: client,
+		}
+		expectedError := errors.New("error in encrypting SAK")
+		crypto.On("Encrypt", "service-account-key-json").Return("", expectedError)
+		pc := &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type:  gcloudiam.ResourceTypeProject,
+					Roles: []*domain.Role{},
+				},
+			},
+			//	base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
+			Credentials: gcloudiam.Credentials{
+				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+				ResourceName:      "projects/test-resource-name",
+			},
+			URN: providerURN,
+		}
+
+		actualError := p.CreateConfig(pc)
+
+		assert.Equal(t, expectedError, actualError)
+	})
+
+	t.Run("should return nil error and create the config on success", func(t *testing.T) {
+		providerURN := "test-URN"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GcloudIamClient)
+		p := gcloudiam.NewProvider("", crypto)
+		p.Clients = map[string]gcloudiam.GcloudIamClient{
+			providerURN: client,
+		}
+		crypto.On("Encrypt", "service-account-key-json").Return("encrypted-SAK", nil)
+		pc := &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type:  gcloudiam.ResourceTypeProject,
+					Roles: []*domain.Role{},
+				},
+			},
+			//	base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
+			Credentials: gcloudiam.Credentials{
+				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+				ResourceName:      "projects/test-resource-name",
+			},
+			URN: providerURN,
+		}
+
+		actualError := p.CreateConfig(pc)
+
+		assert.NoError(t, actualError)
+	})
 }
 
 func TestGetType(t *testing.T) {
