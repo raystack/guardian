@@ -148,13 +148,31 @@ func (s *ClientTestSuite) TestGetCollections() {
 	})
 }
 
-// func getTestClientConfig() *metabase.ClientConfig {
-// 	return &metabase.ClientConfig{
-// 		Username: "test-username",
-// 		Password: "test-password",
-// 		Host:     "http://localhost",
-// 	}
-// }
+func (s *ClientTestSuite) TestGetDatabases() {
+	s.Run("should get databases and nil error on success", func() {
+		s.setup()
+
+		testRequest, err := s.getTestRequest(http.MethodGet, "/api/database?include=tables", nil)
+		s.Require().NoError(err)
+
+		databasesResponseJSON := `[{"id":1,"name":"test-Name","cache_field_values_schedule":"testCache","timezone":"test-time","auto_run_queries":true,"metadata_sync_schedule":"test-sync","engine":"test-engine","native_permissions":"per" }]`
+		databaseResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
+		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
+
+		expectedDatabases := []metabase.Database{
+			{ID: 1, Name: "test-Name", CacheFieldValuesSchedule: "testCache", Timezone: "test-time", AutoRunQueries: true, MetadataSyncSchedule: "test-sync", Engine: "test-engine", NativePermissions: "per"},
+			//Tables: []metabase.Table{{ID: 2, Name: "tab1", DbId: 1, Database: &domain.Resource{ID: "5", ProviderType: "metabase", ProviderURN: "test-URN", Type: "database"} }} },
+		}
+
+		result, err1 := s.client.GetDatabases()
+		var databases []metabase.Database
+		for _, db := range result {
+			databases = append(databases, *db)
+		}
+		s.Nil(err1)
+		s.Equal(expectedDatabases, databases)
+	})
+}
 
 func (s *ClientTestSuite) getTestRequest(method, path string, body interface{}) (*http.Request, error) {
 	var buf io.ReadWriter
