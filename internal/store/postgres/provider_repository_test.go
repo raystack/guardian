@@ -2,6 +2,7 @@ package postgres_test
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"regexp"
 	"testing"
@@ -69,6 +70,31 @@ func (s *ProviderRepositoryTestSuite) TestCreate() {
 
 		s.Nil(err)
 		s.Equal(expectedID, actualID)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if provider is invalid", func() {
+		invalidProvider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				Credentials: make(chan int), // invalid credentials
+			},
+		}
+
+		actualError := s.repository.Create(invalidProvider)
+
+		s.EqualError(actualError, "json: unsupported type: chan int")
+	})
+
+	s.Run("should return error if db returns an error", func() {
+		expectedError := errors.New("unexpected error")
+		s.dbmock.ExpectBegin()
+		s.dbmock.ExpectQuery(".*").
+			WillReturnError(expectedError)
+		s.dbmock.ExpectRollback()
+
+		actualError := s.repository.Create(&domain.Provider{})
+
+		s.ErrorIs(actualError, expectedError)
 	})
 }
 
@@ -175,6 +201,98 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 	})
 }
 
+func (s *ProviderRepositoryTestSuite) TestGetOne() {
+	s.Run("should return provider details on success", func() {
+		timeNow := time.Now()
+
+		expectedType := "test-provider-type"
+		expectedURN := "test-provider-urn"
+		expectedProvider := &domain.Provider{
+			ID:   uuid.New().String(),
+			Type: expectedType,
+			URN:  expectedURN,
+			Config: &domain.ProviderConfig{
+				Type:                expectedType,
+				URN:                 expectedURN,
+				AllowedAccountTypes: []string{"test-account-type"},
+				Credentials: map[string]interface{}{
+					"foo": "bar",
+				},
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess:         true,
+					AllowActiveAccessExtensionIn: "24h",
+				},
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: "test-resource-type",
+						Policy: &domain.PolicyConfig{
+							ID:      "test-policy-id",
+							Version: 1,
+						},
+						Roles: []*domain.Role{
+							{
+								ID:          "test-id",
+								Name:        "test-name",
+								Description: "test-description",
+								Permissions: []interface{}{"test-permission"},
+							},
+						},
+					},
+				},
+			},
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		}
+		expectedConfig, err := json.Marshal(expectedProvider.Config)
+		s.Require().NoError(err)
+
+		expectedQuery := regexp.QuoteMeta(`SELECT * FROM "providers" WHERE type = $1 AND urn = $2 AND "providers"."deleted_at" IS NULL LIMIT 1`)
+		expectedRows := sqlmock.NewRows(s.rows).AddRow(expectedProvider.ID, expectedProvider.Type, expectedProvider.URN, string(expectedConfig), expectedProvider.CreatedAt, expectedProvider.UpdatedAt)
+		s.dbmock.ExpectQuery(expectedQuery).
+			WithArgs(expectedType, expectedURN).
+			WillReturnRows(expectedRows)
+
+		actualProvider, actualError := s.repository.GetOne(expectedType, expectedURN)
+
+		s.NoError(actualError)
+		s.Equal(expectedProvider, actualProvider)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if provider type is empty", func() {
+		actualProvider, actualError := s.repository.GetOne("", "test-urn")
+
+		s.ErrorIs(actualError, provider.ErrEmptyProviderType)
+		s.Nil(actualProvider)
+	})
+
+	s.Run("should return error if provider urn is empty", func() {
+		actualProvider, actualError := s.repository.GetOne("test-type", "")
+
+		s.ErrorIs(actualError, provider.ErrEmptyProviderURN)
+		s.Nil(actualProvider)
+	})
+
+	s.Run("should return not found error if record not found", func() {
+		s.dbmock.ExpectQuery(".*").WillReturnError(gorm.ErrRecordNotFound)
+		actualProvider, actualError := s.repository.GetOne("test-type", "test-urn")
+
+		s.ErrorIs(actualError, provider.ErrRecordNotFound)
+		s.Nil(actualProvider)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if db returns any error", func() {
+		expectedError := errors.New("unexpected error")
+		s.dbmock.ExpectQuery(".*").WillReturnError(expectedError)
+		actualProvider, actualError := s.repository.GetOne("test-type", "test-urn")
+
+		s.ErrorIs(actualError, expectedError)
+		s.Nil(actualProvider)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+}
+
 func (s *ProviderRepositoryTestSuite) TestGetTypes() {
 	s.Run("should return error if results empty", func() {
 		expectedError := errors.New("no provider types found")
@@ -215,6 +333,19 @@ func (s *ProviderRepositoryTestSuite) TestUpdate() {
 		actualError := s.repository.Update(&domain.Provider{})
 
 		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if provider is invalid", func() {
+		invalidProvider := &domain.Provider{
+			ID: uuid.New().String(),
+			Config: &domain.ProviderConfig{
+				Credentials: make(chan int), // invalid credentials
+			},
+		}
+
+		actualError := s.repository.Update(invalidProvider)
+
+		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
 
 	s.Run("should return error if got error from transaction", func() {

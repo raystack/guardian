@@ -1,8 +1,6 @@
 package v1beta1
 
 import (
-	"time"
-
 	"github.com/mitchellh/mapstructure"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/domain"
@@ -17,161 +15,193 @@ func NewAdapter() *adapter {
 }
 
 func (a *adapter) FromProviderProto(p *guardianv1beta1.Provider) (*domain.Provider, error) {
-	providerConfig, err := a.FromProviderConfigProto(p.GetConfig())
-	if err != nil {
-		return nil, err
+	provider := &domain.Provider{
+		ID:   p.GetId(),
+		Type: p.GetType(),
+		URN:  p.GetUrn(),
 	}
 
-	return &domain.Provider{
-		ID:        p.GetId(),
-		Type:      p.GetType(),
-		URN:       p.GetUrn(),
-		Config:    providerConfig,
-		CreatedAt: p.GetCreatedAt().AsTime(),
-		UpdatedAt: p.GetUpdatedAt().AsTime(),
-	}, nil
+	if p.GetConfig() != nil {
+		provider.Config = a.FromProviderConfigProto(p.GetConfig())
+	}
+
+	if p.GetCreatedAt() != nil {
+		provider.CreatedAt = p.GetCreatedAt().AsTime()
+	}
+	if p.GetUpdatedAt() != nil {
+		provider.UpdatedAt = p.GetUpdatedAt().AsTime()
+	}
+
+	return provider, nil
 }
 
-func (a *adapter) FromProviderConfigProto(pc *guardianv1beta1.ProviderConfig) (*domain.ProviderConfig, error) {
-	var appealConfig *domain.AppealConfig
+func (a *adapter) FromProviderConfigProto(pc *guardianv1beta1.ProviderConfig) *domain.ProviderConfig {
+	providerConfig := &domain.ProviderConfig{
+		Type:        pc.GetType(),
+		URN:         pc.GetUrn(),
+		Labels:      pc.GetLabels(),
+		Credentials: pc.GetCredentials().AsInterface(),
+	}
+
 	if pc.GetAppeal() != nil {
-		appealConfig = &domain.AppealConfig{}
+		appealConfig := &domain.AppealConfig{}
 		appealConfig.AllowPermanentAccess = pc.GetAppeal().GetAllowPermanentAccess()
 		appealConfig.AllowActiveAccessExtensionIn = pc.GetAppeal().GetAllowActiveAccessExtensionIn()
+		providerConfig.Appeal = appealConfig
 	}
 
-	resources := []*domain.ResourceConfig{}
-	for _, r := range pc.GetResources() {
-		roles := []*domain.Role{}
-		for _, role := range r.GetRoles() {
-			permissions := []interface{}{}
-			for _, p := range role.GetPermissions() {
-				permissions = append(permissions, p.AsInterface())
+	if pc.GetResources() != nil {
+		resources := []*domain.ResourceConfig{}
+		for _, r := range pc.GetResources() {
+			roles := []*domain.Role{}
+			for _, roleProto := range r.GetRoles() {
+				role := &domain.Role{
+					ID:          roleProto.GetId(),
+					Name:        roleProto.GetName(),
+					Description: roleProto.GetDescription(),
+				}
+
+				if roleProto.Permissions != nil {
+					permissions := []interface{}{}
+					for _, p := range roleProto.GetPermissions() {
+						permissions = append(permissions, p.AsInterface())
+					}
+					role.Permissions = permissions
+				}
+
+				roles = append(roles, role)
 			}
 
-			roles = append(roles, &domain.Role{
-				ID:          role.GetId(),
-				Name:        role.GetName(),
-				Description: role.GetDescription(),
-				Permissions: permissions,
+			resources = append(resources, &domain.ResourceConfig{
+				Type:   r.GetType(),
+				Policy: a.fromPolicyConfigProto(r.GetPolicy()),
+				Roles:  roles,
 			})
 		}
-
-		resources = append(resources, &domain.ResourceConfig{
-			Type:   r.GetType(),
-			Policy: a.fromPolicyConfigProto(r.GetPolicy()),
-			Roles:  roles,
-		})
+		providerConfig.Resources = resources
 	}
 
-	var allowedAccountTypes []string
 	if pc.GetAllowedAccountTypes() != nil {
-		allowedAccountTypes = pc.GetAllowedAccountTypes()
+		providerConfig.AllowedAccountTypes = pc.GetAllowedAccountTypes()
 	}
 
-	return &domain.ProviderConfig{
-		Type:                pc.GetType(),
-		URN:                 pc.GetUrn(),
-		Labels:              pc.GetLabels(),
-		Credentials:         pc.GetCredentials().AsInterface(),
-		Appeal:              appealConfig,
-		Resources:           resources,
-		AllowedAccountTypes: allowedAccountTypes,
-	}, nil
+	return providerConfig
 }
 
 func (a *adapter) ToProviderProto(p *domain.Provider) (*guardianv1beta1.Provider, error) {
-	config, err := a.ToProviderConfigProto(p.Config)
-	if err != nil {
-		return nil, err
+	providerProto := &guardianv1beta1.Provider{
+		Id:   p.ID,
+		Type: p.Type,
+		Urn:  p.URN,
 	}
 
-	return &guardianv1beta1.Provider{
-		Id:        p.ID,
-		Type:      p.Type,
-		Urn:       p.URN,
-		Config:    config,
-		CreatedAt: timestamppb.New(p.CreatedAt),
-		UpdatedAt: timestamppb.New(p.UpdatedAt),
-	}, nil
+	if p.Config != nil {
+		config, err := a.ToProviderConfigProto(p.Config)
+		if err != nil {
+			return nil, err
+		}
+		providerProto.Config = config
+	}
+
+	if !p.CreatedAt.IsZero() {
+		providerProto.CreatedAt = timestamppb.New(p.CreatedAt)
+	}
+	if !p.UpdatedAt.IsZero() {
+		providerProto.UpdatedAt = timestamppb.New(p.UpdatedAt)
+	}
+
+	return providerProto, nil
 }
 
 func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*guardianv1beta1.ProviderConfig, error) {
-	credentials, err := structpb.NewValue(pc.Credentials)
-	if err != nil {
-		return nil, err
+	providerConfigProto := &guardianv1beta1.ProviderConfig{
+		Type:   pc.Type,
+		Urn:    pc.URN,
+		Labels: pc.Labels,
 	}
 
-	var appeal *guardianv1beta1.ProviderConfig_AppealConfig
+	if pc.Credentials != nil {
+		credentials, err := structpb.NewValue(pc.Credentials)
+		if err != nil {
+			return nil, err
+		}
+		providerConfigProto.Credentials = credentials
+	}
+
 	if pc.Appeal != nil {
-		appeal = &guardianv1beta1.ProviderConfig_AppealConfig{
+		providerConfigProto.Appeal = &guardianv1beta1.ProviderConfig_AppealConfig{
 			AllowPermanentAccess:         pc.Appeal.AllowPermanentAccess,
 			AllowActiveAccessExtensionIn: pc.Appeal.AllowActiveAccessExtensionIn,
 		}
 	}
 
-	resources := []*guardianv1beta1.ProviderConfig_ResourceConfig{}
-	for _, rc := range pc.Resources {
-		roles := []*guardianv1beta1.Role{}
-		for _, role := range rc.Roles {
-			roleProto, err := a.ToRole(role)
-			if err != nil {
-				return nil, err
+	if pc.Resources != nil {
+		resources := []*guardianv1beta1.ProviderConfig_ResourceConfig{}
+		for _, rc := range pc.Resources {
+			roles := []*guardianv1beta1.Role{}
+			for _, role := range rc.Roles {
+				roleProto, err := a.ToRole(role)
+				if err != nil {
+					return nil, err
+				}
+				roles = append(roles, roleProto)
 			}
-			roles = append(roles, roleProto)
+
+			resources = append(resources, &guardianv1beta1.ProviderConfig_ResourceConfig{
+				Type:   rc.Type,
+				Policy: a.toPolicyConfigProto(rc.Policy),
+				Roles:  roles,
+			})
 		}
-
-		resources = append(resources, &guardianv1beta1.ProviderConfig_ResourceConfig{
-			Type:   rc.Type,
-			Policy: a.toPolicyConfigProto(rc.Policy),
-			Roles:  roles,
-		})
+		providerConfigProto.Resources = resources
 	}
 
-	var allowedAccountTypes []string
 	if pc.AllowedAccountTypes != nil {
-		allowedAccountTypes = pc.AllowedAccountTypes
+		providerConfigProto.AllowedAccountTypes = pc.AllowedAccountTypes
 	}
 
-	return &guardianv1beta1.ProviderConfig{
-		Type:                pc.Type,
-		Urn:                 pc.URN,
-		Labels:              pc.Labels,
-		Credentials:         credentials,
-		Appeal:              appeal,
-		Resources:           resources,
-		AllowedAccountTypes: allowedAccountTypes,
-	}, nil
+	return providerConfigProto, nil
 }
 
-func (a *adapter) ToProviderTypeProto(pt domain.ProviderType) (*guardianv1beta1.ProviderType, error) {
+func (a *adapter) ToProviderTypeProto(pt domain.ProviderType) *guardianv1beta1.ProviderType {
 	return &guardianv1beta1.ProviderType{
 		Name:          pt.Name,
 		ResourceTypes: pt.ResourceTypes,
-	}, nil
+	}
 }
 
 func (a *adapter) ToRole(role *domain.Role) (*guardianv1beta1.Role, error) {
-	permissions := []*structpb.Value{}
-	for _, p := range role.Permissions {
-		permission, err := structpb.NewValue(p)
-		if err != nil {
-			return nil, err
-		}
-		permissions = append(permissions, permission)
-	}
-
-	return &guardianv1beta1.Role{
+	roleProto := &guardianv1beta1.Role{
 		Id:          role.ID,
 		Name:        role.Name,
 		Description: role.Description,
-		Permissions: permissions,
-	}, nil
+	}
+
+	if role.Permissions != nil {
+		permissions := []*structpb.Value{}
+		for _, p := range role.Permissions {
+			permission, err := structpb.NewValue(p)
+			if err != nil {
+				return nil, err
+			}
+			permissions = append(permissions, permission)
+		}
+		roleProto.Permissions = permissions
+	}
+
+	return roleProto, nil
 }
 
-func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, error) {
-	var steps []*domain.Step
+func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
+	policy := &domain.Policy{
+		ID:          p.GetId(),
+		Version:     uint(p.GetVersion()),
+		Description: p.GetDescription(),
+		Labels:      p.GetLabels(),
+	}
+
 	if p.GetSteps() != nil {
+		var steps []*domain.Step
 		for _, s := range p.GetSteps() {
 			steps = append(steps, &domain.Step{
 				Name:            s.GetName(),
@@ -184,10 +214,11 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, er
 				Approvers:       s.GetApprovers(),
 			})
 		}
+		policy.Steps = steps
 	}
 
-	var requirements []*domain.Requirement
 	if p.GetRequirements() != nil {
+		var requirements []*domain.Requirement
 		for _, r := range p.GetRequirements() {
 			var on *domain.RequirementTrigger
 			if r.GetOn() != nil {
@@ -235,34 +266,38 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) (*domain.Policy, er
 				On:      on,
 				Appeals: additionalAppeals,
 			})
+			policy.Requirements = requirements
 		}
 	}
 
-	var iam *domain.IAMConfig
 	if p.GetIam() != nil {
-		iam = &domain.IAMConfig{
+		policy.IAM = &domain.IAMConfig{
 			Provider: domain.IAMProviderType(p.GetIam().GetProvider()),
 			Config:   p.GetIam().GetConfig().AsInterface(),
 			Schema:   p.GetIam().GetSchema(),
 		}
 	}
 
-	return &domain.Policy{
-		ID:           p.GetId(),
-		Version:      uint(p.GetVersion()),
-		Description:  p.GetDescription(),
-		Steps:        steps,
-		Requirements: requirements,
-		Labels:       p.GetLabels(),
-		IAM:          iam,
-		CreatedAt:    p.GetCreatedAt().AsTime(),
-		UpdatedAt:    p.GetUpdatedAt().AsTime(),
-	}, nil
+	if p.GetCreatedAt() != nil {
+		policy.CreatedAt = p.GetCreatedAt().AsTime()
+	}
+	if p.GetUpdatedAt() != nil {
+		policy.UpdatedAt = p.GetUpdatedAt().AsTime()
+	}
+
+	return policy
 }
 
 func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, error) {
-	var steps []*guardianv1beta1.Policy_ApprovalStep
+	policyProto := &guardianv1beta1.Policy{
+		Id:          p.ID,
+		Version:     uint32(p.Version),
+		Description: p.Description,
+		Labels:      p.Labels,
+	}
+
 	if p.Steps != nil {
+		var steps []*guardianv1beta1.Policy_ApprovalStep
 		for _, s := range p.Steps {
 			steps = append(steps, &guardianv1beta1.Policy_ApprovalStep{
 				Name:            s.Name,
@@ -275,10 +310,11 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 				Approvers:       s.Approvers,
 			})
 		}
+		policyProto.Steps = steps
 	}
 
-	var requirements []*guardianv1beta1.Policy_Requirement
 	if p.Requirements != nil {
+		var requirements []*guardianv1beta1.Policy_Requirement
 		for _, r := range p.Requirements {
 			var on *guardianv1beta1.Policy_Requirement_RequirementTrigger
 			if r.On != nil {
@@ -330,171 +366,91 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 				On:      on,
 				Appeals: additionalAppeals,
 			})
+			policyProto.Requirements = requirements
 		}
 	}
 
-	var iam *guardianv1beta1.Policy_IAM
 	if p.HasIAMConfig() {
 		config, err := structpb.NewValue(p.IAM.Config)
 		if err != nil {
 			return nil, err
 		}
 
-		iam = &guardianv1beta1.Policy_IAM{
+		policyProto.Iam = &guardianv1beta1.Policy_IAM{
 			Provider: string(p.IAM.Provider),
 			Config:   config,
 			Schema:   p.IAM.Schema,
 		}
 	}
 
-	return &guardianv1beta1.Policy{
-		Id:           p.ID,
-		Version:      uint32(p.Version),
-		Description:  p.Description,
-		Steps:        steps,
-		Requirements: requirements,
-		Labels:       p.Labels,
-		Iam:          iam,
-		CreatedAt:    timestamppb.New(p.CreatedAt),
-		UpdatedAt:    timestamppb.New(p.UpdatedAt),
-	}, nil
+	if !p.CreatedAt.IsZero() {
+		policyProto.CreatedAt = timestamppb.New(p.CreatedAt)
+	}
+	if !p.UpdatedAt.IsZero() {
+		policyProto.UpdatedAt = timestamppb.New(p.UpdatedAt)
+	}
+
+	return policyProto, nil
 }
 
 func (a *adapter) FromResourceProto(r *guardianv1beta1.Resource) *domain.Resource {
-	details := map[string]interface{}{}
-	if r.GetDetails() != nil {
-		details = r.GetDetails().AsMap()
-	}
-	return &domain.Resource{
+	resource := &domain.Resource{
 		ID:           r.GetId(),
 		ProviderType: r.GetProviderType(),
 		ProviderURN:  r.GetProviderUrn(),
 		Type:         r.GetType(),
 		URN:          r.GetUrn(),
 		Name:         r.GetName(),
-		Details:      details,
 		Labels:       r.GetLabels(),
-		CreatedAt:    r.GetCreatedAt().AsTime(),
-		UpdatedAt:    r.GetUpdatedAt().AsTime(),
 		IsDeleted:    r.GetIsDeleted(),
 	}
+
+	if r.GetDetails() != nil {
+		resource.Details = r.GetDetails().AsMap()
+	}
+
+	if r.GetCreatedAt() != nil {
+		resource.CreatedAt = r.GetCreatedAt().AsTime()
+	}
+	if r.GetUpdatedAt() != nil {
+		resource.UpdatedAt = r.GetUpdatedAt().AsTime()
+	}
+
+	return resource
 }
 
 func (a *adapter) ToResourceProto(r *domain.Resource) (*guardianv1beta1.Resource, error) {
-	var detailsProto *structpb.Struct
-	if r.Details != nil {
-		details, err := structpb.NewStruct(r.Details)
-		if err != nil {
-			return nil, err
-		}
-		detailsProto = details
-	}
-
-	return &guardianv1beta1.Resource{
+	resourceProto := &guardianv1beta1.Resource{
 		Id:           r.ID,
 		ProviderType: r.ProviderType,
 		ProviderUrn:  r.ProviderURN,
 		Type:         r.Type,
 		Urn:          r.URN,
 		Name:         r.Name,
-		Details:      detailsProto,
 		Labels:       r.Labels,
-		CreatedAt:    timestamppb.New(r.CreatedAt),
-		UpdatedAt:    timestamppb.New(r.UpdatedAt),
 		IsDeleted:    r.IsDeleted,
-	}, nil
-}
+	}
 
-func (a *adapter) FromAppealProto(appeal *guardianv1beta1.Appeal) (*domain.Appeal, error) {
-	resource := a.FromResourceProto(appeal.GetResource())
-
-	approvals := []*domain.Approval{}
-	for _, a := range appeal.GetApprovals() {
-		var actor *string
-		if a.GetActor() != "" {
-			actorStr := a.GetActor()
-			actor = &actorStr
+	if r.Details != nil {
+		details, err := structpb.NewStruct(r.Details)
+		if err != nil {
+			return nil, err
 		}
-
-		approvals = append(approvals, &domain.Approval{
-			ID:            a.GetId(),
-			Name:          a.GetName(),
-			AppealID:      a.GetId(),
-			Status:        a.GetStatus(),
-			Actor:         actor,
-			Reason:        a.GetReason(),
-			PolicyID:      a.GetPolicyId(),
-			PolicyVersion: uint(a.GetPolicyVersion()),
-			Approvers:     a.GetApprovers(),
-			CreatedAt:     appeal.GetCreatedAt().AsTime(),
-			UpdatedAt:     appeal.GetUpdatedAt().AsTime(),
-		})
+		resourceProto.Details = details
 	}
 
-	details := map[string]interface{}{}
-	if appeal.GetDetails() != nil {
-		details = appeal.GetDetails().AsMap()
+	if !r.CreatedAt.IsZero() {
+		resourceProto.CreatedAt = timestamppb.New(r.CreatedAt)
+	}
+	if !r.UpdatedAt.IsZero() {
+		resourceProto.UpdatedAt = timestamppb.New(r.UpdatedAt)
 	}
 
-	return &domain.Appeal{
-		ID:            appeal.GetId(),
-		ResourceID:    appeal.GetResourceId(),
-		PolicyID:      appeal.GetPolicyId(),
-		PolicyVersion: uint(appeal.GetPolicyVersion()),
-		Status:        appeal.GetStatus(),
-		AccountID:     appeal.GetAccountId(),
-		AccountType:   appeal.GetAccountType(),
-		CreatedBy:     appeal.GetCreatedBy(),
-		Creator:       appeal.GetCreator().AsInterface(),
-		Role:          appeal.GetRole(),
-		Options:       a.fromAppealOptionsProto(appeal.GetOptions()),
-		Labels:        appeal.GetLabels(),
-		RevokedBy:     appeal.GetRevokedBy(),
-		RevokedAt:     appeal.GetRevokedAt().AsTime(),
-		RevokeReason:  appeal.GetRevokeReason(),
-		Resource:      resource,
-		Approvals:     approvals,
-		CreatedAt:     appeal.GetCreatedAt().AsTime(),
-		UpdatedAt:     appeal.GetUpdatedAt().AsTime(),
-		Details:       details,
-	}, nil
+	return resourceProto, nil
 }
 
 func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal, error) {
-	var resource *guardianv1beta1.Resource
-	if appeal.Resource != nil {
-		r, err := a.ToResourceProto(appeal.Resource)
-		if err != nil {
-			return nil, err
-		}
-		resource = r
-	}
-
-	creator, err := structpb.NewValue(appeal.Creator)
-	if err != nil {
-		return nil, err
-	}
-
-	approvals := []*guardianv1beta1.Approval{}
-	for _, approval := range appeal.Approvals {
-		approvalProto, err := a.ToApprovalProto(approval)
-		if err != nil {
-			return nil, err
-		}
-
-		approvals = append(approvals, approvalProto)
-	}
-
-	var detailsProto *structpb.Struct
-	if appeal.Details != nil {
-		details, err := structpb.NewStruct(appeal.Details)
-		if err != nil {
-			return nil, err
-		}
-		detailsProto = details
-	}
-
-	return &guardianv1beta1.Appeal{
+	appealProto := &guardianv1beta1.Appeal{
 		Id:            appeal.ID,
 		ResourceId:    appeal.ResourceID,
 		PolicyId:      appeal.PolicyID,
@@ -503,75 +459,127 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 		AccountId:     appeal.AccountID,
 		AccountType:   appeal.AccountType,
 		CreatedBy:     appeal.CreatedBy,
-		Creator:       creator,
 		Role:          appeal.Role,
 		Options:       a.toAppealOptionsProto(appeal.Options),
 		Labels:        appeal.Labels,
 		RevokedBy:     appeal.RevokedBy,
-		RevokedAt:     timestamppb.New(appeal.RevokedAt),
 		RevokeReason:  appeal.RevokeReason,
-		Resource:      resource,
-		Approvals:     approvals,
-		CreatedAt:     timestamppb.New(appeal.CreatedAt),
-		UpdatedAt:     timestamppb.New(appeal.UpdatedAt),
-		Details:       detailsProto,
-	}, nil
+	}
+
+	if appeal.Resource != nil {
+		r, err := a.ToResourceProto(appeal.Resource)
+		if err != nil {
+			return nil, err
+		}
+		appealProto.Resource = r
+	}
+
+	if appeal.Creator != nil {
+		creator, err := structpb.NewValue(appeal.Creator)
+		if err != nil {
+			return nil, err
+		}
+		appealProto.Creator = creator
+	}
+
+	if appeal.Approvals != nil {
+		approvals := []*guardianv1beta1.Approval{}
+		for _, approval := range appeal.Approvals {
+			approvalProto, err := a.ToApprovalProto(approval)
+			if err != nil {
+				return nil, err
+			}
+
+			approvals = append(approvals, approvalProto)
+		}
+		appealProto.Approvals = approvals
+	}
+
+	if appeal.Details != nil {
+		details, err := structpb.NewStruct(appeal.Details)
+		if err != nil {
+			return nil, err
+		}
+		appealProto.Details = details
+	}
+
+	if !appeal.CreatedAt.IsZero() {
+		appealProto.CreatedAt = timestamppb.New(appeal.CreatedAt)
+	}
+	if !appeal.UpdatedAt.IsZero() {
+		appealProto.UpdatedAt = timestamppb.New(appeal.UpdatedAt)
+	}
+	if !appeal.RevokedAt.IsZero() {
+		appealProto.RevokedAt = timestamppb.New(appeal.RevokedAt)
+	}
+
+	return appealProto, nil
 }
 
 func (a *adapter) FromCreateAppealProto(ca *guardianv1beta1.CreateAppealRequest, authenticatedUser string) ([]*domain.Appeal, error) {
 	var appeals []*domain.Appeal
 
 	for _, r := range ca.GetResources() {
-		var options *domain.AppealOptions
-		if r.GetOptions() != nil {
-			if err := mapstructure.Decode(r.GetOptions().AsMap(), &options); err != nil {
-				return nil, err
-			}
-		}
-
-		appeals = append(appeals, &domain.Appeal{
+		appeal := &domain.Appeal{
 			AccountID:   ca.GetAccountId(),
 			AccountType: ca.GetAccountType(),
 			CreatedBy:   authenticatedUser,
 			ResourceID:  r.GetId(),
 			Role:        r.GetRole(),
-			Options:     options,
-			Details:     r.GetDetails().AsMap(),
-		})
+		}
+
+		if r.GetOptions() != nil {
+			var options *domain.AppealOptions
+			if err := mapstructure.Decode(r.GetOptions().AsMap(), &options); err != nil {
+				return nil, err
+			}
+			appeal.Options = options
+		}
+
+		if r.GetDetails() != nil {
+			appeal.Details = r.GetDetails().AsMap()
+		}
+
+		appeals = append(appeals, appeal)
 	}
 
 	return appeals, nil
 }
 
 func (a *adapter) ToApprovalProto(approval *domain.Approval) (*guardianv1beta1.Approval, error) {
-	var appealProto *guardianv1beta1.Appeal
-	if approval.Appeal != nil {
-		appeal, err := a.ToAppealProto(approval.Appeal)
-		if err != nil {
-			return nil, err
-		}
-		appealProto = appeal
-	}
-
-	var actor string
-	if approval.Actor != nil {
-		actor = *approval.Actor
-	}
-
-	return &guardianv1beta1.Approval{
+	approvalProto := &guardianv1beta1.Approval{
 		Id:            approval.ID,
 		Name:          approval.Name,
 		AppealId:      approval.AppealID,
-		Appeal:        appealProto,
 		Status:        approval.Status,
-		Actor:         actor,
 		Reason:        approval.Reason,
 		PolicyId:      approval.PolicyID,
 		PolicyVersion: uint32(approval.PolicyVersion),
 		Approvers:     approval.Approvers,
 		CreatedAt:     timestamppb.New(approval.CreatedAt),
 		UpdatedAt:     timestamppb.New(approval.UpdatedAt),
-	}, nil
+	}
+
+	if approval.Appeal != nil {
+		appeal, err := a.ToAppealProto(approval.Appeal)
+		if err != nil {
+			return nil, err
+		}
+		approvalProto.Appeal = appeal
+	}
+
+	if approval.Actor != nil {
+		approvalProto.Actor = *approval.Actor
+	}
+
+	if !approval.CreatedAt.IsZero() {
+		approvalProto.CreatedAt = timestamppb.New(approval.CreatedAt)
+	}
+	if !approval.UpdatedAt.IsZero() {
+		approvalProto.UpdatedAt = timestamppb.New(approval.UpdatedAt)
+	}
+
+	return approvalProto, nil
 }
 
 func (a *adapter) fromConditionProto(c *guardianv1beta1.Condition) *domain.Condition {
@@ -620,15 +628,16 @@ func (a *adapter) fromAppealOptionsProto(o *guardianv1beta1.AppealOptions) *doma
 		return nil
 	}
 
-	var expirationDate time.Time
-	if o.GetExpirationDate() != nil {
-		expirationDate = o.GetExpirationDate().AsTime()
+	options := &domain.AppealOptions{
+		Duration: o.GetDuration(),
 	}
 
-	return &domain.AppealOptions{
-		Duration:       o.GetDuration(),
-		ExpirationDate: &expirationDate,
+	if o.GetExpirationDate() != nil {
+		expDate := o.GetExpirationDate().AsTime()
+		options.ExpirationDate = &expDate
 	}
+
+	return options
 }
 
 func (a *adapter) toAppealOptionsProto(o *domain.AppealOptions) *guardianv1beta1.AppealOptions {
@@ -636,15 +645,15 @@ func (a *adapter) toAppealOptionsProto(o *domain.AppealOptions) *guardianv1beta1
 		return nil
 	}
 
-	var expirationDate *timestamppb.Timestamp
-	if o.ExpirationDate != nil {
-		expirationDate = timestamppb.New(*o.ExpirationDate)
+	optionsProto := &guardianv1beta1.AppealOptions{
+		Duration: o.Duration,
 	}
 
-	return &guardianv1beta1.AppealOptions{
-		Duration:       o.Duration,
-		ExpirationDate: expirationDate,
+	if o.ExpirationDate != nil {
+		optionsProto.ExpirationDate = timestamppb.New(*o.ExpirationDate)
 	}
+
+	return optionsProto
 }
 
 func (a *adapter) fromPolicyConfigProto(c *guardianv1beta1.PolicyConfig) *domain.PolicyConfig {

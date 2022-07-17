@@ -72,12 +72,12 @@ func (r *ApprovalRepository) ListApprovals(conditions *domain.ListApprovalsFilte
 		}
 
 		for _, m := range models {
-			appeal, err := m.ToDomain()
+			approval, err := m.ToDomain()
 			if err != nil {
 				return nil, err
 			}
 
-			records = append(records, appeal)
+			records = append(records, approval)
 		}
 	}
 
