@@ -72,6 +72,50 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."id" IN ($1,$2) AND "is_deleted" = $3 AND "resources"."deleted_at" IS NULL`),
 				expectedArgs:  []driver.Value{resourceID1, resourceID2, false},
 			},
+			{
+				filters: map[string]interface{}{
+					"type": "test-type",
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "type" = $2 AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{false, "test-type"},
+			},
+			{
+				filters: map[string]interface{}{
+					"name": "test-name",
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "name" = $2 AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{false, "test-name"},
+			},
+			{
+				filters: map[string]interface{}{
+					"provider_type": "test-provider-type",
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "provider_type" = $2 AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{false, "test-provider-type"},
+			},
+			{
+				filters: map[string]interface{}{
+					"provider_urn": "test-provider-urn",
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "provider_urn" = $2 AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{false, "test-provider-urn"},
+			},
+			{
+				filters: map[string]interface{}{
+					"urn": "test-urn",
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "urn" = $2 AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{false, "test-urn"},
+			},
+			{
+				filters: map[string]interface{}{
+					"details": map[string]string{
+						"foo": "bar",
+					},
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "details" #>> $2 = $3 AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{false, "{foo}", "bar"},
+			},
 		}
 
 		for _, tc := range testCases {
@@ -80,8 +124,28 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 			_, actualError := s.repository.Find(tc.filters)
 
 			s.Nil(actualError)
-			s.dbmock.ExpectationsWereMet()
+			s.NoError(s.dbmock.ExpectationsWereMet())
 		}
+	})
+
+	s.Run("should return error if filters has invalid value", func() {
+		invalidFilters := map[string]interface{}{
+			"name": make(chan int), // invalid value
+		}
+		actualRecords, actualError := s.repository.Find(invalidFilters)
+
+		s.Error(actualError)
+		s.Nil(actualRecords)
+	})
+
+	s.Run("should return error if filters validation returns an error", func() {
+		invalidFilters := map[string]interface{}{
+			"ids": []string{},
+		}
+		actualRecords, actualError := s.repository.Find(invalidFilters)
+
+		s.Error(actualError)
+		s.Nil(actualRecords)
 	})
 
 	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "resources"."deleted_at" IS NULL`)
@@ -96,6 +160,7 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 
 		s.EqualError(actualError, expectedError.Error())
 		s.Nil(actualRecords)
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return list of records on success", func() {
@@ -131,6 +196,7 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 
 		s.Equal(expectedRecords, actualRecords)
 		s.Nil(actualError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
 
@@ -154,6 +220,7 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return error if got error from db", func() {
@@ -165,6 +232,7 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE id = $1 AND "resources"."deleted_at" IS NULL LIMIT 1`)
@@ -190,7 +258,7 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 		_, actualError := s.repository.GetOne(expectedID)
 
 		s.Nil(actualError)
-		s.dbmock.ExpectationsWereMet()
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
 
@@ -250,6 +318,7 @@ func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
 		for i, r := range resources {
 			s.Equal(expectedIDs[i], r.ID)
 		}
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return nil error if resources input is empty", func() {
@@ -258,6 +327,20 @@ func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
 		err := s.repository.BulkUpsert(resources)
 
 		s.Nil(err)
+	})
+
+	s.Run("should return error if resources is invalid", func() {
+		invalidResources := []*domain.Resource{
+			{
+				Details: map[string]interface{}{
+					"foo": make(chan int), // invalid value
+				},
+			},
+		}
+
+		actualError := s.repository.BulkUpsert(invalidResources)
+
+		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
 }
 
@@ -270,6 +353,18 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
+	s.Run("should return error if resource is invalid", func() {
+		invalidResource := &domain.Resource{
+			ID: uuid.New().String(),
+			Details: map[string]interface{}{
+				"foo": make(chan int), // invalid value
+			},
+		}
+		actualError := s.repository.Update(invalidResource)
+
+		s.EqualError(actualError, "json: unsupported type: chan int")
+	})
+
 	s.Run("should return error if got error from transaction", func() {
 		expectedError := errors.New("db error")
 		s.dbmock.ExpectBegin()
@@ -280,6 +375,7 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 		actualError := s.repository.Update(&domain.Resource{ID: uuid.New().String()})
 
 		s.EqualError(actualError, expectedError.Error())
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	expectedQuery := regexp.QuoteMeta(`UPDATE "resources" SET "id"=$1,"details"=$2,"labels"=$3,"updated_at"=$4 WHERE id = $5`)
@@ -300,6 +396,7 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 
 		s.Nil(err)
 		s.Equal(expectedID, actualID)
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
 
@@ -319,6 +416,7 @@ func (s *ResourceRepositoryTestSuite) TestDelete() {
 
 		s.Error(err)
 		s.ErrorIs(err, expectedError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return error if resource not found", func() {
@@ -328,6 +426,7 @@ func (s *ResourceRepositoryTestSuite) TestDelete() {
 
 		s.Error(err)
 		s.ErrorIs(err, resource.ErrRecordNotFound)
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return nil on success", func() {
@@ -339,6 +438,7 @@ func (s *ResourceRepositoryTestSuite) TestDelete() {
 		err := s.repository.Delete(expectedID)
 
 		s.Nil(err)
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
 
@@ -358,6 +458,7 @@ func (s *ResourceRepositoryTestSuite) TestBatchDelete() {
 
 		s.Error(err)
 		s.ErrorIs(err, expectedError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return error if resource(s) not found", func() {
@@ -367,6 +468,7 @@ func (s *ResourceRepositoryTestSuite) TestBatchDelete() {
 
 		s.Error(err)
 		s.ErrorIs(err, resource.ErrRecordNotFound)
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return nil on success", func() {
@@ -378,6 +480,7 @@ func (s *ResourceRepositoryTestSuite) TestBatchDelete() {
 		err := s.repository.BatchDelete(expectedIDs)
 
 		s.Nil(err)
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
 

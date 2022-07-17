@@ -51,6 +51,17 @@ func (s *PolicyRepositoryTestSuite) TearDownTest() {
 }
 
 func (s *PolicyRepositoryTestSuite) TestCreate() {
+	s.Run("should return error if payload is invalid", func() {
+		policy := &domain.Policy{
+			IAM: &domain.IAMConfig{
+				Config: make(chan int),
+			},
+		}
+		actualError := s.repository.Create(policy)
+
+		s.EqualError(actualError, "serializing policy: json: unsupported type: chan int")
+	})
+
 	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","labels","requirements","iam","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`)
 
 	s.Run("should return error if got error from db transaction", func() {
