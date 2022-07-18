@@ -43,5 +43,6 @@ tmp
 .guardian.yaml
 guardian
 
-# vscode
+# editor configurations
 .vscode
+.idea/

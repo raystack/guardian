@@ -69,7 +69,7 @@ type policyService interface {
 type appealService interface {
 	GetByID(context.Context, string) (*domain.Appeal, error)
 	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
-	Create(context.Context, []*domain.Appeal) error
+	Create(context.Context, []*domain.Appeal, ...appeal.CreateAppealOption) error
 	MakeAction(context.Context, domain.ApprovalAction) (*domain.Appeal, error)
 	Cancel(context.Context, string) (*domain.Appeal, error)
 	Revoke(ctx context.Context, id, actor, reason string) (*domain.Appeal, error)
