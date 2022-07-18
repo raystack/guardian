@@ -18,7 +18,8 @@ const (
 )
 
 type JobConfig struct {
-	JobType  JobType
+	JobType JobType
+	// Enabled is set as true for backward compatibility. If the job needs to be disabled, it must be present in the config with this value as false.
 	Enabled  bool   `mapstructure:"enabled" default:"true"`
 	Interval string `mapstructure:"interval"`
 }
