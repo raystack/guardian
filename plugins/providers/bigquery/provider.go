@@ -12,17 +12,17 @@ import (
 
 // Provider for bigquery
 type Provider struct {
-	typeName  string
-	bqClients map[string]*bigQueryClient
-	crypto    domain.Crypto
+	typeName string
+	Clients  map[string]BigQueryClient
+	crypto   domain.Crypto
 }
 
 // NewProvider returns bigquery provider
 func NewProvider(typeName string, crypto domain.Crypto) *Provider {
 	return &Provider{
-		typeName:  typeName,
-		bqClients: map[string]*bigQueryClient{},
-		crypto:    crypto,
+		typeName: typeName,
+		Clients:  map[string]BigQueryClient{},
+		crypto:   crypto,
 	}
 }
 
@@ -216,10 +216,10 @@ func (p *Provider) GetAccountTypes() []string {
 	}
 }
 
-func (p *Provider) getBigQueryClient(credentials Credentials) (*bigQueryClient, error) {
+func (p *Provider) getBigQueryClient(credentials Credentials) (BigQueryClient, error) {
 	projectID := strings.Replace(credentials.ResourceName, "projects/", "", 1)
-	if p.bqClients[projectID] != nil {
-		return p.bqClients[projectID], nil
+	if p.Clients[projectID] != nil {
+		return p.Clients[projectID], nil
 	}
 
 	credentials.Decrypt(p.crypto)
@@ -228,7 +228,7 @@ func (p *Provider) getBigQueryClient(credentials Credentials) (*bigQueryClient, 
 		return nil, err
 	}
 
-	p.bqClients[projectID] = client
+	p.Clients[projectID] = client
 	return client, nil
 }
 
