@@ -70,20 +70,23 @@ func RunServer(config *Config) error {
 
 	// init scheduler
 	// TODO: allow timeout configuration for job handler context
-	tasks := []*scheduler.Task{
-		{
-			CronTab: config.Jobs.FetchResourcesInterval,
-			Func:    func() error { return jobHandler.FetchResources(context.Background()) },
-		},
-		{
-			CronTab: config.Jobs.RevokeExpiredAccessInterval,
-			Func:    func() error { return jobHandler.RevokeExpiredAppeals(context.Background()) },
-		},
-		{
-			CronTab: config.Jobs.ExpiringAccessNotificationInterval,
-			Func:    func() error { return jobHandler.AppealExpirationReminder(context.Background()) },
-		},
+
+	jobsMap := map[JobType]func(context.Context) error{
+		FetchResources:             jobHandler.FetchResources,
+		ExpiringAccessNotification: jobHandler.AppealExpirationReminder,
+		RevokeExpiredAccess:        jobHandler.RevokeExpiredAppeals,
 	}
+
+	enabledJobs := fetchJobsToRun(config)
+	tasks := make([]*scheduler.Task, 0)
+	for _, job := range enabledJobs {
+		task := scheduler.Task{
+			CronTab: job.Interval,
+			Func:    func() error { return jobsMap[job.JobType](context.Background()) },
+		}
+		tasks = append(tasks, &task)
+	}
+
 	s, err := scheduler.New(tasks)
 	if err != nil {
 		return err
@@ -226,5 +229,45 @@ func makeHeaderMatcher(c *Config) func(key string) (string, bool) {
 		default:
 			return runtime.DefaultHeaderMatcher(key)
 		}
+	}
+}
+
+func fetchJobsToRun(config *Config) []*JobConfig {
+	jobsToRun := make([]*JobConfig, 0)
+
+	if config.Jobs.FetchResources.Enabled {
+		job := config.Jobs.FetchResources
+		job.JobType = FetchResources
+		jobsToRun = append(jobsToRun, &job)
+	}
+
+	if config.Jobs.ExpiringAccessNotification.Enabled {
+		job := config.Jobs.ExpiringAccessNotification
+		job.JobType = ExpiringAccessNotification
+		jobsToRun = append(jobsToRun, &job)
+	}
+
+	if config.Jobs.RevokeExpiredAccess.Enabled {
+		job := config.Jobs.RevokeExpiredAccess
+		job.JobType = RevokeExpiredAccess
+		jobsToRun = append(jobsToRun, &job)
+	}
+
+	jobScheduleMapping := fetchDefaultJobScheduleMapping()
+	for _, jobConfig := range jobsToRun {
+		schedule, ok := jobScheduleMapping[jobConfig.JobType]
+		if ok && jobConfig.Interval == "" {
+			jobConfig.Interval = schedule
+		}
+	}
+
+	return jobsToRun
+}
+
+func fetchDefaultJobScheduleMapping() map[JobType]string {
+	return map[JobType]string{
+		FetchResources:             "0 */2 * * *",
+		RevokeExpiredAccess:        "*/20 * * * *",
+		ExpiringAccessNotification: "0 9 * * *",
 	}
 }
