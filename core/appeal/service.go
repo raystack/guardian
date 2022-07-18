@@ -153,7 +153,6 @@ func (s *Service) Find(ctx context.Context, filters *domain.ListAppealsFilter) (
 
 // Create record
 func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...CreateAppealOption) error {
-
 	createAppealOpts := &createAppealOptions{}
 	for _, opt := range opts {
 		opt(createAppealOpts)

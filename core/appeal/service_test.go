@@ -772,7 +772,6 @@ func (s *ServiceTestSuite) TestCreate() {
 
 	s.Run("additional appeal creation", func() {
 		s.Run("should use the overridding policy", func() {
-
 			input := &domain.Appeal{
 				ResourceID:    uuid.New().String(),
 				AccountID:     "user@example.com",

@@ -13,7 +13,7 @@ var (
 	ErrInvalidAllowedAccountTypes  = errors.New("allowed account types for noop provider is only \"user\"")
 	ErrInvalidCredentials          = errors.New("credentials should be empty")
 	ErrInvalidResourceConfigLength = errors.New("resource config length should be 1")
-	ErrInvalidResourceConfigType   = errors.New("resouce config type should be \"noop\"")
+	ErrInvalidResourceConfigType   = errors.New("resource config type should be \"noop\"")
 	ErrInvalidRolePermissions      = errors.New("permissions should be empty")
 )
 
