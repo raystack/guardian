@@ -82,7 +82,7 @@ type createAppealOptions struct {
 	IsAdditionalAppeal bool
 }
 
-func WithAdditionalAppealOption() CreateAppealOption {
+func CreateWithAdditionalAppeal() CreateAppealOption {
 	return func(opts *createAppealOptions) {
 		opts.IsAdditionalAppeal = true
 	}
@@ -800,7 +800,7 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 					additionalAppeal.PolicyID = aa.Policy.ID
 					additionalAppeal.PolicyVersion = uint(aa.Policy.Version)
 				}
-				if err := s.Create(ctx, []*domain.Appeal{additionalAppeal}, WithAdditionalAppealOption()); err != nil {
+				if err := s.Create(ctx, []*domain.Appeal{additionalAppeal}, CreateWithAdditionalAppeal()); err != nil {
 					if errors.Is(err, ErrAppealDuplicate) {
 						continue
 					}

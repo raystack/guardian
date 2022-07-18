@@ -839,7 +839,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 			s.mockAuditLogger.On("Log", mock.Anything, appeal.AuditKeyBulkInsert, mock.Anything).Return(nil).Once()
 
-			err := s.service.Create(context.TODO(), []*domain.Appeal{input}, appeal.WithAdditionalAppealOption())
+			err := s.service.Create(context.Background(), []*domain.Appeal{input}, appeal.CreateWithAdditionalAppeal())
 
 			s.NoError(err)
 			s.Equal("test-approval", input.Approvals[0].Name)
