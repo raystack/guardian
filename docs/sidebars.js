@@ -1,22 +1,34 @@
 module.exports = {
   docsSidebar: [
     'introduction',
+    'installation',
+    'roadmap',
+    {
+      type: "category",
+      label: "Concepts",
+      items: [
+        "concepts/overview",
+      ],
+    },
     {
       type: "category",
       label: "Guides",
       items: [
-        "guides/overview",
-        "guides/cli",
-        "guides/managing-policies",
-        "guides/managing-providers",
-        "guides/managing-resources",
-        "guides/managing-appeals",
+        "guides/introduction",
+        "guides/configuration",
+        "guides/create-policy",
+        "guides/create-provider",
+        "guides/update-resource",
+        "guides/create-appeal",
+        "guides/approve-reject-appeal",
+        "guides/complex-use-case",
       ],
     },
     {
       type: "category",
       label: "Providers",
       items: [
+        "providers/gcloud_iam",
         "providers/bigquery",
         "providers/tableau",
         "providers/metabase",
@@ -25,31 +37,25 @@ module.exports = {
     },
     {
       type: "category",
-      label: "Concepts",
-      items: [
-        "concepts/architecture",
-      ],
-    },
-    {
-      type: "category",
       label: "Reference",
       items: [
-        "reference/glossary",
+        "reference/api",
+        "reference/cli",
         "reference/appeal",
         "reference/policy",
         "reference/provider",
         "reference/resource",
+        "reference/glossary",
       ],
     },
     {
       type: "category",
       label: "Contribute",
       items: [
+        "contribute/architecture",
         "contribute/contribution",
         "contribute/development",
       ],
     },
-    'roadmap'
-
   ],
 };

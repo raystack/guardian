@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/odpf/guardian/plugins/identities"
-
 	"github.com/MakeNowJust/heredoc"
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/internal/server"
@@ -44,14 +42,12 @@ func runJobCmd() *cobra.Command {
 			$ guardian job run fetch_resources
 			$ guardian job run appeal_expiration_reminder
 			$ guardian job run appeal_expiration_revocation
-			$ guardian job run inactive_user_appeal_revocation
 		`),
 		Args: cobra.ExactValidArgs(1),
 		ValidArgs: []string{
 			"fetch_resources",
 			"appeal_expiration_reminder",
 			"appeal_expiration_revocation",
-			"inactive_user_appeal_revocation",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configFile, err := cmd.Flags().GetString("config")
@@ -86,20 +82,17 @@ func runJobCmd() *cobra.Command {
 				logger,
 				services.AppealService,
 				services.ProviderService,
-				services.PolicyService,
 				notifier,
-				identities.NewManager(crypto, validator),
 			)
 
-			jobs := map[string]func(context.Context) error{
-				"fetch_resources":                 handler.FetchResources,
-				"appeal_expiration_reminder":      handler.AppealExpirationReminder,
-				"appeal_expiration_revocation":    handler.RevokeExpiredAppeals,
-				"inactive_user_appeal_revocation": handler.RevokeInActiveUserAccess,
+			jobsMap := map[string]func(context.Context) error{
+				"fetch_resources":              handler.FetchResources,
+				"appeal_expiration_reminder":   handler.AppealExpirationReminder,
+				"appeal_expiration_revocation": handler.RevokeExpiredAppeals,
 			}
 
 			jobName := args[0]
-			job := jobs[jobName]
+			job := jobsMap[jobName]
 			if job == nil {
 				return fmt.Errorf("invalid job name: %s", jobName)
 			}

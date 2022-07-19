@@ -772,8 +772,6 @@ func (s *ServiceTestSuite) TestCreate() {
 
 	s.Run("additional appeal creation", func() {
 		s.Run("should use the overridding policy", func() {
-			ctx := context.WithValue(context.Background(), appeal.ContextKeyIsAdditionalAppealCreation{}, true)
-
 			input := &domain.Appeal{
 				ResourceID:    uuid.New().String(),
 				AccountID:     "user@example.com",
@@ -841,7 +839,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 			s.mockAuditLogger.On("Log", mock.Anything, appeal.AuditKeyBulkInsert, mock.Anything).Return(nil).Once()
 
-			err := s.service.Create(ctx, []*domain.Appeal{input})
+			err := s.service.Create(context.Background(), []*domain.Appeal{input}, appeal.CreateWithAdditionalAppeal())
 
 			s.NoError(err)
 			s.Equal("test-approval", input.Approvals[0].Name)

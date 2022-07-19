@@ -106,6 +106,7 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return error if record not found", func() {
@@ -121,6 +122,39 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if returned record is invalid", func() {
+		expectedID := uuid.New().String()
+		expectedRows := sqlmock.NewRows(s.columnNames).
+			AddRow(
+				"",
+				"",
+				"",
+				0,
+				"",
+				"",
+				"",
+				"",
+				"null",
+				"",
+				`{"duration":999}`, // invalid options
+				"null",
+				"null",
+				nil,
+				nil,
+			)
+		s.dbmock.
+			ExpectQuery(expectedQuery).
+			WithArgs(expectedID).
+			WillReturnRows(expectedRows)
+
+		actualResult, actualError := s.repository.GetByID(expectedID)
+
+		s.Nil(actualResult)
+		s.EqualError(actualError, "parsing appeal: json: cannot unmarshal number into Go struct field AppealOptions.duration of type string")
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return records on success", func() {
@@ -232,11 +266,23 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 
 			s.Nil(actualError)
 			s.Equal(tc.expectedRecord, actualRecord)
+			s.NoError(s.dbmock.ExpectationsWereMet())
 		}
 	})
 }
 
 func (s *AppealRepositoryTestSuite) TestFind() {
+	s.Run("should return error if filters validation returns an error", func() {
+		invalidFilters := &domain.ListAppealsFilter{
+			Statuses: []string{},
+		}
+
+		actualAppeals, actualError := s.repository.Find(invalidFilters)
+
+		s.Error(actualError)
+		s.Nil(actualAppeals)
+	})
+
 	s.Run("should return error if got any from db", func() {
 		expectedError := errors.New("db error")
 		s.dbmock.
@@ -247,6 +293,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should run query based on filters", func() {
@@ -305,6 +352,41 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 			},
 			{
 				filters: &domain.ListAppealsFilter{
+					ExpirationDateGreaterThan: timeNow,
+				},
+				expectedClauseQuery: `"options" -> 'expiration_date' > $1 AND "appeals"."deleted_at" IS NULL`,
+				expectedArgs:        []driver.Value{timeNow},
+			},
+			{
+				filters: &domain.ListAppealsFilter{
+					ProviderTypes: []string{"test-provider-type"},
+				},
+				expectedClauseQuery: `"Resource"."provider_type" IN ($1) AND "appeals"."deleted_at" IS NULL`,
+				expectedArgs:        []driver.Value{"test-provider-type"},
+			},
+			{
+				filters: &domain.ListAppealsFilter{
+					ProviderURNs: []string{"test-provider-urn"},
+				},
+				expectedClauseQuery: `"Resource"."provider_urn" IN ($1) AND "appeals"."deleted_at" IS NULL`,
+				expectedArgs:        []driver.Value{"test-provider-urn"},
+			},
+			{
+				filters: &domain.ListAppealsFilter{
+					ResourceTypes: []string{"test-resource-type"},
+				},
+				expectedClauseQuery: `"Resource"."type" IN ($1) AND "appeals"."deleted_at" IS NULL`,
+				expectedArgs:        []driver.Value{"test-resource-type"},
+			},
+			{
+				filters: &domain.ListAppealsFilter{
+					ResourceURNs: []string{"test-resource-urn"},
+				},
+				expectedClauseQuery: `"Resource"."urn" IN ($1) AND "appeals"."deleted_at" IS NULL`,
+				expectedArgs:        []driver.Value{"test-resource-urn"},
+			},
+			{
+				filters: &domain.ListAppealsFilter{
 					OrderBy: []string{"status"},
 				},
 				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$1,$2,$3,$4,$5], "status")`,
@@ -334,7 +416,51 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 			_, actualError := s.repository.Find(tc.filters)
 
 			s.Nil(actualError)
+			s.NoError(s.dbmock.ExpectationsWereMet())
 		}
+	})
+
+	s.Run("should return error if returned appeal is invalid", func() {
+		aggregatedColumns := s.columnNames
+		for _, c := range s.resourceColumnNames {
+			aggregatedColumns = append(aggregatedColumns, fmt.Sprintf("Resource__%s", c))
+		}
+		expectedRows := sqlmock.NewRows(aggregatedColumns).AddRow(
+			// appeal
+			uuid.New().String(),
+			"test-resource-id",
+			"test-policy-id",
+			1,
+			"test-status",
+			"test-account-id",
+			"test-account-type",
+			"test-created-by",
+			"null",
+			"test-role",
+			`{"duration":999}`, // invalid options
+			"null",
+			"null",
+			time.Now(),
+			time.Now(),
+
+			// resource
+			uuid.New().String(),
+			"test-provider-type",
+			"test-provider-urn",
+			"test-resource-type",
+			"test-resource-urn",
+			"null",
+			"null",
+			time.Now(),
+			time.Now(),
+		)
+		s.dbmock.ExpectQuery(".*").WillReturnRows(expectedRows)
+
+		actualRecords, actualError := s.repository.Find(&domain.ListAppealsFilter{})
+
+		s.Nil(actualRecords)
+		s.EqualError(actualError, "parsing appeal: json: cannot unmarshal number into Go struct field AppealOptions.duration of type string")
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return records on success", func() {
@@ -419,10 +545,25 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 
 		s.Equal(expectedRecords, actualRecords)
 		s.Nil(actualError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
 
 func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
+	s.Run("should return error if appeals input is invalid", func() {
+		invalidAppeals := []*domain.Appeal{
+			{
+				Details: map[string]interface{}{
+					"foo": make(chan int), // invalid value
+				},
+			},
+		}
+
+		actualErr := s.repository.BulkUpsert(invalidAppeals)
+
+		s.EqualError(actualErr, "json: unsupported type: chan int")
+	})
+
 	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","account_id","account_type","created_by","creator","role","options","labels","details","revoked_by","revoked_at","revoke_reason","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18),($19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) ON CONFLICT ("id") DO UPDATE SET "resource_id"="excluded"."resource_id","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","status"="excluded"."status","account_id"="excluded"."account_id","account_type"="excluded"."account_type","created_by"="excluded"."created_by","creator"="excluded"."creator","role"="excluded"."role","options"="excluded"."options","labels"="excluded"."labels","details"="excluded"."details","revoked_by"="excluded"."revoked_by","revoked_at"="excluded"."revoked_at","revoke_reason"="excluded"."revoke_reason","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
 
 	appeals := []*domain.Appeal{
@@ -473,6 +614,7 @@ func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
 		actualError := s.repository.BulkUpsert(appeals)
 
 		s.EqualError(actualError, expectedError.Error())
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	expectedIDs := []string{
@@ -497,10 +639,24 @@ func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
 		for i, a := range appeals {
 			s.Equal(expectedIDs[i], a.ID)
 		}
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
 
 func (s *AppealRepositoryTestSuite) TestUpdate() {
+	s.Run("should return error if appeal input is invalid", func() {
+		invalidAppeal := &domain.Appeal{
+			ID: uuid.New().String(),
+			Details: map[string]interface{}{
+				"foo": make(chan int), // invalid value
+			},
+		}
+
+		actualError := s.repository.Update(invalidAppeal)
+
+		s.EqualError(actualError, "json: unsupported type: chan int")
+	})
+
 	s.Run("should return error if got error from transaction", func() {
 		expectedError := errors.New("db error")
 		s.dbmock.ExpectBegin()
@@ -511,6 +667,7 @@ func (s *AppealRepositoryTestSuite) TestUpdate() {
 		actualError := s.repository.Update(&domain.Appeal{ID: uuid.New().String()})
 
 		s.EqualError(actualError, expectedError.Error())
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	expectedUpdateApprovalsQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","reason","policy_id","policy_version","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12),($13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) ON CONFLICT ("id") DO UPDATE SET "name"="excluded"."name","index"="excluded"."index","appeal_id"="excluded"."appeal_id","status"="excluded"."status","actor"="excluded"."actor","reason"="excluded"."reason","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","created_at"="excluded"."created_at","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
@@ -563,6 +720,7 @@ func (s *AppealRepositoryTestSuite) TestUpdate() {
 		err := s.repository.Update(appeal)
 
 		s.Nil(err)
+		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
 
