@@ -100,14 +100,6 @@ func (c *Config) parseAndValidate() error {
 		c.ProviderConfig.Credentials = credentials
 	}
 
-	if len(c.ProviderConfig.Resources) != 1 {
-		return ErrShouldHaveOneResource
-	}
-	r := c.ProviderConfig.Resources[0]
-	if err := c.validateResourceConfig(r); err != nil {
-		validationErrors = append(validationErrors, err)
-	}
-
 	if len(validationErrors) > 0 {
 		errorStrings := []string{}
 		for _, err := range validationErrors {

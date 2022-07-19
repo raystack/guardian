@@ -50,15 +50,41 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		t = ResourceTypeOrganization
 	}
 
-	return []*domain.Resource{
-		{
-			ProviderType: pc.Type,
-			ProviderURN:  pc.URN,
-			Type:         t,
-			URN:          creds.ResourceName,
-			Name:         fmt.Sprintf("%s - GCP IAM", creds.ResourceName),
-		},
-	}, nil
+	roles, err := p.GetRoles(pc, "project")
+	if err != nil {
+		return nil, err
+	}
+
+	rolesMap := make(map[string]*domain.Role)
+	for _, role := range roles {
+		rolesMap[role.ID] = role
+	}
+
+	resources := []*domain.Resource{}
+	for _, rc := range pc.Resources {
+		for _, ro := range rc.Roles {
+			if val, ok := rolesMap[ro.ID]; ok {
+				resource := &domain.Resource{
+					ProviderType: pc.Type,
+					ProviderURN:  pc.URN,
+					Type:         rc.Type,
+					URN:          fmt.Sprintf("%s:%s ", creds.ResourceName, val.ID),
+					Name:         val.Name,
+				}
+				resources = append(resources, resource)
+			}
+		}
+	}
+
+	gCloudResource := &domain.Resource{
+		ProviderType: pc.Type,
+		ProviderURN:  pc.URN,
+		Type:         t,
+		URN:          creds.ResourceName,
+		Name:         fmt.Sprintf("%s - GCP IAM", creds.ResourceName),
+	}
+	resources = append(resources, gCloudResource)
+	return resources, nil
 }
 
 func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
