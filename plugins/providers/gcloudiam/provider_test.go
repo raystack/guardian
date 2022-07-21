@@ -24,14 +24,56 @@ func TestGetType(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
-	t.Run("should return one item of resource", func(t *testing.T) {
+	t.Run("should return roles as resources", func(t *testing.T) {
+		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
+		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
+		p.Clients = map[string]gcloudiam.GcloudIamClient{
+			providerURN: client,
+		}
+
+		gcloudRole1 := &gcloudiam.Role{
+			Name:        "roles/bigquery.admin",
+			Title:       "BigQuery Admin",
+			Description: "Administer all BigQuery resources and data",
+		}
+
+		gcloudRole2 := &gcloudiam.Role{
+			Name:        "roles/apigateway.viewer",
+			Title:       "ApiGateway Viewer",
+			Description: "Read-only access to ApiGateway and related resources",
+		}
+		gCloudRolesList := []*gcloudiam.Role{}
+		gCloudRolesList = append(gCloudRolesList, gcloudRole1)
+		gCloudRolesList = append(gCloudRolesList, gcloudRole2)
+
+		client.On("GetRoles").Return(gCloudRolesList, nil).Once()
+
 		pc := &domain.ProviderConfig{
 			Type: domain.ProviderTypeGCloudIAM,
-			URN:  "test-project-id",
+			URN:  providerURN,
 			Credentials: map[string]interface{}{
-				"resource_name": "project/test-resource-name",
+				"resource_name":     "project/test-resource-name",
+				"ServiceAccountKey": "12345",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "Bigquery",
+					Roles: []*domain.Role{
+						{
+							ID: "roles/bigquery.admin",
+						},
+					},
+				},
+				{
+					Type: "Api_Gateway",
+					Roles: []*domain.Role{
+						{
+							ID: "roles/apigateway.viewer",
+						},
+					},
+				},
 			},
 		}
 
@@ -39,14 +81,20 @@ func TestGetResources(t *testing.T) {
 			{
 				ProviderType: pc.Type,
 				ProviderURN:  pc.URN,
-				Type:         gcloudiam.ResourceTypeProject,
-				URN:          "project/test-resource-name",
-				Name:         "project/test-resource-name - GCP IAM",
+				Type:         "Bigquery",
+				URN:          "project/test-resource-name:roles/bigquery.admin ",
+				Name:         "BigQuery Admin",
+			},
+			{
+				ProviderType: pc.Type,
+				ProviderURN:  pc.URN,
+				Type:         "Api_Gateway",
+				URN:          "project/test-resource-name:roles/apigateway.viewer ",
+				Name:         "ApiGateway Viewer",
 			},
 		}
 
 		actualResources, actualError := p.GetResources(pc)
-
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
 	})

@@ -3,7 +3,6 @@ package gcloudiam
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
@@ -43,14 +42,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
-	var t string
-	if strings.HasPrefix(creds.ResourceName, "project") {
-		t = ResourceTypeProject
-	} else if strings.HasPrefix(creds.ResourceName, "organization") {
-		t = ResourceTypeOrganization
-	}
-
-	roles, err := p.GetRoles(pc, "project")
+	roles, err := p.GetRoles(pc, ResourceTypeProject)
 	if err != nil {
 		return nil, err
 	}
@@ -76,14 +68,6 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		}
 	}
 
-	gCloudResource := &domain.Resource{
-		ProviderType: pc.Type,
-		ProviderURN:  pc.URN,
-		Type:         t,
-		URN:          creds.ResourceName,
-		Name:         fmt.Sprintf("%s - GCP IAM", creds.ResourceName),
-	}
-	resources = append(resources, gCloudResource)
 	return resources, nil
 }
 
