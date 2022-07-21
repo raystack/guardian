@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/odpf/guardian/domain"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -23,6 +24,7 @@ type Appeal struct {
 	CreatedBy     string
 	Creator       datatypes.JSON
 	Role          string
+	Permissions   pq.StringArray `gorm:"type:text[]"`
 	Options       datatypes.JSON
 	Labels        datatypes.JSON
 	Details       datatypes.JSON
@@ -99,6 +101,7 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	m.CreatedBy = a.CreatedBy
 	m.Creator = datatypes.JSON(creator)
 	m.Role = a.Role
+	m.Permissions = pq.StringArray(a.Permissions)
 	m.Options = datatypes.JSON(options)
 	m.Labels = datatypes.JSON(labels)
 	m.Details = datatypes.JSON(details)
@@ -173,6 +176,7 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		CreatedBy:     m.CreatedBy,
 		Creator:       creator,
 		Role:          m.Role,
+		Permissions:   []string(m.Permissions),
 		Options:       options,
 		Details:       details,
 		RevokedBy:     m.RevokedBy,

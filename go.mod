@@ -13,6 +13,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/imdario/mergo v0.3.12
+	github.com/lib/pq v1.10.0
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mcuadros/go-lookup v0.0.0-20200831155250-80f87a4fa5ee
 	github.com/mitchellh/mapstructure v1.4.3
@@ -67,7 +68,6 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.1 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
-	github.com/lib/pq v1.10.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
