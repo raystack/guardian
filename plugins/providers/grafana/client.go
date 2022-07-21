@@ -27,7 +27,7 @@ type ClientConfig struct {
 	HTTPClient HTTPClient
 }
 
-type permission struct {
+type PermissionRequest struct {
 	UserID     int    `json:"userId,omitempty"`
 	TeamID     int    `json:"teamId,omitempty"`
 	Permission int    `json:"permission"`
@@ -40,8 +40,8 @@ type user struct {
 	Email string `json:"email"`
 }
 
-type updatePermissionRequest struct {
-	Items []*permission `json:"items"`
+type UpdatePermissionRequest struct {
+	Items []*PermissionRequest `json:"items"`
 }
 
 type client struct {
@@ -100,7 +100,7 @@ func (c *client) GrantDashboardAccess(resource *Dashboard, user, role string) er
 		return err
 	}
 
-	nonInheritedPermissions := []*permission{}
+	nonInheritedPermissions := []*PermissionRequest{}
 	isPermissionUpdated := false
 	for _, permission := range permissions {
 		if !permission.Inherited {
@@ -115,7 +115,7 @@ func (c *client) GrantDashboardAccess(resource *Dashboard, user, role string) er
 	}
 
 	if !isPermissionUpdated {
-		nonInheritedPermissions = append(nonInheritedPermissions, &permission{
+		nonInheritedPermissions = append(nonInheritedPermissions, &PermissionRequest{
 			UserID:     userDetails.ID,
 			Permission: permissionCode,
 		})
@@ -138,7 +138,7 @@ func (c *client) RevokeDashboardAccess(resource *Dashboard, user, role string) e
 		return err
 	}
 
-	nonInheritedPermissions := []*permission{}
+	nonInheritedPermissions := []*PermissionRequest{}
 	isPermissionFound := false
 	for _, permission := range permissions {
 		if !permission.Inherited {
@@ -234,14 +234,14 @@ func (c *client) GetDashboards(folderId int) ([]*Dashboard, error) {
 	return dashboard, nil
 }
 
-func (c *client) getDashboardPermissions(id int) ([]*permission, error) {
+func (c *client) getDashboardPermissions(id int) ([]*PermissionRequest, error) {
 	url := fmt.Sprintf("/api/dashboards/id/%d/permissions", id)
 	req, err := c.newRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var permissions []*permission
+	var permissions []*PermissionRequest
 	if _, err := c.do(req, &permissions); err != nil {
 		return nil, err
 	}
@@ -249,8 +249,8 @@ func (c *client) getDashboardPermissions(id int) ([]*permission, error) {
 	return permissions, nil
 }
 
-func (c *client) updateDashboardPermissions(id int, permissions []*permission) error {
-	body := updatePermissionRequest{
+func (c *client) updateDashboardPermissions(id int, permissions []*PermissionRequest) error {
+	body := UpdatePermissionRequest{
 		Items: permissions,
 	}
 	url := fmt.Sprintf("/api/dashboards/id/%d/permissions", id)

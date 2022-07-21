@@ -195,3 +195,104 @@ func (s *ClientTestSuite) getTestRequest(method, path string, body interface{}) 
 	req.Header.Set("X-Metabase-Session", s.sessionToken)
 	return req, nil
 }
+
+func (s *ClientTestSuite) TestGetGroups() {
+	s.Run("should fetch groups and nil error on success", func() {
+		s.setup()
+
+		fetchGroupstestRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/group", nil)
+		s.Require().NoError(err)
+
+		d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}   //expected Database Permsissions
+		c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}} //expected Collection Permissions
+		group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
+
+		expectedgroupResponse := []*metabase.Group{&group}
+		//expectedDatabasePermission := metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}}
+		//	expectedCollectionPermission:= metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}
+
+		groupResponseJSON := `[{"name":"All Users","database":[{"name":"", "permission":["read","write"],"urn":"database:1","type":""}], "collection":[{"name":"","permission":["read","write"], "urn":"collection:1","type":""}] }]`
+		//{&metabase.Group{ID: 999,Name: "Test-Group-Name",DatabaseResources: []*metabase.GroupResource{{Name: "Database-Name",Permissions: []string{"Viewer-Permissions"},Urn: "test_URN",Type: ""   }}}}
+		groupResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
+		s.mockHttpClient.On("Do", fetchGroupstestRequest).Return(&groupResponse, nil).Once()
+
+		fetchDatabasePermissionstestRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
+		s.Require().NoError(err)
+
+		expectedDatabaseGroupResponse := metabase.ResourceGroupDetails{}
+		//TODO			expectedDatabasePermission
+		//metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permission": []string{"read", "write"}}}}
+		databaseResourceGroupsResponseJSON := `{[ "database:1": [{"urn":"group:1", "permissions":["read","write"]}] ]}`
+
+		//Working with minor fix required-  `{ "database:1": [{"urn":"group:1", "permissions":["read","write"]}] }`
+
+		//`{"database:1": { "permissions":["read","write"] } }`
+		//`"database:1": {{ "permissions":["read","write"], "urn":"group:1" }} `
+
+		//[[{"name":"", "permission":["read","write"],"urn":"database:1","type":""}]] `
+
+		//`{ "database:1": [ { "permission":["read","write"],"urn":"group:1" } ] }`
+
+		//	[{"urn":"group:1","permission":["read","write"] }]`
+		databaseResourceGroupsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databaseResourceGroupsResponseJSON)))}
+		s.mockHttpClient.On("Do", fetchDatabasePermissionstestRequest).Return(&databaseResourceGroupsResponse, nil).Once()
+
+		fetchCollectionPermissionstestRequest, err := s.getTestRequest(http.MethodGet, "/api/collection/graph", nil)
+		s.Require().NoError(err)
+
+		fetchCollectionPermissionsResponseJSON := ``
+		fetchCollectionPermissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(fetchCollectionPermissionsResponseJSON)))}
+		s.mockHttpClient.On("Do", fetchCollectionPermissionstestRequest).Return(&fetchCollectionPermissionsResponse, nil).Once()
+
+		actualGroupResponse, actualDatabaseGroupResponse, _, err := s.client.GetGroups()
+
+		s.Nil(err)
+		s.Equal(expectedgroupResponse, actualGroupResponse)
+		s.Equal(expectedDatabaseGroupResponse, actualDatabaseGroupResponse)
+	})
+
+}
+
+func (s *ClientTestSuite) TestGrantDatabaseAccess() {
+	s.Run("should grant access to database and nil error on success", func() {
+		s.setup()
+
+		testRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
+		databasesResponseJSON := `{"revision":1,"groups":[{"gid_1":[{"db_1":{"schema":"all"}},{"db_2":{"native":"write"}}]}  ] }`
+		databaseResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
+		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
+
+		s.Require().NoError(err)
+
+		expectedDatabase := &metabase.Database{
+			Name: "test-database",
+			ID:   999,
+		}
+		//[{"name":"All Users","database":[{"name":"", "permission":["read","write"],"urn":"database:1","type":""}], "collection":[{"name":"","permission":["read","write"], "urn":"collection:1","type":""}] }]
+		groups := map[string]*metabase.Group{
+			"gid_1": {ID: 1, Name: "db_1"},
+			"gid_2": {ID: 2, Name: "db_2"},
+		}
+		role := "schemas:all"
+		resource := expectedDatabase
+		email := "test-email@gojek.com" //test for getuser()
+		getUserUrl := fmt.Sprintf("/api/user?query=%s", email)
+		testUserRequest, err := s.getTestRequest(http.MethodGet, getUserUrl, nil)
+
+		userResponseJSON := `{"id":1,"email":"test-email@gojek.com"}`
+		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		s.mockHttpClient.On("Do", testUserRequest).Return(&userResponse, nil).Once()
+
+		//test for addGroupMember()
+
+		membershipURL := "/api/permissions/membership"
+		membershipRequest := `{"group_id":1,"user_id":5}`
+		testGroupMemberRequest, err := s.getTestRequest(http.MethodPost, membershipURL, membershipRequest)
+
+		response := http.Response{StatusCode: 200}
+		s.mockHttpClient.On("Do", testGroupMemberRequest).Return(&response, nil).Once()
+
+		actualError := s.client.GrantDatabaseAccess(resource, email, role, groups)
+		s.Nil(actualError)
+	})
+}
