@@ -173,37 +173,138 @@ func (s *ClientTestSuite) getTestRequest(method, path string, body interface{}) 
 	return req, nil
 }
 
-// func (s *ClientTestSuite) TestGetFlows() {
-// 	s.Run("should get folders and nil error on success", func() {
-// 		s.setup()
+func (s *ClientTestSuite) TestGetFlows() {
+	s.Run("should get flows and nil error on success", func() {
+		s.setup()
 
-// 		path := fmt.Sprintf("/api/%v/sites/%v/flows", s.apiVersion, "1.0")
+		path := fmt.Sprintf("/api/%v/sites/%v/flows", s.apiVersion, "1.0")
 
-// 		testRequest, err := s.getTestRequest(http.MethodGet, path, nil)
-// 		s.Require().NoError(err)
+		testRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+		s.Require().NoError(err)
 
-// 		expectedFlows := []tableau.Flow{
-// 			{
-// 				ID:   "flow-1",
-// 				Name: "fl_1",
-// 			},
-// 			{
-// 				ID:   "flow-2",
-// 				Name: "fl_2",
-// 			},
-// 		}
+		expectedFlows := []*tableau.Flow{
+			{
+				ID:   "flow-1",
+				Name: "fl_1",
+			},
+		}
 
-// 		flowResponseJSON := `[{"id":"flow-1","name":"fl_1"},{"id":"flow-2","name":"fl_2"}]`
-// 		folderResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(flowResponseJSON)))}
-// 		s.mockHttpClient.On("Do", testRequest).Return(&folderResponse, nil).Once()
+		flowResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"flows": {"flow":[{"id":"flow-1","name":"fl_1"}]}} `
 
-// 		result, err1 := s.client.GetFlows()
-// 		var flows []tableau.Flow
-// 		for _, fl := range result {
-// 			flows = append(flows, *fl)
-// 		}
+		folderResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(flowResponseJSON)))}
+		s.mockHttpClient.On("Do", testRequest).Return(&folderResponse, nil).Once()
 
-// 		s.Nil(err1)
-// 		s.Equal(expectedFlows, flows)
-// 	})
-// }
+		actualFlows, err1 := s.client.GetFlows()
+
+		s.Nil(err1)
+		s.Equal(expectedFlows, actualFlows)
+	})
+}
+
+func (s *ClientTestSuite) TestGetDataSources() {
+	s.Run("should get datasources and nil error on success", func() {
+		s.setup()
+
+		path := fmt.Sprintf("/api/%v/sites/%v/datasources", s.apiVersion, "1.0")
+
+		testRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+		s.Require().NoError(err)
+
+		expectedDataSources := []*tableau.DataSource{
+			{
+				ID:   "datasource-1",
+				Name: "ds_1",
+			},
+		}
+
+		DataSourcesJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"datasources": {"datasource":[{"id":"datasource-1","name":"ds_1"}]}} `
+
+		DataSourcesResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(DataSourcesJSON)))}
+		s.mockHttpClient.On("Do", testRequest).Return(&DataSourcesResponse, nil).Once()
+
+		actualDataSources, err1 := s.client.GetDataSources()
+
+		s.Nil(err1)
+		s.Equal(expectedDataSources, actualDataSources)
+	})
+}
+
+func (s *ClientTestSuite) TestGetViews() {
+	s.Run("should get views and nil error on success", func() {
+		s.setup()
+
+		path := fmt.Sprintf("/api/%v/sites/%v/views", s.apiVersion, "1.0")
+
+		testRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+		s.Require().NoError(err)
+
+		expectedViews := []*tableau.View{
+			{
+				ID:   "view-1",
+				Name: "vw_1",
+			},
+		}
+
+		ViewsResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"views": {"view":[{"id":"view-1","name":"vw_1"}]}} `
+
+		ViewsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(ViewsResponseJSON)))}
+		s.mockHttpClient.On("Do", testRequest).Return(&ViewsResponse, nil).Once()
+
+		actualViews, err1 := s.client.GetViews()
+
+		s.Nil(err1)
+		s.Equal(expectedViews, actualViews)
+	})
+}
+
+func (s *ClientTestSuite) TestGetMetrics() {
+	s.Run("should get metrics and nil error on success", func() {
+		s.setup()
+
+		path := fmt.Sprintf("/api/%v/sites/%v/metrics", s.apiVersion, "1.0")
+
+		testRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+		s.Require().NoError(err)
+
+		expectedMetrics := []*tableau.Metric{
+			{
+				ID:   "metric-1",
+				Name: "mt_1",
+			},
+		}
+
+		MetricsResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"metrics": {"metric":[{"id": "metric-1","name":"mt_1"}]}} `
+
+		MetricsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(MetricsResponseJSON)))}
+		s.mockHttpClient.On("Do", testRequest).Return(&MetricsResponse, nil).Once()
+
+		actualMetrics, err1 := s.client.GetMetrics()
+
+		s.Nil(err1)
+		s.Equal(expectedMetrics, actualMetrics)
+	})
+}
+
+func (s *ClientTestSuite) TestUpdateSiteRole() {
+	s.setup()
+
+	userEmail := "test-email@gojek.com"
+	filter := fmt.Sprintf("name:eq:%v", userEmail)
+	path := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", s.apiVersion, s.siteID, filter)
+
+	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil) //testing getUser()
+	s.Require().NoError(err)
+
+	SiteUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+
+	SiteUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(SiteUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&SiteUserResponse, nil).Once()
+
+	response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+	s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
+	role := "Viewer"
+
+	actualError := s.client.UpdateSiteRole(userEmail, role)
+
+	s.Nil(actualError)
+}
