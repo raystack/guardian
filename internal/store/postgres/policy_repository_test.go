@@ -38,6 +38,7 @@ func (s *PolicyRepositoryTestSuite) SetupTest() {
 		"version",
 		"description",
 		"steps",
+		"appeal",
 		"labels",
 		"requirements",
 		"iam",
@@ -62,7 +63,7 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 		s.EqualError(actualError, "serializing policy: json: unsupported type: chan int")
 	})
 
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","labels","requirements","iam","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","appeal","labels","requirements","iam","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`)
 
 	s.Run("should return error if got error from db transaction", func() {
 		p := &domain.Policy{}
@@ -72,6 +73,7 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 			p.Version,
 			p.Description,
 			"null",
+			"{\"duration_options\":null}",
 			"null",
 			"null",
 			"null",
@@ -100,6 +102,7 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 			p.Version,
 			p.Description,
 			"null",
+			"{\"duration_options\":null}",
 			"null",
 			"null",
 			"null",
@@ -143,6 +146,7 @@ func (s *PolicyRepositoryTestSuite) TestFind() {
 				ID:          "",
 				Version:     1,
 				Description: "",
+				Appeal:      domain.PolicyAppealConfig{DurationOptions: nil},
 				CreatedAt:   now,
 				UpdatedAt:   now,
 			},
@@ -153,6 +157,7 @@ func (s *PolicyRepositoryTestSuite) TestFind() {
 				1,
 				"",
 				"null",
+				"{\"duration_options\":null}",
 				"null",
 				"null",
 				"null",
@@ -225,6 +230,7 @@ func (s *PolicyRepositoryTestSuite) TestGetOne() {
 					tc.expectedVersion,
 					"",
 					"null",
+					"{\"duration_options\":null}",
 					"null",
 					"null",
 					"null",

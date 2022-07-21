@@ -488,6 +488,38 @@ func (s *ServiceTestSuite) TestCreate() {
 				}},
 				expectedError: appeal.ErrPolicyVersionNotFound,
 			},
+			{
+				name: "appeal duration not found in policy appeal config",
+				resources: []*domain.Resource{{
+					ID:           "1",
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				callMockValidateAppeal: true,
+				providers:              []*domain.Provider{testProvider},
+				policies: []*domain.Policy{{
+					ID:      "policy_id",
+					Version: uint(1),
+					Appeal: domain.PolicyAppealConfig{
+						DurationOptions: []domain.AppealDurationOption{
+							{Name: "1 Day", Value: "24h"},
+							{Name: "3 Days", Value: "72h"},
+							{Name: "90 Days", Value: "2160h"},
+						},
+					},
+				}},
+				appeals: []*domain.Appeal{{
+					ResourceID:    "1",
+					Role:          "role_1",
+					PolicyID:      "policy_id",
+					PolicyVersion: uint(1),
+					Options: &domain.AppealOptions{
+						Duration: "100h",
+					},
+				}},
+				expectedError: appeal.ErrOptionsDurationNotFound,
+			},
 		}
 
 		for _, tc := range testCases {
