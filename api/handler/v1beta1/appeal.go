@@ -195,6 +195,48 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 	}, nil
 }
 
+func (s *GRPCServer) RevokeAppeals(ctx context.Context, req *guardianv1beta1.RevokeAppealsRequest) (*guardianv1beta1.RevokeAppealsResponse, error) {
+	filters := &domain.ListAppealsFilter{}
+	if req.GetAccountId() != "" {
+		filters.AccountID = req.GetAccountId()
+	}
+	filters.Statuses = []string{domain.AppealStatusActive}
+	if req.GetProviderTypes() != nil {
+		filters.ProviderTypes = req.GetProviderTypes()
+	}
+	if req.GetProviderUrns() != nil {
+		filters.ProviderURNs = req.GetProviderUrns()
+	}
+	if req.GetResourceTypes() != nil {
+		filters.ResourceTypes = req.GetResourceTypes()
+	}
+	if req.GetResourceUrns() != nil {
+		filters.ResourceURNs = req.GetResourceUrns()
+	}
+
+	actor, err := s.getUser(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "failed to get metadata: actor")
+	}
+	reason := req.GetReason().GetReason()
+
+	appeals, err := s.appealService.BulkRevoke(ctx, filters, actor, reason)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to revoke appeals in bulk")
+	}
+	appealsProto := make([]*guardianv1beta1.Appeal, 0)
+	for _, appeal := range appeals {
+		appealProto, err := s.adapter.ToAppealProto(appeal)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
+		}
+		appealsProto = append(appealsProto, appealProto)
+	}
+	return &guardianv1beta1.RevokeAppealsResponse{
+		Appeals: appealsProto,
+	}, nil
+}
+
 func (s *GRPCServer) listAppeals(ctx context.Context, filters *domain.ListAppealsFilter) ([]*guardianv1beta1.Appeal, error) {
 	appeals, err := s.appealService.Find(ctx, filters)
 	if err != nil {

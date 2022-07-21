@@ -119,6 +119,12 @@ type Service struct {
 	TimeNow func() time.Time
 }
 
+type Key struct {
+	AccountId     string
+	PolicyId      string
+	PolicyVersion uint
+}
+
 // NewService returns service struct
 func NewService(deps ServiceDeps) *Service {
 	return &Service{
@@ -523,6 +529,83 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 	}
 
 	return revokedAppeal, nil
+}
+
+func (s *Service) BulkRevoke(ctx context.Context, filters *domain.ListAppealsFilter, actor, reason string) ([]*domain.Appeal, error) {
+	result := make([]*domain.Appeal, 0)
+	appeals, err := s.Find(ctx, filters)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(appeals) == 0 {
+		return nil, nil
+	}
+
+	batchSize := 10
+	timeLimiter := make(chan int, batchSize)
+
+	for i := 1; i <= batchSize; i++ {
+		timeLimiter <- i
+	}
+
+	go func() {
+		for range time.Tick(1 * time.Second) {
+			for i := 1; i <= batchSize; i++ {
+				timeLimiter <- i
+			}
+		}
+	}()
+
+	totalRequests := len(appeals)
+	done := make(chan *domain.Appeal, totalRequests)
+	for _, appeal := range appeals {
+		go s.expiredInActiveUserAppeal(ctx, timeLimiter, done, actor, reason, appeal)
+	}
+
+	var successRevoke []string
+	var failedRevoke []string
+	for {
+		select {
+		case appeal, _ := <-done:
+			accountId := appeal.AccountID
+			if appeal.Status == domain.AppealStatusTerminated {
+				successRevoke = append(successRevoke, appeal.ID)
+			} else {
+				failedRevoke = append(failedRevoke, appeal.ID)
+			}
+			result = append(result, appeal)
+			if len(result) == totalRequests {
+				s.logger.Info("successful appeal revocation", "user", accountId, "count", len(successRevoke), "ids", successRevoke)
+				s.logger.Info("failed appeal revocation", "user", accountId, "count", len(failedRevoke), "ids", failedRevoke)
+				return result, nil
+			}
+		}
+	}
+}
+
+func (s *Service) expiredInActiveUserAppeal(ctx context.Context, timeLimiter chan int, done chan *domain.Appeal, actor string, reason string, appeal *domain.Appeal) {
+	<-timeLimiter
+
+	revokedAppeal := &domain.Appeal{}
+	*revokedAppeal = *appeal
+	revokedAppeal.Status = domain.AppealStatusTerminated
+	revokedAppeal.RevokedAt = s.TimeNow()
+	revokedAppeal.RevokedBy = actor
+	revokedAppeal.RevokeReason = reason
+
+	if err := s.repo.Update(revokedAppeal); err != nil {
+		done <- appeal
+		return
+	}
+
+	if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
+		done <- appeal
+		s.logger.Error("failed to revoke appeal", "id", appeal.ID, "error", err)
+	} else {
+		done <- revokedAppeal
+		s.logger.Info("appeal revoked", "id", appeal.ID)
+	}
 }
 
 // getAppealsMapGroupedByStatus returns map[status]map[account_id]map[resource_id]map[role]*domain.Appeal, error
