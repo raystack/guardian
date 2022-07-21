@@ -48,7 +48,8 @@ func (s *GrpcHandlersSuite) TestListUserAppeals() {
 				Creator: map[string]interface{}{
 					"foo": "bar",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission"},
 				Options: &domain.AppealOptions{
 					Duration:       "24h",
 					ExpirationDate: &timeNow,
@@ -94,6 +95,7 @@ func (s *GrpcHandlersSuite) TestListUserAppeals() {
 					CreatedBy:     expectedUser,
 					Creator:       expectedCreator,
 					Role:          "test-role",
+					Permissions:   []string{"test-permission"},
 					Options: &guardianv1beta1.AppealOptions{
 						Duration:       "24h",
 						ExpirationDate: timestamppb.New(timeNow),

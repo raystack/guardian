@@ -790,6 +790,10 @@ func (s *ServiceTestSuite) TestCreate() {
 				Type:         "test-type",
 				URN:          "test-urn",
 			}
+			expectedPermissions := []string{
+				"test-permission-1",
+				"test-permission-2",
+			}
 			dummyProvider := &domain.Provider{
 				Type: dummyResource.ProviderType,
 				URN:  dummyResource.ProviderURN,
@@ -806,6 +810,10 @@ func (s *ServiceTestSuite) TestCreate() {
 							Roles: []*domain.Role{
 								{
 									ID: input.Role,
+									Permissions: []interface{}{
+										expectedPermissions[0],
+										expectedPermissions[1],
+									},
 								},
 							},
 						},
@@ -845,6 +853,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 			s.NoError(err)
 			s.Equal("test-approval", input.Approvals[0].Name)
+			s.Equal(expectedPermissions, input.Permissions)
 		})
 	})
 }

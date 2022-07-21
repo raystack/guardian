@@ -201,6 +201,12 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 			return fmt.Errorf("validating appeal based on provider: %w", err)
 		}
 
+		permissions, err := getPermissions(provider.Config, appeal.Resource.Type, appeal.Role)
+		if err != nil {
+			return fmt.Errorf("getting permissions list: %w", err)
+		}
+		appeal.Permissions = permissions
+
 		var policy *domain.Policy
 		if isAdditionalAppealCreation && appeal.PolicyID != "" && appeal.PolicyVersion != 0 {
 			policy = policies[appeal.PolicyID][appeal.PolicyVersion]
@@ -947,4 +953,22 @@ func validateAppeal(a *domain.Appeal, pendingAppealsMap map[string]map[string]ma
 	}
 
 	return nil
+}
+
+func getPermissions(pc *domain.ProviderConfig, resourceType, role string) ([]string, error) {
+	for _, rc := range pc.Resources {
+		if rc.Type == resourceType {
+			for _, r := range rc.Roles {
+				if r.ID == role {
+					var permissions []string
+					for _, p := range r.Permissions {
+						permissions = append(permissions, fmt.Sprintf("%s", p))
+					}
+					return permissions, nil
+				}
+			}
+			return nil, ErrInvalidRole
+		}
+	}
+	return nil, ErrResourceTypeNotFound
 }
