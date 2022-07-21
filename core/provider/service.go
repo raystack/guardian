@@ -37,6 +37,7 @@ type repository interface {
 }
 
 type Client interface {
+	providers.PermissionManager
 	providers.Client
 }
 
@@ -245,6 +246,11 @@ func (s *Service) GetRoles(ctx context.Context, id string, resourceType string) 
 	return c.GetRoles(p.Config, resourceType)
 }
 
+func (s *Service) GetPermissions(_ context.Context, pc *domain.ProviderConfig, resourceType, role string) ([]interface{}, error) {
+	c := s.getClient(pc.Type)
+	return c.GetPermissions(pc, resourceType, role)
+}
+
 func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domain.Provider) error {
 	if err := s.validateAppealParam(a); err != nil {
 		return err
@@ -428,7 +434,7 @@ func (s *Service) validateAppealParam(a *domain.Appeal) error {
 	return nil
 }
 
-func (s *Service) getClient(pType string) providers.Client {
+func (s *Service) getClient(pType string) Client {
 	return s.clients[pType]
 }
 

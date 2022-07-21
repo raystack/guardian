@@ -67,6 +67,7 @@ type providerService interface {
 	GrantAccess(context.Context, *domain.Appeal) error
 	RevokeAccess(context.Context, *domain.Appeal) error
 	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
+	GetPermissions(context.Context, *domain.ProviderConfig, string, string) ([]interface{}, error)
 }
 
 type resourceService interface {
@@ -201,7 +202,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 			return fmt.Errorf("validating appeal based on provider: %w", err)
 		}
 
-		permissions, err := getPermissions(provider.Config, appeal.Resource.Type, appeal.Role)
+		permissions, err := s.getPermissions(ctx, provider.Config, appeal.Resource.Type, appeal.Role)
 		if err != nil {
 			return fmt.Errorf("getting permissions list: %w", err)
 		}
@@ -955,20 +956,15 @@ func validateAppeal(a *domain.Appeal, pendingAppealsMap map[string]map[string]ma
 	return nil
 }
 
-func getPermissions(pc *domain.ProviderConfig, resourceType, role string) ([]string, error) {
-	for _, rc := range pc.Resources {
-		if rc.Type == resourceType {
-			for _, r := range rc.Roles {
-				if r.ID == role {
-					var permissions []string
-					for _, p := range r.Permissions {
-						permissions = append(permissions, fmt.Sprintf("%s", p))
-					}
-					return permissions, nil
-				}
-			}
-			return nil, ErrInvalidRole
-		}
+func (s *Service) getPermissions(ctx context.Context, pc *domain.ProviderConfig, resourceType, role string) ([]string, error) {
+	permissions, err := s.providerService.GetPermissions(ctx, pc, resourceType, role)
+	if err != nil {
+		return nil, err
 	}
-	return nil, ErrResourceTypeNotFound
+
+	var strPermissions []string
+	for _, p := range permissions {
+		strPermissions = append(strPermissions, fmt.Sprintf("%s", p))
+	}
+	return strPermissions, nil
 }

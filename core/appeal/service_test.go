@@ -182,6 +182,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		actualError := s.service.Create(context.Background(), []*domain.Appeal{})
 
 		s.EqualError(actualError, expectedError.Error())
+		s.mockRepository.AssertExpectations(s.T())
 	})
 
 	s.Run("should return error for invalid appeals", func() {
@@ -219,6 +220,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			existingAppeals               []*domain.Appeal
 			callMockValidateAppeal        bool
 			expectedAppealValidationError error
+			callMockGetPermissions        bool
 			appeals                       []*domain.Appeal
 			expectedError                 error
 		}{
@@ -439,6 +441,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				}},
 				providers:              []*domain.Provider{testProvider},
 				callMockValidateAppeal: true,
+				callMockGetPermissions: true,
 				appeals:                []*domain.Appeal{{ResourceID: "1"}},
 				expectedError:          appeal.ErrResourceTypeNotFound,
 			},
@@ -452,6 +455,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				}},
 				providers:              []*domain.Provider{testProvider},
 				callMockValidateAppeal: true,
+				callMockGetPermissions: true,
 				appeals: []*domain.Appeal{{
 					ResourceID: "1",
 					Role:       "role_1",
@@ -470,6 +474,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Type:         "resource_type",
 				}},
 				callMockValidateAppeal: true,
+				callMockGetPermissions: true,
 				providers:              []*domain.Provider{testProvider},
 				policies: []*domain.Policy{{
 					ID: "policy_id",
@@ -494,10 +499,16 @@ func (s *ServiceTestSuite) TestCreate() {
 				if tc.callMockValidateAppeal {
 					s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedAppealValidationError).Once()
 				}
+				if tc.callMockGetPermissions {
+					s.mockProviderService.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+						Return([]interface{}{}, nil).Once()
+				}
 
 				actualError := s.service.Create(context.Background(), tc.appeals)
 
 				s.Contains(actualError.Error(), tc.expectedError.Error())
+				s.mockProviderService.AssertExpectations(s.T())
+				s.mockRepository.AssertExpectations(s.T())
 			})
 		}
 	})
@@ -517,6 +528,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		actualError := s.service.Create(context.Background(), []*domain.Appeal{})
 
 		s.ErrorIs(actualError, expectedError)
+		s.mockRepository.AssertExpectations(s.T())
 	})
 
 	s.Run("should return appeals on success", func() {
@@ -553,7 +565,8 @@ func (s *ServiceTestSuite) TestCreate() {
 							},
 							Roles: []*domain.Role{
 								{
-									ID: "role_id",
+									ID:          "role_id",
+									Permissions: []interface{}{"test-permission-1"},
 								},
 							},
 						},
@@ -621,6 +634,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				CreatedBy:     accountID,
 				Creator:       expectedCreatorUser,
 				Role:          "role_id",
+				Permissions:   []string{"test-permission-1"},
 				Approvals: []*domain.Approval{
 					{
 						Name:          "step_1",
@@ -654,6 +668,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				CreatedBy:     accountID,
 				Creator:       expectedCreatorUser,
 				Role:          "role_id",
+				Permissions:   []string{"test-permission-1"},
 				Approvals: []*domain.Approval{
 					{
 						ID:            "1",
@@ -687,6 +702,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				CreatedBy:     accountID,
 				Creator:       expectedCreatorUser,
 				Role:          "role_id",
+				Permissions:   []string{"test-permission-1"},
 				Approvals: []*domain.Approval{
 					{
 						ID:            "1",
@@ -722,6 +738,8 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		s.mockProviderService.On("GetPermissions", mock.Anything, mock.Anything, "resource_type_1", "role_id").
+			Return([]interface{}{"test-permission-1"}, nil)
 		s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 		s.mockIAMManager.On("GetClient", mock.Anything, mock.Anything).Return(s.mockIAMClient, nil)
 		s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
@@ -766,8 +784,10 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		actualError := s.service.Create(context.Background(), appeals)
 
-		s.Equal(expectedResult, appeals)
 		s.Nil(actualError)
+		s.Equal(expectedResult, appeals)
+		s.mockProviderService.AssertExpectations(s.T())
+		s.mockRepository.AssertExpectations(s.T())
 	})
 
 	s.Run("additional appeal creation", func() {
@@ -841,6 +861,8 @@ func (s *ServiceTestSuite) TestCreate() {
 			s.mockPolicyService.On("Find", mock.Anything).Return([]*domain.Policy{dummyPolicy, overriddingPolicy}, nil).Once()
 			s.mockRepository.On("Find", mock.Anything).Return([]*domain.Appeal{}, nil).Once()
 			s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			s.mockProviderService.On("GetPermissions", mock.Anything, dummyProvider.Config, dummyResource.Type, input.Role).
+				Return(dummyProvider.Config.Resources[0].Roles[0].Permissions, nil)
 			s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 			s.mockIAMManager.On("GetClient", mock.Anything, mock.Anything).Return(s.mockIAMClient, nil)
 			s.mockIAMClient.On("GetUser", input.AccountID).Return(map[string]interface{}{}, nil)
@@ -898,7 +920,8 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 						},
 						Roles: []*domain.Role{
 							{
-								ID: "role_id",
+								ID:          "role_id",
+								Permissions: []interface{}{"test-permission"},
 							},
 						},
 					},
@@ -959,6 +982,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			CreatedBy:     accountID,
 			Creator:       expectedCreatorUser,
 			Role:          "role_id",
+			Permissions:   []string{"test-permission"},
 			Approvals: []*domain.Approval{
 				{
 					Name:          "step_1",
@@ -984,6 +1008,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			CreatedBy:     accountID,
 			Creator:       expectedCreatorUser,
 			Role:          "role_id",
+			Permissions:   []string{"test-permission"},
 			Approvals: []*domain.Approval{
 				{
 					ID:            "1",
@@ -1022,6 +1047,8 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	}
 	s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	s.mockProviderService.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return([]interface{}{"test-permission"}, nil)
 	s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 	s.mockIAMManager.On("GetClient", mock.Anything).Return(s.mockIAMClient, nil)
 	s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
