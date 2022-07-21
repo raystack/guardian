@@ -12,6 +12,7 @@ import (
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/providers/grafana"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -176,6 +177,8 @@ func (s *ClientTestSuite) getTestRequest(method, path string, body interface{}) 
 }
 
 func (s *ClientTestSuite) TestGrantDashboardAccess() {
+	s.setup()
+
 	user := "test-email@gojek.com"
 	role := "view" //valid roles are "view", "edit", "admin"
 
@@ -203,44 +206,24 @@ func (s *ClientTestSuite) TestGrantDashboardAccess() {
 	permissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(permissionsResponseJSON)))}
 	s.mockHttpClient.On("Do", permissionsRequest).Return(&permissionsResponse, nil).Once()
 
-	db_id := 1
-	/*
-		permissions := []*grafana.PermissionRequest{
-			{
-				UserID:     1,
-				Permission: 1,
-			},
-		}
-
-		body := grafana.UpdatePermissionRequest{
-			Items: permissions,
-		}
-	*/
-
-	body := "{\"items\":[{\"userId\":1,\"permission\":1}]}"
-
-	//"{\"items\":[{\"userId\":1,\"permission\":1}]}"
-	updatePermissionsURL := fmt.Sprintf("/api/dashboards/id/%d/permissions", db_id)
-	updatepermissionsRequest, err3 := s.getTestRequest(http.MethodPost, updatePermissionsURL, body)
-
-	s.Require().NoError(err3)
-
 	updatePermissionsResponseJSON := `[{"permission":1,"inherited":true}]`
 	updatePermissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updatePermissionsResponseJSON)))}
-	s.mockHttpClient.On("Do", updatepermissionsRequest).Return(&updatePermissionsResponse, nil).Once()
+	s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&updatePermissionsResponse, nil).Once()
 
 	actualError := s.client.GrantDashboardAccess(&resource, user, role)
 	s.Nil(actualError)
+	s.mockHttpClient.AssertExpectations(s.T())
 }
 
 func (s *ClientTestSuite) TestRevokeDashboardAccess() {
+	s.setup()
+
 	user := "test-email@gojek.com"
 	role := "view" //valid roles are "view", "edit", "admin"
 
 	url := fmt.Sprintf("/api/users/lookup?loginOrEmail=%s", user) //testing the getUser(user) Response
 	testRequest, err := s.getTestRequest(http.MethodGet, url, nil)
 	s.Require().NoError(err)
-
 	userResponseJSON := `{ "id":1,"email":"test-email@gojek.com" }`
 	userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 	s.mockHttpClient.On("Do", testRequest).Return(&userResponse, nil).Once()
@@ -255,35 +238,13 @@ func (s *ClientTestSuite) TestRevokeDashboardAccess() {
 	permissionsUrl := fmt.Sprintf("/api/dashboards/id/%d/permissions", id)
 	permissionsRequest, err2 := s.getTestRequest(http.MethodGet, permissionsUrl, nil)
 	s.Require().NoError(err2)
-
-	permissionsResponseJSON := `[{"permission":1,"inherited":true}]` //permission codes are: "view": 1, "edit": 2, "admin": 4
+	permissionsResponseJSON := `[{"permission":1,"inherited":false,"userID":1}]` //permission codes are: "view": 1, "edit": 2, "admin": 4
 	permissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(permissionsResponseJSON)))}
 	s.mockHttpClient.On("Do", permissionsRequest).Return(&permissionsResponse, nil).Once()
 
-	db_id := 1
-	//body : { "items" : [{"userId":1,  "permission":1}]  }
-
-	body := `{ "items" : [{"userId":1,  "permission":1}]  }` // best case working
-
-	/*	permissions := []*grafana.PermissionRequest{
-			{
-				UserID:     1,
-				Permission: 1,
-				Inherited:  false,
-			},
-		}
-
-		body := grafana.UpdatePermissionRequest{
-			Items: permissions,
-		}
-	*/
-	updatePermissionsURL := fmt.Sprintf("/api/dashboards/id/%d/permissions", db_id)
-	updatepermissionsRequest, err3 := s.getTestRequest(http.MethodPost, updatePermissionsURL, body)
-	s.Require().NoError(err3)
-
 	updatePermissionsResponseJSON := `[{"permission":1,"inherited":false}]`
 	updatePermissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updatePermissionsResponseJSON)))}
-	s.mockHttpClient.On("Do", updatepermissionsRequest).Return(&updatePermissionsResponse, nil).Once()
+	s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&updatePermissionsResponse, nil).Once()
 
 	actualError := s.client.RevokeDashboardAccess(&resource, user, role)
 	s.Nil(actualError)
