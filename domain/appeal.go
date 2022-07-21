@@ -76,7 +76,7 @@ func (a *Appeal) Cancel() {
 func (a *Appeal) Activate() error {
 	a.Status = AppealStatusActive
 
-	if a.Options != nil && a.Options.Duration != "" {
+	if a.Options != nil && a.Options.Duration != "" && a.Options.Duration != "0h" {
 		duration, err := time.ParseDuration(a.Options.Duration)
 		if err != nil {
 			return err
