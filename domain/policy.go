@@ -200,10 +200,11 @@ type PolicyAppealConfig struct {
 
 type AppealDurationOption struct {
 	// Name of the duration
-	// Ex: 1 Day, 3 Days
+	// Ex: 1 Day, 3 Days, Permanent
 	Name string `json:"name" yaml:"name" validate:"required"`
 	// Value of the actual duration
-	// Ex: 24h, 72h
+	// Ex: 24h, 72h, 0h
+	// `0h` is reserved for permanent access
 	Value string `json:"value" yaml:"value" validate:"required"`
 }
 
