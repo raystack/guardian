@@ -206,7 +206,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 		if err != nil {
 			return fmt.Errorf("getting permissions list: %w", err)
 		}
-		appeal.Permissions = permissions
+		appeal.Permissions = strPermissions
 
 		var policy *domain.Policy
 		if isAdditionalAppealCreation && appeal.PolicyID != "" && appeal.PolicyVersion != 0 {
