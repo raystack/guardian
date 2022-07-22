@@ -202,7 +202,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 			return fmt.Errorf("validating appeal based on provider: %w", err)
 		}
 
-		permissions, err := s.getPermissions(ctx, provider.Config, appeal.Resource.Type, appeal.Role)
+		strPermissions, err := s.getPermissions(ctx, provider.Config, appeal.Resource.Type, appeal.Role)
 		if err != nil {
 			return fmt.Errorf("getting permissions list: %w", err)
 		}
