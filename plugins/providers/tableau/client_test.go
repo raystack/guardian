@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/odpf/guardian/mocks"
@@ -295,16 +296,341 @@ func (s *ClientTestSuite) TestUpdateSiteRole() {
 	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil) //testing getUser()
 	s.Require().NoError(err)
 
-	SiteUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+	GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-	SiteUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(SiteUserResponseJSON)))}
-	s.mockHttpClient.On("Do", GetUserRequest).Return(&SiteUserResponse, nil).Once()
+	GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 	response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
 	s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 	role := "Viewer"
 
 	actualError := s.client.UpdateSiteRole(userEmail, role)
+
+	s.Nil(actualError)
+}
+
+func (s *ClientTestSuite) TestGrantWorkbookAccess() { //the body have to be updated later after fix getTestRequest
+	s.setup()
+
+	userEmail := "test-email@gojek.com"
+	filter := fmt.Sprintf("name:eq:%v", userEmail) //test getUser
+	path := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", s.apiVersion, s.siteID, filter)
+
+	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+	s.Require().NoError(err)
+
+	GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+
+	GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
+
+	//body:=
+	//request:=
+	response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+	s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
+
+	role := "write:allow"
+	resource := &tableau.Workbook{
+		ID: "wb_1",
+	}
+	actualError := s.client.GrantWorkbookAccess(resource, userEmail, role)
+
+	s.Nil(actualError)
+}
+
+func (s *ClientTestSuite) TestGrantFlowAccess() { //the body have to be updated later after fix getTestRequest
+	s.setup()
+
+	userEmail := "test-email@gojek.com"
+	filter := fmt.Sprintf("name:eq:%v", userEmail) //test getUser
+	path := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", s.apiVersion, s.siteID, filter)
+
+	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+	s.Require().NoError(err)
+
+	GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+
+	GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
+
+	//body:=
+	//request:=
+	response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+	s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
+
+	role := "write:allow"
+	resource := &tableau.Flow{
+		ID: "fl_1",
+	}
+	actualError := s.client.GrantFlowAccess(resource, userEmail, role)
+
+	s.Nil(actualError)
+}
+
+func (s *ClientTestSuite) TestGrantMetricAccess() { //the body have to be updated later after fix getTestRequest
+	s.setup()
+
+	userEmail := "test-email@gojek.com"
+	filter := fmt.Sprintf("name:eq:%v", userEmail) //test getUser
+	path := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", s.apiVersion, s.siteID, filter)
+
+	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+	s.Require().NoError(err)
+
+	GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+
+	GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
+
+	//body:=
+	//request:=
+	response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+	s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
+
+	role := "write:allow"
+	resource := &tableau.Metric{
+		ID: "mt_1",
+	}
+	actualError := s.client.GrantMetricAccess(resource, userEmail, role)
+
+	s.Nil(actualError)
+}
+
+func (s *ClientTestSuite) TestGrantDataSourceAccess() { //the body have to be updated later after fix getTestRequest
+	s.setup()
+
+	userEmail := "test-email@gojek.com"
+	filter := fmt.Sprintf("name:eq:%v", userEmail) //test getUser
+	path := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", s.apiVersion, s.siteID, filter)
+
+	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+	s.Require().NoError(err)
+
+	GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+
+	GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
+
+	//body:=
+	//request:=
+	response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+	s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
+
+	role := "write:allow"
+	resource := &tableau.DataSource{
+		ID: "ds_1",
+	}
+	actualError := s.client.GrantDataSourceAccess(resource, userEmail, role)
+
+	s.Nil(actualError)
+}
+
+func (s *ClientTestSuite) TestGrantViewAccess() { //the body have to be updated later after fix getTestRequest
+	s.setup()
+
+	userEmail := "test-email@gojek.com"
+	filter := fmt.Sprintf("name:eq:%v", userEmail) //test getUser
+	path := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", s.apiVersion, s.siteID, filter)
+
+	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+	s.Require().NoError(err)
+
+	GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+
+	GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
+
+	//body:=
+	//request:=
+	response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+	s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
+
+	role := "write:allow"
+	resource := &tableau.View{
+		ID: "vw_1",
+	}
+	actualError := s.client.GrantViewAccess(resource, userEmail, role)
+
+	s.Nil(actualError)
+}
+
+func (s *ClientTestSuite) TestRevokeWorkbookAccess() {
+	s.setup()
+
+	userEmail := "test-email@gojek.com"
+	filter := fmt.Sprintf("name:eq:%v", userEmail) //test getUser
+	path := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", s.apiVersion, s.siteID, filter)
+
+	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+	s.Require().NoError(err)
+
+	GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+
+	GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
+
+	userID := "userID-1"
+	role := "write:allow"
+	split := strings.Split(role, ":")
+	capabilityName := split[0]
+	capabilityMode := split[1]
+	resource := &tableau.Workbook{
+		ID: "wb_1",
+	}
+	deleteWbPath := fmt.Sprintf("/api/%v/sites/%v/workbooks/%v/permissions/users/%v/%v/%v", s.apiVersion, s.siteID, resource.ID, userID, capabilityName, capabilityMode)
+
+	deleteWbPermissionRequest, err := s.getTestRequest(http.MethodDelete, deleteWbPath, nil)
+	s.Require().NoError(err)
+
+	deleteWbPermissionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+	s.mockHttpClient.On("Do", deleteWbPermissionRequest).Return(&deleteWbPermissionResponse, nil).Once()
+
+	actualError := s.client.RevokeWorkbookAccess(resource, userEmail, role)
+
+	s.Nil(actualError)
+}
+
+func (s *ClientTestSuite) TestRevokeFlowAccess() {
+	s.setup()
+
+	userEmail := "test-email@gojek.com"
+	filter := fmt.Sprintf("name:eq:%v", userEmail) //test getUser
+	path := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", s.apiVersion, s.siteID, filter)
+
+	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+	s.Require().NoError(err)
+
+	GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+
+	GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
+
+	userID := "userID-1"
+	role := "write:allow"
+	split := strings.Split(role, ":")
+	capabilityName := split[0]
+	capabilityMode := split[1]
+	resource := &tableau.Flow{
+		ID: "fl_1",
+	}
+	deleteFlowPath := fmt.Sprintf("/api/%v/sites/%v/flows/%v/permissions/users/%v/%v/%v", s.apiVersion, s.siteID, resource.ID, userID, capabilityName, capabilityMode)
+
+	deleteFlowPermissionRequest, err := s.getTestRequest(http.MethodDelete, deleteFlowPath, nil)
+	s.Require().NoError(err)
+
+	deleteFlowPermissionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+	s.mockHttpClient.On("Do", deleteFlowPermissionRequest).Return(&deleteFlowPermissionResponse, nil).Once()
+
+	actualError := s.client.RevokeFlowAccess(resource, userEmail, role)
+
+	s.Nil(actualError)
+}
+
+func (s *ClientTestSuite) TestRevokeMetricAccess() {
+	s.setup()
+
+	userEmail := "test-email@gojek.com"
+	filter := fmt.Sprintf("name:eq:%v", userEmail) //test getUser
+	path := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", s.apiVersion, s.siteID, filter)
+
+	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+	s.Require().NoError(err)
+
+	GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+
+	GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
+
+	userID := "userID-1"
+	role := "write:allow"
+	split := strings.Split(role, ":")
+	capabilityName := split[0]
+	capabilityMode := split[1]
+	resource := &tableau.Metric{
+		ID: "mt_1",
+	}
+	deleteMetricPath := fmt.Sprintf("/api/%v/sites/%v/metrics/%v/permissions/users/%v/%v/%v", s.apiVersion, s.siteID, resource.ID, userID, capabilityName, capabilityMode)
+
+	deleteMetricPermissionRequest, err := s.getTestRequest(http.MethodDelete, deleteMetricPath, nil)
+	s.Require().NoError(err)
+
+	deleteMetricPermissionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+	s.mockHttpClient.On("Do", deleteMetricPermissionRequest).Return(&deleteMetricPermissionResponse, nil).Once()
+
+	actualError := s.client.RevokeMetricAccess(resource, userEmail, role)
+
+	s.Nil(actualError)
+}
+
+func (s *ClientTestSuite) TestRevokeDataSourceAccess() {
+	s.setup()
+
+	userEmail := "test-email@gojek.com"
+	filter := fmt.Sprintf("name:eq:%v", userEmail) //test getUser
+	path := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", s.apiVersion, s.siteID, filter)
+
+	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+	s.Require().NoError(err)
+
+	GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+
+	GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
+
+	userID := "userID-1"
+	role := "write:allow"
+	split := strings.Split(role, ":")
+	capabilityName := split[0]
+	capabilityMode := split[1]
+	resource := &tableau.DataSource{
+		ID: "ds_1",
+	}
+	deleteDsPath := fmt.Sprintf("/api/%v/sites/%v/datasources/%v/permissions/users/%v/%v/%v", s.apiVersion, s.siteID, resource.ID, userID, capabilityName, capabilityMode)
+
+	deleteDsPermissionRequest, err := s.getTestRequest(http.MethodDelete, deleteDsPath, nil)
+	s.Require().NoError(err)
+
+	deleteDsPermissionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+	s.mockHttpClient.On("Do", deleteDsPermissionRequest).Return(&deleteDsPermissionResponse, nil).Once()
+
+	actualError := s.client.RevokeDataSourceAccess(resource, userEmail, role)
+
+	s.Nil(actualError)
+}
+
+func (s *ClientTestSuite) TestRevokeViewAccess() {
+	s.setup()
+
+	userEmail := "test-email@gojek.com"
+	filter := fmt.Sprintf("name:eq:%v", userEmail) //test getUser
+	path := fmt.Sprintf("/api/%v/sites/%v/users?filter=%v", s.apiVersion, s.siteID, filter)
+
+	GetUserRequest, err := s.getTestRequest(http.MethodGet, path, nil)
+	s.Require().NoError(err)
+
+	GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
+
+	GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+	s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
+
+	userID := "userID-1"
+	role := "write:allow"
+	split := strings.Split(role, ":")
+	capabilityName := split[0]
+	capabilityMode := split[1]
+	resource := &tableau.View{
+		ID: "vw_1",
+	}
+	deleteViewPath := fmt.Sprintf("/api/%v/sites/%v/views/%v/permissions/users/%v/%v/%v", s.apiVersion, s.siteID, resource.ID, userID, capabilityName, capabilityMode)
+
+	deleteViewPermissionRequest, err := s.getTestRequest(http.MethodDelete, deleteViewPath, nil)
+	s.Require().NoError(err)
+
+	deleteViewPermissionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+	s.mockHttpClient.On("Do", deleteViewPermissionRequest).Return(&deleteViewPermissionResponse, nil).Once()
+
+	actualError := s.client.RevokeViewAccess(resource, userEmail, role)
 
 	s.Nil(actualError)
 }
