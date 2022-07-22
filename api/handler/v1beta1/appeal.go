@@ -54,7 +54,7 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListAppealsRequest) (*guardianv1beta1.ListAppealsResponse, error) {
 	filters := &domain.ListAppealsFilter{}
 	if req.GetAccountId() != "" {
-		filters.AccountID = req.GetAccountId()
+		filters.AccountID = []string{req.GetAccountId()}
 	}
 	if req.GetStatuses() != nil {
 		filters.Statuses = req.GetStatuses()
@@ -197,7 +197,7 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 
 func (s *GRPCServer) RevokeAppeals(ctx context.Context, req *guardianv1beta1.RevokeAppealsRequest) (*guardianv1beta1.RevokeAppealsResponse, error) {
 	filters := &domain.ListAppealsFilter{}
-	if req.GetAccountId() != "" {
+	if req.GetAccountId() != nil {
 		filters.AccountID = req.GetAccountId()
 	}
 	filters.Statuses = []string{domain.AppealStatusActive}
@@ -214,13 +214,9 @@ func (s *GRPCServer) RevokeAppeals(ctx context.Context, req *guardianv1beta1.Rev
 		filters.ResourceURNs = req.GetResourceUrns()
 	}
 
-	actor, err := s.getUser(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "failed to get metadata: actor")
-	}
-	reason := req.GetReason().GetReason()
+	reason := req.GetReason()
 
-	appeals, err := s.appealService.BulkRevoke(ctx, filters, actor, reason)
+	appeals, err := s.appealService.BulkRevoke(ctx, filters, domain.SystemActorName, reason)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to revoke appeals in bulk")
 	}

@@ -119,7 +119,7 @@ type ApprovalAction struct {
 
 type ListAppealsFilter struct {
 	CreatedBy                 string    `mapstructure:"created_by" validate:"omitempty,required"`
-	AccountID                 string    `mapstructure:"account_id" validate:"omitempty,required"`
+	AccountID                 []string  `mapstructure:"account_id" validate:"omitempty,required"`
 	ResourceID                string    `mapstructure:"resource_id" validate:"omitempty,required"`
 	Role                      string    `mapstructure:"role" validate:"omitempty,required"`
 	Statuses                  []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
