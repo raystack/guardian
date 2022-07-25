@@ -52,22 +52,7 @@ func TestCreateConfig(t *testing.T) {
 					},
 				},
 			},
-			// {
-			// 	name: "decoding SAKey base64 to Json gives an error",
-			// 	pc: &domain.ProviderConfig{
-			// 		Credentials: gcloudiam.Credentials{
-			// 			ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
-			// 			ResourceName:      "projects/test-resource-name",
-			// 		},
-			// 		Resources: []*domain.ResourceConfig{
-			// 			{
-			// 				Type: gcloudiam.ResourceTypeProject,
-			// 			},
-			// 		},
-			// 	},
-			// },
 		}
-
 		for _, tc := range testcases {
 			t.Run(tc.name, func(t *testing.T) {
 				actualError := p.CreateConfig(tc.pc)
@@ -76,7 +61,7 @@ func TestCreateConfig(t *testing.T) {
 		}
 	})
 
-	t.Run("should return error if there resource config is invalid", func(t *testing.T) {
+	t.Run("should return error if there parse and valid config is invalid", func(t *testing.T) {
 		providerURN := "test-URN"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcloudIamClient)
@@ -307,11 +292,8 @@ func TestGrantAccess(t *testing.T) {
 	t.Run("should return error if resource type is unknown", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
-		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
-		p.Clients = map[string]gcloudiam.GcloudIamClient{
-			providerURN: client,
-		}
+		crypto.On("Decrypt", "c2VydmljZS1hY2NvdW50LWtleS1qc29u").Return(`{"type":"service_account"}`, nil) // tests the newIamClient when p.Clients is not initialised in the provider config
 		expectedError := errors.New("invalid resource type")
 
 		pc := &domain.ProviderConfig{
@@ -320,6 +302,10 @@ func TestGrantAccess(t *testing.T) {
 				{
 					Type: "test-type",
 				},
+			},
+			Credentials: gcloudiam.Credentials{
+				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+				ResourceName:      "projects/test-resource-name",
 			},
 		}
 		a := &domain.Appeal{

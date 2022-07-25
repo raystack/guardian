@@ -75,43 +75,44 @@ func TestCreateConfig(t *testing.T) {
 		}
 	})
 
-	t.Run("should return error if there resource config is invalid", func(t *testing.T) {
-		providerURN := "test-URN"
+	t.Run("should return error if error in parse and validate configurations", func(t *testing.T) {
+		//providerURN := "test-URN"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.BigQueryClient)
 		p := bigquery.NewProvider("", crypto)
 		p.Clients = map[string]bigquery.BigQueryClient{
-			providerURN: client,
+			"test-resource-name": client,
 		}
 
 		testcases := []struct {
-			pc *domain.ProviderConfig
+			name string
+			pc   *domain.ProviderConfig
 		}{
 			{
+				name: "resource type invalid",
 				pc: &domain.ProviderConfig{
 					Credentials: bigquery.Credentials{
-						ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
-						ResourceName:      "projects/test-resource-name",
-					},
-				},
-			},
-			{
-				pc: &domain.ProviderConfig{
-					Credentials: bigquery.Credentials{
-						ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+						ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte(`{"type":"service_account"}`)),
 						ResourceName:      "projects/test-resource-name",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
-							Type: "invalid resource type",
+							Type: "not dataset or table resource type",
+							Roles: []*domain.Role{
+								{
+									ID:          "viewer",
+									Permissions: []interface{}{"wrong permissions"},
+								},
+							},
 						},
 					},
 				},
 			},
 			{
+				name: "wrong permissions for dataset type",
 				pc: &domain.ProviderConfig{
 					Credentials: bigquery.Credentials{
-						ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+						ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte(`{"type":"service_account"}`)),
 						ResourceName:      "projects/test-resource-name",
 					},
 					Resources: []*domain.ResourceConfig{
@@ -127,72 +128,132 @@ func TestCreateConfig(t *testing.T) {
 					},
 				},
 			},
+			{
+				name: "wrong permissions for table resource type",
+				pc: &domain.ProviderConfig{
+					Credentials: bigquery.Credentials{
+						ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte(`{"type":"service_account"}`)),
+						ResourceName:      "projects/test-resource-name",
+					},
+					Resources: []*domain.ResourceConfig{
+						{
+							Type: bigquery.ResourceTypeTable,
+							Roles: []*domain.Role{
+								{
+									ID:          "viewer",
+									Permissions: []interface{}{""},
+								},
+							},
+						},
+					},
+				},
+			},
 		}
+		crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
 
 		for _, tc := range testcases {
-			actualError := p.CreateConfig(tc.pc)
-			assert.Error(t, actualError)
+			t.Run(tc.name, func(t *testing.T) {
+				actualError := p.CreateConfig(tc.pc)
+				assert.Error(t, actualError)
+			})
 		}
 	})
 
-	// t.Run("should return error if error in encrypting the credentials", func(t *testing.T) {
-	// 	providerURN := "test-URN"
-	// 	crypto := new(mocks.Crypto)
-	// 	client := new(mocks.BigQueryClient)
-	// 	p := bigquery.NewProvider("", crypto)
-	// 	p.Clients = map[string]bigquery.BigQueryClient{
-	// 		"test-resource-name": client,
-	// 	}
-	// 	expectedError := errors.New("error in encrypting SAK")
-	// 	crypto.On("Encrypt", "service-account-key-json").Return("", expectedError)
-	// 	pc := &domain.ProviderConfig{
-	// 		Resources: []*domain.ResourceConfig{
-	// 			{
-	// 				Type:  bigquery.ResourceTypeDataset,
-	// 				Roles: []*domain.Role{},
-	// 			},
-	// 		},
-	// 		//	base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
-	// 		Credentials: bigquery.Credentials{
-	// 			ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
-	// 			ResourceName:      "projects/test-resource-name",
-	// 		},
-	// 		URN: providerURN,
-	// 	}
+	t.Run("should return error if error in parsing or validaing permissions", func(t *testing.T) {
+		providerURN := "test-URN"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.BigQueryClient)
+		p := bigquery.NewProvider("", crypto)
+		p.Clients = map[string]bigquery.BigQueryClient{
+			"test-resource-name": client,
+		}
+		pc := &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: bigquery.ResourceTypeDataset,
+					Roles: []*domain.Role{
+						{
+							ID:          "VIEWER",
+							Name:        "VIEWER",
+							Permissions: []interface{}{"invalid permissions for resouce type"},
+						},
+					},
+				},
+			},
+			Credentials: bigquery.Credentials{
+				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte(`{"type":"service_account"}`)), // private_key
+				ResourceName:      "projects/test-resource-name",
+			},
+			URN: providerURN,
+		}
+		//crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
 
-	// 	actualError := p.CreateConfig(pc)
+		actualError := p.CreateConfig(pc)
 
-	// 	assert.Equal(t, expectedError, actualError)
-	// })
+		assert.Error(t, actualError)
+	})
 
-	// t.Run("should return nil error and create the config on success", func(t *testing.T) {
-	// 	providerURN := "test-URN"
-	// 	crypto := new(mocks.Crypto)
-	// 	client := new(mocks.BigQueryClient)
-	// 	p := bigquery.NewProvider("", crypto)
-	// 	p.Clients = map[string]bigquery.BigQueryClient{
-	// 		"test-resource-name": client,
-	// 	}
-	// 	crypto.On("Encrypt", "service-account-key-json").Return("service-account-key-json", nil)
-	// 	pc := &domain.ProviderConfig{
-	// 		Resources: []*domain.ResourceConfig{
-	// 			{
-	// 				Type:  bigquery.ResourceTypeDataset,
-	// 				Roles: []*domain.Role{},
-	// 			},
-	// 		},
-	// 		//	base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
-	// 		Credentials: bigquery.Credentials{
-	// 			ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
-	// 			ResourceName:      "projects/test-resource-name",
-	// 		},
-	// 		URN: providerURN,
-	// 	}
+	t.Run("should return error if error in encrypting the credentials", func(t *testing.T) {
+		providerURN := "test-URN"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.BigQueryClient)
+		p := bigquery.NewProvider("", crypto)
+		p.Clients = map[string]bigquery.BigQueryClient{
+			"test-resource-name": client,
+		}
+		pc := &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type:  bigquery.ResourceTypeDataset,
+					Roles: []*domain.Role{},
+				},
+			},
+			Credentials: bigquery.Credentials{
+				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte(`{"type":"service_account"}`)),
+				ResourceName:      "projects/test-resource-name",
+			},
+			URN: providerURN,
+		}
+		expectedError := errors.New("error in encrypting SAK")
+		crypto.On("Encrypt", `{"type":"service_account"}`).Return("", expectedError)
+		actualError := p.CreateConfig(pc)
 
-	// 	actualError := p.CreateConfig(pc)
+		assert.Equal(t, expectedError, actualError)
+	})
 
-	// 	assert.NoError(t, actualError)
-	// })
+	t.Run("should return nil error and create the config on success", func(t *testing.T) {
+		providerURN := "test-URN"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.BigQueryClient)
+		p := bigquery.NewProvider("", crypto)
+		p.Clients = map[string]bigquery.BigQueryClient{
+			"test-resource-name": client,
+		}
+		pc := &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: bigquery.ResourceTypeDataset,
+					Roles: []*domain.Role{
+						{
+							ID:          "VIEWER",
+							Name:        "VIEWER",
+							Permissions: []interface{}{"READER"},
+						},
+					},
+				},
+			},
+			Credentials: bigquery.Credentials{
+				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte(`{"type":"service_account"}`)), // private_key
+				ResourceName:      "projects/test-resource-name",
+			},
+			URN: providerURN,
+		}
+		crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
+
+		actualError := p.CreateConfig(pc)
+
+		assert.NoError(t, actualError)
+	})
 }
 
 func TestGetResources(t *testing.T) {
@@ -262,7 +323,7 @@ func TestGetResources(t *testing.T) {
 				TableID:   "t_id",
 			},
 		}
-
+		//		crypto.On("Decrypt", "c2VydmljZS1hY2NvdW50LWtleS1qc29u").Return(`{"type":"service_account"}`, nil).Once()
 		client.On("GetDatasets", mock.Anything).Return(expectedDatasets, nil).Once()
 		client.On("GetTables", mock.Anything, mock.Anything).Return(expectedTables, nil).Once()
 		expectedResources := []*domain.Resource{
