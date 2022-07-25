@@ -281,6 +281,7 @@ func (s *ClientTestSuite) TestGetGroups() {
 
 		//test fetch database permissions
 		fetchDatabasePermissionstestRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
+		s.Require().NoError(err)
 		expectedDatabaseGroupResponse := metabase.ResourceGroupDetails{"database:3": []map[string]interface{}{{"name": "All Users", "permissions": []string{"schema:all"}, "urn": "group:1"}}, "database:4": []map[string]interface{}{{"name": "All Users", "permissions": []string{"native:write"}, "urn": "group:1"}}}
 		databaseResourceGroupsResponseJSON := `{"groups":{"1":{ "3":{"schema":"all"},"4":{"native":"write"}} } }`
 
