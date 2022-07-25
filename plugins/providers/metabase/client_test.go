@@ -266,47 +266,31 @@ func (s *ClientTestSuite) TestGetGroups() {
 		fetchGroupstestRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/group", nil)
 		s.Require().NoError(err)
 
-		d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}   //expected Database Permsissions
-		c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}} //expected Collection Permissions
-		group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
+		//test fetech group permissions
+		groups := []*metabase.Group{}
+		d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"schema:all"}}, {Urn: "database:2", Permissions: []string{"native:write"}}, {Urn: "database:3", Permissions: []string{"schema:all"}}, {Urn: "database:4", Permissions: []string{"native:write"}}}                     //expected Database Permsissions
+		c := []*metabase.GroupResource{{Name: "All Users", Urn: "collection:1", Permissions: []string{"read"}}, {Name: "All Users", Urn: "collection:2", Permissions: []string{"write"}}, {Urn: "collection:3", Permissions: []string{"read"}}, {Urn: "collection:4", Permissions: []string{"write"}}} //expected Collection Permissions
+		group := metabase.Group{ID: 1, Name: "All Users", DatabaseResources: d, CollectionResources: c}
 
-		expectedgroupResponse := []*metabase.Group{&group}
-		//expectedDatabasePermission := metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}}
-		//	expectedCollectionPermission:= metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}
+		groups = append(groups, &group)
+		expectedgroupResponse := groups
 
-		groupResponseJSON := `[{"name":"All Users","database":[{"name":"", "permission":["read","write"],"urn":"database:1","type":""}], "collection":[{"name":"","permission":["read","write"], "urn":"collection:1","type":""}] }]`
-		//{&metabase.Group{ID: 999,Name: "Test-Group-Name",DatabaseResources: []*metabase.GroupResource{{Name: "Database-Name",Permissions: []string{"Viewer-Permissions"},Urn: "test_URN",Type: ""   }}}}
+		groupResponseJSON := `[{"id":1,"name":"All Users","database":[{"permission":["schema:all"],"urn":"database:1"},{"permission":["native:write"],"urn":"database:2"}], "collection":[{"name":"All Users","permission":["read"], "urn":"collection:1"},{"name":"All Users","permission":["write"], "urn":"collection:2"}] }]`
 		groupResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
 		s.mockHttpClient.On("Do", fetchGroupstestRequest).Return(&groupResponse, nil).Once()
 
+		//test fetch database permissions
 		fetchDatabasePermissionstestRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
-		s.Require().NoError(err)
-		fetchDatabasePermissionsResponseJSON := `{"groups":{"gid_1":{ "db_1":{"schema":"all"},"db_2":{"native":"write"}} } }`
-		fetchDatabasePermissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(fetchDatabasePermissionsResponseJSON)))}
-		s.mockHttpClient.On("Do", fetchGroupstestRequest).Return(&fetchDatabasePermissionsResponse, nil).Once()
+		expectedDatabaseGroupResponse := metabase.ResourceGroupDetails{"database:3": []map[string]interface{}{{"name": "All Users", "permissions": []string{"schema:all"}, "urn": "group:1"}}, "database:4": []map[string]interface{}{{"name": "All Users", "permissions": []string{"native:write"}, "urn": "group:1"}}}
+		databaseResourceGroupsResponseJSON := `{"groups":{"1":{ "3":{"schema":"all"},"4":{"native":"write"}} } }`
 
-		expectedDatabaseGroupResponse := metabase.ResourceGroupDetails{}
-		//TODO			expectedDatabasePermission
-		//metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permission": []string{"read", "write"}}}}
-		databaseResourceGroupsResponseJSON := `{[ "database:1": [{"urn":"group:1", "permissions":["read","write"]}] ]}`
-
-		//Working with minor fix required-  `{ "database:1": [{"urn":"group:1", "permissions":["read","write"]}] }`
-
-		//`{"database:1": { "permissions":["read","write"] } }`
-		//`"database:1": {{ "permissions":["read","write"], "urn":"group:1" }} `
-
-		//[[{"name":"", "permission":["read","write"],"urn":"database:1","type":""}]] `
-
-		//`{ "database:1": [ { "permission":["read","write"],"urn":"group:1" } ] }`
-
-		//	[{"urn":"group:1","permission":["read","write"] }]`
 		databaseResourceGroupsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databaseResourceGroupsResponseJSON)))}
 		s.mockHttpClient.On("Do", fetchDatabasePermissionstestRequest).Return(&databaseResourceGroupsResponse, nil).Once()
 
 		fetchCollectionPermissionstestRequest, err := s.getTestRequest(http.MethodGet, "/api/collection/graph", nil)
 		s.Require().NoError(err)
 
-		fetchCollectionPermissionsResponseJSON := ``
+		fetchCollectionPermissionsResponseJSON := `{"groups":{"1":{ "3":"read","4":"write"} } }`
 		fetchCollectionPermissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(fetchCollectionPermissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", fetchCollectionPermissionstestRequest).Return(&fetchCollectionPermissionsResponse, nil).Once()
 
