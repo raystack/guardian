@@ -443,42 +443,42 @@ func (s *ClientTestSuite) TestGrantCollectionAccess() {
 	})
 }
 
-func (s *ClientTestSuite) TestRevokeCollectionAccess() {
+// func (s *ClientTestSuite) TestRevokeCollectionAccess() {
 
-	s.Run("should grant access to collection and nil error on success", func() {
-		s.setup()
+// 	s.Run("should grant access to collection and nil error on success", func() {
+// 		s.setup()
 
-		testRequest, err := s.getTestRequest(http.MethodGet, "/api/collection/graph", nil) //test getcollection access
-		s.Require().NoError(err)
-		collectionResponseJSON := `{"revision":1,"groups":{"51": {"999":"write"},"52":{"1000":"read"} } }`
-		collectionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(collectionResponseJSON)))}
-		s.mockHttpClient.On("Do", testRequest).Return(&collectionResponse, nil).Once()
+// 		testRequest, err := s.getTestRequest(http.MethodGet, "/api/collection/graph", nil) //test getcollection access
+// 		s.Require().NoError(err)
+// 		collectionResponseJSON := `{"revision":1,"groups":{"51": {"999":"write"},"52":{"1000":"read"} } }`
+// 		collectionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(collectionResponseJSON)))}
+// 		s.mockHttpClient.On("Do", testRequest).Return(&collectionResponse, nil).Once()
 
-		email := "test-email@gojek.com"
+// 		email := "test-email@gojek.com"
 
-		groupIDInt := 51 //test GetGroups
-		url := fmt.Sprintf("/api/permissions/group/%d", groupIDInt)
-		req, err := s.getTestRequest(http.MethodGet, url, nil)
-		groupResponseJSON := `{"id":51 ,"name":"999", "members":[{"id":1,"email":"test-email@gojek.com","membership_id":500,"group_ids":[51,52,53]}] }`
-		groupResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
-		s.mockHttpClient.On("Do", req).Return(&groupResponse, nil).Once()
+// 		groupIDInt := 51 //test GetGroups
+// 		url := fmt.Sprintf("/api/permissions/group/%d", groupIDInt)
+// 		req, err := s.getTestRequest(http.MethodGet, url, nil)
+// 		groupResponseJSON := `{"id":51 ,"name":"999", "members":[{"id":1,"email":"test-email@gojek.com","membership_id":500,"group_ids":[51,52,53]}] }`
+// 		groupResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
+// 		s.mockHttpClient.On("Do", req).Return(&groupResponse, nil).Once()
 
-		membershipID := 500 //test removeGroupMember
-		revokeGroupMemeberURL := fmt.Sprintf("/api/permissions/membership/%d", membershipID)
-		revokeGroupMemeberRequest, err := s.getTestRequest(http.MethodDelete, revokeGroupMemeberURL, nil)
-		revokeGroupMemeberResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
-		s.mockHttpClient.On("Do", revokeGroupMemeberRequest).Return(&revokeGroupMemeberResponse, nil).Once()
+// 		membershipID := 500 //test removeGroupMember
+// 		revokeGroupMemeberURL := fmt.Sprintf("/api/permissions/membership/%d", membershipID)
+// 		revokeGroupMemeberRequest, err := s.getTestRequest(http.MethodDelete, revokeGroupMemeberURL, nil)
+// 		revokeGroupMemeberResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+// 		s.mockHttpClient.On("Do", revokeGroupMemeberRequest).Return(&revokeGroupMemeberResponse, nil).Once()
 
-		role := "write" //valid collection roles are "read" and "write"
-		expectedCollection := &metabase.Collection{
-			ID:   999,
-			Name: "test-collection",
-		}
-		resource := expectedCollection
-		actualError := s.client.RevokeCollectionAccess(resource, email, role)
-		s.Nil(actualError)
-	})
-}
+// 		role := "write" //valid collection roles are "read" and "write"
+// 		expectedCollection := &metabase.Collection{
+// 			ID:   999,
+// 			Name: "test-collection",
+// 		}
+// 		resource := expectedCollection
+// 		actualError := s.client.RevokeCollectionAccess(resource, email, role)
+// 		s.Nil(actualError)
+// 	})
+// }
 
 func (s *ClientTestSuite) TestGrantGroupAccesss() {
 
