@@ -28,7 +28,6 @@ func TestGetType(t *testing.T) {
 func TestCreateConfig(t *testing.T) {
 
 	t.Run("should return error if error in credentials are invalid/mandatory fields are missing", func(t *testing.T) {
-		//providerURN := "test-URN"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.BigQueryClient)
 		p := bigquery.NewProvider("", crypto)
@@ -76,7 +75,6 @@ func TestCreateConfig(t *testing.T) {
 	})
 
 	t.Run("should return error if error in parse and validate configurations", func(t *testing.T) {
-		//providerURN := "test-URN"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.BigQueryClient)
 		p := bigquery.NewProvider("", crypto)
@@ -186,7 +184,6 @@ func TestCreateConfig(t *testing.T) {
 			},
 			URN: providerURN,
 		}
-		//crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
 
 		actualError := p.CreateConfig(pc)
 
@@ -253,6 +250,7 @@ func TestCreateConfig(t *testing.T) {
 		actualError := p.CreateConfig(pc)
 
 		assert.NoError(t, actualError)
+		crypto.AssertExpectations(t)
 	})
 }
 
@@ -323,7 +321,6 @@ func TestGetResources(t *testing.T) {
 				TableID:   "t_id",
 			},
 		}
-		//		crypto.On("Decrypt", "c2VydmljZS1hY2NvdW50LWtleS1qc29u").Return(`{"type":"service_account"}`, nil).Once()
 		client.On("GetDatasets", mock.Anything).Return(expectedDatasets, nil).Once()
 		client.On("GetTables", mock.Anything, mock.Anything).Return(expectedTables, nil).Once()
 		expectedResources := []*domain.Resource{
@@ -346,6 +343,7 @@ func TestGetResources(t *testing.T) {
 
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
+		client.AssertExpectations(t)
 	})
 }
 
@@ -353,6 +351,7 @@ func TestGrantAccess(t *testing.T) {
 
 	t.Run("should return error if Provider Config or Appeal doesn't have required paramters", func(t *testing.T) {
 		testCases := []struct {
+		    name           string
 			providerConfig *domain.ProviderConfig
 			appeal         *domain.Appeal
 			expectedError  error
@@ -532,7 +531,6 @@ func TestGrantAccess(t *testing.T) {
 	})
 
 	t.Run("should return error if GrantDataset Access returns an error", func(t *testing.T) {
-		//	providerURN := "test-URN"
 		expectedError := errors.New("Test-Error")
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
@@ -584,7 +582,6 @@ func TestGrantAccess(t *testing.T) {
 	})
 
 	t.Run("should grant access to dataset resource and return no error on success", func(t *testing.T) {
-		//	providerURN := "test-URN"
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
 		crypto := new(mocks.Crypto)
@@ -632,6 +629,7 @@ func TestGrantAccess(t *testing.T) {
 		actualError := p.GrantAccess(pc, a)
 
 		assert.Nil(t, actualError)
+		client.AssertExpectations(t)
 	})
 
 	t.Run("should grant access to table resource and return no error on success", func(t *testing.T) {
@@ -685,6 +683,7 @@ func TestGrantAccess(t *testing.T) {
 		actualError := p.GrantAccess(pc, a)
 
 		assert.Nil(t, actualError)
+		client.AssertExpectations(t)
 	})
 }
 
@@ -871,7 +870,6 @@ func TestRevokeAccess(t *testing.T) {
 	})
 
 	t.Run("should return error if Revoke Dataset Access returns an error", func(t *testing.T) {
-		//	providerURN := "test-URN"
 		expectedError := errors.New("Test-Error")
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
@@ -923,7 +921,6 @@ func TestRevokeAccess(t *testing.T) {
 	})
 
 	t.Run("should Revoke access to dataset resource and return no error on success", func(t *testing.T) {
-		//	providerURN := "test-URN"
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
 		crypto := new(mocks.Crypto)
@@ -1024,6 +1021,7 @@ func TestRevokeAccess(t *testing.T) {
 		actualError := p.RevokeAccess(pc, a)
 
 		assert.Nil(t, actualError)
+		client.AssertExpectations(t)
 	})
 }
 
