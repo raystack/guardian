@@ -618,7 +618,7 @@ func TestGrantAccess(t *testing.T) {
 	})
 
 	t.Run("given database resource", func(t *testing.T) {
-		t.Run("should return error if there is an error in granting database access", func(t *testing.T) {
+		t.Run("should return error if there is an error in revoking database access", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			expectedError := errors.New("client error")
 			crypto := new(mocks.Crypto)
@@ -1262,7 +1262,7 @@ func TestRevokeAccess(t *testing.T) {
 	})
 
 	t.Run("given database resource", func(t *testing.T) {
-		t.Run("should return error if there is an error in granting database access", func(t *testing.T) {
+		t.Run("should return error if there is an error in revoking database access", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			expectedError := errors.New("client error")
 			crypto := new(mocks.Crypto)
@@ -1273,12 +1273,6 @@ func TestRevokeAccess(t *testing.T) {
 				providerURN: client,
 			}
 			client.On("RevokeDatabaseAccess", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
-			d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
-			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
-			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
-			client.On("GetGroups").Return([]*metabase.Group{&group},
-				metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-				metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -1313,7 +1307,7 @@ func TestRevokeAccess(t *testing.T) {
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
 
-		t.Run("should return nil error if granting access is successful", func(t *testing.T) {
+		t.Run("should return nil error if revoking database access is successful", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			crypto := new(mocks.Crypto)
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
@@ -1329,13 +1323,6 @@ func TestRevokeAccess(t *testing.T) {
 				providerURN: client,
 			}
 			client.On("RevokeDatabaseAccess", expectedDatabase, expectedUser, expectedRole, mock.Anything).Return(nil).Once()
-
-			d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"schemas:all"}}}
-			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read"}}}
-			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
-			client.On("GetGroups").Return([]*metabase.Group{&group},
-				metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"schemas:all"}}}},
-				metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"read"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -1371,12 +1358,12 @@ func TestRevokeAccess(t *testing.T) {
 			actualError := p.RevokeAccess(pc, a)
 
 			assert.Nil(t, actualError)
-			//client.AssertExpectations(t)
+			client.AssertExpectations(t)
 		})
 	})
 
 	t.Run("given collection resource", func(t *testing.T) {
-		t.Run("should return error if there is an error in granting collection access", func(t *testing.T) {
+		t.Run("should return error if there is an error in revoking collection access", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			expectedError := errors.New("client error")
 			crypto := new(mocks.Crypto)
@@ -1387,13 +1374,6 @@ func TestRevokeAccess(t *testing.T) {
 				providerURN: client,
 			}
 			client.On("RevokeCollectionAccess", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
-
-			d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
-			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
-			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
-			client.On("GetGroups").Return([]*metabase.Group{&group},
-				metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-				metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -1428,7 +1408,7 @@ func TestRevokeAccess(t *testing.T) {
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
 
-		t.Run("should return nil error if granting access is successful", func(t *testing.T) {
+		t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			crypto := new(mocks.Crypto)
 			client := new(mocks.MetabaseClient)
@@ -1446,13 +1426,6 @@ func TestRevokeAccess(t *testing.T) {
 			}
 			client.On("RevokeCollectionAccess", expectedCollection, expectedUser, expectedRole, mock.Anything).Return(nil).Once()
 
-			d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
-			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
-			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
-			client.On("GetGroups").Return([]*metabase.Group{&group},
-				metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-				metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
-
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
 					Host:     "localhost",
@@ -1487,13 +1460,13 @@ func TestRevokeAccess(t *testing.T) {
 			actualError := p.RevokeAccess(pc, a)
 
 			assert.Nil(t, actualError)
-			//client.AssertExpectations(t)
+			client.AssertExpectations(t)
 		})
 	})
 
 	t.Run("given Group resource", func(t *testing.T) {
 
-		t.Run("should return error if there is an error in granting group access", func(t *testing.T) {
+		t.Run("should return error if there is an error in revoking group access", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			expectedError := errors.New("client error")
 			crypto := new(mocks.Crypto)
@@ -1504,12 +1477,6 @@ func TestRevokeAccess(t *testing.T) {
 				providerURN: client,
 			}
 			client.On("RevokeGroupAccess", mock.Anything, mock.Anything).Return(expectedError).Once()
-			d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
-			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
-			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
-			client.On("GetGroups").Return([]*metabase.Group{&group},
-				metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-				metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -1546,7 +1513,7 @@ func TestRevokeAccess(t *testing.T) {
 	})
 
 	t.Run("given Table resource", func(t *testing.T) {
-		t.Run("should return error if there is an error in granting table access", func(t *testing.T) {
+		t.Run("should return error if there is an error in revoking table access", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			expectedError := errors.New("client error")
 			expectedUser := "test@email.com"
@@ -1558,13 +1525,6 @@ func TestRevokeAccess(t *testing.T) {
 				providerURN: client,
 			}
 			client.On("RevokeTableAccess", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
-
-			d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
-			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
-			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
-			client.On("GetGroups").Return([]*metabase.Group{&group},
-				metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-				metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -1602,7 +1562,7 @@ func TestRevokeAccess(t *testing.T) {
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
 
-		t.Run("should return nil error if granting table access is successful", func(t *testing.T) {
+		t.Run("should return nil error if revoking table access is successful", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			crypto := new(mocks.Crypto)
 			client := new(mocks.MetabaseClient)
@@ -1621,12 +1581,12 @@ func TestRevokeAccess(t *testing.T) {
 			}
 			client.On("RevokeTableAccess", expectedTable, expectedUser, expectedRole, mock.Anything).Return(nil).Once()
 
-			d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
-			c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
-			group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
-			client.On("GetGroups").Return([]*metabase.Group{&group},
-				metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-				metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
+			// d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
+			// c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
+			// group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
+			// client.On("GetGroups").Return([]*metabase.Group{&group},
+			// 	metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
+			// 	metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
 
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
@@ -1662,7 +1622,7 @@ func TestRevokeAccess(t *testing.T) {
 			actualError := p.RevokeAccess(pc, a)
 
 			assert.Nil(t, actualError)
-			//client.AssertExpectations(t)
+			client.AssertExpectations(t)
 		})
 
 	})
