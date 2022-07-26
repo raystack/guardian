@@ -200,7 +200,6 @@ func (s *ClientTestSuite) TestGetDatabases() {
 
 		expectedDatabases := []metabase.Database{
 			{ID: 1, Name: "test-Name", CacheFieldValuesSchedule: "testCache", Timezone: "test-time", AutoRunQueries: true, MetadataSyncSchedule: "test-sync", Engine: "test-engine", NativePermissions: "per"},
-			//Tables: []metabase.Table{{ID: 2, Name: "tab1", DbId: 1, Database: &domain.Resource{ID: "5", ProviderType: "metabase", ProviderURN: "test-URN", Type: "database"} }} },
 		}
 
 		result, err1 := s.client.GetDatabases()
@@ -210,6 +209,7 @@ func (s *ClientTestSuite) TestGetDatabases() {
 		}
 		s.Nil(err1)
 		s.Equal(expectedDatabases, databases)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 
 	s.Run("should get databases and nil error on success", func() {
@@ -234,6 +234,8 @@ func (s *ClientTestSuite) TestGetDatabases() {
 		}
 		s.Nil(err1)
 		s.Equal(expectedDatabases, databases)
+		s.mockHttpClient.AssertExpectations(s.T())
+
 	})
 }
 
@@ -300,6 +302,7 @@ func (s *ClientTestSuite) TestGetGroups() {
 		s.Nil(err)
 		s.Equal(expectedgroupResponse, actualGroupResponse)
 		s.Equal(expectedDatabaseGroupResponse, actualDatabaseGroupResponse)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 
 }
@@ -352,6 +355,7 @@ func (s *ClientTestSuite) TestGrantDatabaseAccess() {
 		}
 		actualError := s.client.GrantDatabaseAccess(resource, email, role, groups)
 		s.Nil(actualError)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 }
 
@@ -394,6 +398,7 @@ func (s *ClientTestSuite) TestGrantCollectionAccess() {
 		resource := expectedCollection
 		actualError := s.client.GrantCollectionAccess(resource, email, role)
 		s.Nil(actualError)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 
 	s.Run("should grant access to collection and nil error on success", func() {
@@ -425,6 +430,7 @@ func (s *ClientTestSuite) TestGrantCollectionAccess() {
 		resource := expectedCollection
 		actualError := s.client.GrantCollectionAccess(resource, email, role)
 		s.Nil(actualError)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 }
 
@@ -464,6 +470,7 @@ func (s *ClientTestSuite) TestRevokeCollectionAccess() {
 		resource := expectedCollection
 		actualError := s.client.RevokeCollectionAccess(resource, email, role)
 		s.Nil(actualError)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 }
 
@@ -485,6 +492,8 @@ func (s *ClientTestSuite) TestGrantGroupAccesss() {
 		actualError := s.client.GrantGroupAccess(groupID, email)
 
 		s.Nil(actualError)
+		s.mockHttpClient.AssertExpectations(s.T())
+
 	})
 
 	s.Run("should add member to group and nil error on success", func() {
@@ -506,6 +515,7 @@ func (s *ClientTestSuite) TestGrantGroupAccesss() {
 		actualError := s.client.GrantGroupAccess(groupID, email)
 
 		s.Nil(actualError)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 }
 
