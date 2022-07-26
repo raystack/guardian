@@ -31,6 +31,10 @@ type ApprovalRepositoryTestSuite struct {
 	resourceColumnNames []string
 }
 
+func TestApprovalRepository(t *testing.T) {
+	suite.Run(t, new(ApprovalRepositoryTestSuite))
+}
+
 func (s *ApprovalRepositoryTestSuite) SetupTest() {
 	db, mock, _ := mocks.NewStore()
 	s.sqldb, _ = db.DB()
@@ -309,6 +313,51 @@ func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
 	})
 }
 
-func TestApprovalRepository(t *testing.T) {
-	suite.Run(t, new(ApprovalRepositoryTestSuite))
+func (s *ApprovalRepositoryTestSuite) TestAddApprover() {
+	s.Run("should return nil error on success", func() {
+		approval := &domain.Approver{
+			ApprovalID: uuid.New().String(),
+			Email:      "user@example.com",
+		}
+
+		expectedID := uuid.New().String()
+		expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvers" ("approval_id","appeal_id","email","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"`)
+		expectedRows := sqlmock.NewRows([]string{"id"}).AddRow(expectedID)
+		s.dbmock.ExpectQuery(expectedQuery).
+			WithArgs(
+				approval.ApprovalID,
+				approval.AppealID,
+				approval.Email,
+				utils.AnyTime{},
+				utils.AnyTime{},
+				nil,
+			).
+			WillReturnRows(expectedRows)
+
+		err := s.repository.AddApprover(approval)
+
+		s.NoError(err)
+		s.Equal(expectedID, approval.ID)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if approver payload is invalid", func() {
+		invalidApprover := &domain.Approver{
+			ID: "invalid-uuid",
+		}
+
+		err := s.repository.AddApprover(invalidApprover)
+
+		s.EqualError(err, "parsing approver: parsing uuid: invalid UUID length: 12")
+	})
+
+	s.Run("should return error if db returns an error", func() {
+		expectedError := errors.New("unexpected error")
+		s.dbmock.ExpectQuery(".*").WillReturnError(expectedError)
+
+		err := s.repository.AddApprover(&domain.Approver{})
+
+		s.ErrorIs(err, expectedError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
 }

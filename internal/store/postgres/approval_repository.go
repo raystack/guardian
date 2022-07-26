@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"fmt"
+
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres/model"
 	"github.com/odpf/guardian/utils"
@@ -111,4 +113,20 @@ func (r *ApprovalRepository) BulkInsert(approvals []*domain.Approval) error {
 
 		return nil
 	})
+}
+
+func (r *ApprovalRepository) AddApprover(approver *domain.Approver) error {
+	m := new(model.Approver)
+	if err := m.FromDomain(approver); err != nil {
+		return fmt.Errorf("parsing approver: %w", err)
+	}
+
+	result := r.db.Create(m)
+	if result.Error != nil {
+		return fmt.Errorf("inserting new approver: %w", result.Error)
+	}
+
+	newApprover := m.ToDomain()
+	*approver = *newApprover
+	return nil
 }

@@ -537,7 +537,7 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 			},
 			{
 				"should return not found error if appeal not found",
-				appeal.ErrApprovalNameNotFound,
+				appeal.ErrApprovalNotFound,
 				codes.NotFound,
 			},
 			{

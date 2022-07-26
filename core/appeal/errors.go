@@ -3,7 +3,8 @@ package appeal
 import "errors"
 
 var (
-	ErrAppealIDEmptyParam = errors.New("appeal id is required")
+	ErrAppealIDEmptyParam   = errors.New("appeal id is required")
+	ErrApprovalIDEmptyParam = errors.New("approval id/name is required")
 
 	ErrAppealStatusCanceled           = errors.New("appeal already canceled")
 	ErrAppealStatusApproved           = errors.New("appeal already approved")
@@ -23,7 +24,8 @@ var (
 	ErrApprovalStatusRejected      = errors.New("approval already rejected")
 	ErrApprovalStatusSkipped       = errors.New("approval already skipped")
 	ErrApprovalStatusUnrecognized  = errors.New("unrecognized approval status")
-	ErrApprovalNameNotFound        = errors.New("approval step name not found")
+	ErrApprovalNotFound            = errors.New("approval not found")
+	ErrUnableToAddApprover         = errors.New("unable to add a new approver")
 
 	ErrActionForbidden    = errors.New("user is not allowed to make action on this approval step")
 	ErrActionInvalidValue = errors.New("invalid action value")
@@ -44,4 +46,5 @@ var (
 
 	ErrApproverKeyNotRecognized = errors.New("unrecognized approvers key")
 	ErrApproverInvalidType      = errors.New("invalid approver type, expected an email string or array of email string")
+	ErrApproverEmail            = errors.New("approver is not a valid email")
 )

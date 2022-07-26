@@ -1298,7 +1298,7 @@ func (s *ServiceTestSuite) MakeAction() {
 						Status: domain.ApprovalStatusApproved,
 					},
 				},
-				expectedError: appeal.ErrApprovalNameNotFound,
+				expectedError: appeal.ErrApprovalNotFound,
 			},
 		}
 
@@ -1894,6 +1894,80 @@ func (s *ServiceTestSuite) TestRevoke() {
 		s.Equal(expectedAppeal, actualResult)
 		s.Nil(actualError)
 	})
+}
+
+func (s *ServiceTestSuite) TestAddApprover() {
+	s.Run("should return appeal on success", func() {
+		appealID := uuid.New().String()
+		approvalID := uuid.New().String()
+		approvalName := "test-approval-name"
+		newApprover := "user@example.com"
+
+		testCases := []struct {
+			name, appealID, approvalID, newApprover string
+		}{
+			{
+				name:     "with approval ID",
+				appealID: appealID, approvalID: approvalID, newApprover: newApprover,
+			},
+			{
+				name:     "with approval name",
+				appealID: appealID, approvalID: approvalName, newApprover: newApprover,
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				expectedAppeal := &domain.Appeal{
+					ID:     appealID,
+					Status: domain.AppealStatusPending,
+					Approvals: []*domain.Approval{
+						{
+							ID:     approvalID,
+							Name:   approvalName,
+							Status: domain.ApprovalStatusPending,
+							Approvers: []string{
+								"existing.approver@example.com",
+							},
+						},
+					},
+					Resource: &domain.Resource{},
+				}
+				expectedApproval := &domain.Approval{
+					ID:     approvalID,
+					Name:   approvalName,
+					Status: domain.ApprovalStatusPending,
+					Approvers: []string{
+						"existing.approver@example.com",
+						tc.newApprover,
+					},
+				}
+				s.mockRepository.EXPECT().GetByID(appealID).Return(expectedAppeal, nil).Once()
+				s.mockApprovalService.EXPECT().
+					AddApprover(mock.AnythingOfType("*context.emptyCtx"), approvalID, newApprover).
+					Return(nil).Once()
+				s.mockAuditLogger.EXPECT().
+					Log(mock.AnythingOfType("*context.emptyCtx"), appeal.AuditKeyAddApprover, expectedApproval).Return(nil).Once()
+				s.mockNotifier.EXPECT().Notify(mock.Anything).
+					Run(func(notifications []domain.Notification) {
+						s.Len(notifications, 1)
+						n := notifications[0]
+						s.Equal(tc.newApprover, n.User)
+						s.Equal(domain.NotificationTypeApproverNotification, n.Message.Type)
+					}).
+					Return(nil).Once()
+
+				actualAppeal, actualError := s.service.AddApprover(context.Background(), appealID, approvalID, newApprover)
+
+				s.NoError(actualError)
+				s.Equal(expectedApproval, actualAppeal.Approvals[0])
+				s.mockRepository.AssertExpectations(s.T())
+				s.mockApprovalService.AssertExpectations(s.T())
+			})
+		}
+	})
+
+	// TODO: add error test cases
 }
 
 func TestService(t *testing.T) {

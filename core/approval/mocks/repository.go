@@ -12,6 +12,51 @@ type Repository struct {
 	mock.Mock
 }
 
+type Repository_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *Repository) EXPECT() *Repository_Expecter {
+	return &Repository_Expecter{mock: &_m.Mock}
+}
+
+// AddApprover provides a mock function with given fields: _a0
+func (_m *Repository) AddApprover(_a0 *domain.Approver) error {
+	ret := _m.Called(_a0)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*domain.Approver) error); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Repository_AddApprover_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddApprover'
+type Repository_AddApprover_Call struct {
+	*mock.Call
+}
+
+// AddApprover is a helper method to define mock.On call
+//  - _a0 *domain.Approver
+func (_e *Repository_Expecter) AddApprover(_a0 interface{}) *Repository_AddApprover_Call {
+	return &Repository_AddApprover_Call{Call: _e.mock.On("AddApprover", _a0)}
+}
+
+func (_c *Repository_AddApprover_Call) Run(run func(_a0 *domain.Approver)) *Repository_AddApprover_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*domain.Approver))
+	})
+	return _c
+}
+
+func (_c *Repository_AddApprover_Call) Return(_a0 error) *Repository_AddApprover_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
 // BulkInsert provides a mock function with given fields: _a0
 func (_m *Repository) BulkInsert(_a0 []*domain.Approval) error {
 	ret := _m.Called(_a0)
@@ -24,6 +69,29 @@ func (_m *Repository) BulkInsert(_a0 []*domain.Approval) error {
 	}
 
 	return r0
+}
+
+// Repository_BulkInsert_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkInsert'
+type Repository_BulkInsert_Call struct {
+	*mock.Call
+}
+
+// BulkInsert is a helper method to define mock.On call
+//  - _a0 []*domain.Approval
+func (_e *Repository_Expecter) BulkInsert(_a0 interface{}) *Repository_BulkInsert_Call {
+	return &Repository_BulkInsert_Call{Call: _e.mock.On("BulkInsert", _a0)}
+}
+
+func (_c *Repository_BulkInsert_Call) Run(run func(_a0 []*domain.Approval)) *Repository_BulkInsert_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]*domain.Approval))
+	})
+	return _c
+}
+
+func (_c *Repository_BulkInsert_Call) Return(_a0 error) *Repository_BulkInsert_Call {
+	_c.Call.Return(_a0)
+	return _c
 }
 
 // ListApprovals provides a mock function with given fields: _a0
@@ -47,4 +115,27 @@ func (_m *Repository) ListApprovals(_a0 *domain.ListApprovalsFilter) ([]*domain.
 	}
 
 	return r0, r1
+}
+
+// Repository_ListApprovals_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListApprovals'
+type Repository_ListApprovals_Call struct {
+	*mock.Call
+}
+
+// ListApprovals is a helper method to define mock.On call
+//  - _a0 *domain.ListApprovalsFilter
+func (_e *Repository_Expecter) ListApprovals(_a0 interface{}) *Repository_ListApprovals_Call {
+	return &Repository_ListApprovals_Call{Call: _e.mock.On("ListApprovals", _a0)}
+}
+
+func (_c *Repository_ListApprovals_Call) Run(run func(_a0 *domain.ListApprovalsFilter)) *Repository_ListApprovals_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*domain.ListApprovalsFilter))
+	})
+	return _c
+}
+
+func (_c *Repository_ListApprovals_Call) Return(_a0 []*domain.Approval, _a1 error) *Repository_ListApprovals_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
 }

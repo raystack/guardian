@@ -1,4 +1,4 @@
-//go:generate mockery --name=repository --exported
+//go:generate mockery --name=repository --exported --with-expecter
 //go:generate mockery --name=policyService --exported
 
 package approval
@@ -16,6 +16,7 @@ import (
 type repository interface {
 	BulkInsert([]*domain.Approval) error
 	ListApprovals(*domain.ListApprovalsFilter) ([]*domain.Approval, error)
+	AddApprover(*domain.Approver) error
 }
 
 type policyService interface {
@@ -124,6 +125,13 @@ func (s *Service) AdvanceApproval(ctx context.Context, appeal *domain.Appeal) er
 	}
 
 	return nil
+}
+
+func (s *Service) AddApprover(_ context.Context, approvalID, email string) error {
+	return s.repo.AddApprover(&domain.Approver{
+		ApprovalID: approvalID,
+		Email:      email,
+	})
 }
 
 func structToMap(item interface{}) (map[string]interface{}, error) {
