@@ -177,6 +177,7 @@ func TestCreateConfig(t *testing.T) {
 		for _, tc := range testcases {
 			actualError := p.CreateConfig(tc.pc)
 			assert.Equal(t, tc.expectedError, actualError)
+			crypto.AssertExpectations(t)
 		}
 	})
 }
@@ -863,6 +864,7 @@ func TestRevokeAccess(t *testing.T) {
 		actualError := p.RevokeAccess(pc, a)
 
 		assert.Nil(t, actualError)
+		client.AssertExpectations(t)
 	})
 
 }

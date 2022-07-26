@@ -51,6 +51,7 @@ func TestCredentials(t *testing.T) {
 
 			assert.Nil(t, actualError)
 			assert.Equal(t, expectedEncryptedServiceAccountKey, creds.ServiceAccountKey)
+			encryptor.AssertExpectations(t)
 		})
 	})
 

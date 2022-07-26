@@ -414,6 +414,7 @@ func (s *ClientTestSuite) TestGetMetrics() {
 
 		s.Nil(err1)
 		s.Equal(expectedMetrics, actualMetrics)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 }
 
@@ -464,6 +465,7 @@ func (s *ClientTestSuite) TestUpdateSiteRole() {
 		actualError := s.client.UpdateSiteRole(userEmail, role)
 
 		s.Nil(actualError)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 }
 
@@ -509,8 +511,6 @@ func (s *ClientTestSuite) TestGrantWorkbookAccess() { //the body have to be upda
 		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
-		//body:=
-		//request:=
 		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
@@ -521,6 +521,7 @@ func (s *ClientTestSuite) TestGrantWorkbookAccess() { //the body have to be upda
 		actualError := s.client.GrantWorkbookAccess(resource, userEmail, role)
 
 		s.Nil(actualError)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 }
 
@@ -566,8 +567,6 @@ func (s *ClientTestSuite) TestGrantFlowAccess() { //the body have to be updated 
 		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
-		//body:=
-		//request:=
 		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
@@ -578,6 +577,7 @@ func (s *ClientTestSuite) TestGrantFlowAccess() { //the body have to be updated 
 		actualError := s.client.GrantFlowAccess(resource, userEmail, role)
 
 		s.Nil(actualError)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 }
 
@@ -623,8 +623,6 @@ func (s *ClientTestSuite) TestGrantMetricAccess() { //the body have to be update
 		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
-		//body:=
-		//request:=
 		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
@@ -635,6 +633,7 @@ func (s *ClientTestSuite) TestGrantMetricAccess() { //the body have to be update
 		actualError := s.client.GrantMetricAccess(resource, userEmail, role)
 
 		s.Nil(actualError)
+		s.mockHttpClient.AssertExpectations(s.T())
 	})
 }
 

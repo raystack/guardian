@@ -313,7 +313,6 @@ func TestGetResources(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := tableau.NewProvider("", crypto)
 
-		//expectedError := tableau.ErrInvalidResourceType
 		crypto.On("Decrypt", "test-password").Return("correct-password", nil).Once()
 		pc := &domain.ProviderConfig{
 			Type: "test-URN",
@@ -635,6 +634,7 @@ func TestGetResources(t *testing.T) {
 
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
+		client.AssertExpectations(t)
 	})
 }
 

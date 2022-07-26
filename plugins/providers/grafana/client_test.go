@@ -41,7 +41,6 @@ func TestNewClient(t *testing.T) {
 	})
 
 	t.Run("should return client and nil error on success", func(t *testing.T) {
-		// TO DO
 		mockHttpClient := new(mocks.HTTPClient)
 		testCases := []struct {
 			name   string
@@ -141,7 +140,6 @@ func (s *ClientTestSuite) TestGetFolders() {
 				Title: "fd_2",
 			},
 		}
-		//	expectedFolders := []grafana.Folder()
 		folderResponseJSON := `[{"id":1,"title":"fd_1"},{"id":2,"title":"fd_2"}]`
 		folderResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(folderResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&folderResponse, nil).Once()
@@ -167,8 +165,7 @@ func (s *ClientTestSuite) TestGetDashboards() {
 		testRequest, err := s.getTestRequest(http.MethodGet, url, nil)
 		s.Require().NoError(err)
 
-		dashboardResponseJSON := ``
-		dashboardResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(dashboardResponseJSON)))}
+		dashboardResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("")))}
 		s.mockHttpClient.On("Do", testRequest).Return(&dashboardResponse, errors.New("http client error")).Once()
 
 		result, err1 := s.client.GetDashboards(folderID)
@@ -291,7 +288,7 @@ func (s *ClientTestSuite) TestGrantDashboardAccess() {
 		s.setup()
 
 		user := "test-email@gojek.com"
-		role := "invalid role" //valid roles are "view", "edit", "admin"
+		role := "invalid role"
 		expectedError := grafana.ErrInvalidPermissionType
 
 		url := fmt.Sprintf("/api/users/lookup?loginOrEmail=%s", user) //testing the getUser(user) Response

@@ -233,6 +233,7 @@ func TestCreateConfig(t *testing.T) {
 		for _, tc := range testcases {
 			actualError := p.CreateConfig(tc.pc)
 			assert.Equal(t, tc.expectedError, actualError)
+			crypto.AssertExpectations(t)
 		}
 	})
 }
@@ -578,48 +579,6 @@ func TestGrantAccess(t *testing.T) {
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
 
-	// t.Run("should return a client and no error if the client initialization is correct", func(t *testing.T) {
-	// 	crypto := new(mocks.Crypto)
-	// 	client := new(mocks.MetabaseClient)
-	// 	providerURN := "test-provider-URN"
-	// 	logger := log.NewLogrus(log.LogrusWithLevel("info"))
-	// 	p := metabase.NewProvider("", crypto, logger)
-	// 	p.Clients = map[string]metabase.MetabaseClient{
-	// 		providerURN: client,
-	// 	}
-	// 	crypto.On("Decrypt", "test-password").Return("test-password", nil).Once()
-
-	// 	client.On("GetGroups").Return(nil, nil, nil, errors.New("randon_err")).Once()
-
-	// 	pc := &domain.ProviderConfig{
-	// 		Credentials: metabase.Credentials{
-	// 			Host:     "http://localhost",
-	// 			Username: "test-username",
-	// 			Password: "test-password",
-	// 		},
-	// 		Resources: []*domain.ResourceConfig{
-	// 			{
-	// 				Type: "test-type",
-	// 				Roles: []*domain.Role{
-	// 					{
-	// 						ID:          "test-role",
-	// 						Permissions: []interface{}{"test-permission-config"},
-	// 					},
-	// 				},
-	// 			},
-	// 		},
-	// 	}
-	// 	a := &domain.Appeal{
-	// 		Resource: &domain.Resource{
-	// 			Type: "test-type",
-	// 		},
-	// 		Role: "test-role",
-	// 	}
-
-	// 	actualError := p.GrantAccess(pc, a)
-	// 	assert.Equal(t, "random_err", actualError)
-	// })
-
 	t.Run("should return error if resource type in unknown", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
@@ -937,6 +896,7 @@ func TestGrantAccess(t *testing.T) {
 			actualError := p.GrantAccess(pc, a)
 
 			assert.EqualError(t, actualError, expectedError.Error())
+			client.AssertExpectations(t)
 		})
 
 		t.Run("should return nil error if granting access is successful", func(t *testing.T) {
@@ -992,6 +952,7 @@ func TestGrantAccess(t *testing.T) {
 			actualError := p.GrantAccess(pc, a)
 
 			assert.Nil(t, actualError)
+			client.AssertExpectations(t)
 		})
 	})
 
@@ -1124,6 +1085,7 @@ func TestRevokeAccess(t *testing.T) {
 		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
 
 		testcases := []struct {
+		    name            string
 			resourceConfigs []*domain.ResourceConfig
 			appeal          *domain.Appeal
 			expectedError   error
@@ -1408,6 +1370,7 @@ func TestRevokeAccess(t *testing.T) {
 			actualError := p.RevokeAccess(pc, a)
 
 			assert.Nil(t, actualError)
+			client.AssertExpectations(t)
 		})
 	})
 
@@ -1523,6 +1486,7 @@ func TestRevokeAccess(t *testing.T) {
 			actualError := p.RevokeAccess(pc, a)
 
 			assert.Nil(t, actualError)
+			client.AssertExpectations(t)
 		})
 	})
 
@@ -1697,6 +1661,7 @@ func TestRevokeAccess(t *testing.T) {
 			actualError := p.RevokeAccess(pc, a)
 
 			assert.Nil(t, actualError)
+			client.AssertExpectations(t)
 		})
 
 	})
