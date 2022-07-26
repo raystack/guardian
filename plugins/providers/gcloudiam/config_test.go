@@ -50,6 +50,7 @@ func TestCredentials(t *testing.T) {
 
 			assert.Nil(t, actualError)
 			assert.Equal(t, expectedEncryptedServiceAccountKey, creds.ServiceAccountKey)
+			encryptor.AssertExpectations(t)
 		})
 	})
 
@@ -89,15 +90,8 @@ func TestCredentials(t *testing.T) {
 
 			assert.Nil(t, actualError)
 			assert.Equal(t, expectedDecryptedServiceAccountKey, creds.ServiceAccountKey)
+			decryptor.AssertExpectations(t)
 		})
 	})
 }
 
-// func TestConfig(t *testing.T) {
-
-// 	t.Run("ParseAndValidate", func(t *testing.T) {
-// 		t.Run("should return error if error in validating credentials",func(t *testing.T) {
-
-// 		})
-// 	})
-// }

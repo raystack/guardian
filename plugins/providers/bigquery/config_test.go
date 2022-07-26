@@ -90,6 +90,7 @@ func TestCredentials(t *testing.T) {
 
 			assert.Nil(t, actualError)
 			assert.Equal(t, expectedDecryptedServiceAccountKey, creds.ServiceAccountKey)
+			decryptor.AssertExpectations(t)
 		})
 	})
 }

@@ -138,7 +138,6 @@ func TestCreateConfig(t *testing.T) {
 					Roles: []*domain.Role{},
 				},
 			},
-			//	base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
 			Credentials: gcloudiam.Credentials{
 				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
 				ResourceName:      "projects/test-resource-name",
@@ -167,7 +166,6 @@ func TestCreateConfig(t *testing.T) {
 					Roles: []*domain.Role{},
 				},
 			},
-			//	base64.StdEncoding.EncodeToString([]byte("service-account-key-json"))
 			Credentials: gcloudiam.Credentials{
 				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
 				ResourceName:      "projects/test-resource-name",
@@ -178,6 +176,7 @@ func TestCreateConfig(t *testing.T) {
 		actualError := p.CreateConfig(pc)
 
 		assert.NoError(t, actualError)
+		crypto.AssertExpectations(t)
 	})
 }
 
@@ -563,6 +562,7 @@ func TestGetRoles(t *testing.T) {
 
 		assert.Equal(t, expectedRoles, actualRoles)
 		assert.Nil(t, actualError)
+		client.AssertExpectations(t)
 	})
 
 }
