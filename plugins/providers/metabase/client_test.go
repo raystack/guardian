@@ -268,8 +268,8 @@ func (s *ClientTestSuite) TestGetGroups() {
 
 		//test fetech group permissions
 		groups := []*metabase.Group{}
-		d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"schema:all"}}, {Urn: "database:2", Permissions: []string{"native:write"}}, {Urn: "database:3", Permissions: []string{"schema:all"}}, {Urn: "database:4", Permissions: []string{"native:write"}}}                     //expected Database Permsissions
-		c := []*metabase.GroupResource{{Name: "All Users", Urn: "collection:1", Permissions: []string{"read"}}, {Name: "All Users", Urn: "collection:2", Permissions: []string{"write"}}, {Urn: "collection:3", Permissions: []string{"read"}}, {Urn: "collection:4", Permissions: []string{"write"}}} //expected Collection Permissions
+		d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"schema:all"}}, {Urn: "database:2", Permissions: []string{"native:write"}}, {Urn: "database:3", Permissions: []string{"schema:all"}}}                          //expected Database Permsissions
+		c := []*metabase.GroupResource{{Name: "All Users", Urn: "collection:1", Permissions: []string{"read"}}, {Name: "All Users", Urn: "collection:2", Permissions: []string{"write"}}, {Urn: "collection:3", Permissions: []string{"read"}}} //expected Collection Permissions
 		group := metabase.Group{ID: 1, Name: "All Users", DatabaseResources: d, CollectionResources: c}
 
 		groups = append(groups, &group)
@@ -282,8 +282,8 @@ func (s *ClientTestSuite) TestGetGroups() {
 		//test fetch database permissions
 		fetchDatabasePermissionstestRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
 		s.Require().NoError(err)
-		expectedDatabaseGroupResponse := metabase.ResourceGroupDetails{"database:3": []map[string]interface{}{{"name": "All Users", "permissions": []string{"schema:all"}, "urn": "group:1"}}, "database:4": []map[string]interface{}{{"name": "All Users", "permissions": []string{"native:write"}, "urn": "group:1"}}}
-		databaseResourceGroupsResponseJSON := `{"groups":{"1":{ "3":{"schema":"all"},"4":{"native":"write"}} } }`
+		expectedDatabaseGroupResponse := metabase.ResourceGroupDetails{"database:3": []map[string]interface{}{{"name": "All Users", "permissions": []string{"schema:all"}, "urn": "group:1"}}}
+		databaseResourceGroupsResponseJSON := `{"groups":{"1":{ "3":{"schema":"all"}} } }`
 
 		databaseResourceGroupsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databaseResourceGroupsResponseJSON)))}
 		s.mockHttpClient.On("Do", fetchDatabasePermissionstestRequest).Return(&databaseResourceGroupsResponse, nil).Once()
@@ -291,7 +291,7 @@ func (s *ClientTestSuite) TestGetGroups() {
 		fetchCollectionPermissionstestRequest, err := s.getTestRequest(http.MethodGet, "/api/collection/graph", nil)
 		s.Require().NoError(err)
 
-		fetchCollectionPermissionsResponseJSON := `{"groups":{"1":{ "3":"read","4":"write"} } }`
+		fetchCollectionPermissionsResponseJSON := `{"groups":{"1":{ "3":"read"} } }`
 		fetchCollectionPermissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(fetchCollectionPermissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", fetchCollectionPermissionstestRequest).Return(&fetchCollectionPermissionsResponse, nil).Once()
 
@@ -504,6 +504,137 @@ func (s *ClientTestSuite) TestGrantGroupAccesss() {
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&res, nil).Once()
 
 		actualError := s.client.GrantGroupAccess(groupID, email)
+
+		s.Nil(actualError)
+	})
+}
+
+func (s *ClientTestSuite) TestGrantTableAccess() {
+	s.Run("should create the group, if not already there, grant access to database and nil error on success", func() {
+		s.setup()
+
+		//test get database access
+		testRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
+		s.Require().NoError(err)
+		databasesResponseJSON := `{"revision":1,"groups":{"999":{"1":{"schema":"all"},"2":{"native":"write"}}}}`
+		databaseResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
+		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
+
+		expectedTable := &metabase.Table{
+			Name: "test-table",
+			ID:   999,
+			DbId: 1,
+		}
+		resource := expectedTable
+		role := "all"
+
+		groups := map[string]*metabase.Group{
+			"table_1_999_all1": {ID: 1, Name: "1", DatabaseResources: []*metabase.GroupResource{{Permissions: []string{"schema:all"}, Urn: "database:1"}}}}
+
+		groupResponseJSON := `{"id":0,"name":"_guardian_table_1_999_all"}`
+		response2 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))} // test for createGroup
+		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response2, nil).Once()
+
+		updateDatabaseAccessResponseJSON := `{"revision":1,"groups":{"999":{"1":{"schema":"all"},"2":{"native":"write"}},"1":{"1":{"schemas":{"public":{"999":"all"} } } }  }}`
+		updateDatabaseAccessResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updateDatabaseAccessResponseJSON)))}
+		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).
+			Return(&updateDatabaseAccessResponse, nil).Once()
+
+		email := "test-email@gojek.com" //test for getuser()
+
+		getUserUrl := fmt.Sprintf("/api/user?query=%s", email)
+		testUserRequest, err := s.getTestRequest(http.MethodGet, getUserUrl, nil)
+		s.Require().NoError(err)
+		userResponseJSON := `{"data":[{"id":1,"email":"test-email@gojek.com"}]}`
+		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		s.mockHttpClient.On("Do", testUserRequest).Return(&userResponse, nil).Once()
+
+		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)} // test for addGroupMember
+		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
+
+		actualError := s.client.GrantTableAccess(resource, email, role, groups)
+
+		s.Nil(actualError)
+	})
+
+	s.Run("if group already there should grant access to database and nil error on success", func() {
+		s.setup()
+
+		//test get database access
+		testRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
+		s.Require().NoError(err)
+		databasesResponseJSON := `{"revision":1,"groups":{"999":{"1":{"schema":"all"},"2":{"native":"write"}}}}`
+		databaseResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
+		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
+
+		expectedTable := &metabase.Table{
+			Name: "test-table",
+			ID:   999,
+			DbId: 1,
+		}
+		resource := expectedTable
+		role := "all"
+
+		groups := map[string]*metabase.Group{
+			"table_1_999_all": {ID: 1, Name: "1", DatabaseResources: []*metabase.GroupResource{{Permissions: []string{"schema:all"}, Urn: "database:1"}}}}
+
+		updateDatabaseAccessResponseJSON := `{"revision":1,"groups":{"999":{"1":{"schema":"all"},"2":{"native":"write"}},"1":{"1":{"schemas":{"public":{"999":"all"} } } }  }}`
+		updateDatabaseAccessResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updateDatabaseAccessResponseJSON)))}
+		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).
+			Return(&updateDatabaseAccessResponse, nil).Once()
+
+		email := "test-email@gojek.com" //test for getuser()
+
+		getUserUrl := fmt.Sprintf("/api/user?query=%s", email)
+		testUserRequest, err := s.getTestRequest(http.MethodGet, getUserUrl, nil)
+		s.Require().NoError(err)
+		userResponseJSON := `{"data":[{"id":1,"email":"test-email@gojek.com"}]}`
+		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		s.mockHttpClient.On("Do", testUserRequest).Return(&userResponse, nil).Once()
+
+		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)} // test for addGroupMember
+		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
+
+		actualError := s.client.GrantTableAccess(resource, email, role, groups)
+
+		s.Nil(actualError)
+	})
+}
+
+func (s *ClientTestSuite) TestRevokeDatabaseAccess() {
+	s.Run("should grant access to database and nil error on success", func() {
+		s.setup()
+
+		testRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
+		s.Require().NoError(err)
+		databasesResponseJSON := `{"revision":1,"groups":{"51":{"999":{"schemas":"all"}}}}`
+		databaseResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
+		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
+
+		expectedDatabase := &metabase.Database{
+			Name: "test-database",
+			ID:   999,
+		}
+		resource := expectedDatabase
+		email := "test-email@gojek.com"
+		role := "schemas:all"
+
+		groupIDInt := 51 //test GetGroup(groupID)
+		url := fmt.Sprintf("/api/permissions/group/%d", groupIDInt)
+		req, err2 := s.getTestRequest(http.MethodGet, url, nil)
+		s.Require().NoError(err2)
+		groupResponseJSON := `{"id":51 ,"name":"999", "members":[{"id":1,"email":"test-email@gojek.com","membership_id":500,"group_ids":[51]}] }`
+		groupResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
+		s.mockHttpClient.On("Do", req).Return(&groupResponse, nil).Once()
+
+		membershipID := 500 //test removeGroupMember
+		revokeGroupMemeberURL := fmt.Sprintf("/api/permissions/membership/%d", membershipID)
+		revokeGroupMemeberRequest, err3 := s.getTestRequest(http.MethodDelete, revokeGroupMemeberURL, nil)
+		s.Require().NoError(err3)
+		revokeGroupMemeberResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		s.mockHttpClient.On("Do", revokeGroupMemeberRequest).Return(&revokeGroupMemeberResponse, nil).Once()
+
+		actualError := s.client.RevokeDatabaseAccess(resource, email, role)
 
 		s.Nil(actualError)
 	})
