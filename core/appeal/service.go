@@ -556,9 +556,16 @@ func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email s
 	if approval == nil {
 		return nil, ErrApprovalNotFound
 	}
-	// TODO: check if approval type is manual
+
 	if !utils.ContainsString([]string{domain.ApprovalStatusPending, domain.ApprovalStatusBlocked}, approval.Status) {
 		return nil, fmt.Errorf("%w: can't add approver to approval with %q status", ErrUnableToAddApprover, approval.Status)
+	}
+
+	// check if approval type is auto
+	// this approach is the quickest way to assume that approval is auto, otherwise need to fetch the policy details and lookup the approval type which takes more time
+	if approval.Status == domain.ApprovalStatusBlocked && (approval.Approvers == nil || len(approval.Approvers) == 0) {
+		// approval is automatic (strategy: auto) that is still on blocked
+		return nil, fmt.Errorf("%w: can't modify approvers for approval with strategy auto", ErrUnableToAddApprover)
 	}
 
 	if err := s.approvalService.AddApprover(ctx, approval.ID, email); err != nil {
