@@ -42,6 +42,8 @@ type GuardianServiceClient interface {
 	ListUserApprovals(ctx context.Context, in *ListUserApprovalsRequest, opts ...grpc.CallOption) (*ListUserApprovalsResponse, error)
 	ListApprovals(ctx context.Context, in *ListApprovalsRequest, opts ...grpc.CallOption) (*ListApprovalsResponse, error)
 	UpdateApproval(ctx context.Context, in *UpdateApprovalRequest, opts ...grpc.CallOption) (*UpdateApprovalResponse, error)
+	AddApprover(ctx context.Context, in *AddApproverRequest, opts ...grpc.CallOption) (*AddApproverResponse, error)
+	DeleteApprover(ctx context.Context, in *DeleteApproverRequest, opts ...grpc.CallOption) (*DeleteApproverResponse, error)
 }
 
 type guardianServiceClient struct {
@@ -268,6 +270,24 @@ func (c *guardianServiceClient) UpdateApproval(ctx context.Context, in *UpdateAp
 	return out, nil
 }
 
+func (c *guardianServiceClient) AddApprover(ctx context.Context, in *AddApproverRequest, opts ...grpc.CallOption) (*AddApproverResponse, error) {
+	out := new(AddApproverResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/AddApprover", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) DeleteApprover(ctx context.Context, in *DeleteApproverRequest, opts ...grpc.CallOption) (*DeleteApproverResponse, error) {
+	out := new(DeleteApproverResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/DeleteApprover", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GuardianServiceServer is the server API for GuardianService service.
 // All implementations must embed UnimplementedGuardianServiceServer
 // for forward compatibility
@@ -296,6 +316,8 @@ type GuardianServiceServer interface {
 	ListUserApprovals(context.Context, *ListUserApprovalsRequest) (*ListUserApprovalsResponse, error)
 	ListApprovals(context.Context, *ListApprovalsRequest) (*ListApprovalsResponse, error)
 	UpdateApproval(context.Context, *UpdateApprovalRequest) (*UpdateApprovalResponse, error)
+	AddApprover(context.Context, *AddApproverRequest) (*AddApproverResponse, error)
+	DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error)
 	mustEmbedUnimplementedGuardianServiceServer()
 }
 
@@ -374,6 +396,12 @@ func (UnimplementedGuardianServiceServer) ListApprovals(context.Context, *ListAp
 }
 func (UnimplementedGuardianServiceServer) UpdateApproval(context.Context, *UpdateApprovalRequest) (*UpdateApprovalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateApproval not implemented")
+}
+func (UnimplementedGuardianServiceServer) AddApprover(context.Context, *AddApproverRequest) (*AddApproverResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddApprover not implemented")
+}
+func (UnimplementedGuardianServiceServer) DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteApprover not implemented")
 }
 func (UnimplementedGuardianServiceServer) mustEmbedUnimplementedGuardianServiceServer() {}
 
@@ -820,6 +848,42 @@ func _GuardianService_UpdateApproval_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GuardianService_AddApprover_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddApproverRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).AddApprover(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/AddApprover",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).AddApprover(ctx, req.(*AddApproverRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_DeleteApprover_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteApproverRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).DeleteApprover(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/DeleteApprover",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).DeleteApprover(ctx, req.(*DeleteApproverRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GuardianService_ServiceDesc is the grpc.ServiceDesc for GuardianService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -922,6 +986,14 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateApproval",
 			Handler:    _GuardianService_UpdateApproval_Handler,
+		},
+		{
+			MethodName: "AddApprover",
+			Handler:    _GuardianService_AddApprover_Handler,
+		},
+		{
+			MethodName: "DeleteApprover",
+			Handler:    _GuardianService_DeleteApprover_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
