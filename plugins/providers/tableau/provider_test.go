@@ -36,13 +36,16 @@ func TestCreateConfig(t *testing.T) {
 		}
 
 		testcases := []struct {
-			pc *domain.ProviderConfig
+			name string
+			pc   *domain.ProviderConfig
 		}{
-			{ //invalid credentials struct
+			{
+				name: "invalid credentials struct",
 				pc: &domain.ProviderConfig{
 					Credentials: "invalid-credential-structure"},
 			},
-			{ //empty mandatory credentials
+			{
+				name: "empty mandatory credentials",
 				pc: &domain.ProviderConfig{
 					Credentials: tableau.Credentials{
 						Host:       "",
@@ -55,8 +58,10 @@ func TestCreateConfig(t *testing.T) {
 		}
 
 		for _, tc := range testcases {
-			actualError := p.CreateConfig(tc.pc)
-			assert.Error(t, actualError)
+			t.Run(tc.name, func(t *testing.T) {
+				actualError := p.CreateConfig(tc.pc)
+				assert.Error(t, actualError)
+			})
 		}
 	})
 

@@ -36,13 +36,16 @@ func TestCreateConfig(t *testing.T) {
 		}
 
 		testcases := []struct {
-			pc *domain.ProviderConfig
+			name string
+			pc   *domain.ProviderConfig
 		}{
-			{ //invalid credentials struct
+			{
+				name: "invalid credentials struct",
 				pc: &domain.ProviderConfig{
 					Credentials: "invalid-credential-structure"},
 			},
-			{ //empty mandatory credentials
+			{
+				name: "empty mandatory credentials",
 				pc: &domain.ProviderConfig{
 					Credentials: grafana.Credentials{
 						Host:     "",
@@ -54,8 +57,10 @@ func TestCreateConfig(t *testing.T) {
 		}
 
 		for _, tc := range testcases {
-			actualError := p.CreateConfig(tc.pc)
-			assert.Error(t, actualError)
+			t.Run(tc.name, func(t *testing.T) {
+				actualError := p.CreateConfig(tc.pc)
+				assert.Error(t, actualError)
+			})
 		}
 	})
 
@@ -595,11 +600,13 @@ func TestRevokeAccess(t *testing.T) {
 		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
 
 		testcases := []struct {
+			name            string
 			resourceConfigs []*domain.ResourceConfig
 			appeal          *domain.Appeal
 			expectedError   error
 		}{
 			{
+				name: "invalid resource type",
 				appeal: &domain.Appeal{
 					Resource: &domain.Resource{
 						Type: "test-type",
@@ -608,6 +615,7 @@ func TestRevokeAccess(t *testing.T) {
 				expectedError: grafana.ErrInvalidResourceType,
 			},
 			{
+				name: "invalid role",
 				resourceConfigs: []*domain.ResourceConfig{
 					{
 						Type: "test-type",
@@ -627,6 +635,7 @@ func TestRevokeAccess(t *testing.T) {
 				expectedError: grafana.ErrInvalidRole,
 			},
 			{
+				name: "invalid permission config",
 				resourceConfigs: []*domain.ResourceConfig{
 					{
 						Type: "test-type",
@@ -651,15 +660,17 @@ func TestRevokeAccess(t *testing.T) {
 		}
 
 		for _, tc := range testcases {
-			crypto := new(mocks.Crypto)
-			p := grafana.NewProvider("", crypto)
+			t.Run(tc.name, func(t *testing.T) {
+				crypto := new(mocks.Crypto)
+				p := grafana.NewProvider("", crypto)
 
-			providerConfig := &domain.ProviderConfig{
-				Resources: tc.resourceConfigs,
-			}
+				providerConfig := &domain.ProviderConfig{
+					Resources: tc.resourceConfigs,
+				}
 
-			actualError := p.RevokeAccess(providerConfig, tc.appeal)
-			assert.EqualError(t, actualError, tc.expectedError.Error())
+				actualError := p.RevokeAccess(providerConfig, tc.appeal)
+				assert.EqualError(t, actualError, tc.expectedError.Error())
+			})
 		}
 	})
 
