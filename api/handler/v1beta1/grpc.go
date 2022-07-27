@@ -28,6 +28,8 @@ type ProtoAdapter interface {
 	FromPolicyProto(*guardianv1beta1.Policy) *domain.Policy
 	ToPolicyProto(*domain.Policy) (*guardianv1beta1.Policy, error)
 
+	ToPolicyAppealConfigProto(policy *domain.Policy) *guardianv1beta1.PolicyAppealConfig
+
 	FromResourceProto(*guardianv1beta1.Resource) *domain.Resource
 	ToResourceProto(*domain.Resource) (*guardianv1beta1.Resource, error)
 

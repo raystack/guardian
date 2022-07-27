@@ -91,3 +91,21 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *guardianv1beta1.Upda
 		Policy: policyProto,
 	}, nil
 }
+
+func (s *GRPCServer) GetPolicyAppealConfig(ctx context.Context, req *guardianv1beta1.GetPolicyAppealConfigRequest) (*guardianv1beta1.GetPolicyAppealConfigResponse, error) {
+	p, err := s.policyService.GetOne(ctx, req.GetId(), uint(req.GetVersion()))
+	if err != nil {
+		switch err {
+		case policy.ErrPolicyNotFound:
+			return nil, status.Error(codes.NotFound, "policy not found")
+		default:
+			return nil, status.Errorf(codes.Internal, "failed to retrieve policy: %v", err)
+		}
+	}
+
+	appealConfigProto := s.adapter.ToPolicyAppealConfigProto(p)
+
+	return &guardianv1beta1.GetPolicyAppealConfigResponse{
+		Appeal: appealConfigProto,
+	}, nil
+}

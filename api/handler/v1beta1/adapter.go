@@ -393,6 +393,24 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 	return policyProto, nil
 }
 
+func (a *adapter) ToPolicyAppealConfigProto(p *domain.Policy) *guardianv1beta1.PolicyAppealConfig {
+	policyAppealConfigProto := &guardianv1beta1.PolicyAppealConfig{}
+
+	var durationOptions []*guardianv1beta1.PolicyAppealConfig_DurationOptions
+	if p.Appeal.DurationOptions != nil {
+		var option *guardianv1beta1.PolicyAppealConfig_DurationOptions
+		for _, d := range p.Appeal.DurationOptions {
+			option = &guardianv1beta1.PolicyAppealConfig_DurationOptions{
+				Name:  d.Name,
+				Value: d.Value,
+			}
+			durationOptions = append(durationOptions, option)
+		}
+	}
+	policyAppealConfigProto.DurationOptions = durationOptions
+	return policyAppealConfigProto
+}
+
 func (a *adapter) FromResourceProto(r *guardianv1beta1.Resource) *domain.Resource {
 	resource := &domain.Resource{
 		ID:           r.GetId(),
