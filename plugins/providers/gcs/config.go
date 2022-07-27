@@ -19,9 +19,22 @@ type Config struct {
 }
 
 type Credentials struct {
-	//Todo
-	ServiceAccountKey string `validate:"required,url" `
-	ResourceName      string `validate:"required"`
+	ServiceAccountKey string `json:"service_account_key" mapstructure:"service_account_key" validate:"required,base64"`
+	ResourceName      string `json:"resource_name" mapstructure:"resource_name" validate:"required"`
+}
+
+func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
+	if c == nil {
+		return ErrUnableToDecryptNilCredentials
+	}
+
+	decryptedServiceAccount, err := decryptor.Decrypt(c.ServiceAccountKey)
+	if err != nil {
+		return err
+	}
+
+	c.ServiceAccountKey = decryptedServiceAccount
+	return nil
 }
 
 type Permission string

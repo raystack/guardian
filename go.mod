@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	cloud.google.com/go/bigquery v1.8.0
+	cloud.google.com/go/storage v1.10.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/antonmedv/expr v1.9.0
