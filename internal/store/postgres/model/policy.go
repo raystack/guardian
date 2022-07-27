@@ -15,7 +15,7 @@ type Policy struct {
 	Version      uint   `gorm:"primaryKey"`
 	Description  string
 	Steps        datatypes.JSON
-	Appeal       datatypes.JSON
+	Appeal       datatypes.JSON `gorm:"default:'{\"duration_options\":null}'"`
 	Labels       datatypes.JSON
 	Requirements datatypes.JSON
 	IAM          datatypes.JSON
