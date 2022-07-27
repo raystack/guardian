@@ -51,9 +51,21 @@ func TestDatabase(t *testing.T) {
 			assert.Equal(t, expectedError, actualError)
 		})
 
+		t.Run("should return error if number of fields is URN is not 2", func(t *testing.T) {
+			expectedError := metabase.ErrInvalidDatabaseURN
+			r := &domain.Resource{
+				Type: metabase.ResourceTypeDatabase,
+				URN:  "1",
+			}
+			d := new(metabase.Database)
+			actualError := d.FromDomain(r)
+
+			assert.Equal(t, expectedError, actualError)
+		})
+
 		t.Run("should return error if got error converting string to int", func(t *testing.T) {
 			r := &domain.Resource{
-				URN:  "non-numeric",
+				URN:  "database: non_numeric_field",
 				Type: metabase.ResourceTypeDatabase,
 			}
 			d := new(metabase.Database)
@@ -91,8 +103,10 @@ func TestCollection(t *testing.T) {
 			}{
 				{
 					db: &metabase.Collection{
-						ID:   "root",
-						Name: "collection 1",
+						ID:        "root",
+						Name:      "collection 1",
+						Location:  "location",
+						Namespace: "my_namespace",
 					},
 					expectedResource: &domain.Resource{
 						Type: metabase.ResourceTypeCollection,
@@ -137,6 +151,30 @@ func TestCollection(t *testing.T) {
 			assert.Equal(t, expectedErr, actualError)
 		})
 
+		t.Run("should return error if number of fields in URN is not 2", func(t *testing.T) {
+			expectedError := metabase.ErrInvalidCollectionURN
+			r := &domain.Resource{
+				Type: metabase.ResourceTypeCollection,
+				URN:  "Wrong_URN",
+			}
+			d := new(metabase.Collection)
+
+			actualError := d.FromDomain(r)
+
+			assert.Equal(t, expectedError, actualError)
+		})
+
+		t.Run("should return error if got error converting string to int", func(t *testing.T) {
+			r := &domain.Resource{
+				URN:  "collection: non_numeric_field",
+				Type: metabase.ResourceTypeCollection,
+			}
+			d := new(metabase.Collection)
+			actualError := d.FromDomain(r)
+
+			assert.Error(t, actualError)
+		})
+
 		t.Run("should pass right values for id", func(t *testing.T) {
 			testCases := []struct {
 				expectedResource   *domain.Resource
@@ -155,12 +193,12 @@ func TestCollection(t *testing.T) {
 				},
 				{
 					expectedResource: &domain.Resource{
-						URN:  "collection:1",
+						URN:  "collection:0",
 						Name: "test-collection",
 						Type: metabase.ResourceTypeCollection,
 					},
 					expectedCollection: &metabase.Collection{
-						ID:   1,
+						ID:   "collection:0",
 						Name: "test-collection",
 					},
 				},
@@ -174,6 +212,111 @@ func TestCollection(t *testing.T) {
 				assert.Nil(t, actualError)
 				assert.Equal(t, tc.expectedCollection, c)
 			}
+		})
+	})
+}
+
+func TestTable(t *testing.T) {
+	t.Run("FromDomain", func(t *testing.T) {
+		t.Run("should return an error if resource type invalid", func(t *testing.T) {
+			expectedError := metabase.ErrInvalidResourceType
+			r := &domain.Resource{
+				Type: "wrong-type",
+			}
+			d := new(metabase.Table)
+
+			actualError := d.FromDomain(r)
+
+			assert.Equal(t, expectedError, actualError)
+		})
+
+		t.Run("should return error if number of table URN fields is not 2", func(t *testing.T) {
+			expectedError := metabase.ErrInvalidTableURN
+			r := &domain.Resource{
+				Type: metabase.ResourceTypeTable,
+				URN:  "Wrong_URN",
+			}
+			d := new(metabase.Table)
+
+			actualError := d.FromDomain(r)
+
+			assert.Equal(t, expectedError, actualError)
+		})
+
+		t.Run("should return error if got error converting string to int", func(t *testing.T) {
+			r := &domain.Resource{
+				Type: metabase.ResourceTypeTable,
+				URN:  "table: 1.two",
+			}
+			d := new(metabase.Table)
+			actualError := d.FromDomain(r)
+
+			assert.Error(t, actualError)
+		})
+
+		t.Run("should return error if got error converting string to int", func(t *testing.T) {
+			r := &domain.Resource{
+				Type: metabase.ResourceTypeTable,
+				URN:  "table: one.2",
+			}
+			d := new(metabase.Table)
+
+			actualError := d.FromDomain(r)
+
+			assert.Error(t, actualError)
+		})
+
+		t.Run("should not return an error if all fields are according to the needs", func(t *testing.T) {
+			r := &domain.Resource{
+				Type: metabase.ResourceTypeTable,
+				URN:  "table:1.2",
+			}
+			d := new(metabase.Table)
+
+			actualError := d.FromDomain(r)
+
+			assert.NoError(t, actualError)
+		})
+	})
+}
+
+func TestGroup(t *testing.T) {
+	t.Run("FromDomain", func(t *testing.T) {
+		t.Run("should return an error if resource type is invalid", func(t *testing.T) {
+			expectedError := metabase.ErrInvalidResourceType
+			r := &domain.Resource{
+				Type: "invalid_resource_type",
+			}
+			d := new(metabase.Group)
+
+			actualError := d.FromDomain(r)
+
+			assert.Equal(t, expectedError, actualError)
+		})
+
+		t.Run("should return error if URN doesnt contain 2 int fields after :", func(t *testing.T) {
+			expectedError := metabase.ErrInvalidGroupURN
+			r := &domain.Resource{
+				Type: metabase.ResourceTypeGroup,
+				URN:  "group_URN",
+			}
+			d := new(metabase.Group)
+
+			actualError := d.FromDomain(r)
+
+			assert.Equal(t, expectedError, actualError)
+		})
+
+		t.Run("should return error if got error converting string to int", func(t *testing.T) {
+			r := &domain.Resource{
+				Type: metabase.ResourceTypeGroup,
+				URN:  "group: non-numeric",
+			}
+			d := new(metabase.Group)
+
+			actualError := d.FromDomain(r)
+
+			assert.Error(t, actualError)
 		})
 	})
 }

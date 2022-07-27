@@ -36,6 +36,7 @@ func (p *Provider) GetType() string {
 }
 
 func (p *Provider) CreateConfig(cfg *domain.ProviderConfig) error {
+
 	if cfg.Type != domain.ProviderTypeNoOp {
 		return ErrInvalidProviderType
 	}
@@ -51,6 +52,7 @@ func (p *Provider) CreateConfig(cfg *domain.ProviderConfig) error {
 	if len(cfg.Resources) != 1 {
 		return ErrInvalidResourceConfigLength
 	}
+
 	if cfg.Resources[0].Type != ResourceTypeNoOp {
 		return ErrInvalidResourceConfigType
 	}
