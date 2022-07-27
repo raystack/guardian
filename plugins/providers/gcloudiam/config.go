@@ -3,6 +3,7 @@ package gcloudiam
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -99,7 +100,11 @@ func (c *Config) parseAndValidate() error {
 		c.ProviderConfig.Credentials = credentials
 	}
 
-	if err := c.validateResourceConfig(c.ProviderConfig.Resources); err != nil {
+	if len(c.ProviderConfig.Resources) != 1 {
+		return ErrShouldHaveOneResource
+	}
+	r := c.ProviderConfig.Resources[0]
+	if err := c.validateResourceConfig(r); err != nil {
 		validationErrors = append(validationErrors, err)
 	}
 
@@ -135,11 +140,15 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 	return &credentials, nil
 }
 
-func (c *Config) validateResourceConfig(resources []*domain.ResourceConfig) error {
-	for _, resource := range resources {
-		if resource.Roles == nil || len(resource.Roles) == 0 {
-			return ErrRolesShouldNotBeEmpty
-		}
+func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
+	resourceTypeValidation := fmt.Sprintf("oneof=%s %s", ResourceTypeProject, ResourceTypeOrganization)
+	if err := c.validator.Var(resource.Type, resourceTypeValidation); err != nil {
+		return err
 	}
+
+	if resource.Roles == nil || len(resource.Roles) == 0 {
+		return ErrRolesShouldNotBeEmpty
+	}
+
 	return nil
 }

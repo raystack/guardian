@@ -24,7 +24,7 @@ func TestGetType(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
-	t.Run("should return roles as resources", func(t *testing.T) {
+	t.Run("should check for valid roles in provider config and return ", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcloudIamClient)
@@ -59,18 +59,17 @@ func TestGetResources(t *testing.T) {
 			},
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: "Bigquery",
+					Type: "project",
 					Roles: []*domain.Role{
 						{
-							ID: "roles/bigquery.admin",
+							ID:          "role-1",
+							Name:        "BigQuery",
+							Permissions: []interface{}{"roles/bigquery.admin"},
 						},
-					},
-				},
-				{
-					Type: "Api_Gateway",
-					Roles: []*domain.Role{
 						{
-							ID: "roles/apigateway.viewer",
+							ID:          "role-2",
+							Name:        "Api gateway",
+							Permissions: []interface{}{"roles/apigateway.viewer"},
 						},
 					},
 				},
@@ -81,16 +80,9 @@ func TestGetResources(t *testing.T) {
 			{
 				ProviderType: pc.Type,
 				ProviderURN:  pc.URN,
-				Type:         "Bigquery",
-				URN:          "project/test-resource-name:roles/bigquery.admin ",
-				Name:         "BigQuery Admin",
-			},
-			{
-				ProviderType: pc.Type,
-				ProviderURN:  pc.URN,
-				Type:         "Api_Gateway",
-				URN:          "project/test-resource-name:roles/apigateway.viewer ",
-				Name:         "ApiGateway Viewer",
+				Type:         gcloudiam.ResourceTypeProject,
+				URN:          "project/test-resource-name",
+				Name:         "project/test-resource-name - GCP IAM",
 			},
 		}
 
@@ -169,6 +161,18 @@ func TestGrantAccess(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: gcloudiam.ResourceTypeProject,
+					Roles: []*domain.Role{
+						{
+							ID:          "role-1",
+							Name:        "BigQuery",
+							Permissions: []interface{}{"roles/bigquery.admin"},
+						},
+						{
+							ID:          "role-2",
+							Name:        "Api gateway",
+							Permissions: []interface{}{"roles/apigateway.viewer"},
+						},
+					},
 				},
 			},
 			URN: providerURN,
@@ -179,7 +183,7 @@ func TestGrantAccess(t *testing.T) {
 				URN:  "999",
 				Name: "test-role",
 			},
-			Role: "test-role",
+			Role: "role-1",
 		}
 
 		actualError := p.GrantAccess(pc, a)
@@ -191,19 +195,32 @@ func TestGrantAccess(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcloudIamClient)
-		expectedRole := "test-role"
+		expectedRole := "role-1"
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
+		expectedPermission := "roles/bigquery.admin"
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
-		client.On("GrantAccess", expectedAccountType, expectedAccountID, expectedRole).Return(nil).Once()
+		client.On("GrantAccess", expectedAccountType, expectedAccountID, expectedPermission).Return(nil).Once()
 
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: gcloudiam.ResourceTypeProject,
+					Roles: []*domain.Role{
+						{
+							ID:          "role-1",
+							Name:        "BigQuery",
+							Permissions: []interface{}{"roles/bigquery.admin"},
+						},
+						{
+							ID:          "role-2",
+							Name:        "Api gateway",
+							Permissions: []interface{}{"roles/apigateway.viewer"},
+						},
+					},
 				},
 			},
 			URN: providerURN,
@@ -257,7 +274,7 @@ func TestRevokeAccess(t *testing.T) {
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
 
-	t.Run("should return error if there is an error in granting the access", func(t *testing.T) {
+	t.Run("should return error if there is an error in revoking the access", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		expectedError := errors.New("client error")
 		crypto := new(mocks.Crypto)
@@ -272,6 +289,18 @@ func TestRevokeAccess(t *testing.T) {
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: gcloudiam.ResourceTypeProject,
+					Roles: []*domain.Role{
+						{
+							ID:          "role-1",
+							Name:        "BigQuery",
+							Permissions: []interface{}{"roles/bigquery.admin"},
+						},
+						{
+							ID:          "role-2",
+							Name:        "Api gateway",
+							Permissions: []interface{}{"roles/apigateway.viewer"},
+						},
+					},
 				},
 			},
 			URN: providerURN,
@@ -282,7 +311,7 @@ func TestRevokeAccess(t *testing.T) {
 				URN:  "999",
 				Name: "test-role",
 			},
-			Role: "test-role",
+			Role: "role-1",
 		}
 
 		actualError := p.RevokeAccess(pc, a)
@@ -294,19 +323,32 @@ func TestRevokeAccess(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcloudIamClient)
-		expectedRole := "test-role"
+		expectedRole := "role-1"
+		expectedPermission := "roles/bigquery.admin"
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
-		client.On("RevokeAccess", expectedAccountType, expectedAccountID, expectedRole).Return(nil).Once()
+		client.On("RevokeAccess", expectedAccountType, expectedAccountID, expectedPermission).Return(nil).Once()
 
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
 				{
 					Type: gcloudiam.ResourceTypeProject,
+					Roles: []*domain.Role{
+						{
+							ID:          "role-1",
+							Name:        "BigQuery",
+							Permissions: []interface{}{"roles/bigquery.admin"},
+						},
+						{
+							ID:          "role-2",
+							Name:        "Api gateway",
+							Permissions: []interface{}{"roles/apigateway.viewer"},
+						},
+					},
 				},
 			},
 			URN: providerURN,
