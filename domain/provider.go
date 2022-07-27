@@ -17,6 +17,8 @@ const (
 	ProviderTypeGCloudIAM = "gcloud_iam"
 	// ProviderTypeNoOp is the type name for No-Op provider
 	ProviderTypeNoOp = "noop"
+	//  ProviderTypeGCS is the type name for Google Cloud Storage provider
+	ProviderTypeGCS = "gcs"
 )
 
 // Role is the configuration to define a role and mapping the permissions in the provider

@@ -1,21 +1,43 @@
 package gcs
 
 import (
+	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
 
+	"cloud.google.com/go/storage"
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
+	"google.golang.org/api/option"
 )
 
 type Config struct {
 	ProviderConfig *domain.ProviderConfig
-	valid          bool //ask why required?
+	valid          bool
 
 	crypto    domain.Crypto
 	validator *validator.Validate
+}
+
+func (c *Config) EncryptCredentials() error {
+	if err := c.parseAndValidate(); err != nil {
+		return err
+	}
+
+	credentials, ok := c.ProviderConfig.Credentials.(*Credentials)
+	if !ok {
+		return ErrInvalidCredentialsType
+	}
+
+	if err := credentials.Encrypt(c.crypto); err != nil {
+		return err
+	}
+
+	c.ProviderConfig.Credentials = credentials
+	return nil
 }
 
 type Credentials struct {
@@ -37,6 +59,20 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 	return nil
 }
 
+func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
+	if c == nil {
+		return ErrUnableToEncryptNilCredentials
+	}
+
+	encryptedCredentials, err := encryptor.Encrypt(c.ServiceAccountKey)
+	if err != nil {
+		return err
+	}
+
+	c.ServiceAccountKey = encryptedCredentials
+	return nil
+}
+
 type Permission string
 
 func NewConfig(pc *domain.ProviderConfig, crypto domain.Crypto) *Config {
@@ -47,6 +83,10 @@ func NewConfig(pc *domain.ProviderConfig, crypto domain.Crypto) *Config {
 	}
 }
 
+func (c *Config) ParseAndValidate() error {
+	return c.parseAndValidate()
+}
+
 func (c *Config) parseAndValidate() error {
 	if c.valid {
 		return nil
@@ -54,12 +94,22 @@ func (c *Config) parseAndValidate() error {
 
 	validationError := []error{}
 
-	if credentials, err := c.validateCredentials(c.ProviderConfig.Credentials); err != nil {
+	credentials, err := c.validateCredentials(c.ProviderConfig.Credentials)
+	if err != nil {
 		validationError = append(validationError, err)
 	} else {
 		c.ProviderConfig.Credentials = credentials
 	}
 	//  Todo- Resource.go
+	ctx := context.TODO()
+	saKey := credentials.ServiceAccountKey
+	fmt.Printf("saKey: %v\n", saKey)
+	client, err := storage.NewClient(ctx, option.WithCredentialsJSON([]byte(saKey)))
+	if err != nil {
+		return fmt.Errorf("initialising gcs client: %w", err)
+	}
+	defer client.Close()
+
 	for _, r := range c.ProviderConfig.Resources {
 		if err := c.validateResourceConfig(r); err != nil {
 			validationError = append(validationError, err)
@@ -88,21 +138,28 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 		return nil, err
 	}
 
+	saKeyJson, err := base64.StdEncoding.DecodeString(credentials.ServiceAccountKey)
+	if err != nil {
+		return nil, err
+	}
+
+	credentials.ServiceAccountKey = string(saKeyJson)
+
 	return &credentials, nil
 }
 
 // Todo - Resource type and its struct
 
 func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
-	resourceTypeValidation := fmt.Sprintf("oneof=%s%s", ResourceTypeBucket, ResourceTypeObject)
+	resourceTypeValidation := fmt.Sprintf("oneof=%s %s", ResourceTypeBucket, ResourceTypeObject)
 	if err := c.validator.Var(resource.Type, resourceTypeValidation); err != nil {
-		return err
+		return fmt.Errorf("validating resource type: %w", err)
 	}
 
 	for _, role := range resource.Roles {
 		for i, permission := range role.Permissions {
 			if permissionConfig, err := c.validatePermission(resource.Type, permission); err != nil {
-				return err
+				return fmt.Errorf("validating permissions: %w", err)
 			} else {
 				role.Permissions[i] = permissionConfig
 			}

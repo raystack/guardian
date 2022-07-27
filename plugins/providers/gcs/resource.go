@@ -11,14 +11,14 @@ type Bucket struct {
 	Name string
 }
 
-func (b *Bucket) fromDomain(r *domain.Resource) error {
-	if r.Type == ResourceTypeBucket {
-		return ErrInvalidResourceType
-	}
+// func (b *Bucket) fromDomain(r *domain.Resource) error {
+// 	if r.Type == ResourceTypeBucket {
+// 		return ErrInvalidResourceType
+// 	}
 
-	b.Name = r.URN
-	return nil
-}
+// 	b.Name = r.URN
+// 	return nil
+// }
 
 func (b *Bucket) toDomain() *domain.Resource {
 	return &domain.Resource{
@@ -32,14 +32,14 @@ type Object struct {
 	Name string
 }
 
-func (o *Object) fromDomain(r *domain.Resource) error {
-	if r.Type == ResourceTypeObject {
-		return ErrInvalidResourceType
-	}
+// func (o *Object) fromDomain(r *domain.Resource) error {
+// 	if r.Type == ResourceTypeObject {
+// 		return ErrInvalidResourceType
+// 	}
 
-	o.Name = r.URN
-	return nil
-}
+// 	o.Name = r.URN
+// 	return nil
+// }
 
 func (o *Object) toDomain() *domain.Resource {
 	return &domain.Resource{

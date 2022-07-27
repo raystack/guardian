@@ -26,7 +26,6 @@ func TestGetType(t *testing.T) {
 }
 
 func TestCreateConfig(t *testing.T) {
-
 	t.Run("should return error if error in credentials are invalid/mandatory fields are missing", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		client := new(mocks.BigQueryClient)
@@ -173,7 +172,7 @@ func TestCreateConfig(t *testing.T) {
 						{
 							ID:          "VIEWER",
 							Name:        "VIEWER",
-							Permissions: []interface{}{"invalid permissions for resouce type"},
+							Permissions: []interface{}{"invalid permissions for resource type"},
 						},
 					},
 				},
@@ -348,10 +347,9 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
-
-	t.Run("should return error if Provider Config or Appeal doesn't have required paramters", func(t *testing.T) {
+	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
-		    name           string
+			name           string
 			providerConfig *domain.ProviderConfig
 			appeal         *domain.Appeal
 			expectedError  error
@@ -417,7 +415,6 @@ func TestGrantAccess(t *testing.T) {
 		}
 
 		for _, tc := range testCases {
-
 			p := initProvider()
 			pc := tc.providerConfig
 			a := tc.appeal
@@ -688,8 +685,7 @@ func TestGrantAccess(t *testing.T) {
 }
 
 func TestRevokeAccess(t *testing.T) {
-
-	t.Run("should return error if Provider Config or Appeal doesn't have required paramters", func(t *testing.T) {
+	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			providerConfig *domain.ProviderConfig
 			appeal         *domain.Appeal
@@ -756,7 +752,6 @@ func TestRevokeAccess(t *testing.T) {
 		}
 
 		for _, tc := range testCases {
-
 			p := initProvider()
 			pc := tc.providerConfig
 			a := tc.appeal
