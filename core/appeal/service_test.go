@@ -1970,6 +1970,72 @@ func (s *ServiceTestSuite) TestAddApprover() {
 	// TODO: add error test cases
 }
 
+func (s *ServiceTestSuite) TestDeleteApprover() {
+	s.Run("should return nil error on success", func() {
+		appealID := uuid.New().String()
+		approvalID := uuid.New().String()
+		approvalName := "test-approval-name"
+		approverEmail := "user@example.com"
+
+		testCases := []struct {
+			name, appealID, approvalID, newApprover string
+		}{
+			{
+				name:     "with approval ID",
+				appealID: appealID, approvalID: approvalID, newApprover: approverEmail,
+			},
+			{
+				name:     "with approval name",
+				appealID: appealID, approvalID: approvalName, newApprover: approverEmail,
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				expectedAppeal := &domain.Appeal{
+					ID:     appealID,
+					Status: domain.AppealStatusPending,
+					Approvals: []*domain.Approval{
+						{
+							ID:     approvalID,
+							Name:   approvalName,
+							Status: domain.ApprovalStatusPending,
+							Approvers: []string{
+								"approver1@example.com",
+								tc.newApprover,
+							},
+						},
+					},
+					Resource: &domain.Resource{},
+				}
+				expectedApproval := &domain.Approval{
+					ID:     approvalID,
+					Name:   approvalName,
+					Status: domain.ApprovalStatusPending,
+					Approvers: []string{
+						"approver1@example.com",
+					},
+				}
+				s.mockRepository.EXPECT().GetByID(appealID).Return(expectedAppeal, nil).Once()
+				s.mockApprovalService.EXPECT().
+					DeleteApprover(mock.AnythingOfType("*context.emptyCtx"), approvalID, approverEmail).
+					Return(nil).Once()
+				s.mockAuditLogger.EXPECT().
+					Log(mock.AnythingOfType("*context.emptyCtx"), appeal.AuditKeyDeleteApprover, expectedApproval).Return(nil).Once()
+
+				actualAppeal, actualError := s.service.DeleteApprover(context.Background(), appealID, approvalID, approverEmail)
+
+				s.NoError(actualError)
+				s.Equal(expectedApproval, actualAppeal.Approvals[0])
+				s.mockRepository.AssertExpectations(s.T())
+				s.mockApprovalService.AssertExpectations(s.T())
+			})
+		}
+	})
+
+	// TODO: add error test cases
+}
+
 func TestService(t *testing.T) {
 	suite.Run(t, new(ServiceTestSuite))
 }

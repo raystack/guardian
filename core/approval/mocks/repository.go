@@ -94,6 +94,44 @@ func (_c *Repository_BulkInsert_Call) Return(_a0 error) *Repository_BulkInsert_C
 	return _c
 }
 
+// DeleteApprover provides a mock function with given fields: approvalID, email
+func (_m *Repository) DeleteApprover(approvalID string, email string) error {
+	ret := _m.Called(approvalID, email)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(approvalID, email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Repository_DeleteApprover_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteApprover'
+type Repository_DeleteApprover_Call struct {
+	*mock.Call
+}
+
+// DeleteApprover is a helper method to define mock.On call
+//  - approvalID string
+//  - email string
+func (_e *Repository_Expecter) DeleteApprover(approvalID interface{}, email interface{}) *Repository_DeleteApprover_Call {
+	return &Repository_DeleteApprover_Call{Call: _e.mock.On("DeleteApprover", approvalID, email)}
+}
+
+func (_c *Repository_DeleteApprover_Call) Run(run func(approvalID string, email string)) *Repository_DeleteApprover_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *Repository_DeleteApprover_Call) Return(_a0 error) *Repository_DeleteApprover_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
 // ListApprovals provides a mock function with given fields: _a0
 func (_m *Repository) ListApprovals(_a0 *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
 	ret := _m.Called(_a0)

@@ -26,13 +26,14 @@ import (
 )
 
 const (
-	AuditKeyBulkInsert  = "appeal.bulkInsert"
-	AuditKeyCancel      = "appeal.cancel"
-	AuditKeyApprove     = "appeal.approve"
-	AuditKeyReject      = "appeal.reject"
-	AuditKeyRevoke      = "appeal.revoke"
-	AuditKeyExtend      = "appeal.extend"
-	AuditKeyAddApprover = "appeal.addApprover"
+	AuditKeyBulkInsert     = "appeal.bulkInsert"
+	AuditKeyCancel         = "appeal.cancel"
+	AuditKeyApprove        = "appeal.approve"
+	AuditKeyReject         = "appeal.reject"
+	AuditKeyRevoke         = "appeal.revoke"
+	AuditKeyExtend         = "appeal.extend"
+	AuditKeyAddApprover    = "appeal.addApprover"
+	AuditKeyDeleteApprover = "appeal.deleteApprover"
 )
 
 var TimeNow = time.Now
@@ -60,6 +61,7 @@ type policyService interface {
 type approvalService interface {
 	AdvanceApproval(context.Context, *domain.Appeal) error
 	AddApprover(ctx context.Context, approvalID, email string) error
+	DeleteApprover(ctx context.Context, approvalID, email string) error
 }
 
 type providerService interface {
@@ -528,33 +530,13 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 }
 
 func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error) {
-	if appealID == "" {
-		return nil, ErrAppealIDEmptyParam
-	}
-	if approvalID == "" {
-		return nil, ErrApprovalIDEmptyParam
-	}
 	if err := s.validator.Var(email, "email"); err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrApproverEmail, err)
 	}
 
-	appeal, err := s.repo.GetByID(appealID)
+	appeal, approval, err := s.getApproval(appealID, approvalID)
 	if err != nil {
-		return nil, fmt.Errorf("getting appeal details: %w", err)
-	}
-	if appeal.Status != domain.AppealStatusPending {
-		return nil, fmt.Errorf("%w: can't add approver to appeal with %q status", ErrUnableToAddApprover, appeal.Status)
-	}
-
-	var approval *domain.Approval
-	for _, a := range appeal.Approvals {
-		if a.ID == approvalID || a.Name == approvalID {
-			approval = a
-			break
-		}
-	}
-	if approval == nil {
-		return nil, ErrApprovalNotFound
+		return nil, err
 	}
 
 	if !utils.ContainsString([]string{domain.ApprovalStatusPending, domain.ApprovalStatusBlocked}, approval.Status) {
@@ -597,6 +579,69 @@ func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email s
 	}
 
 	return appeal, nil
+}
+
+func (s *Service) DeleteApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error) {
+	if err := s.validator.Var(email, "email"); err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrApproverEmail, err)
+	}
+
+	appeal, approval, err := s.getApproval(appealID, approvalID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(approval.Approvers) == 1 {
+		return nil, fmt.Errorf("%w: can't delete if there's only one approver", ErrUnableToDeleteApprover)
+	}
+
+	if err := s.approvalService.DeleteApprover(ctx, approvalID, email); err != nil {
+		return nil, err
+	}
+
+	var newApprovers []string
+	for _, a := range approval.Approvers {
+		if a != email {
+			newApprovers = append(newApprovers, a)
+		}
+	}
+	approval.Approvers = newApprovers
+
+	if err := s.auditLogger.Log(ctx, AuditKeyDeleteApprover, approval); err != nil {
+		s.logger.Error("failed to record audit log", "error", err)
+	}
+
+	return appeal, nil
+}
+
+func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *domain.Approval, error) {
+	if appealID == "" {
+		return nil, nil, ErrAppealIDEmptyParam
+	}
+	if approvalID == "" {
+		return nil, nil, ErrApprovalIDEmptyParam
+	}
+
+	appeal, err := s.repo.GetByID(appealID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("getting appeal details: %w", err)
+	}
+	if appeal.Status != domain.AppealStatusPending {
+		return nil, nil, fmt.Errorf("%w: can't delete approver to appeal with %q status", ErrUnableToAddApprover, appeal.Status)
+	}
+
+	var approval *domain.Approval
+	for _, a := range appeal.Approvals {
+		if a.ID == approvalID || a.Name == approvalID {
+			approval = a
+			break
+		}
+	}
+	if approval == nil {
+		return nil, nil, ErrApprovalNotFound
+	}
+
+	return appeal, approval, nil
 }
 
 // getAppealsMapGroupedByStatus returns map[status]map[account_id]map[resource_id]map[role]*domain.Appeal, error

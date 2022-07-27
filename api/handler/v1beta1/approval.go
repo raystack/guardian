@@ -121,6 +121,33 @@ func (s *GRPCServer) AddApprover(ctx context.Context, req *guardianv1beta1.AddAp
 	}, nil
 }
 
+func (s *GRPCServer) DeleteApprover(ctx context.Context, req *guardianv1beta1.DeleteApproverRequest) (*guardianv1beta1.DeleteApproverResponse, error) {
+	a, err := s.appealService.DeleteApprover(ctx, req.GetAppealId(), req.GetApprovalId(), req.GetEmail())
+	if err != nil {
+		switch err {
+		case appeal.ErrAppealIDEmptyParam,
+			appeal.ErrApprovalIDEmptyParam,
+			appeal.ErrApproverEmail,
+			appeal.ErrUnableToDeleteApprover:
+			return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %s", err)
+		case appeal.ErrAppealNotFound,
+			appeal.ErrApprovalNotFound:
+			return nil, status.Errorf(codes.NotFound, "resource not found: %s", err)
+		default:
+			return nil, status.Errorf(codes.Internal, "failed to delete approver: %s", err)
+		}
+	}
+
+	appealProto, err := s.adapter.ToAppealProto(a)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %s", err)
+	}
+
+	return &guardianv1beta1.DeleteApproverResponse{
+		Appeal: appealProto,
+	}, nil
+}
+
 func (s *GRPCServer) listApprovals(ctx context.Context, filters *domain.ListApprovalsFilter) ([]*guardianv1beta1.Approval, error) {
 	approvals, err := s.approvalService.ListApprovals(ctx, filters)
 	if err != nil {

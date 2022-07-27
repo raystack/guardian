@@ -11,6 +11,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
+	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/guardian/mocks"
@@ -356,6 +357,43 @@ func (s *ApprovalRepositoryTestSuite) TestAddApprover() {
 		s.dbmock.ExpectQuery(".*").WillReturnError(expectedError)
 
 		err := s.repository.AddApprover(&domain.Approver{})
+
+		s.ErrorIs(err, expectedError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+}
+
+func (s *ApprovalRepositoryTestSuite) TestDeleteApprover() {
+	s.Run("should return nil error on success", func() {
+		approvalID := uuid.New().String()
+		approverEmail := "user@example.com"
+
+		expectedQuery := regexp.QuoteMeta(`UPDATE "approvers" SET "deleted_at"=$1 WHERE approval_id = $2 AND email = $3 AND "approvers"."deleted_at" IS NULL`)
+		s.dbmock.ExpectExec(expectedQuery).
+			WithArgs(utils.AnyTime{}, approvalID, approverEmail).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err := s.repository.DeleteApprover(approvalID, approverEmail)
+
+		s.NoError(err)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if db returns an error", func() {
+		expectedError := errors.New("unexpected error")
+		s.dbmock.ExpectExec(".*").WillReturnError(expectedError)
+
+		err := s.repository.DeleteApprover("", "")
+
+		s.ErrorIs(err, expectedError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if db returns an error", func() {
+		expectedError := appeal.ErrApproverNotFound
+		s.dbmock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(1, 0))
+
+		err := s.repository.DeleteApprover("", "")
 
 		s.ErrorIs(err, expectedError)
 		s.NoError(s.dbmock.ExpectationsWereMet())

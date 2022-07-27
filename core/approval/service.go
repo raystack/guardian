@@ -17,6 +17,7 @@ type repository interface {
 	BulkInsert([]*domain.Approval) error
 	ListApprovals(*domain.ListApprovalsFilter) ([]*domain.Approval, error)
 	AddApprover(*domain.Approver) error
+	DeleteApprover(approvalID, email string) error
 }
 
 type policyService interface {
@@ -132,6 +133,10 @@ func (s *Service) AddApprover(_ context.Context, approvalID, email string) error
 		ApprovalID: approvalID,
 		Email:      email,
 	})
+}
+
+func (s *Service) DeleteApprover(_ context.Context, approvalID, email string) error {
+	return s.repo.DeleteApprover(approvalID, email)
 }
 
 func structToMap(item interface{}) (map[string]interface{}, error) {

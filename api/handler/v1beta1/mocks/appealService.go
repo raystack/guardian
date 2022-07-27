@@ -174,6 +174,55 @@ func (_c *AppealService_Create_Call) Return(_a0 error) *AppealService_Create_Cal
 	return _c
 }
 
+// DeleteApprover provides a mock function with given fields: ctx, appealID, approvalID, email
+func (_m *AppealService) DeleteApprover(ctx context.Context, appealID string, approvalID string, email string) (*domain.Appeal, error) {
+	ret := _m.Called(ctx, appealID, approvalID, email)
+
+	var r0 *domain.Appeal
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *domain.Appeal); ok {
+		r0 = rf(ctx, appealID, approvalID, email)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.Appeal)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, appealID, approvalID, email)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AppealService_DeleteApprover_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteApprover'
+type AppealService_DeleteApprover_Call struct {
+	*mock.Call
+}
+
+// DeleteApprover is a helper method to define mock.On call
+//  - ctx context.Context
+//  - appealID string
+//  - approvalID string
+//  - email string
+func (_e *AppealService_Expecter) DeleteApprover(ctx interface{}, appealID interface{}, approvalID interface{}, email interface{}) *AppealService_DeleteApprover_Call {
+	return &AppealService_DeleteApprover_Call{Call: _e.mock.On("DeleteApprover", ctx, appealID, approvalID, email)}
+}
+
+func (_c *AppealService_DeleteApprover_Call) Run(run func(ctx context.Context, appealID string, approvalID string, email string)) *AppealService_DeleteApprover_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *AppealService_DeleteApprover_Call) Return(_a0 *domain.Appeal, _a1 error) *AppealService_DeleteApprover_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
 // Find provides a mock function with given fields: _a0, _a1
 func (_m *AppealService) Find(_a0 context.Context, _a1 *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
 	ret := _m.Called(_a0, _a1)

@@ -319,3 +319,27 @@ func (s *ServiceTestSuite) TestAddApprover() {
 		s.mockRepository.AssertExpectations(s.T())
 	})
 }
+
+func (s *ServiceTestSuite) TestDeleteApprover() {
+	s.Run("should return nil error on success", func() {
+		approvalID := uuid.New().String()
+		approverEmail := "user@example.com"
+
+		s.mockRepository.EXPECT().DeleteApprover(approvalID, approverEmail).Return(nil)
+
+		err := s.service.DeleteApprover(context.Background(), approvalID, approverEmail)
+
+		s.NoError(err)
+		s.mockRepository.AssertExpectations(s.T())
+	})
+
+	s.Run("should return error if repository returns an error", func() {
+		expectedError := errors.New("unexpected error")
+		s.mockRepository.EXPECT().DeleteApprover(mock.Anything, mock.Anything).Return(expectedError)
+
+		err := s.service.DeleteApprover(context.Background(), "", "")
+
+		s.ErrorIs(err, expectedError)
+		s.mockRepository.AssertExpectations(s.T())
+	})
+}

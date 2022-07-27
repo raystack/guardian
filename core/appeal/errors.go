@@ -26,6 +26,7 @@ var (
 	ErrApprovalStatusUnrecognized  = errors.New("unrecognized approval status")
 	ErrApprovalNotFound            = errors.New("approval not found")
 	ErrUnableToAddApprover         = errors.New("unable to add a new approver")
+	ErrUnableToDeleteApprover      = errors.New("unable to remove approver")
 
 	ErrActionForbidden    = errors.New("user is not allowed to make action on this approval step")
 	ErrActionInvalidValue = errors.New("invalid action value")
@@ -47,4 +48,5 @@ var (
 	ErrApproverKeyNotRecognized = errors.New("unrecognized approvers key")
 	ErrApproverInvalidType      = errors.New("invalid approver type, expected an email string or array of email string")
 	ErrApproverEmail            = errors.New("approver is not a valid email")
+	ErrApproverNotFound         = errors.New("approver not found")
 )
