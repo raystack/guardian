@@ -17,10 +17,13 @@ type PermissionManager struct{}
 func (m PermissionManager) GetPermissions(pc *domain.ProviderConfig, resourceType, role string) ([]interface{}, error) {
 	for _, rc := range pc.Resources {
 		if rc.Type != resourceType {
-		        continue
+			continue
 		}
 		for _, r := range rc.Roles {
 			if r.ID == role {
+				if r.Permissions == nil {
+					return make([]interface{}, 0), nil
+				}
 				return r.Permissions, nil
 			}
 		}

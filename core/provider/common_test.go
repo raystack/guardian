@@ -35,6 +35,29 @@ func TestGetPermissions(t *testing.T) {
 		assert.Equal(t, expectedPermissions, actualPermissions)
 	})
 
+	t.Run("should return empty slice if permissions is nil", func(t *testing.T) {
+		pc := &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "test-resource-type",
+					Roles: []*domain.Role{
+						{
+							ID:          "test-role",
+							Permissions: nil,
+						},
+					},
+				},
+			},
+		}
+		expectedPermissions := []interface{}{}
+
+		pm := provider.PermissionManager{}
+		actualPermissions, actualError := pm.GetPermissions(pc, "test-resource-type", "test-role")
+
+		assert.NoError(t, actualError)
+		assert.Equal(t, expectedPermissions, actualPermissions)
+	})
+
 	t.Run("should return error if resource type not found", func(t *testing.T) {
 		expectedError := provider.ErrInvalidResourceType
 
