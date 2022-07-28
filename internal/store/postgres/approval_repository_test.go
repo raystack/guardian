@@ -101,15 +101,6 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 		expectedUser := "user@example.com"
 		expectedAccountID := "account@example.com"
 		expectedStatuses := []string{"test-status-1", "test-status-2"}
-		//expectedApprovers := []*domain.Approver{
-		//	{
-		//		ID:         uuid.New().String(),
-		//		ApprovalID: approvalID,
-		//		Email:      expectedUser,
-		//		CreatedAt:  timeNow,
-		//		UpdatedAt:  timeNow,
-		//	},
-		//}
 		expectedApprovals := []*domain.Approval{
 			{
 				ID:            approvalID,
