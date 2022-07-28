@@ -36,8 +36,6 @@ const (
 
 var TimeNow = time.Now
 
-type ContextKeyIsAdditionalAppealCreation struct{}
-
 type repository interface {
 	BulkUpsert([]*domain.Appeal) error
 	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
@@ -77,6 +75,18 @@ type resourceService interface {
 
 type auditLogger interface {
 	Log(ctx context.Context, action string, data interface{}) error
+}
+
+type CreateAppealOption func(*createAppealOptions)
+
+type createAppealOptions struct {
+	IsAdditionalAppeal bool
+}
+
+func CreateWithAdditionalAppeal() CreateAppealOption {
+	return func(opts *createAppealOptions) {
+		opts.IsAdditionalAppeal = true
+	}
 }
 
 type ServiceDeps struct {
@@ -143,8 +153,12 @@ func (s *Service) Find(ctx context.Context, filters *domain.ListAppealsFilter) (
 }
 
 // Create record
-func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
-	isAdditionalAppealCreation, _ := ctx.Value(ContextKeyIsAdditionalAppealCreation{}).(bool)
+func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...CreateAppealOption) error {
+	createAppealOpts := &createAppealOptions{}
+	for _, opt := range opts {
+		opt(createAppealOpts)
+	}
+	isAdditionalAppealCreation := createAppealOpts.IsAdditionalAppeal
 
 	resourceIDs := []string{}
 	for _, a := range appeals {
@@ -254,7 +268,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 					oldExtendedAppeals = append(oldExtendedAppeals, oldExtendedAppeal)
 				}
 
-				if err := s.CreateAccess(ctx, appeal); err != nil {
+				if err := s.CreateAccess(ctx, appeal, opts...); err != nil {
 					return fmt.Errorf("creating access: %w", err)
 				}
 				notifications = append(notifications, domain.Notification{
@@ -299,7 +313,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal) error {
 	return nil
 }
 
-// Approve an approval step
+// MakeAction Approve an approval step
 func (s *Service) MakeAction(ctx context.Context, approvalAction domain.ApprovalAction) (*domain.Appeal, error) {
 	if err := utils.ValidateStruct(approvalAction); err != nil {
 		return nil, err
@@ -793,8 +807,7 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 					additionalAppeal.PolicyID = aa.Policy.ID
 					additionalAppeal.PolicyVersion = uint(aa.Policy.Version)
 				}
-				ctx = context.WithValue(ctx, ContextKeyIsAdditionalAppealCreation{}, true)
-				if err := s.Create(ctx, []*domain.Appeal{additionalAppeal}); err != nil {
+				if err := s.Create(ctx, []*domain.Appeal{additionalAppeal}, CreateWithAdditionalAppeal()); err != nil {
 					if errors.Is(err, ErrAppealDuplicate) {
 						continue
 					}
@@ -806,7 +819,7 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 	return nil
 }
 
-func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal) error {
+func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal, opts ...CreateAppealOption) error {
 	policy := a.Policy
 	if policy == nil {
 		p, err := s.policyService.GetOne(ctx, a.PolicyID, a.PolicyVersion)
@@ -816,7 +829,12 @@ func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal) error {
 		policy = p
 	}
 
-	isAdditionalAppealCreation, _ := ctx.Value(ContextKeyIsAdditionalAppealCreation{}).(bool)
+	createAppealOpts := &createAppealOptions{}
+	for _, opt := range opts {
+		opt(createAppealOpts)
+	}
+
+	isAdditionalAppealCreation := createAppealOpts.IsAdditionalAppeal
 	if !isAdditionalAppealCreation {
 		if err := s.handleAppealRequirements(ctx, a, policy); err != nil {
 			return fmt.Errorf("handling appeal requirements: %w", err)

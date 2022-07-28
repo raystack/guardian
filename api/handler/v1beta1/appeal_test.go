@@ -448,7 +448,7 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 			},
 		}
 		s.appealService.EXPECT().Create(mock.AnythingOfType("*context.valueCtx"), expectedAppeals).
-			Run(func(_a0 context.Context, _a1 []*domain.Appeal) {
+			Run(func(_a0 context.Context, _a1 []*domain.Appeal, _a2 ...appeal.CreateAppealOption) {
 				for _, a := range _a1 {
 					a.ID = "test-id"
 					a.Resource = expectedResource
@@ -557,7 +557,7 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 			},
 		}
 		s.appealService.EXPECT().Create(mock.AnythingOfType("*context.valueCtx"), mock.Anything).
-			Run(func(_a0 context.Context, _a1 []*domain.Appeal) {
+			Run(func(_a0 context.Context, _a1 []*domain.Appeal, _a2 ...appeal.CreateAppealOption) {
 				*_a1[0] = *invalidAppeal
 			}).
 			Return(nil).Once()
