@@ -20,36 +20,36 @@ const (
 )
 
 type Database struct {
-	ID                       int     `json:"id"`
-	Name                     string  `json:"name"`
-	CacheFieldValuesSchedule string  `json:"cache_field_values_schedule"`
-	Timezone                 string  `json:"timezone"`
-	AutoRunQueries           bool    `json:"auto_run_queries"`
-	MetadataSyncSchedule     string  `json:"metadata_sync_schedule"`
-	Engine                   string  `json:"engine"`
-	NativePermissions        string  `json:"native_permissions"`
-	Tables                   []Table `json:"tables"`
+	ID                       int     `json:"id" mapstructure:"id"`
+	Name                     string  `json:"name" mapstructure:"name"`
+	CacheFieldValuesSchedule string  `json:"cache_field_values_schedule" mapstructure:"cache_field_values_schedule"`
+	Timezone                 string  `json:"timezone" mapstructure:"timezone"`
+	AutoRunQueries           bool    `json:"auto_run_queries" mapstructure:"auto_run_queries"`
+	MetadataSyncSchedule     string  `json:"metadata_sync_schedule" mapstructure:"metadata_sync_schedule"`
+	Engine                   string  `json:"engine" mapstructure:"engine"`
+	NativePermissions        string  `json:"native_permissions" mapstructure:"native_permissions"`
+	Tables                   []Table `json:"tables" mapstructure:"tables"`
 }
 
 type Table struct {
-	ID       int    `mapstructure:"id"`
-	Name     string `json:"name"`
-	DbId     int    `mapstructure:"db_id"`
-	Database *domain.Resource
+	ID       int              `json:"id" mapstructure:"id"`
+	Name     string           `json:"name" mapstructure:"name"`
+	DbId     int              `json:"db_id" mapstructure:"db_id"`
+	Database *domain.Resource `json:"database" mapstructure:"database"`
 }
 
 type GroupResource struct {
-	Name        string   `json:"name"`
-	Permissions []string `json:"permission"`
-	Urn         string   `json:"urn"`
-	Type        string   `json:"type"`
+	Name        string   `json:"name" mapstructure:"name"`
+	Permissions []string `json:"permission" mapstructure:"permission"`
+	Urn         string   `json:"urn" mapstructure:"urn"`
+	Type        string   `json:"type" mapstructure:"type"`
 }
 
 type Group struct {
-	ID                  int              `json:"id"`
-	Name                string           `json:"name"`
-	DatabaseResources   []*GroupResource `json:"database"`
-	CollectionResources []*GroupResource `json:"collection"`
+	ID                  int              `json:"id" mapstructure:"id"`
+	Name                string           `json:"name" mapstructure:"name"`
+	DatabaseResources   []*GroupResource `json:"database" mapstructure:"database"`
+	CollectionResources []*GroupResource `json:"collection" mapstructure:"collection"`
 }
 
 func (d *Database) FromDomain(r *domain.Resource) error {

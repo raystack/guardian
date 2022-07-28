@@ -29,6 +29,22 @@ resources:
     policy:
       id: my_policy
       version: 1
+    roles:
+      - id: role-1
+        name: BigQuery
+        permissions:
+          - roles/bigquery.admin
+          - roles/bigquery.dataEditor
+          - roles/bigquery.dataOwner
+      - id: role-2
+        name: Custom
+        permissions:
+          - projects/integration/roles/project.iamManager
+      - id: role-3
+        name: Api gateway
+        permissions:
+          - roles/apigateway.admin
+          - roles/apigateway.viewer
 ```
 
 ```yaml
@@ -48,6 +64,13 @@ resources:
     policy:
       id: my_policy
       version: 1
+    roles:
+      - id: role-1
+        name: BigQuery
+        permissions:
+          - roles/bigquery.admin
+          - roles/bigquery.dataEditor
+          - roles/bigquery.dataOwner
 ```
 
 ### `GCloudIAMAccountType`

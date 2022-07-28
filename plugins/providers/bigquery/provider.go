@@ -12,17 +12,17 @@ import (
 
 // Provider for bigquery
 type Provider struct {
-	typeName  string
-	bqClients map[string]*bigQueryClient
-	crypto    domain.Crypto
+	typeName string
+	Clients  map[string]BigQueryClient
+	crypto   domain.Crypto
 }
 
 // NewProvider returns bigquery provider
 func NewProvider(typeName string, crypto domain.Crypto) *Provider {
 	return &Provider{
-		typeName:  typeName,
-		bqClients: map[string]*bigQueryClient{},
-		crypto:    crypto,
+		typeName: typeName,
+		Clients:  map[string]BigQueryClient{},
+		crypto:   crypto,
 	}
 }
 
@@ -66,7 +66,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 	for _, d := range datasets {
-		dataset := d.toDomain()
+		dataset := d.ToDomain()
 		dataset.ProviderType = pc.Type
 		dataset.ProviderURN = pc.URN
 
@@ -80,7 +80,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 				return nil, err
 			}
 			for _, t := range tables {
-				table := t.toDomain()
+				table := t.ToDomain()
 				table.ProviderType = pc.Type
 				table.ProviderURN = pc.URN
 				resources = append(resources, table)
@@ -113,7 +113,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	ctx := context.TODO()
 	if a.Resource.Type == ResourceTypeDataset {
 		d := new(Dataset)
-		if err := d.fromDomain(a.Resource); err != nil {
+		if err := d.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
@@ -129,7 +129,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return nil
 	} else if a.Resource.Type == ResourceTypeTable {
 		t := new(Table)
-		if err := t.fromDomain(a.Resource); err != nil {
+		if err := t.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
@@ -170,7 +170,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	ctx := context.TODO()
 	if a.Resource.Type == ResourceTypeDataset {
 		d := new(Dataset)
-		if err := d.fromDomain(a.Resource); err != nil {
+		if err := d.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
@@ -186,7 +186,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return nil
 	} else if a.Resource.Type == ResourceTypeTable {
 		t := new(Table)
-		if err := t.fromDomain(a.Resource); err != nil {
+		if err := t.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
@@ -216,10 +216,10 @@ func (p *Provider) GetAccountTypes() []string {
 	}
 }
 
-func (p *Provider) getBigQueryClient(credentials Credentials) (*bigQueryClient, error) {
+func (p *Provider) getBigQueryClient(credentials Credentials) (BigQueryClient, error) {
 	projectID := strings.Replace(credentials.ResourceName, "projects/", "", 1)
-	if p.bqClients[projectID] != nil {
-		return p.bqClients[projectID], nil
+	if p.Clients[projectID] != nil {
+		return p.Clients[projectID], nil
 	}
 
 	credentials.Decrypt(p.crypto)
@@ -228,7 +228,7 @@ func (p *Provider) getBigQueryClient(credentials Credentials) (*bigQueryClient, 
 		return nil, err
 	}
 
-	p.bqClients[projectID] = client
+	p.Clients[projectID] = client
 	return client, nil
 }
 
