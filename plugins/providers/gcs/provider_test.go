@@ -1,6 +1,7 @@
 package gcs_test
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/odpf/guardian/domain"
@@ -21,40 +22,39 @@ func TestGetType(t *testing.T) {
 	})
 }
 
-// func TestCreateConfig(t *testing.T) {
+func TestCreateConfig(t *testing.T) {
+	t.Run("should make the provider config, parse and validate the credentials and permissions and return nil error on success", func(t *testing.T) {
+		crypto := new(mocks.Crypto)
+		p := gcs.NewProvider("gcs", crypto)
+		providerURN := "test-resource-name"
+		pc := &domain.ProviderConfig{
+			Type: domain.ProviderTypeGCS,
+			URN:  providerURN,
+			Credentials: gcs.Credentials{
+				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte(`{"type":"service_account"}`)),
+				ResourceName:      "projects/test-resource-name",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: gcs.ResourceTypeBucket,
+					Roles: []*domain.Role{
+						{
+							ID:          "Storage Legacy Bucket Writer",
+							Name:        "Storage Legacy Bucket Writer",
+							Description: "Read access to buckets with object listing/creation/deletion",
+							Permissions: []interface{}{"roles/storage.legacyBucketWriter"},
+						},
+					},
+				},
+			},
+		}
+		crypto.On("Encrypt", `{"type":"service_account"}`).Return("encrypted Service Account Key", nil)
 
-// 	t.Run("should make the provider config, parse and validate the credentials and permissions and return nil error on success", func(t *testing.T) {
-// 		p := initProvider()
-// 		crypto := new(mocks.Crypto)
-// 		providerURN := "test-resource-name"
-// 		pc := &domain.ProviderConfig{
-// 			Type: domain.ProviderTypeGCS,
-// 			URN:  providerURN,
-// 			Credentials: gcs.Credentials{
-// 				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte(`{"type":"service_account"}`)),
-// 				ResourceName:      "projects/test-resource-name",
-// 			},
-// 			Resources: []*domain.ResourceConfig{
-// 				{
-// 					Type: gcs.ResourceTypeBucket,
-// 					Roles: []*domain.Role{
-// 						{
-// 							ID:          "",
-// 							Name:        "",
-// 							Description: "",
-// 							Permissions: []interface{}{"view"},
-// 						},
-// 					},
-// 				},
-// 			},
-// 		}
-// 		crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
-
-// 		actualError := p.CreateConfig(pc)
-// 		assert.NoError(t, actualError)
-// 		crypto.AssertExpectations(t)
-// 	})
-// }
+		actualError := p.CreateConfig(pc)
+		assert.NoError(t, actualError)
+		crypto.AssertExpectations(t)
+	})
+}
 
 func TestGrantAccess(t *testing.T) {
 	t.Run("test", func(t *testing.T) {

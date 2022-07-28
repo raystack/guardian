@@ -64,12 +64,12 @@ func (c *Credentials) Encrypt(encryptor domain.Encryptor) error {
 		return ErrUnableToEncryptNilCredentials
 	}
 
-	encryptedCredentials, err := encryptor.Encrypt(c.ServiceAccountKey)
+	encryptedServiceAccount, err := encryptor.Encrypt(c.ServiceAccountKey)
 	if err != nil {
 		return err
 	}
 
-	c.ServiceAccountKey = encryptedCredentials
+	c.ServiceAccountKey = encryptedServiceAccount
 	return nil
 }
 
@@ -181,7 +181,7 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 
 	var nameValidation string
 	if resourceType == ResourceTypeBucket {
-		nameValidation = "oneof=view edit admin" //Todo- check with API
+		nameValidation = "oneof=roles/storage.admin roles/storage.legacyBucketOwner roles/storage.legacyBucketReader roles/storage.legacyBucketWriter roles/storage.legacyObjectOwner roles/storage.legacyObjectReader roles/storage.objectAdmin roles/storage.objectCreator roles/storage.objectViewer"
 	} else if resourceType == ResourceTypeObject {
 		nameValidation = "oneof=viewer owner" //Todo- check with API
 	}
