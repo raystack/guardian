@@ -24,7 +24,6 @@ func TestGetType(t *testing.T) {
 }
 
 func TestCreateConfig(t *testing.T) {
-
 	t.Run("should return error if there credentials are invalid", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
@@ -118,7 +117,6 @@ func TestCreateConfig(t *testing.T) {
 	})
 
 	t.Run("should not return error if parse and valid of Credentials are correct", func(t *testing.T) {
-
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GrafanaClient)
@@ -669,7 +667,6 @@ func TestRevokeAccess(t *testing.T) {
 
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
-
 	})
 
 	t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
@@ -725,7 +722,6 @@ func TestRevokeAccess(t *testing.T) {
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
 	})
-
 }
 
 func TestGetRoles(t *testing.T) {

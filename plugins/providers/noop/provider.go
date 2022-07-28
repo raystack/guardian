@@ -38,7 +38,6 @@ func (p *Provider) GetType() string {
 }
 
 func (p *Provider) CreateConfig(cfg *domain.ProviderConfig) error {
-
 	if cfg.Type != domain.ProviderTypeNoOp {
 		return ErrInvalidProviderType
 	}

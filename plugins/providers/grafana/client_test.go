@@ -107,7 +107,6 @@ func (s *ClientTestSuite) setup() {
 }
 
 func (s *ClientTestSuite) TestGetFolders() {
-
 	s.Run("should get folders and nil error on success", func() {
 		s.setup()
 
@@ -156,7 +155,6 @@ func (s *ClientTestSuite) TestGetFolders() {
 }
 
 func (s *ClientTestSuite) TestGetDashboards() {
-
 	s.Run("should get folders and nil error on success", func() {
 		s.setup()
 
@@ -233,7 +231,6 @@ func (s *ClientTestSuite) getTestRequest(method, path string, body interface{}) 
 }
 
 func (s *ClientTestSuite) TestGrantDashboardAccess() {
-
 	s.Run("should return error if user not found", func() {
 		s.setup()
 
@@ -389,7 +386,6 @@ func (s *ClientTestSuite) TestGrantDashboardAccess() {
 }
 
 func (s *ClientTestSuite) TestRevokeDashboardAccess() {
-
 	s.Run("should return error if user not found", func() {
 		s.setup()
 

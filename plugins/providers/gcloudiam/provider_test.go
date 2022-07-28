@@ -13,7 +13,6 @@ import (
 )
 
 func TestCreateConfig(t *testing.T) {
-
 	t.Run("should return error if error in credentials are invalid/mandatory fields are missing", func(t *testing.T) {
 		providerURN := "test-URN"
 		crypto := new(mocks.Crypto)
@@ -193,7 +192,6 @@ func TestGetType(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
-
 	t.Run("should error when credentials are invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := gcloudiam.NewProvider("", crypto)
@@ -495,7 +493,6 @@ func TestRevokeAccess(t *testing.T) {
 }
 
 func TestGetRoles(t *testing.T) {
-
 	t.Run("should return error if resource type is not project or organisation", func(t *testing.T) {
 		expectedError := gcloudiam.ErrInvalidResourceType
 		providerURN := "test-provider-urn"
@@ -564,7 +561,6 @@ func TestGetRoles(t *testing.T) {
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
 	})
-
 }
 
 func TestGetAccountTypes(t *testing.T) {

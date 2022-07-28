@@ -67,7 +67,6 @@ func TestDataSet(t *testing.T) {
 			assert.Nil(t, actualError)
 			assert.Equal(t, expectedDataset, d)
 		})
-
 	})
 }
 
@@ -144,6 +143,5 @@ func TestTable(t *testing.T) {
 			assert.Nil(t, actualError)
 			assert.Equal(t, expectedTable, d)
 		})
-
 	})
 }

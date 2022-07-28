@@ -128,7 +128,6 @@ func (s *ClientTestSuite) setup() {
 }
 
 func (s *ClientTestSuite) TestGetWorkbooks() {
-
 	s.Run("should return error if status code is 403, user forbidden to get workbooks", func() {
 		s.setup()
 
@@ -193,7 +192,6 @@ func (s *ClientTestSuite) getTestRequest(method, path string, body interface{}) 
 }
 
 func (s *ClientTestSuite) TestGetFlows() {
-
 	s.Run("should get error if user is forbidden, Status Code 403", func() {
 		s.setup()
 
@@ -278,7 +276,6 @@ func (s *ClientTestSuite) TestGetFlows() {
 }
 
 func (s *ClientTestSuite) TestGetDataSources() {
-
 	s.Run("should return error if status code is 403, user forbidden to get workbooks", func() {
 		s.setup()
 
@@ -324,7 +321,6 @@ func (s *ClientTestSuite) TestGetDataSources() {
 }
 
 func (s *ClientTestSuite) TestGetViews() {
-
 	s.Run("should return error if status code is 403, user forbidden to get resource", func() {
 		s.setup()
 
@@ -419,7 +415,6 @@ func (s *ClientTestSuite) TestGetMetrics() {
 }
 
 func (s *ClientTestSuite) TestUpdateSiteRole() {
-
 	s.Run("should return error if error in getting the user", func() {
 		s.setup()
 
@@ -470,7 +465,6 @@ func (s *ClientTestSuite) TestUpdateSiteRole() {
 }
 
 func (s *ClientTestSuite) TestGrantWorkbookAccess() { //the body have to be updated later after fix getTestRequest
-
 	s.Run("should return error if error in getting the user", func() {
 		s.setup()
 
@@ -526,7 +520,6 @@ func (s *ClientTestSuite) TestGrantWorkbookAccess() { //the body have to be upda
 }
 
 func (s *ClientTestSuite) TestGrantFlowAccess() { //the body have to be updated later after fix getTestRequest
-
 	s.Run("should return error if error in getting the user", func() {
 		s.setup()
 
@@ -582,7 +575,6 @@ func (s *ClientTestSuite) TestGrantFlowAccess() { //the body have to be updated 
 }
 
 func (s *ClientTestSuite) TestGrantMetricAccess() { //the body have to be updated later after fix getTestRequest
-
 	s.Run("should return error if error in getting the user", func() {
 		s.setup()
 
@@ -608,7 +600,6 @@ func (s *ClientTestSuite) TestGrantMetricAccess() { //the body have to be update
 		s.Equal(expectedError, actualError)
 	})
 	s.Run("should grant access to metric and return no error on success", func() {
-
 		s.setup()
 
 		userEmail := "test-email@gojek.com"
@@ -638,7 +629,6 @@ func (s *ClientTestSuite) TestGrantMetricAccess() { //the body have to be update
 }
 
 func (s *ClientTestSuite) TestGrantDataSourceAccess() { //the body have to be updated later after fix getTestRequest
-
 	s.Run("should return error if error in getting the user", func() {
 		s.setup()
 
@@ -664,7 +654,6 @@ func (s *ClientTestSuite) TestGrantDataSourceAccess() { //the body have to be up
 		s.Equal(expectedError, actualError)
 	})
 	s.Run("should grant access to datasource and return nil error on success", func() {
-
 		s.setup()
 
 		userEmail := "test-email@gojek.com"
@@ -695,7 +684,6 @@ func (s *ClientTestSuite) TestGrantDataSourceAccess() { //the body have to be up
 }
 
 func (s *ClientTestSuite) TestGrantViewAccess() { //the body have to be updated later after fix getTestRequest
-
 	s.Run("should return error if error in getting the user", func() {
 		s.setup()
 
@@ -722,7 +710,6 @@ func (s *ClientTestSuite) TestGrantViewAccess() { //the body have to be updated 
 	})
 
 	s.Run("should grant access to view and return nil error on success", func() {
-
 		s.setup()
 
 		userEmail := "test-email@gojek.com"
@@ -753,7 +740,6 @@ func (s *ClientTestSuite) TestGrantViewAccess() { //the body have to be updated 
 }
 
 func (s *ClientTestSuite) TestRevokeWorkbookAccess() {
-
 	s.Run("should return error if error in getting the user", func() {
 		s.setup()
 
@@ -779,7 +765,6 @@ func (s *ClientTestSuite) TestRevokeWorkbookAccess() {
 		s.Equal(expectedError, actualError)
 	})
 	s.Run("should revoke access to workbook and return no error on success", func() {
-
 		s.setup()
 
 		userEmail := "test-email@gojek.com"
@@ -817,7 +802,6 @@ func (s *ClientTestSuite) TestRevokeWorkbookAccess() {
 }
 
 func (s *ClientTestSuite) TestRevokeFlowAccess() {
-
 	s.Run("should return error if error in getting the user", func() {
 		s.setup()
 
@@ -844,7 +828,6 @@ func (s *ClientTestSuite) TestRevokeFlowAccess() {
 	})
 
 	s.Run("should revoke access to flow and return nil error on success", func() {
-
 		s.setup()
 
 		userEmail := "test-email@gojek.com"
@@ -882,7 +865,6 @@ func (s *ClientTestSuite) TestRevokeFlowAccess() {
 }
 
 func (s *ClientTestSuite) TestRevokeMetricAccess() {
-
 	s.Run("should return error if error in getting the user", func() {
 		s.setup()
 
@@ -908,7 +890,6 @@ func (s *ClientTestSuite) TestRevokeMetricAccess() {
 		s.Equal(expectedError, actualError)
 	})
 	s.Run("should revoke access to metric and return nil error on success", func() {
-
 		s.setup()
 
 		userEmail := "test-email@gojek.com"
@@ -946,7 +927,6 @@ func (s *ClientTestSuite) TestRevokeMetricAccess() {
 }
 
 func (s *ClientTestSuite) TestRevokeDataSourceAccess() {
-
 	s.Run("should return error if error in getting the user", func() {
 		s.setup()
 
@@ -972,7 +952,6 @@ func (s *ClientTestSuite) TestRevokeDataSourceAccess() {
 		s.Equal(expectedError, actualError)
 	})
 	s.Run("should revoke access to datasource and return nil error on success", func() {
-
 		s.setup()
 
 		userEmail := "test-email@gojek.com"
@@ -1010,7 +989,6 @@ func (s *ClientTestSuite) TestRevokeDataSourceAccess() {
 }
 
 func (s *ClientTestSuite) TestRevokeViewAccess() {
-
 	s.Run("should return error if error in getting the user", func() {
 		s.setup()
 
@@ -1036,7 +1014,6 @@ func (s *ClientTestSuite) TestRevokeViewAccess() {
 		s.Equal(expectedError, actualError)
 	})
 	s.Run("should revoke access to view and return nil error on success", func() {
-
 		s.setup()
 
 		userEmail := "test-email@gojek.com"
