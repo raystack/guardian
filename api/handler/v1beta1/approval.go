@@ -78,7 +78,7 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 		case appeal.ErrActionForbidden:
 			return nil, status.Error(codes.PermissionDenied, "permission denied")
 		case appeal.ErrApprovalNotFound:
-			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
+			return nil, status.Errorf(codes.NotFound, "approval not found: %v", id)
 		default:
 			return nil, status.Errorf(codes.Internal, "failed to update approval: %v", err)
 		}
