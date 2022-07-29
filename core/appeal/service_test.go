@@ -2016,13 +2016,19 @@ func (s *ServiceTestSuite) TestAddApprover() {
 	})
 
 	s.Run("should return error if appeal status is not pending", func() {
+		approvalID := uuid.New().String()
 		expectedError := appeal.ErrUnableToAddApprover
 		expectedAppeal := &domain.Appeal{
 			Status: domain.AppealStatusActive,
+			Approvals: []*domain.Approval{
+				{
+					ID: approvalID,
+				},
+			},
 		}
 		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
 
-		appeal, err := s.service.AddApprover(context.Background(), uuid.New().String(), uuid.New().String(), "user@example.com")
+		appeal, err := s.service.AddApprover(context.Background(), uuid.New().String(), approvalID, "user@example.com")
 
 		s.Nil(appeal)
 		s.ErrorIs(err, expectedError)
@@ -2220,6 +2226,26 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(nil, expectedError).Once()
 
 		appeal, err := s.service.DeleteApprover(context.Background(), uuid.New().String(), uuid.New().String(), "user@example.com")
+
+		s.Nil(appeal)
+		s.ErrorIs(err, expectedError)
+		s.mockRepository.AssertExpectations(s.T())
+	})
+
+	s.Run("should return error if appeal status is not pending", func() {
+		approvalID := uuid.New().String()
+		expectedError := appeal.ErrUnableToDeleteApprover
+		expectedAppeal := &domain.Appeal{
+			Status: domain.AppealStatusActive,
+			Approvals: []*domain.Approval{
+				{
+					ID: approvalID,
+				},
+			},
+		}
+		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+
+		appeal, err := s.service.DeleteApprover(context.Background(), uuid.New().String(), approvalID, "user@example.com")
 
 		s.Nil(appeal)
 		s.ErrorIs(err, expectedError)

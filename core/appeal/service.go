@@ -538,6 +538,9 @@ func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email s
 	if err != nil {
 		return nil, err
 	}
+	if appeal.Status != domain.AppealStatusPending {
+		return nil, fmt.Errorf("%w: can't add new approver to appeal with %q status", ErrUnableToAddApprover, appeal.Status)
+	}
 
 	if !utils.ContainsString([]string{domain.ApprovalStatusPending, domain.ApprovalStatusBlocked}, approval.Status) {
 		return nil, fmt.Errorf("%w: can't add approver to approval with %q status", ErrUnableToAddApprover, approval.Status)
@@ -590,6 +593,9 @@ func (s *Service) DeleteApprover(ctx context.Context, appealID, approvalID, emai
 	if err != nil {
 		return nil, err
 	}
+	if appeal.Status != domain.AppealStatusPending {
+		return nil, fmt.Errorf("%w: can't delete approver to appeal with %q status", ErrUnableToDeleteApprover, appeal.Status)
+	}
 
 	if !utils.ContainsString([]string{domain.ApprovalStatusPending, domain.ApprovalStatusBlocked}, approval.Status) {
 		return nil, fmt.Errorf("%w: can't delete approver to approval with %q status", ErrUnableToDeleteApprover, approval.Status)
@@ -636,9 +642,6 @@ func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *dom
 	appeal, err := s.repo.GetByID(appealID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("getting appeal details: %w", err)
-	}
-	if appeal.Status != domain.AppealStatusPending {
-		return nil, nil, fmt.Errorf("%w: can't delete approver to appeal with %q status", ErrUnableToAddApprover, appeal.Status)
 	}
 
 	var approval *domain.Approval
