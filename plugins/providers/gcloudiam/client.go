@@ -124,7 +124,7 @@ func (c *iamClient) RevokeAccess(accountType, accountID, role string) error {
 	member := fmt.Sprintf("%s:%s", accountType, accountID)
 	for _, b := range policy.Bindings {
 		if b.Role == role {
-			var removeIndex int = -1
+			removeIndex := -1
 			for i, m := range b.Members {
 				if m == member {
 					removeIndex = i

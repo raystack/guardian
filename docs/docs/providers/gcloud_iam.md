@@ -89,3 +89,12 @@ resources:
 
 - `project`
 - `organization`
+
+### `GCloudIAMResourceRoles`
+
+A user defined roles grouping single or multiple GCloud roles.
+
+### `GCloudIAMResourcePermission`
+
+A Google Cloud predefined role name. These can be any roles defined under Gcloud project roles list. User defined roles group them together depending on the use case
+
