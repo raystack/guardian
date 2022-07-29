@@ -115,21 +115,21 @@ func TestCreateConfig(t *testing.T) {
 // 	})
 // }
 
-func TestRevokeAccess(t *testing.T) {
-	t.Run("test", func(t *testing.T) {
-		p := initProvider()
-		providerURN := "test-URN"
-		pc := &domain.ProviderConfig{
-			URN:         providerURN,
-			Credentials: "valid-Credentials",
-			Resources:   []*domain.ResourceConfig{{}},
-		}
-		a := &domain.Appeal{}
+// func TestRevokeAccess(t *testing.T) {
+// 	t.Run("test", func(t *testing.T) {
+// 		p := initProvider()
+// 		providerURN := "test-URN"
+// 		pc := &domain.ProviderConfig{
+// 			URN:         providerURN,
+// 			Credentials: "valid-Credentials",
+// 			Resources:   []*domain.ResourceConfig{{}},
+// 		}
+// 		a := &domain.Appeal{}
 
-		actualError := p.RevokeAccess(pc, a)
-		assert.Nil(t, actualError)
-	})
-}
+// 		actualError := p.RevokeAccess(pc, a)
+// 		assert.Nil(t, actualError)
+// 	})
+// }
 
 func TestGetRoles(t *testing.T) {
 	t.Run("test", func(t *testing.T) {

@@ -112,7 +112,6 @@ func (p *Provider) GetType() string {
 }
 
 func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
-
 	if err := validateProviderConfigAndAppealParams(pc, a); err != nil {
 		return fmt.Errorf("invalid provider/appeal config: %w", err)
 	}
@@ -141,7 +140,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	user := a.AccountID
 
 	if a.Resource.Type == ResourceTypeBucket {
-		bucketName := a.Resource.URN //"asia.artifacts.pilotdata-integration.appspot.com"
+		bucketName := a.Resource.URN
 		b := new(Bucket)
 		bucket := client.Bucket(bucketName)
 		if err := b.fromDomain(a.Resource); err != nil {
@@ -161,8 +160,8 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 				return fmt.Errorf("Bucket(%q).IAM().Policy: %v", bucketName, err)
 			}
 
-			identity := fmt.Sprintf("user:%s", user)           //user, serviceAccount also valid
-			var role iam.RoleName = iam.RoleName(resolvedRole) //"roles/storage.objectViewer"
+			identity := fmt.Sprintf("user:%s", user)           //TODO, the identity should have "group:" or "user:"..  user, serviceAccount also valid
+			var role iam.RoleName = iam.RoleName(resolvedRole) //TODO : discuss the roles and edit this    "roles/storage.objectViewer"
 
 			policy.Add(identity, role)
 			if err := bucket.IAM().SetPolicy(ctx, policy); err != nil {
@@ -174,6 +173,63 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 }
 
 func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
+	if err := validateProviderConfigAndAppealParams(pc, a); err != nil {
+		return fmt.Errorf("invalid provider/appeal config: %w", err)
+	}
+
+	permissions, err := getPermissions(pc.Resources, a)
+	if err != nil {
+		return fmt.Errorf("error in getting permissions: %w", err)
+	}
+
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return fmt.Errorf("error in decoding credentials%w", err)
+	}
+
+	if err := creds.Decrypt(p.crypto); err != nil {
+		return fmt.Errorf("error in decrypting credentials%w", err)
+	}
+
+	ctx := context.TODO()
+	client, err := storage.NewClient(ctx, option.WithCredentialsJSON([]byte(creds.ServiceAccountKey)))
+	if err != nil {
+		return fmt.Errorf("error in getting new client: %w", err)
+	}
+	defer client.Close()
+
+	user := a.AccountID
+
+	if a.Resource.Type == ResourceTypeBucket {
+		bucketName := a.Resource.URN
+		b := new(Bucket)
+		bucket := client.Bucket(bucketName)
+		if err := b.fromDomain(a.Resource); err != nil {
+			return fmt.Errorf("from Domain func error: %w", err)
+		}
+		for _, p := range permissions {
+			resolvedRole, err := resolveRole(string(p))
+			if err != nil {
+				if errors.Is(err, ErrPermissionAlreadyExists) {
+					return nil
+				}
+				return fmt.Errorf("error in resolving permissions: %w", err)
+			}
+
+			policy, err := bucket.IAM().Policy(ctx)
+			if err != nil {
+				return fmt.Errorf("Bucket(%q).IAM().Policy: %v", bucketName, err)
+			}
+
+			identity := fmt.Sprintf("user:%s", user)           //TODO, the identity should have "group:" or "user:"..  user, serviceAccount also valid
+			var role iam.RoleName = iam.RoleName(resolvedRole) //TODO : discuss the roles and edit this    "roles/storage.objectViewer"
+
+			policy.Remove(identity, role)
+			if err := bucket.IAM().SetPolicy(ctx, policy); err != nil {
+				return fmt.Errorf("Bucket(%q).IAM().SetPolicy: %v", bucketName, err)
+			}
+		}
+	}
 	return nil
 }
 
@@ -182,7 +238,7 @@ func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*
 }
 
 func (p *Provider) GetAccountTypes() []string {
-	return []string{"user", "serviceAccount", "group", "domain"}
+	return []string{AccountTypeUser, AccountTypeServiceAccount, AccountTypeGroup, AccountTypeDomain}
 }
 
 func validateProviderConfigAndAppealParams(pc *domain.ProviderConfig, a *domain.Appeal) error {
