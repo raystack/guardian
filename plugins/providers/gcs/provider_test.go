@@ -42,7 +42,7 @@ func TestCreateConfig(t *testing.T) {
 							ID:          "Storage Legacy Bucket Writer",
 							Name:        "Storage Legacy Bucket Writer",
 							Description: "Read access to buckets with object listing/creation/deletion",
-							Permissions: []interface{}{"roles/storage.legacyBucketWriter"},
+							Permissions: []interface{}{"WRITER"},
 						},
 					},
 				},
@@ -56,21 +56,64 @@ func TestCreateConfig(t *testing.T) {
 	})
 }
 
-func TestGrantAccess(t *testing.T) {
-	t.Run("test", func(t *testing.T) {
-		p := initProvider()
-		providerURN := "test-URN"
-		pc := &domain.ProviderConfig{
-			URN:         providerURN,
-			Credentials: "valid-Credentials",
-			Resources:   []*domain.ResourceConfig{{}},
-		}
-		a := &domain.Appeal{}
+// func TestGetResources(t *testing.T) {
+// 	t.Run("should get the bucket resources defined in the provider config", func(t *testing.T) {
+// 		crypto := new(mocks.Crypto)
+// 		p := gcs.NewProvider("gcs", crypto)
+// 		providerURN := "test-resource-name"
+// 		pc := &domain.ProviderConfig{
+// 			Type: domain.ProviderTypeGCS,
+// 			URN:  providerURN,
+// 			Credentials: gcs.Credentials{
+// 				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte(`{"type":"service_account"}`)),
+// 				ResourceName:      "projects/test-resource-name",
+// 			},
+// 			Resources: []*domain.ResourceConfig{
+// 				{
+// 					Type: gcs.ResourceTypeBucket,
+// 					Roles: []*domain.Role{
+// 						{
+// 							ID:          "Storage Legacy Bucket Writer",
+// 							Name:        "Storage Legacy Bucket Writer",
+// 							Description: "Read access to buckets with object listing/creation/deletion",
+// 							Permissions: []interface{}{"roles/storage.legacyBucketWriter"},
+// 						},
+// 					},
+// 				},
+// 			},
+// 		}
+// 		expectedResources := []*domain.Resource{
+// 			{
+// 				ProviderType: pc.Type,
+// 				ProviderURN:  pc.URN,
+// 				Type:         gcs.ResourceTypeBucket,
+// 				URN:          "projects/test-resource-name",
+// 			},
+// 		}
 
-		actualError := p.GrantAccess(pc, a)
-		assert.Nil(t, actualError)
-	})
-}
+// 		crypto.On("Decrypt", "eyJ0eXBlIjoic2VydmljZV9hY2NvdW50In0=").Return(`{"type":"service_account"}`, nil)
+
+// 		actualResources, actualError := p.GetResources(pc)
+// 		assert.NoError(t, actualError)
+// 		assert.Equal(t, expectedResources, actualResources)
+// 	})
+// }
+
+// func TestGrantAccess(t *testing.T) {
+// 	t.Run("test", func(t *testing.T) {
+// 		p := initProvider()
+// 		providerURN := "test-URN"
+// 		pc := &domain.ProviderConfig{
+// 			URN:         providerURN,
+// 			Credentials: "valid-Credentials",
+// 			Resources:   []*domain.ResourceConfig{{}},
+// 		}
+// 		a := &domain.Appeal{}
+
+// 		actualError := p.GrantAccess(pc, a)
+// 		assert.Nil(t, actualError)
+// 	})
+// }
 
 func TestRevokeAccess(t *testing.T) {
 	t.Run("test", func(t *testing.T) {

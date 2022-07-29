@@ -14,6 +14,19 @@ import (
 	"google.golang.org/api/option"
 )
 
+const (
+	BucketRoleReader      = "READER"
+	BucketRoleWriter      = "WRITER"
+	BucketRoleOwner       = "OWNER"
+	BucketRoleObjectAdmin = "OBJECTADMIN"
+	BucketRoleAdmin       = "ADMIN"
+
+	AccountTypeUser           = "user"
+	AccountTypeServiceAccount = "serviceAccount"
+	AccountTypeGroup          = "group"
+	AccountTypeDomain         = "domain"
+)
+
 type Config struct {
 	ProviderConfig *domain.ProviderConfig
 	valid          bool
@@ -181,7 +194,8 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 
 	var nameValidation string
 	if resourceType == ResourceTypeBucket {
-		nameValidation = "oneof=roles/storage.admin roles/storage.legacyBucketOwner roles/storage.legacyBucketReader roles/storage.legacyBucketWriter roles/storage.legacyObjectOwner roles/storage.legacyObjectReader roles/storage.objectAdmin roles/storage.objectCreator roles/storage.objectViewer"
+		// nameValidation = "oneof=roles/storage.admin roles/storage.legacyBucketOwner roles/storage.legacyBucketReader roles/storage.legacyBucketWriter roles/storage.legacyObjectOwner roles/storage.legacyObjectReader roles/storage.objectAdmin roles/storage.objectCreator roles/storage.objectViewer"
+		nameValidation = "oneof=READER OWNER WRITER ADMIN OBJECTADMIN"
 	} else if resourceType == ResourceTypeObject {
 		nameValidation = "oneof=viewer owner" //Todo- check with API
 	}
