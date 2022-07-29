@@ -507,6 +507,7 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 			Variables: map[string]interface{}{
 				"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
 				"role":          appeal.Role,
+				"account_id":    appeal.AccountID,
 			},
 		},
 	}}); errs != nil {
