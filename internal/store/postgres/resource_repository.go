@@ -131,7 +131,7 @@ func (r *ResourceRepository) BulkUpsert(resources []*domain.Resource) error {
 					{Name: "type"},
 					{Name: "urn"},
 				},
-				DoUpdates: clause.AssignmentColumns([]string{"name", "updated_at", "is_deleted"}),
+				DoUpdates: clause.AssignmentColumns([]string{"name", "details", "updated_at", "is_deleted"}),
 			}
 			if err := r.db.Clauses(upsertClause).Create(models).Error; err != nil {
 				return err

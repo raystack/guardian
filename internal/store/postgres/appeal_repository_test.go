@@ -12,6 +12,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
@@ -50,6 +51,7 @@ func (s *AppealRepositoryTestSuite) SetupTest() {
 		"created_by",
 		"creator",
 		"role",
+		"permissions",
 		"options",
 		"labels",
 		"details",
@@ -139,6 +141,7 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 				"",
 				"null",
 				"",
+				"{}",
 				`{"duration":999}`, // invalid options
 				"null",
 				"null",
@@ -213,6 +216,7 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 					tc.expectedRecord.CreatedBy,
 					"null",
 					tc.expectedRecord.Role,
+					pq.StringArray(tc.expectedRecord.Permissions),
 					"null",
 					"null",
 					"null",
@@ -297,7 +301,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 	})
 
 	s.Run("should run query based on filters", func() {
-		selectAppealsJoinsWithResourceSql := `SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE`
+		selectAppealsJoinsWithResourceSql := `SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."permissions","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE`
 		timeNow := time.Now()
 		testCases := []struct {
 			filters             *domain.ListAppealsFilter
@@ -437,6 +441,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 			"test-created-by",
 			"null",
 			"test-role",
+			"{}",
 			`{"duration":999}`, // invalid options
 			"null",
 			"null",
@@ -464,7 +469,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 	})
 
 	s.Run("should return records on success", func() {
-		expectedQuery := regexp.QuoteMeta(`SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE "appeals"."deleted_at" IS NULL`)
+		expectedQuery := regexp.QuoteMeta(`SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."permissions","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE "appeals"."deleted_at" IS NULL`)
 		resourceID1 := uuid.New().String()
 		resourceID2 := uuid.New().String()
 		expectedRecords := []*domain.Appeal{
@@ -519,6 +524,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				r.CreatedBy,
 				"null",
 				r.Role,
+				pq.StringArray(r.Permissions),
 				"null",
 				"null",
 				"null",
@@ -543,8 +549,8 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 
 		actualRecords, actualError := s.repository.Find(&domain.ListAppealsFilter{})
 
-		s.Equal(expectedRecords, actualRecords)
 		s.Nil(actualError)
+		s.Equal(expectedRecords, actualRecords)
 		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
@@ -564,18 +570,20 @@ func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
 		s.EqualError(actualErr, "json: unsupported type: chan int")
 	})
 
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","account_id","account_type","created_by","creator","role","options","labels","details","revoked_by","revoked_at","revoke_reason","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18),($19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) ON CONFLICT ("id") DO UPDATE SET "resource_id"="excluded"."resource_id","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","status"="excluded"."status","account_id"="excluded"."account_id","account_type"="excluded"."account_type","created_by"="excluded"."created_by","creator"="excluded"."creator","role"="excluded"."role","options"="excluded"."options","labels"="excluded"."labels","details"="excluded"."details","revoked_by"="excluded"."revoked_by","revoked_at"="excluded"."revoked_at","revoke_reason"="excluded"."revoke_reason","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "appeals" ("resource_id","policy_id","policy_version","status","account_id","account_type","created_by","creator","role","permissions","options","labels","details","revoked_by","revoked_at","revoke_reason","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19),($20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38) ON CONFLICT ("id") DO UPDATE SET "resource_id"="excluded"."resource_id","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","status"="excluded"."status","account_id"="excluded"."account_id","account_type"="excluded"."account_type","created_by"="excluded"."created_by","creator"="excluded"."creator","role"="excluded"."role","permissions"="excluded"."permissions","options"="excluded"."options","labels"="excluded"."labels","details"="excluded"."details","revoked_by"="excluded"."revoked_by","revoked_at"="excluded"."revoked_at","revoke_reason"="excluded"."revoke_reason","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
 
 	appeals := []*domain.Appeal{
 		{
-			AccountID:  "test@email.com",
-			Role:       "role_name",
-			ResourceID: uuid.New().String(),
+			AccountID:   "test@email.com",
+			Role:        "role_name",
+			Permissions: []string{"test-permission"},
+			ResourceID:  uuid.New().String(),
 		},
 		{
-			AccountID:  "test2@email.com",
-			Role:       "role_name",
-			ResourceID: uuid.New().String(),
+			AccountID:   "test2@email.com",
+			Role:        "role_name",
+			Permissions: []string{"test-permission"},
+			ResourceID:  uuid.New().String(),
 		},
 	}
 
@@ -592,6 +600,7 @@ func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
 			a.CreatedBy,
 			"null",
 			a.Role,
+			pq.StringArray(a.Permissions),
 			"null",
 			"null",
 			"null",
@@ -671,7 +680,7 @@ func (s *AppealRepositoryTestSuite) TestUpdate() {
 	})
 
 	expectedUpdateApprovalsQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","reason","policy_id","policy_version","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12),($13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) ON CONFLICT ("id") DO UPDATE SET "name"="excluded"."name","index"="excluded"."index","appeal_id"="excluded"."appeal_id","status"="excluded"."status","actor"="excluded"."actor","reason"="excluded"."reason","policy_id"="excluded"."policy_id","policy_version"="excluded"."policy_version","created_at"="excluded"."created_at","updated_at"="excluded"."updated_at","deleted_at"="excluded"."deleted_at" RETURNING "id"`)
-	expectedUpdateAppealQuery := regexp.QuoteMeta(`UPDATE "appeals" SET "resource_id"=$1,"policy_id"=$2,"policy_version"=$3,"status"=$4,"account_id"=$5,"account_type"=$6,"created_by"=$7,"creator"=$8,"role"=$9,"options"=$10,"labels"=$11,"details"=$12,"revoked_by"=$13,"revoked_at"=$14,"revoke_reason"=$15,"created_at"=$16,"updated_at"=$17,"deleted_at"=$18 WHERE "id" = $19`)
+	expectedUpdateAppealQuery := regexp.QuoteMeta(`UPDATE "appeals" SET "resource_id"=$1,"policy_id"=$2,"policy_version"=$3,"status"=$4,"account_id"=$5,"account_type"=$6,"created_by"=$7,"creator"=$8,"role"=$9,"permissions"=$10,"options"=$11,"labels"=$12,"details"=$13,"revoked_by"=$14,"revoked_at"=$15,"revoke_reason"=$16,"created_at"=$17,"updated_at"=$18,"deleted_at"=$19 WHERE "id" = $20`)
 	s.Run("should return nil on success", func() {
 		expectedID := uuid.New().String()
 		appeal := &domain.Appeal{
