@@ -104,21 +104,23 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 			p.Version,
 			p.Description,
 			"null",
-			"{\"duration_options\":null}",
 			"null",
 			"null",
 			"null",
 			utils.AnyTime{},
 			utils.AnyTime{},
 			gorm.DeletedAt{},
+			"{\"duration_options\":null}",
 		}
-		expectedResult := sqlmock.NewResult(1, 1)
+
+		expectedRows := sqlmock.NewRows([]string{"appeal"}).AddRow("{\"duration_options\":null}")
 
 		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectExec(expectedQuery).
+		s.dbmock.ExpectQuery(expectedQuery).
 			WithArgs(expectedArgs...).
-			WillReturnResult(expectedResult)
+			WillReturnRows(expectedRows)
 		s.dbmock.ExpectCommit()
+		s.dbmock.MatchExpectationsInOrder(false)
 
 		err := s.repository.Create(p)
 
