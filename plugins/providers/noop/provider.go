@@ -18,6 +18,8 @@ var (
 )
 
 type Provider struct {
+	provider.PermissionManager
+
 	typeName string
 
 	logger log.Logger

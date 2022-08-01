@@ -37,6 +37,7 @@ type Appeal struct {
 	CreatedBy     string                 `json:"created_by" yaml:"created_by"`
 	Creator       interface{}            `json:"creator" yaml:"creator"`
 	Role          string                 `json:"role" yaml:"role"`
+	Permissions   []string               `json:"permissions" yaml:"permissions"`
 	Options       *AppealOptions         `json:"options" yaml:"options"`
 	Details       map[string]interface{} `json:"details" yaml:"details"`
 	Labels        map[string]string      `json:"labels" yaml:"labels"`

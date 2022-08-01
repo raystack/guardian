@@ -42,6 +42,29 @@ func (_m *Client) GetAccountTypes() []string {
 	return r0
 }
 
+// GetPermissions provides a mock function with given fields: p, resourceType, role
+func (_m *Client) GetPermissions(p *domain.ProviderConfig, resourceType string, role string) ([]interface{}, error) {
+	ret := _m.Called(p, resourceType, role)
+
+	var r0 []interface{}
+	if rf, ok := ret.Get(0).(func(*domain.ProviderConfig, string, string) []interface{}); ok {
+		r0 = rf(p, resourceType, role)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]interface{})
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*domain.ProviderConfig, string, string) error); ok {
+		r1 = rf(p, resourceType, role)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetResources provides a mock function with given fields: pc
 func (_m *Client) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
 	ret := _m.Called(pc)

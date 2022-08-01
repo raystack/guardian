@@ -1,17 +1,28 @@
 package postgres
 
 import (
+	"embed"
+	"errors"
 	"fmt"
 	"log"
+	"net"
+	"net/url"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/odpf/guardian/internal/store"
-	"github.com/odpf/guardian/internal/store/postgres/model"
 	pg "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
+//go:embed migrations/*.sql
+var fs embed.FS
+
 type Store struct {
 	db *gorm.DB
+
+	config *store.Config
 }
 
 func NewStore(c *store.Config) (*Store, error) {
@@ -30,7 +41,7 @@ func NewStore(c *store.Config) (*Store, error) {
 		log.Panic(err)
 	}
 
-	return &Store{gormDB}, nil
+	return &Store{gormDB, c}, nil
 }
 
 func (s *Store) DB() *gorm.DB {
@@ -38,18 +49,38 @@ func (s *Store) DB() *gorm.DB {
 }
 
 func (s *Store) Migrate() error {
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`).Error; err != nil {
+	iofsDriver, err := iofs.New(fs, "migrations")
+	if err != nil {
+		return err
+	}
+	m, err := migrate.NewWithSourceInstance("iofs", iofsDriver, toConnectionString(s.config))
+	if err != nil {
+		return err
+	}
+
+	if err := m.Up(); err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			log.Print("no change")
+		} else {
 			return err
 		}
+	}
 
-		return tx.AutoMigrate(
-			&model.Provider{},
-			&model.Policy{},
-			&model.Resource{},
-			&model.Appeal{},
-			&model.Approval{},
-			&model.Approver{},
-		)
-	})
+	return nil
+}
+
+func toConnectionString(c *store.Config) string {
+	pgURL := &url.URL{
+		Scheme: "postgres",
+		Host:   net.JoinHostPort(c.Host, c.Port),
+		User:   url.UserPassword(c.User, c.Password),
+		Path:   c.Name,
+	}
+	q := pgURL.Query()
+	if c.SslMode != "" {
+		q.Add("sslmode", c.SslMode)
+	}
+	pgURL.RawQuery = q.Encode()
+
+	return pgURL.String()
 }

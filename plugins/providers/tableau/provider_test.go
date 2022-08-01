@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/providers/tableau"
@@ -644,80 +643,6 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
-	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission tableau.Permission
-		invalidPermissionConfig := "invalid-permisiion-config"
-		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
-
-		testcases := []struct {
-			resourceConfigs []*domain.ResourceConfig
-			appeal          *domain.Appeal
-			expectedError   error
-		}{
-			{
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-				},
-				expectedError: tableau.ErrInvalidResourceType,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "not-test-role",
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: tableau.ErrInvalidRole,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									invalidPermissionConfig,
-								},
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: invalidPermissionConfigError,
-			},
-		}
-
-		for _, tc := range testcases {
-			crypto := new(mocks.Crypto)
-			p := tableau.NewProvider("", crypto)
-
-			providerConfig := &domain.ProviderConfig{
-				Resources: tc.resourceConfigs,
-			}
-
-			actualError := p.GrantAccess(providerConfig, tc.appeal)
-			assert.EqualError(t, actualError, tc.expectedError.Error())
-		}
-	})
-
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := tableau.NewProvider("", crypto)
@@ -871,14 +796,6 @@ func TestGrantAccess(t *testing.T) {
 				Password:   "test-password",
 				ContentURL: "test-content-url",
 			}
-			validAppeal := &domain.Appeal{
-				Resource: &domain.Resource{
-					Type: tableau.ResourceTypeWorkbook,
-					URN:  "999",
-					Name: "test-workbook",
-				},
-				Role: "test-role",
-			}
 
 			client.On("GrantWorkbookAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 			client.On("UpdateSiteRole", mock.Anything, mock.Anything).Return(expectedError).Once()
@@ -900,7 +817,15 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with Site Role Permissions",
-					a:    validAppeal,
+					a: &domain.Appeal{
+						Resource: &domain.Resource{
+							Type: tableau.ResourceTypeWorkbook,
+							URN:  "999",
+							Name: "test-workbook",
+						},
+						Role:        "test-role",
+						Permissions: []string{"Creator@site_role"},
+					},
 				},
 				{
 					pc: &domain.ProviderConfig{
@@ -914,7 +839,15 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with Workook Permissions without site role permission",
-					a:    validAppeal,
+					a: &domain.Appeal{
+						Resource: &domain.Resource{
+							Type: tableau.ResourceTypeWorkbook,
+							URN:  "999",
+							Name: "test-workbook",
+						},
+						Role:        "test-role",
+						Permissions: []string{"Read:Allow"},
+					},
 				},
 			}
 
@@ -1023,14 +956,6 @@ func TestGrantAccess(t *testing.T) {
 				Password:   "test-password",
 				ContentURL: "test-content-url",
 			}
-			validAppeal := &domain.Appeal{
-				Resource: &domain.Resource{
-					Type: tableau.ResourceTypeFlow,
-					URN:  "999",
-					Name: "test-flow",
-				},
-				Role: "test-role",
-			}
 
 			client.On("GrantFlowAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 			client.On("UpdateSiteRole", mock.Anything, mock.Anything).Return(expectedError).Once()
@@ -1052,7 +977,15 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config to Update Site Role Permissions",
-					a:    validAppeal,
+					a: &domain.Appeal{
+						Resource: &domain.Resource{
+							Type: tableau.ResourceTypeFlow,
+							URN:  "999",
+							Name: "test-flow",
+						},
+						Role:        "test-role",
+						Permissions: []string{"Creator@site_role"},
+					},
 				},
 				{
 					pc: &domain.ProviderConfig{
@@ -1066,7 +999,15 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with to Grant Flow Permission",
-					a:    validAppeal,
+					a: &domain.Appeal{
+						Resource: &domain.Resource{
+							Type: tableau.ResourceTypeFlow,
+							URN:  "999",
+							Name: "test-flow",
+						},
+						Role:        "test-role",
+						Permissions: []string{"ChangeHierarchy:Allow"},
+					},
 				},
 			}
 
@@ -1175,14 +1116,6 @@ func TestGrantAccess(t *testing.T) {
 				Password:   "test-password",
 				ContentURL: "test-content-url",
 			}
-			validAppeal := &domain.Appeal{
-				Resource: &domain.Resource{
-					Type: tableau.ResourceTypeView,
-					URN:  "999",
-					Name: "test-view",
-				},
-				Role: "test-role",
-			}
 
 			client.On("GrantViewAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 			client.On("UpdateSiteRole", mock.Anything, mock.Anything).Return(expectedError).Once()
@@ -1204,7 +1137,15 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config to Update Site Role Permissions",
-					a:    validAppeal,
+					a: &domain.Appeal{
+						Resource: &domain.Resource{
+							Type: tableau.ResourceTypeView,
+							URN:  "999",
+							Name: "test-view",
+						},
+						Role:        "test-role",
+						Permissions: []string{"Creator@site_role"},
+					},
 				},
 				{
 					pc: &domain.ProviderConfig{
@@ -1218,7 +1159,15 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with to Grant View Permission",
-					a:    validAppeal,
+					a: &domain.Appeal{
+						Resource: &domain.Resource{
+							Type: tableau.ResourceTypeView,
+							URN:  "999",
+							Name: "test-view",
+						},
+						Role:        "test-role",
+						Permissions: []string{"Connect:Allow"},
+					},
 				},
 			}
 
@@ -1326,14 +1275,6 @@ func TestGrantAccess(t *testing.T) {
 				Password:   "test-password",
 				ContentURL: "test-content-url",
 			}
-			validAppeal := &domain.Appeal{
-				Resource: &domain.Resource{
-					Type: tableau.ResourceTypeMetric,
-					URN:  "999",
-					Name: "test-metric",
-				},
-				Role: "test-role",
-			}
 
 			client.On("GrantMetricAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 			client.On("UpdateSiteRole", mock.Anything, mock.Anything).Return(expectedError).Once()
@@ -1355,7 +1296,15 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config to Update Site Role Permissions",
-					a:    validAppeal,
+					a: &domain.Appeal{
+						Resource: &domain.Resource{
+							Type: tableau.ResourceTypeMetric,
+							URN:  "999",
+							Name: "test-metric",
+						},
+						Role:        "test-role",
+						Permissions: []string{"Creator@site_role"},
+					},
 				},
 				{
 					pc: &domain.ProviderConfig{
@@ -1369,7 +1318,15 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with to Grant Metric Permission",
-					a:    validAppeal,
+					a: &domain.Appeal{
+						Resource: &domain.Resource{
+							Type: tableau.ResourceTypeMetric,
+							URN:  "999",
+							Name: "test-metric",
+						},
+						Role:        "test-role",
+						Permissions: []string{"Delete:Allow"},
+					},
 				},
 			}
 
@@ -1478,14 +1435,6 @@ func TestGrantAccess(t *testing.T) {
 				Password:   "test-password",
 				ContentURL: "test-content-url",
 			}
-			validAppeal := &domain.Appeal{
-				Resource: &domain.Resource{
-					Type: tableau.ResourceTypeDataSource,
-					URN:  "999",
-					Name: "test-DataSource",
-				},
-				Role: "test-role",
-			}
 
 			client.On("GrantDataSourceAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 			client.On("UpdateSiteRole", mock.Anything, mock.Anything).Return(expectedError).Once()
@@ -1507,7 +1456,15 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config to Update Site Role Permissions",
-					a:    validAppeal,
+					a: &domain.Appeal{
+						Resource: &domain.Resource{
+							Type: tableau.ResourceTypeDataSource,
+							URN:  "999",
+							Name: "test-DataSource",
+						},
+						Role:        "test-role",
+						Permissions: []string{"Creator@site_role"},
+					},
 				},
 				{
 					pc: &domain.ProviderConfig{
@@ -1521,7 +1478,15 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with to Grant DataSource Permission",
-					a:    validAppeal,
+					a: &domain.Appeal{
+						Resource: &domain.Resource{
+							Type: tableau.ResourceTypeDataSource,
+							URN:  "999",
+							Name: "test-DataSource",
+						},
+						Role:        "test-role",
+						Permissions: []string{"ChangePermissions:Allow"},
+					},
 				},
 			}
 
@@ -1594,80 +1559,6 @@ func TestGrantAccess(t *testing.T) {
 }
 
 func TestRevokeAccess(t *testing.T) {
-	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission tableau.Permission
-		invalidPermissionConfig := "invalid-permisiion-config"
-		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
-
-		testcases := []struct {
-			resourceConfigs []*domain.ResourceConfig
-			appeal          *domain.Appeal
-			expectedError   error
-		}{
-			{
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-				},
-				expectedError: tableau.ErrInvalidResourceType,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "not-test-role",
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: tableau.ErrInvalidRole,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									invalidPermissionConfig,
-								},
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: invalidPermissionConfigError,
-			},
-		}
-
-		for _, tc := range testcases {
-			crypto := new(mocks.Crypto)
-			p := tableau.NewProvider("", crypto)
-
-			providerConfig := &domain.ProviderConfig{
-				Resources: tc.resourceConfigs,
-			}
-
-			actualError := p.RevokeAccess(providerConfig, tc.appeal)
-			assert.EqualError(t, actualError, tc.expectedError.Error())
-		}
-	})
-
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := tableau.NewProvider("", crypto)
@@ -1826,7 +1717,8 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "999",
 					Name: "test-workbook",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.RevokeAccess(pc, a)
@@ -1934,7 +1826,8 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "999",
 					Name: "test-flow",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.RevokeAccess(pc, a)
@@ -2043,7 +1936,8 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "99",
 					Name: "test-view",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.RevokeAccess(pc, a)
@@ -2152,7 +2046,8 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "99",
 					Name: "test-metric",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.RevokeAccess(pc, a)
@@ -2261,7 +2156,8 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "99",
 					Name: "test-datasource",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.RevokeAccess(pc, a)
