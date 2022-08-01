@@ -54,7 +54,7 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListAppealsRequest) (*guardianv1beta1.ListAppealsResponse, error) {
 	filters := &domain.ListAppealsFilter{}
 	if req.GetAccountId() != "" {
-		filters.AccountID = []string{req.GetAccountId()}
+		filters.AccountIDs = []string{req.GetAccountId()}
 	}
 	if req.GetStatuses() != nil {
 		filters.Statuses = req.GetStatuses()
@@ -198,21 +198,12 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 func (s *GRPCServer) RevokeAppeals(ctx context.Context, req *guardianv1beta1.RevokeAppealsRequest) (*guardianv1beta1.RevokeAppealsResponse, error) {
 	filters := &domain.ListAppealsFilter{}
 	if req.GetAccountId() != nil {
-		filters.AccountID = req.GetAccountId()
+		filters.AccountIDs = req.GetAccountId()
 	}
-	filters.Statuses = []string{domain.AppealStatusActive}
-	if req.GetProviderTypes() != nil {
-		filters.ProviderTypes = req.GetProviderTypes()
-	}
-	if req.GetProviderUrns() != nil {
-		filters.ProviderURNs = req.GetProviderUrns()
-	}
-	if req.GetResourceTypes() != nil {
-		filters.ResourceTypes = req.GetResourceTypes()
-	}
-	if req.GetResourceUrns() != nil {
-		filters.ResourceURNs = req.GetResourceUrns()
-	}
+	filters.ProviderTypes = req.GetProviderTypes()
+	filters.ProviderURNs = req.GetProviderUrns()
+	filters.ResourceTypes = req.GetResourceTypes()
+	filters.ResourceURNs = req.GetResourceUrns()
 
 	reason := req.GetReason()
 

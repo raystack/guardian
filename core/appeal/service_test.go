@@ -112,7 +112,7 @@ func (s *ServiceTestSuite) TestFind() {
 
 	s.Run("should return records on success", func() {
 		expectedFilters := &domain.ListAppealsFilter{
-			AccountID: []string{"user@email.com"},
+			AccountIDs: []string{"user@email.com"},
 		}
 		expectedResult := []*domain.Appeal{
 			{
@@ -1024,7 +1024,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 		})
 
 	expectedExistingActiveAppealsFilters := &domain.ListAppealsFilter{
-		AccountID:  []string{"test@email.com"},
+		AccountIDs: []string{"test@email.com"},
 		ResourceID: "1",
 		Role:       "role_id",
 		Statuses:   []string{domain.AppealStatusActive},
@@ -1430,7 +1430,7 @@ func (s *ServiceTestSuite) MakeAction() {
 		s.mockRepository.On("GetByID", action.AppealID).Return(appealDetails, nil).Once()
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything, appealDetails).Return(nil).Once()
 		s.mockRepository.On("Find", &domain.ListAppealsFilter{
-			AccountID:  []string{appealDetails.AccountID},
+			AccountIDs: []string{appealDetails.AccountID},
 			ResourceID: appealDetails.ResourceID,
 			Role:       appealDetails.Role,
 			Statuses:   []string{domain.AppealStatusActive},

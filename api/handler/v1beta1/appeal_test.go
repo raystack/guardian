@@ -206,7 +206,7 @@ func (s *GrpcHandlersSuite) TestListAppeals() {
 
 		expectedUser := "user@example.com"
 		expectedFilters := &domain.ListAppealsFilter{
-			AccountID:     []string{expectedUser},
+			AccountIDs:    []string{expectedUser},
 			Statuses:      []string{"active", "pending"},
 			Role:          "test-role",
 			ProviderTypes: []string{"test-provider-type"},

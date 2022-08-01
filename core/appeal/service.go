@@ -119,12 +119,6 @@ type Service struct {
 	TimeNow func() time.Time
 }
 
-type Key struct {
-	AccountId     string
-	PolicyId      string
-	PolicyVersion uint
-}
-
 // NewService returns service struct
 func NewService(deps ServiceDeps) *Service {
 	return &Service{
@@ -252,7 +246,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			if approval.Index == len(appeal.Approvals)-1 && approval.Status == domain.ApprovalStatusApproved {
 				var oldExtendedAppeal *domain.Appeal
 				activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
-					AccountID:  []string{appeal.AccountID},
+					AccountIDs: []string{appeal.AccountID},
 					ResourceID: appeal.ResourceID,
 					Role:       appeal.Role,
 					Statuses:   []string{domain.AppealStatusActive},
@@ -372,7 +366,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 			if appeal.Status == domain.AppealStatusActive {
 				var oldExtendedAppeal *domain.Appeal
 				activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
-					AccountID:  []string{appeal.AccountID},
+					AccountIDs: []string{appeal.AccountID},
 					ResourceID: appeal.ResourceID,
 					Role:       appeal.Role,
 					Statuses:   []string{domain.AppealStatusActive},
@@ -533,6 +527,7 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 
 func (s *Service) BulkRevoke(ctx context.Context, filters *domain.ListAppealsFilter, actor, reason string) ([]*domain.Appeal, error) {
 	result := make([]*domain.Appeal, 0)
+	filters.Statuses = []string{domain.AppealStatusActive}
 	appeals, err := s.Find(ctx, filters)
 	if err != nil {
 		return nil, err

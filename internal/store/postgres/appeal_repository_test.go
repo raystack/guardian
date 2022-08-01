@@ -317,7 +317,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 			},
 			{
 				filters: &domain.ListAppealsFilter{
-					AccountID: []string{"user@email.com"},
+					AccountIDs: []string{"user@email.com"},
 				},
 				expectedClauseQuery: `"account_id" IN ($1) AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"user@email.com"},
