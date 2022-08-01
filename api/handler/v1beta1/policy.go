@@ -92,7 +92,7 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *guardianv1beta1.Upda
 	}, nil
 }
 
-func (s *GRPCServer) GetPolicyAppealConfig(ctx context.Context, req *guardianv1beta1.GetPolicyConfigRequest) (*guardianv1beta1.GetPolicyConfigResponse, error) {
+func (s *GRPCServer) GetPolicyAppealConfig(ctx context.Context, req *guardianv1beta1.GetPolicyPreferencesRequest) (*guardianv1beta1.GetPolicyPreferencesResponse, error) {
 	p, err := s.policyService.GetOne(ctx, req.GetId(), uint(req.GetVersion()))
 	if err != nil {
 		switch err {
@@ -105,7 +105,7 @@ func (s *GRPCServer) GetPolicyAppealConfig(ctx context.Context, req *guardianv1b
 
 	appealConfigProto := s.adapter.ToPolicyAppealConfigProto(p)
 
-	return &guardianv1beta1.GetPolicyConfigResponse{
+	return &guardianv1beta1.GetPolicyPreferencesResponse{
 		Appeal: appealConfigProto,
 	}, nil
 }
