@@ -76,16 +76,22 @@ func (a *Appeal) Cancel() {
 func (a *Appeal) Activate() error {
 	a.Status = AppealStatusActive
 
-	if a.Options != nil && a.Options.Duration != "" && a.Options.Duration != "0h" {
-		duration, err := time.ParseDuration(a.Options.Duration)
-		if err != nil {
-			return err
-		}
-
-		expirationDate := time.Now().Add(duration)
-		a.Options.ExpirationDate = &expirationDate
+	if a.Options == nil || a.Options.Duration == "" {
+		return nil
 	}
 
+	duration, err := time.ParseDuration(a.Options.Duration)
+	if err != nil {
+		return err
+	}
+
+	// for permanent access duration is equal to zero
+	if duration == 0*time.Second {
+		return nil
+	}
+
+	expirationDate := time.Now().Add(duration)
+	a.Options.ExpirationDate = &expirationDate
 	return nil
 }
 
