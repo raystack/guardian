@@ -410,7 +410,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 func (a *adapter) ToPolicyAppealConfigProto(p *domain.Policy) *guardianv1beta1.PolicyAppealConfig {
 	policyAppealConfigProto := &guardianv1beta1.PolicyAppealConfig{}
 
-	durationOptions := make([]*guardianv1beta1.PolicyAppealConfig_DurationOptions, 0)
+	var durationOptions []*guardianv1beta1.PolicyAppealConfig_DurationOptions
 	if p.Appeal.DurationOptions != nil {
 		var option *guardianv1beta1.PolicyAppealConfig_DurationOptions
 		for _, d := range p.Appeal.DurationOptions {

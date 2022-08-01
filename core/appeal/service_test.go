@@ -497,6 +497,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Type:         "resource_type",
 				}},
 				callMockValidateAppeal: true,
+				callMockGetPermissions: true,
 				providers:              []*domain.Provider{testProvider},
 				policies: []*domain.Policy{{
 					ID:      "policy_id",
