@@ -396,6 +396,19 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 		isFound := false
 		for _, r := range res {
 			if er.URN == r.URN {
+				existingMetadata := er.Details
+				if existingMetadata != nil {
+					if r.Details != nil {
+						for key, value := range existingMetadata {
+							if _, ok := r.Details[key]; !ok {
+								r.Details[key] = value
+							}
+						}
+					} else {
+						r.Details = existingMetadata
+					}
+				}
+
 				resources = append(resources, r)
 				isFound = true
 				break
