@@ -980,7 +980,11 @@ func (s *Service) getPermissions(ctx context.Context, pc *domain.ProviderConfig,
 		return nil, err
 	}
 
-	var strPermissions []string
+	if permissions == nil {
+		return nil, nil
+	}
+
+	strPermissions := []string{}
 	for _, p := range permissions {
 		strPermissions = append(strPermissions, fmt.Sprintf("%s", p))
 	}
