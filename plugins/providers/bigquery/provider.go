@@ -12,17 +12,19 @@ import (
 
 // Provider for bigquery
 type Provider struct {
-	typeName  string
-	bqClients map[string]*bigQueryClient
-	crypto    domain.Crypto
+	provider.PermissionManager
+
+	typeName string
+	Clients  map[string]BigQueryClient
+	crypto   domain.Crypto
 }
 
 // NewProvider returns bigquery provider
 func NewProvider(typeName string, crypto domain.Crypto) *Provider {
 	return &Provider{
-		typeName:  typeName,
-		bqClients: map[string]*bigQueryClient{},
-		crypto:    crypto,
+		typeName: typeName,
+		Clients:  map[string]BigQueryClient{},
+		crypto:   crypto,
 	}
 }
 
@@ -66,7 +68,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 	for _, d := range datasets {
-		dataset := d.toDomain()
+		dataset := d.ToDomain()
 		dataset.ProviderType = pc.Type
 		dataset.ProviderURN = pc.URN
 
@@ -80,7 +82,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 				return nil, err
 			}
 			for _, t := range tables {
-				table := t.toDomain()
+				table := t.ToDomain()
 				table.ProviderType = pc.Type
 				table.ProviderURN = pc.URN
 				resources = append(resources, table)
@@ -96,11 +98,6 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return err
 	}
 
-	permissions, err := getPermissions(pc.Resources, a)
-	if err != nil {
-		return err
-	}
-
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -110,10 +107,11 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return err
 	}
 
+	permissions := getPermissions(a)
 	ctx := context.TODO()
 	if a.Resource.Type == ResourceTypeDataset {
 		d := new(Dataset)
-		if err := d.fromDomain(a.Resource); err != nil {
+		if err := d.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
@@ -129,7 +127,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return nil
 	} else if a.Resource.Type == ResourceTypeTable {
 		t := new(Table)
-		if err := t.fromDomain(a.Resource); err != nil {
+		if err := t.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
@@ -153,11 +151,6 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return err
 	}
 
-	permissions, err := getPermissions(pc.Resources, a)
-	if err != nil {
-		return err
-	}
-
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -167,10 +160,11 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return err
 	}
 
+	permissions := getPermissions(a)
 	ctx := context.TODO()
 	if a.Resource.Type == ResourceTypeDataset {
 		d := new(Dataset)
-		if err := d.fromDomain(a.Resource); err != nil {
+		if err := d.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
@@ -186,7 +180,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return nil
 	} else if a.Resource.Type == ResourceTypeTable {
 		t := new(Table)
-		if err := t.fromDomain(a.Resource); err != nil {
+		if err := t.FromDomain(a.Resource); err != nil {
 			return err
 		}
 
@@ -216,10 +210,10 @@ func (p *Provider) GetAccountTypes() []string {
 	}
 }
 
-func (p *Provider) getBigQueryClient(credentials Credentials) (*bigQueryClient, error) {
+func (p *Provider) getBigQueryClient(credentials Credentials) (BigQueryClient, error) {
 	projectID := strings.Replace(credentials.ResourceName, "projects/", "", 1)
-	if p.bqClients[projectID] != nil {
-		return p.bqClients[projectID], nil
+	if p.Clients[projectID] != nil {
+		return p.Clients[projectID], nil
 	}
 
 	credentials.Decrypt(p.crypto)
@@ -228,7 +222,7 @@ func (p *Provider) getBigQueryClient(credentials Credentials) (*bigQueryClient, 
 		return nil, err
 	}
 
-	p.bqClients[projectID] = client
+	p.Clients[projectID] = client
 	return client, nil
 }
 
@@ -251,36 +245,10 @@ func validateProviderConfigAndAppealParams(pc *domain.ProviderConfig, a *domain.
 	return nil
 }
 
-func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) ([]Permission, error) {
-	var resourceConfig *domain.ResourceConfig
-	for _, rc := range resourceConfigs {
-		if rc.Type == a.Resource.Type {
-			resourceConfig = rc
-		}
-	}
-	if resourceConfig == nil {
-		return nil, ErrInvalidResourceType
-	}
-
-	var role *domain.Role
-	for _, r := range resourceConfig.Roles {
-		if r.ID == a.Role {
-			role = r
-		}
-	}
-	if role == nil {
-		return nil, ErrInvalidRole
-	}
-
+func getPermissions(a *domain.Appeal) []Permission {
 	var permissions []Permission
-	for _, p := range role.Permissions {
-		var permission Permission
-		if err := mapstructure.Decode(p, &permission); err != nil {
-			return nil, err
-		}
-
-		permissions = append(permissions, permission)
+	for _, p := range a.Permissions {
+		permissions = append(permissions, Permission(p))
 	}
-
-	return permissions, nil
+	return permissions
 }

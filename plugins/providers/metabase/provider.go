@@ -10,6 +10,8 @@ import (
 )
 
 type provider struct {
+	pv.PermissionManager
+
 	typeName string
 	Clients  map[string]MetabaseClient
 	crypto   domain.Crypto
@@ -200,11 +202,6 @@ func (p *provider) addTables(pc *domain.ProviderConfig, databases []*Database, r
 func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
 	// TODO: validate provider config and appeal
 
-	permissions, err := getPermissions(pc.Resources, a)
-	if err != nil {
-		return err
-	}
-
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -224,6 +221,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		groupMap[group.Name] = group
 	}
 
+	permissions := getPermissions(a)
 	if a.Resource.Type == ResourceTypeDatabase {
 		d := new(Database)
 		if err := d.FromDomain(a.Resource); err != nil {
@@ -278,11 +276,6 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 }
 
 func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
-	permissions, err := getPermissions(pc.Resources, a)
-	if err != nil {
-		return err
-	}
-
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -292,6 +285,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return err
 	}
 
+	permissions := getPermissions(a)
 	if a.Resource.Type == ResourceTypeDatabase {
 		d := new(Database)
 		if err := d.FromDomain(a.Resource); err != nil {
@@ -377,41 +371,10 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Metab
 	return client, nil
 }
 
-func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) ([]Permission, error) {
-	var resourceConfig *domain.ResourceConfig
-	for _, rc := range resourceConfigs {
-		if rc.Type == a.Resource.Type {
-			resourceConfig = rc
-		}
-	}
-	if resourceConfig == nil {
-		return nil, ErrInvalidResourceType
-	}
-
-	roles := resourceConfig.Roles
-	role := &domain.Role{}
-	isRoleExists := len(roles) == 0
-	for _, r := range roles {
-		if a.Role == r.ID {
-			isRoleExists = true
-			role = r
-			break
-		}
-	}
-
-	if !isRoleExists {
-		return nil, ErrInvalidRole
-	}
-
+func getPermissions(a *domain.Appeal) []Permission {
 	var permissions []Permission
-	for _, p := range role.Permissions {
-		var permission Permission
-		if err := mapstructure.Decode(p, &permission); err != nil {
-			return nil, err
-		}
-
-		permissions = append(permissions, permission)
+	for _, p := range a.Permissions {
+		permissions = append(permissions, Permission(p))
 	}
-
-	return permissions, nil
+	return permissions
 }

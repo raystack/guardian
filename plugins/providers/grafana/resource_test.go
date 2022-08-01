@@ -17,8 +17,12 @@ func TestDashboard(t *testing.T) {
 			}{
 				{
 					db: &grafana.Dashboard{
-						ID:    1,
-						Title: "dashboard 1",
+						ID:          1,
+						Title:       "dashboard 1",
+						FolderID:    101,
+						FolderUID:   "Test-folder-UID",
+						FolderTitle: "Title",
+						UID:         "Test-UID",
 					},
 					expectedResource: &domain.Resource{
 						Type: grafana.ResourceTypeDashboard,
