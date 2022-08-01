@@ -80,10 +80,10 @@ requirements:
 
 ### `DurationOptions`
 
-| Field | Type   | Description                                                                                   | Required |
-|:------|:-------|:----------------------------------------------------------------------------------------------|:---------|
-| name  | string | name of duration                                                                              | YES      |
-| value | string | actual value of duration such as `24h`, `72h`. value will be `0h` in case of permanent duration | YES      |
+| Field | Type   | Description                                                                                                                                                                                                                              | Required |
+|:------|:-------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------|
+| name  | string | name of duration                                                                                                                                                                                                                         | YES      |
+| value | string | actual value of duration such as `24h`, `72h`. value will be `0h` in case of permanent duration. <br/> Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". Reference: [ParseDuration](https://pkg.go.dev/time#ParseDuration) | YES      |
 
 ### `IAM`
 
