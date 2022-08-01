@@ -24,7 +24,6 @@ func TestGetType(t *testing.T) {
 }
 
 func TestCreateConfig(t *testing.T) {
-
 	t.Run("should return error if there credentials are invalid", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
@@ -121,7 +120,6 @@ func TestCreateConfig(t *testing.T) {
 	})
 
 	t.Run("should not return error if parse and valid of Credentials are correct", func(t *testing.T) {
-
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.TableauClient)
@@ -184,7 +182,7 @@ func TestCreateConfig(t *testing.T) {
 							Type: tableau.ResourceTypeFlow,
 							Roles: []*domain.Role{
 								{
-									ID:   "change-hierachy",
+									ID:   "change-hierarchy",
 									Name: "test-name",
 									Permissions: []interface{}{
 										map[string]interface{}{

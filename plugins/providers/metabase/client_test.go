@@ -149,7 +149,6 @@ func (s *ClientTestSuite) TestGetCollections() {
 }
 
 func (s *ClientTestSuite) TestGetDatabases() {
-
 	s.Run("should return error bad request, status code 400", func() {
 		s.setup()
 
@@ -235,7 +234,6 @@ func (s *ClientTestSuite) TestGetDatabases() {
 		s.Nil(err1)
 		s.Equal(expectedDatabases, databases)
 		s.mockHttpClient.AssertExpectations(s.T())
-
 	})
 }
 
@@ -304,7 +302,6 @@ func (s *ClientTestSuite) TestGetGroups() {
 		s.Equal(expectedDatabaseGroupResponse, actualDatabaseGroupResponse)
 		s.mockHttpClient.AssertExpectations(s.T())
 	})
-
 }
 
 func (s *ClientTestSuite) TestGrantDatabaseAccess() {
@@ -360,7 +357,6 @@ func (s *ClientTestSuite) TestGrantDatabaseAccess() {
 }
 
 func (s *ClientTestSuite) TestGrantCollectionAccess() {
-
 	s.Run("should grant access to collection and nil error on success", func() {
 		s.setup()
 
@@ -435,7 +431,6 @@ func (s *ClientTestSuite) TestGrantCollectionAccess() {
 }
 
 func (s *ClientTestSuite) TestRevokeCollectionAccess() {
-
 	s.Run("should grant access to collection and nil error on success", func() {
 		s.setup()
 
@@ -475,7 +470,6 @@ func (s *ClientTestSuite) TestRevokeCollectionAccess() {
 }
 
 func (s *ClientTestSuite) TestGrantGroupAccesss() {
-
 	s.Run("should return nil if user is already part of the group", func() {
 		s.setup()
 
@@ -493,7 +487,6 @@ func (s *ClientTestSuite) TestGrantGroupAccesss() {
 
 		s.Nil(actualError)
 		s.mockHttpClient.AssertExpectations(s.T())
-
 	})
 
 	s.Run("should add member to group and nil error on success", func() {

@@ -28,7 +28,6 @@ func TestGetType(t *testing.T) {
 }
 
 func TestCreateConfig(t *testing.T) {
-
 	t.Run("should return error if there credentials are invalid", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
@@ -124,7 +123,6 @@ func TestCreateConfig(t *testing.T) {
 	})
 
 	t.Run("should not return error if parse and valid of Credentials are correct", func(t *testing.T) {
-
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.MetabaseClient)
@@ -772,7 +770,6 @@ func TestGrantAccess(t *testing.T) {
 	})
 
 	t.Run("given Group resource", func(t *testing.T) {
-
 		t.Run("should return error if there is an error in granting group access", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			expectedError := errors.New("client error")
@@ -1004,7 +1001,6 @@ func TestGrantAccess(t *testing.T) {
 			assert.Nil(t, actualError)
 			client.AssertExpectations(t)
 		})
-
 	})
 }
 
@@ -1322,7 +1318,6 @@ func TestRevokeAccess(t *testing.T) {
 	})
 
 	t.Run("given Group resource", func(t *testing.T) {
-
 		t.Run("should return error if there is an error in revoking group access", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			expectedError := errors.New("client error")
@@ -1476,7 +1471,6 @@ func TestRevokeAccess(t *testing.T) {
 			assert.Nil(t, actualError)
 			client.AssertExpectations(t)
 		})
-
 	})
 }
 
@@ -1523,7 +1517,6 @@ func TestGetRoles(t *testing.T) {
 
 		assert.Nil(t, actualRoles)
 		assert.ErrorIs(t, actualError, provider.ErrInvalidResourceType)
-
 	})
 
 	t.Run("should return roles specified in the provider config", func(t *testing.T) {

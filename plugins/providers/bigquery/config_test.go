@@ -56,7 +56,6 @@ func TestCredentials(t *testing.T) {
 	})
 
 	t.Run("decrypt", func(t *testing.T) {
-
 		t.Run("should return error if creds is nil", func(t *testing.T) {
 			var creds *bigquery.Credentials
 
