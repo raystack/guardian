@@ -58,10 +58,11 @@ func (s *Store) Migrate() error {
 		return err
 	}
 
-	if err := m.Up(); errors.Is(err, migrate.ErrNoChange) {
-		log.Println("migration schema version is up to date")
-		return nil
-	} else if err != nil {
+	if err := m.Up(); err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			log.Println("migration schema version is up to date")
+			return nil
+		}
 		return err
 	}
 
