@@ -63,7 +63,7 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 		s.EqualError(actualError, "serializing policy: json: unsupported type: chan int")
 	})
 
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","appeal","labels","requirements","iam","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","labels","requirements","iam","created_at","updated_at","deleted_at","appeal") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING "appeal"`)
 
 	s.Run("should return error if got error from db transaction", func() {
 		p := &domain.Policy{}
@@ -73,21 +73,23 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 			p.Version,
 			p.Description,
 			"null",
-			"{\"duration_options\":null}",
 			"null",
 			"null",
 			"null",
 			utils.AnyTime{},
 			utils.AnyTime{},
 			gorm.DeletedAt{},
+			"{\"duration_options\":null}",
 		}
 		expectedError := errors.New("unexpected error")
 
 		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectExec(expectedQuery).
+		s.dbmock.
+			ExpectQuery(expectedQuery).
 			WithArgs(expectedArgs...).
 			WillReturnError(expectedError)
 		s.dbmock.ExpectRollback()
+		s.dbmock.MatchExpectationsInOrder(false)
 
 		actualError := s.repository.Create(p)
 
