@@ -17,7 +17,7 @@ steps:
     strategy: manual
     approvers:
       - $appeal.resource.details.owner
-appeal:
+appeal_config:
   duration_options:
     - name: 1 Day
       value: 24h
@@ -50,14 +50,14 @@ requirements:
 
 ### `Policy`
 
-| Field          | Type                                    | Description                                                           | Required |
-|:---------------|:----------------------------------------|:----------------------------------------------------------------------|:---------|
-| `id`           | `string`                                | Policy unique identifier                                              | YES      |
-| `version`      | `uint`                                  | Auto increment value. Keeping the                                     | NO       |
-| `steps`        | [`[]object(Step)`](#step)               | Sequence of approval steps                                            | YES      |
-| `appeal`       | `object(PolicyAppealConfig)`            | appeal configuration options                                          | NO       |
-| `iam`          | [`object(IAM)`](#iam)                   | Identity manager configuration for client and identity/creator schema | NO       |
-| `requirements` | [`[]object(Requirement)`](#requirement) | Additional appeals                                                    | YES      |
+| Field           | Type                                    | Description                                                           | Required |
+|:----------------|:----------------------------------------|:----------------------------------------------------------------------|:---------|
+| `id`            | `string`                                | Policy unique identifier                                              | YES      |
+| `version`       | `uint`                                  | Auto increment value. Keeping the                                     | NO       |
+| `steps`         | [`[]object(Step)`](#step)               | Sequence of approval steps                                            | YES      |
+| `appeal_config` | `object(PolicyAppealConfig)`            | appeal configuration options                                          | NO       |
+| `iam`           | [`object(IAM)`](#iam)                   | Identity manager configuration for client and identity/creator schema | NO       |
+| `requirements`  | [`[]object(Requirement)`](#requirement) | Additional appeals                                                    | YES      |
 
 ### `Step`
 
