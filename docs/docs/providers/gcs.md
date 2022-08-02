@@ -17,7 +17,38 @@ Access can be given at the bucket level or object level as those allowed to be m
 ** NOTE ** : Object level access can only be provide for objects belonging to a **Fine-granied** bucket. For objects belonging to the **Uniform-level**, permissions are only given at the bucket level.
 
 ## Config
-TODO
+```yaml
+type: gcs
+urn: sample-URN
+credentials:
+  service_account_key: <base64 encoded service account key json>
+  resource_name: projects/<gcs-project-id>
+  - type: bucket
+    policy:
+      id: my-first-policy
+      version: 1
+    roles:
+      - id: READER
+        name: 'Grants permission to list a bucket contents and read bucket metadata, excluding IAM policies'
+        permissions:
+          - roles/storage.legacyBucketReader
+      - id: WRITER
+        name: 'Grants permission to create, replace, and delete objects; list objects in a bucket'
+        permissions:
+          - roles/storage.legacyBucketWriter
+      - id: OWNER
+        name: 'Grants permission to update objects; list and update tag bindings; read object metadata when listing'
+        permissions:
+          - roles/storage.legacyBucketOwner
+      - id: ADMIN
+        name: 'Grants full control of buckets and objects'
+        permissions:
+          - roles/storage.admin
+      - id: OBJECTADMIN
+        name: 'Grants full control over objects, including listing, creating, viewing, and deleting objects'
+        permissions:
+          - roles/storage.objectAdmin
+```
 
 ## GCS Account Types
 
