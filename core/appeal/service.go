@@ -319,7 +319,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 
 func validateAppealDurationConfig(appeal *domain.Appeal, policy *domain.Policy) error {
 	// return nil if duration options are not configured for this policy
-	if policy.Appeal.DurationOptions == nil {
+	if policy.Appeal == nil || policy.Appeal.DurationOptions == nil {
 		return nil
 	}
 	for _, durationOption := range policy.Appeal.DurationOptions {

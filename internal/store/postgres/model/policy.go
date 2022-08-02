@@ -15,7 +15,7 @@ type Policy struct {
 	Version      uint   `gorm:"primaryKey"`
 	Description  string
 	Steps        datatypes.JSON
-	Appeal       datatypes.JSON `gorm:"default:'{\"duration_options\":null}'"`
+	Appeal       datatypes.JSON
 	Labels       datatypes.JSON
 	Requirements datatypes.JSON
 	IAM          datatypes.JSON
@@ -89,7 +89,7 @@ func (m *Policy) ToDomain() (*domain.Policy, error) {
 		}
 	}
 
-	var appealConfig domain.PolicyAppealConfig
+	var appealConfig *domain.PolicyAppealConfig
 	if err := json.Unmarshal(m.Appeal, &appealConfig); err != nil {
 		return nil, err
 	}

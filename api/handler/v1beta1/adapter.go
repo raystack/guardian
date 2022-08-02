@@ -287,7 +287,9 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
 			}
 			durationOptions = append(durationOptions, option)
 		}
-		policy.Appeal.DurationOptions = durationOptions
+		policy.Appeal = &domain.PolicyAppealConfig{
+			DurationOptions: durationOptions,
+		}
 	}
 
 	if p.GetCreatedAt() != nil {
@@ -408,8 +410,11 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 }
 
 func (a *adapter) ToPolicyAppealConfigProto(p *domain.Policy) *guardianv1beta1.PolicyAppealConfig {
-	policyAppealConfigProto := &guardianv1beta1.PolicyAppealConfig{}
+	if p.Appeal == nil {
+		return nil
+	}
 
+	policyAppealConfigProto := &guardianv1beta1.PolicyAppealConfig{}
 	var durationOptions []*guardianv1beta1.PolicyAppealConfig_DurationOptions
 	if p.Appeal.DurationOptions != nil {
 		var option *guardianv1beta1.PolicyAppealConfig_DurationOptions

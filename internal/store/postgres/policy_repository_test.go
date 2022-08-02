@@ -63,7 +63,7 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 		s.EqualError(actualError, "serializing policy: json: unsupported type: chan int")
 	})
 
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","labels","requirements","iam","created_at","updated_at","deleted_at","appeal") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING "appeal"`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","appeal","labels","requirements","iam","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`)
 
 	s.Run("should return error if got error from db transaction", func() {
 		p := &domain.Policy{}
@@ -76,16 +76,16 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 			"null",
 			"null",
 			"null",
+			"null",
 			utils.AnyTime{},
 			utils.AnyTime{},
 			gorm.DeletedAt{},
-			"{\"duration_options\":null}",
 		}
 		expectedError := errors.New("unexpected error")
 
 		s.dbmock.ExpectBegin()
 		s.dbmock.
-			ExpectQuery(expectedQuery).
+			ExpectExec(expectedQuery).
 			WithArgs(expectedArgs...).
 			WillReturnError(expectedError)
 		s.dbmock.ExpectRollback()
@@ -107,18 +107,18 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 			"null",
 			"null",
 			"null",
+			"null",
 			utils.AnyTime{},
 			utils.AnyTime{},
 			gorm.DeletedAt{},
-			"{\"duration_options\":null}",
 		}
 
-		expectedRows := sqlmock.NewRows([]string{"appeal"}).AddRow("{\"duration_options\":null}")
+		expectedResult := sqlmock.NewResult(1, 1)
 
 		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectQuery(expectedQuery).
+		s.dbmock.ExpectExec(expectedQuery).
 			WithArgs(expectedArgs...).
-			WillReturnRows(expectedRows)
+			WillReturnResult(expectedResult)
 		s.dbmock.ExpectCommit()
 		s.dbmock.MatchExpectationsInOrder(false)
 
@@ -150,7 +150,7 @@ func (s *PolicyRepositoryTestSuite) TestFind() {
 				ID:          "",
 				Version:     1,
 				Description: "",
-				Appeal:      domain.PolicyAppealConfig{DurationOptions: nil},
+				Appeal:      nil,
 				CreatedAt:   now,
 				UpdatedAt:   now,
 			},
@@ -161,7 +161,7 @@ func (s *PolicyRepositoryTestSuite) TestFind() {
 				1,
 				"",
 				"null",
-				"{\"duration_options\":null}",
+				"null",
 				"null",
 				"null",
 				"null",
@@ -234,7 +234,7 @@ func (s *PolicyRepositoryTestSuite) TestGetOne() {
 					tc.expectedVersion,
 					"",
 					"null",
-					"{\"duration_options\":null}",
+					"null",
 					"null",
 					"null",
 					"null",
