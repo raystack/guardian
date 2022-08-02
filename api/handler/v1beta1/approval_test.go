@@ -680,12 +680,12 @@ func (s *GrpcHandlersSuite) TestAddApprover() {
 			expectedError      error
 			expectedStatusCode codes.Code
 		}{
-			{appeal.ErrAppealIDEmptyParam, codes.InvalidArgument},
-			{appeal.ErrApprovalIDEmptyParam, codes.InvalidArgument},
-			{appeal.ErrApproverEmail, codes.InvalidArgument},
-			{appeal.ErrUnableToAddApprover, codes.InvalidArgument},
-			{appeal.ErrAppealNotFound, codes.NotFound},
-			{appeal.ErrApprovalNotFound, codes.NotFound},
+			{fmt.Errorf("err message: %w", appeal.ErrAppealIDEmptyParam), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrApprovalIDEmptyParam), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrApproverEmail), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrUnableToAddApprover), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrAppealNotFound), codes.NotFound},
+			{fmt.Errorf("err message: %w", appeal.ErrApprovalNotFound), codes.NotFound},
 			{errors.New("unexpected error"), codes.Internal},
 		}
 
@@ -805,12 +805,12 @@ func (s *GrpcHandlersSuite) TestDeleteApprover() {
 			expectedError      error
 			expectedStatusCode codes.Code
 		}{
-			{appeal.ErrAppealIDEmptyParam, codes.InvalidArgument},
-			{appeal.ErrApprovalIDEmptyParam, codes.InvalidArgument},
-			{appeal.ErrApproverEmail, codes.InvalidArgument},
-			{appeal.ErrUnableToDeleteApprover, codes.InvalidArgument},
-			{appeal.ErrAppealNotFound, codes.NotFound},
-			{appeal.ErrApprovalNotFound, codes.NotFound},
+			{fmt.Errorf("err message: %w", appeal.ErrAppealIDEmptyParam), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrApprovalIDEmptyParam), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrApproverEmail), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrUnableToDeleteApprover), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrAppealNotFound), codes.NotFound},
+			{fmt.Errorf("err message: %w", appeal.ErrApprovalNotFound), codes.NotFound},
 			{errors.New("unexpected error"), codes.Internal},
 		}
 
