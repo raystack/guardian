@@ -505,9 +505,9 @@ The request parameters associated with this is API are as follows:
 
 ##### Parameters
 
-| Name           | Located in | Description | Required | Type   |
-| -------------- | ---------- | ----------- | -------- | -------- |
-| account_id     | query      |             | No | string   |
+| Name           | Located in | Description | Required | Type     |
+|----------------| ---------- | ----------- | -------- |----------|
+| account_ids    | query      |             | No | [string] |
 | statuses       | query      |             | No | [string] |
 | role           | query      |             | No | string   |
 | provider_types | query      |             | No | [string] |
@@ -609,6 +609,41 @@ Appeals can be canceled by calling the **`PUT`** Method on **`{{HOST}}/api/v1bet
 
 ```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
+```
+
+### Bulk Revoke Access
+
+Bulk revoke of active resource-accesses based on parameters by calling the **`POST`** Method on **`{{HOST}}/api/v1beta1/appeals/revoke`** using the following parameters:
+
+##### Parameters
+
+| Name           | Located in | Description                                                        | Required | Type   |
+|----------------| ---------- |--------------------------------------------------------------------| -------- |--------|
+| account_ids    | query      |                                                                    | No | [string] |
+| provider_types | query      |                                                                    | No | [string] |
+| provider_urns  | query      |                                                                    | No | [string] |
+| resource_types | query      |                                                                    | No | [string] |
+| resource_urns  | query      |                                                                    | No | [string] |
+| reason         | query      |                                                                    | No | string |
+| X-Auth-Email   | header     | Contains the user email who is requesting to bulk revoke of access | Yes         | string   |
+##### Responses
+
+| Code    | Description                   | Type                             |
+| ------- | ----------------------------- |----------------------------------|
+| 200     | A successful response.        | [[]Appeal](./appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)          |
+
+** Here is an example below: **
+
+```bash
+$ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
+$ curl --request POST 'localhost:3000/api/v1beta1/appeals/revoke' 
+--header 'X-Auth-Email: abc@xyz.com' 
+--header 'Content-Type: application/json' 
+--data-raw '{
+    "account_id":["user1.@domain1.com", "user2.@domain1.com"],
+    "reason": "Bulk revoke"
+}'
 ```
 
 ### List Approvals

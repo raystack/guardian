@@ -52,15 +52,16 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 }
 
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListAppealsRequest) (*guardianv1beta1.ListAppealsResponse, error) {
-	filters := &domain.ListAppealsFilter{}
-	filters.AccountIDs = []string{req.GetAccountId()}
-	filters.Statuses = req.GetStatuses()
-	filters.Role = req.GetRole()
-	filters.ProviderTypes = req.GetProviderTypes()
-	filters.ProviderURNs = req.GetProviderUrns()
-	filters.ResourceTypes = req.GetResourceTypes()
-	filters.ResourceURNs = req.GetResourceUrns()
-	filters.OrderBy = req.GetOrderBy()
+	filters := &domain.ListAppealsFilter{
+		AccountIDs:    []string{req.GetAccountId()},
+		Statuses:      req.GetStatuses(),
+		Role:          req.GetRole(),
+		ProviderTypes: req.GetProviderTypes(),
+		ProviderURNs:  req.GetProviderUrns(),
+		ResourceTypes: req.GetResourceTypes(),
+		ResourceURNs:  req.GetResourceUrns(),
+		OrderBy:       req.GetOrderBy(),
+	}
 	appeals, err := s.listAppeals(ctx, filters)
 	if err != nil {
 		return nil, err
@@ -181,11 +182,11 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 
 func (s *GRPCServer) RevokeAppeals(ctx context.Context, req *guardianv1beta1.RevokeAppealsRequest) (*guardianv1beta1.RevokeAppealsResponse, error) {
 	filters := &domain.ListAppealsFilter{
-	    AccountIDs : req.GetAccountIds()
-	    ProviderTypes : req.GetProviderTypes()
-	    ProviderURNs : req.GetProviderUrns()
-	    ResourceTypes : req.GetResourceTypes()
-	    ResourceURNs : req.GetResourceUrns()
+		AccountIDs:    req.GetAccountIds(),
+		ProviderTypes: req.GetProviderTypes(),
+		ProviderURNs:  req.GetProviderUrns(),
+		ResourceTypes: req.GetResourceTypes(),
+		ResourceURNs:  req.GetResourceUrns(),
 	}
 
 	appeals, err := s.appealService.BulkRevoke(ctx, filters, domain.SystemActorName, req.GetReason())
