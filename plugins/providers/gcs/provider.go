@@ -75,6 +75,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		if err != nil {
 			return nil, err
 		}
+		uniformBucketLevelAccess := battrs.UniformBucketLevelAccess.Enabled
 
 		if utils.ContainsString(resourceTypes, ResourceTypeBucket) {
 			b := &Bucket{Name: battrs.Name}
@@ -84,7 +85,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 			resources = append(resources, bucketResource)
 		}
 
-		if utils.ContainsString(resourceTypes, ResourceTypeObject) {
+		if utils.ContainsString(resourceTypes, ResourceTypeObject) && !uniformBucketLevelAccess {
 			objIt := client.Bucket(battrs.Name).Objects(ctx, nil)
 			for {
 				oattrs, err := objIt.Next()

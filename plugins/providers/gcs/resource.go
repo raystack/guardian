@@ -43,7 +43,7 @@ type Object struct {
 
 func (o *Object) toDomain() *domain.Resource {
 	return &domain.Resource{
-		Type: ResourceTypeBucket,
+		Type: ResourceTypeObject,
 		URN:  o.Name,
 		Name: o.Name,
 	}
