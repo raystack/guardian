@@ -103,6 +103,15 @@ func (a *Appeal) SetDefaults() {
 	}
 }
 
+func (a *Appeal) GetApproval(id string) *Approval {
+	for _, approval := range a.Approvals {
+		if approval.ID == id || approval.Name == id {
+			return approval
+		}
+	}
+	return nil
+}
+
 type ApprovalActionType string
 
 const (

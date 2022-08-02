@@ -653,13 +653,7 @@ func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *dom
 		return nil, nil, fmt.Errorf("getting appeal details: %w", err)
 	}
 
-	var approval *domain.Approval
-	for _, a := range appeal.Approvals {
-		if a.ID == approvalID || a.Name == approvalID {
-			approval = a
-			break
-		}
-	}
+	approval := appeal.GetApproval(approvalID)
 	if approval == nil {
 		return nil, nil, ErrApprovalNotFound
 	}
