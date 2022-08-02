@@ -53,30 +53,14 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListAppealsRequest) (*guardianv1beta1.ListAppealsResponse, error) {
 	filters := &domain.ListAppealsFilter{}
-	if req.GetAccountId() != "" {
-		filters.AccountIDs = []string{req.GetAccountId()}
-	}
-	if req.GetStatuses() != nil {
-		filters.Statuses = req.GetStatuses()
-	}
-	if req.GetRole() != "" {
-		filters.Role = req.GetRole()
-	}
-	if req.GetProviderTypes() != nil {
-		filters.ProviderTypes = req.GetProviderTypes()
-	}
-	if req.GetProviderUrns() != nil {
-		filters.ProviderURNs = req.GetProviderUrns()
-	}
-	if req.GetResourceTypes() != nil {
-		filters.ResourceTypes = req.GetResourceTypes()
-	}
-	if req.GetResourceUrns() != nil {
-		filters.ResourceURNs = req.GetResourceUrns()
-	}
-	if req.GetOrderBy() != nil {
-		filters.OrderBy = req.GetOrderBy()
-	}
+	filters.AccountIDs = []string{req.GetAccountId()}
+	filters.Statuses = req.GetStatuses()
+	filters.Role = req.GetRole()
+	filters.ProviderTypes = req.GetProviderTypes()
+	filters.ProviderURNs = req.GetProviderUrns()
+	filters.ResourceTypes = req.GetResourceTypes()
+	filters.ResourceURNs = req.GetResourceUrns()
+	filters.OrderBy = req.GetOrderBy()
 	appeals, err := s.listAppeals(ctx, filters)
 	if err != nil {
 		return nil, err
