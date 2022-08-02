@@ -187,9 +187,7 @@ func (s *GRPCServer) RevokeAppeals(ctx context.Context, req *guardianv1beta1.Rev
 	filters.ResourceTypes = req.GetResourceTypes()
 	filters.ResourceURNs = req.GetResourceUrns()
 
-	reason := req.GetReason()
-
-	appeals, err := s.appealService.BulkRevoke(ctx, filters, domain.SystemActorName, reason)
+	appeals, err := s.appealService.BulkRevoke(ctx, filters, domain.SystemActorName, req.GetReason())
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to revoke appeals in bulk")
 	}
