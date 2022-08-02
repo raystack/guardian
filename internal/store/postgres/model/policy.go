@@ -15,7 +15,7 @@ type Policy struct {
 	Version      uint   `gorm:"primaryKey"`
 	Description  string
 	Steps        datatypes.JSON
-	Appeal       datatypes.JSON
+	AppealConfig datatypes.JSON
 	Labels       datatypes.JSON
 	Requirements datatypes.JSON
 	IAM          datatypes.JSON
@@ -46,7 +46,7 @@ func (m *Policy) FromDomain(p *domain.Policy) error {
 		return err
 	}
 
-	appeal, err := json.Marshal(p.Appeal)
+	appeal, err := json.Marshal(p.AppealConfig)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (m *Policy) FromDomain(p *domain.Policy) error {
 	m.Version = p.Version
 	m.Description = p.Description
 	m.Steps = datatypes.JSON(steps)
-	m.Appeal = datatypes.JSON(appeal)
+	m.AppealConfig = datatypes.JSON(appeal)
 	m.Labels = datatypes.JSON(labels)
 	m.Requirements = datatypes.JSON(requirements)
 	m.IAM = datatypes.JSON(iam)
@@ -90,7 +90,7 @@ func (m *Policy) ToDomain() (*domain.Policy, error) {
 	}
 
 	var appealConfig *domain.PolicyAppealConfig
-	if err := json.Unmarshal(m.Appeal, &appealConfig); err != nil {
+	if err := json.Unmarshal(m.AppealConfig, &appealConfig); err != nil {
 		return nil, err
 	}
 
@@ -106,7 +106,7 @@ func (m *Policy) ToDomain() (*domain.Policy, error) {
 		Version:      m.Version,
 		Description:  m.Description,
 		Steps:        steps,
-		Appeal:       appealConfig,
+		AppealConfig: appealConfig,
 		Labels:       labels,
 		Requirements: requirements,
 		IAM:          iam,

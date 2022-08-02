@@ -38,7 +38,7 @@ func (s *PolicyRepositoryTestSuite) SetupTest() {
 		"version",
 		"description",
 		"steps",
-		"appeal",
+		"appeal_config",
 		"labels",
 		"requirements",
 		"iam",
@@ -63,7 +63,7 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 		s.EqualError(actualError, "serializing policy: json: unsupported type: chan int")
 	})
 
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","appeal","labels","requirements","iam","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`)
+	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","appeal_config","labels","requirements","iam","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`)
 
 	s.Run("should return error if got error from db transaction", func() {
 		p := &domain.Policy{}
@@ -147,12 +147,12 @@ func (s *PolicyRepositoryTestSuite) TestFind() {
 		now := time.Now()
 		expectedPolicies := []*domain.Policy{
 			{
-				ID:          "",
-				Version:     1,
-				Description: "",
-				Appeal:      nil,
-				CreatedAt:   now,
-				UpdatedAt:   now,
+				ID:           "",
+				Version:      1,
+				Description:  "",
+				AppealConfig: nil,
+				CreatedAt:    now,
+				UpdatedAt:    now,
 			},
 		}
 		expectedRows := sqlmock.NewRows(s.rows).

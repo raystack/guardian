@@ -117,7 +117,7 @@ func (s *GrpcHandlersSuite) TestGetPolicy() {
 				Config:   map[string]interface{}{"foo": "bar"},
 				Schema:   map[string]string{"foo": "bar"},
 			},
-			Appeal: &domain.PolicyAppealConfig{
+			AppealConfig: &domain.PolicyAppealConfig{
 				DurationOptions: []domain.AppealDurationOption{
 					{Name: "1 Day", Value: "24h"},
 					{Name: "3 Days", Value: "72h"},
@@ -285,7 +285,7 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 				Config:   map[string]interface{}{"foo": "bar"},
 				Schema:   map[string]string{"foo": "bar"},
 			},
-			Appeal: &domain.PolicyAppealConfig{
+			AppealConfig: &domain.PolicyAppealConfig{
 				DurationOptions: []domain.AppealDurationOption{
 					{Name: "1 Day", Value: "24h"},
 					{Name: "3 Days", Value: "72h"},
@@ -485,7 +485,7 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 				Config:   map[string]interface{}{"foo": "bar"},
 				Schema:   map[string]string{"foo": "bar"},
 			},
-			Appeal: &domain.PolicyAppealConfig{
+			AppealConfig: &domain.PolicyAppealConfig{
 				DurationOptions: []domain.AppealDurationOption{
 					{Name: "1 Day", Value: "24h"},
 					{Name: "3 Days", Value: "72h"},

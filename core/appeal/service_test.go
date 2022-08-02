@@ -502,7 +502,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				policies: []*domain.Policy{{
 					ID:      "policy_id",
 					Version: uint(1),
-					Appeal: &domain.PolicyAppealConfig{
+					AppealConfig: &domain.PolicyAppealConfig{
 						DurationOptions: []domain.AppealDurationOption{
 							{Name: "1 Day", Value: "24h"},
 							{Name: "3 Days", Value: "72h"},
