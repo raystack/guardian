@@ -42,7 +42,7 @@ func TestCreateConfig(t *testing.T) {
 							ID:          "Storage Legacy Bucket Writer",
 							Name:        "Storage Legacy Bucket Writer",
 							Description: "Read access to buckets with object listing/creation/deletion",
-							Permissions: []interface{}{"WRITER"},
+							Permissions: []interface{}{"roles/storage.legacyBucketWriter"},
 						},
 					},
 				},
