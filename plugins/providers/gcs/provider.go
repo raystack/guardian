@@ -138,6 +138,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	defer client.Close()
 
 	user := a.AccountID
+	userType := a.AccountType
 
 	if a.Resource.Type == ResourceTypeBucket {
 		bucketName := a.Resource.URN
@@ -153,8 +154,8 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 				return fmt.Errorf("Bucket(%q).IAM().Policy: %v", bucketName, err)
 			}
 
-			identity := fmt.Sprintf("user:%s", user)           //TODO, the identity should have "group:" or "user:"..  user, serviceAccount also valid
-			var role iam.RoleName = iam.RoleName(resolvedRole) //TODO : discuss the roles and edit this    "roles/storage.objectViewer"
+			identity := fmt.Sprintf("%s:%s", userType, user)
+			var role iam.RoleName = iam.RoleName(resolvedRole)
 
 			policy.Add(identity, role)
 			if err := bucket.IAM().SetPolicy(ctx, policy); err != nil {
