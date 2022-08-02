@@ -551,15 +551,18 @@ func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email s
 		return nil, fmt.Errorf("%w: can't add new approver to appeal with %q status", ErrUnableToAddApprover, appeal.Status)
 	}
 
-	if !utils.ContainsString([]string{domain.ApprovalStatusPending, domain.ApprovalStatusBlocked}, approval.Status) {
+	switch approval.Status {
+	case domain.ApprovalStatusPending:
+		break
+	case domain.ApprovalStatusBlocked:
+		// check if approval type is auto
+		// this approach is the quickest way to assume that approval is auto, otherwise need to fetch the policy details and lookup the approval type which takes more time
+		if approval.Approvers == nil || len(approval.Approvers) == 0 {
+			// approval is automatic (strategy: auto) that is still on blocked
+			return nil, fmt.Errorf("%w: can't modify approvers for approval with strategy auto", ErrUnableToAddApprover)
+		}
+	default:
 		return nil, fmt.Errorf("%w: can't add approver to approval with %q status", ErrUnableToAddApprover, approval.Status)
-	}
-
-	// check if approval type is auto
-	// this approach is the quickest way to assume that approval is auto, otherwise need to fetch the policy details and lookup the approval type which takes more time
-	if approval.Status == domain.ApprovalStatusBlocked && (approval.Approvers == nil || len(approval.Approvers) == 0) {
-		// approval is automatic (strategy: auto) that is still on blocked
-		return nil, fmt.Errorf("%w: can't modify approvers for approval with strategy auto", ErrUnableToAddApprover)
 	}
 
 	if err := s.approvalService.AddApprover(ctx, approval.ID, email); err != nil {
@@ -606,15 +609,18 @@ func (s *Service) DeleteApprover(ctx context.Context, appealID, approvalID, emai
 		return nil, fmt.Errorf("%w: can't delete approver to appeal with %q status", ErrUnableToDeleteApprover, appeal.Status)
 	}
 
-	if !utils.ContainsString([]string{domain.ApprovalStatusPending, domain.ApprovalStatusBlocked}, approval.Status) {
+	switch approval.Status {
+	case domain.ApprovalStatusPending:
+		break
+	case domain.ApprovalStatusBlocked:
+		// check if approval type is auto
+		// this approach is the quickest way to assume that approval is auto, otherwise need to fetch the policy details and lookup the approval type which takes more time
+		if approval.Approvers == nil || len(approval.Approvers) == 0 {
+			// approval is automatic (strategy: auto) that is still on blocked
+			return nil, fmt.Errorf("%w: can't modify approvers for approval with strategy auto", ErrUnableToDeleteApprover)
+		}
+	default:
 		return nil, fmt.Errorf("%w: can't delete approver to approval with %q status", ErrUnableToDeleteApprover, approval.Status)
-	}
-
-	// check if approval type is auto
-	// this approach is the quickest way to assume that approval is auto, otherwise need to fetch the policy details and lookup the approval type which takes more time
-	if approval.Status == domain.ApprovalStatusBlocked && (approval.Approvers == nil || len(approval.Approvers) == 0) {
-		// approval is automatic (strategy: auto) that is still on blocked
-		return nil, fmt.Errorf("%w: can't modify approvers for approval with strategy auto", ErrUnableToDeleteApprover)
 	}
 
 	if len(approval.Approvers) == 1 {
