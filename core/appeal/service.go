@@ -534,10 +534,16 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 	return revokedAppeal, nil
 }
 
-func (s *Service) BulkRevoke(ctx context.Context, filters *domain.ListAppealsFilter, actor, reason string) ([]*domain.Appeal, error) {
+func (s *Service) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsFilter, actor, reason string) ([]*domain.Appeal, error) {
 	result := make([]*domain.Appeal, 0)
-	filters.Statuses = []string{domain.AppealStatusActive}
-	appeals, err := s.Find(ctx, filters)
+	appeals, err := s.Find(ctx, &domain.ListAppealsFilter{
+		Statuses:      []string{domain.AppealStatusActive},
+		AccountIDs:    filters.AccountIDs,
+		ProviderTypes: filters.ProviderTypes,
+		ProviderURNs:  filters.ProviderURNs,
+		ResourceTypes: filters.ResourceTypes,
+		ResourceURNs:  filters.ResourceURNs,
+	})
 	if err != nil {
 		return nil, err
 	}

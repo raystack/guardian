@@ -132,3 +132,11 @@ type ListAppealsFilter struct {
 	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 	OrderBy                   []string  `mapstructure:"order_by" validate:"omitempty,min=1"`
 }
+
+type RevokeAppealsFilter struct {
+	AccountIDs    []string `mapstructure:"account_ids" validate:"omitempty,required"`
+	ProviderTypes []string `mapstructure:"provider_types" validate:"omitempty,min=1"`
+	ProviderURNs  []string `mapstructure:"provider_urns" validate:"omitempty,min=1"`
+	ResourceTypes []string `mapstructure:"resource_types" validate:"omitempty,min=1"`
+	ResourceURNs  []string `mapstructure:"resource_urns" validate:"omitempty,min=1"`
+}
