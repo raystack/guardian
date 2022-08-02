@@ -20,7 +20,7 @@ type Dataset struct {
 	DatasetID string
 }
 
-func (d *Dataset) fromDomain(r *domain.Resource) error {
+func (d *Dataset) FromDomain(r *domain.Resource) error {
 	if r.Type != ResourceTypeDataset {
 		return ErrInvalidResourceType
 	}
@@ -30,7 +30,7 @@ func (d *Dataset) fromDomain(r *domain.Resource) error {
 	return nil
 }
 
-func (d *Dataset) toDomain() *domain.Resource {
+func (d *Dataset) ToDomain() *domain.Resource {
 	return &domain.Resource{
 		Type: ResourceTypeDataset,
 		Name: d.DatasetID,
@@ -45,7 +45,7 @@ type Table struct {
 	TableID   string
 }
 
-func (t *Table) fromDomain(r *domain.Resource) error {
+func (t *Table) FromDomain(r *domain.Resource) error {
 	if r.Type != ResourceTypeTable {
 		return ErrInvalidResourceType
 	}
@@ -60,7 +60,7 @@ func (t *Table) fromDomain(r *domain.Resource) error {
 	return nil
 }
 
-func (t *Table) toDomain() *domain.Resource {
+func (t *Table) ToDomain() *domain.Resource {
 	return &domain.Resource{
 		Type: ResourceTypeTable,
 		Name: t.TableID,

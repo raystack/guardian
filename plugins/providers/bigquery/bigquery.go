@@ -11,6 +11,16 @@ import (
 	"google.golang.org/api/option"
 )
 
+//go:generate mockery --name=BigQueryClient --exported --with-expecter
+type BigQueryClient interface {
+	GetDatasets(context.Context) ([]*Dataset, error)
+	GetTables(ctx context.Context, datasetID string) ([]*Table, error)
+	GrantDatasetAccess(ctx context.Context, d *Dataset, user, role string) error
+	RevokeDatasetAccess(ctx context.Context, d *Dataset, user, role string) error
+	GrantTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
+	RevokeTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
+	ResolveDatasetRole(role string) (bq.AccessRole, error)
+}
 type bigQueryClient struct {
 	projectID  string
 	client     *bq.Client

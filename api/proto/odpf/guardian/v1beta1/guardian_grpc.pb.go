@@ -44,6 +44,7 @@ type GuardianServiceClient interface {
 	UpdateApproval(ctx context.Context, in *UpdateApprovalRequest, opts ...grpc.CallOption) (*UpdateApprovalResponse, error)
 	AddApprover(ctx context.Context, in *AddApproverRequest, opts ...grpc.CallOption) (*AddApproverResponse, error)
 	DeleteApprover(ctx context.Context, in *DeleteApproverRequest, opts ...grpc.CallOption) (*DeleteApproverResponse, error)
+	RevokeAppeals(ctx context.Context, in *RevokeAppealsRequest, opts ...grpc.CallOption) (*RevokeAppealsResponse, error)
 }
 
 type guardianServiceClient struct {
@@ -288,6 +289,15 @@ func (c *guardianServiceClient) DeleteApprover(ctx context.Context, in *DeleteAp
 	return out, nil
 }
 
+func (c *guardianServiceClient) RevokeAppeals(ctx context.Context, in *RevokeAppealsRequest, opts ...grpc.CallOption) (*RevokeAppealsResponse, error) {
+	out := new(RevokeAppealsResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeAppeals", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GuardianServiceServer is the server API for GuardianService service.
 // All implementations must embed UnimplementedGuardianServiceServer
 // for forward compatibility
@@ -318,6 +328,7 @@ type GuardianServiceServer interface {
 	UpdateApproval(context.Context, *UpdateApprovalRequest) (*UpdateApprovalResponse, error)
 	AddApprover(context.Context, *AddApproverRequest) (*AddApproverResponse, error)
 	DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error)
+	RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error)
 	mustEmbedUnimplementedGuardianServiceServer()
 }
 
@@ -402,6 +413,9 @@ func (UnimplementedGuardianServiceServer) AddApprover(context.Context, *AddAppro
 }
 func (UnimplementedGuardianServiceServer) DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteApprover not implemented")
+}
+func (UnimplementedGuardianServiceServer) RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeAppeals not implemented")
 }
 func (UnimplementedGuardianServiceServer) mustEmbedUnimplementedGuardianServiceServer() {}
 
@@ -884,6 +898,24 @@ func _GuardianService_DeleteApprover_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GuardianService_RevokeAppeals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeAppealsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).RevokeAppeals(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/RevokeAppeals",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).RevokeAppeals(ctx, req.(*RevokeAppealsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GuardianService_ServiceDesc is the grpc.ServiceDesc for GuardianService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -994,6 +1026,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteApprover",
 			Handler:    _GuardianService_DeleteApprover_Handler,
+		},
+		{
+			MethodName: "RevokeAppeals",
+			Handler:    _GuardianService_RevokeAppeals_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
