@@ -37,10 +37,10 @@ JOBS:
     ENABLED: true
     INTERVAL: '0 */2 * * *'  #"At minute 0 past every 2nd hour"
   REVOKE_EXPIRED_ACCESS:
-    ENABLED: false
+    ENABLED: true
     INTERVAL: '*/20 * * * *'  #“At every 20th minute"
   EXPIRING_ACCESS_NOTIFICATION:
-    ENABLED: false
+    ENABLED: true
     INTERVAL: '0 9 * * *' #"At minute 0 past hour 9"
 ```
 
