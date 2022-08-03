@@ -278,6 +278,20 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
 		}
 	}
 
+	if p.GetAppeal() != nil {
+		var durationOptions []domain.AppealDurationOption
+		for _, d := range p.GetAppeal().GetDurationOptions() {
+			option := domain.AppealDurationOption{
+				Name:  d.GetName(),
+				Value: d.GetValue(),
+			}
+			durationOptions = append(durationOptions, option)
+		}
+		policy.AppealConfig = &domain.PolicyAppealConfig{
+			DurationOptions: durationOptions,
+		}
+	}
+
 	if p.GetCreatedAt() != nil {
 		policy.CreatedAt = p.GetCreatedAt().AsTime()
 	}
@@ -383,6 +397,8 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 		}
 	}
 
+	policyProto.Appeal = a.ToPolicyAppealConfigProto(p)
+
 	if !p.CreatedAt.IsZero() {
 		policyProto.CreatedAt = timestamppb.New(p.CreatedAt)
 	}
@@ -391,6 +407,25 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 	}
 
 	return policyProto, nil
+}
+
+func (a *adapter) ToPolicyAppealConfigProto(p *domain.Policy) *guardianv1beta1.PolicyAppealConfig {
+	if p.AppealConfig == nil {
+		return nil
+	}
+
+	policyAppealConfigProto := &guardianv1beta1.PolicyAppealConfig{}
+	var durationOptions []*guardianv1beta1.PolicyAppealConfig_DurationOptions
+	if p.AppealConfig.DurationOptions != nil {
+		for _, d := range p.AppealConfig.DurationOptions {
+			durationOptions = append(durationOptions, &guardianv1beta1.PolicyAppealConfig_DurationOptions{
+				Name:  d.Name,
+				Value: d.Value,
+			})
+		}
+	}
+	policyAppealConfigProto.DurationOptions = durationOptions
+	return policyAppealConfigProto
 }
 
 func (a *adapter) FromResourceProto(r *guardianv1beta1.Resource) *domain.Resource {
