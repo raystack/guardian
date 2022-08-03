@@ -2,6 +2,7 @@ package gcs_test
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -280,6 +281,137 @@ func TestGrantAccess(t *testing.T) {
 		}
 	},
 	)
+
+	t.Run("should return error if error in decoding credentials", func(t *testing.T) {
+		p := initProvider()
+
+		pc := &domain.ProviderConfig{
+			Credentials: "invalid-credentials-struct",
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "test-type",
+					Roles: []*domain.Role{
+						{
+							ID:          "test-role",
+							Permissions: []interface{}{"test-permission-config"},
+						},
+					},
+				},
+			},
+		}
+		a := &domain.Appeal{
+			Resource: &domain.Resource{
+				Type: "test-type",
+			},
+			Role: "test-role",
+		}
+		actualError := p.GrantAccess(pc, a)
+		assert.Error(t, actualError)
+	})
+
+	t.Run("should return error if error in decrypting the service account key", func(t *testing.T) {
+		expectedAccountType := "user"
+		expectedAccountID := "test@email.com"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GcsClient)
+		p := gcs.NewProvider("gcs", crypto)
+		p.Clients = map[string]gcs.GcsClient{
+			"test-resource-name": client,
+		}
+		providerURN := "test-resource-name"
+		expectedError := errors.New("Error in decrypting service account key")
+		crypto.On("Decrypt", "c2VydmljZV9hY2NvdW50LWtleS1qc29u").Return(`{"type":"service_account"}`, expectedError)
+
+		pc := &domain.ProviderConfig{
+			Type: domain.ProviderTypeGCS,
+			URN:  providerURN,
+			Credentials: gcs.Credentials{
+				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service_account-key-json")),
+				ResourceName:      "projects/test-resource-name",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: gcs.ResourceTypeBucket,
+					Roles: []*domain.Role{
+						{
+							ID:          "Storage Legacy Bucket Writer",
+							Name:        "Storage Legacy Bucket Writer",
+							Description: "Read access to buckets with object listing/creation/deletion",
+							Permissions: []interface{}{"roles/storage.legacyBucketWriter"},
+						},
+					},
+				},
+			},
+		}
+		a := &domain.Appeal{
+			Role: "Storage Legacy Bucket Writer",
+			Resource: &domain.Resource{
+				URN:          "test-bucket-name",
+				Name:         "test-bucket-name",
+				ProviderType: "gcs",
+				ProviderURN:  "test-resource-name",
+				Type:         "bucket",
+			},
+			ID:          "999",
+			ResourceID:  "999",
+			AccountType: expectedAccountType,
+			AccountID:   expectedAccountID,
+		}
+
+		actualError := p.GrantAccess(pc, a)
+
+		assert.Error(t, actualError)
+	})
+
+	t.Run("should return error if error in getting the gcs client", func(t *testing.T) {
+		expectedAccountType := "user"
+		expectedAccountID := "test@email.com"
+		crypto := new(mocks.Crypto)
+		p := gcs.NewProvider("gcs", crypto)
+		providerURN := "test-resource-name"
+
+		crypto.On("Decrypt", "c2VydmljZV9hY2NvdW50LWtleS1qc29u").Return(`{"type":"service_account"}`, nil)
+
+		pc := &domain.ProviderConfig{
+			Type: domain.ProviderTypeGCS,
+			URN:  providerURN,
+			Credentials: gcs.Credentials{
+				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service_account-key-json")),
+				ResourceName:      "projects/test-resource-name",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: gcs.ResourceTypeBucket,
+					Roles: []*domain.Role{
+						{
+							ID:          "Storage Legacy Bucket Writer",
+							Name:        "Storage Legacy Bucket Writer",
+							Description: "Read access to buckets with object listing/creation/deletion",
+							Permissions: []interface{}{"roles/storage.legacyBucketWriter"},
+						},
+					},
+				},
+			},
+		}
+		a := &domain.Appeal{
+			Role: "Storage Legacy Bucket Writer",
+			Resource: &domain.Resource{
+				URN:          "test-bucket-name",
+				Name:         "test-bucket-name",
+				ProviderType: "gcs",
+				ProviderURN:  "test-resource-name",
+				Type:         "bucket",
+			},
+			ID:          "999",
+			ResourceID:  "999",
+			AccountType: expectedAccountType,
+			AccountID:   expectedAccountID,
+		}
+
+		actualError := p.GrantAccess(pc, a)
+
+		assert.Error(t, actualError)
+	})
 
 	t.Run("should grant the access to bucket resource and return nil error", func(t *testing.T) {
 
