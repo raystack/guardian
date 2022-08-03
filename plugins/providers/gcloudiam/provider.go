@@ -36,6 +36,16 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 		return err
 	}
 
+	client, err := p.getIamClient(pc)
+	if err != nil {
+		return err
+	}
+
+	r := c.ProviderConfig.Resources[0]
+	if err := c.validatePermissions(r, client); err != nil {
+		return err
+	}
+
 	return c.EncryptCredentials()
 }
 
@@ -52,41 +62,6 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		t = ResourceTypeOrganization
 	}
 
-	client, err := p.getIamClient(pc)
-	if err != nil {
-		return nil, err
-	}
-
-	iamRoles, err := client.GetRoles()
-	if err != nil {
-		return nil, err
-	}
-
-	var roles []*domain.Role
-	for _, r := range iamRoles {
-		roles = append(roles, &domain.Role{
-			ID:          r.Name,
-			Name:        r.Title,
-			Description: r.Description,
-		})
-	}
-
-	rolesMap := make(map[string]*domain.Role)
-	for _, role := range roles {
-		rolesMap[role.ID] = role
-	}
-
-	for _, rc := range pc.Resources {
-		for _, ro := range rc.Roles {
-			for _, p := range ro.Permissions {
-				permission := fmt.Sprint(p)
-				if _, ok := rolesMap[permission]; !ok {
-					return nil, fmt.Errorf("%v: %v", ErrInvalidProjectRole, permission)
-				}
-			}
-		}
-	}
-
 	return []*domain.Resource{
 		{
 			ProviderType: pc.Type,
@@ -96,6 +71,23 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 			Name:         fmt.Sprintf("%s - GCP IAM", creds.ResourceName),
 		},
 	}, nil
+}
+
+func (p *Provider) GetRequestedRoleInAppeal(pc *domain.ProviderConfig, a *domain.Appeal) (*domain.Role, error) {
+	resourceRoleMap := make(map[string]*domain.Role)
+	for _, rc := range pc.Resources {
+		for _, ro := range rc.Roles {
+			resourceRole := fmt.Sprintf("%s-%s", rc.Type, ro.ID)
+			resourceRoleMap[resourceRole] = ro
+		}
+	}
+	appealResourceRole := fmt.Sprintf("%s-%s", a.Resource.Type, a.Role)
+	requestedRole, ok := resourceRoleMap[appealResourceRole]
+	if !ok {
+		return nil, ErrInvalidRole
+	}
+
+	return requestedRole, nil
 }
 
 func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
@@ -112,19 +104,10 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	}
 
 	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
-		resourceRoleMap := make(map[string]*domain.Role)
-		for _, rc := range pc.Resources {
-			for _, ro := range rc.Roles {
-				resourceRole := fmt.Sprintf("%s-%s", rc.Type, ro.ID)
-				resourceRoleMap[resourceRole] = ro
-			}
+		requestedRole, err := p.GetRequestedRoleInAppeal(pc, a)
+		if err != nil {
+			return err
 		}
-		appealResourceRole := fmt.Sprintf("%s-%s", a.Resource.Type, a.Role)
-		requestedRole, ok := resourceRoleMap[appealResourceRole]
-		if !ok {
-			return ErrInvalidRole
-		}
-
 		for _, p := range requestedRole.Permissions {
 			permission := fmt.Sprint(p)
 			if err := client.GrantAccess(a.AccountType, a.AccountID, permission); err != nil {
@@ -152,17 +135,9 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	}
 
 	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
-		resourceRoleMap := make(map[string]*domain.Role)
-		for _, rc := range pc.Resources {
-			for _, ro := range rc.Roles {
-				resourceRole := fmt.Sprintf("%s-%s", rc.Type, ro.ID)
-				resourceRoleMap[resourceRole] = ro
-			}
-		}
-		appealResourceRole := fmt.Sprintf("%s-%s", a.Resource.Type, a.Role)
-		requestedRole, ok := resourceRoleMap[appealResourceRole]
-		if !ok {
-			return ErrInvalidRole
+		requestedRole, err := p.GetRequestedRoleInAppeal(pc, a)
+		if err != nil {
+			return err
 		}
 		for _, p := range requestedRole.Permissions {
 			permission := fmt.Sprint(p)

@@ -33,8 +33,21 @@ func TestCreateConfig(t *testing.T) {
 					Resources: []*domain.ResourceConfig{
 						{
 							Type: gcloudiam.ResourceTypeProject,
+							Roles: []*domain.Role{
+								{
+									ID:          "role-1",
+									Name:        "BigQuery",
+									Permissions: []interface{}{"roles/bigquery.admin"},
+								},
+								{
+									ID:          "role-2",
+									Name:        "Api gateway",
+									Permissions: []interface{}{"roles/apigateway.viewer"},
+								},
+							},
 						},
 					},
+					URN: providerURN,
 				},
 			},
 			{
@@ -47,8 +60,21 @@ func TestCreateConfig(t *testing.T) {
 					Resources: []*domain.ResourceConfig{
 						{
 							Type: gcloudiam.ResourceTypeProject,
+							Roles: []*domain.Role{
+								{
+									ID:          "role-1",
+									Name:        "BigQuery",
+									Permissions: []interface{}{"roles/bigquery.admin"},
+								},
+								{
+									ID:          "role-2",
+									Name:        "Api gateway",
+									Permissions: []interface{}{"roles/apigateway.viewer"},
+								},
+							},
 						},
 					},
+					URN: providerURN,
 				},
 			},
 		}
@@ -115,7 +141,7 @@ func TestCreateConfig(t *testing.T) {
 	})
 
 	t.Run("should return error if error in encrypting the credentials", func(t *testing.T) {
-		providerURN := "test-URN"
+		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
@@ -123,7 +149,20 @@ func TestCreateConfig(t *testing.T) {
 			providerURN: client,
 		}
 		expectedError := errors.New("error in encrypting SAK")
-		crypto.On("Encrypt", "service-account-key-json").Return("", expectedError)
+
+		crypto.On("Encrypt", `{"type":"service_account"}`).Return("", expectedError)
+
+		gcloudRole1 := &gcloudiam.Role{
+			Name:        "roles/bigquery.admin",
+			Title:       "BigQuery Admin",
+			Description: "Administer all BigQuery resources and data",
+		}
+
+		gCloudRolesList := []*gcloudiam.Role{}
+		gCloudRolesList = append(gCloudRolesList, gcloudRole1)
+
+		client.On("GetRoles").Return(gCloudRolesList, nil).Once()
+
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
 				{
@@ -138,7 +177,7 @@ func TestCreateConfig(t *testing.T) {
 				},
 			},
 			Credentials: gcloudiam.Credentials{
-				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte(`{"type":"service_account"}`)),
 				ResourceName:      "projects/test-resource-name",
 			},
 			URN: providerURN,
@@ -157,7 +196,20 @@ func TestCreateConfig(t *testing.T) {
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
-		crypto.On("Encrypt", "service-account-key-json").Return("encrypted-SAK", nil)
+
+		gcloudRole1 := &gcloudiam.Role{
+			Name:        "roles/bigquery.admin",
+			Title:       "BigQuery Admin",
+			Description: "Administer all BigQuery resources and data",
+		}
+
+		gCloudRolesList := []*gcloudiam.Role{}
+		gCloudRolesList = append(gCloudRolesList, gcloudRole1)
+
+		client.On("GetRoles").Return(gCloudRolesList, nil).Once()
+
+		crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
+
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
 				{
@@ -168,16 +220,11 @@ func TestCreateConfig(t *testing.T) {
 							Name:        "BigQuery",
 							Permissions: []interface{}{"roles/bigquery.admin"},
 						},
-						{
-							ID:          "role-2",
-							Name:        "Api gateway",
-							Permissions: []interface{}{"roles/apigateway.viewer"},
-						},
 					},
 				},
 			},
 			Credentials: gcloudiam.Credentials{
-				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+				ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte(`{"type":"service_account"}`)),
 				ResourceName:      "projects/test-resource-name",
 			},
 			URN: providerURN,

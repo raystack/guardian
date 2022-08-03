@@ -11,7 +11,6 @@ var (
 	ErrPermissionNotFound            = errors.New("permission not found")
 	ErrInvalidResourceType           = errors.New("invalid resource type")
 	ErrInvalidRole                   = errors.New("invalid role")
-	ErrShouldHaveEmptyRoles          = errors.New("gcloud_iam provider should have empty roles")
 	ErrShouldHaveOneResource         = errors.New("gcloud_iam should have one resource")
 	ErrInvalidResourceName           = errors.New("invalid resource name: resource name should be projects/{{project-id}} or organizations/{{org-id}}")
 	ErrRolesShouldNotBeEmpty         = errors.New("gcloud_iam provider should not have empty roles")
