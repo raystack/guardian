@@ -29,6 +29,7 @@ func appealsCommand() *cobra.Command {
 			$ guardian appeal list
 			$ guardian appeal status
 			$ guardian appeal revoke
+			$ guardian appeal bulk-revoke
 			$ guardian appeal cancel
 		`),
 	}
@@ -36,6 +37,7 @@ func appealsCommand() *cobra.Command {
 	cmd.AddCommand(listAppealsCommand())
 	cmd.AddCommand(createAppealCommand())
 	cmd.AddCommand(revokeAppealCommand())
+	cmd.AddCommand(bulkRevokeAppealCommand())
 	cmd.AddCommand(approveApprovalStepCommand())
 	cmd.AddCommand(rejectApprovalStepCommand())
 	cmd.AddCommand(statusAppealCommand())
@@ -220,6 +222,79 @@ func revokeAppealCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&reason, "reason", "r", "", "Reason of the revocation")
 
+	return cmd
+}
+
+func bulkRevokeAppealCommand() *cobra.Command {
+	var accountIds []string
+	var providerTypes []string
+	var providerUrns []string
+	var resourceTypes []string
+	var resourceUrns []string
+	var reason string
+
+	cmd := &cobra.Command{
+		Use:   "bulk-revoke",
+		Short: "Bulk Revoke active accesses/appeals",
+		Example: heredoc.Doc(`
+		$ guardian appeal bulk-revoke 
+		$ guardian appeal bulk-revoke --account-ids=<account-ids> --reason=<reason> --provider-types=<provider-types> --provider-urns=<provider-urns>
+		$ guardian appeal bulk-revoke --account-ids=<account-ids> --reason=<reason> --resource-types=<resource-types> --resource-urns=<resource-urns>
+	`),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			spinner := printer.Spin("")
+			defer spinner.Stop()
+
+			cs := term.NewColorScheme()
+
+			client, cancel, err := createClient(cmd)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			response, err := client.RevokeAppeals(cmd.Context(), &guardianv1beta1.RevokeAppealsRequest{
+				AccountIds:    accountIds,
+				ProviderTypes: providerTypes,
+				ProviderUrns:  providerUrns,
+				ResourceTypes: resourceTypes,
+				ResourceUrns:  resourceUrns,
+				Reason:        reason,
+			})
+			if err != nil {
+				return err
+			}
+
+			var report [][]string
+			appeals := response.GetAppeals()
+			spinner.Stop()
+
+			fmt.Printf(" \nShowing %d revoked appeals of account-ids: %v \n \n", len(appeals), len(accountIds))
+
+			report = append(report, []string{"ID", "USER", "RESOURCE ID", "ROLE", "STATUS"})
+			for _, a := range appeals {
+				report = append(report, []string{
+					cs.Greenf("%v", a.GetId()),
+					a.GetAccountId(),
+					fmt.Sprintf("%v", a.GetResourceId()),
+					a.GetRole(),
+					a.GetStatus(),
+				})
+			}
+			printer.Table(os.Stdout, report)
+			return nil
+		},
+	}
+
+	cmd.Flags().StringArrayVarP(&accountIds, "account-ids", "a", nil, "Filter by accountIds")
+	cmd.Flags().StringArrayVarP(&providerTypes, "provider-types", "pt", nil, "Filter by providerTypes")
+	cmd.Flags().StringArrayVarP(&providerUrns, "provider-urns", "pu", nil, "Filter by providerUrns")
+	cmd.Flags().StringArrayVarP(&resourceTypes, "resource-types", "rt", nil, "Filter by resourceTypes")
+	cmd.Flags().StringArrayVarP(&resourceUrns, "resource-urns", "ru", nil, "Filter by resourceUrns")
+	cmd.Flags().StringVarP(&reason, "reason", "r", "", "Reason of the revocation")
+	cmd.MarkFlagRequired("account-ids")
+	cmd.MarkFlagRequired("reason")
 	return cmd
 }
 
