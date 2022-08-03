@@ -233,6 +233,10 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			}
 		}
 
+		if err := validateAppealDurationConfig(appeal, policy); err != nil {
+			return fmt.Errorf("validating appeal duration: %w", err)
+		}
+
 		if err := s.addCreatorDetails(appeal, policy); err != nil {
 			return fmt.Errorf("retrieving creator details: %w", err)
 		}
@@ -311,6 +315,20 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 	}
 
 	return nil
+}
+
+func validateAppealDurationConfig(appeal *domain.Appeal, policy *domain.Policy) error {
+	// return nil if duration options are not configured for this policy
+	if policy.AppealConfig == nil || policy.AppealConfig.DurationOptions == nil {
+		return nil
+	}
+	for _, durationOption := range policy.AppealConfig.DurationOptions {
+		if appeal.Options.Duration == durationOption.Value {
+			return nil
+		}
+	}
+
+	return ErrOptionsDurationNotFound
 }
 
 // MakeAction Approve an approval step

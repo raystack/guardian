@@ -33,6 +33,7 @@ type GuardianServiceClient interface {
 	GetPolicy(ctx context.Context, in *GetPolicyRequest, opts ...grpc.CallOption) (*GetPolicyResponse, error)
 	CreatePolicy(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error)
 	UpdatePolicy(ctx context.Context, in *UpdatePolicyRequest, opts ...grpc.CallOption) (*UpdatePolicyResponse, error)
+	GetPolicyPreferences(ctx context.Context, in *GetPolicyPreferencesRequest, opts ...grpc.CallOption) (*GetPolicyPreferencesResponse, error)
 	ListResources(ctx context.Context, in *ListResourcesRequest, opts ...grpc.CallOption) (*ListResourcesResponse, error)
 	GetResource(ctx context.Context, in *GetResourceRequest, opts ...grpc.CallOption) (*GetResourceResponse, error)
 	UpdateResource(ctx context.Context, in *UpdateResourceRequest, opts ...grpc.CallOption) (*UpdateResourceResponse, error)
@@ -150,6 +151,15 @@ func (c *guardianServiceClient) CreatePolicy(ctx context.Context, in *CreatePoli
 func (c *guardianServiceClient) UpdatePolicy(ctx context.Context, in *UpdatePolicyRequest, opts ...grpc.CallOption) (*UpdatePolicyResponse, error) {
 	out := new(UpdatePolicyResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/UpdatePolicy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) GetPolicyPreferences(ctx context.Context, in *GetPolicyPreferencesRequest, opts ...grpc.CallOption) (*GetPolicyPreferencesResponse, error) {
+	out := new(GetPolicyPreferencesResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/GetPolicyPreferences", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -297,6 +307,7 @@ type GuardianServiceServer interface {
 	GetPolicy(context.Context, *GetPolicyRequest) (*GetPolicyResponse, error)
 	CreatePolicy(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error)
 	UpdatePolicy(context.Context, *UpdatePolicyRequest) (*UpdatePolicyResponse, error)
+	GetPolicyPreferences(context.Context, *GetPolicyPreferencesRequest) (*GetPolicyPreferencesResponse, error)
 	ListResources(context.Context, *ListResourcesRequest) (*ListResourcesResponse, error)
 	GetResource(context.Context, *GetResourceRequest) (*GetResourceResponse, error)
 	UpdateResource(context.Context, *UpdateResourceRequest) (*UpdateResourceResponse, error)
@@ -350,6 +361,9 @@ func (UnimplementedGuardianServiceServer) CreatePolicy(context.Context, *CreateP
 }
 func (UnimplementedGuardianServiceServer) UpdatePolicy(context.Context, *UpdatePolicyRequest) (*UpdatePolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePolicy not implemented")
+}
+func (UnimplementedGuardianServiceServer) GetPolicyPreferences(context.Context, *GetPolicyPreferencesRequest) (*GetPolicyPreferencesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyPreferences not implemented")
 }
 func (UnimplementedGuardianServiceServer) ListResources(context.Context, *ListResourcesRequest) (*ListResourcesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListResources not implemented")
@@ -600,6 +614,24 @@ func _GuardianService_UpdatePolicy_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GuardianServiceServer).UpdatePolicy(ctx, req.(*UpdatePolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_GetPolicyPreferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyPreferencesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).GetPolicyPreferences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/GetPolicyPreferences",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).GetPolicyPreferences(ctx, req.(*GetPolicyPreferencesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -906,6 +938,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdatePolicy",
 			Handler:    _GuardianService_UpdatePolicy_Handler,
+		},
+		{
+			MethodName: "GetPolicyPreferences",
+			Handler:    _GuardianService_GetPolicyPreferences_Handler,
 		},
 		{
 			MethodName: "ListResources",

@@ -204,38 +204,7 @@ func (s *ServiceTestSuite) TestUpdateValidation() {
 }
 
 func (s *ServiceTestSuite) TestUpdate() {
-	s.Run("should return error if got error getting existing record", func() {
-		testCases := []struct {
-			expectedExistingProvider *domain.Provider
-			expectedRepositoryError  error
-			expectedError            error
-		}{
-			{
-				expectedExistingProvider: nil,
-				expectedRepositoryError:  provider.ErrRecordNotFound,
-				expectedError:            provider.ErrRecordNotFound,
-			},
-			{
-				expectedExistingProvider: nil,
-				expectedRepositoryError:  errors.New("repository error"),
-				expectedError:            errors.New("repository error"),
-			},
-		}
-
-		for _, tc := range testCases {
-			expectedProvider := &domain.Provider{
-				ID: "1",
-			}
-			expectedError := tc.expectedError
-			s.mockProviderRepository.On("GetByID", expectedProvider.ID).Return(tc.expectedExistingProvider, tc.expectedRepositoryError).Once()
-
-			actualError := s.service.Update(context.Background(), expectedProvider)
-
-			s.EqualError(actualError, expectedError.Error())
-		}
-	})
-
-	s.Run("should update only non-zero values", func() {
+	s.Run("should update record on success", func() {
 		testCases := []struct {
 			updatePayload       *domain.Provider
 			existingProvider    *domain.Provider
@@ -243,20 +212,16 @@ func (s *ServiceTestSuite) TestUpdate() {
 		}{
 			{
 				updatePayload: &domain.Provider{
-					ID: "1",
-					Config: &domain.ProviderConfig{
-						Labels: map[string]string{
-							"foo": "bar",
-						},
-					},
-				},
-				existingProvider: &domain.Provider{
 					ID:   "1",
 					Type: mockProviderType,
 					Config: &domain.ProviderConfig{
 						Appeal: &domain.AppealConfig{
 							AllowPermanentAccess:         true,
 							AllowActiveAccessExtensionIn: "1h",
+						},
+						AllowedAccountTypes: []string{"user"},
+						Labels: map[string]string{
+							"foo": "bar",
 						},
 						Type: mockProviderType,
 						URN:  "urn",
@@ -282,7 +247,6 @@ func (s *ServiceTestSuite) TestUpdate() {
 		}
 
 		for _, tc := range testCases {
-			s.mockProviderRepository.On("GetByID", tc.updatePayload.ID).Return(tc.existingProvider, nil).Once()
 			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 			s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 			s.mockProviderRepository.On("Update", tc.expectedNewProvider).Return(nil)
