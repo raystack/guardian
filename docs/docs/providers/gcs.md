@@ -6,17 +6,15 @@ It provides features such as object versioning or fine-grain permissions (per ob
 
 ## Prerequisites
 
-1. A service account with `` role at the project/organization level
+1. A service account with `roles/storage.admin` role at the project/organization level
 
 ## Access Management
 
-Access can be given at the bucket level or object level as those allowed to be managed through these Google Cloud Storage APIs:
+Access can be given only at the bucket level on Guardian as those allowed to be managed through these Google Cloud Storage APIs:
 - [Bucket Access Control](https://cloud.google.com/storage/docs/samples/storage-add-bucket-iam-member)
-- [Object Access Control](https://cloud.google.com/storage/docs/samples/storage-add-file-owner)
 
-** NOTE ** : Object level access can only be provide for objects belonging to a **Fine-granied** bucket. For objects belonging to the **Uniform-level**, permissions are only given at the bucket level.
 
-## Config
+## Provider Config
 ```yaml
 type: gcs
 urn: sample-URN
@@ -29,23 +27,28 @@ credentials:
       version: 1
     roles:
       - id: READER
-        name: 'Grants permission to list a bucket contents and read bucket metadata, excluding IAM policies'
+        name: Reader
+        description: 'Grants permission to list a bucket contents and read bucket metadata, excluding IAM policies'
         permissions:
           - roles/storage.legacyBucketReader
       - id: WRITER
-        name: 'Grants permission to create, replace, and delete objects; list objects in a bucket'
+        name: Writer
+        description: 'Grants permission to create, replace, and delete objects; list objects in a bucket'
         permissions:
           - roles/storage.legacyBucketWriter
       - id: OWNER
-        name: 'Grants permission to update objects; list and update tag bindings; read object metadata when listing'
+        name: Owner
+        description: 'Grants permission to update objects; list and update tag bindings; read object metadata when listing'
         permissions:
           - roles/storage.legacyBucketOwner
       - id: ADMIN
-        name: 'Grants full control of buckets and objects'
+        name: Admin
+        description: 'Grants full control of buckets and objects'
         permissions:
           - roles/storage.admin
       - id: OBJECTADMIN
-        name: 'Grants full control over objects, including listing, creating, viewing, and deleting objects'
+        name: ObjectAdmin
+        description: 'Grants full control over objects, including listing, creating, viewing, and deleting objects'
         permissions:
           - roles/storage.objectAdmin
 ```
@@ -67,11 +70,10 @@ credentials:
 ## GCS Resource Types
 
 - Bucket
-- Object
 
 ## GCS Resource Permission
 
-A Google Cloud predefined role name. 
+A Google Cloud predefined role name. [`Read More`](https://cloud.google.com/storage/docs/access-control/iam-roles)
 
 For **`Bucket`** resource type, the list of allowed permissions are:
 
@@ -85,7 +87,4 @@ For **`Bucket`** resource type, the list of allowed permissions are:
 - `roles/storage.objectCreator`
 - `roles/storage.objectViewer`
 
-For **`Object`** resource type, the list of allowed permissions are:
-
-TODO
 

@@ -2,17 +2,15 @@ package gcs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"cloud.google.com/go/iam"
-	"cloud.google.com/go/storage"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/utils"
-	"google.golang.org/api/iterator"
-	"google.golang.org/api/option"
 )
 
 type Provider struct {
@@ -49,12 +47,10 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
-	ctx := context.TODO()
-	client, err := storage.NewClient(ctx, option.WithCredentialsJSON([]byte(creds.ServiceAccountKey)))
+	client, err := p.getGcsClient(creds)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
 
 	resourceTypes := []string{}
 	for _, rc := range pc.Resources {
@@ -62,45 +58,18 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	}
 
 	var resources []*domain.Resource
-
+	ctx := context.Background()
 	projectID := strings.Replace(creds.ResourceName, "projects/", "", 1)
-
-	it := client.Buckets(ctx, projectID)
-	for {
-		battrs, err := it.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		uniformBucketLevelAccess := battrs.UniformBucketLevelAccess.Enabled
-
+	buckets, err := client.GetBuckets(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	for _, b := range buckets {
+		bucketResource := b.toDomain()
+		bucketResource.ProviderType = pc.Type
+		bucketResource.ProviderURN = pc.URN
 		if utils.ContainsString(resourceTypes, ResourceTypeBucket) {
-			b := &Bucket{Name: battrs.Name}
-			bucketResource := b.toDomain()
-			bucketResource.ProviderType = pc.Type
-			bucketResource.ProviderURN = pc.URN
 			resources = append(resources, bucketResource)
-		}
-
-		if utils.ContainsString(resourceTypes, ResourceTypeObject) && !uniformBucketLevelAccess {
-			objIt := client.Bucket(battrs.Name).Objects(ctx, nil)
-			for {
-				oattrs, err := objIt.Next()
-				if err == iterator.Done {
-					break
-				}
-				if err != nil {
-					return nil, err
-				}
-
-				o := &Object{Name: oattrs.Name}
-				objectResource := o.toDomain()
-				objectResource.ProviderType = pc.Type
-				objectResource.ProviderURN = pc.URN
-				resources = append(resources, objectResource)
-			}
 		}
 	}
 
@@ -130,40 +99,32 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return fmt.Errorf("error in decrypting credentials%w", err)
 	}
 
-	ctx := context.TODO()
-	client, err := storage.NewClient(ctx, option.WithCredentialsJSON([]byte(creds.ServiceAccountKey)))
+	client, err := p.getGcsClient(creds)
 	if err != nil {
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
-	defer client.Close()
 
 	user := a.AccountID
 	userType := a.AccountType
-
+	identity := fmt.Sprintf("%s:%s", userType, user)
+	ctx := context.TODO()
 	if a.Resource.Type == ResourceTypeBucket {
-		bucketName := a.Resource.URN
 		b := new(Bucket)
-		bucket := client.Bucket(bucketName)
 		if err := b.fromDomain(a.Resource); err != nil {
 			return fmt.Errorf("from Domain func error: %w", err)
 		}
 		for _, p := range permissions {
-			resolvedRole := string(p)
-			policy, err := bucket.IAM().Policy(ctx)
-			if err != nil {
-				return fmt.Errorf("Bucket(%q).IAM().Policy: %v", bucketName, err)
-			}
-
-			identity := fmt.Sprintf("%s:%s", userType, user)
-			var role iam.RoleName = iam.RoleName(resolvedRole)
-
-			policy.Add(identity, role)
-			if err := bucket.IAM().SetPolicy(ctx, policy); err != nil {
-				return fmt.Errorf("Bucket(%q).IAM().SetPolicy: %v", bucketName, err)
+			var role iam.RoleName = iam.RoleName(string(p))
+			if err := client.GrantBucketAccess(ctx, b, identity, role); err != nil {
+				if errors.Is(err, ErrPermissionAlreadyExists) {
+					return nil
+				}
+				return err
 			}
 		}
+		return nil
 	}
-	return nil
+	return ErrInvalidResourceType
 }
 
 func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
@@ -185,40 +146,32 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return fmt.Errorf("error in decrypting credentials%w", err)
 	}
 
-	ctx := context.TODO()
-	client, err := storage.NewClient(ctx, option.WithCredentialsJSON([]byte(creds.ServiceAccountKey)))
+	client, err := p.getGcsClient(creds)
 	if err != nil {
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
-	defer client.Close()
 
 	user := a.AccountID
 	userType := a.AccountType
-
+	identity := fmt.Sprintf("%s:%s", userType, user)
+	ctx := context.TODO()
 	if a.Resource.Type == ResourceTypeBucket {
-		bucketName := a.Resource.URN
 		b := new(Bucket)
-		bucket := client.Bucket(bucketName)
 		if err := b.fromDomain(a.Resource); err != nil {
 			return fmt.Errorf("from Domain func error: %w", err)
 		}
 		for _, p := range permissions {
-			resolvedRole := string(p)
-			policy, err := bucket.IAM().Policy(ctx)
-			if err != nil {
-				return fmt.Errorf("Bucket(%q).IAM().Policy: %v", bucketName, err)
-			}
-
-			identity := fmt.Sprintf("%s:%s", userType, user)
-			var role iam.RoleName = iam.RoleName(resolvedRole)
-
-			policy.Remove(identity, role)
-			if err := bucket.IAM().SetPolicy(ctx, policy); err != nil {
-				return fmt.Errorf("Bucket(%q).IAM().SetPolicy: %v", bucketName, err)
+			var role iam.RoleName = iam.RoleName(string(p))
+			if err := client.RevokeBucketAccess(ctx, b, identity, role); err != nil {
+				if errors.Is(err, ErrPermissionAlreadyExists) {
+					return nil
+				}
+				return err
 			}
 		}
+		return nil
 	}
-	return nil
+	return ErrInvalidResourceType
 }
 
 func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {
@@ -280,4 +233,19 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 	}
 
 	return permissions, nil
+}
+
+func (p *Provider) getGcsClient(creds Credentials) (GcsClient, error) {
+	projectID := strings.Replace(creds.ResourceName, "projects/", "", 1)
+	if p.Clients[projectID] != nil {
+		return p.Clients[projectID], nil
+	}
+
+	client, err := newGcsClient(projectID, []byte(creds.ServiceAccountKey))
+	if err != nil {
+		return nil, err
+	}
+
+	p.Clients[projectID] = client
+	return client, nil
 }

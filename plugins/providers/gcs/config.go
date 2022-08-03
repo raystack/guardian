@@ -15,12 +15,6 @@ import (
 )
 
 const (
-	BucketRoleReader      = "READER"
-	BucketRoleWriter      = "WRITER"
-	BucketRoleOwner       = "OWNER"
-	BucketRoleObjectAdmin = "OBJECTADMIN"
-	BucketRoleAdmin       = "ADMIN"
-
 	AccountTypeUser           = "user"
 	AccountTypeServiceAccount = "serviceAccount"
 	AccountTypeGroup          = "group"
@@ -161,10 +155,8 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 	return &credentials, nil
 }
 
-// Todo - Resource type and its struct
-
 func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
-	resourceTypeValidation := fmt.Sprintf("oneof=%s %s", ResourceTypeBucket, ResourceTypeObject)
+	resourceTypeValidation := fmt.Sprintf("oneof=%s", ResourceTypeBucket)
 	if err := c.validator.Var(resource.Type, resourceTypeValidation); err != nil {
 		return fmt.Errorf("validating resource type: %w", err)
 	}
@@ -195,10 +187,7 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 	var nameValidation string
 	if resourceType == ResourceTypeBucket {
 		nameValidation = "oneof=roles/storage.admin roles/storage.legacyBucketOwner roles/storage.legacyBucketReader roles/storage.legacyBucketWriter roles/storage.legacyObjectOwner roles/storage.legacyObjectReader roles/storage.objectAdmin roles/storage.objectCreator roles/storage.objectViewer"
-	} else if resourceType == ResourceTypeObject {
-		nameValidation = "oneof=viewer owner" //Todo- check with API
 	}
-
 	if err := c.validator.Var(pc, nameValidation); err != nil {
 		return nil, err
 	}
