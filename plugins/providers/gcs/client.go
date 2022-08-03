@@ -10,6 +10,7 @@ import (
 	"google.golang.org/api/option"
 )
 
+//go:generate mockery --name=GcsClient --exported --with-expecter
 type GcsClient interface {
 	GetBuckets(ctx context.Context, projectID string) ([]*Bucket, error)
 	GrantBucketAccess(ctx context.Context, b *Bucket, identity string, role iam.RoleName) error
