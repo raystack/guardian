@@ -2,7 +2,7 @@ NAME="github.com/odpf/guardian"
 LAST_COMMIT := $(shell git rev-parse --short HEAD)
 LAST_TAG := "$(shell git rev-list --tags --max-count=1)"
 APP_VERSION := "$(shell git describe --tags ${LAST_TAG})-next"
-PROTON_COMMIT := "8266bc0373a9a801a338975c4ce9137a7e7c4fe9"
+PROTON_COMMIT := "1bb0faff7214e51073f7baa506e1f38cce77a655"
 
 .PHONY: all build test clean dist vet proto install
 

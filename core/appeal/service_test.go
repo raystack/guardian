@@ -232,7 +232,17 @@ func (s *ServiceTestSuite) TestCreate() {
 					ResourceID: "1",
 					Role:       "test-role",
 				}},
-				expectedError: appeal.ErrCannotCreateAppealForOtherUser,
+				resources: []*domain.Resource{{
+					ID:           "1",
+					ProviderType: testProvider.Type,
+					ProviderURN:  testProvider.URN,
+					Type:         "resource_type",
+				}},
+				providers:              []*domain.Provider{testProvider},
+				policies:               []*domain.Policy{{ID: "policy_id", Version: 1, AppealConfig: &domain.PolicyAppealConfig{AllowCrossIndividualUser: false}}},
+				callMockValidateAppeal: true,
+				callMockGetPermissions: true,
+				expectedError:          appeal.ErrCannotCreateAppealForOtherUser,
 			},
 			{
 				name: "duplicate appeal",

@@ -237,6 +237,10 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("validating appeal duration: %w", err)
 		}
 
+		if err := validateCrossIndividualAppeal(appeal, policy); err != nil {
+			return fmt.Errorf("validating cross-individual appeal: %w", err)
+		}
+
 		if err := s.addCreatorDetails(appeal, policy); err != nil {
 			return fmt.Errorf("retrieving creator details: %w", err)
 		}
@@ -285,6 +289,21 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 						},
 					},
 				})
+
+				if appeal.AccountType == domain.DefaultAppealAccountType && appeal.AccountID != appeal.CreatedBy {
+					notifications = append(notifications, domain.Notification{
+						User: appeal.AccountID,
+						Message: domain.NotificationMessage{
+							Type: domain.NotificationTypeAppealApprovedForOther,
+							Variables: map[string]interface{}{
+								"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+								"role":          appeal.Role,
+								"account_id":    appeal.AccountID,
+								"requestor":     appeal.CreatedBy,
+							},
+						},
+					})
+				}
 			}
 		}
 	}
@@ -329,6 +348,18 @@ func validateAppealDurationConfig(appeal *domain.Appeal, policy *domain.Policy) 
 	}
 
 	return ErrOptionsDurationNotFound
+}
+
+func validateCrossIndividualAppeal(a *domain.Appeal, policy *domain.Policy) error {
+	if a.AccountType == domain.DefaultAppealAccountType {
+		if policy.AppealConfig != nil && policy.AppealConfig.AllowCrossIndividualUser == true {
+			return nil
+		}
+		if a.AccountID != a.CreatedBy {
+			return ErrCannotCreateAppealForOtherUser
+		}
+	}
+	return nil
 }
 
 // MakeAction Approve an approval step
@@ -434,6 +465,21 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 						},
 					},
 				})
+
+				if appeal.AccountType == domain.DefaultAppealAccountType && appeal.AccountID != appeal.CreatedBy {
+					notifications = append(notifications, domain.Notification{
+						User: appeal.AccountID,
+						Message: domain.NotificationMessage{
+							Type: domain.NotificationTypeAppealApprovedForOther,
+							Variables: map[string]interface{}{
+								"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+								"role":          appeal.Role,
+								"account_id":    appeal.AccountID,
+								"requestor":     appeal.CreatedBy,
+							},
+						},
+					})
+				}
 			} else if appeal.Status == domain.AppealStatusRejected {
 				notifications = append(notifications, domain.Notification{
 					User: appeal.CreatedBy,
@@ -981,10 +1027,6 @@ func getProvider(a *domain.Appeal, providersMap map[string]map[string]*domain.Pr
 }
 
 func validateAppeal(a *domain.Appeal, pendingAppealsMap map[string]map[string]map[string]*domain.Appeal) error {
-	if a.AccountType == domain.DefaultAppealAccountType && a.AccountID != a.CreatedBy {
-		return ErrCannotCreateAppealForOtherUser
-	}
-
 	if pendingAppealsMap[a.AccountID] != nil &&
 		pendingAppealsMap[a.AccountID][a.ResourceID] != nil &&
 		pendingAppealsMap[a.AccountID][a.ResourceID][a.Role] != nil {

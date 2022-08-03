@@ -195,7 +195,8 @@ type Policy struct {
 }
 
 type PolicyAppealConfig struct {
-	DurationOptions []AppealDurationOption `json:"duration_options" yaml:"duration_options" validate:"omitempty,min=1,dive"`
+	DurationOptions          []AppealDurationOption `json:"duration_options" yaml:"duration_options" validate:"omitempty,min=1,dive"`
+	AllowCrossIndividualUser bool                   `json:"allow_cross_individual_user" yaml:"allow_cross_individual_user"`
 }
 
 type AppealDurationOption struct {

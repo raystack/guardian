@@ -47,6 +47,17 @@ steps:
     approvers: $name
     # -- we can set dependencies on previous steps
 
+# -- appeal config can be configured like shown below
+appeal:
+# -- there can be multiple duration allowed in appeal for access request
+  - durations_options:
+      - name: 1 Day
+        value: 24h
+      - name: 1 Week
+        value: 98h
+# -- config to allow user to create access request for other user
+  - allow_cross_individual_user: false
+
 # -- iam can be configured like shown below
 iam:
   provider: http
