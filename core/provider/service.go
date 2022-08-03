@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/providers"
 	"github.com/odpf/guardian/utils"
@@ -164,22 +163,6 @@ func (s *Service) GetOne(ctx context.Context, pType, urn string) (*domain.Provid
 
 // Update updates the non-zero value(s) only
 func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
-	var currentProvider *domain.Provider
-	var err error
-
-	if len(p.ID) > 0 {
-		currentProvider, err = s.GetByID(ctx, p.ID)
-	} else {
-		currentProvider, err = s.GetOne(ctx, p.Type, p.URN)
-	}
-	if err != nil {
-		return err
-	}
-
-	if err := mergo.Merge(p, currentProvider); err != nil {
-		return err
-	}
-
 	c := s.getClient(p.Type)
 	if c == nil {
 		return ErrInvalidProviderType
