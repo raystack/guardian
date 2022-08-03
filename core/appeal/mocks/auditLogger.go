@@ -13,6 +13,14 @@ type AuditLogger struct {
 	mock.Mock
 }
 
+type AuditLogger_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *AuditLogger) EXPECT() *AuditLogger_Expecter {
+	return &AuditLogger_Expecter{mock: &_m.Mock}
+}
+
 // Log provides a mock function with given fields: ctx, action, data
 func (_m *AuditLogger) Log(ctx context.Context, action string, data interface{}) error {
 	ret := _m.Called(ctx, action, data)
@@ -25,4 +33,29 @@ func (_m *AuditLogger) Log(ctx context.Context, action string, data interface{})
 	}
 
 	return r0
+}
+
+// AuditLogger_Log_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Log'
+type AuditLogger_Log_Call struct {
+	*mock.Call
+}
+
+// Log is a helper method to define mock.On call
+//  - ctx context.Context
+//  - action string
+//  - data interface{}
+func (_e *AuditLogger_Expecter) Log(ctx interface{}, action interface{}, data interface{}) *AuditLogger_Log_Call {
+	return &AuditLogger_Log_Call{Call: _e.mock.On("Log", ctx, action, data)}
+}
+
+func (_c *AuditLogger_Log_Call) Run(run func(ctx context.Context, action string, data interface{})) *AuditLogger_Log_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(interface{}))
+	})
+	return _c
+}
+
+func (_c *AuditLogger_Log_Call) Return(_a0 error) *AuditLogger_Log_Call {
+	_c.Call.Return(_a0)
+	return _c
 }

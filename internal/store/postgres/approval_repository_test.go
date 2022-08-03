@@ -11,6 +11,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
+	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/guardian/mocks"
@@ -29,6 +30,10 @@ type ApprovalRepositoryTestSuite struct {
 	approverColumnNames []string
 	appealColumnNames   []string
 	resourceColumnNames []string
+}
+
+func TestApprovalRepository(t *testing.T) {
+	suite.Run(t, new(ApprovalRepositoryTestSuite))
 }
 
 func (s *ApprovalRepositoryTestSuite) SetupTest() {
@@ -292,6 +297,88 @@ func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
 	})
 }
 
-func TestApprovalRepository(t *testing.T) {
-	suite.Run(t, new(ApprovalRepositoryTestSuite))
+func (s *ApprovalRepositoryTestSuite) TestAddApprover() {
+	s.Run("should return nil error on success", func() {
+		approval := &domain.Approver{
+			ApprovalID: uuid.New().String(),
+			Email:      "user@example.com",
+		}
+
+		expectedID := uuid.New().String()
+		expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvers" ("approval_id","appeal_id","email","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"`)
+		expectedRows := sqlmock.NewRows([]string{"id"}).AddRow(expectedID)
+		s.dbmock.ExpectQuery(expectedQuery).
+			WithArgs(
+				approval.ApprovalID,
+				approval.AppealID,
+				approval.Email,
+				utils.AnyTime{},
+				utils.AnyTime{},
+				nil,
+			).
+			WillReturnRows(expectedRows)
+
+		err := s.repository.AddApprover(approval)
+
+		s.NoError(err)
+		s.Equal(expectedID, approval.ID)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if approver payload is invalid", func() {
+		invalidApprover := &domain.Approver{
+			ID: "invalid-uuid",
+		}
+
+		err := s.repository.AddApprover(invalidApprover)
+
+		s.EqualError(err, "parsing approver: parsing uuid: invalid UUID length: 12")
+	})
+
+	s.Run("should return error if db returns an error", func() {
+		expectedError := errors.New("unexpected error")
+		s.dbmock.ExpectQuery(".*").WillReturnError(expectedError)
+
+		err := s.repository.AddApprover(&domain.Approver{})
+
+		s.ErrorIs(err, expectedError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+}
+
+func (s *ApprovalRepositoryTestSuite) TestDeleteApprover() {
+	s.Run("should return nil error on success", func() {
+		approvalID := uuid.New().String()
+		approverEmail := "user@example.com"
+
+		expectedQuery := regexp.QuoteMeta(`UPDATE "approvers" SET "deleted_at"=$1 WHERE approval_id = $2 AND email = $3 AND "approvers"."deleted_at" IS NULL`)
+		s.dbmock.ExpectExec(expectedQuery).
+			WithArgs(utils.AnyTime{}, approvalID, approverEmail).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err := s.repository.DeleteApprover(approvalID, approverEmail)
+
+		s.NoError(err)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if db returns an error", func() {
+		expectedError := errors.New("unexpected error")
+		s.dbmock.ExpectExec(".*").WillReturnError(expectedError)
+
+		err := s.repository.DeleteApprover("", "")
+
+		s.ErrorIs(err, expectedError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if db returns an error", func() {
+		expectedError := appeal.ErrApproverNotFound
+		s.dbmock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(1, 0))
+
+		err := s.repository.DeleteApprover("", "")
+
+		s.ErrorIs(err, expectedError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
 }
