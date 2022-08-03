@@ -1,6 +1,9 @@
 package postgres
 
 import (
+	"fmt"
+
+	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres/model"
 	"github.com/odpf/guardian/utils"
@@ -97,4 +100,35 @@ func (r *ApprovalRepository) BulkInsert(approvals []*domain.Approval) error {
 
 		return nil
 	})
+}
+
+func (r *ApprovalRepository) AddApprover(approver *domain.Approver) error {
+	m := new(model.Approver)
+	if err := m.FromDomain(approver); err != nil {
+		return fmt.Errorf("parsing approver: %w", err)
+	}
+
+	result := r.db.Create(m)
+	if result.Error != nil {
+		return fmt.Errorf("inserting new approver: %w", result.Error)
+	}
+
+	newApprover := m.ToDomain()
+	*approver = *newApprover
+	return nil
+}
+
+func (r *ApprovalRepository) DeleteApprover(approvalID, email string) error {
+	result := r.db.
+		Where("approval_id = ?", approvalID).
+		Where("email = ?", email).
+		Delete(&model.Approver{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return appeal.ErrApproverNotFound
+	}
+
+	return nil
 }
