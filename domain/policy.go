@@ -186,7 +186,7 @@ type Policy struct {
 	Version      uint                `json:"version" yaml:"version" validate:"required"`
 	Description  string              `json:"description" yaml:"description"`
 	Steps        []*Step             `json:"steps" yaml:"steps" validate:"required,min=1,dive"`
-	AppealConfig *PolicyAppealConfig `json:"appeal_config" yaml:"appeal_config" validate:"omitempty"`
+	AppealConfig *PolicyAppealConfig `json:"appeal_config" yaml:"appeal_config" validate:"omitempty,dive"`
 	Requirements []*Requirement      `json:"requirements,omitempty" yaml:"requirements,omitempty" validate:"omitempty,min=1,dive"`
 	Labels       map[string]string   `json:"labels,omitempty" yaml:"labels,omitempty"`
 	IAM          *IAMConfig          `json:"iam,omitempty" yaml:"iam,omitempty" validate:"omitempty,dive"`
