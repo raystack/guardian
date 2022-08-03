@@ -2,8 +2,10 @@ package gcs_test
 
 import (
 	"encoding/base64"
+	"fmt"
 	"testing"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/providers/gcs"
@@ -113,6 +115,172 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
+
+	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
+		testCases := []struct {
+			name           string
+			providerConfig *domain.ProviderConfig
+			appeal         *domain.Appeal
+			expectedError  error
+		}{
+			{
+				name:           "nil provider config",
+				providerConfig: nil,
+				expectedError:  fmt.Errorf("invalid provider/appeal config: %w", gcs.ErrNilProviderConfig),
+			},
+			{
+				name: "nil appeal config",
+				providerConfig: &domain.ProviderConfig{
+					Type:                domain.ProviderTypeGCS,
+					URN:                 "test-URN",
+					AllowedAccountTypes: []string{"user", "serviceAccount"},
+				},
+				appeal:        nil,
+				expectedError: fmt.Errorf("invalid provider/appeal config: %w", gcs.ErrNilAppeal),
+			},
+			{
+				name: "nil resource config",
+				providerConfig: &domain.ProviderConfig{
+					Type:                domain.ProviderTypeGCS,
+					URN:                 "test-URN",
+					AllowedAccountTypes: []string{"user", "serviceAccount"},
+				},
+				appeal: &domain.Appeal{
+					ID:          "test-appeal-id",
+					AccountType: "user",
+				},
+				expectedError: fmt.Errorf("invalid provider/appeal config: %w", gcs.ErrNilResource),
+			},
+			{
+				name: "provider type doesnt match",
+				providerConfig: &domain.ProviderConfig{
+					Type:                domain.ProviderTypeGCS,
+					URN:                 "test-URN-1",
+					AllowedAccountTypes: []string{"user", "serviceAccount"},
+				},
+				appeal: &domain.Appeal{
+					ID:          "test-appeal-id",
+					AccountType: "user",
+					Resource: &domain.Resource{
+						ID:           "test-resource-id",
+						ProviderType: "not-gcs",
+					},
+				},
+				expectedError: fmt.Errorf("invalid provider/appeal config: %w", gcs.ErrProviderTypeMismatch),
+			},
+			{
+				name: "provider urn doesnt match",
+				providerConfig: &domain.ProviderConfig{
+					Type:                domain.ProviderTypeGCS,
+					URN:                 "test-URN-1",
+					AllowedAccountTypes: []string{"user", "serviceAccount"},
+				},
+				appeal: &domain.Appeal{
+					ID:          "test-appeal-id",
+					AccountType: "user",
+					Resource: &domain.Resource{
+						ID:           "test-resource-id",
+						ProviderType: domain.ProviderTypeGCS,
+						ProviderURN:  "not-test-URN-1",
+					},
+				},
+				expectedError: fmt.Errorf("invalid provider/appeal config: %w", gcs.ErrProviderURNMismatch),
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				p := initProvider()
+				pc := tc.providerConfig
+				a := tc.appeal
+
+				actualError := p.GrantAccess(pc, a)
+				assert.EqualError(t, actualError, tc.expectedError.Error())
+			})
+		}
+	})
+
+	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
+		var permission gcs.Permission
+		invalidPermissionConfig := map[string]interface{}{}
+		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
+
+		testCases := []struct {
+			name            string
+			resourceConfigs []*domain.ResourceConfig
+			appeal          *domain.Appeal
+			expectedError   error
+		}{
+			{
+				name: "invalid resource type",
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Type: "test-type",
+					},
+				},
+				expectedError: fmt.Errorf("error in getting permissions: %w", gcs.ErrInvalidResourceType),
+			},
+			{
+				name: "invalid role",
+				resourceConfigs: []*domain.ResourceConfig{
+					{
+						Type: "test-type",
+						Roles: []*domain.Role{
+							{
+								ID: "not-test-role",
+							},
+						},
+					},
+				},
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Type: "test-type",
+					},
+					Role: "test-role",
+				},
+				expectedError: fmt.Errorf("error in getting permissions: %w", gcs.ErrInvalidRole),
+			},
+			{
+				name: "invalid permissions config",
+				resourceConfigs: []*domain.ResourceConfig{
+					{
+						Type: "test-type",
+						Roles: []*domain.Role{
+							{
+								ID: "test-role",
+								Permissions: []interface{}{
+									invalidPermissionConfig,
+								},
+							},
+						},
+					},
+				},
+				appeal: &domain.Appeal{
+					Resource: &domain.Resource{
+						Type: "test-type",
+					},
+					Role: "test-role",
+				},
+				expectedError: fmt.Errorf("error in getting permissions: %w", invalidPermissionConfigError),
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				crypto := new(mocks.Crypto)
+				p := gcs.NewProvider("", crypto)
+
+				providerConfig := &domain.ProviderConfig{
+					Resources: tc.resourceConfigs,
+				}
+
+				actualError := p.GrantAccess(providerConfig, tc.appeal)
+				assert.EqualError(t, actualError, tc.expectedError.Error())
+			})
+		}
+	},
+	)
+
 	t.Run("should grant the access to bucket resource and return nil error", func(t *testing.T) {
 
 		expectedAccountType := "user"

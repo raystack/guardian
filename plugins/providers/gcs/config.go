@@ -107,7 +107,6 @@ func (c *Config) parseAndValidate() error {
 	} else {
 		c.ProviderConfig.Credentials = credentials
 	}
-	//  Todo- Resource.go
 	ctx := context.TODO()
 	saKey := credentials.ServiceAccountKey
 	fmt.Printf("saKey: %v\n", saKey)
