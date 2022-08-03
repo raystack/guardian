@@ -553,6 +553,10 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 }
 
 func (s *Service) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsFilter, actor, reason string) ([]*domain.Appeal, error) {
+	if filters.AccountIDs == nil || len(filters.AccountIDs) == 0 {
+		return nil, fmt.Errorf("account_ids is missing")
+	}
+
 	result := make([]*domain.Appeal, 0)
 	appeals, err := s.Find(ctx, &domain.ListAppealsFilter{
 		Statuses:      []string{domain.AppealStatusActive},
@@ -630,19 +634,21 @@ func (s *Service) expiredInActiveUserAppeal(ctx context.Context, timeLimiter cha
 
 		revokedAppeal := &domain.Appeal{}
 		*revokedAppeal = *appeal
-		revokedAppeal.Status = domain.AppealStatusTerminated
 		revokedAppeal.RevokedAt = s.TimeNow()
 		revokedAppeal.RevokedBy = actor
 		revokedAppeal.RevokeReason = reason
 
-		if err := s.repo.Update(revokedAppeal); err != nil {
+		if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
 			done <- appeal
+			s.logger.Error("failed to revoke appeal-access in provider", "id", appeal.ID, "error", err)
 			return
 		}
 
-		if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
+		revokedAppeal.Status = domain.AppealStatusTerminated
+		if err := s.repo.Update(revokedAppeal); err != nil {
 			done <- appeal
-			s.logger.Error("failed to revoke appeal", "id", appeal.ID, "error", err)
+			s.logger.Error("failed to update appeal-revoke status", "id", appeal.ID, "error", err)
+			return
 		} else {
 			done <- revokedAppeal
 			s.logger.Info("appeal revoked", "id", appeal.ID)

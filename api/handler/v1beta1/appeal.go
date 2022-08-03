@@ -181,6 +181,9 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 }
 
 func (s *GRPCServer) RevokeAppeals(ctx context.Context, req *guardianv1beta1.RevokeAppealsRequest) (*guardianv1beta1.RevokeAppealsResponse, error) {
+	if req.GetAccountIds() == nil || len(req.AccountIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "account_ids is missing")
+	}
 	filters := &domain.RevokeAppealsFilter{
 		AccountIDs:    req.GetAccountIds(),
 		ProviderTypes: req.GetProviderTypes(),
