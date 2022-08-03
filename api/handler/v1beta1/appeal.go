@@ -53,7 +53,7 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListAppealsRequest) (*guardianv1beta1.ListAppealsResponse, error) {
 	filters := &domain.ListAppealsFilter{
-		AccountIDs:    []string{req.GetAccountId()},
+		AccountID:     req.GetAccountId(),
 		Statuses:      req.GetStatuses(),
 		Role:          req.GetRole(),
 		ProviderTypes: req.GetProviderTypes(),

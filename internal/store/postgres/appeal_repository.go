@@ -66,7 +66,14 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 	if filters.CreatedBy != "" {
 		db = db.Where(`"created_by" = ?`, filters.CreatedBy)
 	}
+	accounts := make([]string, 0)
+	if filters.AccountID != "" {
+		accounts = append(accounts, filters.AccountID)
+	}
 	if filters.AccountIDs != nil {
+		accounts = append(accounts, filters.AccountIDs...)
+	}
+	if len(accounts) > 0 {
 		db = db.Where(`"account_id" IN ?`, filters.AccountIDs)
 	}
 	if filters.Statuses != nil {

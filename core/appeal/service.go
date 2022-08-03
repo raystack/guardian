@@ -257,7 +257,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			if approval.Index == len(appeal.Approvals)-1 && approval.Status == domain.ApprovalStatusApproved {
 				var oldExtendedAppeal *domain.Appeal
 				activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
-					AccountIDs: []string{appeal.AccountID},
+					AccountID:  appeal.AccountID,
 					ResourceID: appeal.ResourceID,
 					Role:       appeal.Role,
 					Statuses:   []string{domain.AppealStatusActive},
@@ -391,7 +391,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 			if appeal.Status == domain.AppealStatusActive {
 				var oldExtendedAppeal *domain.Appeal
 				activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
-					AccountIDs: []string{appeal.AccountID},
+					AccountID:  appeal.AccountID,
 					ResourceID: appeal.ResourceID,
 					Role:       appeal.Role,
 					Statuses:   []string{domain.AppealStatusActive},
