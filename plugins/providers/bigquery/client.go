@@ -2,25 +2,19 @@ package bigquery
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	bq "cloud.google.com/go/bigquery"
+	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/utils"
 	bqApi "google.golang.org/api/bigquery/v2"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
-//go:generate mockery --name=BigQueryClient --exported --with-expecter
-type BigQueryClient interface {
-	GetDatasets(context.Context) ([]*Dataset, error)
-	GetTables(ctx context.Context, datasetID string) ([]*Table, error)
-	GrantDatasetAccess(ctx context.Context, d *Dataset, user, role string) error
-	RevokeDatasetAccess(ctx context.Context, d *Dataset, user, role string) error
-	GrantTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
-	RevokeTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
-	ResolveDatasetRole(role string) (bq.AccessRole, error)
-}
 type bigQueryClient struct {
 	projectID  string
 	client     *bq.Client
@@ -270,6 +264,84 @@ func (c *bigQueryClient) RevokeTableAccess(ctx context.Context, t *Table, accoun
 	}
 	_, err = tableService.SetIamPolicy(resourceName, setIamPolicyRequest).Do()
 	return err
+}
+
+func (c *bigQueryClient) ListAccess(ctx context.Context, resourceTypes []string) (domain.ResourceAccess, error) {
+	access := make(domain.ResourceAccess)
+
+	datasetIt := c.client.Datasets(ctx)
+	for {
+		d, err := datasetIt.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("listing datasets: %w", err)
+		}
+
+		if utils.ContainsString(resourceTypes, ResourceTypeDataset) {
+			m, err := d.Metadata(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("getting dataset access: %w", err)
+			}
+
+			var accessEntries []domain.AccessEntry
+			for _, a := range m.Access {
+				ae := datasetAccessEntry(*a)
+				accessEntries = append(accessEntries, domain.AccessEntry{
+					AccountID:   a.Entity,
+					AccountType: ae.getEntityType(),
+					Permission:  string(a.Role),
+				})
+			}
+
+			urn := fmt.Sprintf("%s:%s", d.ProjectID, d.DatasetID)
+			access[urn] = accessEntries
+		}
+
+		if utils.ContainsString(resourceTypes, ResourceTypeTable) {
+			tableIt := d.Tables(ctx)
+			for {
+				t, err := tableIt.Next()
+				if errors.Is(err, iterator.Done) {
+					break
+				}
+				if err != nil {
+					return nil, fmt.Errorf("listing tables: %w", err)
+				}
+
+				resourceName := fmt.Sprintf("projects/%s/datasets/%s/tables/%s", c.projectID, t.DatasetID, t.TableID)
+				getIamPolicyRequest := &bqApi.GetIamPolicyRequest{
+					Options: &bqApi.GetPolicyOptions{RequestedPolicyVersion: 1},
+				}
+				policy, err := c.apiClient.Tables.GetIamPolicy(resourceName, getIamPolicyRequest).Do()
+				if err != nil {
+					return nil, fmt.Errorf("getting access for %q: %w", resourceName, err)
+				}
+				var accessEntries []domain.AccessEntry
+				for _, b := range policy.Bindings {
+					for _, m := range b.Members {
+						member := strings.Split(m, ":")
+						if len(member) != 2 {
+							return nil, errors.New("invalid table access member signature")
+						}
+						accountType := member[0]
+						accountID := member[1]
+						accessEntries = append(accessEntries, domain.AccessEntry{
+							AccountID:   accountID,
+							AccountType: accountType,
+							Permission:  b.Role,
+						})
+					}
+				}
+
+				urn := fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID)
+				access[urn] = accessEntries
+			}
+		}
+	}
+
+	return access, nil
 }
 
 func (c *bigQueryClient) getGrantableRolesForTables() ([]string, error) {

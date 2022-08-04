@@ -59,6 +59,13 @@ type ProviderConfig struct {
 	Resources           []*ResourceConfig `json:"resources" yaml:"resources" validate:"required"`
 }
 
+func (pc ProviderConfig) GetResourceTypes() (resourceTypes []string) {
+	for _, rc := range pc.Resources {
+		resourceTypes = append(resourceTypes, rc.Type)
+	}
+	return
+}
+
 // Provider domain structure
 type Provider struct {
 	ID        string          `json:"id" yaml:"id"`
@@ -73,3 +80,13 @@ type ProviderType struct {
 	Name          string   `json:"name" yaml:"name"`
 	ResourceTypes []string `json:"resource_types" yaml:"resource_types"`
 }
+
+type AccessEntry struct {
+	Resource    string
+	AccountID   string
+	AccountType string
+	Permission  string
+}
+
+// ResourceAccess is list of UserAccess grouped by resource identifier
+type ResourceAccess map[string][]AccessEntry

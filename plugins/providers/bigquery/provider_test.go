@@ -7,8 +7,8 @@ import (
 
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
+	"github.com/odpf/guardian/plugins/providers/bigquery/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

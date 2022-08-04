@@ -3,12 +3,31 @@ package bigquery
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
+	bq "cloud.google.com/go/bigquery"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 )
+
+//go:generate mockery --name=BigQueryClient --exported --with-expecter
+type BigQueryClient interface {
+	GetDatasets(context.Context) ([]*Dataset, error)
+	GetTables(ctx context.Context, datasetID string) ([]*Table, error)
+	GrantDatasetAccess(ctx context.Context, d *Dataset, user, role string) error
+	RevokeDatasetAccess(ctx context.Context, d *Dataset, user, role string) error
+	GrantTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
+	RevokeTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
+	ResolveDatasetRole(role string) (bq.AccessRole, error)
+	ListAccess(ctx context.Context, resourceTypes []string) (domain.ResourceAccess, error)
+}
+
+//go:generate mockery --name=crypto --exported --with-expecter
+type crypto interface {
+	domain.Crypto
+}
 
 // Provider for bigquery
 type Provider struct {
@@ -16,15 +35,15 @@ type Provider struct {
 
 	typeName string
 	Clients  map[string]BigQueryClient
-	crypto   domain.Crypto
+	crypto   crypto
 }
 
 // NewProvider returns bigquery provider
-func NewProvider(typeName string, crypto domain.Crypto) *Provider {
+func NewProvider(typeName string, c crypto) *Provider {
 	return &Provider{
 		typeName: typeName,
 		Clients:  map[string]BigQueryClient{},
-		crypto:   crypto,
+		crypto:   c,
 	}
 }
 
@@ -56,10 +75,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
-	var resourceTypes []string
-	for _, rc := range pc.Resources {
-		resourceTypes = append(resourceTypes, rc.Type)
-	}
+	resourceTypes := pc.GetResourceTypes()
 
 	resources := []*domain.Resource{}
 	ctx := context.Background()
@@ -208,6 +224,19 @@ func (p *Provider) GetAccountTypes() []string {
 		AccountTypeUser,
 		AccountTypeServiceAccount,
 	}
+}
+
+func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig) (domain.ResourceAccess, error) {
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return nil, fmt.Errorf("parsing credentials: %w", err)
+	}
+	bqClient, err := p.getBigQueryClient(creds)
+	if err != nil {
+		return nil, fmt.Errorf("initializing bigquery client: %w", err)
+	}
+
+	return bqClient.ListAccess(ctx, pc.GetResourceTypes())
 }
 
 func (p *Provider) getBigQueryClient(credentials Credentials) (BigQueryClient, error) {
