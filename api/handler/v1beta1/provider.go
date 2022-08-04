@@ -146,3 +146,26 @@ func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1beta1.ListRol
 		Roles: roleProtos,
 	}, nil
 }
+
+func (s *GRPCServer) ImportAccess(ctx context.Context, req *guardianv1beta1.ImportAccessRequest) (*guardianv1beta1.ImportAccessResponse, error) {
+	grants, err := s.grantService.ImportAccess(ctx, req.GetId())
+	if err != nil {
+		if errors.Is(err, provider.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "provider with id %q not found: %v", req.GetId(), err)
+		}
+		return nil, status.Errorf(codes.Internal, "failed to import access: %v", err)
+	}
+
+	grantsProto := []*guardianv1beta1.Grant{}
+	for _, g := range grants {
+		grantProto, err := s.adapter.ToGrantProto(g)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse appeal proto %q: %v", g.ID, err)
+		}
+		grantsProto = append(grantsProto, grantProto)
+	}
+
+	return &guardianv1beta1.ImportAccessResponse{
+		Grants: grantsProto,
+	}, nil
+}

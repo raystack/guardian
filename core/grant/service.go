@@ -20,11 +20,18 @@ type repository interface {
 	List(context.Context, domain.ListGrantsFilter) ([]domain.Grant, error)
 	GetByID(context.Context, string) (*domain.Grant, error)
 	Update(context.Context, *domain.Grant) error
+	BulkInsert(context.Context, []*domain.Grant) error
 }
 
 //go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
 	RevokeAccess(context.Context, domain.Grant) error
+	ListAccess(context.Context, string) (*domain.Provider, domain.ResourceAccess, error)
+}
+
+//go:generate mockery --name=resourceService --exported --with-expecter
+type resourceService interface {
+	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
 }
 
 //go:generate mockery --name=auditLogger --exported --with-expecter
@@ -47,6 +54,7 @@ type grantCreation struct {
 type Service struct {
 	repo            repository
 	providerService providerService
+	resourceService resourceService
 
 	notifier    notifier
 	validator   *validator.Validate
@@ -57,6 +65,7 @@ type Service struct {
 type ServiceDeps struct {
 	Repository      repository
 	ProviderService providerService
+	ResourceService resourceService
 
 	Notifier    notifier
 	Validator   *validator.Validate
@@ -68,6 +77,7 @@ func NewService(deps ServiceDeps) *Service {
 	return &Service{
 		repo:            deps.Repository,
 		providerService: deps.ProviderService,
+		resourceService: deps.ResourceService,
 
 		notifier:    deps.Notifier,
 		validator:   deps.Validator,
@@ -256,4 +266,78 @@ func (s *Service) expiredInActiveUserAccess(ctx context.Context, timeLimiter cha
 			s.logger.Info("grant revoked", "id", grant.ID)
 		}
 	}
+}
+
+func (s *Service) ImportAccess(ctx context.Context, providerID string) ([]*domain.Grant, error) {
+	p, resourceAccess, err := s.providerService.ListAccess(ctx, providerID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching access from provider: %w", err)
+	}
+
+	resources, err := s.resourceService.Find(ctx, map[string]interface{}{
+		"provider_type": p.Type,
+		"provider_urn":  p.URN,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("getting resources: %w", err)
+	}
+	resourcesMap := map[string]*domain.Resource{}
+	for _, r := range resources {
+		resourcesMap[r.URN] = r
+	}
+
+	grants, err := s.repo.List(ctx, domain.ListGrantsFilter{
+		ProviderTypes: []string{p.Type},
+		ProviderURNs:  []string{p.URN},
+		Statuses:      []string{string(domain.GrantStatusActive)},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("getting active grants: %w", err)
+	}
+	// map[resourceURN]map[accounttype:accountId]map[role]grant
+	grantsMap := map[string]map[string]map[string]*domain.Grant{}
+	for _, g := range grants {
+		if grantsMap[g.Resource.URN] == nil {
+			grantsMap[g.Resource.URN] = map[string]map[string]*domain.Grant{}
+		}
+
+		userSignature := fmt.Sprintf("%s:%s", g.AccountType, g.AccountID)
+		if grantsMap[g.Resource.URN][userSignature] == nil {
+			grantsMap[g.Resource.URN][userSignature] = map[string]*domain.Grant{}
+		}
+
+		grantsMap[g.Resource.URN][userSignature][g.Role] = &g
+	}
+
+	importedGrants := []*domain.Grant{}
+	for rURN, access := range resourceAccess {
+		for _, ae := range access {
+			userSignature := fmt.Sprintf("%s:%s", ae.AccountType, ae.AccountID)
+			if grantsMap[rURN] != nil &&
+				grantsMap[rURN][userSignature] != nil &&
+				grantsMap[rURN][userSignature][ae.Permission] != nil {
+				continue // access already registered
+			}
+
+			r := resourcesMap[rURN]
+			if r == nil {
+				continue // skip access for resources that not yet added to guardian
+			}
+			importedGrants = append(importedGrants, &domain.Grant{
+				ResourceID:  r.ID,
+				Status:      domain.GrantStatusActive,
+				AccountID:   ae.AccountID,
+				AccountType: ae.AccountType,
+				CreatedBy:   domain.SystemActorName,
+				Role:        ae.Permission, // TODO: use existing role in provider
+				Permissions: []string{ae.Permission},
+			})
+		}
+	}
+
+	if err := s.repo.BulkInsert(ctx, importedGrants); err != nil {
+		return nil, fmt.Errorf("inserting imported grants into the db: %w", err)
+	}
+
+	return importedGrants, nil
 }

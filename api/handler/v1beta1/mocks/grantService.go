@@ -120,6 +120,53 @@ func (_c *GrantService_GetByID_Call) Return(_a0 *domain.Grant, _a1 error) *Grant
 	return _c
 }
 
+// ImportAccess provides a mock function with given fields: ctx, providerID
+func (_m *GrantService) ImportAccess(ctx context.Context, providerID string) ([]*domain.Grant, error) {
+	ret := _m.Called(ctx, providerID)
+
+	var r0 []*domain.Grant
+	if rf, ok := ret.Get(0).(func(context.Context, string) []*domain.Grant); ok {
+		r0 = rf(ctx, providerID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.Grant)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, providerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GrantService_ImportAccess_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ImportAccess'
+type GrantService_ImportAccess_Call struct {
+	*mock.Call
+}
+
+// ImportAccess is a helper method to define mock.On call
+//  - ctx context.Context
+//  - providerID string
+func (_e *GrantService_Expecter) ImportAccess(ctx interface{}, providerID interface{}) *GrantService_ImportAccess_Call {
+	return &GrantService_ImportAccess_Call{Call: _e.mock.On("ImportAccess", ctx, providerID)}
+}
+
+func (_c *GrantService_ImportAccess_Call) Run(run func(ctx context.Context, providerID string)) *GrantService_ImportAccess_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *GrantService_ImportAccess_Call) Return(_a0 []*domain.Grant, _a1 error) *GrantService_ImportAccess_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
 // List provides a mock function with given fields: _a0, _a1
 func (_m *GrantService) List(_a0 context.Context, _a1 domain.ListGrantsFilter) ([]domain.Grant, error) {
 	ret := _m.Called(_a0, _a1)
