@@ -558,7 +558,7 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 
 func (s *Service) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsFilter, actor, reason string) ([]*domain.Appeal, error) {
 	if filters.AccountIDs == nil || len(filters.AccountIDs) == 0 {
-		return nil, fmt.Errorf("account_ids is missing")
+		return nil, fmt.Errorf("account_ids is required")
 	}
 
 	result := make([]*domain.Appeal, 0)

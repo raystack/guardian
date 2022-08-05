@@ -290,10 +290,10 @@ func bulkRevokeAppealCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringArrayVarP(&accountIds, "account-ids", "a", nil, "Filter by accountIds")
-	cmd.Flags().StringArrayVarP(&providerTypes, "provider-types", "pt", nil, "Filter by providerTypes")
-	cmd.Flags().StringArrayVarP(&providerUrns, "provider-urns", "pu", nil, "Filter by providerUrns")
-	cmd.Flags().StringArrayVarP(&resourceTypes, "resource-types", "rt", nil, "Filter by resourceTypes")
-	cmd.Flags().StringArrayVarP(&resourceUrns, "resource-urns", "ru", nil, "Filter by resourceUrns")
+	cmd.Flags().StringArrayVar(&providerTypes, "provider-types", nil, "Filter by providerTypes")
+	cmd.Flags().StringArrayVar(&providerUrns, "provider-urns", nil, "Filter by providerUrns")
+	cmd.Flags().StringArrayVar(&resourceTypes, "resource-types", nil, "Filter by resourceTypes")
+	cmd.Flags().StringArrayVar(&resourceUrns, "resource-urns", nil, "Filter by resourceUrns")
 	cmd.Flags().StringVarP(&reason, "reason", "r", "", "Reason of the revocation")
 	cmd.MarkFlagRequired("account-ids")
 	cmd.MarkFlagRequired("reason")

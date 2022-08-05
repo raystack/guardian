@@ -505,17 +505,18 @@ The request parameters associated with this is API are as follows:
 
 ##### Parameters
 
-| Name           | Located in | Description | Required | Type     |
-|----------------| ---------- | ----------- | -------- |----------|
-| account_ids    | query      |             | No | [string] |
-| statuses       | query      |             | No | [string] |
-| role           | query      |             | No | string   |
-| provider_types | query      |             | No | [string] |
-| provider_urns  | query      |             | No | [string] |
-| resource_types | query      |             | No | [string] |
-| resource_urns  | query      |             | No | [string] |
-| order_by       | query      |             | No | [string] |
-| created_by     | query      |             | No | string   |
+| Name           | Located in | Description                             | Required | Type     |
+|----------------| ---------- |-----------------------------------------| -------- |----------|
+| account_id     | query      | this will be depcreate use `account_ids` | No | string   |
+| account_ids    | query      |                                         | No | [string] |
+| statuses       | query      |                                         | No | [string] |
+| role           | query      |                                         | No | string   |
+| provider_types | query      |                                         | No | [string] |
+| provider_urns  | query      |                                         | No | [string] |
+| resource_types | query      |                                         | No | [string] |
+| resource_urns  | query      |                                         | No | [string] |
+| order_by       | query      |                                         | No | [string] |
+| created_by     | query      |                                         | No | string   |
 
 ##### Responses
 

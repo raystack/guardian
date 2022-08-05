@@ -74,7 +74,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 		accounts = append(accounts, filters.AccountIDs...)
 	}
 	if len(accounts) > 0 {
-		db = db.Where(`"account_id" IN ?`, filters.AccountIDs)
+		db = db.Where(`"account_id" IN ?`, accounts)
 	}
 	if filters.Statuses != nil {
 		db = db.Where(`"status" IN ?`, filters.Statuses)
