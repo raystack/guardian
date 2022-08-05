@@ -10,11 +10,11 @@ import (
 	"google.golang.org/api/option"
 )
 
-//go:generate mockery --name=GcsClient --exported --with-expecter
+//go:generate mockery --name=GCSClient --exported --with-expecter
 type GCSClient interface {
 	GetBuckets(ctx context.Context, projectID string) ([]*Bucket, error)
-	GrantBucketAccess(ctx context.Context, b *Bucket, identity string, role iam.RoleName) error
-	RevokeBucketAccess(ctx context.Context, b *Bucket, identity string, role iam.RoleName) error
+	GrantBucketAccess(ctx context.Context, b Bucket, identity string, role iam.RoleName) error
+	RevokeBucketAccess(ctx context.Context, b Bucket, identity string, role iam.RoleName) error
 }
 
 type gcsClient struct {
@@ -54,7 +54,7 @@ func (c *gcsClient) GetBuckets(ctx context.Context, projectID string) ([]*Bucket
 	return result, nil
 }
 
-func (c *gcsClient) GrantBucketAccess(ctx context.Context, b *Bucket, identity string, role iam.RoleName) error {
+func (c *gcsClient) GrantBucketAccess(ctx context.Context, b Bucket, identity string, role iam.RoleName) error {
 
 	bucketName := b.Name
 	bucket := c.client.Bucket(bucketName)
@@ -71,7 +71,7 @@ func (c *gcsClient) GrantBucketAccess(ctx context.Context, b *Bucket, identity s
 	return nil
 }
 
-func (c *gcsClient) RevokeBucketAccess(ctx context.Context, b *Bucket, identity string, role iam.RoleName) error {
+func (c *gcsClient) RevokeBucketAccess(ctx context.Context, b Bucket, identity string, role iam.RoleName) error {
 
 	bucketName := b.Name
 	bucket := c.client.Bucket(bucketName)

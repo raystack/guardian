@@ -13,13 +13,17 @@ import (
 	"github.com/odpf/guardian/utils"
 )
 
+//go:generate mockery --name=Crypto --exported --with-expecter
+type Crypto interface {
+	domain.Crypto
+}
 type Provider struct {
 	typeName string
 	Clients  map[string]GCSClient
-	crypto   domain.Crypto
+	crypto   Crypto
 }
 
-func NewProvider(typeName string, crypto domain.Crypto) *Provider {
+func NewProvider(typeName string, crypto Crypto) *Provider {
 	return &Provider{
 		typeName: typeName,
 		Clients:  map[string]GCSClient{},
@@ -115,7 +119,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 		for _, p := range permissions {
 			role := iam.RoleName(string(p))
-			if err := client.GrantBucketAccess(ctx, b, identity, role); err != nil {
+			if err := client.GrantBucketAccess(ctx, *b, identity, role); err != nil {
 				if errors.Is(err, ErrPermissionAlreadyExists) {
 					return nil
 				}
@@ -162,7 +166,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		}
 		for _, p := range permissions {
 			var role iam.RoleName = iam.RoleName(string(p))
-			if err := client.RevokeBucketAccess(ctx, b, identity, role); err != nil {
+			if err := client.RevokeBucketAccess(ctx, *b, identity, role); err != nil {
 				if errors.Is(err, ErrPermissionAlreadyExists) {
 					return nil
 				}

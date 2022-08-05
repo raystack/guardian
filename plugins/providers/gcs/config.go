@@ -1,17 +1,14 @@
 package gcs
 
 import (
-	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
 
-	"cloud.google.com/go/storage"
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
-	"google.golang.org/api/option"
 )
 
 const (
@@ -117,13 +114,6 @@ func (c *Config) parseAndValidate() error {
 	} else {
 		c.ProviderConfig.Credentials = credentials
 	}
-	ctx := context.TODO()
-	saKey := credentials.ServiceAccountKey
-	client, err := storage.NewClient(ctx, option.WithCredentialsJSON([]byte(saKey)))
-	if err != nil {
-		return fmt.Errorf("initialising gcs client: %w", err)
-	}
-	defer client.Close()
 
 	for _, r := range c.ProviderConfig.Resources {
 		if err := c.validateResourceConfig(r); err != nil {

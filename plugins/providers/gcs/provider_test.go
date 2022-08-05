@@ -8,8 +8,8 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/providers/gcs"
+	"github.com/odpf/guardian/plugins/providers/gcs/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -29,7 +29,7 @@ func TestGetType(t *testing.T) {
 func TestCreateConfig(t *testing.T) {
 	t.Run("should return error if error in parse and validate configurations", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
-		client := new(mocks.GcsClient)
+		client := new(mocks.GCSClient)
 		p := gcs.NewProvider("", crypto)
 		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
@@ -93,7 +93,7 @@ func TestCreateConfig(t *testing.T) {
 	t.Run("should return error if error in encrypting the credentials", func(t *testing.T) {
 		providerURN := "test-URN"
 		crypto := new(mocks.Crypto)
-		client := new(mocks.GcsClient)
+		client := new(mocks.GCSClient)
 		p := gcs.NewProvider("", crypto)
 		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
@@ -177,7 +177,7 @@ func TestGetResources(t *testing.T) {
 
 	t.Run("should return error if error in decrypting the service account key", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
-		client := new(mocks.GcsClient)
+		client := new(mocks.GCSClient)
 		p := gcs.NewProvider("gcs", crypto)
 		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
@@ -218,7 +218,7 @@ func TestGetResources(t *testing.T) {
 
 	t.Run("should get the bucket resources defined in the provider config", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
-		client := new(mocks.GcsClient)
+		client := new(mocks.GCSClient)
 		p := gcs.NewProvider("gcs", crypto)
 		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
@@ -468,7 +468,7 @@ func TestGrantAccess(t *testing.T) {
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
 		crypto := new(mocks.Crypto)
-		client := new(mocks.GcsClient)
+		client := new(mocks.GCSClient)
 		p := gcs.NewProvider("gcs", crypto)
 		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
@@ -574,7 +574,7 @@ func TestGrantAccess(t *testing.T) {
 		expectedAccountID := "test@email.com"
 
 		crypto := new(mocks.Crypto)
-		client := new(mocks.GcsClient)
+		client := new(mocks.GCSClient)
 		p := gcs.NewProvider("gcs", crypto)
 		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
@@ -824,7 +824,7 @@ func TestRevokeAccess(t *testing.T) {
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
 		crypto := new(mocks.Crypto)
-		client := new(mocks.GcsClient)
+		client := new(mocks.GCSClient)
 		p := gcs.NewProvider("gcs", crypto)
 		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
@@ -930,7 +930,7 @@ func TestRevokeAccess(t *testing.T) {
 		expectedAccountID := "test@email.com"
 
 		crypto := new(mocks.Crypto)
-		client := new(mocks.GcsClient)
+		client := new(mocks.GCSClient)
 		p := gcs.NewProvider("gcs", crypto)
 		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
