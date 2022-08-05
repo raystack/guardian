@@ -15,6 +15,16 @@ import (
 )
 
 const (
+	BucketRoleAdmin         = "roles/storage.admin"
+	BucketRoleOwner         = "roles/storage.legacyBucketOwner "
+	BucketRoleReader        = "roles/storage.legacyBucketReader"
+	BucketRoleWriter        = "roles/storage.legacyBucketWriter"
+	BucketRoleObjectOwner   = "roles/storage.legacyObjectOwner"
+	BucketRoleObjectReader  = "roles/storage.legacyObjectReader"
+	BucketRoleObjectAdmin   = "roles/storage.objectAdmin"
+	BucketRoleObjectCreator = "roles/storage.objectCreator"
+	BucketRoleObjectViewer  = "roles/storage.objectViewer"
+
 	AccountTypeUser           = "user"
 	AccountTypeServiceAccount = "serviceAccount"
 	AccountTypeGroup          = "group"
@@ -109,7 +119,6 @@ func (c *Config) parseAndValidate() error {
 	}
 	ctx := context.TODO()
 	saKey := credentials.ServiceAccountKey
-	fmt.Printf("saKey: %v\n", saKey)
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON([]byte(saKey)))
 	if err != nil {
 		return fmt.Errorf("initialising gcs client: %w", err)
@@ -185,7 +194,7 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 
 	var nameValidation string
 	if resourceType == ResourceTypeBucket {
-		nameValidation = "oneof=roles/storage.admin roles/storage.legacyBucketOwner roles/storage.legacyBucketReader roles/storage.legacyBucketWriter roles/storage.legacyObjectOwner roles/storage.legacyObjectReader roles/storage.objectAdmin roles/storage.objectCreator roles/storage.objectViewer"
+		nameValidation = fmt.Sprintf("oneof=%s %s %s %s %s %s %s %s %s", BucketRoleAdmin, BucketRoleOwner, BucketRoleReader, BucketRoleWriter, BucketRoleObjectOwner, BucketRoleObjectReader, BucketRoleObjectAdmin, BucketRoleObjectCreator, BucketRoleObjectViewer)
 	}
 	if err := c.validator.Var(pc, nameValidation); err != nil {
 		return nil, err

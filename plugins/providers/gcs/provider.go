@@ -47,7 +47,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
-	client, err := p.getGcsClient(creds)
+	client, err := p.getGCSClient(creds)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return fmt.Errorf("error in decrypting credentials%w", err)
 	}
 
-	client, err := p.getGcsClient(creds)
+	client, err := p.getGCSClient(creds)
 	if err != nil {
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
@@ -114,7 +114,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 			return fmt.Errorf("from Domain func error: %w", err)
 		}
 		for _, p := range permissions {
-			var role iam.RoleName = iam.RoleName(string(p))
+			role := iam.RoleName(string(p))
 			if err := client.GrantBucketAccess(ctx, b, identity, role); err != nil {
 				if errors.Is(err, ErrPermissionAlreadyExists) {
 					return nil
@@ -146,7 +146,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return fmt.Errorf("error in decrypting credentials%w", err)
 	}
 
-	client, err := p.getGcsClient(creds)
+	client, err := p.getGCSClient(creds)
 	if err != nil {
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
@@ -235,13 +235,13 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 	return permissions, nil
 }
 
-func (p *Provider) getGcsClient(creds Credentials) (GCSClient, error) {
+func (p *Provider) getGCSClient(creds Credentials) (GCSClient, error) {
 	projectID := strings.Replace(creds.ResourceName, "projects/", "", 1)
 	if p.Clients[projectID] != nil {
 		return p.Clients[projectID], nil
 	}
 
-	client, err := newGcsClient(projectID, []byte(creds.ServiceAccountKey))
+	client, err := newGCSClient(projectID, []byte(creds.ServiceAccountKey))
 	if err != nil {
 		return nil, err
 	}
