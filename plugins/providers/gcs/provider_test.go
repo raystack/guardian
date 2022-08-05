@@ -31,7 +31,7 @@ func TestCreateConfig(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcsClient)
 		p := gcs.NewProvider("", crypto)
-		p.Clients = map[string]gcs.GcsClient{
+		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
 		}
 
@@ -95,7 +95,7 @@ func TestCreateConfig(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcsClient)
 		p := gcs.NewProvider("", crypto)
-		p.Clients = map[string]gcs.GcsClient{
+		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
 		}
 		pc := &domain.ProviderConfig{
@@ -179,7 +179,7 @@ func TestGetResources(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcsClient)
 		p := gcs.NewProvider("gcs", crypto)
-		p.Clients = map[string]gcs.GcsClient{
+		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
 		}
 		providerURN := "test-resource-name"
@@ -220,7 +220,7 @@ func TestGetResources(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcsClient)
 		p := gcs.NewProvider("gcs", crypto)
-		p.Clients = map[string]gcs.GcsClient{
+		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
 		}
 		providerURN := "test-resource-name"
@@ -470,7 +470,7 @@ func TestGrantAccess(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcsClient)
 		p := gcs.NewProvider("gcs", crypto)
-		p.Clients = map[string]gcs.GcsClient{
+		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
 		}
 		providerURN := "test-resource-name"
@@ -576,7 +576,7 @@ func TestGrantAccess(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcsClient)
 		p := gcs.NewProvider("gcs", crypto)
-		p.Clients = map[string]gcs.GcsClient{
+		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
 		}
 		providerURN := "test-resource-name"
@@ -826,7 +826,7 @@ func TestRevokeAccess(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcsClient)
 		p := gcs.NewProvider("gcs", crypto)
-		p.Clients = map[string]gcs.GcsClient{
+		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
 		}
 		providerURN := "test-resource-name"
@@ -932,7 +932,7 @@ func TestRevokeAccess(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GcsClient)
 		p := gcs.NewProvider("gcs", crypto)
-		p.Clients = map[string]gcs.GcsClient{
+		p.Clients = map[string]gcs.GCSClient{
 			"test-resource-name": client,
 		}
 		providerURN := "test-resource-name"

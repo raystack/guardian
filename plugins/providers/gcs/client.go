@@ -11,7 +11,7 @@ import (
 )
 
 //go:generate mockery --name=GcsClient --exported --with-expecter
-type GcsClient interface {
+type GCSClient interface {
 	GetBuckets(ctx context.Context, projectID string) ([]*Bucket, error)
 	GrantBucketAccess(ctx context.Context, b *Bucket, identity string, role iam.RoleName) error
 	RevokeBucketAccess(ctx context.Context, b *Bucket, identity string, role iam.RoleName) error

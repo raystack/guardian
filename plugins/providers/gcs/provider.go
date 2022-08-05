@@ -15,14 +15,14 @@ import (
 
 type Provider struct {
 	typeName string
-	Clients  map[string]GcsClient
+	Clients  map[string]GCSClient
 	crypto   domain.Crypto
 }
 
 func NewProvider(typeName string, crypto domain.Crypto) *Provider {
 	return &Provider{
 		typeName: typeName,
-		Clients:  map[string]GcsClient{},
+		Clients:  map[string]GCSClient{},
 		crypto:   crypto,
 	}
 }
@@ -235,7 +235,7 @@ func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) 
 	return permissions, nil
 }
 
-func (p *Provider) getGcsClient(creds Credentials) (GcsClient, error) {
+func (p *Provider) getGcsClient(creds Credentials) (GCSClient, error) {
 	projectID := strings.Replace(creds.ResourceName, "projects/", "", 1)
 	if p.Clients[projectID] != nil {
 		return p.Clients[projectID], nil
