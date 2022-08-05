@@ -387,6 +387,28 @@ func (_m *AppealService) Revoke(ctx context.Context, id string, actor string, re
 	return r0, r1
 }
 
+func (_m *AppealService) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsFilter, actor, reason string) ([]*domain.Appeal, error) {
+	ret := _m.Called(ctx, filters, actor, reason)
+
+	var r0 []*domain.Appeal
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.RevokeAppealsFilter, string, string) []*domain.Appeal); ok {
+		r0 = rf(ctx, filters, actor, reason)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.Appeal)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *domain.RevokeAppealsFilter, string, string) error); ok {
+		r1 = rf(ctx, filters, actor, reason)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // AppealService_Revoke_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Revoke'
 type AppealService_Revoke_Call struct {
 	*mock.Call

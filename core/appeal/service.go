@@ -556,6 +556,110 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 	return revokedAppeal, nil
 }
 
+func (s *Service) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsFilter, actor, reason string) ([]*domain.Appeal, error) {
+	if filters.AccountIDs == nil || len(filters.AccountIDs) == 0 {
+		return nil, fmt.Errorf("account_ids is required")
+	}
+
+	result := make([]*domain.Appeal, 0)
+	appeals, err := s.Find(ctx, &domain.ListAppealsFilter{
+		Statuses:      []string{domain.AppealStatusActive},
+		AccountIDs:    filters.AccountIDs,
+		ProviderTypes: filters.ProviderTypes,
+		ProviderURNs:  filters.ProviderURNs,
+		ResourceTypes: filters.ResourceTypes,
+		ResourceURNs:  filters.ResourceURNs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(appeals) == 0 {
+		return nil, nil
+	}
+
+	batchSize := 10
+	timeLimiter := make(chan int, batchSize)
+
+	for i := 1; i <= batchSize; i++ {
+		timeLimiter <- i
+	}
+
+	go func() {
+		for range time.Tick(1 * time.Second) {
+			for i := 1; i <= batchSize; i++ {
+				timeLimiter <- i
+			}
+		}
+	}()
+
+	totalRequests := len(appeals)
+	done := make(chan *domain.Appeal, totalRequests)
+	resourceAppealMap := make(map[string][]*domain.Appeal, 0)
+
+	for _, appeal := range appeals {
+		var resourceAppeals []*domain.Appeal
+		var ok bool
+		if resourceAppeals, ok = resourceAppealMap[appeal.ResourceID]; ok {
+			resourceAppeals = append(resourceAppeals, appeal)
+		} else {
+			resourceAppeals = []*domain.Appeal{appeal}
+		}
+		resourceAppealMap[appeal.ResourceID] = resourceAppeals
+	}
+
+	for _, resourceAppeals := range resourceAppealMap {
+		go s.expiredInActiveUserAppeal(ctx, timeLimiter, done, actor, reason, resourceAppeals)
+	}
+
+	var successRevoke []string
+	var failedRevoke []string
+	for {
+		select {
+		case appeal, _ := <-done:
+			if appeal.Status == domain.AppealStatusTerminated {
+				successRevoke = append(successRevoke, appeal.ID)
+			} else {
+				failedRevoke = append(failedRevoke, appeal.ID)
+			}
+			result = append(result, appeal)
+			if len(result) == totalRequests {
+				s.logger.Info("successful appeal revocation", "count", len(successRevoke), "ids", successRevoke)
+				s.logger.Info("failed appeal revocation", "count", len(failedRevoke), "ids", failedRevoke)
+				return result, nil
+			}
+		}
+	}
+}
+
+func (s *Service) expiredInActiveUserAppeal(ctx context.Context, timeLimiter chan int, done chan *domain.Appeal, actor string, reason string, appeals []*domain.Appeal) {
+	for _, appeal := range appeals {
+		<-timeLimiter
+
+		revokedAppeal := &domain.Appeal{}
+		*revokedAppeal = *appeal
+		revokedAppeal.RevokedAt = s.TimeNow()
+		revokedAppeal.RevokedBy = actor
+		revokedAppeal.RevokeReason = reason
+
+		if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
+			done <- appeal
+			s.logger.Error("failed to revoke appeal-access in provider", "id", appeal.ID, "error", err)
+			return
+		}
+
+		revokedAppeal.Status = domain.AppealStatusTerminated
+		if err := s.repo.Update(revokedAppeal); err != nil {
+			done <- appeal
+			s.logger.Error("failed to update appeal-revoke status", "id", appeal.ID, "error", err)
+			return
+		} else {
+			done <- revokedAppeal
+			s.logger.Info("appeal revoked", "id", appeal.ID)
+		}
+	}
+}
+
 func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error) {
 	if err := s.validator.Var(email, "email"); err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrApproverEmail, err)
