@@ -108,8 +108,8 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	if err != nil {
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
-
-	identity := fmt.Sprintf("%s:%s", a.AccountType, a.AccountID) // identity is AccountType : AccountID, eg: "serviceAccount:test@email.com"
+	// identity is AccountType : AccountID, eg: "serviceAccount:test@email.com"
+	identity := fmt.Sprintf("%s:%s", a.AccountType, a.AccountID)
 	if a.Resource.Type == ResourceTypeBucket {
 		b := new(Bucket)
 		if err := b.fromDomain(a.Resource); err != nil {
@@ -156,7 +156,6 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	user := a.AccountID
 	userType := a.AccountType
 	identity := fmt.Sprintf("%s:%s", userType, user)
-	ctx := context.TODO()
 	if a.Resource.Type == ResourceTypeBucket {
 		b := new(Bucket)
 		if err := b.fromDomain(a.Resource); err != nil {
@@ -164,7 +163,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		}
 		for _, p := range permissions {
 			var role iam.RoleName = iam.RoleName(string(p))
-			if err := client.RevokeBucketAccess(ctx, *b, identity, role); err != nil {
+			if err := client.RevokeBucketAccess(context.TODO(), *b, identity, role); err != nil {
 				if errors.Is(err, ErrPermissionAlreadyExists) {
 					return nil
 				}
