@@ -46,6 +46,8 @@ type GuardianServiceClient interface {
 	AddApprover(ctx context.Context, in *AddApproverRequest, opts ...grpc.CallOption) (*AddApproverResponse, error)
 	DeleteApprover(ctx context.Context, in *DeleteApproverRequest, opts ...grpc.CallOption) (*DeleteApproverResponse, error)
 	RevokeAppeals(ctx context.Context, in *RevokeAppealsRequest, opts ...grpc.CallOption) (*RevokeAppealsResponse, error)
+	ListAccesses(ctx context.Context, in *ListAccessesRequest, opts ...grpc.CallOption) (*ListAccessesResponse, error)
+	GetAccess(ctx context.Context, in *GetAccessRequest, opts ...grpc.CallOption) (*GetAccessResponse, error)
 }
 
 type guardianServiceClient struct {
@@ -308,6 +310,24 @@ func (c *guardianServiceClient) RevokeAppeals(ctx context.Context, in *RevokeApp
 	return out, nil
 }
 
+func (c *guardianServiceClient) ListAccesses(ctx context.Context, in *ListAccessesRequest, opts ...grpc.CallOption) (*ListAccessesResponse, error) {
+	out := new(ListAccessesResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/ListAccesses", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) GetAccess(ctx context.Context, in *GetAccessRequest, opts ...grpc.CallOption) (*GetAccessResponse, error) {
+	out := new(GetAccessResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/GetAccess", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GuardianServiceServer is the server API for GuardianService service.
 // All implementations must embed UnimplementedGuardianServiceServer
 // for forward compatibility
@@ -340,6 +360,8 @@ type GuardianServiceServer interface {
 	AddApprover(context.Context, *AddApproverRequest) (*AddApproverResponse, error)
 	DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error)
 	RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error)
+	ListAccesses(context.Context, *ListAccessesRequest) (*ListAccessesResponse, error)
+	GetAccess(context.Context, *GetAccessRequest) (*GetAccessResponse, error)
 	mustEmbedUnimplementedGuardianServiceServer()
 }
 
@@ -430,6 +452,12 @@ func (UnimplementedGuardianServiceServer) DeleteApprover(context.Context, *Delet
 }
 func (UnimplementedGuardianServiceServer) RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RevokeAppeals not implemented")
+}
+func (UnimplementedGuardianServiceServer) ListAccesses(context.Context, *ListAccessesRequest) (*ListAccessesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAccesses not implemented")
+}
+func (UnimplementedGuardianServiceServer) GetAccess(context.Context, *GetAccessRequest) (*GetAccessResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAccess not implemented")
 }
 func (UnimplementedGuardianServiceServer) mustEmbedUnimplementedGuardianServiceServer() {}
 
@@ -948,6 +976,42 @@ func _GuardianService_RevokeAppeals_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GuardianService_ListAccesses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAccessesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).ListAccesses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/ListAccesses",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).ListAccesses(ctx, req.(*ListAccessesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_GetAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAccessRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).GetAccess(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/GetAccess",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).GetAccess(ctx, req.(*GetAccessRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GuardianService_ServiceDesc is the grpc.ServiceDesc for GuardianService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1066,6 +1130,14 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RevokeAppeals",
 			Handler:    _GuardianService_RevokeAppeals_Handler,
+		},
+		{
+			MethodName: "ListAccesses",
+			Handler:    _GuardianService_ListAccesses_Handler,
+		},
+		{
+			MethodName: "GetAccess",
+			Handler:    _GuardianService_GetAccess_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

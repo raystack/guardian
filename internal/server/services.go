@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core"
+	"github.com/odpf/guardian/core/access"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/core/approval"
 	"github.com/odpf/guardian/core/policy"
@@ -34,6 +35,7 @@ type Services struct {
 	PolicyService   *policy.Service
 	ApprovalService *approval.Service
 	AppealService   *appeal.Service
+	AccessService   *access.Service
 }
 
 type ServiceDeps struct {
@@ -87,6 +89,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 	resourceRepository := postgres.NewResourceRepository(store.DB())
 	appealRepository := postgres.NewAppealRepository(store.DB())
 	approvalRepository := postgres.NewApprovalRepository(store.DB())
+	accessRepository := postgres.NewAccessRepository(store.DB())
 
 	providerClients := []provider.Client{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, deps.Crypto),
@@ -138,6 +141,10 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Logger:          deps.Logger,
 		AuditLogger:     auditLogger,
 	})
+	accessService := access.NewService(access.ServiceDeps{
+		Repository: accessRepository,
+		Logger:     deps.Logger,
+	})
 
 	return &Services{
 		resourceService,
@@ -145,5 +152,6 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		policyService,
 		approvalService,
 		appealService,
+		accessService,
 	}, nil
 }
