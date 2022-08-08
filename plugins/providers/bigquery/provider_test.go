@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
@@ -424,81 +423,6 @@ func TestGrantAccess(t *testing.T) {
 		}
 	})
 
-	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission bigquery.Permission
-		invalidPermissionConfig := map[string]interface{}{}
-		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
-
-		testCases := []struct {
-			resourceConfigs []*domain.ResourceConfig
-			appeal          *domain.Appeal
-			expectedError   error
-		}{
-			{
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-				},
-				expectedError: bigquery.ErrInvalidResourceType,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "not-test-role",
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: bigquery.ErrInvalidRole,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									invalidPermissionConfig,
-								},
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: invalidPermissionConfigError,
-			},
-		}
-
-		for _, tc := range testCases {
-			crypto := new(mocks.Crypto)
-			p := bigquery.NewProvider("", crypto)
-
-			providerConfig := &domain.ProviderConfig{
-				Resources: tc.resourceConfigs,
-			}
-
-			actualError := p.GrantAccess(providerConfig, tc.appeal)
-			assert.EqualError(t, actualError, tc.expectedError.Error())
-		}
-	},
-	)
-
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		p := initProvider()
 
@@ -571,6 +495,7 @@ func TestGrantAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"VIEWER"},
 		}
 
 		actualError := p.GrantAccess(pc, a)
@@ -621,6 +546,7 @@ func TestGrantAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"VIEWER"},
 		}
 
 		actualError := p.GrantAccess(pc, a)
@@ -675,6 +601,7 @@ func TestGrantAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"VIEWER"},
 		}
 
 		actualError := p.GrantAccess(pc, a)
@@ -761,81 +688,6 @@ func TestRevokeAccess(t *testing.T) {
 		}
 	})
 
-	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission bigquery.Permission
-		invalidPermissionConfig := map[string]interface{}{}
-		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
-
-		testCases := []struct {
-			resourceConfigs []*domain.ResourceConfig
-			appeal          *domain.Appeal
-			expectedError   error
-		}{
-			{
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-				},
-				expectedError: bigquery.ErrInvalidResourceType,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "not-test-role",
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: bigquery.ErrInvalidRole,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									invalidPermissionConfig,
-								},
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: invalidPermissionConfigError,
-			},
-		}
-
-		for _, tc := range testCases {
-			crypto := new(mocks.Crypto)
-			p := bigquery.NewProvider("", crypto)
-
-			providerConfig := &domain.ProviderConfig{
-				Resources: tc.resourceConfigs,
-			}
-
-			actualError := p.RevokeAccess(providerConfig, tc.appeal)
-			assert.EqualError(t, actualError, tc.expectedError.Error())
-		}
-	},
-	)
-
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		p := initProvider()
 
@@ -908,6 +760,7 @@ func TestRevokeAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"VIEWER"},
 		}
 
 		actualError := p.RevokeAccess(pc, a)
@@ -958,6 +811,7 @@ func TestRevokeAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"VIEWER"},
 		}
 
 		actualError := p.RevokeAccess(pc, a)
@@ -1011,6 +865,7 @@ func TestRevokeAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"VIEWER"},
 		}
 
 		actualError := p.RevokeAccess(pc, a)

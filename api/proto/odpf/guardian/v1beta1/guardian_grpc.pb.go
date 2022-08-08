@@ -29,6 +29,7 @@ type GuardianServiceClient interface {
 	GetPolicy(ctx context.Context, in *GetPolicyRequest, opts ...grpc.CallOption) (*GetPolicyResponse, error)
 	CreatePolicy(ctx context.Context, in *CreatePolicyRequest, opts ...grpc.CallOption) (*CreatePolicyResponse, error)
 	UpdatePolicy(ctx context.Context, in *UpdatePolicyRequest, opts ...grpc.CallOption) (*UpdatePolicyResponse, error)
+	GetPolicyPreferences(ctx context.Context, in *GetPolicyPreferencesRequest, opts ...grpc.CallOption) (*GetPolicyPreferencesResponse, error)
 	ListResources(ctx context.Context, in *ListResourcesRequest, opts ...grpc.CallOption) (*ListResourcesResponse, error)
 	GetResource(ctx context.Context, in *GetResourceRequest, opts ...grpc.CallOption) (*GetResourceResponse, error)
 	UpdateResource(ctx context.Context, in *UpdateResourceRequest, opts ...grpc.CallOption) (*UpdateResourceResponse, error)
@@ -42,6 +43,9 @@ type GuardianServiceClient interface {
 	ListUserApprovals(ctx context.Context, in *ListUserApprovalsRequest, opts ...grpc.CallOption) (*ListUserApprovalsResponse, error)
 	ListApprovals(ctx context.Context, in *ListApprovalsRequest, opts ...grpc.CallOption) (*ListApprovalsResponse, error)
 	UpdateApproval(ctx context.Context, in *UpdateApprovalRequest, opts ...grpc.CallOption) (*UpdateApprovalResponse, error)
+	AddApprover(ctx context.Context, in *AddApproverRequest, opts ...grpc.CallOption) (*AddApproverResponse, error)
+	DeleteApprover(ctx context.Context, in *DeleteApproverRequest, opts ...grpc.CallOption) (*DeleteApproverResponse, error)
+	RevokeAppeals(ctx context.Context, in *RevokeAppealsRequest, opts ...grpc.CallOption) (*RevokeAppealsResponse, error)
 }
 
 type guardianServiceClient struct {
@@ -145,6 +149,15 @@ func (c *guardianServiceClient) CreatePolicy(ctx context.Context, in *CreatePoli
 func (c *guardianServiceClient) UpdatePolicy(ctx context.Context, in *UpdatePolicyRequest, opts ...grpc.CallOption) (*UpdatePolicyResponse, error) {
 	out := new(UpdatePolicyResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/UpdatePolicy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) GetPolicyPreferences(ctx context.Context, in *GetPolicyPreferencesRequest, opts ...grpc.CallOption) (*GetPolicyPreferencesResponse, error) {
+	out := new(GetPolicyPreferencesResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/GetPolicyPreferences", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -268,6 +281,33 @@ func (c *guardianServiceClient) UpdateApproval(ctx context.Context, in *UpdateAp
 	return out, nil
 }
 
+func (c *guardianServiceClient) AddApprover(ctx context.Context, in *AddApproverRequest, opts ...grpc.CallOption) (*AddApproverResponse, error) {
+	out := new(AddApproverResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/AddApprover", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) DeleteApprover(ctx context.Context, in *DeleteApproverRequest, opts ...grpc.CallOption) (*DeleteApproverResponse, error) {
+	out := new(DeleteApproverResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/DeleteApprover", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) RevokeAppeals(ctx context.Context, in *RevokeAppealsRequest, opts ...grpc.CallOption) (*RevokeAppealsResponse, error) {
+	out := new(RevokeAppealsResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeAppeals", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GuardianServiceServer is the server API for GuardianService service.
 // All implementations must embed UnimplementedGuardianServiceServer
 // for forward compatibility
@@ -283,6 +323,7 @@ type GuardianServiceServer interface {
 	GetPolicy(context.Context, *GetPolicyRequest) (*GetPolicyResponse, error)
 	CreatePolicy(context.Context, *CreatePolicyRequest) (*CreatePolicyResponse, error)
 	UpdatePolicy(context.Context, *UpdatePolicyRequest) (*UpdatePolicyResponse, error)
+	GetPolicyPreferences(context.Context, *GetPolicyPreferencesRequest) (*GetPolicyPreferencesResponse, error)
 	ListResources(context.Context, *ListResourcesRequest) (*ListResourcesResponse, error)
 	GetResource(context.Context, *GetResourceRequest) (*GetResourceResponse, error)
 	UpdateResource(context.Context, *UpdateResourceRequest) (*UpdateResourceResponse, error)
@@ -296,6 +337,9 @@ type GuardianServiceServer interface {
 	ListUserApprovals(context.Context, *ListUserApprovalsRequest) (*ListUserApprovalsResponse, error)
 	ListApprovals(context.Context, *ListApprovalsRequest) (*ListApprovalsResponse, error)
 	UpdateApproval(context.Context, *UpdateApprovalRequest) (*UpdateApprovalResponse, error)
+	AddApprover(context.Context, *AddApproverRequest) (*AddApproverResponse, error)
+	DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error)
+	RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error)
 	mustEmbedUnimplementedGuardianServiceServer()
 }
 
@@ -336,6 +380,9 @@ func (UnimplementedGuardianServiceServer) CreatePolicy(context.Context, *CreateP
 func (UnimplementedGuardianServiceServer) UpdatePolicy(context.Context, *UpdatePolicyRequest) (*UpdatePolicyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePolicy not implemented")
 }
+func (UnimplementedGuardianServiceServer) GetPolicyPreferences(context.Context, *GetPolicyPreferencesRequest) (*GetPolicyPreferencesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPolicyPreferences not implemented")
+}
 func (UnimplementedGuardianServiceServer) ListResources(context.Context, *ListResourcesRequest) (*ListResourcesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListResources not implemented")
 }
@@ -374,6 +421,15 @@ func (UnimplementedGuardianServiceServer) ListApprovals(context.Context, *ListAp
 }
 func (UnimplementedGuardianServiceServer) UpdateApproval(context.Context, *UpdateApprovalRequest) (*UpdateApprovalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateApproval not implemented")
+}
+func (UnimplementedGuardianServiceServer) AddApprover(context.Context, *AddApproverRequest) (*AddApproverResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddApprover not implemented")
+}
+func (UnimplementedGuardianServiceServer) DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteApprover not implemented")
+}
+func (UnimplementedGuardianServiceServer) RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeAppeals not implemented")
 }
 func (UnimplementedGuardianServiceServer) mustEmbedUnimplementedGuardianServiceServer() {}
 
@@ -582,6 +638,24 @@ func _GuardianService_UpdatePolicy_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GuardianServiceServer).UpdatePolicy(ctx, req.(*UpdatePolicyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_GetPolicyPreferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPolicyPreferencesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).GetPolicyPreferences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/GetPolicyPreferences",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).GetPolicyPreferences(ctx, req.(*GetPolicyPreferencesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -820,6 +894,60 @@ func _GuardianService_UpdateApproval_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GuardianService_AddApprover_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddApproverRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).AddApprover(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/AddApprover",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).AddApprover(ctx, req.(*AddApproverRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_DeleteApprover_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteApproverRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).DeleteApprover(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/DeleteApprover",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).DeleteApprover(ctx, req.(*DeleteApproverRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_RevokeAppeals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeAppealsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).RevokeAppeals(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/RevokeAppeals",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).RevokeAppeals(ctx, req.(*RevokeAppealsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GuardianService_ServiceDesc is the grpc.ServiceDesc for GuardianService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -872,6 +1000,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _GuardianService_UpdatePolicy_Handler,
 		},
 		{
+			MethodName: "GetPolicyPreferences",
+			Handler:    _GuardianService_GetPolicyPreferences_Handler,
+		},
+		{
 			MethodName: "ListResources",
 			Handler:    _GuardianService_ListResources_Handler,
 		},
@@ -922,6 +1054,18 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateApproval",
 			Handler:    _GuardianService_UpdateApproval_Handler,
+		},
+		{
+			MethodName: "AddApprover",
+			Handler:    _GuardianService_AddApprover_Handler,
+		},
+		{
+			MethodName: "DeleteApprover",
+			Handler:    _GuardianService_DeleteApprover_Handler,
+		},
+		{
+			MethodName: "RevokeAppeals",
+			Handler:    _GuardianService_RevokeAppeals_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

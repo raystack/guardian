@@ -42,7 +42,7 @@ func (m *Approver) FromDomain(a *domain.Approver) error {
 }
 
 // ToDomain transforms model into *domain.Approver
-func (m *Approver) ToDomain() (*domain.Approver, error) {
+func (m *Approver) ToDomain() *domain.Approver {
 	return &domain.Approver{
 		ID:         m.ID.String(),
 		ApprovalID: m.ApprovalID,
@@ -50,5 +50,5 @@ func (m *Approver) ToDomain() (*domain.Approver, error) {
 		Email:      m.Email,
 		CreatedAt:  m.CreatedAt,
 		UpdatedAt:  m.UpdatedAt,
-	}, nil
+	}
 }

@@ -11,3 +11,7 @@ type Client interface {
 	GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error)
 	GetAccountTypes() []string
 }
+
+type PermissionManager interface {
+	GetPermissions(p *domain.ProviderConfig, resourceType, role string) ([]interface{}, error)
+}

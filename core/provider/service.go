@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/imdario/mergo"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/providers"
 	"github.com/odpf/guardian/utils"
@@ -37,6 +36,7 @@ type repository interface {
 }
 
 type Client interface {
+	providers.PermissionManager
 	providers.Client
 }
 
@@ -163,22 +163,6 @@ func (s *Service) GetOne(ctx context.Context, pType, urn string) (*domain.Provid
 
 // Update updates the non-zero value(s) only
 func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
-	var currentProvider *domain.Provider
-	var err error
-
-	if len(p.ID) > 0 {
-		currentProvider, err = s.GetByID(ctx, p.ID)
-	} else {
-		currentProvider, err = s.GetOne(ctx, p.Type, p.URN)
-	}
-	if err != nil {
-		return err
-	}
-
-	if err := mergo.Merge(p, currentProvider); err != nil {
-		return err
-	}
-
 	c := s.getClient(p.Type)
 	if c == nil {
 		return ErrInvalidProviderType
@@ -243,6 +227,11 @@ func (s *Service) GetRoles(ctx context.Context, id string, resourceType string) 
 
 	c := s.getClient(p.Type)
 	return c.GetRoles(p.Config, resourceType)
+}
+
+func (s *Service) GetPermissions(_ context.Context, pc *domain.ProviderConfig, resourceType, role string) ([]interface{}, error) {
+	c := s.getClient(pc.Type)
+	return c.GetPermissions(pc, resourceType, role)
 }
 
 func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domain.Provider) error {
@@ -390,6 +379,19 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 		isFound := false
 		for _, r := range res {
 			if er.URN == r.URN {
+				existingMetadata := er.Details
+				if existingMetadata != nil {
+					if r.Details != nil {
+						for key, value := range existingMetadata {
+							if _, ok := r.Details[key]; !ok {
+								r.Details[key] = value
+							}
+						}
+					} else {
+						r.Details = existingMetadata
+					}
+				}
+
 				resources = append(resources, r)
 				isFound = true
 				break
@@ -428,7 +430,7 @@ func (s *Service) validateAppealParam(a *domain.Appeal) error {
 	return nil
 }
 
-func (s *Service) getClient(pType string) providers.Client {
+func (s *Service) getClient(pType string) Client {
 	return s.clients[pType]
 }
 

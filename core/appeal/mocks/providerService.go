@@ -37,6 +37,29 @@ func (_m *ProviderService) Find(_a0 context.Context) ([]*domain.Provider, error)
 	return r0, r1
 }
 
+// GetPermissions provides a mock function with given fields: _a0, _a1, _a2, _a3
+func (_m *ProviderService) GetPermissions(_a0 context.Context, _a1 *domain.ProviderConfig, _a2 string, _a3 string) ([]interface{}, error) {
+	ret := _m.Called(_a0, _a1, _a2, _a3)
+
+	var r0 []interface{}
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.ProviderConfig, string, string) []interface{}); ok {
+		r0 = rf(_a0, _a1, _a2, _a3)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]interface{})
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *domain.ProviderConfig, string, string) error); ok {
+		r1 = rf(_a0, _a1, _a2, _a3)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GrantAccess provides a mock function with given fields: _a0, _a1
 func (_m *ProviderService) GrantAccess(_a0 context.Context, _a1 *domain.Appeal) error {
 	ret := _m.Called(_a0, _a1)

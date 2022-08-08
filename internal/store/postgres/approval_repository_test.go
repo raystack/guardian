@@ -11,6 +11,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
+	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/guardian/mocks"
@@ -29,6 +30,10 @@ type ApprovalRepositoryTestSuite struct {
 	approverColumnNames []string
 	appealColumnNames   []string
 	resourceColumnNames []string
+}
+
+func TestApprovalRepository(t *testing.T) {
+	suite.Run(t, new(ApprovalRepositoryTestSuite))
 }
 
 func (s *ApprovalRepositoryTestSuite) SetupTest() {
@@ -101,15 +106,6 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 		expectedUser := "user@example.com"
 		expectedAccountID := "account@example.com"
 		expectedStatuses := []string{"test-status-1", "test-status-2"}
-		expectedApprovers := []*domain.Approver{
-			{
-				ID:         uuid.New().String(),
-				ApprovalID: approvalID,
-				Email:      expectedUser,
-				CreatedAt:  timeNow,
-				UpdatedAt:  timeNow,
-			},
-		}
 		expectedApprovals := []*domain.Approval{
 			{
 				ID:            approvalID,
@@ -140,15 +136,7 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 			},
 		}
 
-		expectedListApproversQuery := regexp.QuoteMeta(`SELECT * FROM "approvers" WHERE email = $1 AND "approvers"."deleted_at" IS NULL`)
-		expectedApproverRows := sqlmock.NewRows(s.approverColumnNames)
-		for _, a := range expectedApprovers {
-			expectedApproverRows.AddRow(a.ID, a.Email, a.AppealID, a.ApprovalID, a.CreatedAt, a.UpdatedAt)
-		}
-		s.dbmock.ExpectQuery(expectedListApproversQuery).
-			WithArgs(expectedUser).
-			WillReturnRows(expectedApproverRows)
-		expectedListApprovalsQuery := regexp.QuoteMeta(`SELECT "approvals"."id","approvals"."name","approvals"."index","approvals"."appeal_id","approvals"."status","approvals"."actor","approvals"."reason","approvals"."policy_id","approvals"."policy_version","approvals"."created_at","approvals"."updated_at","approvals"."deleted_at","Appeal"."id" AS "Appeal__id","Appeal"."resource_id" AS "Appeal__resource_id","Appeal"."policy_id" AS "Appeal__policy_id","Appeal"."policy_version" AS "Appeal__policy_version","Appeal"."status" AS "Appeal__status","Appeal"."account_id" AS "Appeal__account_id","Appeal"."account_type" AS "Appeal__account_type","Appeal"."created_by" AS "Appeal__created_by","Appeal"."creator" AS "Appeal__creator","Appeal"."role" AS "Appeal__role","Appeal"."options" AS "Appeal__options","Appeal"."labels" AS "Appeal__labels","Appeal"."details" AS "Appeal__details","Appeal"."revoked_by" AS "Appeal__revoked_by","Appeal"."revoked_at" AS "Appeal__revoked_at","Appeal"."revoke_reason" AS "Appeal__revoke_reason","Appeal"."created_at" AS "Appeal__created_at","Appeal"."updated_at" AS "Appeal__updated_at","Appeal"."deleted_at" AS "Appeal__deleted_at" FROM "approvals" LEFT JOIN "appeals" "Appeal" ON "approvals"."appeal_id" = "Appeal"."id" WHERE "approvals"."status" IN ($1,$2) AND "Appeal"."account_id" = $3 AND "Appeal"."status" != $4 AND "approvals"."id" = $5 AND "approvals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$6,$7,$8,$9,$10], "approvals"."status"), "updated_at" desc, "created_at"`)
+		expectedListApprovalsQuery := regexp.QuoteMeta(`SELECT "approvals"."id","approvals"."name","approvals"."index","approvals"."appeal_id","approvals"."status","approvals"."actor","approvals"."reason","approvals"."policy_id","approvals"."policy_version","approvals"."created_at","approvals"."updated_at","approvals"."deleted_at","Appeal"."id" AS "Appeal__id","Appeal"."resource_id" AS "Appeal__resource_id","Appeal"."policy_id" AS "Appeal__policy_id","Appeal"."policy_version" AS "Appeal__policy_version","Appeal"."status" AS "Appeal__status","Appeal"."account_id" AS "Appeal__account_id","Appeal"."account_type" AS "Appeal__account_type","Appeal"."created_by" AS "Appeal__created_by","Appeal"."creator" AS "Appeal__creator","Appeal"."role" AS "Appeal__role","Appeal"."permissions" AS "Appeal__permissions","Appeal"."options" AS "Appeal__options","Appeal"."labels" AS "Appeal__labels","Appeal"."details" AS "Appeal__details","Appeal"."revoked_by" AS "Appeal__revoked_by","Appeal"."revoked_at" AS "Appeal__revoked_at","Appeal"."revoke_reason" AS "Appeal__revoke_reason","Appeal"."created_at" AS "Appeal__created_at","Appeal"."updated_at" AS "Appeal__updated_at","Appeal"."deleted_at" AS "Appeal__deleted_at" FROM "approvals" LEFT JOIN "appeals" "Appeal" ON "approvals"."appeal_id" = "Appeal"."id" JOIN "approvers" ON "approvals"."id" = "approvers"."approval_id" WHERE "approvers"."email" = $1 AND "approvals"."status" IN ($2,$3) AND "Appeal"."account_id" = $4 AND "Appeal"."status" != $5 AND "approvals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$6,$7,$8,$9,$10], "approvals"."status"), "updated_at" desc, "created_at"`)
 		approvalColumnNames := s.approvalColumnNames
 		for _, c := range s.appealColumnNames {
 			approvalColumnNames = append(approvalColumnNames, fmt.Sprintf("Appeal__%s", c))
@@ -164,7 +152,7 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 			)
 		}
 		s.dbmock.ExpectQuery(expectedListApprovalsQuery).
-			WithArgs(expectedStatuses[0], expectedStatuses[1], expectedAccountID, domain.AppealStatusCanceled, approvalID,
+			WithArgs(expectedUser, expectedStatuses[0], expectedStatuses[1], expectedAccountID, domain.AppealStatusCanceled,
 				domain.AppealStatusPending,
 				domain.AppealStatusActive,
 				domain.AppealStatusRejected,
@@ -309,6 +297,88 @@ func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
 	})
 }
 
-func TestApprovalRepository(t *testing.T) {
-	suite.Run(t, new(ApprovalRepositoryTestSuite))
+func (s *ApprovalRepositoryTestSuite) TestAddApprover() {
+	s.Run("should return nil error on success", func() {
+		approval := &domain.Approver{
+			ApprovalID: uuid.New().String(),
+			Email:      "user@example.com",
+		}
+
+		expectedID := uuid.New().String()
+		expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvers" ("approval_id","appeal_id","email","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"`)
+		expectedRows := sqlmock.NewRows([]string{"id"}).AddRow(expectedID)
+		s.dbmock.ExpectQuery(expectedQuery).
+			WithArgs(
+				approval.ApprovalID,
+				approval.AppealID,
+				approval.Email,
+				utils.AnyTime{},
+				utils.AnyTime{},
+				nil,
+			).
+			WillReturnRows(expectedRows)
+
+		err := s.repository.AddApprover(approval)
+
+		s.NoError(err)
+		s.Equal(expectedID, approval.ID)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if approver payload is invalid", func() {
+		invalidApprover := &domain.Approver{
+			ID: "invalid-uuid",
+		}
+
+		err := s.repository.AddApprover(invalidApprover)
+
+		s.EqualError(err, "parsing approver: parsing uuid: invalid UUID length: 12")
+	})
+
+	s.Run("should return error if db returns an error", func() {
+		expectedError := errors.New("unexpected error")
+		s.dbmock.ExpectQuery(".*").WillReturnError(expectedError)
+
+		err := s.repository.AddApprover(&domain.Approver{})
+
+		s.ErrorIs(err, expectedError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+}
+
+func (s *ApprovalRepositoryTestSuite) TestDeleteApprover() {
+	s.Run("should return nil error on success", func() {
+		approvalID := uuid.New().String()
+		approverEmail := "user@example.com"
+
+		expectedQuery := regexp.QuoteMeta(`UPDATE "approvers" SET "deleted_at"=$1 WHERE approval_id = $2 AND email = $3 AND "approvers"."deleted_at" IS NULL`)
+		s.dbmock.ExpectExec(expectedQuery).
+			WithArgs(utils.AnyTime{}, approvalID, approverEmail).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err := s.repository.DeleteApprover(approvalID, approverEmail)
+
+		s.NoError(err)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if db returns an error", func() {
+		expectedError := errors.New("unexpected error")
+		s.dbmock.ExpectExec(".*").WillReturnError(expectedError)
+
+		err := s.repository.DeleteApprover("", "")
+
+		s.ErrorIs(err, expectedError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
+
+	s.Run("should return error if db returns an error", func() {
+		expectedError := appeal.ErrApproverNotFound
+		s.dbmock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(1, 0))
+
+		err := s.repository.DeleteApprover("", "")
+
+		s.ErrorIs(err, expectedError)
+		s.NoError(s.dbmock.ExpectationsWereMet())
+	})
 }

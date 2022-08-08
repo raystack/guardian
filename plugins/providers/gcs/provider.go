@@ -18,6 +18,8 @@ type Crypto interface {
 	domain.Crypto
 }
 type Provider struct {
+	provider.PermissionManager
+
 	typeName string
 	Clients  map[string]GCSClient
 	crypto   Crypto
