@@ -64,9 +64,8 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	}
 
 	var resources []*domain.Resource
-	ctx := context.Background()
 	projectID := strings.Replace(creds.ResourceName, "projects/", "", 1)
-	buckets, err := client.GetBuckets(ctx, projectID)
+	buckets, err := client.GetBuckets(context.TODO(), projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -110,10 +109,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
 
-	user := a.AccountID
-	userType := a.AccountType
-	identity := fmt.Sprintf("%s:%s", userType, user)
-	ctx := context.TODO()
+	identity := fmt.Sprintf("%s:%s", a.AccountType, a.AccountID) // identity is AccountType : AccountID, eg: "serviceAccount:test@email.com"
 	if a.Resource.Type == ResourceTypeBucket {
 		b := new(Bucket)
 		if err := b.fromDomain(a.Resource); err != nil {
@@ -121,7 +117,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		}
 		for _, p := range permissions {
 			role := iam.RoleName(string(p))
-			if err := client.GrantBucketAccess(ctx, *b, identity, role); err != nil {
+			if err := client.GrantBucketAccess(context.TODO(), *b, identity, role); err != nil {
 				if errors.Is(err, ErrPermissionAlreadyExists) {
 					return nil
 				}

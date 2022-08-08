@@ -71,13 +71,13 @@ func (_c *GCSClient_GetBuckets_Call) Return(_a0 []*gcs.Bucket, _a1 error) *GCSCl
 	return _c
 }
 
-// GrantBucketAccess provides a mock function with given fields: ctx, b, identity, role
-func (_m *GCSClient) GrantBucketAccess(ctx context.Context, b gcs.Bucket, identity string, role iam.RoleName) error {
-	ret := _m.Called(ctx, b, identity, role)
+// GrantBucketAccess provides a mock function with given fields: ctx, b, identity, roleName
+func (_m *GCSClient) GrantBucketAccess(ctx context.Context, b gcs.Bucket, identity string, roleName iam.RoleName) error {
+	ret := _m.Called(ctx, b, identity, roleName)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, gcs.Bucket, string, iam.RoleName) error); ok {
-		r0 = rf(ctx, b, identity, role)
+		r0 = rf(ctx, b, identity, roleName)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -94,12 +94,12 @@ type GCSClient_GrantBucketAccess_Call struct {
 //  - ctx context.Context
 //  - b gcs.Bucket
 //  - identity string
-//  - role iam.RoleName
-func (_e *GCSClient_Expecter) GrantBucketAccess(ctx interface{}, b interface{}, identity interface{}, role interface{}) *GCSClient_GrantBucketAccess_Call {
-	return &GCSClient_GrantBucketAccess_Call{Call: _e.mock.On("GrantBucketAccess", ctx, b, identity, role)}
+//  - roleName iam.RoleName
+func (_e *GCSClient_Expecter) GrantBucketAccess(ctx interface{}, b interface{}, identity interface{}, roleName interface{}) *GCSClient_GrantBucketAccess_Call {
+	return &GCSClient_GrantBucketAccess_Call{Call: _e.mock.On("GrantBucketAccess", ctx, b, identity, roleName)}
 }
 
-func (_c *GCSClient_GrantBucketAccess_Call) Run(run func(ctx context.Context, b gcs.Bucket, identity string, role iam.RoleName)) *GCSClient_GrantBucketAccess_Call {
+func (_c *GCSClient_GrantBucketAccess_Call) Run(run func(ctx context.Context, b gcs.Bucket, identity string, roleName iam.RoleName)) *GCSClient_GrantBucketAccess_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(gcs.Bucket), args[2].(string), args[3].(iam.RoleName))
 	})
@@ -111,13 +111,13 @@ func (_c *GCSClient_GrantBucketAccess_Call) Return(_a0 error) *GCSClient_GrantBu
 	return _c
 }
 
-// RevokeBucketAccess provides a mock function with given fields: ctx, b, identity, role
-func (_m *GCSClient) RevokeBucketAccess(ctx context.Context, b gcs.Bucket, identity string, role iam.RoleName) error {
-	ret := _m.Called(ctx, b, identity, role)
+// RevokeBucketAccess provides a mock function with given fields: ctx, b, identity, roleName
+func (_m *GCSClient) RevokeBucketAccess(ctx context.Context, b gcs.Bucket, identity string, roleName iam.RoleName) error {
+	ret := _m.Called(ctx, b, identity, roleName)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, gcs.Bucket, string, iam.RoleName) error); ok {
-		r0 = rf(ctx, b, identity, role)
+		r0 = rf(ctx, b, identity, roleName)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -134,12 +134,12 @@ type GCSClient_RevokeBucketAccess_Call struct {
 //  - ctx context.Context
 //  - b gcs.Bucket
 //  - identity string
-//  - role iam.RoleName
-func (_e *GCSClient_Expecter) RevokeBucketAccess(ctx interface{}, b interface{}, identity interface{}, role interface{}) *GCSClient_RevokeBucketAccess_Call {
-	return &GCSClient_RevokeBucketAccess_Call{Call: _e.mock.On("RevokeBucketAccess", ctx, b, identity, role)}
+//  - roleName iam.RoleName
+func (_e *GCSClient_Expecter) RevokeBucketAccess(ctx interface{}, b interface{}, identity interface{}, roleName interface{}) *GCSClient_RevokeBucketAccess_Call {
+	return &GCSClient_RevokeBucketAccess_Call{Call: _e.mock.On("RevokeBucketAccess", ctx, b, identity, roleName)}
 }
 
-func (_c *GCSClient_RevokeBucketAccess_Call) Run(run func(ctx context.Context, b gcs.Bucket, identity string, role iam.RoleName)) *GCSClient_RevokeBucketAccess_Call {
+func (_c *GCSClient_RevokeBucketAccess_Call) Run(run func(ctx context.Context, b gcs.Bucket, identity string, roleName iam.RoleName)) *GCSClient_RevokeBucketAccess_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(gcs.Bucket), args[2].(string), args[3].(iam.RoleName))
 	})

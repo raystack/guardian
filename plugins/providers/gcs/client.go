@@ -13,8 +13,8 @@ import (
 //go:generate mockery --name=GCSClient --exported --with-expecter
 type GCSClient interface {
 	GetBuckets(ctx context.Context, projectID string) ([]*Bucket, error)
-	GrantBucketAccess(ctx context.Context, b Bucket, identity string, role iam.RoleName) error
-	RevokeBucketAccess(ctx context.Context, b Bucket, identity string, role iam.RoleName) error
+	GrantBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error
+	RevokeBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error
 }
 
 type gcsClient struct {
@@ -54,35 +54,35 @@ func (c *gcsClient) GetBuckets(ctx context.Context, projectID string) ([]*Bucket
 	return result, nil
 }
 
-func (c *gcsClient) GrantBucketAccess(ctx context.Context, b Bucket, identity string, role iam.RoleName) error {
+func (c *gcsClient) GrantBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error {
 
 	bucketName := b.Name
 	bucket := c.client.Bucket(bucketName)
 	policy, err := bucket.IAM().Policy(ctx)
 	if err != nil {
-		return fmt.Errorf("Bucket(%q).IAM().Policy: %v", bucketName, err)
+		return fmt.Errorf("Bucket(%q).IAM().Policy: %w", bucketName, err)
 	}
 
-	policy.Add(identity, role)
+	policy.Add(identity, roleName)
 	if err := bucket.IAM().SetPolicy(ctx, policy); err != nil {
-		return fmt.Errorf("Bucket(%q).IAM().SetPolicy: %v", bucketName, err)
+		return fmt.Errorf("Bucket(%q).IAM().SetPolicy: %w", bucketName, err)
 	}
 
 	return nil
 }
 
-func (c *gcsClient) RevokeBucketAccess(ctx context.Context, b Bucket, identity string, role iam.RoleName) error {
+func (c *gcsClient) RevokeBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error {
 
 	bucketName := b.Name
 	bucket := c.client.Bucket(bucketName)
 	policy, err := bucket.IAM().Policy(ctx)
 	if err != nil {
-		return fmt.Errorf("Bucket(%q).IAM().Policy: %v", bucketName, err)
+		return fmt.Errorf("Bucket(%q).IAM().Policy: %w", bucketName, err)
 	}
 
-	policy.Remove(identity, role)
+	policy.Remove(identity, roleName)
 	if err := bucket.IAM().SetPolicy(ctx, policy); err != nil {
-		return fmt.Errorf("Bucket(%q).IAM().SetPolicy: %v", bucketName, err)
+		return fmt.Errorf("Bucket(%q).IAM().SetPolicy: %w", bucketName, err)
 	}
 
 	return nil
