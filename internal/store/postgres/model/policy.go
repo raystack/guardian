@@ -90,8 +90,10 @@ func (m *Policy) ToDomain() (*domain.Policy, error) {
 	}
 
 	var appealConfig *domain.PolicyAppealConfig
-	if err := json.Unmarshal(m.AppealConfig, &appealConfig); err != nil {
-		return nil, err
+	if m.AppealConfig != nil {
+		if err := json.Unmarshal(m.AppealConfig, &appealConfig); err != nil {
+			return nil, err
+		}
 	}
 
 	var iam *domain.IAMConfig
