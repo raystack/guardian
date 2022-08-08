@@ -170,15 +170,15 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 	}
 	resources, err := s.getResourcesMap(ctx, resourceIDs)
 	if err != nil {
-		return fmt.Errorf("getting resources: %w", err)
+		return err
 	}
 	providers, err := s.getProvidersMap(ctx)
 	if err != nil {
-		return fmt.Errorf("getting providers: %w", err)
+		return err
 	}
 	policies, err := s.getPoliciesMap(ctx)
 	if err != nil {
-		return fmt.Errorf("getting policies: %w", err)
+		return err
 	}
 
 	appealsGroupedByStatus, err := s.getAppealsMapGroupedByStatus([]string{
@@ -186,7 +186,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		domain.AppealStatusActive,
 	})
 	if err != nil {
-		return fmt.Errorf("getting appeals: %w", err)
+		return err
 	}
 	pendingAppeals := appealsGroupedByStatus[domain.AppealStatusPending]
 	activeAppeals := appealsGroupedByStatus[domain.AppealStatusActive]
@@ -198,7 +198,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		appeal.SetDefaults()
 
 		if err := validateAppeal(appeal, pendingAppeals); err != nil {
-			return fmt.Errorf("validating appeal: %w", err)
+			return err
 		}
 		if err := addResource(appeal, resources); err != nil {
 			return fmt.Errorf("retrieving resource details for %s: %w", appeal.ResourceID, err)

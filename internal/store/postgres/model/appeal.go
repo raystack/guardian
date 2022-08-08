@@ -46,22 +46,22 @@ type Appeal struct {
 func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	labels, err := json.Marshal(a.Labels)
 	if err != nil {
-		return fmt.Errorf("parsing labels: %w", err)
+		return err
 	}
 
 	options, err := json.Marshal(a.Options)
 	if err != nil {
-		return fmt.Errorf("parsing options: %w", err)
+		return err
 	}
 
 	details, err := json.Marshal(a.Details)
 	if err != nil {
-		return fmt.Errorf("parsing details: %w", err)
+		return err
 	}
 
 	creator, err := json.Marshal(a.Creator)
 	if err != nil {
-		return fmt.Errorf("parsing creator: %w", err)
+		return err
 	}
 
 	var approvals []*Approval
