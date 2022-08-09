@@ -114,7 +114,7 @@ func TestCreateConfig(t *testing.T) {
 		crypto.On("Encrypt", `{"type":"service_account"}`).Return("", expectedError)
 		actualError := p.CreateConfig(pc)
 
-		assert.Equal(t, expectedError, actualError)
+		assert.ErrorIs(t, actualError, expectedError)
 	})
 
 	t.Run("should make the provider config, parse and validate the credentials and permissions and return nil error on success", func(t *testing.T) {

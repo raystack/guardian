@@ -30,28 +30,9 @@ const (
 
 type Config struct {
 	ProviderConfig *domain.ProviderConfig
-	valid          bool
 
 	crypto    domain.Crypto
 	validator *validator.Validate
-}
-
-func (c *Config) EncryptCredentials() error {
-	if err := c.parseAndValidate(); err != nil {
-		return err
-	}
-
-	credentials, ok := c.ProviderConfig.Credentials.(*Credentials)
-	if !ok {
-		return ErrInvalidCredentialsType
-	}
-
-	if err := credentials.Encrypt(c.crypto); err != nil {
-		return err
-	}
-
-	c.ProviderConfig.Credentials = credentials
-	return nil
 }
 
 type Credentials struct {
@@ -97,14 +78,7 @@ func NewConfig(pc *domain.ProviderConfig, crypto domain.Crypto) *Config {
 	}
 }
 
-func (c *Config) ParseAndValidate() error {
-	return c.parseAndValidate()
-}
-
 func (c *Config) parseAndValidate() error {
-	if c.valid {
-		return nil
-	}
 
 	validationError := []error{}
 
@@ -129,7 +103,6 @@ func (c *Config) parseAndValidate() error {
 		return errors.New(strings.Join(errorStrings, "\n"))
 	}
 
-	c.valid = true
 	return nil
 }
 

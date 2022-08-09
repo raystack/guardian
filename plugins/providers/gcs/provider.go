@@ -36,11 +36,21 @@ func NewProvider(typeName string, crypto Crypto) *Provider {
 func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 	c := NewConfig(pc, p.crypto)
 
-	if err := c.ParseAndValidate(); err != nil {
+	if err := c.parseAndValidate(); err != nil {
 		return err
 	}
 
-	return c.EncryptCredentials()
+	credentials, ok := c.ProviderConfig.Credentials.(*Credentials)
+	if !ok {
+		return ErrInvalidCredentialsType
+	}
+
+	if err := credentials.Encrypt(c.crypto); err != nil {
+		return fmt.Errorf("encrypting creds: %w", err)
+	}
+
+	c.ProviderConfig.Credentials = credentials
+	return nil
 }
 
 func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
