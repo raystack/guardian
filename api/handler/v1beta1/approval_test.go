@@ -3,8 +3,10 @@ package v1beta1_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
@@ -537,7 +539,7 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 			},
 			{
 				"should return not found error if appeal not found",
-				appeal.ErrApprovalNameNotFound,
+				appeal.ErrApprovalNotFound,
 				codes.NotFound,
 			},
 			{
@@ -592,5 +594,255 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)
 		s.approvalService.AssertExpectations(s.T())
+	})
+}
+
+func (s *GrpcHandlersSuite) TestAddApprover() {
+	s.Run("should return appeal details on success", func() {
+		s.setup()
+		timeNow := time.Now()
+
+		appealID := uuid.New().String()
+		approvalID := uuid.New().String()
+		email := "user@example.com"
+		expectedAppeal := &domain.Appeal{
+			ID:            appealID,
+			ResourceID:    uuid.New().String(),
+			PolicyID:      "test-policy-id",
+			PolicyVersion: 1,
+			Status:        domain.AppealStatusPending,
+			AccountID:     "test-account-id",
+			AccountType:   "test-account-type",
+			CreatedBy:     "test-created-by",
+			Role:          "test-role",
+			Options: &domain.AppealOptions{
+				Duration: "24h",
+			},
+			Resource: &domain.Resource{},
+			Approvals: []*domain.Approval{
+				{
+					ID:        approvalID,
+					Name:      "test-name",
+					Status:    domain.ApprovalStatusPending,
+					Approvers: []string{"approver1@example.com", email},
+					CreatedAt: timeNow,
+					UpdatedAt: timeNow,
+				},
+			},
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		}
+		s.appealService.EXPECT().AddApprover(mock.AnythingOfType("*context.emptyCtx"), appealID, approvalID, email).Return(expectedAppeal, nil).Once()
+		expectedResponse := &guardianv1beta1.AddApproverResponse{
+			Appeal: &guardianv1beta1.Appeal{
+				Id:            expectedAppeal.ID,
+				ResourceId:    expectedAppeal.ResourceID,
+				PolicyId:      expectedAppeal.PolicyID,
+				PolicyVersion: uint32(expectedAppeal.PolicyVersion),
+				Status:        expectedAppeal.Status,
+				AccountId:     expectedAppeal.AccountID,
+				Role:          expectedAppeal.Role,
+				Options: &guardianv1beta1.AppealOptions{
+					Duration: expectedAppeal.Options.Duration,
+				},
+				Resource:    &guardianv1beta1.Resource{},
+				AccountType: expectedAppeal.AccountType,
+				CreatedBy:   expectedAppeal.CreatedBy,
+				Approvals: []*guardianv1beta1.Approval{
+					{
+						Id:        expectedAppeal.Approvals[0].ID,
+						Name:      expectedAppeal.Approvals[0].Name,
+						Status:    expectedAppeal.Approvals[0].Status,
+						Approvers: expectedAppeal.Approvals[0].Approvers,
+						CreatedAt: timestamppb.New(timeNow),
+						UpdatedAt: timestamppb.New(timeNow),
+					},
+				},
+				CreatedAt: timestamppb.New(timeNow),
+				UpdatedAt: timestamppb.New(timeNow),
+			},
+		}
+
+		req := &guardianv1beta1.AddApproverRequest{
+			AppealId:   appealID,
+			ApprovalId: approvalID,
+			Email:      email,
+		}
+		res, err := s.grpcServer.AddApprover(context.Background(), req)
+
+		s.NoError(err)
+		s.Equal(expectedResponse, res)
+		s.appealService.AssertExpectations(s.T())
+	})
+
+	s.Run("should return error if appeal service returns error", func() {
+		testCases := []struct {
+			expectedError      error
+			expectedStatusCode codes.Code
+		}{
+			{fmt.Errorf("err message: %w", appeal.ErrAppealIDEmptyParam), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrApprovalIDEmptyParam), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrApproverEmail), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrUnableToAddApprover), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrAppealNotFound), codes.NotFound},
+			{fmt.Errorf("err message: %w", appeal.ErrApprovalNotFound), codes.NotFound},
+			{errors.New("unexpected error"), codes.Internal},
+		}
+
+		for _, tc := range testCases {
+			s.Run(fmt.Sprintf("should return %v error code if appeal service returns %q", tc.expectedStatusCode, tc.expectedError), func() {
+				s.appealService.EXPECT().AddApprover(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, tc.expectedError).Once()
+
+				req := &guardianv1beta1.AddApproverRequest{}
+				res, err := s.grpcServer.AddApprover(context.Background(), req)
+
+				s.Equal(tc.expectedStatusCode, status.Code(err))
+				s.Nil(res)
+				s.appealService.AssertExpectations(s.T())
+			})
+		}
+	})
+
+	s.Run("should return error if there's an error when parsing appeal", func() {
+		expectedAppeal := &domain.Appeal{
+			Creator: map[string]interface{}{
+				"foo": make(chan int), // invalid json
+			},
+		}
+		s.appealService.EXPECT().AddApprover(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(expectedAppeal, nil).Once()
+
+		req := &guardianv1beta1.AddApproverRequest{}
+		res, err := s.grpcServer.AddApprover(context.Background(), req)
+
+		s.Equal(codes.Internal, status.Code(err))
+		s.Nil(res)
+		s.appealService.AssertExpectations(s.T())
+	})
+}
+
+func (s *GrpcHandlersSuite) TestDeleteApprover() {
+	s.Run("should return appeal details on success", func() {
+		s.setup()
+		timeNow := time.Now()
+
+		appealID := uuid.New().String()
+		approvalID := uuid.New().String()
+		email := "user@example.com"
+		expectedAppeal := &domain.Appeal{
+			ID:            appealID,
+			ResourceID:    uuid.New().String(),
+			PolicyID:      "test-policy-id",
+			PolicyVersion: 1,
+			Status:        domain.AppealStatusPending,
+			AccountID:     "test-account-id",
+			AccountType:   "test-account-type",
+			CreatedBy:     "test-created-by",
+			Role:          "test-role",
+			Options: &domain.AppealOptions{
+				Duration: "24h",
+			},
+			Resource: &domain.Resource{},
+			Approvals: []*domain.Approval{
+				{
+					ID:        approvalID,
+					Name:      "test-name",
+					Status:    domain.ApprovalStatusPending,
+					Approvers: []string{"approver1@example.com"},
+					CreatedAt: timeNow,
+					UpdatedAt: timeNow,
+				},
+			},
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		}
+		s.appealService.EXPECT().DeleteApprover(mock.AnythingOfType("*context.emptyCtx"), appealID, approvalID, email).Return(expectedAppeal, nil).Once()
+		expectedResponse := &guardianv1beta1.DeleteApproverResponse{
+			Appeal: &guardianv1beta1.Appeal{
+				Id:            expectedAppeal.ID,
+				ResourceId:    expectedAppeal.ResourceID,
+				PolicyId:      expectedAppeal.PolicyID,
+				PolicyVersion: uint32(expectedAppeal.PolicyVersion),
+				Status:        expectedAppeal.Status,
+				AccountId:     expectedAppeal.AccountID,
+				Role:          expectedAppeal.Role,
+				Options: &guardianv1beta1.AppealOptions{
+					Duration: expectedAppeal.Options.Duration,
+				},
+				Resource:    &guardianv1beta1.Resource{},
+				AccountType: expectedAppeal.AccountType,
+				CreatedBy:   expectedAppeal.CreatedBy,
+				Approvals: []*guardianv1beta1.Approval{
+					{
+						Id:        expectedAppeal.Approvals[0].ID,
+						Name:      expectedAppeal.Approvals[0].Name,
+						Status:    expectedAppeal.Approvals[0].Status,
+						Approvers: expectedAppeal.Approvals[0].Approvers,
+						CreatedAt: timestamppb.New(timeNow),
+						UpdatedAt: timestamppb.New(timeNow),
+					},
+				},
+				CreatedAt: timestamppb.New(timeNow),
+				UpdatedAt: timestamppb.New(timeNow),
+			},
+		}
+
+		req := &guardianv1beta1.DeleteApproverRequest{
+			AppealId:   appealID,
+			ApprovalId: approvalID,
+			Email:      email,
+		}
+		res, err := s.grpcServer.DeleteApprover(context.Background(), req)
+
+		s.NoError(err)
+		s.Equal(expectedResponse, res)
+		s.appealService.AssertExpectations(s.T())
+	})
+
+	s.Run("should return error if appeal service returns error", func() {
+		testCases := []struct {
+			expectedError      error
+			expectedStatusCode codes.Code
+		}{
+			{fmt.Errorf("err message: %w", appeal.ErrAppealIDEmptyParam), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrApprovalIDEmptyParam), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrApproverEmail), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrUnableToDeleteApprover), codes.InvalidArgument},
+			{fmt.Errorf("err message: %w", appeal.ErrAppealNotFound), codes.NotFound},
+			{fmt.Errorf("err message: %w", appeal.ErrApprovalNotFound), codes.NotFound},
+			{errors.New("unexpected error"), codes.Internal},
+		}
+
+		for _, tc := range testCases {
+			s.Run(fmt.Sprintf("should return %v error code if appeal service returns %q", tc.expectedStatusCode, tc.expectedError), func() {
+				s.appealService.EXPECT().DeleteApprover(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, tc.expectedError).Once()
+
+				req := &guardianv1beta1.DeleteApproverRequest{}
+				res, err := s.grpcServer.DeleteApprover(context.Background(), req)
+
+				s.Equal(tc.expectedStatusCode, status.Code(err))
+				s.Nil(res)
+				s.appealService.AssertExpectations(s.T())
+			})
+		}
+	})
+
+	s.Run("should return error if there's an error when parsing appeal", func() {
+		expectedAppeal := &domain.Appeal{
+			Creator: map[string]interface{}{
+				"foo": make(chan int), // invalid json
+			},
+		}
+		s.appealService.EXPECT().DeleteApprover(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(expectedAppeal, nil).Once()
+
+		req := &guardianv1beta1.DeleteApproverRequest{}
+		res, err := s.grpcServer.DeleteApprover(context.Background(), req)
+
+		s.Equal(codes.Internal, status.Code(err))
+		s.Nil(res)
+		s.appealService.AssertExpectations(s.T())
 	})
 }

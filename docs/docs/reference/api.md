@@ -22,7 +22,7 @@ Policies can be created by calling with a **`POST`** Method on **`{{HOST}}/api/v
 | 200     | A successful response         | [Policy](./policy.md#policy-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/policies' \
@@ -75,7 +75,7 @@ Policies can be updated by using the **`PUT`** Method on **`{{HOST}}/api/v1beta1
 | 200     | A successful response.        | [Policy](./policy.md#policy-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/policies/{{policy_id}}' \
@@ -114,7 +114,7 @@ To get the list of all the policies created by the user, use the ** `GET` ** Met
 | 200     | A successful response.        | [[Policy]](./policy.md#policy-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)          |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/policies'
@@ -138,7 +138,7 @@ Viewing a policy can be done by the ** `GET`** Method on **`{{HOST}}/api/v1beta1
 | 200     | A successful response.        | [Policy](./policy.md#policy-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/policies/{{policy_id}}/versions/{{policy_version}}'
@@ -167,7 +167,7 @@ Providers can be created by calling to **`POST`** Method **`{{HOST}}/api/v1beta1
 | 200     | A successful response.        | [ProviderResponse](#providerresponse) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)               |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/providers' \
@@ -258,7 +258,7 @@ Providers can be updated by calling to **`PUT`** Method **`{HOST}}/api/v1beta1/p
 | 200     | A successful response.        | [ProviderResponse](#providerresponse) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)               |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/providers/{{provider_id}}' \
@@ -281,7 +281,7 @@ To get the list of all the providers avaliable, call the **`GET`** Method on **`
 | 200     | A successful response.        | [[ProviderResponse]](#providerresponse) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)                 |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/providers'
@@ -304,7 +304,7 @@ To see the details of a particular provider by id, call the **`GET`** Method on 
 | 200     | A successful response.        | [ProviderResponse](#providerresponse) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)               |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/providers/{{provider_id}}'
@@ -345,7 +345,7 @@ Listing roles can be done by calling to **`GET`** Method **`{{HOST}}/api/v1beta1
 | 200     | A successful response.        | [[Role]](./provider.md#role) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)      |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/providers/{{provider_id}}/resources/{{resource_type}}/roles'
@@ -378,7 +378,7 @@ To get the list of all the resources availiable, call the **`GET`** Method on **
 | 200     | A successful response.        | [[Resource]](./resource.md#resource-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)                |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/resources'
@@ -401,7 +401,7 @@ To see the details of a particular resource by id, call the **`GET`** Method on 
 | 200     | A successful response.        | [Resource](./resource.md#resource-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)              |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request GET '{{HOST}}/api/v1beta1/resources/{{resource_id}}'
@@ -427,7 +427,7 @@ Update a resource can be done by calling to **`PUT`** Method **`{{HOST}}/api/v1b
 | 200     | A successful response.        | [Resource](./resource.md#resource-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)              |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/resources/{{resource_id}}' \
@@ -481,7 +481,7 @@ Appeals can be created by calling the **`POST`** Method on **`{{HOST}}/api/v1bet
 | 200     | A successful response.        | [Appeal](./appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
 
-** Here is an example below: **
+**Here is an example below:**
 
 ```bash
 $ curl --request POST '{{HOST}}/api/v1beta1/appeals' \
@@ -505,17 +505,18 @@ The request parameters associated with this is API are as follows:
 
 ##### Parameters
 
-| Name           | Located in | Description | Required | Type   |
-| -------------- | ---------- | ----------- | -------- | -------- |
-| account_id     | query      |             | No | string   |
-| statuses       | query      |             | No | [string] |
-| role           | query      |             | No | string   |
-| provider_types | query      |             | No | [string] |
-| provider_urns  | query      |             | No | [string] |
-| resource_types | query      |             | No | [string] |
-| resource_urns  | query      |             | No | [string] |
-| order_by       | query      |             | No | [string] |
-| created_by     | query      |             | No | string   |
+| Name           | Located in | Description                             | Required | Type     |
+|----------------| ---------- |-----------------------------------------| -------- |----------|
+| account_id     | query      | this will be depcreate use `account_ids` | No | string   |
+| account_ids    | query      |                                         | No | [string] |
+| statuses       | query      |                                         | No | [string] |
+| role           | query      |                                         | No | string   |
+| provider_types | query      |                                         | No | [string] |
+| provider_urns  | query      |                                         | No | [string] |
+| resource_types | query      |                                         | No | [string] |
+| resource_urns  | query      |                                         | No | [string] |
+| order_by       | query      |                                         | No | [string] |
+| created_by     | query      |                                         | No | string   |
 
 ##### Responses
 
@@ -605,10 +606,45 @@ Appeals can be canceled by calling the **`PUT`** Method on **`{{HOST}}/api/v1bet
 | 200     | A successful response.        | [Appeal](./appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
 
+**Here is an example below:**
+
+```bash
+$ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
+```
+
+### Bulk Revoke Access
+
+Bulk revoke of active resource-accesses based on parameters by calling the **`POST`** Method on **`{{HOST}}/api/v1beta1/appeals/revoke`** using the following parameters:
+
+##### Parameters
+
+| Name           | Located in | Description                                                        | Required | Type   |
+|----------------| ---------- |--------------------------------------------------------------------| -------- |--------|
+| account_ids    | query      |                                                                    | No | [string] |
+| provider_types | query      |                                                                    | No | [string] |
+| provider_urns  | query      |                                                                    | No | [string] |
+| resource_types | query      |                                                                    | No | [string] |
+| resource_urns  | query      |                                                                    | No | [string] |
+| reason         | query      |                                                                    | No | string |
+| X-Auth-Email   | header     | Contains the user email who is requesting to bulk revoke of access | Yes         | string   |
+##### Responses
+
+| Code    | Description                   | Type                             |
+| ------- | ----------------------------- |----------------------------------|
+| 200     | A successful response.        | [[]Appeal](./appeal.md#appeal-1) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus)          |
+
 ** Here is an example below: **
 
 ```bash
 $ curl --request PUT '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/cancel'
+$ curl --request POST 'localhost:3000/api/v1beta1/appeals/revoke' 
+--header 'X-Auth-Email: abc@xyz.com' 
+--header 'Content-Type: application/json' 
+--data-raw '{
+    "account_id":["user1.@domain1.com", "user2.@domain1.com"],
+    "reason": "Bulk revoke"
+}'
 ```
 
 ### List Approvals
@@ -671,7 +707,7 @@ Appeals can be approved/rejected by calling the **`POST`** Method on **`{{HOST}}
 | 200     | A successful response.        | [Appeal](./appeal.md#appeal-1) |
 | default | An unexpected error response. | [rpcStatus](#rpcstatus)        |
 
-** Here is an example below: **
+**Here is an example below:**
 
 #### Approve an Appeal
 
@@ -695,6 +731,52 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
     "reason": "{{rejection_message}}"
 }'
 ```
+
+### Add Approver
+Approver can be added by calling `POST /api/v1beta1/appeals/:appeal_id/approvals/:approval_id/approvers` endpoint with the following parameters:
+
+##### Parameters
+| Name | Located in | Description | Required | Type |
+| --- | --- | --- | --- | --- |
+| appeal_id | path | Unique identifier of the appeal | Yes | string(UUID) |
+| approval_id | path | Unique identifier or name of the approval | Yes | string(UUID) or string |
+| email | body | New approver email | Yes | [Object(AddApproverRequest)](#addapproverrequest) |
+
+**Example:**
+```bash
+$ curl --location --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{approval_id}}/approvers' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email": "new.approver@example.com"
+}'
+```
+
+##### Responses
+| Code | Description | Type |
+| --- | --- | --- |
+| 200 | A successful response. | [AddApproverResponse](#addapproverresponse) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
+
+### Delete Approver
+Existing approver can be removed by calling `DELETE /api/v1beta1/appeals/:appeal_id/approvals/:approval_id/approvers/:email` endpoint with the following parameters:
+
+##### Parameters
+| Name | Located in | Description | Required | Type |
+| --- | --- | --- | --- | --- |
+| appeal_id | path | Unique identifier of the appeal | Yes | string(UUID) |
+| approval_id | path | Unique identifier or name of the approval | Yes | string(UUID) or string |
+| email | path | To be deleted approver email | Yes | string |
+
+**Example:**
+```bash
+$ curl --location --request DELETE '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{approval_id}}/approvers/{{email}}'
+```
+
+##### Responses
+| Code | Description | Type |
+| --- | --- | --- |
+| 200 | A successful response. | [DeleteApproverResponse](#deleteapproverresponse) |
+| default | An unexpected error response. | [rpcStatus](#rpcstatus) |
 
 ## Models
 
@@ -754,3 +836,18 @@ $ curl --request POST '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/approvals/{{ap
 | ------ | ------ | ------------------------------------------------------------------------ |
 | action | string | Can be **`Approve`** or **`Reject`** the Appeal                                  |
 | reason | string | In case an appeal is rejected, the reason is to be updated in this field |
+
+#### AddApproverRequest
+| Name | Type | Description |
+| --- | --- | --- |
+| email | string | Email address of the new approver |
+
+#### AddApproverResponse
+| Name | Type | Description |
+| --- | --- | --- |
+| appeal | [Object(Appeal)](./appeal.md#appeal-1) | Appeal object |
+
+#### DeleteApproverResponse
+| Name | Type | Description |
+| --- | --- | --- |
+| appeal | [Object(Appeal)](./appeal.md#appeal-1) | Appeal object |

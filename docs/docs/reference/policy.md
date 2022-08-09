@@ -11,12 +11,20 @@ steps:
     when: $appeal.resource.details.is_pii
     strategy: manual
     approvers:
-    - $appeal.creator.userManager
+      - $appeal.creator.userManager
   - name: admin_approval
     description: approval from dataset admin/owner
     strategy: manual
     approvers:
-    - $appeal.resource.details.owner
+      - $appeal.resource.details.owner
+appeal_config:
+  duration_options:
+    - name: 1 Day
+      value: 24h
+    - name: 3 Days
+      value: 72h
+    - name: Permanent
+      value: 0h
 iam:
   provider: http
   config:
@@ -32,22 +40,24 @@ requirements:
       provider_type: bigquery
       role: writer
     appeals:
-    - resource:
-        id: 99
-      role: roles/bigquery.jobUser
-      policy:
-        id: auto_approval
-        version: 1
+      - resource:
+          id: 99
+        role: roles/bigquery.jobUser
+        policy:
+          id: auto_approval
+          version: 1
 ```
+
 ### `Policy`
 
-| Field | Type | Description | Required |
-| :----- | :---- | :------ | :------ |
-| `id` | `string` |Policy unique identifier | YES |
-| `version` | `uint`| Auto increment value. Keeping the | NO |
-| `steps` | [`[]object(Step)`](#step) |Sequence of approval steps | YES |
-| `iam` | [`object(IAM)`](#iam) |Identity manager configuration for client and identity/creator schema | NO |
-| `requirements` | [`[]object(Requirement)`](#requirement) |Additional appeals  |  YES |
+| Field           | Type                                    | Description                                                           | Required |
+|:----------------|:----------------------------------------|:----------------------------------------------------------------------|:---------|
+| `id`            | `string`                                | Policy unique identifier                                              | YES      |
+| `version`       | `uint`                                  | Auto increment value. Keeping the                                     | NO       |
+| `steps`         | [`[]object(Step)`](#step)               | Sequence of approval steps                                            | YES      |
+| `appeal_config` | `object(PolicyAppealConfig)`            | appeal configuration options                                          | NO       |
+| `iam`           | [`object(IAM)`](#iam)                   | Identity manager configuration for client and identity/creator schema | NO       |
+| `requirements`  | [`[]object(Requirement)`](#requirement) | Additional appeals                                                    | YES      |
 
 ### `Step`
 
@@ -61,6 +71,19 @@ requirements:
 | `approvers` | `[]string` | List of email or [`Expression`](#expression) string. The `Expression` is expected to return an email address or list of email addresses. | YES if `strategy` is `manual` | |
 | `approve_if` | [`Expression`](#expression) | Determines the automatic resolution of current step when `strategy` is `auto` | YES if `strategy` is `auto` |
 | `allow_failed` | `boolean` | If `true`, and current step is rejected, it will mark the appeal status as skipped instead of rejected | NO |
+
+### `PolicyAppealConfig`
+
+| Field            | Type                      | Description              | Required |
+|:-----------------|:--------------------------|:-------------------------|:---------|
+| duration_options | []object(DurationOptions) | list of duration options | NO       | 
+
+### `DurationOptions`
+
+| Field | Type   | Description                                                                                                                                                                                                                              | Required |
+|:------|:-------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------|
+| name  | string | name of duration                                                                                                                                                                                                                         | YES      |
+| value | string | actual value of duration such as `24h`, `72h`. value will be `0h` in case of permanent duration. <br/> Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". Reference: [ParseDuration](https://pkg.go.dev/time#ParseDuration) | YES      |
 
 ### `IAM`
 
@@ -94,13 +117,15 @@ requirements:
 
 ### `Expression`
 
-Expression is an evaluatable statement intented to make the policy highly flexible. Guardian uses https://github.com/antonmedv/expr to parse expressions. There's also some accessible variables specific to Guardian use cases:
+Expression is an evaluatable statement intented to make the policy highly flexible. Guardian
+uses https://github.com/antonmedv/expr to parse expressions. There's also some accessible variables specific to Guardian
+use cases:
 
 #### Variables
 
 1. `$appeal`: [`Appeal`](appeal.md#appeal-1)
 
-    Usage example:
+   Usage example:
     * `$appeal.resource.id` =&gt; `1`
     * `$appeal.resource.details.owners` =&gt; `["owner@email.com", "another.owner@email.com"]`
     * `$appeal.resource.labels.key` =&gt; `"value"`

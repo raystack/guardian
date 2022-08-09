@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/providers/grafana"
@@ -314,80 +313,6 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
-	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission grafana.Permission
-		invalidPermissionConfig := map[string]interface{}{}
-		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
-
-		testcases := []struct {
-			resourceConfigs []*domain.ResourceConfig
-			appeal          *domain.Appeal
-			expectedError   error
-		}{
-			{
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-				},
-				expectedError: grafana.ErrInvalidResourceType,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "not-test-role",
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: grafana.ErrInvalidRole,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									invalidPermissionConfig,
-								},
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: invalidPermissionConfigError,
-			},
-		}
-
-		for _, tc := range testcases {
-			crypto := new(mocks.Crypto)
-			p := grafana.NewProvider("", crypto)
-
-			providerConfig := &domain.ProviderConfig{
-				Resources: tc.resourceConfigs,
-			}
-
-			actualError := p.GrantAccess(providerConfig, tc.appeal)
-			assert.EqualError(t, actualError, tc.expectedError.Error())
-		}
-	})
-
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := grafana.NewProvider("", crypto)
@@ -529,7 +454,8 @@ func TestGrantAccess(t *testing.T) {
 					URN:  "999",
 					Name: "test-dashboard",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.GrantAccess(pc, a)
@@ -592,86 +518,6 @@ func TestGrantAccess(t *testing.T) {
 }
 
 func TestRevokeAccess(t *testing.T) {
-	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission grafana.Permission
-		invalidPermissionConfig := map[string]interface{}{}
-		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
-
-		testcases := []struct {
-			name            string
-			resourceConfigs []*domain.ResourceConfig
-			appeal          *domain.Appeal
-			expectedError   error
-		}{
-			{
-				name: "invalid resource type",
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-				},
-				expectedError: grafana.ErrInvalidResourceType,
-			},
-			{
-				name: "invalid role",
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "not-test-role",
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: grafana.ErrInvalidRole,
-			},
-			{
-				name: "invalid permission config",
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									invalidPermissionConfig,
-								},
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: invalidPermissionConfigError,
-			},
-		}
-
-		for _, tc := range testcases {
-			t.Run(tc.name, func(t *testing.T) {
-				crypto := new(mocks.Crypto)
-				p := grafana.NewProvider("", crypto)
-
-				providerConfig := &domain.ProviderConfig{
-					Resources: tc.resourceConfigs,
-				}
-
-				actualError := p.RevokeAccess(providerConfig, tc.appeal)
-				assert.EqualError(t, actualError, tc.expectedError.Error())
-			})
-		}
-	})
-
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := grafana.NewProvider("", crypto)
@@ -777,7 +623,7 @@ func TestRevokeAccess(t *testing.T) {
 	})
 
 	t.Run("given dashboard resource", func(t *testing.T) {
-		t.Run("should return error if there is an error in granting dashboard access", func(t *testing.T) {
+		t.Run("should return error if there is an error in revoking dashboard access", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			expectedError := errors.New("client error")
 			crypto := new(mocks.Crypto)
@@ -813,7 +659,8 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "999",
 					Name: "test-dashboard",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.RevokeAccess(pc, a)
@@ -822,7 +669,7 @@ func TestRevokeAccess(t *testing.T) {
 		})
 	})
 
-	t.Run("should return nil error if granting access is successful", func(t *testing.T) {
+	t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Crypto)
 		client := new(mocks.GrafanaClient)
@@ -863,10 +710,11 @@ func TestRevokeAccess(t *testing.T) {
 				URN:  "999",
 				Name: "test-dashboard",
 			},
-			Role:       "viewer",
-			AccountID:  expectedUser,
-			ResourceID: "999",
-			ID:         "999",
+			Role:        "viewer",
+			AccountID:   expectedUser,
+			ResourceID:  "999",
+			ID:          "999",
+			Permissions: []string{"view"},
 		}
 
 		actualError := p.RevokeAccess(pc, a)

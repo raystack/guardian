@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS "approvers";
+DROP TABLE IF EXISTS "approvals";
+DROP TABLE IF EXISTS "appeals";

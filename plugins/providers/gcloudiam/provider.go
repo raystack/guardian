@@ -162,6 +162,11 @@ func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*
 	return provider.GetRoles(pc, resourceType)
 }
 
+func (p *Provider) GetPermissions(_pc *domain.ProviderConfig, _resourceType, role string) ([]interface{}, error) {
+	// TODO: validate if role is a valid gcloud iam role
+	return []interface{}{role}, nil
+}
+
 func (p *Provider) GetAccountTypes() []string {
 	return []string{
 		AccountTypeUser,

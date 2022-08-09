@@ -79,10 +79,7 @@ func (m *Approval) ToDomain() (*domain.Approval, error) {
 	var approvers []string
 	if m.Approvers != nil {
 		for _, a := range m.Approvers {
-			approver, err := a.ToDomain()
-			if err != nil {
-				return nil, err
-			}
+			approver := a.ToDomain()
 			approvers = append(approvers, approver.Email)
 		}
 	}

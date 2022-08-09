@@ -117,6 +117,12 @@ func (s *GrpcHandlersSuite) TestGetPolicy() {
 				Config:   map[string]interface{}{"foo": "bar"},
 				Schema:   map[string]string{"foo": "bar"},
 			},
+			AppealConfig: &domain.PolicyAppealConfig{
+				DurationOptions: []domain.AppealDurationOption{
+					{Name: "1 Day", Value: "24h"},
+					{Name: "3 Days", Value: "72h"},
+				},
+			},
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		}
@@ -159,6 +165,12 @@ func (s *GrpcHandlersSuite) TestGetPolicy() {
 					Provider: "slack",
 					Config:   expectedIAMConfig,
 					Schema:   dummyPolicy.IAM.Schema,
+				},
+				Appeal: &guardianv1beta1.PolicyAppealConfig{
+					DurationOptions: []*guardianv1beta1.PolicyAppealConfig_DurationOptions{
+						{Name: "1 Day", Value: "24h"},
+						{Name: "3 Days", Value: "72h"},
+					},
 				},
 				CreatedAt: timestamppb.New(timeNow),
 				UpdatedAt: timestamppb.New(timeNow),
@@ -273,6 +285,12 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 				Config:   map[string]interface{}{"foo": "bar"},
 				Schema:   map[string]string{"foo": "bar"},
 			},
+			AppealConfig: &domain.PolicyAppealConfig{
+				DurationOptions: []domain.AppealDurationOption{
+					{Name: "1 Day", Value: "24h"},
+					{Name: "3 Days", Value: "72h"},
+				},
+			},
 		}
 		expectedVersion := uint(1)
 		expectedIAMConfig, err := structpb.NewValue(expectedPolicy.IAM.Config)
@@ -317,6 +335,12 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 					Provider: "slack",
 					Config:   expectedIAMConfig,
 					Schema:   expectedPolicy.IAM.Schema,
+				},
+				Appeal: &guardianv1beta1.PolicyAppealConfig{
+					DurationOptions: []*guardianv1beta1.PolicyAppealConfig_DurationOptions{
+						{Name: "1 Day", Value: "24h"},
+						{Name: "3 Days", Value: "72h"},
+					},
 				},
 				CreatedAt: timestamppb.New(timeNow),
 				UpdatedAt: timestamppb.New(timeNow),
@@ -368,6 +392,12 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 					Provider: "slack",
 					Config:   expectedIAMConfig,
 					Schema:   expectedPolicy.IAM.Schema,
+				},
+				Appeal: &guardianv1beta1.PolicyAppealConfig{
+					DurationOptions: []*guardianv1beta1.PolicyAppealConfig_DurationOptions{
+						{Name: "1 Day", Value: "24h"},
+						{Name: "3 Days", Value: "72h"},
+					},
 				},
 			},
 		}
@@ -455,6 +485,12 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 				Config:   map[string]interface{}{"foo": "bar"},
 				Schema:   map[string]string{"foo": "bar"},
 			},
+			AppealConfig: &domain.PolicyAppealConfig{
+				DurationOptions: []domain.AppealDurationOption{
+					{Name: "1 Day", Value: "24h"},
+					{Name: "3 Days", Value: "72h"},
+				},
+			},
 		}
 		expectedVersion := uint(1)
 		expectedIAMConfig, err := structpb.NewValue(expectedPolicy.IAM.Config)
@@ -496,6 +532,12 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 					Provider: "slack",
 					Config:   expectedIAMConfig,
 					Schema:   expectedPolicy.IAM.Schema,
+				},
+				Appeal: &guardianv1beta1.PolicyAppealConfig{
+					DurationOptions: []*guardianv1beta1.PolicyAppealConfig_DurationOptions{
+						{Name: "1 Day", Value: "24h"},
+						{Name: "3 Days", Value: "72h"},
+					},
 				},
 				CreatedAt: timestamppb.New(timeNow),
 				UpdatedAt: timestamppb.New(timeNow),
@@ -544,6 +586,12 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 					Provider: "slack",
 					Config:   expectedIAMConfig,
 					Schema:   expectedPolicy.IAM.Schema,
+				},
+				Appeal: &guardianv1beta1.PolicyAppealConfig{
+					DurationOptions: []*guardianv1beta1.PolicyAppealConfig_DurationOptions{
+						{Name: "1 Day", Value: "24h"},
+						{Name: "3 Days", Value: "72h"},
+					},
 				},
 			},
 		}

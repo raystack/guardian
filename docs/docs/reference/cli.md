@@ -642,3 +642,16 @@ Cancel an appeal. **Appeal creator can cancel their appeal while it's status is 
 ```
 $ guardian appeal cancel <appeal-id>
 ```
+
+### Add Approver
+Add a new approver into an existing approval
+
+```sh
+$ guardian appeal add-approver --appeal-id=<appeal-id> --approval-id=<approval-id> --email=<new-approver-email>
+```
+
+### Delete Approver
+Delete existing approver from an approval step
+```sh
+$ guardian appeal delete-approver --appeal-id=<appeal-id> --approval-id=<approval-id> --email=<new-approver-email>
+```

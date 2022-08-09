@@ -2,6 +2,7 @@ package v1beta1
 
 import (
 	"context"
+	"errors"
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/core/appeal"
@@ -77,8 +78,8 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 			return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %v", err)
 		case appeal.ErrActionForbidden:
 			return nil, status.Error(codes.PermissionDenied, "permission denied")
-		case appeal.ErrApprovalNameNotFound:
-			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
+		case appeal.ErrApprovalNotFound:
+			return nil, status.Errorf(codes.NotFound, "approval not found: %v", id)
 		default:
 			return nil, status.Errorf(codes.Internal, "failed to update approval: %v", err)
 		}
@@ -90,6 +91,56 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 	}
 
 	return &guardianv1beta1.UpdateApprovalResponse{
+		Appeal: appealProto,
+	}, nil
+}
+
+func (s *GRPCServer) AddApprover(ctx context.Context, req *guardianv1beta1.AddApproverRequest) (*guardianv1beta1.AddApproverResponse, error) {
+	a, err := s.appealService.AddApprover(ctx, req.GetAppealId(), req.GetApprovalId(), req.GetEmail())
+	switch {
+	case errors.Is(err, appeal.ErrAppealIDEmptyParam),
+		errors.Is(err, appeal.ErrApprovalIDEmptyParam),
+		errors.Is(err, appeal.ErrApproverEmail),
+		errors.Is(err, appeal.ErrUnableToAddApprover):
+		return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %s", err)
+	case errors.Is(err, appeal.ErrAppealNotFound),
+		errors.Is(err, appeal.ErrApprovalNotFound):
+		return nil, status.Errorf(codes.NotFound, "resource not found: %s", err)
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to add approver: %s", err)
+	}
+
+	appealProto, err := s.adapter.ToAppealProto(a)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %s", err)
+	}
+
+	return &guardianv1beta1.AddApproverResponse{
+		Appeal: appealProto,
+	}, nil
+}
+
+func (s *GRPCServer) DeleteApprover(ctx context.Context, req *guardianv1beta1.DeleteApproverRequest) (*guardianv1beta1.DeleteApproverResponse, error) {
+	a, err := s.appealService.DeleteApprover(ctx, req.GetAppealId(), req.GetApprovalId(), req.GetEmail())
+	switch {
+	case errors.Is(err, appeal.ErrAppealIDEmptyParam),
+		errors.Is(err, appeal.ErrApprovalIDEmptyParam),
+		errors.Is(err, appeal.ErrApproverEmail),
+		errors.Is(err, appeal.ErrUnableToDeleteApprover):
+		return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %s", err)
+	case errors.Is(err, appeal.ErrAppealNotFound),
+		errors.Is(err, appeal.ErrApprovalNotFound):
+		return nil, status.Errorf(codes.NotFound, "resource not found: %s", err)
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to delete approver: %s", err)
+	}
+
+	appealProto, err := s.adapter.ToAppealProto(a)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %s", err)
+	}
+
+	return &guardianv1beta1.DeleteApproverResponse{
 		Appeal: appealProto,
 	}, nil
 }

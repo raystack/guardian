@@ -28,6 +28,8 @@ type ProtoAdapter interface {
 	FromPolicyProto(*guardianv1beta1.Policy) *domain.Policy
 	ToPolicyProto(*domain.Policy) (*guardianv1beta1.Policy, error)
 
+	ToPolicyAppealConfigProto(policy *domain.Policy) *guardianv1beta1.PolicyAppealConfig
+
 	FromResourceProto(*guardianv1beta1.Resource) *domain.Resource
 	ToResourceProto(*domain.Resource) (*guardianv1beta1.Resource, error)
 
@@ -75,6 +77,9 @@ type appealService interface {
 	MakeAction(context.Context, domain.ApprovalAction) (*domain.Appeal, error)
 	Cancel(context.Context, string) (*domain.Appeal, error)
 	Revoke(ctx context.Context, id, actor, reason string) (*domain.Appeal, error)
+	BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsFilter, actor, reason string) ([]*domain.Appeal, error)
+	AddApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
+	DeleteApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
 }
 
 type approvalService interface {

@@ -6,7 +6,6 @@ import (
 
 	"github.com/odpf/salt/log"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
@@ -435,81 +434,6 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
-	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission metabase.Permission
-		invalidPermissionConfig := map[string]interface{}{}
-		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
-
-		testcases := []struct {
-			resourceConfigs []*domain.ResourceConfig
-			appeal          *domain.Appeal
-			expectedError   error
-		}{
-			{
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-				},
-				expectedError: metabase.ErrInvalidResourceType,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "not-test-role",
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: metabase.ErrInvalidRole,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									invalidPermissionConfig,
-								},
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: invalidPermissionConfigError,
-			},
-		}
-
-		for _, tc := range testcases {
-			crypto := new(mocks.Crypto)
-			logger := log.NewLogrus(log.LogrusWithLevel("info"))
-			p := metabase.NewProvider("", crypto, logger)
-
-			providerConfig := &domain.ProviderConfig{
-				Resources: tc.resourceConfigs,
-			}
-
-			actualError := p.GrantAccess(providerConfig, tc.appeal)
-			assert.EqualError(t, actualError, tc.expectedError.Error())
-		}
-	})
-
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
@@ -659,7 +583,8 @@ func TestGrantAccess(t *testing.T) {
 					URN:  "database:999",
 					Name: "test-database",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.GrantAccess(pc, a)
@@ -773,7 +698,8 @@ func TestGrantAccess(t *testing.T) {
 					URN:  "collection:999",
 					Name: "test-collection",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.GrantAccess(pc, a)
@@ -887,7 +813,8 @@ func TestGrantAccess(t *testing.T) {
 					URN:  "group:999",
 					Name: "test-group",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.GrantAccess(pc, a)
@@ -999,10 +926,11 @@ func TestGrantAccess(t *testing.T) {
 					URN:  "table:999.1000",
 					Name: "test-database",
 				},
-				Role:       "test-role",
-				AccountID:  expectedUser,
-				ResourceID: "999",
-				ID:         "999",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
+				AccountID:   expectedUser,
+				ResourceID:  "999",
+				ID:          "999",
 			}
 
 			actualError := p.GrantAccess(pc, a)
@@ -1061,10 +989,11 @@ func TestGrantAccess(t *testing.T) {
 					URN:  "table:999.1000",
 					Name: "test-table",
 				},
-				Role:       "viewer",
-				AccountID:  expectedUser,
-				ResourceID: "999",
-				ID:         "999",
+				Role:        "viewer",
+				Permissions: []string{expectedRole},
+				AccountID:   expectedUser,
+				ResourceID:  "999",
+				ID:          "999",
 			}
 
 			actualError := p.GrantAccess(pc, a)
@@ -1076,82 +1005,6 @@ func TestGrantAccess(t *testing.T) {
 }
 
 func TestRevokeAccess(t *testing.T) {
-	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission metabase.Permission
-		invalidPermissionConfig := map[string]interface{}{}
-		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
-
-		testcases := []struct {
-			name            string
-			resourceConfigs []*domain.ResourceConfig
-			appeal          *domain.Appeal
-			expectedError   error
-		}{
-			{
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-				},
-				expectedError: metabase.ErrInvalidResourceType,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "not-test-role",
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: metabase.ErrInvalidRole,
-			},
-			{
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									invalidPermissionConfig,
-								},
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: invalidPermissionConfigError,
-			},
-		}
-
-		for _, tc := range testcases {
-			crypto := new(mocks.Crypto)
-			logger := log.NewLogrus(log.LogrusWithLevel("info"))
-			p := metabase.NewProvider("", crypto, logger)
-
-			providerConfig := &domain.ProviderConfig{
-				Resources: tc.resourceConfigs,
-			}
-
-			actualError := p.RevokeAccess(providerConfig, tc.appeal)
-			assert.EqualError(t, actualError, tc.expectedError.Error())
-		}
-	})
-
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
@@ -1295,7 +1148,8 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "database:999",
 					Name: "test-database",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.RevokeAccess(pc, a)
@@ -1345,10 +1199,11 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "database:999",
 					Name: "test-database",
 				},
-				Role:       "viewer",
-				AccountID:  expectedUser,
-				ResourceID: "999",
-				ID:         "999",
+				Role:        "viewer",
+				Permissions: []string{expectedRole},
+				AccountID:   expectedUser,
+				ResourceID:  "999",
+				ID:          "999",
 			}
 
 			actualError := p.RevokeAccess(pc, a)
@@ -1396,7 +1251,8 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "collection:999",
 					Name: "test-collection",
 				},
-				Role: "test-role",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
 			}
 
 			actualError := p.RevokeAccess(pc, a)
@@ -1447,10 +1303,11 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "collection:999",
 					Name: "test-collection",
 				},
-				Role:       "viewer",
-				AccountID:  expectedUser,
-				ResourceID: "999",
-				ID:         "999",
+				Role:        "viewer",
+				Permissions: []string{expectedRole},
+				AccountID:   expectedUser,
+				ResourceID:  "999",
+				ID:          "999",
 			}
 
 			actualError := p.RevokeAccess(pc, a)
@@ -1546,10 +1403,11 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "table:999.1000",
 					Name: "test-database",
 				},
-				Role:       "test-role",
-				AccountID:  expectedUser,
-				ResourceID: "999",
-				ID:         "999",
+				Role:        "test-role",
+				Permissions: []string{"test-permission-config"},
+				AccountID:   expectedUser,
+				ResourceID:  "999",
+				ID:          "999",
 			}
 
 			actualError := p.RevokeAccess(pc, a)
@@ -1576,13 +1434,6 @@ func TestRevokeAccess(t *testing.T) {
 			}
 			client.On("RevokeTableAccess", expectedTable, expectedUser, expectedRole, mock.Anything).Return(nil).Once()
 
-			// d := []*metabase.GroupResource{{Urn: "database:1", Permissions: []string{"read", "write"}}}
-			// c := []*metabase.GroupResource{{Urn: "collection:1", Permissions: []string{"read", "write"}}}
-			// group := metabase.Group{Name: "All Users", DatabaseResources: d, CollectionResources: c}
-			// client.On("GetGroups").Return([]*metabase.Group{&group},
-			// 	metabase.ResourceGroupDetails{"database:1": {{"urn": "group:1", "permissions": []string{"read", "write"}}}},
-			// 	metabase.ResourceGroupDetails{"collection:1": {{"urn": "group:1", "permissions": []string{"write"}}}}, nil).Once()
-
 			pc := &domain.ProviderConfig{
 				Credentials: metabase.Credentials{
 					Host:     "localhost",
@@ -1608,10 +1459,11 @@ func TestRevokeAccess(t *testing.T) {
 					URN:  "table:999.1000",
 					Name: "test-table",
 				},
-				Role:       "viewer",
-				AccountID:  expectedUser,
-				ResourceID: "999",
-				ID:         "999",
+				Role:        "viewer",
+				Permissions: []string{expectedRole},
+				AccountID:   expectedUser,
+				ResourceID:  "999",
+				ID:          "999",
 			}
 
 			actualError := p.RevokeAccess(pc, a)

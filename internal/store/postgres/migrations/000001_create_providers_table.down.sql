@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS "providers";
+
+DROP EXTENSION IF EXISTS "uuid-ossp";

@@ -37,6 +37,7 @@ type Appeal struct {
 	CreatedBy     string                 `json:"created_by" yaml:"created_by"`
 	Creator       interface{}            `json:"creator" yaml:"creator"`
 	Role          string                 `json:"role" yaml:"role"`
+	Permissions   []string               `json:"permissions" yaml:"permissions"`
 	Options       *AppealOptions         `json:"options" yaml:"options"`
 	Details       map[string]interface{} `json:"details" yaml:"details"`
 	Labels        map[string]string      `json:"labels" yaml:"labels"`
@@ -75,16 +76,22 @@ func (a *Appeal) Cancel() {
 func (a *Appeal) Activate() error {
 	a.Status = AppealStatusActive
 
-	if a.Options != nil && a.Options.Duration != "" {
-		duration, err := time.ParseDuration(a.Options.Duration)
-		if err != nil {
-			return err
-		}
-
-		expirationDate := time.Now().Add(duration)
-		a.Options.ExpirationDate = &expirationDate
+	if a.Options == nil || a.Options.Duration == "" {
+		return nil
 	}
 
+	duration, err := time.ParseDuration(a.Options.Duration)
+	if err != nil {
+		return err
+	}
+
+	// for permanent access duration is equal to zero
+	if duration == 0*time.Second {
+		return nil
+	}
+
+	expirationDate := time.Now().Add(duration)
+	a.Options.ExpirationDate = &expirationDate
 	return nil
 }
 
@@ -100,6 +107,15 @@ func (a *Appeal) SetDefaults() {
 	if a.AccountType == "" {
 		a.AccountType = DefaultAppealAccountType
 	}
+}
+
+func (a *Appeal) GetApproval(id string) *Approval {
+	for _, approval := range a.Approvals {
+		if approval.ID == id || approval.Name == id {
+			return approval
+		}
+	}
+	return nil
 }
 
 type ApprovalActionType string
@@ -120,6 +136,7 @@ type ApprovalAction struct {
 type ListAppealsFilter struct {
 	CreatedBy                 string    `mapstructure:"created_by" validate:"omitempty,required"`
 	AccountID                 string    `mapstructure:"account_id" validate:"omitempty,required"`
+	AccountIDs                []string  `mapstructure:"account_ids" validate:"omitempty,required"`
 	ResourceID                string    `mapstructure:"resource_id" validate:"omitempty,required"`
 	Role                      string    `mapstructure:"role" validate:"omitempty,required"`
 	Statuses                  []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
@@ -130,4 +147,12 @@ type ListAppealsFilter struct {
 	ResourceTypes             []string  `mapstructure:"resource_types" validate:"omitempty,min=1"`
 	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 	OrderBy                   []string  `mapstructure:"order_by" validate:"omitempty,min=1"`
+}
+
+type RevokeAppealsFilter struct {
+	AccountIDs    []string `mapstructure:"account_ids" validate:"omitempty,required"`
+	ProviderTypes []string `mapstructure:"provider_types" validate:"omitempty,min=1"`
+	ProviderURNs  []string `mapstructure:"provider_urns" validate:"omitempty,min=1"`
+	ResourceTypes []string `mapstructure:"resource_types" validate:"omitempty,min=1"`
+	ResourceURNs  []string `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 }

@@ -68,6 +68,25 @@ type Permission struct {
 	Type string `json:"type,omitempty" mapstructure:"type"`
 }
 
+func (p Permission) String() string {
+	str := p.Name
+	if p.Type != "" {
+		str += fmt.Sprintf("@%s", p.Type)
+	}
+	return str
+}
+
+func toPermission(s string) (p Permission) {
+	ss := strings.Split(s, "@")
+	if len(ss) > 0 {
+		p.Name = ss[0]
+	}
+	if len(ss) == 2 {
+		p.Type = ss[1]
+	}
+	return
+}
+
 type Config struct {
 	ProviderConfig *domain.ProviderConfig
 	valid          bool
