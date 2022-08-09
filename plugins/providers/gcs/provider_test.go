@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/providers/gcs"
 	"github.com/odpf/guardian/plugins/providers/gcs/mocks"
@@ -356,87 +355,6 @@ func TestGrantAccess(t *testing.T) {
 		}
 	})
 
-	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission gcs.Permission
-		invalidPermissionConfig := map[string]interface{}{}
-		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
-
-		testCases := []struct {
-			name            string
-			resourceConfigs []*domain.ResourceConfig
-			appeal          *domain.Appeal
-			expectedError   error
-		}{
-			{
-				name: "invalid resource type",
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-				},
-				expectedError: fmt.Errorf("error in getting permissions: %w", gcs.ErrInvalidResourceType),
-			},
-			{
-				name: "invalid role",
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "not-test-role",
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: fmt.Errorf("error in getting permissions: %w", gcs.ErrInvalidRole),
-			},
-			{
-				name: "invalid permissions config",
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									invalidPermissionConfig,
-								},
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: fmt.Errorf("error in getting permissions: %w", invalidPermissionConfigError),
-			},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				crypto := new(mocks.Crypto)
-				p := gcs.NewProvider("", crypto)
-
-				providerConfig := &domain.ProviderConfig{
-					Resources: tc.resourceConfigs,
-				}
-
-				actualError := p.GrantAccess(providerConfig, tc.appeal)
-				assert.EqualError(t, actualError, tc.expectedError.Error())
-			})
-		}
-	},
-	)
-
 	t.Run("should return error if error in decoding credentials", func(t *testing.T) {
 		p := initProvider()
 
@@ -511,6 +429,7 @@ func TestGrantAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
 		actualError := p.GrantAccess(pc, a)
@@ -561,6 +480,7 @@ func TestGrantAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
 		actualError := p.GrantAccess(pc, a)
@@ -618,6 +538,7 @@ func TestGrantAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
 		actualError := p.GrantAccess(pc, a)
@@ -712,87 +633,6 @@ func TestRevokeAccess(t *testing.T) {
 		}
 	})
 
-	t.Run("should return an error if there is an error in getting permissions", func(t *testing.T) {
-		var permission gcs.Permission
-		invalidPermissionConfig := map[string]interface{}{}
-		invalidPermissionConfigError := mapstructure.Decode(invalidPermissionConfig, &permission)
-
-		testCases := []struct {
-			name            string
-			resourceConfigs []*domain.ResourceConfig
-			appeal          *domain.Appeal
-			expectedError   error
-		}{
-			{
-				name: "invalid resource type",
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-				},
-				expectedError: fmt.Errorf("error in getting permissions: %w", gcs.ErrInvalidResourceType),
-			},
-			{
-				name: "invalid role",
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "not-test-role",
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: fmt.Errorf("error in getting permissions: %w", gcs.ErrInvalidRole),
-			},
-			{
-				name: "invalid permissions config",
-				resourceConfigs: []*domain.ResourceConfig{
-					{
-						Type: "test-type",
-						Roles: []*domain.Role{
-							{
-								ID: "test-role",
-								Permissions: []interface{}{
-									invalidPermissionConfig,
-								},
-							},
-						},
-					},
-				},
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Type: "test-type",
-					},
-					Role: "test-role",
-				},
-				expectedError: fmt.Errorf("error in getting permissions: %w", invalidPermissionConfigError),
-			},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				crypto := new(mocks.Crypto)
-				p := gcs.NewProvider("", crypto)
-
-				providerConfig := &domain.ProviderConfig{
-					Resources: tc.resourceConfigs,
-				}
-
-				actualError := p.RevokeAccess(providerConfig, tc.appeal)
-				assert.EqualError(t, actualError, tc.expectedError.Error())
-			})
-		}
-	},
-	)
-
 	t.Run("should return error if error in decoding credentials", func(t *testing.T) {
 		p := initProvider()
 
@@ -867,6 +707,7 @@ func TestRevokeAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
 		actualError := p.RevokeAccess(pc, a)
@@ -917,6 +758,7 @@ func TestRevokeAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
 		actualError := p.RevokeAccess(pc, a)
@@ -974,6 +816,7 @@ func TestRevokeAccess(t *testing.T) {
 			ResourceID:  "999",
 			AccountType: expectedAccountType,
 			AccountID:   expectedAccountID,
+			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
 		actualError := p.RevokeAccess(pc, a)

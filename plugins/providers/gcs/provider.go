@@ -90,10 +90,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 		return fmt.Errorf("invalid provider/appeal config: %w", err)
 	}
 
-	permissions, err := getPermissions(pc.Resources, a)
-	if err != nil {
-		return fmt.Errorf("error in getting permissions: %w", err)
-	}
+	permissions := getPermissions(a)
 
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
@@ -134,10 +131,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return fmt.Errorf("invalid provider/appeal config: %w", err)
 	}
 
-	permissions, err := getPermissions(pc.Resources, a)
-	if err != nil {
-		return fmt.Errorf("error in getting permissions: %w", err)
-	}
+	permissions := getPermissions(a)
 
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
@@ -153,9 +147,8 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
 
-	user := a.AccountID
-	userType := a.AccountType
-	identity := fmt.Sprintf("%s:%s", userType, user)
+	// identity is AccountType : AccountID, eg: "serviceAccount:test@email.com"
+	identity := fmt.Sprintf("%s:%s", a.AccountType, a.AccountID)
 	if a.Resource.Type == ResourceTypeBucket {
 		b := new(Bucket)
 		if err := b.fromDomain(a.Resource); err != nil {
@@ -202,38 +195,12 @@ func validateProviderConfigAndAppealParams(pc *domain.ProviderConfig, a *domain.
 	return nil
 }
 
-func getPermissions(resourceConfigs []*domain.ResourceConfig, a *domain.Appeal) ([]Permission, error) {
-	var resourceConfig *domain.ResourceConfig
-	for _, rc := range resourceConfigs {
-		if rc.Type == a.Resource.Type {
-			resourceConfig = rc
-		}
-	}
-	if resourceConfig == nil {
-		return nil, ErrInvalidResourceType
-	}
-
-	var role *domain.Role
-	for _, r := range resourceConfig.Roles {
-		if r.ID == a.Role {
-			role = r
-		}
-	}
-	if role == nil {
-		return nil, ErrInvalidRole
-	}
-
+func getPermissions(a *domain.Appeal) []Permission {
 	var permissions []Permission
-	for _, p := range role.Permissions {
-		var permission Permission
-		if err := mapstructure.Decode(p, &permission); err != nil {
-			return nil, err
-		}
-
-		permissions = append(permissions, permission)
+	for _, p := range a.Permissions {
+		permissions = append(permissions, Permission(p))
 	}
-
-	return permissions, nil
+	return permissions
 }
 
 func (p *Provider) getGCSClient(creds Credentials) (GCSClient, error) {
