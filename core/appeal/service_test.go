@@ -225,7 +225,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			expectedError                 error
 		}{
 			{
-				name: "creating appeal for other normal user",
+				name: "creating appeal for other normal user with allow_on_behalf=false",
 				appeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user-2",
@@ -239,7 +239,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Type:         "resource_type",
 				}},
 				providers:              []*domain.Provider{testProvider},
-				policies:               []*domain.Policy{{ID: "policy_id", Version: 1, AppealConfig: &domain.PolicyAppealConfig{AllowCrossIndividualUser: false}}},
+				policies:               []*domain.Policy{{ID: "policy_id", Version: 1, AppealConfig: &domain.PolicyAppealConfig{AllowOnBehalf: false}}},
 				callMockValidateAppeal: true,
 				callMockGetPermissions: true,
 				expectedError:          appeal.ErrCannotCreateAppealForOtherUser,
@@ -659,6 +659,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						"url": "http://localhost",
 					},
 				},
+				AppealConfig: &domain.PolicyAppealConfig{AllowOnBehalf: true},
 			},
 		}
 		expectedCreatorUser := map[string]interface{}{
@@ -666,7 +667,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		expectedAppealsInsertionParam := []*domain.Appeal{}
 		for i, r := range resourceIDs {
-			expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, &domain.Appeal{
+			appeal := &domain.Appeal{
 				ResourceID:    r,
 				Resource:      resources[i],
 				PolicyID:      "policy_1",
@@ -696,7 +697,11 @@ func (s *ServiceTestSuite) TestCreate() {
 						Approvers:     []string{"user.approver@email.com"},
 					},
 				},
-			})
+			}
+			if appeal.ResourceID == "2" {
+				appeal.AccountID = "user@email.com"
+			}
+			expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, appeal)
 		}
 		expectedResult := []*domain.Appeal{
 			{
@@ -740,7 +745,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				PolicyID:      "policy_1",
 				PolicyVersion: 1,
 				Status:        domain.AppealStatusPending,
-				AccountID:     accountID,
+				AccountID:     "user@email.com",
 				AccountType:   domain.DefaultAppealAccountType,
 				CreatedBy:     accountID,
 				Creator:       expectedCreatorUser,
@@ -816,7 +821,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			},
 			{
 				CreatedBy:  accountID,
-				AccountID:  accountID,
+				AccountID:  "user@email.com",
 				ResourceID: "2",
 				Resource: &domain.Resource{
 					ID:  "2",

@@ -288,8 +288,8 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
 			durationOptions = append(durationOptions, option)
 		}
 		policy.AppealConfig = &domain.PolicyAppealConfig{
-			DurationOptions:          durationOptions,
-			AllowCrossIndividualUser: p.GetAppeal().GetAllowCrossIndividualUser(),
+			DurationOptions: durationOptions,
+			AllowOnBehalf:   p.GetAppeal().GetAllowOnBehalf(),
 		}
 	}
 

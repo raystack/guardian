@@ -352,7 +352,7 @@ func validateAppealDurationConfig(appeal *domain.Appeal, policy *domain.Policy) 
 
 func validateCrossIndividualAppeal(a *domain.Appeal, policy *domain.Policy) error {
 	if a.AccountType == domain.DefaultAppealAccountType {
-		if policy.AppealConfig != nil && policy.AppealConfig.AllowCrossIndividualUser == true {
+		if policy.AppealConfig != nil && policy.AppealConfig.AllowOnBehalf == true {
 			return nil
 		}
 		if a.AccountID != a.CreatedBy {
