@@ -94,8 +94,9 @@ func (c *Config) parseAndValidate() error {
 
 	validationErrors := []error{}
 
-	if credentials, err := c.validateCredentials(c.ProviderConfig.Credentials); err != nil {
-		validationErrors = append(validationErrors, err)
+	credentials, err := c.validateCredentials(c.ProviderConfig.Credentials)
+	if err != nil {
+		return err
 	} else {
 		c.ProviderConfig.Credentials = credentials
 	}
@@ -146,9 +147,41 @@ func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
 		return err
 	}
 
-	if resource.Roles == nil || len(resource.Roles) == 0 {
-		return nil
+	if len(resource.Roles) == 0 {
+		return ErrRolesShouldNotBeEmpty
 	}
 
-	return ErrShouldHaveEmptyRoles
+	return nil
+}
+
+func (c *Config) validatePermissions(resource *domain.ResourceConfig, client GcloudIamClient) error {
+	iamRoles, err := client.GetRoles()
+	if err != nil {
+		return err
+	}
+
+	var roles []*domain.Role
+	for _, r := range iamRoles {
+		roles = append(roles, &domain.Role{
+			ID:          r.Name,
+			Name:        r.Title,
+			Description: r.Description,
+		})
+	}
+
+	rolesMap := make(map[string]*domain.Role)
+	for _, role := range roles {
+		rolesMap[role.ID] = role
+	}
+
+	for _, ro := range resource.Roles {
+		for _, p := range ro.Permissions {
+			permission := fmt.Sprint(p)
+			if _, ok := rolesMap[permission]; !ok {
+				return fmt.Errorf("%w: %v", ErrInvalidProjectRole, permission)
+			}
+		}
+	}
+
+	return nil
 }

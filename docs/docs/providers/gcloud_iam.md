@@ -29,6 +29,22 @@ resources:
     policy:
       id: my_policy
       version: 1
+    roles:
+      - id: role-1
+        name: BigQuery
+        permissions:
+          - roles/bigquery.admin
+          - roles/bigquery.dataEditor
+          - roles/bigquery.dataOwner
+      - id: role-2
+        name: Custom
+        permissions:
+          - projects/integration/roles/project.iamManager
+      - id: role-3
+        name: Api gateway
+        permissions:
+          - roles/apigateway.admin
+          - roles/apigateway.viewer
 ```
 
 ```yaml
@@ -48,6 +64,13 @@ resources:
     policy:
       id: my_policy
       version: 1
+    roles:
+      - id: role-1
+        name: BigQuery
+        permissions:
+          - roles/bigquery.admin
+          - roles/bigquery.dataEditor
+          - roles/bigquery.dataOwner
 ```
 
 ### `GCloudIAMAccountType`
@@ -66,3 +89,12 @@ resources:
 
 - `project`
 - `organization`
+
+### `GCloudIAMResourceRoles`
+
+A user defined roles grouping single or multiple GCloud roles.
+
+### `GCloudIAMResourcePermission`
+
+A Google Cloud predefined role name. These can be any roles defined under Gcloud project roles list. User defined roles group them together depending on the use case
+
