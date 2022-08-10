@@ -479,7 +479,8 @@ func TestGrantAccess(t *testing.T) {
 				URN:  "999",
 				Name: "test-role",
 			},
-			Role: "role-1",
+			Role:        "role-1",
+			Permissions: []string{"roles/bigquery.admin"},
 		}
 
 		actualError := p.GrantAccess(pc, a)
@@ -531,6 +532,7 @@ func TestGrantAccess(t *testing.T) {
 			AccountID:   expectedAccountID,
 			ResourceID:  "999",
 			ID:          "999",
+			Permissions: []string{"roles/bigquery.admin"},
 		}
 
 		actualError := p.GrantAccess(pc, a)
@@ -607,7 +609,8 @@ func TestRevokeAccess(t *testing.T) {
 				URN:  "999",
 				Name: "test-role",
 			},
-			Role: "role-1",
+			Role:        "role-1",
+			Permissions: []string{"roles/bigquery.admin"},
 		}
 
 		actualError := p.RevokeAccess(pc, a)
@@ -728,6 +731,42 @@ func TestGetRoles(t *testing.T) {
 		actualRoles, actualError := p.GetRoles(pc, "project")
 
 		assert.Equal(t, expectedRoles, actualRoles)
+		assert.Nil(t, actualError)
+		client.AssertExpectations(t)
+	})
+}
+
+func TestGetPermissions(t *testing.T) {
+	t.Run("should get the expected permissions and no error", func(t *testing.T) {
+		providerURN := "test-provider-urn"
+		crypto := new(mocks.Crypto)
+		client := new(mocks.GcloudIamClient)
+		expectedPermissions := []interface{}{"roles/bigquery.admin"}
+
+		p := gcloudiam.NewProvider("", crypto)
+		p.Clients = map[string]gcloudiam.GcloudIamClient{
+			providerURN: client,
+		}
+
+		pc := &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: gcloudiam.ResourceTypeProject,
+					Roles: []*domain.Role{
+						{
+							ID:          "role-1",
+							Name:        "BigQuery",
+							Permissions: []interface{}{"roles/bigquery.admin"},
+						},
+					},
+				},
+			},
+			URN: providerURN,
+		}
+
+		actualPermissions, actualError := p.GetPermissions(pc, "project", "role-1")
+
+		assert.Equal(t, expectedPermissions, actualPermissions)
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
 	})
