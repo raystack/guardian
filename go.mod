@@ -3,7 +3,9 @@ module github.com/odpf/guardian
 go 1.17
 
 require (
+	cloud.google.com/go v0.99.0
 	cloud.google.com/go/bigquery v1.8.0
+	cloud.google.com/go/storage v1.10.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/antonmedv/expr v1.9.0
@@ -35,7 +37,6 @@ require (
 )
 
 require (
-	cloud.google.com/go v0.99.0 // indirect
 	github.com/alecthomas/chroma v0.8.2 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/briandowns/spinner v1.18.0 // indirect
