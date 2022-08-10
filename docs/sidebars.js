@@ -30,6 +30,7 @@ module.exports = {
       items: [
         "providers/gcloud_iam",
         "providers/bigquery",
+        "providers/gcs",
         "providers/tableau",
         "providers/metabase",
         "providers/grafana",

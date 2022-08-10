@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/odpf/guardian/core/provider"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
 )
 
 type Provider struct {
+	provider.PermissionManager
+
 	typeName string
 	Clients  map[string]GcloudIamClient
 	crypto   domain.Crypto
@@ -32,6 +36,17 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 
 	if err := c.ParseAndValidate(); err != nil {
 		return err
+	}
+
+	client, err := p.getIamClient(pc)
+	if err != nil {
+		return err
+	}
+
+	for _, r := range c.ProviderConfig.Resources {
+		if err := c.validatePermissions(r, client); err != nil {
+			return err
+		}
 	}
 
 	return c.EncryptCredentials()
@@ -75,12 +90,15 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	}
 
 	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
-		if err := client.GrantAccess(a.AccountType, a.AccountID, a.Role); err != nil {
-			if errors.Is(err, ErrPermissionAlreadyExists) {
-				return nil
+		for _, p := range a.Permissions {
+			permission := fmt.Sprint(p)
+			if err := client.GrantAccess(a.AccountType, a.AccountID, permission); err != nil {
+				if !errors.Is(err, ErrPermissionAlreadyExists) {
+					return err
+				}
 			}
-			return err
 		}
+
 		return nil
 	}
 
@@ -99,12 +117,15 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) err
 	}
 
 	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
-		if err := client.RevokeAccess(a.AccountType, a.AccountID, a.Role); err != nil {
-			if errors.Is(err, ErrPermissionNotFound) {
-				return nil
+		for _, p := range a.Permissions {
+			permission := fmt.Sprint(p)
+			if err := client.RevokeAccess(a.AccountType, a.AccountID, permission); err != nil {
+				if !errors.Is(err, ErrPermissionNotFound) {
+					return err
+				}
 			}
-			return err
 		}
+
 		return nil
 	}
 
@@ -116,31 +137,12 @@ func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*
 		return nil, ErrInvalidResourceType
 	}
 
-	client, err := p.getIamClient(pc)
-	if err != nil {
-		return nil, err
-	}
-
-	iamRoles, err := client.GetRoles()
-	if err != nil {
-		return nil, err
-	}
-
-	var roles []*domain.Role
-	for _, r := range iamRoles {
-		roles = append(roles, &domain.Role{
-			ID:          r.Name,
-			Name:        r.Title,
-			Description: r.Description,
-		})
-	}
-
-	return roles, nil
+	return provider.GetRoles(pc, resourceType)
 }
 
 func (p *Provider) GetPermissions(_pc *domain.ProviderConfig, _resourceType, role string) ([]interface{}, error) {
 	// TODO: validate if role is a valid gcloud iam role
-	return []interface{}{role}, nil
+	return p.PermissionManager.GetPermissions(_pc, _resourceType, role)
 }
 
 func (p *Provider) GetAccountTypes() []string {

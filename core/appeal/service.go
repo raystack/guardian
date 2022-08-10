@@ -1,11 +1,11 @@
-//go:generate mockery --name=repository --exported
+//go:generate mockery --name=repository --exported --with-expecter
 //go:generate mockery --name=iamManager --exported
-//go:generate mockery --name=notifier --exported
+//go:generate mockery --name=notifier --exported --with-expecter
 //go:generate mockery --name=policyService --exported
-//go:generate mockery --name=approvalService --exported
+//go:generate mockery --name=approvalService --exported --with-expecter
 //go:generate mockery --name=providerService --exported
 //go:generate mockery --name=resourceService --exported
-//go:generate mockery --name=auditLogger --exported
+//go:generate mockery --name=auditLogger --exported --with-expecter
 
 package appeal
 
@@ -26,12 +26,14 @@ import (
 )
 
 const (
-	AuditKeyBulkInsert = "appeal.bulkInsert"
-	AuditKeyCancel     = "appeal.cancel"
-	AuditKeyApprove    = "appeal.approve"
-	AuditKeyReject     = "appeal.reject"
-	AuditKeyRevoke     = "appeal.revoke"
-	AuditKeyExtend     = "appeal.extend"
+	AuditKeyBulkInsert     = "appeal.bulkInsert"
+	AuditKeyCancel         = "appeal.cancel"
+	AuditKeyApprove        = "appeal.approve"
+	AuditKeyReject         = "appeal.reject"
+	AuditKeyRevoke         = "appeal.revoke"
+	AuditKeyExtend         = "appeal.extend"
+	AuditKeyAddApprover    = "appeal.addApprover"
+	AuditKeyDeleteApprover = "appeal.deleteApprover"
 )
 
 var TimeNow = time.Now
@@ -58,6 +60,8 @@ type policyService interface {
 
 type approvalService interface {
 	AdvanceApproval(context.Context, *domain.Appeal) error
+	AddApprover(ctx context.Context, approvalID, email string) error
+	DeleteApprover(ctx context.Context, approvalID, email string) error
 }
 
 type providerService interface {
@@ -518,7 +522,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 		}
 	}
 
-	return nil, ErrApprovalNameNotFound
+	return nil, ErrApprovalNotFound
 }
 
 func (s *Service) Cancel(ctx context.Context, id string) (*domain.Appeal, error) {
@@ -596,6 +600,239 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 	}
 
 	return revokedAppeal, nil
+}
+
+func (s *Service) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsFilter, actor, reason string) ([]*domain.Appeal, error) {
+	if filters.AccountIDs == nil || len(filters.AccountIDs) == 0 {
+		return nil, fmt.Errorf("account_ids is required")
+	}
+
+	result := make([]*domain.Appeal, 0)
+	appeals, err := s.Find(ctx, &domain.ListAppealsFilter{
+		Statuses:      []string{domain.AppealStatusActive},
+		AccountIDs:    filters.AccountIDs,
+		ProviderTypes: filters.ProviderTypes,
+		ProviderURNs:  filters.ProviderURNs,
+		ResourceTypes: filters.ResourceTypes,
+		ResourceURNs:  filters.ResourceURNs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(appeals) == 0 {
+		return nil, nil
+	}
+
+	batchSize := 10
+	timeLimiter := make(chan int, batchSize)
+
+	for i := 1; i <= batchSize; i++ {
+		timeLimiter <- i
+	}
+
+	go func() {
+		for range time.Tick(1 * time.Second) {
+			for i := 1; i <= batchSize; i++ {
+				timeLimiter <- i
+			}
+		}
+	}()
+
+	totalRequests := len(appeals)
+	done := make(chan *domain.Appeal, totalRequests)
+	resourceAppealMap := make(map[string][]*domain.Appeal, 0)
+
+	for _, appeal := range appeals {
+		var resourceAppeals []*domain.Appeal
+		var ok bool
+		if resourceAppeals, ok = resourceAppealMap[appeal.ResourceID]; ok {
+			resourceAppeals = append(resourceAppeals, appeal)
+		} else {
+			resourceAppeals = []*domain.Appeal{appeal}
+		}
+		resourceAppealMap[appeal.ResourceID] = resourceAppeals
+	}
+
+	for _, resourceAppeals := range resourceAppealMap {
+		go s.expiredInActiveUserAppeal(ctx, timeLimiter, done, actor, reason, resourceAppeals)
+	}
+
+	var successRevoke []string
+	var failedRevoke []string
+	for {
+		select {
+		case appeal, _ := <-done:
+			if appeal.Status == domain.AppealStatusTerminated {
+				successRevoke = append(successRevoke, appeal.ID)
+			} else {
+				failedRevoke = append(failedRevoke, appeal.ID)
+			}
+			result = append(result, appeal)
+			if len(result) == totalRequests {
+				s.logger.Info("successful appeal revocation", "count", len(successRevoke), "ids", successRevoke)
+				s.logger.Info("failed appeal revocation", "count", len(failedRevoke), "ids", failedRevoke)
+				return result, nil
+			}
+		}
+	}
+}
+
+func (s *Service) expiredInActiveUserAppeal(ctx context.Context, timeLimiter chan int, done chan *domain.Appeal, actor string, reason string, appeals []*domain.Appeal) {
+	for _, appeal := range appeals {
+		<-timeLimiter
+
+		revokedAppeal := &domain.Appeal{}
+		*revokedAppeal = *appeal
+		revokedAppeal.RevokedAt = s.TimeNow()
+		revokedAppeal.RevokedBy = actor
+		revokedAppeal.RevokeReason = reason
+
+		if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
+			done <- appeal
+			s.logger.Error("failed to revoke appeal-access in provider", "id", appeal.ID, "error", err)
+			return
+		}
+
+		revokedAppeal.Status = domain.AppealStatusTerminated
+		if err := s.repo.Update(revokedAppeal); err != nil {
+			done <- appeal
+			s.logger.Error("failed to update appeal-revoke status", "id", appeal.ID, "error", err)
+			return
+		} else {
+			done <- revokedAppeal
+			s.logger.Info("appeal revoked", "id", appeal.ID)
+		}
+	}
+}
+
+func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error) {
+	if err := s.validator.Var(email, "email"); err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrApproverEmail, err)
+	}
+
+	appeal, approval, err := s.getApproval(appealID, approvalID)
+	if err != nil {
+		return nil, err
+	}
+	if appeal.Status != domain.AppealStatusPending {
+		return nil, fmt.Errorf("%w: can't add new approver to appeal with %q status", ErrUnableToAddApprover, appeal.Status)
+	}
+
+	switch approval.Status {
+	case domain.ApprovalStatusPending:
+		break
+	case domain.ApprovalStatusBlocked:
+		// check if approval type is auto
+		// this approach is the quickest way to assume that approval is auto, otherwise need to fetch the policy details and lookup the approval type which takes more time
+		if approval.Approvers == nil || len(approval.Approvers) == 0 {
+			// approval is automatic (strategy: auto) that is still on blocked
+			return nil, fmt.Errorf("%w: can't modify approvers for approval with strategy auto", ErrUnableToAddApprover)
+		}
+	default:
+		return nil, fmt.Errorf("%w: can't add approver to approval with %q status", ErrUnableToAddApprover, approval.Status)
+	}
+
+	if err := s.approvalService.AddApprover(ctx, approval.ID, email); err != nil {
+		return nil, fmt.Errorf("adding new approver: %w", err)
+	}
+	approval.Approvers = append(approval.Approvers, email)
+
+	if err := s.auditLogger.Log(ctx, AuditKeyAddApprover, approval); err != nil {
+		s.logger.Error("failed to record audit log", "error", err)
+	}
+
+	if errs := s.notifier.Notify([]domain.Notification{
+		{
+			User: email,
+			Message: domain.NotificationMessage{
+				Type: domain.NotificationTypeApproverNotification,
+				Variables: map[string]interface{}{
+					"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+					"role":          appeal.Role,
+					"requestor":     appeal.CreatedBy,
+					"appeal_id":     appeal.ID,
+				},
+			},
+		},
+	}); errs != nil {
+		for _, err1 := range errs {
+			s.logger.Error("failed to send notifications", "error", err1.Error())
+		}
+	}
+
+	return appeal, nil
+}
+
+func (s *Service) DeleteApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error) {
+	if err := s.validator.Var(email, "email"); err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrApproverEmail, err)
+	}
+
+	appeal, approval, err := s.getApproval(appealID, approvalID)
+	if err != nil {
+		return nil, err
+	}
+	if appeal.Status != domain.AppealStatusPending {
+		return nil, fmt.Errorf("%w: can't delete approver to appeal with %q status", ErrUnableToDeleteApprover, appeal.Status)
+	}
+
+	switch approval.Status {
+	case domain.ApprovalStatusPending:
+		break
+	case domain.ApprovalStatusBlocked:
+		// check if approval type is auto
+		// this approach is the quickest way to assume that approval is auto, otherwise need to fetch the policy details and lookup the approval type which takes more time
+		if approval.Approvers == nil || len(approval.Approvers) == 0 {
+			// approval is automatic (strategy: auto) that is still on blocked
+			return nil, fmt.Errorf("%w: can't modify approvers for approval with strategy auto", ErrUnableToDeleteApprover)
+		}
+	default:
+		return nil, fmt.Errorf("%w: can't delete approver to approval with %q status", ErrUnableToDeleteApprover, approval.Status)
+	}
+
+	if len(approval.Approvers) == 1 {
+		return nil, fmt.Errorf("%w: can't delete if there's only one approver", ErrUnableToDeleteApprover)
+	}
+
+	if err := s.approvalService.DeleteApprover(ctx, approvalID, email); err != nil {
+		return nil, err
+	}
+
+	var newApprovers []string
+	for _, a := range approval.Approvers {
+		if a != email {
+			newApprovers = append(newApprovers, a)
+		}
+	}
+	approval.Approvers = newApprovers
+
+	if err := s.auditLogger.Log(ctx, AuditKeyDeleteApprover, approval); err != nil {
+		s.logger.Error("failed to record audit log", "error", err)
+	}
+
+	return appeal, nil
+}
+
+func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *domain.Approval, error) {
+	if appealID == "" {
+		return nil, nil, ErrAppealIDEmptyParam
+	}
+	if approvalID == "" {
+		return nil, nil, ErrApprovalIDEmptyParam
+	}
+
+	appeal, err := s.repo.GetByID(appealID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("getting appeal details: %w", err)
+	}
+
+	approval := appeal.GetApproval(approvalID)
+	if approval == nil {
+		return nil, nil, ErrApprovalNotFound
+	}
+
+	return appeal, approval, nil
 }
 
 // getAppealsMapGroupedByStatus returns map[status]map[account_id]map[resource_id]map[role]*domain.Appeal, error

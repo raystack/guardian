@@ -17,6 +17,7 @@ import (
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
 	"github.com/odpf/guardian/plugins/providers/gcloudiam"
+	"github.com/odpf/guardian/plugins/providers/gcs"
 	"github.com/odpf/guardian/plugins/providers/grafana"
 	"github.com/odpf/guardian/plugins/providers/metabase"
 	"github.com/odpf/guardian/plugins/providers/noop"
@@ -94,6 +95,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		tableau.NewProvider(domain.ProviderTypeTableau, deps.Crypto),
 		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, deps.Crypto),
 		noop.NewProvider(domain.ProviderTypeNoOp, deps.Logger),
+		gcs.NewProvider(domain.ProviderTypeGCS, deps.Crypto),
 	}
 
 	iamManager := identities.NewManager(deps.Crypto, deps.Validator)

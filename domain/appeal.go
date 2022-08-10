@@ -109,6 +109,15 @@ func (a *Appeal) SetDefaults() {
 	}
 }
 
+func (a *Appeal) GetApproval(id string) *Approval {
+	for _, approval := range a.Approvals {
+		if approval.ID == id || approval.Name == id {
+			return approval
+		}
+	}
+	return nil
+}
+
 type ApprovalActionType string
 
 const (
@@ -127,6 +136,7 @@ type ApprovalAction struct {
 type ListAppealsFilter struct {
 	CreatedBy                 string    `mapstructure:"created_by" validate:"omitempty,required"`
 	AccountID                 string    `mapstructure:"account_id" validate:"omitempty,required"`
+	AccountIDs                []string  `mapstructure:"account_ids" validate:"omitempty,required"`
 	ResourceID                string    `mapstructure:"resource_id" validate:"omitempty,required"`
 	Role                      string    `mapstructure:"role" validate:"omitempty,required"`
 	Statuses                  []string  `mapstructure:"statuses" validate:"omitempty,min=1"`
@@ -137,4 +147,12 @@ type ListAppealsFilter struct {
 	ResourceTypes             []string  `mapstructure:"resource_types" validate:"omitempty,min=1"`
 	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 	OrderBy                   []string  `mapstructure:"order_by" validate:"omitempty,min=1"`
+}
+
+type RevokeAppealsFilter struct {
+	AccountIDs    []string `mapstructure:"account_ids" validate:"omitempty,required"`
+	ProviderTypes []string `mapstructure:"provider_types" validate:"omitempty,min=1"`
+	ProviderURNs  []string `mapstructure:"provider_urns" validate:"omitempty,min=1"`
+	ResourceTypes []string `mapstructure:"resource_types" validate:"omitempty,min=1"`
+	ResourceURNs  []string `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 }

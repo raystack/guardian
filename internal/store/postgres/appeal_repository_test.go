@@ -321,9 +321,16 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 			},
 			{
 				filters: &domain.ListAppealsFilter{
+					AccountIDs: []string{"user@email.com"},
+				},
+				expectedClauseQuery: `"account_id" IN ($1) AND "appeals"."deleted_at" IS NULL`,
+				expectedArgs:        []driver.Value{"user@email.com"},
+			},
+			{
+				filters: &domain.ListAppealsFilter{
 					AccountID: "user@email.com",
 				},
-				expectedClauseQuery: `"account_id" = $1 AND "appeals"."deleted_at" IS NULL`,
+				expectedClauseQuery: `"account_id" IN ($1) AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"user@email.com"},
 			},
 			{

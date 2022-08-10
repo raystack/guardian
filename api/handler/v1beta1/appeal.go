@@ -52,30 +52,15 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 }
 
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListAppealsRequest) (*guardianv1beta1.ListAppealsResponse, error) {
-	filters := &domain.ListAppealsFilter{}
-	if req.GetAccountId() != "" {
-		filters.AccountID = req.GetAccountId()
-	}
-	if req.GetStatuses() != nil {
-		filters.Statuses = req.GetStatuses()
-	}
-	if req.GetRole() != "" {
-		filters.Role = req.GetRole()
-	}
-	if req.GetProviderTypes() != nil {
-		filters.ProviderTypes = req.GetProviderTypes()
-	}
-	if req.GetProviderUrns() != nil {
-		filters.ProviderURNs = req.GetProviderUrns()
-	}
-	if req.GetResourceTypes() != nil {
-		filters.ResourceTypes = req.GetResourceTypes()
-	}
-	if req.GetResourceUrns() != nil {
-		filters.ResourceURNs = req.GetResourceUrns()
-	}
-	if req.GetOrderBy() != nil {
-		filters.OrderBy = req.GetOrderBy()
+	filters := &domain.ListAppealsFilter{
+		AccountID:     req.GetAccountId(),
+		Statuses:      req.GetStatuses(),
+		Role:          req.GetRole(),
+		ProviderTypes: req.GetProviderTypes(),
+		ProviderURNs:  req.GetProviderUrns(),
+		ResourceTypes: req.GetResourceTypes(),
+		ResourceURNs:  req.GetResourceUrns(),
+		OrderBy:       req.GetOrderBy(),
 	}
 	appeals, err := s.listAppeals(ctx, filters)
 	if err != nil {
@@ -192,6 +177,35 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 
 	return &guardianv1beta1.RevokeAppealResponse{
 		Appeal: appealProto,
+	}, nil
+}
+
+func (s *GRPCServer) RevokeAppeals(ctx context.Context, req *guardianv1beta1.RevokeAppealsRequest) (*guardianv1beta1.RevokeAppealsResponse, error) {
+	if req.GetAccountIds() == nil || len(req.AccountIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "account_ids is required")
+	}
+	filters := &domain.RevokeAppealsFilter{
+		AccountIDs:    req.GetAccountIds(),
+		ProviderTypes: req.GetProviderTypes(),
+		ProviderURNs:  req.GetProviderUrns(),
+		ResourceTypes: req.GetResourceTypes(),
+		ResourceURNs:  req.GetResourceUrns(),
+	}
+
+	appeals, err := s.appealService.BulkRevoke(ctx, filters, domain.SystemActorName, req.GetReason())
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to revoke appeals in bulk")
+	}
+	appealsProto := make([]*guardianv1beta1.Appeal, 0)
+	for _, appeal := range appeals {
+		appealProto, err := s.adapter.ToAppealProto(appeal)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
+		}
+		appealsProto = append(appealsProto, appealProto)
+	}
+	return &guardianv1beta1.RevokeAppealsResponse{
+		Appeals: appealsProto,
 	}, nil
 }
 

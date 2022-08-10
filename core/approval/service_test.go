@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/approval"
 	approvalmocks "github.com/odpf/guardian/core/approval/mocks"
 	"github.com/odpf/guardian/domain"
@@ -18,6 +19,10 @@ type ServiceTestSuite struct {
 	mockPolicyService *approvalmocks.PolicyService
 
 	service *approval.Service
+}
+
+func TestService(t *testing.T) {
+	suite.Run(t, new(ServiceTestSuite))
 }
 
 func (s *ServiceTestSuite) SetupTest() {
@@ -290,6 +295,51 @@ func (s *ServiceTestSuite) TestAdvanceApproval() {
 	})
 }
 
-func TestService(t *testing.T) {
-	suite.Run(t, new(ServiceTestSuite))
+func (s *ServiceTestSuite) TestAddApprover() {
+	s.Run("should return nil error on success", func() {
+		expectedApprover := &domain.Approver{
+			ApprovalID: uuid.New().String(),
+			Email:      "user@example.com",
+		}
+		s.mockRepository.EXPECT().AddApprover(expectedApprover).Return(nil)
+
+		err := s.service.AddApprover(context.Background(), expectedApprover.ApprovalID, expectedApprover.Email)
+
+		s.NoError(err)
+		s.mockRepository.AssertExpectations(s.T())
+	})
+
+	s.Run("should return error if repository returns an error", func() {
+		expectedError := errors.New("unexpected error")
+		s.mockRepository.EXPECT().AddApprover(mock.Anything).Return(expectedError)
+
+		err := s.service.AddApprover(context.Background(), "", "")
+
+		s.ErrorIs(err, expectedError)
+		s.mockRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *ServiceTestSuite) TestDeleteApprover() {
+	s.Run("should return nil error on success", func() {
+		approvalID := uuid.New().String()
+		approverEmail := "user@example.com"
+
+		s.mockRepository.EXPECT().DeleteApprover(approvalID, approverEmail).Return(nil)
+
+		err := s.service.DeleteApprover(context.Background(), approvalID, approverEmail)
+
+		s.NoError(err)
+		s.mockRepository.AssertExpectations(s.T())
+	})
+
+	s.Run("should return error if repository returns an error", func() {
+		expectedError := errors.New("unexpected error")
+		s.mockRepository.EXPECT().DeleteApprover(mock.Anything, mock.Anything).Return(expectedError)
+
+		err := s.service.DeleteApprover(context.Background(), "", "")
+
+		s.ErrorIs(err, expectedError)
+		s.mockRepository.AssertExpectations(s.T())
+	})
 }
