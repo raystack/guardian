@@ -178,7 +178,7 @@ func (c *Config) validatePermissions(resource *domain.ResourceConfig, client Gcl
 		for _, p := range ro.Permissions {
 			permission := fmt.Sprint(p)
 			if _, ok := rolesMap[permission]; !ok {
-				return fmt.Errorf("%v: %v", ErrInvalidProjectRole, permission)
+				return fmt.Errorf("%w: %v", ErrInvalidProjectRole, permission)
 			}
 		}
 	}
