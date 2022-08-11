@@ -41,6 +41,7 @@ func (r *AppealRepository) GetByID(id string) (*domain.Appeal, error) {
 		}).
 		Preload("Approvals.Approvers").
 		Preload("Resource").
+		Preload("Access").
 		First(&m, "id = ?", id).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

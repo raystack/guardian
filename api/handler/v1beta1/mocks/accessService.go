@@ -99,7 +99,7 @@ type AccessService_List_Call struct {
 
 // List is a helper method to define mock.On call
 //  - _a0 context.Context
-//  - _a1 domain.ListAccessFilter
+//  - _a1 domain.ListAccessesFilter
 func (_e *AccessService_Expecter) List(_a0 interface{}, _a1 interface{}) *AccessService_List_Call {
 	return &AccessService_List_Call{Call: _e.mock.On("List", _a0, _a1)}
 }

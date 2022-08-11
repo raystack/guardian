@@ -55,15 +55,21 @@ func (m *Access) FromDomain(a domain.Access) error {
 		m.Appeal = appeal
 	}
 
+	if a.ExpirationDate != nil {
+		m.ExpirationDate = *a.ExpirationDate
+	}
+
+	if a.RevokedAt != nil {
+		m.RevokedAt = *a.RevokedAt
+	}
+
 	m.Status = string(a.Status)
 	m.AccountID = a.AccountID
 	m.AccountType = a.AccountType
 	m.ResourceID = a.ResourceID
 	m.Permissions = pq.StringArray(a.Permissions)
-	m.ExpirationDate = *a.ExpirationDate
 	m.AppealID = a.AppealID
 	m.RevokedBy = a.RevokedBy
-	m.RevokedAt = *a.RevokedAt
 	m.RevokeReason = a.RevokeReason
 	m.CreatedAt = a.CreatedAt
 	m.UpdatedAt = a.UpdatedAt
@@ -72,19 +78,17 @@ func (m *Access) FromDomain(a domain.Access) error {
 
 func (m Access) ToDomain() (*domain.Access, error) {
 	access := &domain.Access{
-		ID:             m.ID.String(),
-		Status:         domain.AccessStatus(m.Status),
-		AccountID:      m.AccountID,
-		AccountType:    m.AccountType,
-		ResourceID:     m.ResourceID,
-		Permissions:    []string(m.Permissions),
-		ExpirationDate: &m.ExpirationDate,
-		AppealID:       m.AppealID,
-		RevokedBy:      m.RevokedBy,
-		RevokedAt:      &m.RevokedAt,
-		RevokeReason:   m.RevokeReason,
-		CreatedAt:      m.CreatedAt,
-		UpdatedAt:      m.UpdatedAt,
+		ID:           m.ID.String(),
+		Status:       domain.AccessStatus(m.Status),
+		AccountID:    m.AccountID,
+		AccountType:  m.AccountType,
+		ResourceID:   m.ResourceID,
+		Permissions:  []string(m.Permissions),
+		AppealID:     m.AppealID,
+		RevokedBy:    m.RevokedBy,
+		RevokeReason: m.RevokeReason,
+		CreatedAt:    m.CreatedAt,
+		UpdatedAt:    m.UpdatedAt,
 	}
 
 	if m.Resource != nil {
@@ -101,6 +105,13 @@ func (m Access) ToDomain() (*domain.Access, error) {
 			return nil, fmt.Errorf("parsing appeal: %w", err)
 		}
 		access.Appeal = a
+	}
+
+	if !m.ExpirationDate.IsZero() {
+		access.ExpirationDate = &m.ExpirationDate
+	}
+	if !m.RevokedAt.IsZero() {
+		access.RevokedAt = &m.RevokedAt
 	}
 
 	return access, nil

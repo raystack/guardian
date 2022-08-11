@@ -129,21 +129,26 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Repository:    approvalRepository,
 		PolicyService: policyService,
 	})
+	accessService := access.NewService(access.ServiceDeps{
+		Repository:      accessRepository,
+		ProviderService: providerService,
+		Notifier:        deps.Notifier,
+		Logger:          deps.Logger,
+		Validator:       deps.Validator,
+		AuditLogger:     auditLogger,
+	})
 	appealService := appeal.NewService(appeal.ServiceDeps{
 		Repository:      appealRepository,
 		ResourceService: resourceService,
 		ApprovalService: approvalService,
 		ProviderService: providerService,
 		PolicyService:   policyService,
+		AccessService:   accessService,
 		IAMManager:      iamManager,
 		Notifier:        deps.Notifier,
 		Validator:       deps.Validator,
 		Logger:          deps.Logger,
 		AuditLogger:     auditLogger,
-	})
-	accessService := access.NewService(access.ServiceDeps{
-		Repository: accessRepository,
-		Logger:     deps.Logger,
 	})
 
 	return &Services{

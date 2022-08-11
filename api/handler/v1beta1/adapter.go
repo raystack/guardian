@@ -551,6 +551,14 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 		appealProto.RevokedAt = timestamppb.New(appeal.RevokedAt)
 	}
 
+	if appeal.Access != nil {
+		accessProto, err := a.ToAccessProto(*appeal.Access)
+		if err != nil {
+			return nil, fmt.Errorf("parsing access: %w", err)
+		}
+		appealProto.Access = accessProto
+	}
+
 	return appealProto, nil
 }
 

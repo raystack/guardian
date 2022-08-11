@@ -22,16 +22,16 @@ func NewAccessRepository(db *gorm.DB) *AccessRepository {
 func (r *AccessRepository) List(ctx context.Context, filter domain.ListAccessesFilter) ([]domain.Access, error) {
 	db := r.db.WithContext(ctx)
 	if filter.AccountIDs != nil {
-		db = db.Where(`"account_id" IN ?`, filter.AccountIDs)
+		db = db.Where(`"accesses"."account_id" IN ?`, filter.AccountIDs)
 	}
 	if filter.AccountTypes != nil {
-		db = db.Where(`"account_type" IN ?`, filter.AccountTypes)
+		db = db.Where(`"accesses"."account_type" IN ?`, filter.AccountTypes)
 	}
 	if filter.ResourceIDs != nil {
-		db = db.Where(`"resource_id" IN ?`, filter.ResourceIDs)
+		db = db.Where(`"accesses"."resource_id" IN ?`, filter.ResourceIDs)
 	}
 	if filter.Statuses != nil {
-		db = db.Where(`"statuses" IN ?`, filter.Statuses)
+		db = db.Where(`"accesses"."status" IN ?`, filter.Statuses)
 	}
 
 	var models []model.Access
@@ -65,4 +65,28 @@ func (r *AccessRepository) GetByID(ctx context.Context, id string) (*domain.Acce
 		return nil, fmt.Errorf("parsing access %q: %w", a.ID, err)
 	}
 	return a, nil
+}
+
+func (r *AccessRepository) Update(ctx context.Context, a *domain.Access) error {
+	if a == nil || a.ID == "" {
+		return access.ErrEmptyIDParam
+	}
+
+	m := new(model.Access)
+	if err := m.FromDomain(*a); err != nil {
+		return fmt.Errorf("parsing access payload: %w", err)
+	}
+
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(m).Updates(*m).Error; err != nil {
+			return err
+		}
+
+		newAccess, err := m.ToDomain()
+		if err != nil {
+			return fmt.Errorf("parsing access: %w", err)
+		}
+		*a = *newAccess
+		return nil
+	})
 }

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -49,6 +50,7 @@ type Appeal struct {
 	Policy    *Policy     `json:"-" yaml:"-"`
 	Resource  *Resource   `json:"resource,omitempty" yaml:"resource,omitempty"`
 	Approvals []*Approval `json:"approvals,omitempty" yaml:"approvals,omitempty"`
+	Access    *Access     `json:"access,omitempty" yaml:"access,omitempty"`
 
 	CreatedAt time.Time `json:"created_at,omitempty" yaml:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
@@ -116,6 +118,28 @@ func (a *Appeal) GetApproval(id string) *Approval {
 		}
 	}
 	return nil
+}
+
+func (a Appeal) ToAccess() (*Access, error) {
+	access := &Access{
+		Status:      AccessStatusActive,
+		AccountID:   a.AccountID,
+		AccountType: a.AccountType,
+		ResourceID:  a.ResourceID,
+		Permissions: a.Permissions,
+		AppealID:    a.ID,
+	}
+
+	if a.Options != nil && a.Options.Duration != "" {
+		duration, err := time.ParseDuration(a.Options.Duration)
+		if err != nil {
+			return nil, fmt.Errorf("parsing duration %q: %w", a.Options.Duration, err)
+		}
+		expDate := time.Now().Add(duration)
+		access.ExpirationDate = &expDate
+	}
+
+	return access, nil
 }
 
 type ApprovalActionType string

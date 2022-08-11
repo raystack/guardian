@@ -1,12 +1,15 @@
 package domain
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type AccessStatus string
 
 const (
-	AccessStatusActive  AccessStatus = "active"
-	AccessStatusRevoked AccessStatus = "revoked"
+	AccessStatusActive   AccessStatus = "active"
+	AccessStatusInactive AccessStatus = "inactive"
 )
 
 type Access struct {
@@ -26,6 +29,22 @@ type Access struct {
 
 	Resource *Resource `json:"resource" yaml:"resource"`
 	Appeal   *Appeal   `json:"appeal" yaml:"appeal"`
+}
+
+func (a *Access) Revoke(actor, reason string) error {
+	if a == nil {
+		return errors.New("access is nil")
+	}
+	if actor == "" {
+		return errors.New("actor shouldn't be empty")
+	}
+
+	a.Status = AccessStatusInactive
+	a.RevokedBy = actor
+	a.RevokeReason = reason
+	now := time.Now()
+	a.RevokedAt = &now
+	return nil
 }
 
 type ListAccessesFilter struct {
