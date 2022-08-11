@@ -332,7 +332,7 @@ func validateAppealDurationConfig(appeal *domain.Appeal, policy *domain.Policy) 
 		}
 	}
 
-	return fmt.Errorf("%s - %v", appeal.Options.Duration, ErrOptionsDurationNotFound)
+	return ErrOptionsDurationNotFound
 }
 
 // MakeAction Approve an approval step

@@ -4,6 +4,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	pg "gorm.io/driver/postgres"
 	"log"
 	"net"
 	"net/url"
@@ -12,7 +13,6 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/odpf/guardian/internal/store"
-	pg "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -40,6 +40,15 @@ func NewStore(c *store.Config) (*Store, error) {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	db, err := gormDB.DB()
+	if err != nil {
+		log.Panic(err)
+	}
+	db.SetConnMaxLifetime(c.ConnMaxLifeTime)
+	db.SetMaxIdleConns(c.MaxIdleConns)
+	db.SetMaxOpenConns(c.MaxOpenConns)
+	db.SetConnMaxIdleTime(c.MaxIdleLifeTime)
 
 	return &Store{gormDB, c}, nil
 }
