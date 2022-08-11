@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/lib/pq"
 	"github.com/odpf/guardian/core/access"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres/model"
@@ -32,6 +33,9 @@ func (r *AccessRepository) List(ctx context.Context, filter domain.ListAccessesF
 	}
 	if filter.Statuses != nil {
 		db = db.Where(`"accesses"."status" IN ?`, filter.Statuses)
+	}
+	if filter.Permissions != nil {
+		db = db.Where(`"accesses"."permissions" @> ?`, pq.StringArray(filter.Permissions))
 	}
 
 	var models []model.Access

@@ -1250,7 +1250,7 @@ func (s *Service) prepareAccess(ctx context.Context, appeal *domain.Appeal) (new
 		AccountIDs:  []string{appeal.AccountID},
 		ResourceIDs: []string{appeal.ResourceID},
 		Statuses:    []string{string(domain.AccessStatusActive)},
-		// TODO: filter by permission/role
+		Permissions: appeal.Permissions,
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to retrieve existing active accesses: %w", err)

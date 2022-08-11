@@ -16,6 +16,7 @@ type Access struct {
 	AccountID      string
 	AccountType    string
 	ResourceID     string
+	Role           string
 	Permissions    pq.StringArray `gorm:"type:text[]"`
 	ExpirationDate time.Time
 	AppealID       string
@@ -67,6 +68,7 @@ func (m *Access) FromDomain(a domain.Access) error {
 	m.AccountID = a.AccountID
 	m.AccountType = a.AccountType
 	m.ResourceID = a.ResourceID
+	m.Role = a.Role
 	m.Permissions = pq.StringArray(a.Permissions)
 	m.AppealID = a.AppealID
 	m.RevokedBy = a.RevokedBy
@@ -83,6 +85,7 @@ func (m Access) ToDomain() (*domain.Access, error) {
 		AccountID:    m.AccountID,
 		AccountType:  m.AccountType,
 		ResourceID:   m.ResourceID,
+		Role:         m.Role,
 		Permissions:  []string(m.Permissions),
 		AppealID:     m.AppealID,
 		RevokedBy:    m.RevokedBy,

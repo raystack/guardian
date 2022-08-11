@@ -18,6 +18,7 @@ type Access struct {
 	AccountID      string
 	AccountType    string
 	ResourceID     string
+	Role           string
 	Permissions    []string
 	ExpirationDate *time.Time
 	AppealID       string
@@ -52,4 +53,5 @@ type ListAccessesFilter struct {
 	AccountIDs   []string
 	AccountTypes []string
 	ResourceIDs  []string
+	Permissions  []string
 }
