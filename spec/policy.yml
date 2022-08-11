@@ -56,7 +56,7 @@ appeal:
       - name: 1 Week
         value: 98h
 # -- config to allow user to create access request for other user
-  - allow_cross_individual_user: false
+  - allow_on_behalf: false
 
 # -- iam can be configured like shown below
 iam:

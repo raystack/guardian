@@ -149,7 +149,7 @@ func parseMessage(message domain.NotificationMessage, templates domain.Notificat
 		text = templates.ApproverNotification
 	case domain.NotificationTypeExpirationReminder:
 		text = templates.ExpirationReminder
-	case domain.NotificationTypeAppealApprovedForOther:
+	case domain.NotificationTypeAppealForOnBehalf:
 		text = templates.OthersAppealApproved
 	}
 

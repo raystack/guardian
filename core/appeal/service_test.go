@@ -227,10 +227,10 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "creating appeal for other normal user with allow_on_behalf=false",
 				appeals: []*domain.Appeal{{
-					CreatedBy:  "test-user",
-					AccountID:  "test-user-2",
+					CreatedBy:  "addOnBehalfApprovedNotification-user",
+					AccountID:  "addOnBehalfApprovedNotification-user-2",
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 				}},
 				resources: []*domain.Resource{{
 					ID:           "1",
@@ -247,17 +247,17 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "duplicate appeal",
 				existingAppeals: []*domain.Appeal{{
-					CreatedBy:  "test-user",
-					AccountID:  "test-user",
+					CreatedBy:  "addOnBehalfApprovedNotification-user",
+					AccountID:  "addOnBehalfApprovedNotification-user",
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Status:     domain.AppealStatusPending,
 				}},
 				appeals: []*domain.Appeal{{
-					CreatedBy:  "test-user",
-					AccountID:  "test-user",
+					CreatedBy:  "addOnBehalfApprovedNotification-user",
+					AccountID:  "addOnBehalfApprovedNotification-user",
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 				}},
 				expectedError: appeal.ErrAppealDuplicate,
 			},
@@ -267,10 +267,10 @@ func (s *ServiceTestSuite) TestCreate() {
 					ID: "1",
 				}},
 				appeals: []*domain.Appeal{{
-					CreatedBy:  "test-user",
-					AccountID:  "test-user",
+					CreatedBy:  "addOnBehalfApprovedNotification-user",
+					AccountID:  "addOnBehalfApprovedNotification-user",
 					ResourceID: "2",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 				}},
 				expectedError: appeal.ErrResourceNotFound,
 			},
@@ -293,17 +293,17 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
-					CreatedBy:  "test-user",
-					AccountID:  "test-user",
+					CreatedBy:  "addOnBehalfApprovedNotification-user",
+					AccountID:  "addOnBehalfApprovedNotification-user",
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Status:     domain.AppealStatusActive,
 				}},
 				appeals: []*domain.Appeal{{
-					CreatedBy:  "test-user",
-					AccountID:  "test-user",
+					CreatedBy:  "addOnBehalfApprovedNotification-user",
+					AccountID:  "addOnBehalfApprovedNotification-user",
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 				}},
 				providers:     []*domain.Provider{testProvider},
 				expectedError: appeal.ErrAppealFoundActiveAccess,
@@ -316,17 +316,17 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
-					CreatedBy:  "test-user",
-					AccountID:  "test-user",
+					CreatedBy:  "addOnBehalfApprovedNotification-user",
+					AccountID:  "addOnBehalfApprovedNotification-user",
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Status:     domain.AppealStatusActive,
 				}},
 				appeals: []*domain.Appeal{{
-					CreatedBy:  "test-user",
-					AccountID:  "test-user",
+					CreatedBy:  "addOnBehalfApprovedNotification-user",
+					AccountID:  "addOnBehalfApprovedNotification-user",
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 				}},
 				providers: []*domain.Provider{{
 					ID:   "1",
@@ -348,20 +348,20 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  testProvider.URN,
 				}},
 				existingAppeals: []*domain.Appeal{{
-					CreatedBy:  "test-user",
-					AccountID:  "test-user",
+					CreatedBy:  "addOnBehalfApprovedNotification-user",
+					AccountID:  "addOnBehalfApprovedNotification-user",
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Status:     domain.AppealStatusActive,
 					Options: &domain.AppealOptions{
 						ExpirationDate: &expDate,
 					},
 				}},
 				appeals: []*domain.Appeal{{
-					CreatedBy:  "test-user",
-					AccountID:  "test-user",
+					CreatedBy:  "addOnBehalfApprovedNotification-user",
+					AccountID:  "addOnBehalfApprovedNotification-user",
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 				}},
 				providers: []*domain.Provider{{
 					ID:   "1",
@@ -575,7 +575,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	})
 
 	s.Run("should return appeals on success", func() {
-		accountID := "test@email.com"
+		accountID := "addOnBehalfApprovedNotification@email.com"
 		resourceIDs := []string{"1", "2"}
 		resources := []*domain.Resource{}
 		for _, id := range resourceIDs {
@@ -609,7 +609,7 @@ func (s *ServiceTestSuite) TestCreate() {
 							Roles: []*domain.Role{
 								{
 									ID:          "role_id",
-									Permissions: []interface{}{"test-permission-1"},
+									Permissions: []interface{}{"addOnBehalfApprovedNotification-permission-1"},
 								},
 							},
 						},
@@ -678,7 +678,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				CreatedBy:     accountID,
 				Creator:       expectedCreatorUser,
 				Role:          "role_id",
-				Permissions:   []string{"test-permission-1"},
+				Permissions:   []string{"addOnBehalfApprovedNotification-permission-1"},
 				Approvals: []*domain.Approval{
 					{
 						Name:          "step_1",
@@ -716,7 +716,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				CreatedBy:     accountID,
 				Creator:       expectedCreatorUser,
 				Role:          "role_id",
-				Permissions:   []string{"test-permission-1"},
+				Permissions:   []string{"addOnBehalfApprovedNotification-permission-1"},
 				Approvals: []*domain.Approval{
 					{
 						ID:            "1",
@@ -750,7 +750,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				CreatedBy:     accountID,
 				Creator:       expectedCreatorUser,
 				Role:          "role_id",
-				Permissions:   []string{"test-permission-1"},
+				Permissions:   []string{"addOnBehalfApprovedNotification-permission-1"},
 				Approvals: []*domain.Approval{
 					{
 						ID:            "1",
@@ -787,7 +787,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		s.mockProviderService.On("GetPermissions", mock.Anything, mock.Anything, "resource_type_1", "role_id").
-			Return([]interface{}{"test-permission-1"}, nil)
+			Return([]interface{}{"addOnBehalfApprovedNotification-permission-1"}, nil)
 		s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 		s.mockIAMManager.On("GetClient", mock.Anything, mock.Anything).Return(s.mockIAMClient, nil)
 		s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
@@ -845,20 +845,20 @@ func (s *ServiceTestSuite) TestCreate() {
 				AccountID:     "user@example.com",
 				AccountType:   domain.DefaultAppealAccountType,
 				CreatedBy:     "user@example.com",
-				Role:          "test-role",
-				PolicyID:      "test-policy",
+				Role:          "addOnBehalfApprovedNotification-role",
+				PolicyID:      "addOnBehalfApprovedNotification-policy",
 				PolicyVersion: 99,
 			}
 			dummyResource := &domain.Resource{
 				ID:           input.ResourceID,
-				ProviderType: "test-provider-type",
-				ProviderURN:  "test-provider-urn",
-				Type:         "test-type",
-				URN:          "test-urn",
+				ProviderType: "addOnBehalfApprovedNotification-provider-type",
+				ProviderURN:  "addOnBehalfApprovedNotification-provider-urn",
+				Type:         "addOnBehalfApprovedNotification-type",
+				URN:          "addOnBehalfApprovedNotification-urn",
 			}
 			expectedPermissions := []string{
-				"test-permission-1",
-				"test-permission-2",
+				"addOnBehalfApprovedNotification-permission-1",
+				"addOnBehalfApprovedNotification-permission-2",
 			}
 			dummyProvider := &domain.Provider{
 				Type: dummyResource.ProviderType,
@@ -870,7 +870,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						{
 							Type: dummyResource.Type,
 							Policy: &domain.PolicyConfig{
-								ID:      "test-dummy-policy",
+								ID:      "addOnBehalfApprovedNotification-dummy-policy",
 								Version: 1,
 							},
 							Roles: []*domain.Role{
@@ -887,7 +887,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				},
 			}
 			dummyPolicy := &domain.Policy{
-				ID:      "test-dummy-policy",
+				ID:      "addOnBehalfApprovedNotification-dummy-policy",
 				Version: 1,
 			}
 			overriddingPolicy := &domain.Policy{
@@ -895,7 +895,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				Version: input.PolicyVersion,
 				Steps: []*domain.Step{
 					{
-						Name:      "test-approval",
+						Name:      "addOnBehalfApprovedNotification-approval",
 						Strategy:  "auto",
 						ApproveIf: "true",
 					},
@@ -920,7 +920,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			err := s.service.Create(context.Background(), []*domain.Appeal{input}, appeal.CreateWithAdditionalAppeal())
 
 			s.NoError(err)
-			s.Equal("test-approval", input.Approvals[0].Name)
+			s.Equal("addOnBehalfApprovedNotification-approval", input.Approvals[0].Name)
 			s.Equal(expectedPermissions, input.Permissions)
 		})
 	})
@@ -932,7 +932,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 		return timeNow
 	}
 
-	accountID := "test@email.com"
+	accountID := "addOnBehalfApprovedNotification@email.com"
 	resourceIDs := []string{"1"}
 	var resources []*domain.Resource
 	for _, id := range resourceIDs {
@@ -967,7 +967,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 						Roles: []*domain.Role{
 							{
 								ID:          "role_id",
-								Permissions: []interface{}{"test-permission"},
+								Permissions: []interface{}{"addOnBehalfApprovedNotification-permission"},
 							},
 						},
 					},
@@ -1028,7 +1028,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			CreatedBy:     accountID,
 			Creator:       expectedCreatorUser,
 			Role:          "role_id",
-			Permissions:   []string{"test-permission"},
+			Permissions:   []string{"addOnBehalfApprovedNotification-permission"},
 			Approvals: []*domain.Approval{
 				{
 					Name:          "step_1",
@@ -1054,7 +1054,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			CreatedBy:     accountID,
 			Creator:       expectedCreatorUser,
 			Role:          "role_id",
-			Permissions:   []string{"test-permission"},
+			Permissions:   []string{"addOnBehalfApprovedNotification-permission"},
 			Approvals: []*domain.Approval{
 				{
 					ID:            "1",
@@ -1094,7 +1094,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	s.mockProviderService.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return([]interface{}{"test-permission"}, nil)
+		Return([]interface{}{"addOnBehalfApprovedNotification-permission"}, nil)
 	s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 	s.mockIAMManager.On("GetClient", mock.Anything).Return(s.mockIAMClient, nil)
 	s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
@@ -1108,7 +1108,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 		})
 
 	expectedExistingActiveAppealsFilters := &domain.ListAppealsFilter{
-		AccountID:  "test@email.com",
+		AccountID:  "addOnBehalfApprovedNotification@email.com",
 		ResourceID: "1",
 		Role:       "role_id",
 		Statuses:   []string{domain.AppealStatusActive},
@@ -1415,7 +1415,7 @@ func (s *ServiceTestSuite) MakeAction() {
 				Approvers: []string{"user@email.com"},
 			},
 		},
-		PolicyID:      "policy-test",
+		PolicyID:      "policy-addOnBehalfApprovedNotification",
 		PolicyVersion: 1,
 	}
 
@@ -1455,7 +1455,7 @@ func (s *ServiceTestSuite) MakeAction() {
 					Approvers: []string{"user@email.com"},
 				},
 			},
-			PolicyID:      "policy-test",
+			PolicyID:      "policy-addOnBehalfApprovedNotification",
 			PolicyVersion: 1,
 		}
 
@@ -1480,7 +1480,7 @@ func (s *ServiceTestSuite) MakeAction() {
 	s.Run("should terminate existing active access if present", func() {
 		action := domain.ApprovalAction{
 			AppealID:     "1",
-			ApprovalName: "test-approval-step",
+			ApprovalName: "addOnBehalfApprovedNotification-approval-step",
 			Action:       "approve",
 			Actor:        "approver@example.com",
 		}
@@ -1488,11 +1488,11 @@ func (s *ServiceTestSuite) MakeAction() {
 			ID:         "1",
 			AccountID:  "user@example.com",
 			ResourceID: "1",
-			Role:       "test-role",
+			Role:       "addOnBehalfApprovedNotification-role",
 			Status:     domain.AppealStatusPending,
 			Approvals: []*domain.Approval{
 				{
-					Name:      "test-approval-step",
+					Name:      "addOnBehalfApprovedNotification-approval-step",
 					Status:    domain.ApprovalStatusPending,
 					Approvers: []string{"approver@example.com"},
 				},
@@ -1504,7 +1504,7 @@ func (s *ServiceTestSuite) MakeAction() {
 				Status:     domain.AppealStatusActive,
 				AccountID:  "user@example.com",
 				ResourceID: "1",
-				Role:       "test-role",
+				Role:       "addOnBehalfApprovedNotification-role",
 			},
 		}
 		expectedTerminatedAppeal := &domain.Appeal{}
@@ -1552,12 +1552,12 @@ func (s *ServiceTestSuite) MakeAction() {
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Resource: &domain.Resource{
 						ID:           "1",
 						URN:          "urn",
-						Name:         "test-resource-name",
-						ProviderType: "test-provider",
+						Name:         "addOnBehalfApprovedNotification-resource-name",
+						ProviderType: "addOnBehalfApprovedNotification-provider",
 					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
@@ -1577,12 +1577,12 @@ func (s *ServiceTestSuite) MakeAction() {
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Resource: &domain.Resource{
 						ID:           "1",
 						URN:          "urn",
-						Name:         "test-resource-name",
-						ProviderType: "test-provider",
+						Name:         "addOnBehalfApprovedNotification-resource-name",
+						ProviderType: "addOnBehalfApprovedNotification-provider",
 					},
 					Status: domain.AppealStatusActive,
 					Approvals: []*domain.Approval{
@@ -1605,8 +1605,8 @@ func (s *ServiceTestSuite) MakeAction() {
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealApproved,
 							Variables: map[string]interface{}{
-								"resource_name": "test-resource-name (test-provider: urn)",
-								"role":          "test-role",
+								"resource_name": "addOnBehalfApprovedNotification-resource-name (addOnBehalfApprovedNotification-provider: urn)",
+								"role":          "addOnBehalfApprovedNotification-role",
 							},
 						},
 					},
@@ -1619,19 +1619,19 @@ func (s *ServiceTestSuite) MakeAction() {
 					ApprovalName: "approval_1",
 					Actor:        "user@email.com",
 					Action:       domain.AppealActionNameReject,
-					Reason:       "test-reason",
+					Reason:       "addOnBehalfApprovedNotification-reason",
 				},
 				expectedAppealDetails: &domain.Appeal{
 					ID:         validApprovalActionParam.AppealID,
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Resource: &domain.Resource{
 						ID:           "1",
 						URN:          "urn",
-						Name:         "test-resource-name",
-						ProviderType: "test-provider",
+						Name:         "addOnBehalfApprovedNotification-resource-name",
+						ProviderType: "addOnBehalfApprovedNotification-provider",
 					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
@@ -1651,12 +1651,12 @@ func (s *ServiceTestSuite) MakeAction() {
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Resource: &domain.Resource{
 						ID:           "1",
 						URN:          "urn",
-						Name:         "test-resource-name",
-						ProviderType: "test-provider",
+						Name:         "addOnBehalfApprovedNotification-resource-name",
+						ProviderType: "addOnBehalfApprovedNotification-provider",
 					},
 					Status: domain.AppealStatusRejected,
 					Approvals: []*domain.Approval{
@@ -1669,7 +1669,7 @@ func (s *ServiceTestSuite) MakeAction() {
 							Status:    domain.ApprovalStatusRejected,
 							Approvers: []string{"user@email.com"},
 							Actor:     &user,
-							Reason:    "test-reason",
+							Reason:    "addOnBehalfApprovedNotification-reason",
 							UpdatedAt: timeNow,
 						},
 					},
@@ -1680,8 +1680,8 @@ func (s *ServiceTestSuite) MakeAction() {
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealRejected,
 							Variables: map[string]interface{}{
-								"resource_name": "test-resource-name (test-provider: urn)",
-								"role":          "test-role",
+								"resource_name": "addOnBehalfApprovedNotification-resource-name (addOnBehalfApprovedNotification-provider: urn)",
+								"role":          "addOnBehalfApprovedNotification-role",
 							},
 						},
 					},
@@ -1700,12 +1700,12 @@ func (s *ServiceTestSuite) MakeAction() {
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Resource: &domain.Resource{
 						ID:           "1",
 						URN:          "urn",
-						Name:         "test-resource-name",
-						ProviderType: "test-provider",
+						Name:         "addOnBehalfApprovedNotification-resource-name",
+						ProviderType: "addOnBehalfApprovedNotification-provider",
 					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
@@ -1729,12 +1729,12 @@ func (s *ServiceTestSuite) MakeAction() {
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Resource: &domain.Resource{
 						ID:           "1",
 						URN:          "urn",
-						Name:         "test-resource-name",
-						ProviderType: "test-provider",
+						Name:         "addOnBehalfApprovedNotification-resource-name",
+						ProviderType: "addOnBehalfApprovedNotification-provider",
 					},
 					Status: domain.AppealStatusRejected,
 					Approvals: []*domain.Approval{
@@ -1762,8 +1762,8 @@ func (s *ServiceTestSuite) MakeAction() {
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeAppealRejected,
 							Variables: map[string]interface{}{
-								"resource_name": "test-resource-name (test-provider: urn)",
-								"role":          "test-role",
+								"resource_name": "addOnBehalfApprovedNotification-resource-name (addOnBehalfApprovedNotification-provider: urn)",
+								"role":          "addOnBehalfApprovedNotification-role",
 							},
 						},
 					},
@@ -1782,12 +1782,12 @@ func (s *ServiceTestSuite) MakeAction() {
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Resource: &domain.Resource{
 						ID:           "1",
 						URN:          "urn",
-						Name:         "test-resource-name",
-						ProviderType: "test-provider",
+						Name:         "addOnBehalfApprovedNotification-resource-name",
+						ProviderType: "addOnBehalfApprovedNotification-provider",
 					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
@@ -1811,12 +1811,12 @@ func (s *ServiceTestSuite) MakeAction() {
 					AccountID:  "user@email.com",
 					CreatedBy:  creator,
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 					Resource: &domain.Resource{
 						ID:           "1",
 						URN:          "urn",
-						Name:         "test-resource-name",
-						ProviderType: "test-provider",
+						Name:         "addOnBehalfApprovedNotification-resource-name",
+						ProviderType: "addOnBehalfApprovedNotification-provider",
 					},
 					Status: domain.AppealStatusPending,
 					Approvals: []*domain.Approval{
@@ -1843,8 +1843,8 @@ func (s *ServiceTestSuite) MakeAction() {
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeApproverNotification,
 							Variables: map[string]interface{}{
-								"resource_name": "test-resource-name (test-provider: urn)",
-								"role":          "test-role",
+								"resource_name": "addOnBehalfApprovedNotification-resource-name (addOnBehalfApprovedNotification-provider: urn)",
+								"role":          "addOnBehalfApprovedNotification-role",
 								"requestor":     creator,
 								"appeal_id":     validApprovalActionParam.AppealID,
 							},
@@ -1855,8 +1855,8 @@ func (s *ServiceTestSuite) MakeAction() {
 						Message: domain.NotificationMessage{
 							Type: domain.NotificationTypeApproverNotification,
 							Variables: map[string]interface{}{
-								"resource_name": "test-resource-name (test-provider: urn)",
-								"role":          "test-role",
+								"resource_name": "addOnBehalfApprovedNotification-resource-name (addOnBehalfApprovedNotification-provider: urn)",
+								"role":          "addOnBehalfApprovedNotification-role",
 								"requestor":     creator,
 								"appeal_id":     validApprovalActionParam.AppealID,
 							},
@@ -1925,7 +1925,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 
 	appealID := "1"
 	actor := "user@email.com"
-	reason := "test-reason"
+	reason := "addOnBehalfApprovedNotification-reason"
 
 	appealDetails := &domain.Appeal{
 		ID:         appealID,
@@ -1984,7 +1984,7 @@ func (s *ServiceTestSuite) TestAddApprover() {
 	s.Run("should return appeal on success", func() {
 		appealID := uuid.New().String()
 		approvalID := uuid.New().String()
-		approvalName := "test-approval-name"
+		approvalName := "addOnBehalfApprovedNotification-approval-name"
 		newApprover := "user@example.com"
 
 		testCases := []struct {
@@ -2209,7 +2209,7 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 	s.Run("should return nil error on success", func() {
 		appealID := uuid.New().String()
 		approvalID := uuid.New().String()
-		approvalName := "test-approval-name"
+		approvalName := "addOnBehalfApprovedNotification-approval-name"
 		approverEmail := "user@example.com"
 
 		testCases := []struct {

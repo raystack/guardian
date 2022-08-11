@@ -29,7 +29,7 @@ appeal:
       value: 24h
     - name: 1 week
       value: 98h
-  - allow_cross_individual_user: false
+  - allow_on_behalf: false
 ```
 
 Check [policy reference](../reference/policy.md) for more details on the policy configuration.<br/>
@@ -89,7 +89,7 @@ $ curl --request POST '{{HOST}}/api/v1beta1/policies' \
                 "value": "72h"
             }
         ],
-        "allow_cross_individual_user": true
+        "allow_on_behalf": true
     }
 }'
 ```
