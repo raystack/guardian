@@ -126,6 +126,7 @@ func (a Appeal) ToAccess() (*Access, error) {
 		AccountID:   a.AccountID,
 		AccountType: a.AccountType,
 		ResourceID:  a.ResourceID,
+		Role:        a.Role,
 		Permissions: a.Permissions,
 		AppealID:    a.ID,
 	}

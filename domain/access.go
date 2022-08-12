@@ -32,6 +32,13 @@ type Access struct {
 	Appeal   *Appeal   `json:"appeal" yaml:"appeal"`
 }
 
+func (a Access) IsEligibleForExtension(extensionDurationRule time.Duration) bool {
+	if a.ExpirationDate != nil && !a.ExpirationDate.IsZero() {
+		return time.Until(*a.ExpirationDate) <= extensionDurationRule
+	}
+	return true
+}
+
 func (a *Access) Revoke(actor, reason string) error {
 	if a == nil {
 		return errors.New("access is nil")

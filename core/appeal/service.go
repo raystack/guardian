@@ -193,22 +193,20 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		return err
 	}
 
-	appealsGroupedByStatus, err := s.getAppealsMapGroupedByStatus([]string{
-		domain.AppealStatusPending,
-		domain.AppealStatusActive,
-	})
+	pendingAppeals, err := s.getPendingAppealsMap()
 	if err != nil {
-		return err
+		return fmt.Errorf("listing pending appeals: %w", err)
 	}
-	pendingAppeals := appealsGroupedByStatus[domain.AppealStatusPending]
-	activeAppeals := appealsGroupedByStatus[domain.AppealStatusActive]
+	activeAccesses, err := s.getActiveAccessesMap(ctx)
+	if err != nil {
+		return fmt.Errorf("listing active accesses: %w", err)
+	}
 
 	notifications := []domain.Notification{}
 
 	for _, appeal := range appeals {
 		appeal.SetDefaults()
 
-		// TODO: validate with pending accesses instead of pending appeals
 		if err := validateAppeal(appeal, pendingAppeals); err != nil {
 			return err
 		}
@@ -220,8 +218,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("retrieving provider: %w", err)
 		}
 
-		// TODO: validate with active accesses instead of active appeals
-		ok, err := s.isEligibleToExtend(appeal, provider, activeAppeals)
+		ok, err := s.isEligibleToExtend(appeal, provider, activeAccesses)
 		if err != nil {
 			return fmt.Errorf("checking appeal extension eligibility: %w", err)
 		}
@@ -789,28 +786,49 @@ func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *dom
 	return appeal, approval, nil
 }
 
-// getAppealsMapGroupedByStatus returns map[status]map[account_id]map[resource_id]map[role]*domain.Appeal, error
-func (s *Service) getAppealsMapGroupedByStatus(statuses []string) (map[string]map[string]map[string]map[string]*domain.Appeal, error) {
-	appeals, err := s.repo.Find(&domain.ListAppealsFilter{Statuses: statuses})
+// getPendingAppealsMap returns map[account_id]map[resource_id]map[role]*domain.Appeal, error
+func (s *Service) getPendingAppealsMap() (map[string]map[string]map[string]*domain.Appeal, error) {
+	appeals, err := s.repo.Find(&domain.ListAppealsFilter{
+		Statuses: []string{domain.AppealStatusPending},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	appealsMap := map[string]map[string]map[string]map[string]*domain.Appeal{}
+	appealsMap := map[string]map[string]map[string]*domain.Appeal{}
 	for _, a := range appeals {
-		if appealsMap[a.Status] == nil {
-			appealsMap[a.Status] = map[string]map[string]map[string]*domain.Appeal{}
+		if appealsMap[a.AccountID] == nil {
+			appealsMap[a.AccountID] = map[string]map[string]*domain.Appeal{}
 		}
-		if appealsMap[a.Status][a.AccountID] == nil {
-			appealsMap[a.Status][a.AccountID] = map[string]map[string]*domain.Appeal{}
+		if appealsMap[a.AccountID][a.ResourceID] == nil {
+			appealsMap[a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
 		}
-		if appealsMap[a.Status][a.AccountID][a.ResourceID] == nil {
-			appealsMap[a.Status][a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
-		}
-		appealsMap[a.Status][a.AccountID][a.ResourceID][a.Role] = a
+		appealsMap[a.AccountID][a.ResourceID][a.Role] = a
 	}
 
 	return appealsMap, nil
+}
+
+func (s *Service) getActiveAccessesMap(ctx context.Context) (map[string]map[string]map[string]*domain.Access, error) {
+	accesses, err := s.accessService.List(ctx, domain.ListAccessesFilter{
+		Statuses: []string{string(domain.AccessStatusActive)},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	accessesMap := map[string]map[string]map[string]*domain.Access{}
+	for i, a := range accesses {
+		if accessesMap[a.AccountID] == nil {
+			accessesMap[a.AccountID] = map[string]map[string]*domain.Access{}
+		}
+		if accessesMap[a.AccountID][a.ResourceID] == nil {
+			accessesMap[a.AccountID][a.ResourceID] = map[string]*domain.Access{}
+		}
+		accessesMap[a.AccountID][a.ResourceID][a.Role] = &accesses[i]
+	}
+
+	return accessesMap, nil
 }
 
 func (s *Service) getResourcesMap(ctx context.Context, ids []string) (map[string]*domain.Resource, error) {
@@ -1106,33 +1124,24 @@ func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal, opts ...Cr
 	return nil
 }
 
-func (s *Service) isEligibleToExtend(a *domain.Appeal, p *domain.Provider, activeAppealsMap map[string]map[string]map[string]*domain.Appeal) (bool, error) {
-	if activeAppealsMap[a.AccountID] != nil &&
-		activeAppealsMap[a.AccountID][a.ResourceID] != nil &&
-		activeAppealsMap[a.AccountID][a.ResourceID][a.Role] != nil {
+func (s *Service) isEligibleToExtend(a *domain.Appeal, p *domain.Provider, activeAccesses map[string]map[string]map[string]*domain.Access) (bool, error) {
+	if activeAccesses[a.AccountID] != nil &&
+		activeAccesses[a.AccountID][a.ResourceID] != nil &&
+		activeAccesses[a.AccountID][a.ResourceID][a.Role] != nil {
 		if p.Config.Appeal != nil {
 			if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
 				return false, ErrAppealFoundActiveAccess
 			}
 
-			duration, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
+			extensionDurationRule, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
 			if err != nil {
-				return false, fmt.Errorf("%v: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
+				return false, fmt.Errorf("%w: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
 			}
 
-			now := s.TimeNow()
-			appeal := activeAppealsMap[a.AccountID][a.ResourceID][a.Role]
-			var isEligibleForExtension bool
-			if appeal.Options != nil && appeal.Options.ExpirationDate != nil {
-				activeAppealExpDate := appeal.Options.ExpirationDate
-				isEligibleForExtension = activeAppealExpDate.Sub(now) <= duration
-			} else {
-				isEligibleForExtension = true
-			}
-			return isEligibleForExtension, nil
+			access := activeAccesses[a.AccountID][a.ResourceID][a.Role]
+			return access.IsEligibleForExtension(extensionDurationRule), nil
 		}
 	}
-
 	return true, nil
 }
 
