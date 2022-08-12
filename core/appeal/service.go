@@ -66,8 +66,8 @@ type approvalService interface {
 //go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
 	Find(context.Context) ([]*domain.Provider, error)
-	GrantAccess(context.Context, *domain.Appeal) error
-	RevokeAccess(context.Context, *domain.Appeal) error
+	GrantAccess(context.Context, domain.Access) error
+	RevokeAccess(context.Context, domain.Access) error
 	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
 	GetPermissions(context.Context, *domain.ProviderConfig, string, string) ([]interface{}, error)
 }
@@ -416,7 +416,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 			}
 
 			if err := s.repo.Update(appeal); err != nil {
-				if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
+				if err := s.providerService.RevokeAccess(ctx, *appeal.Access); err != nil {
 					return nil, fmt.Errorf("revoking access: %w", err)
 				}
 				return nil, fmt.Errorf("updating appeal: %w", err)
@@ -519,7 +519,7 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 		return nil, err
 	}
 
-	if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
+	if err := s.providerService.RevokeAccess(ctx, *appeal.Access); err != nil {
 		if err := s.repo.Update(appeal); err != nil {
 			return nil, err
 		}
@@ -559,6 +559,7 @@ func (s *Service) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsF
 	}
 
 	result := make([]*domain.Appeal, 0)
+	// TODO: list access
 	appeals, err := s.Find(ctx, &domain.ListAppealsFilter{
 		Statuses:      []string{domain.AppealStatusActive},
 		AccountIDs:    filters.AccountIDs,
@@ -639,7 +640,7 @@ func (s *Service) expiredInActiveUserAppeal(ctx context.Context, timeLimiter cha
 		revokedAppeal.RevokedBy = actor
 		revokedAppeal.RevokeReason = reason
 
-		if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
+		if err := s.providerService.RevokeAccess(ctx, *appeal.Access); err != nil {
 			done <- appeal
 			s.logger.Error("failed to revoke appeal-access in provider", "id", appeal.ID, "error", err)
 			return
@@ -1117,7 +1118,7 @@ func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal, opts ...Cr
 		}
 	}
 
-	if err := s.providerService.GrantAccess(ctx, a); err != nil {
+	if err := s.providerService.GrantAccess(ctx, *a.Access); err != nil {
 		return fmt.Errorf("granting access: %w", err)
 	}
 

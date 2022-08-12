@@ -56,8 +56,8 @@ type providerService interface {
 	FetchResources(context.Context) error
 	GetRoles(ctx context.Context, id, resourceType string) ([]*domain.Role, error)
 	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
-	GrantAccess(context.Context, *domain.Appeal) error
-	RevokeAccess(context.Context, *domain.Appeal) error
+	GrantAccess(context.Context, domain.Access) error
+	RevokeAccess(context.Context, domain.Access) error
 	Delete(context.Context, string) error
 }
 

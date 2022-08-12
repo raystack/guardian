@@ -23,7 +23,7 @@ type repository interface {
 
 //go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
-	RevokeAccess(context.Context, *domain.Appeal) error
+	RevokeAccess(context.Context, domain.Access) error
 }
 
 //go:generate mockery --name=auditLogger --exported --with-expecter
@@ -112,7 +112,7 @@ func (s *Service) Revoke(ctx context.Context, id, actor, reason string, opts ...
 	options := s.getOptions(opts...)
 
 	if !options.skipRevokeInProvider {
-		if err := s.providerService.RevokeAccess(ctx, access.Appeal); err != nil {
+		if err := s.providerService.RevokeAccess(ctx, *access); err != nil {
 			return nil, fmt.Errorf("removing access in provider: %w", err)
 		}
 	}

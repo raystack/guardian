@@ -314,15 +314,11 @@ func (s *ServiceTestSuite) TestFetchResources() {
 func (s *ServiceTestSuite) TestGrantAccess() {
 	s.Run("should return error if got error on appeal param validation", func() {
 		testCases := []struct {
-			appealParam   *domain.Appeal
+			appealParam   domain.Access
 			expectedError error
 		}{
 			{
-				appealParam:   nil,
-				expectedError: provider.ErrNilAppeal,
-			},
-			{
-				appealParam:   &domain.Appeal{},
+				appealParam:   domain.Access{},
 				expectedError: provider.ErrNilResource,
 			},
 		}
@@ -333,7 +329,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 	})
 
 	s.Run("should return error if provider is not exists", func() {
-		appeal := &domain.Appeal{
+		appeal := domain.Access{
 			Resource: &domain.Resource{
 				ProviderType: "invalid-provider-type",
 			},
@@ -343,7 +339,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	validAppeal := &domain.Appeal{
+	validAppeal := domain.Access{
 		Resource: &domain.Resource{
 			ProviderType: mockProviderType,
 			ProviderURN:  "urn",
@@ -412,15 +408,11 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 func (s *ServiceTestSuite) TestRevokeAccess() {
 	s.Run("should return error if got error on appeal param validation", func() {
 		testCases := []struct {
-			appealParam   *domain.Appeal
+			appealParam   domain.Access
 			expectedError error
 		}{
 			{
-				appealParam:   nil,
-				expectedError: provider.ErrNilAppeal,
-			},
-			{
-				appealParam:   &domain.Appeal{},
+				appealParam:   domain.Access{},
 				expectedError: provider.ErrNilResource,
 			},
 		}
@@ -431,7 +423,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 	})
 
 	s.Run("should return error if provider is not exists", func() {
-		appeal := &domain.Appeal{
+		appeal := domain.Access{
 			Resource: &domain.Resource{
 				ProviderType: "invalid-provider-type",
 			},
@@ -441,7 +433,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	validAppeal := &domain.Appeal{
+	validAppeal := domain.Access{
 		Resource: &domain.Resource{
 			ProviderType: mockProviderType,
 			ProviderURN:  "urn",
