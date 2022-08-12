@@ -220,10 +220,10 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 
 		ok, err := s.isEligibleToExtend(appeal, provider, activeAccesses)
 		if err != nil {
-			return fmt.Errorf("checking appeal extension eligibility: %w", err)
+			return fmt.Errorf("checking access extension eligibility: %w", err)
 		}
 		if !ok {
-			return ErrAppealNotEligibleForExtension
+			return ErrAccessNotEligibleForExtension
 		}
 
 		if err := s.providerService.ValidateAppeal(ctx, appeal, provider); err != nil {
