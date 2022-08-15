@@ -80,9 +80,10 @@ func RunServer(config *Config) error {
 	enabledJobs := fetchJobsToRun(config)
 	tasks := make([]*scheduler.Task, 0)
 	for _, job := range enabledJobs {
+		fn := jobsMap[job.JobType]
 		task := scheduler.Task{
 			CronTab: job.Interval,
-			Func:    func() error { return jobsMap[job.JobType](context.Background()) },
+			Func:    func() error { return fn(context.Background()) },
 		}
 		tasks = append(tasks, &task)
 	}
