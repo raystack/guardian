@@ -273,6 +273,8 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 				if err != nil {
 					return fmt.Errorf("preparing access: %w", err)
 				}
+				newAccess.Resource = appeal.Resource
+				appeal.Access = newAccess
 				if revokedAccess != nil {
 					if _, err := s.accessService.Revoke(ctx, revokedAccess.ID, domain.SystemActorName, RevokeReasonForExtension,
 						access.SkipNotifications(),
@@ -285,7 +287,6 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 						return fmt.Errorf("granting access: %w", err)
 					}
 				}
-				appeal.Access = newAccess
 
 				notifications = append(notifications, domain.Notification{
 					User: appeal.CreatedBy,
@@ -400,6 +401,8 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 				if err != nil {
 					return nil, fmt.Errorf("preparing access: %w", err)
 				}
+				newAccess.Resource = appeal.Resource
+				appeal.Access = newAccess
 				if revokedAccess != nil {
 					if _, err := s.accessService.Revoke(ctx, revokedAccess.ID, domain.SystemActorName, RevokeReasonForExtension,
 						access.SkipNotifications(),
@@ -412,7 +415,6 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 						return nil, fmt.Errorf("granting access: %w", err)
 					}
 				}
-				appeal.Access = newAccess
 			}
 
 			if err := s.repo.Update(appeal); err != nil {
@@ -501,7 +503,6 @@ func (s *Service) Cancel(ctx context.Context, id string) (*domain.Appeal, error)
 	return appeal, nil
 }
 
-// TODO: delete this
 func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (*domain.Appeal, error) {
 	appeal, err := s.repo.GetByID(id)
 	if err != nil {
@@ -510,10 +511,13 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 
 	revokedAppeal := &domain.Appeal{}
 	*revokedAppeal = *appeal
-	revokedAppeal.Status = domain.AppealStatusTerminated
-	revokedAppeal.RevokedAt = s.TimeNow()
-	revokedAppeal.RevokedBy = actor
-	revokedAppeal.RevokeReason = reason
+	if err := revokedAppeal.Revoke(actor, reason); err != nil {
+		return nil, err
+	}
+	appeal.Access.Resource = appeal.Resource
+	if err := appeal.Access.Revoke(actor, reason); err != nil {
+		return nil, fmt.Errorf("updating access status: %s", err)
+	}
 
 	if err := s.repo.Update(revokedAppeal); err != nil {
 		return nil, err
@@ -614,7 +618,7 @@ func (s *Service) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsF
 	var failedRevoke []string
 	for {
 		select {
-		case appeal, _ := <-done:
+		case appeal := <-done:
 			if appeal.Status == domain.AppealStatusTerminated {
 				successRevoke = append(successRevoke, appeal.ID)
 			} else {
@@ -636,9 +640,15 @@ func (s *Service) expiredInActiveUserAppeal(ctx context.Context, timeLimiter cha
 
 		revokedAppeal := &domain.Appeal{}
 		*revokedAppeal = *appeal
-		revokedAppeal.RevokedAt = s.TimeNow()
-		revokedAppeal.RevokedBy = actor
-		revokedAppeal.RevokeReason = reason
+		if err := revokedAppeal.Revoke(actor, reason); err != nil {
+			s.logger.Error("failed to update appeal status", "id", appeal.ID, "error", err)
+			return
+		}
+		revokedAppeal.Access.Resource = appeal.Resource
+		if err := revokedAppeal.Access.Revoke(actor, reason); err != nil {
+			s.logger.Error("failed to update access status", "id", revokedAppeal.Access.ID, "error", err)
+			return
+		}
 
 		if err := s.providerService.RevokeAccess(ctx, *appeal.Access); err != nil {
 			done <- appeal
@@ -646,7 +656,6 @@ func (s *Service) expiredInActiveUserAppeal(ctx context.Context, timeLimiter cha
 			return
 		}
 
-		revokedAppeal.Status = domain.AppealStatusTerminated
 		if err := s.repo.Update(revokedAppeal); err != nil {
 			done <- appeal
 			s.logger.Error("failed to update appeal-revoke status", "id", appeal.ID, "error", err)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/odpf/guardian/core/access"
 	"github.com/odpf/guardian/core/appeal"
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
@@ -93,6 +94,8 @@ type approvalService interface {
 type accessService interface {
 	List(context.Context, domain.ListAccessesFilter) ([]domain.Access, error)
 	GetByID(context.Context, string) (*domain.Access, error)
+	Revoke(ctx context.Context, id, actor, reason string, opts ...access.Option) (*domain.Access, error)
+	BulkRevoke(ctx context.Context, filter domain.RevokeAccessesFilter, actor, reason string) ([]*domain.Access, error)
 }
 
 type GRPCServer struct {

@@ -56,9 +56,21 @@ func (a *Access) Revoke(actor, reason string) error {
 }
 
 type ListAccessesFilter struct {
-	Statuses     []string
-	AccountIDs   []string
-	AccountTypes []string
-	ResourceIDs  []string
-	Permissions  []string
+	Statuses      []string
+	AccountIDs    []string
+	AccountTypes  []string
+	ResourceIDs   []string
+	Permissions   []string
+	ProviderTypes []string
+	ProviderURNs  []string
+	ResourceTypes []string
+	ResourceURNs  []string
+}
+
+type RevokeAccessesFilter struct {
+	AccountIDs    []string `validate:"omitempty,required"`
+	ProviderTypes []string `validate:"omitempty,min=1"`
+	ProviderURNs  []string `validate:"omitempty,min=1"`
+	ResourceTypes []string `validate:"omitempty,min=1"`
+	ResourceURNs  []string `validate:"omitempty,min=1"`
 }

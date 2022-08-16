@@ -38,6 +38,7 @@ type GuardianServiceClient interface {
 	ListAppeals(ctx context.Context, in *ListAppealsRequest, opts ...grpc.CallOption) (*ListAppealsResponse, error)
 	GetAppeal(ctx context.Context, in *GetAppealRequest, opts ...grpc.CallOption) (*GetAppealResponse, error)
 	CancelAppeal(ctx context.Context, in *CancelAppealRequest, opts ...grpc.CallOption) (*CancelAppealResponse, error)
+	// Deprecated: Do not use.
 	RevokeAppeal(ctx context.Context, in *RevokeAppealRequest, opts ...grpc.CallOption) (*RevokeAppealResponse, error)
 	CreateAppeal(ctx context.Context, in *CreateAppealRequest, opts ...grpc.CallOption) (*CreateAppealResponse, error)
 	ListUserApprovals(ctx context.Context, in *ListUserApprovalsRequest, opts ...grpc.CallOption) (*ListUserApprovalsResponse, error)
@@ -45,9 +46,12 @@ type GuardianServiceClient interface {
 	UpdateApproval(ctx context.Context, in *UpdateApprovalRequest, opts ...grpc.CallOption) (*UpdateApprovalResponse, error)
 	AddApprover(ctx context.Context, in *AddApproverRequest, opts ...grpc.CallOption) (*AddApproverResponse, error)
 	DeleteApprover(ctx context.Context, in *DeleteApproverRequest, opts ...grpc.CallOption) (*DeleteApproverResponse, error)
+	// Deprecated: Do not use.
 	RevokeAppeals(ctx context.Context, in *RevokeAppealsRequest, opts ...grpc.CallOption) (*RevokeAppealsResponse, error)
 	ListAccesses(ctx context.Context, in *ListAccessesRequest, opts ...grpc.CallOption) (*ListAccessesResponse, error)
 	GetAccess(ctx context.Context, in *GetAccessRequest, opts ...grpc.CallOption) (*GetAccessResponse, error)
+	RevokeAccess(ctx context.Context, in *RevokeAccessRequest, opts ...grpc.CallOption) (*RevokeAccessResponse, error)
+	RevokeAccesses(ctx context.Context, in *RevokeAccessesRequest, opts ...grpc.CallOption) (*RevokeAccessesResponse, error)
 }
 
 type guardianServiceClient struct {
@@ -238,6 +242,7 @@ func (c *guardianServiceClient) CancelAppeal(ctx context.Context, in *CancelAppe
 	return out, nil
 }
 
+// Deprecated: Do not use.
 func (c *guardianServiceClient) RevokeAppeal(ctx context.Context, in *RevokeAppealRequest, opts ...grpc.CallOption) (*RevokeAppealResponse, error) {
 	out := new(RevokeAppealResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeAppeal", in, out, opts...)
@@ -301,6 +306,7 @@ func (c *guardianServiceClient) DeleteApprover(ctx context.Context, in *DeleteAp
 	return out, nil
 }
 
+// Deprecated: Do not use.
 func (c *guardianServiceClient) RevokeAppeals(ctx context.Context, in *RevokeAppealsRequest, opts ...grpc.CallOption) (*RevokeAppealsResponse, error) {
 	out := new(RevokeAppealsResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeAppeals", in, out, opts...)
@@ -322,6 +328,24 @@ func (c *guardianServiceClient) ListAccesses(ctx context.Context, in *ListAccess
 func (c *guardianServiceClient) GetAccess(ctx context.Context, in *GetAccessRequest, opts ...grpc.CallOption) (*GetAccessResponse, error) {
 	out := new(GetAccessResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/GetAccess", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) RevokeAccess(ctx context.Context, in *RevokeAccessRequest, opts ...grpc.CallOption) (*RevokeAccessResponse, error) {
+	out := new(RevokeAccessResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeAccess", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *guardianServiceClient) RevokeAccesses(ctx context.Context, in *RevokeAccessesRequest, opts ...grpc.CallOption) (*RevokeAccessesResponse, error) {
+	out := new(RevokeAccessesResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeAccesses", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -352,6 +376,7 @@ type GuardianServiceServer interface {
 	ListAppeals(context.Context, *ListAppealsRequest) (*ListAppealsResponse, error)
 	GetAppeal(context.Context, *GetAppealRequest) (*GetAppealResponse, error)
 	CancelAppeal(context.Context, *CancelAppealRequest) (*CancelAppealResponse, error)
+	// Deprecated: Do not use.
 	RevokeAppeal(context.Context, *RevokeAppealRequest) (*RevokeAppealResponse, error)
 	CreateAppeal(context.Context, *CreateAppealRequest) (*CreateAppealResponse, error)
 	ListUserApprovals(context.Context, *ListUserApprovalsRequest) (*ListUserApprovalsResponse, error)
@@ -359,9 +384,12 @@ type GuardianServiceServer interface {
 	UpdateApproval(context.Context, *UpdateApprovalRequest) (*UpdateApprovalResponse, error)
 	AddApprover(context.Context, *AddApproverRequest) (*AddApproverResponse, error)
 	DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error)
+	// Deprecated: Do not use.
 	RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error)
 	ListAccesses(context.Context, *ListAccessesRequest) (*ListAccessesResponse, error)
 	GetAccess(context.Context, *GetAccessRequest) (*GetAccessResponse, error)
+	RevokeAccess(context.Context, *RevokeAccessRequest) (*RevokeAccessResponse, error)
+	RevokeAccesses(context.Context, *RevokeAccessesRequest) (*RevokeAccessesResponse, error)
 	mustEmbedUnimplementedGuardianServiceServer()
 }
 
@@ -458,6 +486,12 @@ func (UnimplementedGuardianServiceServer) ListAccesses(context.Context, *ListAcc
 }
 func (UnimplementedGuardianServiceServer) GetAccess(context.Context, *GetAccessRequest) (*GetAccessResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccess not implemented")
+}
+func (UnimplementedGuardianServiceServer) RevokeAccess(context.Context, *RevokeAccessRequest) (*RevokeAccessResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeAccess not implemented")
+}
+func (UnimplementedGuardianServiceServer) RevokeAccesses(context.Context, *RevokeAccessesRequest) (*RevokeAccessesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeAccesses not implemented")
 }
 func (UnimplementedGuardianServiceServer) mustEmbedUnimplementedGuardianServiceServer() {}
 
@@ -1012,6 +1046,42 @@ func _GuardianService_GetAccess_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GuardianService_RevokeAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeAccessRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).RevokeAccess(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/RevokeAccess",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).RevokeAccess(ctx, req.(*RevokeAccessRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GuardianService_RevokeAccesses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeAccessesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).RevokeAccesses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/RevokeAccesses",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).RevokeAccesses(ctx, req.(*RevokeAccessesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GuardianService_ServiceDesc is the grpc.ServiceDesc for GuardianService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1138,6 +1208,14 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAccess",
 			Handler:    _GuardianService_GetAccess_Handler,
+		},
+		{
+			MethodName: "RevokeAccess",
+			Handler:    _GuardianService_RevokeAccess_Handler,
+		},
+		{
+			MethodName: "RevokeAccesses",
+			Handler:    _GuardianService_RevokeAccesses_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

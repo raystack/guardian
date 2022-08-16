@@ -37,6 +37,18 @@ func (r *AccessRepository) List(ctx context.Context, filter domain.ListAccessesF
 	if filter.Permissions != nil {
 		db = db.Where(`"accesses"."permissions" @> ?`, pq.StringArray(filter.Permissions))
 	}
+	if filter.ProviderTypes != nil {
+		db = db.Where(`"resources"."provider_type" IN ?`, filter.ProviderTypes)
+	}
+	if filter.ProviderURNs != nil {
+		db = db.Where(`"resources"."provider_urn" IN ?`, filter.ProviderURNs)
+	}
+	if filter.ResourceTypes != nil {
+		db = db.Where(`"resources"."type" IN ?`, filter.ResourceTypes)
+	}
+	if filter.ResourceURNs != nil {
+		db = db.Where(`"resources"."urn" IN ?`, filter.ResourceURNs)
+	}
 
 	var models []model.Access
 	if err := db.Joins("Resource").Joins("Appeal").Find(&models).Error; err != nil {

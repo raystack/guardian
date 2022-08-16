@@ -75,16 +75,16 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 		accounts = append(accounts, filters.AccountIDs...)
 	}
 	if len(accounts) > 0 {
-		db = db.Where(`"account_id" IN ?`, accounts)
+		db = db.Where(`"appeals"."account_id" IN ?`, accounts)
 	}
 	if filters.Statuses != nil {
-		db = db.Where(`"status" IN ?`, filters.Statuses)
+		db = db.Where(`"appeals"."status" IN ?`, filters.Statuses)
 	}
 	if filters.ResourceID != "" {
-		db = db.Where(`"resource_id" = ?`, filters.ResourceID)
+		db = db.Where(`"appeals"."resource_id" = ?`, filters.ResourceID)
 	}
 	if filters.Role != "" {
-		db = db.Where(`"role" = ?`, filters.Role)
+		db = db.Where(`"appeals"."role" = ?`, filters.Role)
 	}
 	if !filters.ExpirationDateLessThan.IsZero() {
 		db = db.Where(`"options" -> 'expiration_date' < ?`, filters.ExpirationDateLessThan)
@@ -113,7 +113,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 	}
 
 	var models []*model.Appeal
-	if err := db.Find(&models).Error; err != nil {
+	if err := db.Joins("Access").Find(&models).Error; err != nil {
 		return nil, err
 	}
 

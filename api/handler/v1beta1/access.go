@@ -55,3 +55,59 @@ func (s *GRPCServer) GetAccess(ctx context.Context, req *guardianv1beta1.GetAcce
 		Access: accessProto,
 	}, nil
 }
+
+func (s *GRPCServer) RevokeAccess(ctx context.Context, req *guardianv1beta1.RevokeAccessRequest) (*guardianv1beta1.RevokeAccessResponse, error) {
+	actor, err := s.getUser(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "failed to get metadata: actor")
+	}
+
+	a, err := s.accessService.Revoke(ctx, req.GetId(), actor, req.GetReason())
+	if err != nil {
+		if errors.Is(err, access.ErrAccessNotFound) {
+			return nil, status.Error(codes.NotFound, "access not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to revoke access: %v", err)
+	}
+
+	accessProto, err := s.adapter.ToAccessProto(*a)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to parse access: %v", err)
+	}
+
+	return &guardianv1beta1.RevokeAccessResponse{
+		Access: accessProto,
+	}, nil
+}
+
+func (s *GRPCServer) RevokeAccesses(ctx context.Context, req *guardianv1beta1.RevokeAccessesRequest) (*guardianv1beta1.RevokeAccessesResponse, error) {
+	actor, err := s.getUser(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "failed to get metadata: actor")
+	}
+
+	filter := domain.RevokeAccessesFilter{
+		AccountIDs:    req.GetAccountIds(),
+		ProviderTypes: req.GetProviderTypes(),
+		ProviderURNs:  req.GetProviderUrns(),
+		ResourceTypes: req.GetResourceTypes(),
+		ResourceURNs:  req.GetResourceUrns(),
+	}
+	accesses, err := s.accessService.BulkRevoke(ctx, filter, actor, req.GetReason())
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to revoke accesses in bulk")
+	}
+
+	var accessesProto []*guardianv1beta1.Access
+	for _, a := range accesses {
+		accessProto, err := s.adapter.ToAccessProto(*a)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse access: %v", err)
+		}
+		accessesProto = append(accessesProto, accessProto)
+	}
+
+	return &guardianv1beta1.RevokeAccessesResponse{
+		Accesses: accessesProto,
+	}, nil
+}

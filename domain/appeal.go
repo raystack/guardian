@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
 	"time"
 )
@@ -103,6 +104,21 @@ func (a *Appeal) Reject() {
 
 func (a *Appeal) Terminate() {
 	a.Status = AppealStatusTerminated
+}
+
+func (a *Appeal) Revoke(actor, reason string) error {
+	if a == nil {
+		return errors.New("apppeal is nil")
+	}
+	if actor == "" {
+		return errors.New("actor shouldn't be empty")
+	}
+
+	a.Status = AppealStatusTerminated
+	a.RevokedBy = actor
+	a.RevokeReason = reason
+	a.RevokedAt = time.Now()
+	return nil
 }
 
 func (a *Appeal) SetDefaults() {
