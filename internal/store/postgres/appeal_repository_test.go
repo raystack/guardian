@@ -29,6 +29,7 @@ type AppealRepositoryTestSuite struct {
 	repository *postgres.AppealRepository
 
 	columnNames         []string
+	accessColumnNames   []string
 	approvalColumnNames []string
 	approverColumnNames []string
 	resourceColumnNames []string
@@ -57,6 +58,11 @@ func (s *AppealRepositoryTestSuite) SetupTest() {
 		"details",
 		"created_at",
 		"updated_at",
+	}
+	s.accessColumnNames = []string{
+		"id", "status", "account_id", "account_type", "resource_id", "role", "permissions",
+		"expiration_date", "appeal_id", "revoked_by", "revoked_at", "revoke_reason",
+		"created_at", "updated_at",
 	}
 	s.approvalColumnNames = []string{
 		"id",
@@ -199,6 +205,18 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 					},
 					CreatedAt: timeNow,
 					UpdatedAt: timeNow,
+					Access: &domain.Access{
+						ID:          uuid.NewString(),
+						AppealID:    expectedID,
+						Status:      "test-status",
+						AccountID:   "test-account-id",
+						AccountType: "test-account-type",
+						ResourceID:  uuid.NewString(),
+						Role:        "test-role",
+						Permissions: []string{"test-permission"},
+						CreatedAt:   timeNow,
+						UpdatedAt:   timeNow,
+					},
 				},
 			},
 		}
@@ -227,6 +245,28 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 				ExpectQuery(expectedQuery).
 				WithArgs(tc.expectedID).
 				WillReturnRows(expectedRows)
+
+			expectedAccessesPreloadQuery := regexp.QuoteMeta(`SELECT * FROM "accesses" WHERE "accesses"."appeal_id" = $1 AND "accesses"."deleted_at" IS NULL`)
+			expectedAccessRows := sqlmock.NewRows(s.accessColumnNames).AddRow(
+				tc.expectedRecord.Access.ID,
+				tc.expectedRecord.Access.Status,
+				tc.expectedRecord.Access.AccountID,
+				tc.expectedRecord.Access.AccountType,
+				tc.expectedRecord.Access.ResourceID,
+				tc.expectedRecord.Access.Role,
+				fmt.Sprintf("{%s}", strings.Join(tc.expectedRecord.Access.Permissions, ",")),
+				tc.expectedRecord.Access.ExpirationDate,
+				tc.expectedRecord.Access.AppealID,
+				tc.expectedRecord.Access.RevokedBy,
+				tc.expectedRecord.Access.RevokedAt,
+				tc.expectedRecord.Access.RevokeReason,
+				tc.expectedRecord.Access.CreatedAt,
+				tc.expectedRecord.Access.UpdatedAt,
+			)
+			s.dbmock.
+				ExpectQuery(expectedAccessesPreloadQuery).
+				WithArgs(tc.expectedID).
+				WillReturnRows(expectedAccessRows)
 
 			expectedApprovalsPreloadQuery := regexp.QuoteMeta(`SELECT * FROM "approvals" WHERE "approvals"."appeal_id" = $1 AND "approvals"."deleted_at" IS NULL`)
 			expectedApprovalRows := sqlmock.NewRows(s.approvalColumnNames)
@@ -301,7 +341,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 	})
 
 	s.Run("should run query based on filters", func() {
-		selectAppealsJoinsWithResourceSql := `SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."permissions","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE`
+		selectAppealsJoinsWithResourceSql := `SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."permissions","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted","Access"."id" AS "Access__id","Access"."status" AS "Access__status","Access"."account_id" AS "Access__account_id","Access"."account_type" AS "Access__account_type","Access"."resource_id" AS "Access__resource_id","Access"."role" AS "Access__role","Access"."permissions" AS "Access__permissions","Access"."expiration_date" AS "Access__expiration_date","Access"."appeal_id" AS "Access__appeal_id","Access"."revoked_by" AS "Access__revoked_by","Access"."revoked_at" AS "Access__revoked_at","Access"."revoke_reason" AS "Access__revoke_reason","Access"."created_at" AS "Access__created_at","Access"."updated_at" AS "Access__updated_at","Access"."deleted_at" AS "Access__deleted_at" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" LEFT JOIN "accesses" "Access" ON "appeals"."id" = "Access"."appeal_id" WHERE`
 		timeNow := time.Now()
 		testCases := []struct {
 			filters             *domain.ListAppealsFilter
@@ -323,35 +363,35 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				filters: &domain.ListAppealsFilter{
 					AccountIDs: []string{"user@email.com"},
 				},
-				expectedClauseQuery: `"account_id" IN ($1) AND "appeals"."deleted_at" IS NULL`,
+				expectedClauseQuery: `"appeals"."account_id" IN ($1) AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"user@email.com"},
 			},
 			{
 				filters: &domain.ListAppealsFilter{
 					AccountID: "user@email.com",
 				},
-				expectedClauseQuery: `"account_id" IN ($1) AND "appeals"."deleted_at" IS NULL`,
+				expectedClauseQuery: `"appeals"."account_id" IN ($1) AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"user@email.com"},
 			},
 			{
 				filters: &domain.ListAppealsFilter{
 					Statuses: []string{domain.AppealStatusActive, domain.AppealStatusTerminated},
 				},
-				expectedClauseQuery: `"status" IN ($1,$2) AND "appeals"."deleted_at" IS NULL`,
+				expectedClauseQuery: `"appeals"."status" IN ($1,$2) AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{domain.AppealStatusActive, domain.AppealStatusTerminated},
 			},
 			{
 				filters: &domain.ListAppealsFilter{
 					ResourceID: "1",
 				},
-				expectedClauseQuery: `"resource_id" = $1 AND "appeals"."deleted_at" IS NULL`,
+				expectedClauseQuery: `"appeals"."resource_id" = $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"1"},
 			},
 			{
 				filters: &domain.ListAppealsFilter{
 					Role: "test-role",
 				},
-				expectedClauseQuery: `"role" = $1 AND "appeals"."deleted_at" IS NULL`,
+				expectedClauseQuery: `"appeals"."role" = $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"test-role"},
 			},
 			{
@@ -476,7 +516,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 	})
 
 	s.Run("should return records on success", func() {
-		expectedQuery := regexp.QuoteMeta(`SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."permissions","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" WHERE "appeals"."deleted_at" IS NULL`)
+		expectedQuery := regexp.QuoteMeta(`SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."permissions","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted","Access"."id" AS "Access__id","Access"."status" AS "Access__status","Access"."account_id" AS "Access__account_id","Access"."account_type" AS "Access__account_type","Access"."resource_id" AS "Access__resource_id","Access"."role" AS "Access__role","Access"."permissions" AS "Access__permissions","Access"."expiration_date" AS "Access__expiration_date","Access"."appeal_id" AS "Access__appeal_id","Access"."revoked_by" AS "Access__revoked_by","Access"."revoked_at" AS "Access__revoked_at","Access"."revoke_reason" AS "Access__revoke_reason","Access"."created_at" AS "Access__created_at","Access"."updated_at" AS "Access__updated_at","Access"."deleted_at" AS "Access__deleted_at" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" LEFT JOIN "accesses" "Access" ON "appeals"."id" = "Access"."appeal_id" WHERE "appeals"."deleted_at" IS NULL`)
 		resourceID1 := uuid.New().String()
 		resourceID2 := uuid.New().String()
 		expectedRecords := []*domain.Appeal{
@@ -495,6 +535,12 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				Status:        domain.AppealStatusPending,
 				AccountID:     "user@email.com",
 				Role:          "role_name",
+				Permissions:   []string{"test-permission"},
+				Access: &domain.Access{
+					ID:          uuid.NewString(),
+					Status:      "test-status",
+					Permissions: []string{"test-permission"},
+				},
 			},
 			{
 				ID:         uuid.New().String(),
@@ -511,11 +557,20 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				Status:        domain.AppealStatusPending,
 				AccountID:     "user@email.com",
 				Role:          "role_name",
+				Permissions:   []string{"test-permission"},
+				Access: &domain.Access{
+					ID:          uuid.NewString(),
+					Status:      "test-status",
+					Permissions: []string{"test-permission"},
+				},
 			},
 		}
 		aggregatedColumns := s.columnNames
 		for _, c := range s.resourceColumnNames {
 			aggregatedColumns = append(aggregatedColumns, fmt.Sprintf("Resource__%s", c))
+		}
+		for _, c := range s.accessColumnNames {
+			aggregatedColumns = append(aggregatedColumns, fmt.Sprintf("Access__%s", c))
 		}
 		expectedRows := sqlmock.NewRows(aggregatedColumns)
 		for _, r := range expectedRecords {
@@ -548,6 +603,11 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				"null",
 				r.Resource.CreatedAt,
 				r.Resource.UpdatedAt,
+
+				// access
+				r.Access.ID, r.Access.Status, r.Access.AccountID, r.Access.AccountType, r.Access.ResourceID, r.Access.Role, fmt.Sprintf("{%s}", strings.Join(r.Access.Permissions, ",")),
+				r.Access.ExpirationDate, r.Access.AppealID, r.Access.RevokedBy, r.Access.RevokedAt, r.Access.RevokeReason,
+				r.Access.CreatedAt, r.Access.UpdatedAt,
 			)
 		}
 		s.dbmock.
