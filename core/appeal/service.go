@@ -332,7 +332,7 @@ func addOnBehalfApprovedNotification(appeal *domain.Appeal, notifications []doma
 		notifications = append(notifications, domain.Notification{
 			User: appeal.AccountID,
 			Message: domain.NotificationMessage{
-				Type: domain.NotificationTypeAppealForOnBehalf,
+				Type: domain.NotificationTypeOnBehalfAppealApproved,
 				Variables: map[string]interface{}{
 					"appeal_id":     appeal.ID,
 					"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),

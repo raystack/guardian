@@ -10,12 +10,12 @@ type NotificationMessages struct {
 }
 
 const (
-	NotificationTypeExpirationReminder   = "ExpirationReminder"
-	NotificationTypeAppealApproved       = "AppealApproved"
-	NotificationTypeAppealForOnBehalf    = "OnBehalfAppealApproved"
-	NotificationTypeAppealRejected       = "AppealRejected"
-	NotificationTypeAccessRevoked        = "AccessRevoked"
-	NotificationTypeApproverNotification = "ApproverNotification"
+	NotificationTypeExpirationReminder     = "ExpirationReminder"
+	NotificationTypeAppealApproved         = "AppealApproved"
+	NotificationTypeOnBehalfAppealApproved = "OnBehalfAppealApproved"
+	NotificationTypeAppealRejected         = "AppealRejected"
+	NotificationTypeAccessRevoked          = "AccessRevoked"
+	NotificationTypeApproverNotification   = "ApproverNotification"
 )
 
 type NotificationMessage struct {
