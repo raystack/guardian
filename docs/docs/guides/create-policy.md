@@ -24,7 +24,7 @@ steps:
     approvers:
       - john.doe@company.com
 appeal:
-  - duartion_options:
+  - duration_options:
     - name: 1 day
       value: 24h
     - name: 1 week
