@@ -31,7 +31,7 @@ func ProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian provider init
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 	}
 
@@ -53,7 +53,7 @@ func listProvidersCmd() *cobra.Command {
 		Short: "List and filter providers",
 		Long:  "List and filter all registered providers.",
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			spinner := printer.Spin("")
@@ -108,7 +108,7 @@ func viewProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian provider view <provider-id>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -158,7 +158,7 @@ func createProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian provider create --file <file-path>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			spinner := printer.Spin("")
@@ -211,7 +211,7 @@ func editProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian provider edit <provider-id> --file <file-path>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -267,7 +267,7 @@ func initProviderCmd() *cobra.Command {
 			$ guardian provider init --file=<output-name>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pwd, _ := os.Getwd()
@@ -303,7 +303,7 @@ func applyProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian provider apply --file <file-path>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			spinner := printer.Spin("")
@@ -384,7 +384,7 @@ func planProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian provider plan --file=<file-path>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			spinner := printer.Spin("")

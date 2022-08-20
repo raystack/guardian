@@ -56,7 +56,7 @@ func configInitCommand() *cobra.Command {
 			$ guardian config init
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := cmdx.SetConfig("guardian")
@@ -79,7 +79,7 @@ func configListCommand() *cobra.Command {
 			$ guardian config list
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := cmdx.SetConfig("guardian")
