@@ -16,24 +16,14 @@ func New(cfg *Config) *cobra.Command {
 			Universal access control to cloud apps and infrastructure.`),
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Example: heredoc.Doc(`
-			$ guardian appeal create
-			$ guardian policy list
-			$ guardian provider list
-			$ guardian resource list
-			$ guardian policy create --file policy.yaml
-		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 			"help:learn": heredoc.Doc(`
-				Use 'guardian <command> <subcommand> --help' for more information about a command.
+				Use 'guardian <command> --help' for info about a command.
 				Read the manual at https://odpf.github.io/guardian/
 			`),
 			"help:feedback": heredoc.Doc(`
 				Open an issue here https://github.com/odpf/guardian/issues
-			`),
-			"help:environment": heredoc.Doc(`
-				See 'guardian help environment' for the list of supported environment variables.
 			`),
 		},
 	}
@@ -51,7 +41,7 @@ func New(cfg *Config) *cobra.Command {
 	// Help topics
 	cmdx.SetHelp(cmd)
 	cmd.AddCommand(cmdx.SetCompletionCmd("guardian"))
-	cmd.AddCommand(cmdx.SetHelpTopic("environment", envHelp))
+	cmd.AddCommand(cmdx.SetHelpTopicCmd("environment", envHelp))
 	cmd.AddCommand(cmdx.SetRefCmd(cmd))
 
 	return cmd

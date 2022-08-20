@@ -20,7 +20,7 @@ func appealsCommand() *cobra.Command {
 		Aliases: []string{"appeals"},
 		Short:   "Manage appeals",
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		Example: heredoc.Doc(`
 			$ guardian appeal create
