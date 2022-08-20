@@ -1,7 +1,6 @@
 project_name: guardian
 
 release:
-  draft: true
   prerelease: auto
 
 before:
