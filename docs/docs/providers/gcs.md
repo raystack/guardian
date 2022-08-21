@@ -14,7 +14,7 @@ Access can be given only at the bucket level on Guardian as those allowed to be 
 - [Bucket Access Control](https://cloud.google.com/storage/docs/samples/storage-add-bucket-iam-member)
 
 
-## Provider Config
+#### Provider Config
 ```yaml
 type: gcs
 urn: sample-URN
@@ -53,25 +53,25 @@ credentials:
           - roles/storage.objectAdmin
 ```
 
-## GCS Account Types
+### GCS Account Types
 
 - user
 - serviceAccount
 - group
 - domain
 
-## GCS Credentials
+### GCS Credentials
 
 | Fields | | |
 | :--- | :--- | :--- |
 | resource_name | string | GCP Project ID in resource name format. Example: `projects/my-project-id` |
 | service_account_key | string | Service account key JSON that has [prerequisites permissions](#prerequisites).<br/> On provider creation, the value should be an base64 encoded JSON key. |
 
-## GCS Resource Types
+### GCS Resource Types
 
 - Bucket
 
-## GCS Resource Permission
+### GCS Resource Permission
 
 A Google Cloud predefined role name. [`Read More`](https://cloud.google.com/storage/docs/access-control/iam-roles)
 
