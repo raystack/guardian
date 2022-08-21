@@ -57,6 +57,10 @@ Check for installed guardian version
 guardian version
 ```
 
+#### Linux
+
+`guardian` is available as downloadable binaries from the [releases](https://github.com/odpf/guardian/releases/latest) page. Download the `.deb` or `.rpm` from the releases page and install with `sudo dpkg -i` and `sudo rpm -i` respectively.
+
 #### Windows
 
 `guardian` is available via [scoop](https://scoop.sh/), and as a downloadable binary from the [releases](https://github.com/odpf/guardian/releases/latest) page:
