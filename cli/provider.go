@@ -136,7 +136,7 @@ func viewProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			spinner.Stop()
 
-			if err := printer.Text(p, format); err != nil {
+			if err := printer.File(p, format); err != nil {
 				return fmt.Errorf("failed to format provider: %v", err)
 			}
 			return nil

@@ -89,7 +89,7 @@ func listResourcesCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 				spinner.Stop()
 
-				if err := printer.Text(resources, format); err != nil {
+				if err := printer.File(resources, format); err != nil {
 					return fmt.Errorf("failed to parse resources: %v", err)
 				}
 				return nil
@@ -167,7 +167,7 @@ func viewResourceCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			if format != "" {
 				r := adapter.FromResourceProto(res.GetResource())
 				spinner.Stop()
-				if err := printer.Text(r, format); err != nil {
+				if err := printer.File(r, format); err != nil {
 					return fmt.Errorf("failed to parse resources: %v", err)
 				}
 			} else {

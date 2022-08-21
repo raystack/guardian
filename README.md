@@ -89,7 +89,7 @@ To pull a specific version:
 docker pull odpf/guardian:v0.3.2
 ```
 
-If you like to have a shell alias that runs the latest version of pscale from docker whenever you type `pscale`:
+If you like to have a shell alias that runs the latest version of guardian from docker whenever you type `guardian`:
 
 ```
 mkdir -p $HOME/.config/odpf
