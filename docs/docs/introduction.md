@@ -21,8 +21,8 @@ Resource administrators need to register a data provider on Guardian along with 
 Users are required to raise an appeal to gain access to a particular resource. The appeal will go through all the approvals/steps defined for that particular resource before it gets approved and the access is granted to the user.
 
 ## Key Features
-
-- **Provider Management**: Support various providers \(currently only BigQuery, Metabase, Grafana, and Tableau, with more coming up!\) and multiple instances for each provider type.
+>
+- **Provider Management**: Support various providers \(currently *BigQuery, Google Cloud Storage Metabase, Grafana, and Tableau, Google Cloud IAM* with more coming up!\) and multiple instances for each provider type.
 - **Resource Management**: Resources from a provider are managed in Guardian's database. There is also an API to update the resource's metadata to add additional information.
 - **Appeal-based access**: Users are expected to create an appeal for accessing data from registered providers. The appeal will get reviewed by the configured approvers before it gives access to the user.
 - **Configurable approval flow**: The approval flow configures what is needed for an appeal to get approved and who is eligible to approve/reject. It can be configured and linked to a provider so that every appeal created to their resources will follow the procedure to get approved.
