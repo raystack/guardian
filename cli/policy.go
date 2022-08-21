@@ -71,8 +71,6 @@ func listPoliciesCmd() *cobra.Command {
 			spinner := printer.Spin("")
 			defer spinner.Stop()
 
-			cs := term.NewColorScheme()
-
 			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
@@ -96,7 +94,7 @@ func listPoliciesCmd() *cobra.Command {
 			report = append(report, []string{"ID", "NAME", "DESCRIPTION", "VERSION", "STEPS"})
 			for _, p := range policies {
 				report = append(report, []string{
-					cs.Greenf("%02d", index),
+					term.Greenf("%02d", index),
 					fmt.Sprintf("%v", p.GetId()),
 					p.GetDescription(),
 					fmt.Sprintf("%v", p.GetVersion()),
@@ -163,7 +161,7 @@ func getPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			spinner.Stop()
 
-			if err := printer.Text(p, format); err != nil {
+			if err := printer.File(p, format); err != nil {
 				return fmt.Errorf("failed to format policy: %v", err)
 			}
 			return nil
