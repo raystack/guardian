@@ -140,7 +140,7 @@ git clone git@github.com:odpf/guardian.git
 Install all the golang dependencies
 
 ```
-make install
+make setup
 ```
 
 Build guardian binary file
@@ -149,11 +149,10 @@ Build guardian binary file
 make build
 ```
 
-Init config
+Init server config. Customise with your local configurations.
 
 ```
-cp internal/server/config.yaml config.yaml
-./guardian config init
+make config
 ```
 
 Run database migrations
@@ -166,6 +165,12 @@ Start guardian server
 
 ```
 ./guardian server start -c config.yaml
+```
+
+Initialise client configurations
+
+```
+./guardian config init
 ```
 
 ## Running tests

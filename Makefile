@@ -1,48 +1,71 @@
 NAME="github.com/odpf/guardian"
-LAST_COMMIT := $(shell git rev-parse --short HEAD)
-LAST_TAG := "$(shell git rev-list --tags --max-count=1)"
-APP_VERSION := "$(shell git describe --tags ${LAST_TAG})-next"
+COMMIT := $(shell git rev-parse --short HEAD)
+TAG := "$(shell git rev-list --tags --max-count=1)"
+VERSION := "$(shell git describe --tags ${TAG})-next"
+BUILD_DIR=dist
 PROTON_COMMIT := "60db5133e25d38a650d1e4960416320e2dbfe83a"
 
-.PHONY: all build test clean dist vet proto install
+.PHONY: all build clean test tidy vet proto setup format generate
 
-all: build
+all: clean test build format lint
 
-build: ## Build the guardian binary
-	@echo " > building guardian version ${APP_VERSION}"
-	go build -ldflags "-X ${NAME}/core.Version=${APP_VERSION} -X ${NAME}/core.BuildCommit=${LAST_COMMIT}" -o guardian .
-	@echo " - build complete"
+tidy:
+	@echo "Tidy up go.mod..."
+	@go mod tidy -v
 
-buildr: install ## Build with goreleaser
-	goreleaser --snapshot --skip-publish --rm-dist
+install:
+	@echo "Installing Guardian to ${GOBIN}..."
+	@go install
 
-test: ## Run the tests
+format:
+	@echo "Running go fmt..."
+	@go fmt
+
+lint:
+	@echo "Running lint checks using golangci-lint..."
+	@golangci-lint run
+
+clean: tidy
+	@echo "Cleaning up build directories..."
+	@rm -rf $coverage.out ${BUILD_DIR}
+
+test:
 	go test ./... -race -coverprofile=coverage.out
 
-coverage: ## Print code coverage
-	go test -race -coverprofile coverage.out -covermode=atomic ./... && go tool cover -html=coverage.out
+coverage: test
+	@echo "Generating coverage report..."
+	@go tool cover -html=coverage.out
 
-vet: ## Run the go vet tool
+build:
+	@echo " > Building guardian version ${VERSION}..."
+	go build -ldflags "-X ${NAME}/core.Version=${VERSION} -X ${NAME}/core.BuildCommit=${COMMIT}" -o dist/guardian .
+	@echo "Build complete"
+
+buildr: setup
+	goreleaser --snapshot --skip-publish --rm-dist
+
+vet:
 	go vet ./...
 
-lint: ## Lint with golangci-lint
-	golangci-lint run
+download:
+	@go mod download
 
-generate: ## Generate mocks
+generate:
+	@echo "Running go generate..."
 	go generate ./...
 
-proto: ## Generate the protobuf files
+config:
+	@echo "Initializing sample server config..."
+	@cp internal/server/config.yaml config.yaml
+
+proto:
 	@echo " > generating protobuf from odpf/proton"
 	@echo " > [info] make sure correct version of dependencies are installed using 'make install'"
 	@buf generate https://github.com/odpf/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --template buf.gen.yaml --path odpf/guardian
 	@echo " > protobuf compilation finished"
 
-clean: ## Clean the build artifacts
-	rm -rf guardian dist/
-	rm -f coverage.*
-
-install: ## install required dependencies
-	@echo "> installing dependencies"
+setup:
+	@echo "Installing dependencies..."
 	go mod tidy
 	go get google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
 	go get github.com/golang/protobuf/proto@v1.5.2
@@ -52,6 +75,3 @@ install: ## install required dependencies
 	go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
 	go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.5.0
 	go get github.com/bufbuild/buf/cmd/buf@v0.54.1
-
-help: ## Display this help message
-	@cat $(MAKEFILE_LIST) | grep -e "^[a-zA-Z_\-]*: *.*## *" | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
