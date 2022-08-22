@@ -89,13 +89,6 @@ To pull a specific version:
 docker pull odpf/guardian:v0.3.2
 ```
 
-If you like to have a shell alias that runs the latest version of guardian from docker whenever you type `guardian`:
-
-```
-mkdir -p $HOME/.config/odpf
-alias guardian="docker run -e HOME=/tmp -v $HOME/.config/odpf:/tmp/.config/odpf --user $(id -u):$(id -g) --rm -it -p 3306:3306/tcp odpf/guardian:latest"
-```
-
 ## Usage
 
 Guardian is purely API-driven. It is very easy to get started with Guardian. It provides CLI, HTTP and GRPC APIs for simpler developer experience.
