@@ -112,8 +112,10 @@ func (s *Service) Revoke(ctx context.Context, id, actor, reason string, opts ...
 		return nil, err
 	}
 	// TODO: remove below logic in future release when appeal no longer for managing access
-	if err := access.Appeal.Revoke(actor, reason); err != nil {
-		return nil, fmt.Errorf("updating appeal status: %s", err)
+	if access.Appeal != nil {
+		if err := access.Appeal.Revoke(actor, reason); err != nil {
+			return nil, fmt.Errorf("updating appeal status: %s", err)
+		}
 	}
 	if err := s.repo.Update(ctx, access); err != nil {
 		return nil, fmt.Errorf("updating access record in db: %w", err)
