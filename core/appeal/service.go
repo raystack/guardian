@@ -218,7 +218,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("retrieving provider: %w", err)
 		}
 
-		ok, err := s.isEligibleToExtend(appeal, provider, activeAccesses)
+		ok, err := s.checkExtensionEligibility(appeal, provider, activeAccesses)
 		if err != nil {
 			return fmt.Errorf("checking access extension eligibility: %w", err)
 		}
@@ -1134,7 +1134,7 @@ func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal, opts ...Cr
 	return nil
 }
 
-func (s *Service) isEligibleToExtend(a *domain.Appeal, p *domain.Provider, activeAccesses map[string]map[string]map[string]*domain.Access) (bool, error) {
+func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider, activeAccesses map[string]map[string]map[string]*domain.Access) (bool, error) {
 	if activeAccesses[a.AccountID] != nil &&
 		activeAccesses[a.AccountID][a.ResourceID] != nil &&
 		activeAccesses[a.AccountID][a.ResourceID][a.Role] != nil {
