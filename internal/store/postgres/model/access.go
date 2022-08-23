@@ -23,6 +23,7 @@ type Access struct {
 	RevokedBy      string
 	RevokedAt      time.Time
 	RevokeReason   string
+	CreatedBy      string
 	CreatedAt      time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt      time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt      gorm.DeletedAt `gorm:"index"`
@@ -73,6 +74,7 @@ func (m *Access) FromDomain(a domain.Access) error {
 	m.AppealID = a.AppealID
 	m.RevokedBy = a.RevokedBy
 	m.RevokeReason = a.RevokeReason
+	m.CreatedBy = a.CreatedBy
 	m.CreatedAt = a.CreatedAt
 	m.UpdatedAt = a.UpdatedAt
 	return nil
@@ -90,6 +92,7 @@ func (m Access) ToDomain() (*domain.Access, error) {
 		AppealID:     m.AppealID,
 		RevokedBy:    m.RevokedBy,
 		RevokeReason: m.RevokeReason,
+		CreatedBy:    m.CreatedBy,
 		CreatedAt:    m.CreatedAt,
 		UpdatedAt:    m.UpdatedAt,
 	}

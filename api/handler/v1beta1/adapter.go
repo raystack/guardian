@@ -640,6 +640,7 @@ func (a *adapter) ToAccessProto(access domain.Access) (*guardianv1beta1.Access, 
 		AppealId:     access.AppealID,
 		RevokedBy:    access.RevokedBy,
 		RevokeReason: access.RevokeReason,
+		CreatedBy:    access.CreatedBy,
 	}
 
 	if access.ExpirationDate != nil {

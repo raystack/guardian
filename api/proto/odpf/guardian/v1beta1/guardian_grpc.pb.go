@@ -49,6 +49,7 @@ type GuardianServiceClient interface {
 	// Deprecated: Do not use.
 	RevokeAppeals(ctx context.Context, in *RevokeAppealsRequest, opts ...grpc.CallOption) (*RevokeAppealsResponse, error)
 	ListAccesses(ctx context.Context, in *ListAccessesRequest, opts ...grpc.CallOption) (*ListAccessesResponse, error)
+	ListUserAccesses(ctx context.Context, in *ListUserAccessesRequest, opts ...grpc.CallOption) (*ListUserAccessesResponse, error)
 	GetAccess(ctx context.Context, in *GetAccessRequest, opts ...grpc.CallOption) (*GetAccessResponse, error)
 	RevokeAccess(ctx context.Context, in *RevokeAccessRequest, opts ...grpc.CallOption) (*RevokeAccessResponse, error)
 	RevokeAccesses(ctx context.Context, in *RevokeAccessesRequest, opts ...grpc.CallOption) (*RevokeAccessesResponse, error)
@@ -325,6 +326,15 @@ func (c *guardianServiceClient) ListAccesses(ctx context.Context, in *ListAccess
 	return out, nil
 }
 
+func (c *guardianServiceClient) ListUserAccesses(ctx context.Context, in *ListUserAccessesRequest, opts ...grpc.CallOption) (*ListUserAccessesResponse, error) {
+	out := new(ListUserAccessesResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/ListUserAccesses", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *guardianServiceClient) GetAccess(ctx context.Context, in *GetAccessRequest, opts ...grpc.CallOption) (*GetAccessResponse, error) {
 	out := new(GetAccessResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/GetAccess", in, out, opts...)
@@ -387,6 +397,7 @@ type GuardianServiceServer interface {
 	// Deprecated: Do not use.
 	RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error)
 	ListAccesses(context.Context, *ListAccessesRequest) (*ListAccessesResponse, error)
+	ListUserAccesses(context.Context, *ListUserAccessesRequest) (*ListUserAccessesResponse, error)
 	GetAccess(context.Context, *GetAccessRequest) (*GetAccessResponse, error)
 	RevokeAccess(context.Context, *RevokeAccessRequest) (*RevokeAccessResponse, error)
 	RevokeAccesses(context.Context, *RevokeAccessesRequest) (*RevokeAccessesResponse, error)
@@ -483,6 +494,9 @@ func (UnimplementedGuardianServiceServer) RevokeAppeals(context.Context, *Revoke
 }
 func (UnimplementedGuardianServiceServer) ListAccesses(context.Context, *ListAccessesRequest) (*ListAccessesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAccesses not implemented")
+}
+func (UnimplementedGuardianServiceServer) ListUserAccesses(context.Context, *ListUserAccessesRequest) (*ListUserAccessesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUserAccesses not implemented")
 }
 func (UnimplementedGuardianServiceServer) GetAccess(context.Context, *GetAccessRequest) (*GetAccessResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccess not implemented")
@@ -1028,6 +1042,24 @@ func _GuardianService_ListAccesses_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GuardianService_ListUserAccesses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserAccessesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).ListUserAccesses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/ListUserAccesses",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).ListUserAccesses(ctx, req.(*ListUserAccessesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _GuardianService_GetAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetAccessRequest)
 	if err := dec(in); err != nil {
@@ -1204,6 +1236,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListAccesses",
 			Handler:    _GuardianService_ListAccesses_Handler,
+		},
+		{
+			MethodName: "ListUserAccesses",
+			Handler:    _GuardianService_ListUserAccesses_Handler,
 		},
 		{
 			MethodName: "GetAccess",

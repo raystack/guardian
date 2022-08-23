@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS "accesses" (
   "revoked_by" text,
   "revoked_at" timestamptz,
   "revoke_reason" text,
+  "created_by" text,
   "created_at" timestamptz,
   "updated_at" timestamptz,
   "deleted_at" timestamptz,
@@ -34,6 +35,7 @@ INSERT INTO
     "revoked_by",
     "revoked_at",
     "revoke_reason",
+    "created_by",
     "created_at",
     "updated_at"
   )
@@ -52,6 +54,7 @@ SELECT
   "revoked_by",
   "revoked_at",
   "revoke_reason",
+  "created_by",
   NOW() AS "created_at",
   NOW() AS "updated_at"
 FROM

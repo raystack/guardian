@@ -34,20 +34,26 @@ func (r *AccessRepository) List(ctx context.Context, filter domain.ListAccessesF
 	if filter.Statuses != nil {
 		db = db.Where(`"accesses"."status" IN ?`, filter.Statuses)
 	}
+	if filter.Roles != nil {
+		db = db.Where(`"accesses"."role" IN ?`, filter.Roles)
+	}
 	if filter.Permissions != nil {
 		db = db.Where(`"accesses"."permissions" @> ?`, pq.StringArray(filter.Permissions))
 	}
+	if filter.CreatedBy != "" {
+		db = db.Where(`"accesses"."created_by" = ?`, filter.CreatedBy)
+	}
 	if filter.ProviderTypes != nil {
-		db = db.Where(`"resources"."provider_type" IN ?`, filter.ProviderTypes)
+		db = db.Where(`"Resource"."provider_type" IN ?`, filter.ProviderTypes)
 	}
 	if filter.ProviderURNs != nil {
-		db = db.Where(`"resources"."provider_urn" IN ?`, filter.ProviderURNs)
+		db = db.Where(`"Resource"."provider_urn" IN ?`, filter.ProviderURNs)
 	}
 	if filter.ResourceTypes != nil {
-		db = db.Where(`"resources"."type" IN ?`, filter.ResourceTypes)
+		db = db.Where(`"Resource"."type" IN ?`, filter.ResourceTypes)
 	}
 	if filter.ResourceURNs != nil {
-		db = db.Where(`"resources"."urn" IN ?`, filter.ResourceURNs)
+		db = db.Where(`"Resource"."urn" IN ?`, filter.ResourceURNs)
 	}
 
 	var models []model.Access

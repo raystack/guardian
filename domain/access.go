@@ -25,6 +25,7 @@ type Access struct {
 	RevokedBy      string
 	RevokedAt      *time.Time
 	RevokeReason   string
+	CreatedBy      string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 
@@ -60,11 +61,13 @@ type ListAccessesFilter struct {
 	AccountIDs    []string
 	AccountTypes  []string
 	ResourceIDs   []string
+	Roles         []string
 	Permissions   []string
 	ProviderTypes []string
 	ProviderURNs  []string
 	ResourceTypes []string
 	ResourceURNs  []string
+	CreatedBy     string
 }
 
 type RevokeAccessesFilter struct {

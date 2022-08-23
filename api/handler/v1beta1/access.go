@@ -13,27 +13,52 @@ import (
 
 func (s *GRPCServer) ListAccesses(ctx context.Context, req *guardianv1beta1.ListAccessesRequest) (*guardianv1beta1.ListAccessesResponse, error) {
 	filter := domain.ListAccessesFilter{
-		Statuses:     req.GetStatuses(),
-		AccountIDs:   req.GetAccountIds(),
-		AccountTypes: req.GetAccountTypes(),
-		ResourceIDs:  req.GetResourceIds(),
+		Statuses:      req.GetStatuses(),
+		AccountIDs:    req.GetAccountIds(),
+		AccountTypes:  req.GetAccountTypes(),
+		ResourceIDs:   req.GetResourceIds(),
+		Roles:         req.GetRoles(),
+		ProviderTypes: req.GetProviderTypes(),
+		ProviderURNs:  req.GetProviderUrns(),
+		ResourceTypes: req.GetResourceTypes(),
+		ResourceURNs:  req.GetResourceUrns(),
+		CreatedBy:     req.GetCreatedBy(),
 	}
-	accesses, err := s.accessService.List(ctx, filter)
+	accesses, err := s.listAccesses(ctx, filter)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list access: %v", err)
-	}
-
-	var accessProtos []*guardianv1beta1.Access
-	for _, a := range accesses {
-		accessProto, err := s.adapter.ToAccessProto(a)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse access %q: %v", a.ID, err)
-		}
-		accessProtos = append(accessProtos, accessProto)
+		return nil, err
 	}
 
 	return &guardianv1beta1.ListAccessesResponse{
-		Accesses: accessProtos,
+		Accesses: accesses,
+	}, nil
+}
+
+func (s *GRPCServer) ListUserAccesses(ctx context.Context, req *guardianv1beta1.ListUserAccessesRequest) (*guardianv1beta1.ListUserAccessesResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "failed to get metadata: user")
+	}
+
+	filter := domain.ListAccessesFilter{
+		Statuses:      req.GetStatuses(),
+		AccountIDs:    req.GetAccountIds(),
+		AccountTypes:  req.GetAccountTypes(),
+		ResourceIDs:   req.GetResourceIds(),
+		Roles:         req.GetRoles(),
+		ProviderTypes: req.GetProviderTypes(),
+		ProviderURNs:  req.GetProviderUrns(),
+		ResourceTypes: req.GetResourceTypes(),
+		ResourceURNs:  req.GetResourceUrns(),
+		CreatedBy:     user,
+	}
+	accesses, err := s.listAccesses(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return &guardianv1beta1.ListUserAccessesResponse{
+		Accesses: accesses,
 	}, nil
 }
 
@@ -110,4 +135,22 @@ func (s *GRPCServer) RevokeAccesses(ctx context.Context, req *guardianv1beta1.Re
 	return &guardianv1beta1.RevokeAccessesResponse{
 		Accesses: accessesProto,
 	}, nil
+}
+
+func (s *GRPCServer) listAccesses(ctx context.Context, filter domain.ListAccessesFilter) ([]*guardianv1beta1.Access, error) {
+	accesses, err := s.accessService.List(ctx, filter)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list accesses: %v", err)
+	}
+
+	var accessProtos []*guardianv1beta1.Access
+	for _, a := range accesses {
+		accessProto, err := s.adapter.ToAccessProto(a)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse access %q: %v", a.ID, err)
+		}
+		accessProtos = append(accessProtos, accessProto)
+	}
+
+	return accessProtos, nil
 }
