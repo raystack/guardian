@@ -551,13 +551,11 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 		appealProto.RevokedAt = timestamppb.New(appeal.RevokedAt)
 	}
 
-	if appeal.Access != nil {
-		accessProto, err := a.ToAccessProto(*appeal.Access)
-		if err != nil {
-			return nil, fmt.Errorf("parsing access: %w", err)
-		}
-		appealProto.Access = accessProto
+	accessProto, err := a.ToAccessProto(appeal.Access)
+	if err != nil {
+		return nil, fmt.Errorf("parsing access: %w", err)
 	}
+	appealProto.Access = accessProto
 
 	return appealProto, nil
 }
@@ -628,7 +626,11 @@ func (a *adapter) ToApprovalProto(approval *domain.Approval) (*guardianv1beta1.A
 	return approvalProto, nil
 }
 
-func (a *adapter) ToAccessProto(access domain.Access) (*guardianv1beta1.Access, error) {
+func (a *adapter) ToAccessProto(access *domain.Access) (*guardianv1beta1.Access, error) {
+	if access == nil {
+		return nil, nil
+	}
+
 	accessProto := &guardianv1beta1.Access{
 		Id:           access.ID,
 		Status:       string(access.Status),
