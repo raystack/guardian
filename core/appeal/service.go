@@ -218,12 +218,8 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("retrieving provider: %w", err)
 		}
 
-		ok, err := s.checkExtensionEligibility(appeal, provider, activeAccesses)
-		if err != nil {
+		if err := s.checkExtensionEligibility(appeal, provider, activeAccesses); err != nil {
 			return fmt.Errorf("checking access extension eligibility: %w", err)
-		}
-		if !ok {
-			return ErrAccessNotEligibleForExtension
 		}
 
 		if err := s.providerService.ValidateAppeal(ctx, appeal, provider); err != nil {
@@ -1134,25 +1130,27 @@ func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal, opts ...Cr
 	return nil
 }
 
-func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider, activeAccesses map[string]map[string]map[string]*domain.Access) (bool, error) {
+func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider, activeAccesses map[string]map[string]map[string]*domain.Access) error {
 	if activeAccesses[a.AccountID] != nil &&
 		activeAccesses[a.AccountID][a.ResourceID] != nil &&
 		activeAccesses[a.AccountID][a.ResourceID][a.Role] != nil {
 		if p.Config.Appeal != nil {
 			if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
-				return false, ErrAppealFoundActiveAccess
+				return ErrAppealFoundActiveAccess
 			}
 
 			extensionDurationRule, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
 			if err != nil {
-				return false, fmt.Errorf("%w: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
+				return fmt.Errorf("%w: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
 			}
 
 			access := activeAccesses[a.AccountID][a.ResourceID][a.Role]
-			return access.IsEligibleForExtension(extensionDurationRule), nil
+			if !access.IsEligibleForExtension(extensionDurationRule) {
+				return ErrAccessNotEligibleForExtension
+			}
 		}
 	}
-	return true, nil
+	return nil
 }
 
 func getPolicy(a *domain.Appeal, p *domain.Provider, policiesMap map[string]map[uint]*domain.Policy) (*domain.Policy, error) {
