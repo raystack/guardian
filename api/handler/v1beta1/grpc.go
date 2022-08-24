@@ -32,7 +32,7 @@ type ProtoAdapter interface {
 	FromCreateAppealProto(*guardianv1beta1.CreateAppealRequest, string) ([]*domain.Appeal, error)
 	ToApprovalProto(*domain.Approval) (*guardianv1beta1.Approval, error)
 
-	ToAccessProto(domain.Access) (*guardianv1beta1.Access, error)
+	ToAccessProto(*domain.Access) (*guardianv1beta1.Access, error)
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter

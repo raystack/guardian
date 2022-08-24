@@ -71,7 +71,7 @@ func (s *GRPCServer) GetAccess(ctx context.Context, req *guardianv1beta1.GetAcce
 		return nil, status.Errorf(codes.Internal, "failed to get access details: %v", err)
 	}
 
-	accessProto, err := s.adapter.ToAccessProto(*a)
+	accessProto, err := s.adapter.ToAccessProto(a)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to parse access: %v", err)
 	}
@@ -95,7 +95,7 @@ func (s *GRPCServer) RevokeAccess(ctx context.Context, req *guardianv1beta1.Revo
 		return nil, status.Errorf(codes.Internal, "failed to revoke access: %v", err)
 	}
 
-	accessProto, err := s.adapter.ToAccessProto(*a)
+	accessProto, err := s.adapter.ToAccessProto(a)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to parse access: %v", err)
 	}
@@ -125,7 +125,7 @@ func (s *GRPCServer) RevokeAccesses(ctx context.Context, req *guardianv1beta1.Re
 
 	var accessesProto []*guardianv1beta1.Access
 	for _, a := range accesses {
-		accessProto, err := s.adapter.ToAccessProto(*a)
+		accessProto, err := s.adapter.ToAccessProto(a)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to parse access: %v", err)
 		}
@@ -144,8 +144,8 @@ func (s *GRPCServer) listAccesses(ctx context.Context, filter domain.ListAccesse
 	}
 
 	var accessProtos []*guardianv1beta1.Access
-	for _, a := range accesses {
-		accessProto, err := s.adapter.ToAccessProto(a)
+	for i, a := range accesses {
+		accessProto, err := s.adapter.ToAccessProto(&accesses[i])
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to parse access %q: %v", a.ID, err)
 		}
