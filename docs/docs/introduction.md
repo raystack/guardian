@@ -28,6 +28,18 @@ Users are required to raise an appeal to gain access to a particular resource. T
 - **Configurable approval flow**: The approval flow configures what is needed for an appeal to get approved and who is eligible to approve/reject. It can be configured and linked to a provider so that every appeal created to their resources will follow the procedure to get approved.
 - **External Identity Manager**: This gives the flexibility to use any third-party identity manager. User properties.
 
+## Using Guardian
+ 
+You can manage the data access for your resource via Guardian in any of the following ways:
+#### Guardian Command Line Interface
+>
+You can use the Guardian command line interface to issue commands and to perform the entire data access flow. Using the command line can be faster and more convenient than the console.
+For more information on using the Guardian CLI, see the [CLI Reference](./reference/cli.md) page.
+ 
+#### HTTPS API
+>
+You can get hands on appeal creation, approval updatation, access revocation and much more by using the Guardian HTTPS API, which lets you issue HTTPS requests directly to the service. When you use the HTTPS API, you must include the username in the request header, which will be used by [Shield](https://odpf.github.io/shield/) for authorization. For more information, see the [API Reference](/reference/api.md) page.
+
 ## Where to go from here
 
 See the [installation](./installation) page to install the Guardian CLI. Next, we recommend completing the guides. The tour provides an overview of most of the existing functionality of Guardian and takes approximately 30 minutes to complete.
