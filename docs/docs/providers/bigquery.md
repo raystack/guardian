@@ -18,7 +18,7 @@ BigQuery allows users, groups, and service accounts allowed to access the tables
 
 ### Prerequisites
 
-If a user/administrator wants to control access to a dataset or a table, he must have sufficient permissions for the same. With these permissions, the resource owner can grant and revoke other users/service accounts with selective access to these resources.
+If a user/administrator wants to control access to a dataset or a table, the user must have sufficient permissions for the same. With these permissions, the resource owner can grant and revoke other users/service accounts with selective access to these resources.
 
 For registering BigQuery as a provider on Guardian, users must have a service account with IAM role: **`roles/bigquery.dataOwner`** at the project level.
 
