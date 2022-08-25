@@ -28,12 +28,12 @@ module.exports = {
       type: "category",
       label: "Providers",
       items: [
-        "providers/gcloud_iam",
         "providers/bigquery",
+        "providers/gcloud_iam",
         "providers/gcs",
-        "providers/tableau",
-        "providers/metabase",
         "providers/grafana",
+        "providers/metabase",
+        "providers/tableau",
       ],
     },
     {
