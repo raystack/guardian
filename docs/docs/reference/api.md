@@ -696,7 +696,7 @@ Appeals can be approved/rejected by calling the **`POST`** Method on **`{{HOST}}
 | Name          | Located in | Description | Required | Type            |
 | ------------- | ---------- | ----------- | -------- | ----------------- |
 | id            | path       | Unique Identifier for the Appeal            | Yes      | String            |
-| approval_name | path       | Name of the approval step. <br/> <br/>For instance **`resource_owner_approval`** or **`admin_approval`**<br/> in this [Example](../guides/create-policy#example-policy)           | Yes      | String            |
+| approval_name | path       | Name of the approval step. <br/> <br/>For instance **`resource_owner_approval`** or **`admin_approval`**<br/> in this [Example](../tour/create-policy#example-policy)           | Yes      | String            |
 | action        | body       | Action which the approver wants to take(`Approve` or `Reject`)            | Yes      | [Object(Action)](#action) |
 | X-Auth-Email  | header     | Contains the approver's email id         | Yes         | string            |
 
