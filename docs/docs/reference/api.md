@@ -359,17 +359,17 @@ Resource in Guardian represents the actual resource in the provider e.g. for Big
 
 To get the list of all the resources availiable, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/resources`**
 
-##### Parameters
+##### Query Parameters
 
 | Name          | Located in | Description | Required | Type   |
 | ------------- | ---------- | ----------- | -------- | -------- |
-| provider_type | query      |             | No | string   |
-| provider_urn  | query      |             | No | string   |
-| type          | query      |             | No | string   |
-| urn           | query      |             | No | string   |
-| name          | query      |             | No | string   |
+| provider_type | query      | Unique Provider name <br/><br/> Enum: <br/> - **```bigquery```** , **```gcs```** ,  **```gcloud_iam```** , **```metabase```** , **```grafana```** , **```tableau```** | No | string   |
+| provider_urn  | query      | Unique provider URN            | No | string   |
+| type          | query      | Unique resource name <br/><br/>Enum:<br/> - **```dataset```** , **```table```** for the BigQuery <br/>- **```folder```** , **```dashboard```** for the Grafana <br/> - **```project```** ,  **```organization```** for the Gcloud IAM <br/>- **```workbook```** , **```view```** , **```metric```** , **```datasource```** , **```flow```** for Tableau <br/> - **```bucket```** for Google Cloud Storage <br/> - **```database```** , **```table```** , **```collection```** , **```group```** for Metabase  | No | string   |
+| urn           | query      | Unique Resource URN            | No | string   |
+| name          | query      | Unique Resource Name           | No | string   |
 | details       | query      |             | No | [string] |
-| is_deleted    | query      |             | No | bool     |
+| is_deleted    | query      | Set to query for resources which have been deleted            | No | bool     |
 
 ##### Responses
 
@@ -392,7 +392,7 @@ To see the details of a particular resource by id, call the **`GET`** Method on 
 
 | Name | Located in | Description | Required | Type |
 | ---- | ---------- | ----------- | -------- | ------ |
-| id   | path       |             | Yes      | String |
+| id   | path       | Unique Resource Identifier            | Yes      | String |
 
 ##### Responses
 
@@ -417,7 +417,7 @@ Update a resource can be done by calling to **`PUT`** Method **`{{HOST}}/api/v1b
 
 | Name       | Located in | Description | Required | Type                               |
 | ---------- | ---------- | ----------- | -------- | ------------------------------------ |
-| id         | path       |             | Yes      | String                               |
+| id         | path       | Unique Resource Identifier            | Yes      | String                               |
 | body       | body       |             | Yes      | [Resource](./resource.md#resource-1) |
 
 ##### Responses 
@@ -448,7 +448,7 @@ To delete a particular provider from the database use the **`DELETE`** Method on
 
 | Name       | Located in | Description | Required | Type |
 | ---------- | ---------- | ----------- | -------- | ------ |
-| id         | path       |             | Yes      | String |
+| id         | path       |  Unique Resource Identifier           | Yes      | String |
 
 ##### Response
 
@@ -509,14 +509,14 @@ The request parameters associated with this is API are as follows:
 |----------------| ---------- |-----------------------------------------| -------- |----------|
 | account_id     | query      | this will be depcreate use `account_ids` | No | string   |
 | account_ids    | query      |                                         | No | [string] |
-| statuses       | query      |                                         | No | [string] |
+| statuses       | query      | Enum: **```pending```** , **```rejected```** , **```active```**  , **```terminated```** , **```cancelled```**                                       | No | [string] |
 | role           | query      |                                         | No | string   |
-| provider_types | query      |                                         | No | [string] |
+| provider_types | query      | Enum: <br/> - **```bigquery```** , **```gcs```** ,  **```gcloud_iam```** , **```metabase```** , **```grafana```** , **```tableau```**                                        | No | [string] |
 | provider_urns  | query      |                                         | No | [string] |
 | resource_types | query      |                                         | No | [string] |
 | resource_urns  | query      |                                         | No | [string] |
 | order_by       | query      |                                         | No | [string] |
-| created_by     | query      |                                         | No | string   |
+| created_by     | query      | Email of the appeal creator                                        | No | string   |
 
 ##### Responses
 
