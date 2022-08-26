@@ -166,7 +166,7 @@ func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.Revo
 		case appeal.ErrAppealNotFound:
 			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
 		default:
-			return nil, status.Errorf(codes.Internal, "failed to cancel appeal: %v", err)
+			return nil, status.Errorf(codes.Internal, "failed to revoke appeal: %v", err)
 		}
 	}
 

@@ -350,7 +350,7 @@ func TestGrantAccess(t *testing.T) {
 		testCases := []struct {
 			name           string
 			providerConfig *domain.ProviderConfig
-			appeal         *domain.Appeal
+			access         domain.Access
 			expectedError  error
 		}{
 			{
@@ -363,16 +363,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal:        nil,
-				expectedError: bigquery.ErrNilAppeal,
-			},
-			{
-				providerConfig: &domain.ProviderConfig{
-					Type:                "bigquery",
-					URN:                 "test-URN",
-					AllowedAccountTypes: []string{"user", "serviceAccount"},
-				},
-				appeal: &domain.Appeal{
+				access: domain.Access{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 				},
@@ -384,7 +375,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				access: domain.Access{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -400,7 +391,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				access: domain.Access{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -416,7 +407,7 @@ func TestGrantAccess(t *testing.T) {
 		for _, tc := range testCases {
 			p := initProvider()
 			pc := tc.providerConfig
-			a := tc.appeal
+			a := tc.access
 
 			actualError := p.GrantAccess(pc, a)
 			assert.EqualError(t, actualError, tc.expectedError.Error())
@@ -440,7 +431,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Access{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -484,7 +475,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Access{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -535,7 +526,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Access{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -588,7 +579,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Access{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				URN:          "p_id:d_id.t_id",
@@ -615,7 +606,7 @@ func TestRevokeAccess(t *testing.T) {
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			providerConfig *domain.ProviderConfig
-			appeal         *domain.Appeal
+			access         domain.Access
 			expectedError  error
 		}{
 			{
@@ -628,16 +619,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal:        nil,
-				expectedError: bigquery.ErrNilAppeal,
-			},
-			{
-				providerConfig: &domain.ProviderConfig{
-					Type:                "bigquery",
-					URN:                 "test-URN",
-					AllowedAccountTypes: []string{"user", "serviceAccount"},
-				},
-				appeal: &domain.Appeal{
+				access: domain.Access{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 				},
@@ -649,7 +631,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				access: domain.Access{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -665,7 +647,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				access: domain.Access{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -681,7 +663,7 @@ func TestRevokeAccess(t *testing.T) {
 		for _, tc := range testCases {
 			p := initProvider()
 			pc := tc.providerConfig
-			a := tc.appeal
+			a := tc.access
 
 			actualError := p.RevokeAccess(pc, a)
 			assert.EqualError(t, actualError, tc.expectedError.Error())
@@ -705,7 +687,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Access{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -749,7 +731,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Access{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -800,7 +782,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Access{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -852,7 +834,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Access{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				URN:          "p_id:d_id.t_id",

@@ -223,7 +223,7 @@ func TestGrantAccess(t *testing.T) {
 	t.Run("should return nil", func(t *testing.T) {
 		p := initProvider()
 
-		actualError := p.GrantAccess(nil, nil)
+		actualError := p.GrantAccess(nil, domain.Access{})
 
 		assert.NoError(t, actualError)
 	})
@@ -233,7 +233,7 @@ func TestRevokeAccess(t *testing.T) {
 	t.Run("should return nil", func(t *testing.T) {
 		p := initProvider()
 
-		actualError := p.RevokeAccess(nil, nil)
+		actualError := p.RevokeAccess(nil, domain.Access{})
 
 		assert.NoError(t, actualError)
 	})
