@@ -363,7 +363,7 @@ To get the list of all the resources availiable, call the **`GET`** Method on **
 
 | Name          | Located in | Description | Required | Type   |
 | ------------- | ---------- | ----------- | -------- | -------- |
-| provider_type | query      | Unique Provider name <br/><br/> Enum: <br/> - **```bigquery```** , **```gcs```** ,  **```gcloud_iam```** , **```metabase```** , **```grafana```** , **```tableau```** | No | string   |
+| provider_type | query      | Unique Provider name <br/><br/> Enum: <br/> - **```bigquery```** , **```gcs```** ,  **```gcloud_iam```** , **```metabase```** , **```grafana```** , **```tableau```** , **```noop```**| No | string   |
 | provider_urn  | query      | Unique provider URN            | No | string   |
 | type          | query      | Unique resource name <br/><br/>Enum:<br/> - **```dataset```** , **```table```** for the BigQuery <br/>- **```folder```** , **```dashboard```** for the Grafana <br/> - **```project```** ,  **```organization```** for the Gcloud IAM <br/>- **```workbook```** , **```view```** , **```metric```** , **```datasource```** , **```flow```** for Tableau <br/> - **```bucket```** for Google Cloud Storage <br/> - **```database```** , **```table```** , **```collection```** , **```group```** for Metabase  | No | string   |
 | urn           | query      | Unique Resource URN            | No | string   |
@@ -511,7 +511,7 @@ The request parameters associated with this is API are as follows:
 | account_ids    | query      |                                         | No | [string] |
 | statuses       | query      | Enum: **```pending```** , **```rejected```** , **```active```**  , **```terminated```** , **```cancelled```**                                       | No | [string] |
 | role           | query      |                                         | No | string   |
-| provider_types | query      | Enum: <br/> - **```bigquery```** , **```gcs```** ,  **```gcloud_iam```** , **```metabase```** , **```grafana```** , **```tableau```**                                        | No | [string] |
+| provider_types | query      | Enum: <br/> - **```bigquery```** , **```gcs```** ,  **```gcloud_iam```** , **```metabase```** , **```grafana```** , **```tableau```**  , **```noop```**                                      | No | [string] |
 | provider_urns  | query      |                                         | No | [string] |
 | resource_types | query      |                                         | No | [string] |
 | resource_urns  | query      |                                         | No | [string] |
