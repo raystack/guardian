@@ -534,9 +534,9 @@ The request parameters associated with this is API are as follows:
 
 | Name           | Located in | Description | Required | Type   |
 | -------------- | ---------- | ----------- | -------- | -------- |
-| statuses       | query      |             | No | [string] |
+| statuses       | query      | Enum: **```pending```** , **```rejected```** , **```active```**  , **```terminated```** , **```cancelled```**                                       | No | [string]            | No | [string] |
 | role           | query      |             | No | string   |
-| provider_types | query      |             | No | [string] |
+| provider_types | query      | Enum: <br/> - **```bigquery```** , **```gcs```** ,  **```gcloud_iam```** , **```metabase```** , **```grafana```** , **```tableau```**  , **```noop```**                               | No | [string] |
 | provider_urns  | query      |             | No | [string] |
 | resource_types | query      |             | No | [string] |
 | resource_urns  | query      |             | No | [string] |
@@ -621,7 +621,7 @@ Bulk revoke of active resource-accesses based on parameters by calling the **`PO
 | Name           | Located in | Description                                                        | Required | Type   |
 |----------------| ---------- |--------------------------------------------------------------------| -------- |--------|
 | account_ids    | query      |                                                                    | No | [string] |
-| provider_types | query      |                                                                    | No | [string] |
+| provider_types | query      | Enum: <br/> - **```bigquery```** , **```gcs```** ,  **```gcloud_iam```** , **```metabase```** , **```grafana```** , **```tableau```**  , **```noop```**                                                                                      | No | [string] |
 | provider_urns  | query      |                                                                    | No | [string] |
 | resource_types | query      |                                                                    | No | [string] |
 | resource_urns  | query      |                                                                    | No | [string] |
@@ -656,7 +656,7 @@ To get the list of all approvals, use the ** `GET` ** Method on **`{{HOST}}/api/
 | Name       | Located in | Description | Required | Type   |
 | ---------- | ---------- | ----------- | -------- | -------- |
 | account_id | query      |             | No | string   |
-| statuses   | query      |             | No | [string] |
+| statuses   | query      | Enum: **```pending```** , **```rejected```** , **```active```**  , **```terminated```** , **```cancelled```**                                       | No | [string]            | No | [string] |
 | order_by   | query      |             | No | [string] |
 | created_by | query      |             | No | string   |
 
@@ -676,7 +676,7 @@ To get the list of all approvals for the current user, use the ** `GET` ** Metho
 | Name         | Located in | Description | Required | Type   |
 | ------------ | ---------- | ----------- | -------- | -------- |
 | account_id   | query      |             | No | string   |
-| statuses     | query      |             | No | [string] |
+| statuses     | query      | Enum: **```pending```** , **```rejected```** , **```active```**  , **```terminated```** , **```cancelled```**                                       | No | [string]            | No | [string] |
 | order_by     | query      |             | No | [string] |
 | X-Auth-Email | header     | Contains the user/service account email used for authorization             | Yes      | string   |
 
@@ -782,18 +782,18 @@ $ curl --location --request DELETE '{{HOST}}/api/v1beta1/appeals/{{appeal_id}}/a
 
 #### rpcStatus
 
-| Name    | Type                            | Description | Required |
-| ------- | ------------------------------- | ----------- | -------- |
-| code    | integer                         |             | No       |
-| message | string                          |             | No       |
-| details | [ [protobufAny](#protobufany) ] |             | No       |
+| Name    | Type                                | Description | Required |
+| ------- | :----------------------------------- | ----------- | -------- |
+| code    | integer                         |The status code, which should be an enum value of [google.rpc.Code](https://cloud.google.com/tasks/docs/reference/rpc/google.rpc#google.rpc.Code)           | No       |
+| message | string                          | A developer-facing error message, which should be in English. <br/>Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.| No       |
+| details | [[protobufAny](#protobufany)] | A list of messages that carry the error details. <br/>There is a common set of message types for APIs to use.            | No       |
 
 #### protobufAny
 
 | Name    | Type   | Description | Required |
 | ------- | ------ | ----------- | -------- |
-| typeUrl | string |             | No       |
-| value   | byte   |             | No       |
+| typeUrl | string | A URL/resource name whose content describes the type of the serialized message            | No       |
+| value   | byte   | Must be valid serialized data of the above specified type.            | No       |
 
 #### providerResponse
 
