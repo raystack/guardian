@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"errors"
+	"fmt"
 	"time"
 )
 
@@ -49,6 +51,7 @@ type Appeal struct {
 	Policy    *Policy     `json:"-" yaml:"-"`
 	Resource  *Resource   `json:"resource,omitempty" yaml:"resource,omitempty"`
 	Approvals []*Approval `json:"approvals,omitempty" yaml:"approvals,omitempty"`
+	Access    *Access     `json:"access,omitempty" yaml:"access,omitempty"`
 
 	CreatedAt time.Time `json:"created_at,omitempty" yaml:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
@@ -103,6 +106,21 @@ func (a *Appeal) Terminate() {
 	a.Status = AppealStatusTerminated
 }
 
+func (a *Appeal) Revoke(actor, reason string) error {
+	if a == nil {
+		return errors.New("apppeal is nil")
+	}
+	if actor == "" {
+		return errors.New("actor shouldn't be empty")
+	}
+
+	a.Status = AppealStatusTerminated
+	a.RevokedBy = actor
+	a.RevokeReason = reason
+	a.RevokedAt = time.Now()
+	return nil
+}
+
 func (a *Appeal) SetDefaults() {
 	if a.AccountType == "" {
 		a.AccountType = DefaultAppealAccountType
@@ -116,6 +134,29 @@ func (a *Appeal) GetApproval(id string) *Approval {
 		}
 	}
 	return nil
+}
+
+func (a Appeal) ToAccess() (*Access, error) {
+	access := &Access{
+		Status:      AccessStatusActive,
+		AccountID:   a.AccountID,
+		AccountType: a.AccountType,
+		ResourceID:  a.ResourceID,
+		Role:        a.Role,
+		Permissions: a.Permissions,
+		AppealID:    a.ID,
+	}
+
+	if a.Options != nil && a.Options.Duration != "" {
+		duration, err := time.ParseDuration(a.Options.Duration)
+		if err != nil {
+			return nil, fmt.Errorf("parsing duration %q: %w", a.Options.Duration, err)
+		}
+		expDate := time.Now().Add(duration)
+		access.ExpirationDate = &expDate
+	}
+
+	return access, nil
 }
 
 type ApprovalActionType string

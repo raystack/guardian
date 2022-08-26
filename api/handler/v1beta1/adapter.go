@@ -1,6 +1,8 @@
 package v1beta1
 
 import (
+	"fmt"
+
 	"github.com/mitchellh/mapstructure"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/domain"
@@ -549,6 +551,12 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 		appealProto.RevokedAt = timestamppb.New(appeal.RevokedAt)
 	}
 
+	accessProto, err := a.ToAccessProto(appeal.Access)
+	if err != nil {
+		return nil, fmt.Errorf("parsing access: %w", err)
+	}
+	appealProto.Access = accessProto
+
 	return appealProto, nil
 }
 
@@ -616,6 +624,55 @@ func (a *adapter) ToApprovalProto(approval *domain.Approval) (*guardianv1beta1.A
 	}
 
 	return approvalProto, nil
+}
+
+func (a *adapter) ToAccessProto(access *domain.Access) (*guardianv1beta1.Access, error) {
+	if access == nil {
+		return nil, nil
+	}
+
+	accessProto := &guardianv1beta1.Access{
+		Id:           access.ID,
+		Status:       string(access.Status),
+		AccountId:    access.AccountID,
+		AccountType:  access.AccountType,
+		ResourceId:   access.ResourceID,
+		Role:         access.Role,
+		Permissions:  access.Permissions,
+		AppealId:     access.AppealID,
+		RevokedBy:    access.RevokedBy,
+		RevokeReason: access.RevokeReason,
+		CreatedBy:    access.CreatedBy,
+	}
+
+	if access.ExpirationDate != nil {
+		accessProto.ExpirationDate = timestamppb.New(*access.ExpirationDate)
+	}
+	if access.RevokedAt != nil {
+		accessProto.RevokedAt = timestamppb.New(*access.RevokedAt)
+	}
+	if !access.CreatedAt.IsZero() {
+		accessProto.CreatedAt = timestamppb.New(access.CreatedAt)
+	}
+	if !access.UpdatedAt.IsZero() {
+		accessProto.UpdatedAt = timestamppb.New(access.UpdatedAt)
+	}
+	if access.Resource != nil {
+		resourceProto, err := a.ToResourceProto(access.Resource)
+		if err != nil {
+			return nil, fmt.Errorf("parsing resource: %w", err)
+		}
+		accessProto.Resource = resourceProto
+	}
+	if access.Appeal != nil {
+		appealProto, err := a.ToAppealProto(access.Appeal)
+		if err != nil {
+			return nil, fmt.Errorf("parsing appeal: %w", err)
+		}
+		accessProto.Appeal = appealProto
+	}
+
+	return accessProto, nil
 }
 
 func (a *adapter) fromConditionProto(c *guardianv1beta1.Condition) *domain.Condition {

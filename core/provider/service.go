@@ -284,8 +284,8 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 	return nil
 }
 
-func (s *Service) GrantAccess(ctx context.Context, a *domain.Appeal) error {
-	if err := s.validateAppealParam(a); err != nil {
+func (s *Service) GrantAccess(ctx context.Context, a domain.Access) error {
+	if err := s.validateAccessParam(a); err != nil {
 		return err
 	}
 
@@ -302,8 +302,8 @@ func (s *Service) GrantAccess(ctx context.Context, a *domain.Appeal) error {
 	return c.GrantAccess(p.Config, a)
 }
 
-func (s *Service) RevokeAccess(ctx context.Context, a *domain.Appeal) error {
-	if err := s.validateAppealParam(a); err != nil {
+func (s *Service) RevokeAccess(ctx context.Context, a domain.Access) error {
+	if err := s.validateAccessParam(a); err != nil {
 		return err
 	}
 
@@ -318,8 +318,6 @@ func (s *Service) RevokeAccess(ctx context.Context, a *domain.Appeal) error {
 	}
 
 	return c.RevokeAccess(p.Config, a)
-	// TODO: handle if permission for the given user with the given role is not found
-	// handle the resolution for the appeal status
 }
 
 func (s *Service) Delete(ctx context.Context, id string) error {
@@ -427,6 +425,13 @@ func (s *Service) validateAppealParam(a *domain.Appeal) error {
 	}
 	//TO-DO
 	//Make sure the user and role is required
+	return nil
+}
+
+func (s *Service) validateAccessParam(a domain.Access) error {
+	if a.Resource == nil {
+		return ErrNilResource
+	}
 	return nil
 }
 
