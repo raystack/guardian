@@ -33,6 +33,7 @@ module.exports = {
         "providers/gcs",
         "providers/grafana",
         "providers/metabase",
+        "providers/noop",
         "providers/tableau",
       ],
     },
