@@ -47,6 +47,7 @@ module.exports = {
         "reference/policy",
         "reference/provider",
         "reference/resource",
+        "reference/jobs",
         "reference/glossary",
       ],
     },
