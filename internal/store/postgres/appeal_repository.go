@@ -65,7 +65,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 
 	db := r.db
 	if filters.CreatedBy != "" {
-		db = db.Where(`"created_by" = ?`, filters.CreatedBy)
+		db = db.Where(`"appeals"."created_by" = ?`, filters.CreatedBy)
 	}
 	accounts := make([]string, 0)
 	if filters.AccountID != "" {
@@ -94,7 +94,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 	}
 	if filters.OrderBy != nil {
 		db = addOrderByClause(db, filters.OrderBy, addOrderByClauseOptions{
-			statusColumnName: `"status"`,
+			statusColumnName: `"appeals"."status"`,
 		})
 	}
 

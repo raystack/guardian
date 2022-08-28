@@ -357,7 +357,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				filters: &domain.ListAppealsFilter{
 					CreatedBy: "user@email.com",
 				},
-				expectedClauseQuery: `"created_by" = $1 AND "appeals"."deleted_at" IS NULL`,
+				expectedClauseQuery: `"appeals"."created_by" = $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"user@email.com"},
 			},
 			{
@@ -441,7 +441,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				filters: &domain.ListAppealsFilter{
 					OrderBy: []string{"status"},
 				},
-				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$1,$2,$3,$4,$5], "status")`,
+				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$1,$2,$3,$4,$5], "appeals"."status")`,
 				expectedArgs: []driver.Value{
 					postgres.AppealStatusDefaultSort[0],
 					postgres.AppealStatusDefaultSort[1],
