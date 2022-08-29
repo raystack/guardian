@@ -89,15 +89,40 @@ $ git clone git@github.com:odpf/guardian.git  (Using SSH Protocol) Or
 $ git clone https://github.com/odpf/guardian.git (Using HTTPS Protocol)
 ```
 
+Install all the golang dependencies
+
 ```
-# Install all the golang dependencies
-$ make install
+make setup
+```
 
-# Check all build commands available
-$ make help
+Build guardian binary file
 
-# Build Guardian binary file
-$ make build
+```
+make build
+```
+
+Init server config. Customise with your local configurations.
+
+```
+make config
+```
+
+Run database migrations
+
+```
+./guardian server migrate -c config.yaml
+```
+
+Start guardian server
+
+```
+./guardian server start -c config.yaml
+```
+
+Initialise client configurations
+
+```
+./guardian config init
 ```
 
 ### Verifying the installation​

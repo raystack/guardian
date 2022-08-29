@@ -42,6 +42,7 @@ tmp
 # guardian
 .guardian.yaml
 guardian
+dist/
 
 # editor configurations
 .vscode

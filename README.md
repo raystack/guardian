@@ -89,13 +89,6 @@ To pull a specific version:
 docker pull odpf/guardian:v0.3.2
 ```
 
-If you like to have a shell alias that runs the latest version of guardian from docker whenever you type `guardian`:
-
-```
-mkdir -p $HOME/.config/odpf
-alias guardian="docker run -e HOME=/tmp -v $HOME/.config/odpf:/tmp/.config/odpf --user $(id -u):$(id -g) --rm -it -p 3306:3306/tcp odpf/guardian:latest"
-```
-
 ## Usage
 
 Guardian is purely API-driven. It is very easy to get started with Guardian. It provides CLI, HTTP and GRPC APIs for simpler developer experience.
@@ -140,7 +133,7 @@ git clone git@github.com:odpf/guardian.git
 Install all the golang dependencies
 
 ```
-make install
+make setup
 ```
 
 Build guardian binary file
@@ -149,11 +142,10 @@ Build guardian binary file
 make build
 ```
 
-Init config
+Init server config. Customise with your local configurations.
 
 ```
-cp internal/server/config.yaml config.yaml
-./guardian config init
+make config
 ```
 
 Run database migrations
@@ -166,6 +158,12 @@ Start guardian server
 
 ```
 ./guardian server start -c config.yaml
+```
+
+Initialise client configurations
+
+```
+./guardian config init
 ```
 
 ## Running tests
