@@ -68,6 +68,7 @@ type ListAccessesFilter struct {
 	ResourceTypes []string
 	ResourceURNs  []string
 	CreatedBy     string
+	OrderBy       []string
 }
 
 type RevokeAccessesFilter struct {

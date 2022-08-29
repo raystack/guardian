@@ -23,6 +23,7 @@ func (s *GRPCServer) ListAccesses(ctx context.Context, req *guardianv1beta1.List
 		ResourceTypes: req.GetResourceTypes(),
 		ResourceURNs:  req.GetResourceUrns(),
 		CreatedBy:     req.GetCreatedBy(),
+		OrderBy:       req.GetOrderBy(),
 	}
 	accesses, err := s.listAccesses(ctx, filter)
 	if err != nil {
@@ -50,6 +51,7 @@ func (s *GRPCServer) ListUserAccesses(ctx context.Context, req *guardianv1beta1.
 		ProviderURNs:  req.GetProviderUrns(),
 		ResourceTypes: req.GetResourceTypes(),
 		ResourceURNs:  req.GetResourceUrns(),
+		OrderBy:       req.GetOrderBy(),
 		CreatedBy:     user,
 	}
 	accesses, err := s.listAccesses(ctx, filter)

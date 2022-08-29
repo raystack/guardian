@@ -43,6 +43,11 @@ func (r *AccessRepository) List(ctx context.Context, filter domain.ListAccessesF
 	if filter.CreatedBy != "" {
 		db = db.Where(`"accesses"."created_by" = ?`, filter.CreatedBy)
 	}
+	if filter.OrderBy != nil {
+		db = addOrderByClause(db, filter.OrderBy, addOrderByClauseOptions{
+			statusColumnName: `"accesses"."status"`,
+		})
+	}
 	if filter.ProviderTypes != nil {
 		db = db.Where(`"Resource"."provider_type" IN ?`, filter.ProviderTypes)
 	}
