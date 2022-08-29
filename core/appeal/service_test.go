@@ -136,6 +136,22 @@ func (s *ServiceTestSuite) TestFind() {
 		s.Equal(expectedResult, actualResult)
 		s.Nil(actualError)
 	})
+
+	s.Run("should treat 'active' and 'approved' filter the same way", func() {
+		expectedFilters := &domain.ListAppealsFilter{
+			Statuses: []string{domain.AppealStatusActive, domain.AppealStatusPending},
+		}
+		expectedResult := []*domain.Appeal{}
+		s.mockRepository.On("Find", expectedFilters).Return(expectedResult, nil).Once()
+
+		actualResult, actualError := s.service.Find(context.Background(), &domain.ListAppealsFilter{
+			Statuses: []string{domain.AppealStatusApproved, domain.AppealStatusPending},
+		})
+
+		s.mockRepository.AssertExpectations(s.T())
+		s.NoError(actualError)
+		s.Equal(expectedResult, actualResult)
+	})
 }
 
 func (s *ServiceTestSuite) TestCreate() {

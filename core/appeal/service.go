@@ -165,6 +165,11 @@ func (s *Service) GetByID(ctx context.Context, id string) (*domain.Appeal, error
 
 // Find appeals by filters
 func (s *Service) Find(ctx context.Context, filters *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
+	for i, v := range filters.Statuses {
+		if v == domain.AppealStatusApproved {
+			filters.Statuses[i] = domain.AppealStatusActive
+		}
+	}
 	return s.repo.Find(filters)
 }
 

@@ -12,7 +12,8 @@ const (
 
 	AppealStatusPending    = "pending"
 	AppealStatusCanceled   = "canceled"
-	AppealStatusActive     = "active"
+	AppealStatusActive     = "active" // TODO: rename AppealStatusActive to AppealStatusApproved in all business logic for the next release related to new Access entity
+	AppealStatusApproved   = "approved"
 	AppealStatusRejected   = "rejected"
 	AppealStatusTerminated = "terminated"
 
@@ -145,6 +146,7 @@ func (a Appeal) ToAccess() (*Access, error) {
 		Role:        a.Role,
 		Permissions: a.Permissions,
 		AppealID:    a.ID,
+		CreatedBy:   a.CreatedBy,
 	}
 
 	if a.Options != nil && a.Options.Duration != "" {
