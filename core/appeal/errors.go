@@ -14,8 +14,8 @@ var (
 	ErrAppealStatusUnrecognized       = errors.New("unrecognized appeal status")
 	ErrAppealDuplicate                = errors.New("appeal with the same resource and role already exists")
 	ErrAppealInvalidExtensionDuration = errors.New("invalid appeal extension duration")
-	ErrAppealFoundActiveGrant         = errors.New("user still have an active access")
-	ErrGrantNotEligibleForExtension   = errors.New("existing access is not eligible for extension")
+	ErrAppealFoundActiveGrant         = errors.New("user still have an active grant")
+	ErrGrantNotEligibleForExtension   = errors.New("existing grant is not eligible for extension")
 	ErrCannotCreateAppealForOtherUser = errors.New("creating appeal for other individual user (account_type=\"user\") is not allowed")
 
 	ErrApprovalDependencyIsBlocked = errors.New("found previous approval step that is still in blocked")
