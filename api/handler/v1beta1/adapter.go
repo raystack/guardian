@@ -551,11 +551,11 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 		appealProto.RevokedAt = timestamppb.New(appeal.RevokedAt)
 	}
 
-	accessProto, err := a.ToAccessProto(appeal.Access)
+	grantProto, err := a.ToGrantProto(appeal.Grant)
 	if err != nil {
-		return nil, fmt.Errorf("parsing access: %w", err)
+		return nil, fmt.Errorf("parsing grant: %w", err)
 	}
-	appealProto.Access = accessProto
+	appealProto.Grant = grantProto
 
 	return appealProto, nil
 }
@@ -626,53 +626,53 @@ func (a *adapter) ToApprovalProto(approval *domain.Approval) (*guardianv1beta1.A
 	return approvalProto, nil
 }
 
-func (a *adapter) ToAccessProto(access *domain.Access) (*guardianv1beta1.Access, error) {
-	if access == nil {
+func (a *adapter) ToGrantProto(grant *domain.Grant) (*guardianv1beta1.Grant, error) {
+	if grant == nil {
 		return nil, nil
 	}
 
-	accessProto := &guardianv1beta1.Access{
-		Id:           access.ID,
-		Status:       string(access.Status),
-		AccountId:    access.AccountID,
-		AccountType:  access.AccountType,
-		ResourceId:   access.ResourceID,
-		Role:         access.Role,
-		Permissions:  access.Permissions,
-		AppealId:     access.AppealID,
-		RevokedBy:    access.RevokedBy,
-		RevokeReason: access.RevokeReason,
-		CreatedBy:    access.CreatedBy,
+	grantProto := &guardianv1beta1.Grant{
+		Id:           grant.ID,
+		Status:       string(grant.Status),
+		AccountId:    grant.AccountID,
+		AccountType:  grant.AccountType,
+		ResourceId:   grant.ResourceID,
+		Role:         grant.Role,
+		Permissions:  grant.Permissions,
+		AppealId:     grant.AppealID,
+		RevokedBy:    grant.RevokedBy,
+		RevokeReason: grant.RevokeReason,
+		CreatedBy:    grant.CreatedBy,
 	}
 
-	if access.ExpirationDate != nil {
-		accessProto.ExpirationDate = timestamppb.New(*access.ExpirationDate)
+	if grant.ExpirationDate != nil {
+		grantProto.ExpirationDate = timestamppb.New(*grant.ExpirationDate)
 	}
-	if access.RevokedAt != nil {
-		accessProto.RevokedAt = timestamppb.New(*access.RevokedAt)
+	if grant.RevokedAt != nil {
+		grantProto.RevokedAt = timestamppb.New(*grant.RevokedAt)
 	}
-	if !access.CreatedAt.IsZero() {
-		accessProto.CreatedAt = timestamppb.New(access.CreatedAt)
+	if !grant.CreatedAt.IsZero() {
+		grantProto.CreatedAt = timestamppb.New(grant.CreatedAt)
 	}
-	if !access.UpdatedAt.IsZero() {
-		accessProto.UpdatedAt = timestamppb.New(access.UpdatedAt)
+	if !grant.UpdatedAt.IsZero() {
+		grantProto.UpdatedAt = timestamppb.New(grant.UpdatedAt)
 	}
-	if access.Resource != nil {
-		resourceProto, err := a.ToResourceProto(access.Resource)
+	if grant.Resource != nil {
+		resourceProto, err := a.ToResourceProto(grant.Resource)
 		if err != nil {
 			return nil, fmt.Errorf("parsing resource: %w", err)
 		}
-		accessProto.Resource = resourceProto
+		grantProto.Resource = resourceProto
 	}
-	if access.Appeal != nil {
-		appealProto, err := a.ToAppealProto(access.Appeal)
+	if grant.Appeal != nil {
+		appealProto, err := a.ToAppealProto(grant.Appeal)
 		if err != nil {
 			return nil, fmt.Errorf("parsing appeal: %w", err)
 		}
-		accessProto.Appeal = appealProto
+		grantProto.Appeal = appealProto
 	}
 
-	return accessProto, nil
+	return grantProto, nil
 }
 
 func (a *adapter) fromConditionProto(c *guardianv1beta1.Condition) *domain.Condition {

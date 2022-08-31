@@ -36,7 +36,7 @@ type Appeal struct {
 	Resource  *Resource `gorm:"ForeignKey:ResourceID;References:ID"`
 	Policy    Policy    `gorm:"ForeignKey:PolicyID,PolicyVersion;References:ID,Version"`
 	Approvals []*Approval
-	Access    *Access
+	Grant     *Grant
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
@@ -84,12 +84,12 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 		m.Resource = r
 	}
 
-	if a.Access != nil {
-		access := new(Access)
-		if err := access.FromDomain(*a.Access); err != nil {
-			return fmt.Errorf("parsing access: %w", err)
+	if a.Grant != nil {
+		grant := new(Grant)
+		if err := grant.FromDomain(*a.Grant); err != nil {
+			return fmt.Errorf("parsing grant: %w", err)
 		}
-		m.Access = access
+		m.Grant = grant
 	}
 
 	var id uuid.UUID
@@ -174,13 +174,13 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		resource = r
 	}
 
-	var access *domain.Access
-	if m.Access != nil {
-		a, err := m.Access.ToDomain()
+	var grant *domain.Grant
+	if m.Grant != nil {
+		a, err := m.Grant.ToDomain()
 		if err != nil {
-			return nil, fmt.Errorf("parsing access: %w", err)
+			return nil, fmt.Errorf("parsing grant: %w", err)
 		}
-		access = a
+		grant = a
 	}
 
 	return &domain.Appeal{
@@ -203,7 +203,7 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		Labels:        labels,
 		Approvals:     approvals,
 		Resource:      resource,
-		Access:        access,
+		Grant:         grant,
 		CreatedAt:     m.CreatedAt,
 		UpdatedAt:     m.UpdatedAt,
 	}, nil

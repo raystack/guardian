@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS "accesses";
+DROP TABLE IF EXISTS "grants";

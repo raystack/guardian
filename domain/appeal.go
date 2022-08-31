@@ -52,7 +52,7 @@ type Appeal struct {
 	Policy    *Policy     `json:"-" yaml:"-"`
 	Resource  *Resource   `json:"resource,omitempty" yaml:"resource,omitempty"`
 	Approvals []*Approval `json:"approvals,omitempty" yaml:"approvals,omitempty"`
-	Access    *Access     `json:"access,omitempty" yaml:"access,omitempty"`
+	Grant     *Grant      `json:"grant,omitempty" yaml:"grant,omitempty"`
 
 	CreatedAt time.Time `json:"created_at,omitempty" yaml:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
@@ -137,9 +137,9 @@ func (a *Appeal) GetApproval(id string) *Approval {
 	return nil
 }
 
-func (a Appeal) ToAccess() (*Access, error) {
-	access := &Access{
-		Status:      AccessStatusActive,
+func (a Appeal) ToGrant() (*Grant, error) {
+	grant := &Grant{
+		Status:      GrantStatusActive,
 		AccountID:   a.AccountID,
 		AccountType: a.AccountType,
 		ResourceID:  a.ResourceID,
@@ -155,10 +155,10 @@ func (a Appeal) ToAccess() (*Access, error) {
 			return nil, fmt.Errorf("parsing duration %q: %w", a.Options.Duration, err)
 		}
 		expDate := time.Now().Add(duration)
-		access.ExpirationDate = &expDate
+		grant.ExpirationDate = &expDate
 	}
 
-	return access, nil
+	return grant, nil
 }
 
 type ApprovalActionType string

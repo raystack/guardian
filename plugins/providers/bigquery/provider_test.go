@@ -350,7 +350,7 @@ func TestGrantAccess(t *testing.T) {
 		testCases := []struct {
 			name           string
 			providerConfig *domain.ProviderConfig
-			access         domain.Access
+			grant          domain.Grant
 			expectedError  error
 		}{
 			{
@@ -363,7 +363,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 				},
@@ -375,7 +375,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -391,7 +391,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -407,7 +407,7 @@ func TestGrantAccess(t *testing.T) {
 		for _, tc := range testCases {
 			p := initProvider()
 			pc := tc.providerConfig
-			a := tc.access
+			a := tc.grant
 
 			actualError := p.GrantAccess(pc, a)
 			assert.EqualError(t, actualError, tc.expectedError.Error())
@@ -431,14 +431,14 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		g := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 		assert.Error(t, actualError)
 	})
 
@@ -475,7 +475,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -489,7 +489,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 
 		assert.Equal(t, expectedError, actualError)
 	})
@@ -526,7 +526,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -540,7 +540,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
@@ -579,7 +579,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				URN:          "p_id:d_id.t_id",
@@ -595,7 +595,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
@@ -606,7 +606,7 @@ func TestRevokeAccess(t *testing.T) {
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			providerConfig *domain.ProviderConfig
-			access         domain.Access
+			grant          domain.Grant
 			expectedError  error
 		}{
 			{
@@ -619,7 +619,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 				},
@@ -631,7 +631,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -647,7 +647,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -663,7 +663,7 @@ func TestRevokeAccess(t *testing.T) {
 		for _, tc := range testCases {
 			p := initProvider()
 			pc := tc.providerConfig
-			a := tc.access
+			a := tc.grant
 
 			actualError := p.RevokeAccess(pc, a)
 			assert.EqualError(t, actualError, tc.expectedError.Error())
@@ -687,14 +687,14 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		g := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
 			Role: "test-role",
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(pc, g)
 		assert.Error(t, actualError)
 	})
 
@@ -731,7 +731,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -745,7 +745,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(pc, g)
 
 		assert.Equal(t, expectedError, actualError)
 	})
@@ -782,7 +782,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -796,7 +796,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(pc, g)
 
 		assert.Nil(t, actualError)
 	})
@@ -834,7 +834,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				URN:          "p_id:d_id.t_id",
@@ -850,7 +850,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(pc, g)
 
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)

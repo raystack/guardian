@@ -41,7 +41,7 @@ func (r *AppealRepository) GetByID(id string) (*domain.Appeal, error) {
 		}).
 		Preload("Approvals.Approvers").
 		Preload("Resource").
-		Preload("Access").
+		Preload("Grant").
 		First(&m, "id = ?", id).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -113,7 +113,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 	}
 
 	var models []*model.Appeal
-	if err := db.Joins("Access").Find(&models).Error; err != nil {
+	if err := db.Joins("Grant").Find(&models).Error; err != nil {
 		return nil, err
 	}
 

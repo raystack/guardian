@@ -95,7 +95,7 @@ func (p *Provider) GetType() string {
 	return p.typeName
 }
 
-func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Access) error {
+func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
 	if err := validateProviderConfigAndAppealParams(pc, a); err != nil {
 		return fmt.Errorf("invalid provider/appeal config: %w", err)
 	}
@@ -136,7 +136,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Access) error
 	return ErrInvalidResourceType
 }
 
-func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Access) error {
+func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
 	if err := validateProviderConfigAndAppealParams(pc, a); err != nil {
 		return fmt.Errorf("invalid provider/appeal config: %w", err)
 	}
@@ -186,7 +186,7 @@ func (p *Provider) GetAccountTypes() []string {
 	return []string{AccountTypeUser, AccountTypeServiceAccount, AccountTypeGroup, AccountTypeDomain}
 }
 
-func validateProviderConfigAndAppealParams(pc *domain.ProviderConfig, a domain.Access) error {
+func validateProviderConfigAndAppealParams(pc *domain.ProviderConfig, a domain.Grant) error {
 	if pc == nil {
 		return ErrNilProviderConfig
 	}
@@ -202,7 +202,7 @@ func validateProviderConfigAndAppealParams(pc *domain.ProviderConfig, a domain.A
 	return nil
 }
 
-func getPermissions(a domain.Access) []Permission {
+func getPermissions(a domain.Grant) []Permission {
 	var permissions []Permission
 	for _, p := range a.Permissions {
 		permissions = append(permissions, Permission(p))

@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Access struct {
+type Grant struct {
 	ID             uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
 	Status         string
 	AccountID      string
@@ -32,58 +32,58 @@ type Access struct {
 	Appeal   *Appeal   `gorm:"ForeignKey:AppealID;References:ID"`
 }
 
-func (m *Access) FromDomain(a domain.Access) error {
-	if a.ID != "" {
-		uuid, err := uuid.Parse(a.ID)
+func (m *Grant) FromDomain(g domain.Grant) error {
+	if g.ID != "" {
+		uuid, err := uuid.Parse(g.ID)
 		if err != nil {
 			return fmt.Errorf("parsing uuid: %w", err)
 		}
 		m.ID = uuid
 	}
 
-	if a.Resource != nil {
+	if g.Resource != nil {
 		r := new(Resource)
-		if err := r.FromDomain(a.Resource); err != nil {
+		if err := r.FromDomain(g.Resource); err != nil {
 			return fmt.Errorf("parsing resource: %w", err)
 		}
 		m.Resource = r
 	}
 
-	if a.Appeal != nil {
+	if g.Appeal != nil {
 		appeal := new(Appeal)
-		if err := appeal.FromDomain(a.Appeal); err != nil {
+		if err := appeal.FromDomain(g.Appeal); err != nil {
 			return fmt.Errorf("parsing appeal: %w", err)
 		}
 		m.Appeal = appeal
 	}
 
-	if a.ExpirationDate != nil {
-		m.ExpirationDate = *a.ExpirationDate
+	if g.ExpirationDate != nil {
+		m.ExpirationDate = *g.ExpirationDate
 	}
 
-	if a.RevokedAt != nil {
-		m.RevokedAt = *a.RevokedAt
+	if g.RevokedAt != nil {
+		m.RevokedAt = *g.RevokedAt
 	}
 
-	m.Status = string(a.Status)
-	m.AccountID = a.AccountID
-	m.AccountType = a.AccountType
-	m.ResourceID = a.ResourceID
-	m.Role = a.Role
-	m.Permissions = pq.StringArray(a.Permissions)
-	m.AppealID = a.AppealID
-	m.RevokedBy = a.RevokedBy
-	m.RevokeReason = a.RevokeReason
-	m.CreatedBy = a.CreatedBy
-	m.CreatedAt = a.CreatedAt
-	m.UpdatedAt = a.UpdatedAt
+	m.Status = string(g.Status)
+	m.AccountID = g.AccountID
+	m.AccountType = g.AccountType
+	m.ResourceID = g.ResourceID
+	m.Role = g.Role
+	m.Permissions = pq.StringArray(g.Permissions)
+	m.AppealID = g.AppealID
+	m.RevokedBy = g.RevokedBy
+	m.RevokeReason = g.RevokeReason
+	m.CreatedBy = g.CreatedBy
+	m.CreatedAt = g.CreatedAt
+	m.UpdatedAt = g.UpdatedAt
 	return nil
 }
 
-func (m Access) ToDomain() (*domain.Access, error) {
-	access := &domain.Access{
+func (m Grant) ToDomain() (*domain.Grant, error) {
+	grant := &domain.Grant{
 		ID:           m.ID.String(),
-		Status:       domain.AccessStatus(m.Status),
+		Status:       domain.GrantStatus(m.Status),
 		AccountID:    m.AccountID,
 		AccountType:  m.AccountType,
 		ResourceID:   m.ResourceID,
@@ -102,7 +102,7 @@ func (m Access) ToDomain() (*domain.Access, error) {
 		if err != nil {
 			return nil, fmt.Errorf("parsing resource: %w", err)
 		}
-		access.Resource = r
+		grant.Resource = r
 	}
 
 	if m.Appeal != nil {
@@ -110,15 +110,15 @@ func (m Access) ToDomain() (*domain.Access, error) {
 		if err != nil {
 			return nil, fmt.Errorf("parsing appeal: %w", err)
 		}
-		access.Appeal = a
+		grant.Appeal = a
 	}
 
 	if !m.ExpirationDate.IsZero() {
-		access.ExpirationDate = &m.ExpirationDate
+		grant.ExpirationDate = &m.ExpirationDate
 	}
 	if !m.RevokedAt.IsZero() {
-		access.RevokedAt = &m.RevokedAt
+		grant.RevokedAt = &m.RevokedAt
 	}
 
-	return access, nil
+	return grant, nil
 }

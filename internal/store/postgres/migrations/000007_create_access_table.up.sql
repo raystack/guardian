@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS "accesses" (
+CREATE TABLE IF NOT EXISTS "grants" (
   "id" uuid DEFAULT uuid_generate_v4(),
   "status" text,
   "account_id" text,
@@ -16,14 +16,14 @@ CREATE TABLE IF NOT EXISTS "accesses" (
   "updated_at" timestamptz,
   "deleted_at" timestamptz,
   PRIMARY KEY ("id"),
-  CONSTRAINT "fk_accesses_resource" FOREIGN KEY ("resource_id") REFERENCES "resources"("id"),
-  CONSTRAINT "fk_accesses_appeal" FOREIGN KEY ("appeal_id") REFERENCES "appeals"("id")
+  CONSTRAINT "fk_grants_resource" FOREIGN KEY ("resource_id") REFERENCES "resources"("id"),
+  CONSTRAINT "fk_grants_appeal" FOREIGN KEY ("appeal_id") REFERENCES "appeals"("id")
 );
 
-CREATE INDEX IF NOT EXISTS "idx_accesses_deleted_at" ON "accesses" ("deleted_at");
+CREATE INDEX IF NOT EXISTS "idx_grants_deleted_at" ON "grants" ("deleted_at");
 
 INSERT INTO
-  "accesses" (
+  "grants" (
     "status",
     "account_id",
     "account_type",

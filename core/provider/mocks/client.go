@@ -126,11 +126,11 @@ func (_m *Client) GetType() string {
 }
 
 // GrantAccess provides a mock function with given fields: _a0, _a1
-func (_m *Client) GrantAccess(_a0 *domain.ProviderConfig, _a1 domain.Access) error {
+func (_m *Client) GrantAccess(_a0 *domain.ProviderConfig, _a1 domain.Grant) error {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*domain.ProviderConfig, domain.Access) error); ok {
+	if rf, ok := ret.Get(0).(func(*domain.ProviderConfig, domain.Grant) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -140,11 +140,11 @@ func (_m *Client) GrantAccess(_a0 *domain.ProviderConfig, _a1 domain.Access) err
 }
 
 // RevokeAccess provides a mock function with given fields: _a0, _a1
-func (_m *Client) RevokeAccess(_a0 *domain.ProviderConfig, _a1 domain.Access) error {
+func (_m *Client) RevokeAccess(_a0 *domain.ProviderConfig, _a1 domain.Grant) error {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*domain.ProviderConfig, domain.Access) error); ok {
+	if rf, ok := ret.Get(0).(func(*domain.ProviderConfig, domain.Grant) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/core/access"
+	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/domain"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/codes"
@@ -14,12 +14,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *GrpcHandlersSuite) TestListAccesses() {
-	s.Run("should return list of access on success", func() {
+func (s *GrpcHandlersSuite) TestListGrants() {
+	s.Run("should return list of grants on success", func() {
 		s.setup()
 		timeNow := time.Now()
 
-		dummyAccesses := []domain.Access{
+		dummyGrants := []domain.Grant{
 			{
 				ID:             "test-id",
 				Status:         "test-status",
@@ -42,8 +42,8 @@ func (s *GrpcHandlersSuite) TestListAccesses() {
 				},
 			},
 		}
-		expectedResponse := &guardianv1beta1.ListAccessesResponse{
-			Accesses: []*guardianv1beta1.Access{
+		expectedResponse := &guardianv1beta1.ListGrantsResponse{
+			Grants: []*guardianv1beta1.Grant{
 				{
 					Id:             "test-id",
 					Status:         "test-status",
@@ -67,49 +67,49 @@ func (s *GrpcHandlersSuite) TestListAccesses() {
 				},
 			},
 		}
-		expectedFilter := domain.ListAccessesFilter{
+		expectedFilter := domain.ListGrantsFilter{
 			Statuses:     []string{"test-status"},
 			AccountIDs:   []string{"test-account-id"},
 			AccountTypes: []string{"test-account-type"},
 			ResourceIDs:  []string{"test-resource-id"},
 		}
-		s.accessService.EXPECT().
+		s.grantService.EXPECT().
 			List(mock.AnythingOfType("*context.emptyCtx"), expectedFilter).
-			Return(dummyAccesses, nil).Once()
+			Return(dummyGrants, nil).Once()
 
-		req := &guardianv1beta1.ListAccessesRequest{
+		req := &guardianv1beta1.ListGrantsRequest{
 			Statuses:     expectedFilter.Statuses,
 			AccountIds:   expectedFilter.AccountIDs,
 			AccountTypes: expectedFilter.AccountTypes,
 			ResourceIds:  expectedFilter.ResourceIDs,
 		}
-		res, err := s.grpcServer.ListAccesses(context.Background(), req)
+		res, err := s.grpcServer.ListGrants(context.Background(), req)
 
 		s.NoError(err)
 		s.Equal(expectedResponse, res)
-		s.accessService.AssertExpectations(s.T())
+		s.grantService.AssertExpectations(s.T())
 	})
 
 	s.Run("should return error if service returns an error", func() {
 		s.setup()
 
 		expectedError := errors.New("unexpected error")
-		s.accessService.EXPECT().
-			List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListAccessesFilter")).
+		s.grantService.EXPECT().
+			List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
 			Return(nil, expectedError).Once()
 
-		req := &guardianv1beta1.ListAccessesRequest{}
-		res, err := s.grpcServer.ListAccesses(context.Background(), req)
+		req := &guardianv1beta1.ListGrantsRequest{}
+		res, err := s.grpcServer.ListGrants(context.Background(), req)
 
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)
-		s.accessService.AssertExpectations(s.T())
+		s.grantService.AssertExpectations(s.T())
 	})
 
-	s.Run("should return error if there is an error when parsing the access", func() {
+	s.Run("should return error if there is an error when parsing the grant", func() {
 		s.setup()
 
-		expectedAccesses := []domain.Access{
+		expectedGrants := []domain.Grant{
 			{
 				Resource: &domain.Resource{
 					Details: map[string]interface{}{
@@ -118,27 +118,27 @@ func (s *GrpcHandlersSuite) TestListAccesses() {
 				},
 			},
 		}
-		s.accessService.EXPECT().
-			List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListAccessesFilter")).
-			Return(expectedAccesses, nil).Once()
+		s.grantService.EXPECT().
+			List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
+			Return(expectedGrants, nil).Once()
 
-		req := &guardianv1beta1.ListAccessesRequest{}
-		res, err := s.grpcServer.ListAccesses(context.Background(), req)
+		req := &guardianv1beta1.ListGrantsRequest{}
+		res, err := s.grpcServer.ListGrants(context.Background(), req)
 
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)
-		s.accessService.AssertExpectations(s.T())
+		s.grantService.AssertExpectations(s.T())
 	})
 }
 
-func (s *GrpcHandlersSuite) TestGetAccess() {
-	s.Run("should return access details on succes", func() {
+func (s *GrpcHandlersSuite) TestGetGrant() {
+	s.Run("should return grant details on succes", func() {
 		s.setup()
 		timeNow := time.Now()
 
-		accessID := "test-id"
-		dummyAccess := &domain.Access{
-			ID:             accessID,
+		grantID := "test-id"
+		dummyGrant := &domain.Grant{
+			ID:             grantID,
 			Status:         "test-status",
 			AccountID:      "test-account-id",
 			AccountType:    "test-account-type",
@@ -158,9 +158,9 @@ func (s *GrpcHandlersSuite) TestGetAccess() {
 				ID: "test-appeal-id",
 			},
 		}
-		expectedResponse := &guardianv1beta1.GetAccessResponse{
-			Access: &guardianv1beta1.Access{
-				Id:             accessID,
+		expectedResponse := &guardianv1beta1.GetGrantResponse{
+			Grant: &guardianv1beta1.Grant{
+				Id:             grantID,
 				Status:         "test-status",
 				AccountId:      "test-account-id",
 				AccountType:    "test-account-type",
@@ -181,19 +181,19 @@ func (s *GrpcHandlersSuite) TestGetAccess() {
 				},
 			},
 		}
-		s.accessService.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), accessID).
-			Return(dummyAccess, nil).Once()
+		s.grantService.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), grantID).
+			Return(dummyGrant, nil).Once()
 
-		req := &guardianv1beta1.GetAccessRequest{Id: accessID}
-		res, err := s.grpcServer.GetAccess(context.Background(), req)
+		req := &guardianv1beta1.GetGrantRequest{Id: grantID}
+		res, err := s.grpcServer.GetGrant(context.Background(), req)
 
 		s.NoError(err)
 		s.Equal(expectedResponse, res)
-		s.accessService.AssertExpectations(s.T())
+		s.grantService.AssertExpectations(s.T())
 	})
 
-	s.Run("should return error if access service returns an error", func() {
+	s.Run("should return error if grant service returns an error", func() {
 		testCases := []struct {
 			name          string
 			expectedError error
@@ -201,7 +201,7 @@ func (s *GrpcHandlersSuite) TestGetAccess() {
 		}{
 			{
 				"should return not found error if record not found",
-				access.ErrAccessNotFound,
+				grant.ErrGrantNotFound,
 				codes.NotFound,
 			},
 			{
@@ -215,39 +215,39 @@ func (s *GrpcHandlersSuite) TestGetAccess() {
 			s.Run(tc.name, func() {
 				s.setup()
 
-				s.accessService.EXPECT().
+				s.grantService.EXPECT().
 					GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
 					Return(nil, tc.expectedError).Once()
 
-				req := &guardianv1beta1.GetAccessRequest{Id: "test-id"}
-				res, err := s.grpcServer.GetAccess(context.Background(), req)
+				req := &guardianv1beta1.GetGrantRequest{Id: "test-id"}
+				res, err := s.grpcServer.GetGrant(context.Background(), req)
 
 				s.Equal(tc.expectedCode, status.Code(err))
 				s.Nil(res)
-				s.accessService.AssertExpectations(s.T())
+				s.grantService.AssertExpectations(s.T())
 			})
 		}
 	})
 
-	s.Run("should return error if there is an error when parsing the access", func() {
+	s.Run("should return error if there is an error when parsing the grant", func() {
 		s.setup()
 
-		expectedAccess := &domain.Access{
+		expectedGrant := &domain.Grant{
 			Resource: &domain.Resource{
 				Details: map[string]interface{}{
 					"foo": make(chan int), // invalid value
 				},
 			},
 		}
-		s.accessService.EXPECT().
+		s.grantService.EXPECT().
 			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
-			Return(expectedAccess, nil).Once()
+			Return(expectedGrant, nil).Once()
 
-		req := &guardianv1beta1.GetAccessRequest{Id: "test-id"}
-		res, err := s.grpcServer.GetAccess(context.Background(), req)
+		req := &guardianv1beta1.GetGrantRequest{Id: "test-id"}
+		res, err := s.grpcServer.GetGrant(context.Background(), req)
 
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)
-		s.accessService.AssertExpectations(s.T())
+		s.grantService.AssertExpectations(s.T())
 	})
 }

@@ -5,16 +5,16 @@ import (
 	"time"
 )
 
-type AccessStatus string
+type GrantStatus string
 
 const (
-	AccessStatusActive   AccessStatus = "active"
-	AccessStatusInactive AccessStatus = "inactive"
+	GrantStatusActive   GrantStatus = "active"
+	GrantStatusInactive GrantStatus = "inactive"
 )
 
-type Access struct {
+type Grant struct {
 	ID             string
-	Status         AccessStatus
+	Status         GrantStatus
 	AccountID      string
 	AccountType    string
 	ResourceID     string
@@ -33,30 +33,30 @@ type Access struct {
 	Appeal   *Appeal   `json:"appeal" yaml:"appeal"`
 }
 
-func (a Access) IsEligibleForExtension(extensionDurationRule time.Duration) bool {
-	if a.ExpirationDate != nil && !a.ExpirationDate.IsZero() {
-		return time.Until(*a.ExpirationDate) <= extensionDurationRule
+func (g Grant) IsEligibleForExtension(extensionDurationRule time.Duration) bool {
+	if g.ExpirationDate != nil && !g.ExpirationDate.IsZero() {
+		return time.Until(*g.ExpirationDate) <= extensionDurationRule
 	}
 	return true
 }
 
-func (a *Access) Revoke(actor, reason string) error {
-	if a == nil {
-		return errors.New("access is nil")
+func (g *Grant) Revoke(actor, reason string) error {
+	if g == nil {
+		return errors.New("grant is nil")
 	}
 	if actor == "" {
 		return errors.New("actor shouldn't be empty")
 	}
 
-	a.Status = AccessStatusInactive
-	a.RevokedBy = actor
-	a.RevokeReason = reason
+	g.Status = GrantStatusInactive
+	g.RevokedBy = actor
+	g.RevokeReason = reason
 	now := time.Now()
-	a.RevokedAt = &now
+	g.RevokedAt = &now
 	return nil
 }
 
-type ListAccessesFilter struct {
+type ListGrantsFilter struct {
 	Statuses      []string
 	AccountIDs    []string
 	AccountTypes  []string
@@ -71,7 +71,7 @@ type ListAccessesFilter struct {
 	OrderBy       []string
 }
 
-type RevokeAccessesFilter struct {
+type RevokeGrantsFilter struct {
 	AccountIDs    []string `validate:"omitempty,required"`
 	ProviderTypes []string `validate:"omitempty,min=1"`
 	ProviderURNs  []string `validate:"omitempty,min=1"`

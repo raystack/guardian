@@ -1,4 +1,4 @@
-package access
+package grant
 
 type options struct {
 	skipNotification     bool

@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/odpf/guardian/core/access"
 	"github.com/odpf/guardian/core/appeal"
+	"github.com/odpf/guardian/core/grant"
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/domain"
@@ -32,7 +32,7 @@ type ProtoAdapter interface {
 	FromCreateAppealProto(*guardianv1beta1.CreateAppealRequest, string) ([]*domain.Appeal, error)
 	ToApprovalProto(*domain.Approval) (*guardianv1beta1.Approval, error)
 
-	ToAccessProto(*domain.Access) (*guardianv1beta1.Access, error)
+	ToGrantProto(*domain.Grant) (*guardianv1beta1.Grant, error)
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter
@@ -57,8 +57,8 @@ type providerService interface {
 	FetchResources(context.Context) error
 	GetRoles(ctx context.Context, id, resourceType string) ([]*domain.Role, error)
 	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
-	GrantAccess(context.Context, domain.Access) error
-	RevokeAccess(context.Context, domain.Access) error
+	GrantAccess(context.Context, domain.Grant) error
+	RevokeAccess(context.Context, domain.Grant) error
 	Delete(context.Context, string) error
 }
 
@@ -90,12 +90,12 @@ type approvalService interface {
 	AdvanceApproval(context.Context, *domain.Appeal) error
 }
 
-//go:generate mockery --name=accessService --exported --with-expecter
-type accessService interface {
-	List(context.Context, domain.ListAccessesFilter) ([]domain.Access, error)
-	GetByID(context.Context, string) (*domain.Access, error)
-	Revoke(ctx context.Context, id, actor, reason string, opts ...access.Option) (*domain.Access, error)
-	BulkRevoke(ctx context.Context, filter domain.RevokeAccessesFilter, actor, reason string) ([]*domain.Access, error)
+//go:generate mockery --name=grantService --exported --with-expecter
+type grantService interface {
+	List(context.Context, domain.ListGrantsFilter) ([]domain.Grant, error)
+	GetByID(context.Context, string) (*domain.Grant, error)
+	Revoke(ctx context.Context, id, actor, reason string, opts ...grant.Option) (*domain.Grant, error)
+	BulkRevoke(ctx context.Context, filter domain.RevokeGrantsFilter, actor, reason string) ([]*domain.Grant, error)
 }
 
 type GRPCServer struct {
@@ -104,7 +104,7 @@ type GRPCServer struct {
 	policyService   policyService
 	appealService   appealService
 	approvalService approvalService
-	accessService   accessService
+	grantService    grantService
 	adapter         ProtoAdapter
 
 	authenticatedUserHeaderKey string
@@ -118,7 +118,7 @@ func NewGRPCServer(
 	policyService policyService,
 	appealService appealService,
 	approvalService approvalService,
-	accessService accessService,
+	grantService grantService,
 	adapter ProtoAdapter,
 	authenticatedUserHeaderKey string,
 ) *GRPCServer {
@@ -128,7 +128,7 @@ func NewGRPCServer(
 		policyService:              policyService,
 		appealService:              appealService,
 		approvalService:            approvalService,
-		accessService:              accessService,
+		grantService:               grantService,
 		adapter:                    adapter,
 		authenticatedUserHeaderKey: authenticatedUserHeaderKey,
 	}
