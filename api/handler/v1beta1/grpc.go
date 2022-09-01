@@ -1,15 +1,10 @@
-//go:generate mockery --name=resourceService --exported --with-expecter
-//go:generate mockery --name=providerService --exported --with-expecter
-//go:generate mockery --name=policyService --exported --with-expecter
-//go:generate mockery --name=appealService --exported --with-expecter
-//go:generate mockery --name=approvalService --exported --with-expecter
-
 package v1beta1
 
 import (
 	"context"
 	"errors"
 
+	"github.com/odpf/guardian/core/access"
 	"github.com/odpf/guardian/core/appeal"
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
@@ -36,8 +31,11 @@ type ProtoAdapter interface {
 	ToAppealProto(*domain.Appeal) (*guardianv1beta1.Appeal, error)
 	FromCreateAppealProto(*guardianv1beta1.CreateAppealRequest, string) ([]*domain.Appeal, error)
 	ToApprovalProto(*domain.Approval) (*guardianv1beta1.Approval, error)
+
+	ToAccessProto(*domain.Access) (*guardianv1beta1.Access, error)
 }
 
+//go:generate mockery --name=resourceService --exported --with-expecter
 type resourceService interface {
 	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
 	GetOne(string) (*domain.Resource, error)
@@ -48,6 +46,7 @@ type resourceService interface {
 	BatchDelete(context.Context, []string) error
 }
 
+//go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
 	Create(context.Context, *domain.Provider) error
 	Find(context.Context) ([]*domain.Provider, error)
@@ -58,11 +57,12 @@ type providerService interface {
 	FetchResources(context.Context) error
 	GetRoles(ctx context.Context, id, resourceType string) ([]*domain.Role, error)
 	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
-	GrantAccess(context.Context, *domain.Appeal) error
-	RevokeAccess(context.Context, *domain.Appeal) error
+	GrantAccess(context.Context, domain.Access) error
+	RevokeAccess(context.Context, domain.Access) error
 	Delete(context.Context, string) error
 }
 
+//go:generate mockery --name=policyService --exported --with-expecter
 type policyService interface {
 	Create(context.Context, *domain.Policy) error
 	Find(context.Context) ([]*domain.Policy, error)
@@ -70,6 +70,7 @@ type policyService interface {
 	Update(context.Context, *domain.Policy) error
 }
 
+//go:generate mockery --name=appealService --exported --with-expecter
 type appealService interface {
 	GetByID(context.Context, string) (*domain.Appeal, error)
 	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
@@ -82,10 +83,19 @@ type appealService interface {
 	DeleteApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
 }
 
+//go:generate mockery --name=approvalService --exported --with-expecter
 type approvalService interface {
 	ListApprovals(context.Context, *domain.ListApprovalsFilter) ([]*domain.Approval, error)
 	BulkInsert(context.Context, []*domain.Approval) error
 	AdvanceApproval(context.Context, *domain.Appeal) error
+}
+
+//go:generate mockery --name=accessService --exported --with-expecter
+type accessService interface {
+	List(context.Context, domain.ListAccessesFilter) ([]domain.Access, error)
+	GetByID(context.Context, string) (*domain.Access, error)
+	Revoke(ctx context.Context, id, actor, reason string, opts ...access.Option) (*domain.Access, error)
+	BulkRevoke(ctx context.Context, filter domain.RevokeAccessesFilter, actor, reason string) ([]*domain.Access, error)
 }
 
 type GRPCServer struct {
@@ -94,6 +104,7 @@ type GRPCServer struct {
 	policyService   policyService
 	appealService   appealService
 	approvalService approvalService
+	accessService   accessService
 	adapter         ProtoAdapter
 
 	authenticatedUserHeaderKey string
@@ -107,6 +118,7 @@ func NewGRPCServer(
 	policyService policyService,
 	appealService appealService,
 	approvalService approvalService,
+	accessService accessService,
 	adapter ProtoAdapter,
 	authenticatedUserHeaderKey string,
 ) *GRPCServer {
@@ -116,6 +128,7 @@ func NewGRPCServer(
 		policyService:              policyService,
 		appealService:              appealService,
 		approvalService:            approvalService,
+		accessService:              accessService,
 		adapter:                    adapter,
 		authenticatedUserHeaderKey: authenticatedUserHeaderKey,
 	}

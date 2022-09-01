@@ -12,6 +12,14 @@ type IamManager struct {
 	mock.Mock
 }
 
+type IamManager_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *IamManager) EXPECT() *IamManager_Expecter {
+	return &IamManager_Expecter{mock: &_m.Mock}
+}
+
 // GetClient provides a mock function with given fields: _a0
 func (_m *IamManager) GetClient(_a0 domain.SensitiveConfig) (domain.IAMClient, error) {
 	ret := _m.Called(_a0)
@@ -35,6 +43,29 @@ func (_m *IamManager) GetClient(_a0 domain.SensitiveConfig) (domain.IAMClient, e
 	return r0, r1
 }
 
+// IamManager_GetClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetClient'
+type IamManager_GetClient_Call struct {
+	*mock.Call
+}
+
+// GetClient is a helper method to define mock.On call
+//  - _a0 domain.SensitiveConfig
+func (_e *IamManager_Expecter) GetClient(_a0 interface{}) *IamManager_GetClient_Call {
+	return &IamManager_GetClient_Call{Call: _e.mock.On("GetClient", _a0)}
+}
+
+func (_c *IamManager_GetClient_Call) Run(run func(_a0 domain.SensitiveConfig)) *IamManager_GetClient_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(domain.SensitiveConfig))
+	})
+	return _c
+}
+
+func (_c *IamManager_GetClient_Call) Return(_a0 domain.IAMClient, _a1 error) *IamManager_GetClient_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
 // ParseConfig provides a mock function with given fields: _a0
 func (_m *IamManager) ParseConfig(_a0 *domain.IAMConfig) (domain.SensitiveConfig, error) {
 	ret := _m.Called(_a0)
@@ -56,4 +87,27 @@ func (_m *IamManager) ParseConfig(_a0 *domain.IAMConfig) (domain.SensitiveConfig
 	}
 
 	return r0, r1
+}
+
+// IamManager_ParseConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ParseConfig'
+type IamManager_ParseConfig_Call struct {
+	*mock.Call
+}
+
+// ParseConfig is a helper method to define mock.On call
+//  - _a0 *domain.IAMConfig
+func (_e *IamManager_Expecter) ParseConfig(_a0 interface{}) *IamManager_ParseConfig_Call {
+	return &IamManager_ParseConfig_Call{Call: _e.mock.On("ParseConfig", _a0)}
+}
+
+func (_c *IamManager_ParseConfig_Call) Run(run func(_a0 *domain.IAMConfig)) *IamManager_ParseConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*domain.IAMConfig))
+	})
+	return _c
+}
+
+func (_c *IamManager_ParseConfig_Call) Return(_a0 domain.SensitiveConfig, _a1 error) *IamManager_ParseConfig_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
 }

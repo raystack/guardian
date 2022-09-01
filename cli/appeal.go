@@ -20,7 +20,7 @@ func appealsCommand() *cobra.Command {
 		Aliases: []string{"appeals"},
 		Short:   "Manage appeals",
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		Example: heredoc.Doc(`
 			$ guardian appeal create
@@ -66,8 +66,6 @@ func listAppealsCommand() *cobra.Command {
 			spinner := printer.Spin("")
 			defer spinner.Stop()
 
-			cs := term.NewColorScheme()
-
 			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
@@ -93,7 +91,7 @@ func listAppealsCommand() *cobra.Command {
 			report = append(report, []string{"ID", "USER", "RESOURCE ID", "ROLE", "STATUS"})
 			for _, a := range appeals {
 				report = append(report, []string{
-					cs.Greenf("%v", a.GetId()),
+					term.Greenf("%v", a.GetId()),
 					a.GetAccountId(),
 					fmt.Sprintf("%v", a.GetResourceId()),
 					a.GetRole(),
@@ -160,7 +158,7 @@ func createAppealCommand() *cobra.Command {
 			spinner.Stop()
 
 			appealID := res.GetAppeals()[0].GetId()
-			fmt.Printf("appeal created with id: %v", appealID)
+			printer.Successf("appeal created with id: %v", appealID)
 			return nil
 		},
 	}
@@ -248,8 +246,6 @@ func bulkRevokeAppealCommand() *cobra.Command {
 			spinner := printer.Spin("")
 			defer spinner.Stop()
 
-			cs := term.NewColorScheme()
-
 			client, cancel, err := createClient(cmd)
 			if err != nil {
 				return err
@@ -277,7 +273,7 @@ func bulkRevokeAppealCommand() *cobra.Command {
 			report = append(report, []string{"ID", "USER", "RESOURCE ID", "ROLE", "STATUS"})
 			for _, a := range appeals {
 				report = append(report, []string{
-					cs.Greenf("%v", a.GetId()),
+					term.Greenf("%v", a.GetId()),
 					a.GetAccountId(),
 					fmt.Sprintf("%v", a.GetResourceId()),
 					a.GetRole(),

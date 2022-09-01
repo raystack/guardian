@@ -1,12 +1,3 @@
-//go:generate mockery --name=repository --exported --with-expecter
-//go:generate mockery --name=iamManager --exported
-//go:generate mockery --name=notifier --exported --with-expecter
-//go:generate mockery --name=policyService --exported
-//go:generate mockery --name=approvalService --exported --with-expecter
-//go:generate mockery --name=providerService --exported
-//go:generate mockery --name=resourceService --exported
-//go:generate mockery --name=auditLogger --exported --with-expecter
-
 package appeal
 
 import (
@@ -18,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/odpf/guardian/core/access"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/pkg/evaluator"
 	"github.com/odpf/guardian/plugins/notifiers"
@@ -34,10 +26,13 @@ const (
 	AuditKeyExtend         = "appeal.extend"
 	AuditKeyAddApprover    = "appeal.addApprover"
 	AuditKeyDeleteApprover = "appeal.deleteApprover"
+
+	RevokeReasonForExtension = "Automatically revoked for access extension"
 )
 
 var TimeNow = time.Now
 
+//go:generate mockery --name=repository --exported --with-expecter
 type repository interface {
 	BulkUpsert([]*domain.Appeal) error
 	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
@@ -45,38 +40,52 @@ type repository interface {
 	Update(*domain.Appeal) error
 }
 
+//go:generate mockery --name=iamManager --exported --with-expecter
 type iamManager interface {
 	domain.IAMManager
 }
 
+//go:generate mockery --name=notifier --exported --with-expecter
 type notifier interface {
 	notifiers.Client
 }
 
+//go:generate mockery --name=policyService --exported --with-expecter
 type policyService interface {
 	Find(context.Context) ([]*domain.Policy, error)
 	GetOne(context.Context, string, uint) (*domain.Policy, error)
 }
 
+//go:generate mockery --name=approvalService --exported --with-expecter
 type approvalService interface {
 	AdvanceApproval(context.Context, *domain.Appeal) error
 	AddApprover(ctx context.Context, approvalID, email string) error
 	DeleteApprover(ctx context.Context, approvalID, email string) error
 }
 
+//go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
 	Find(context.Context) ([]*domain.Provider, error)
-	GrantAccess(context.Context, *domain.Appeal) error
-	RevokeAccess(context.Context, *domain.Appeal) error
+	GrantAccess(context.Context, domain.Access) error
+	RevokeAccess(context.Context, domain.Access) error
 	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
 	GetPermissions(context.Context, *domain.ProviderConfig, string, string) ([]interface{}, error)
 }
 
+//go:generate mockery --name=resourceService --exported --with-expecter
 type resourceService interface {
 	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
 	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
 }
 
+//go:generate mockery --name=accessService --exported --with-expecter
+type accessService interface {
+	List(context.Context, domain.ListAccessesFilter) ([]domain.Access, error)
+	Prepare(context.Context, domain.Appeal) (*domain.Access, error)
+	Revoke(ctx context.Context, id, actor, reason string, opts ...access.Option) (*domain.Access, error)
+}
+
+//go:generate mockery --name=auditLogger --exported --with-expecter
 type auditLogger interface {
 	Log(ctx context.Context, action string, data interface{}) error
 }
@@ -99,6 +108,7 @@ type ServiceDeps struct {
 	ResourceService resourceService
 	ProviderService providerService
 	PolicyService   policyService
+	AccessService   accessService
 	IAMManager      iamManager
 
 	Notifier    notifier
@@ -114,6 +124,7 @@ type Service struct {
 	resourceService resourceService
 	providerService providerService
 	policyService   policyService
+	accessService   accessService
 	iam             domain.IAMManager
 
 	notifier    notifier
@@ -132,6 +143,7 @@ func NewService(deps ServiceDeps) *Service {
 		deps.ResourceService,
 		deps.ProviderService,
 		deps.PolicyService,
+		deps.AccessService,
 		deps.IAMManager,
 
 		deps.Notifier,
@@ -181,19 +193,17 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		return err
 	}
 
-	appealsGroupedByStatus, err := s.getAppealsMapGroupedByStatus([]string{
-		domain.AppealStatusPending,
-		domain.AppealStatusActive,
-	})
+	pendingAppeals, err := s.getPendingAppealsMap()
 	if err != nil {
-		return err
+		return fmt.Errorf("listing pending appeals: %w", err)
 	}
-	pendingAppeals := appealsGroupedByStatus[domain.AppealStatusPending]
-	activeAppeals := appealsGroupedByStatus[domain.AppealStatusActive]
+	activeAccesses, err := s.getActiveAccessesMap(ctx)
+	if err != nil {
+		return fmt.Errorf("listing active accesses: %w", err)
+	}
 
 	notifications := []domain.Notification{}
 
-	var oldExtendedAppeals []*domain.Appeal
 	for _, appeal := range appeals {
 		appeal.SetDefaults()
 
@@ -208,12 +218,8 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("retrieving provider: %w", err)
 		}
 
-		ok, err := s.isEligibleToExtend(appeal, provider, activeAppeals)
-		if err != nil {
-			return fmt.Errorf("checking appeal extension eligibility: %w", err)
-		}
-		if !ok {
-			return ErrAppealNotEligibleForExtension
+		if err := s.checkExtensionEligibility(appeal, provider, activeAccesses); err != nil {
+			return fmt.Errorf("checking access extension eligibility: %w", err)
 		}
 
 		if err := s.providerService.ValidateAppeal(ctx, appeal, provider); err != nil {
@@ -263,26 +269,25 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 
 		for _, approval := range appeal.Approvals {
 			if approval.Index == len(appeal.Approvals)-1 && approval.Status == domain.ApprovalStatusApproved {
-				var oldExtendedAppeal *domain.Appeal
-				activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
-					AccountID:  appeal.AccountID,
-					ResourceID: appeal.ResourceID,
-					Role:       appeal.Role,
-					Statuses:   []string{domain.AppealStatusActive},
-				})
+				newAccess, revokedAccess, err := s.prepareAccess(ctx, appeal)
 				if err != nil {
-					return fmt.Errorf("unable to retrieve existing active appeal from db: %w", err)
+					return fmt.Errorf("preparing access: %w", err)
+				}
+				newAccess.Resource = appeal.Resource
+				appeal.Access = newAccess
+				if revokedAccess != nil {
+					if _, err := s.accessService.Revoke(ctx, revokedAccess.ID, domain.SystemActorName, RevokeReasonForExtension,
+						access.SkipNotifications(),
+						access.SkipRevokeAccessInProvider(),
+					); err != nil {
+						return fmt.Errorf("revoking previous access: %w", err)
+					}
+				} else {
+					if err := s.CreateAccess(ctx, appeal); err != nil {
+						return fmt.Errorf("granting access: %w", err)
+					}
 				}
 
-				if len(activeAppeals) > 0 {
-					oldExtendedAppeal = activeAppeals[0]
-					oldExtendedAppeal.Terminate()
-					oldExtendedAppeals = append(oldExtendedAppeals, oldExtendedAppeal)
-				}
-
-				if err := s.CreateAccess(ctx, appeal, opts...); err != nil {
-					return fmt.Errorf("creating access: %w", err)
-				}
 				notifications = append(notifications, domain.Notification{
 					User: appeal.CreatedBy,
 					Message: domain.NotificationMessage{
@@ -299,12 +304,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		}
 	}
 
-	var appealsToUpdate []*domain.Appeal
-
-	appealsToUpdate = append(appealsToUpdate, appeals...)
-	appealsToUpdate = append(appealsToUpdate, oldExtendedAppeals...)
-
-	if err := s.repo.BulkUpsert(appealsToUpdate); err != nil {
+	if err := s.repo.BulkUpsert(appeals); err != nil {
 		return fmt.Errorf("inserting appeals into db: %w", err)
 	}
 
@@ -357,7 +357,7 @@ func validateAppealDurationConfig(appeal *domain.Appeal, policy *domain.Policy) 
 		}
 	}
 
-	return ErrOptionsDurationNotFound
+	return fmt.Errorf("%w: %s", ErrOptionsDurationNotFound, appeal.Options.Duration)
 }
 
 func validateAppealOnBehalf(a *domain.Appeal, policy *domain.Policy) error {
@@ -430,37 +430,31 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 			}
 
 			if appeal.Status == domain.AppealStatusActive {
-				var oldExtendedAppeal *domain.Appeal
-				activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
-					AccountID:  appeal.AccountID,
-					ResourceID: appeal.ResourceID,
-					Role:       appeal.Role,
-					Statuses:   []string{domain.AppealStatusActive},
-				})
+				newAccess, revokedAccess, err := s.prepareAccess(ctx, appeal)
 				if err != nil {
-					return nil, fmt.Errorf("unable to retrieve existing active appeal from db: %w", err)
+					return nil, fmt.Errorf("preparing access: %w", err)
 				}
-				if len(activeAppeals) > 0 {
-					oldExtendedAppeal = activeAppeals[0]
-					oldExtendedAppeal.Terminate()
-					if err := s.repo.Update(oldExtendedAppeal); err != nil {
-						return nil, fmt.Errorf("failed to update existing active appeal: %w", err)
+				newAccess.Resource = appeal.Resource
+				appeal.Access = newAccess
+				if revokedAccess != nil {
+					if _, err := s.accessService.Revoke(ctx, revokedAccess.ID, domain.SystemActorName, RevokeReasonForExtension,
+						access.SkipNotifications(),
+						access.SkipRevokeAccessInProvider(),
+					); err != nil {
+						return nil, fmt.Errorf("revoking previous access: %w", err)
 					}
 				} else {
 					if err := s.CreateAccess(ctx, appeal); err != nil {
-						return nil, err
+						return nil, fmt.Errorf("granting access: %w", err)
 					}
 				}
-
-				if err := appeal.Activate(); err != nil {
-					return nil, fmt.Errorf("activating appeal: %w", err)
-				}
 			}
+
 			if err := s.repo.Update(appeal); err != nil {
-				if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
-					return nil, err
+				if err := s.providerService.RevokeAccess(ctx, *appeal.Access); err != nil {
+					return nil, fmt.Errorf("revoking access: %w", err)
 				}
-				return nil, err
+				return nil, fmt.Errorf("updating appeal: %w", err)
 			}
 
 			notifications := []domain.Notification{}
@@ -551,16 +545,19 @@ func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (
 
 	revokedAppeal := &domain.Appeal{}
 	*revokedAppeal = *appeal
-	revokedAppeal.Status = domain.AppealStatusTerminated
-	revokedAppeal.RevokedAt = s.TimeNow()
-	revokedAppeal.RevokedBy = actor
-	revokedAppeal.RevokeReason = reason
+	if err := revokedAppeal.Revoke(actor, reason); err != nil {
+		return nil, err
+	}
+	appeal.Access.Resource = appeal.Resource
+	if err := appeal.Access.Revoke(actor, reason); err != nil {
+		return nil, fmt.Errorf("updating access status: %s", err)
+	}
 
 	if err := s.repo.Update(revokedAppeal); err != nil {
 		return nil, err
 	}
 
-	if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
+	if err := s.providerService.RevokeAccess(ctx, *appeal.Access); err != nil {
 		if err := s.repo.Update(appeal); err != nil {
 			return nil, err
 		}
@@ -600,6 +597,7 @@ func (s *Service) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsF
 	}
 
 	result := make([]*domain.Appeal, 0)
+	// TODO: list access
 	appeals, err := s.Find(ctx, &domain.ListAppealsFilter{
 		Statuses:      []string{domain.AppealStatusActive},
 		AccountIDs:    filters.AccountIDs,
@@ -654,7 +652,7 @@ func (s *Service) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsF
 	var failedRevoke []string
 	for {
 		select {
-		case appeal, _ := <-done:
+		case appeal := <-done:
 			if appeal.Status == domain.AppealStatusTerminated {
 				successRevoke = append(successRevoke, appeal.ID)
 			} else {
@@ -676,17 +674,22 @@ func (s *Service) expiredInActiveUserAppeal(ctx context.Context, timeLimiter cha
 
 		revokedAppeal := &domain.Appeal{}
 		*revokedAppeal = *appeal
-		revokedAppeal.RevokedAt = s.TimeNow()
-		revokedAppeal.RevokedBy = actor
-		revokedAppeal.RevokeReason = reason
+		if err := revokedAppeal.Revoke(actor, reason); err != nil {
+			s.logger.Error("failed to update appeal status", "id", appeal.ID, "error", err)
+			return
+		}
+		revokedAppeal.Access.Resource = appeal.Resource
+		if err := revokedAppeal.Access.Revoke(actor, reason); err != nil {
+			s.logger.Error("failed to update access status", "id", revokedAppeal.Access.ID, "error", err)
+			return
+		}
 
-		if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
+		if err := s.providerService.RevokeAccess(ctx, *appeal.Access); err != nil {
 			done <- appeal
 			s.logger.Error("failed to revoke appeal-access in provider", "id", appeal.ID, "error", err)
 			return
 		}
 
-		revokedAppeal.Status = domain.AppealStatusTerminated
 		if err := s.repo.Update(revokedAppeal); err != nil {
 			done <- appeal
 			s.logger.Error("failed to update appeal-revoke status", "id", appeal.ID, "error", err)
@@ -827,28 +830,49 @@ func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *dom
 	return appeal, approval, nil
 }
 
-// getAppealsMapGroupedByStatus returns map[status]map[account_id]map[resource_id]map[role]*domain.Appeal, error
-func (s *Service) getAppealsMapGroupedByStatus(statuses []string) (map[string]map[string]map[string]map[string]*domain.Appeal, error) {
-	appeals, err := s.repo.Find(&domain.ListAppealsFilter{Statuses: statuses})
+// getPendingAppealsMap returns map[account_id]map[resource_id]map[role]*domain.Appeal, error
+func (s *Service) getPendingAppealsMap() (map[string]map[string]map[string]*domain.Appeal, error) {
+	appeals, err := s.repo.Find(&domain.ListAppealsFilter{
+		Statuses: []string{domain.AppealStatusPending},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	appealsMap := map[string]map[string]map[string]map[string]*domain.Appeal{}
+	appealsMap := map[string]map[string]map[string]*domain.Appeal{}
 	for _, a := range appeals {
-		if appealsMap[a.Status] == nil {
-			appealsMap[a.Status] = map[string]map[string]map[string]*domain.Appeal{}
+		if appealsMap[a.AccountID] == nil {
+			appealsMap[a.AccountID] = map[string]map[string]*domain.Appeal{}
 		}
-		if appealsMap[a.Status][a.AccountID] == nil {
-			appealsMap[a.Status][a.AccountID] = map[string]map[string]*domain.Appeal{}
+		if appealsMap[a.AccountID][a.ResourceID] == nil {
+			appealsMap[a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
 		}
-		if appealsMap[a.Status][a.AccountID][a.ResourceID] == nil {
-			appealsMap[a.Status][a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
-		}
-		appealsMap[a.Status][a.AccountID][a.ResourceID][a.Role] = a
+		appealsMap[a.AccountID][a.ResourceID][a.Role] = a
 	}
 
 	return appealsMap, nil
+}
+
+func (s *Service) getActiveAccessesMap(ctx context.Context) (map[string]map[string]map[string]*domain.Access, error) {
+	accesses, err := s.accessService.List(ctx, domain.ListAccessesFilter{
+		Statuses: []string{string(domain.AccessStatusActive)},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	accessesMap := map[string]map[string]map[string]*domain.Access{}
+	for i, a := range accesses {
+		if accessesMap[a.AccountID] == nil {
+			accessesMap[a.AccountID] = map[string]map[string]*domain.Access{}
+		}
+		if accessesMap[a.AccountID][a.ResourceID] == nil {
+			accessesMap[a.AccountID][a.ResourceID] = map[string]*domain.Access{}
+		}
+		accessesMap[a.AccountID][a.ResourceID][a.Role] = &accesses[i]
+	}
+
+	return accessesMap, nil
 }
 
 func (s *Service) getResourcesMap(ctx context.Context, ids []string) (map[string]*domain.Resource, error) {
@@ -1115,6 +1139,7 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 }
 
 func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal, opts ...CreateAppealOption) error {
+	// TODO: rename to GrantAccess
 	policy := a.Policy
 	if policy == nil {
 		p, err := s.policyService.GetOne(ctx, a.PolicyID, a.PolicyVersion)
@@ -1136,45 +1161,34 @@ func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal, opts ...Cr
 		}
 	}
 
-	if err := s.providerService.GrantAccess(ctx, a); err != nil {
+	if err := s.providerService.GrantAccess(ctx, *a.Access); err != nil {
 		return fmt.Errorf("granting access: %w", err)
-	}
-
-	if err := a.Activate(); err != nil {
-		return fmt.Errorf("activating appeal: %w", err)
 	}
 
 	return nil
 }
 
-func (s *Service) isEligibleToExtend(a *domain.Appeal, p *domain.Provider, activeAppealsMap map[string]map[string]map[string]*domain.Appeal) (bool, error) {
-	if activeAppealsMap[a.AccountID] != nil &&
-		activeAppealsMap[a.AccountID][a.ResourceID] != nil &&
-		activeAppealsMap[a.AccountID][a.ResourceID][a.Role] != nil {
+func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider, activeAccesses map[string]map[string]map[string]*domain.Access) error {
+	if activeAccesses[a.AccountID] != nil &&
+		activeAccesses[a.AccountID][a.ResourceID] != nil &&
+		activeAccesses[a.AccountID][a.ResourceID][a.Role] != nil {
 		if p.Config.Appeal != nil {
 			if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
-				return false, ErrAppealFoundActiveAccess
+				return ErrAppealFoundActiveAccess
 			}
 
-			duration, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
+			extensionDurationRule, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
 			if err != nil {
-				return false, fmt.Errorf("%v: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
+				return fmt.Errorf("%w: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
 			}
 
-			now := s.TimeNow()
-			appeal := activeAppealsMap[a.AccountID][a.ResourceID][a.Role]
-			var isEligibleForExtension bool
-			if appeal.Options != nil && appeal.Options.ExpirationDate != nil {
-				activeAppealExpDate := appeal.Options.ExpirationDate
-				isEligibleForExtension = activeAppealExpDate.Sub(now) <= duration
-			} else {
-				isEligibleForExtension = true
+			access := activeAccesses[a.AccountID][a.ResourceID][a.Role]
+			if !access.IsEligibleForExtension(extensionDurationRule) {
+				return ErrAccessNotEligibleForExtension
 			}
-			return isEligibleForExtension, nil
 		}
 	}
-
-	return true, nil
+	return nil
 }
 
 func getPolicy(a *domain.Appeal, p *domain.Provider, policiesMap map[string]map[uint]*domain.Policy) (*domain.Policy, error) {
@@ -1280,4 +1294,34 @@ func (s *Service) getPermissions(ctx context.Context, pc *domain.ProviderConfig,
 		strPermissions = append(strPermissions, fmt.Sprintf("%s", p))
 	}
 	return strPermissions, nil
+}
+
+func (s *Service) prepareAccess(ctx context.Context, appeal *domain.Appeal) (newAccess *domain.Access, deactivatedAccess *domain.Access, err error) {
+	activeAccesses, err := s.accessService.List(ctx, domain.ListAccessesFilter{
+		AccountIDs:  []string{appeal.AccountID},
+		ResourceIDs: []string{appeal.ResourceID},
+		Statuses:    []string{string(domain.AccessStatusActive)},
+		Permissions: appeal.Permissions,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to retrieve existing active accesses: %w", err)
+	}
+
+	if len(activeAccesses) > 0 {
+		deactivatedAccess = &activeAccesses[0]
+		if err := deactivatedAccess.Revoke(domain.SystemActorName, "Extended to a new access"); err != nil {
+			return nil, nil, fmt.Errorf("revoking previous access: %w", err)
+		}
+	}
+
+	if err := appeal.Activate(); err != nil {
+		return nil, nil, fmt.Errorf("activating appeal: %w", err)
+	}
+
+	access, err := s.accessService.Prepare(ctx, *appeal)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return access, deactivatedAccess, nil
 }
