@@ -59,6 +59,7 @@ FROM
   LEFT JOIN "resources" ON a."resource_id" = "resources"."id"
   LEFT JOIN "provider_roles" ON "resources"."provider_type" = "provider_roles"."type"
   AND "resources"."provider_urn" = "provider_roles"."urn"
+  AND "resources"."type" = "provider_roles"."resource_type"
   AND a."role" = "provider_roles"."role"
 WHERE
   "appeals"."id" = a."id";
