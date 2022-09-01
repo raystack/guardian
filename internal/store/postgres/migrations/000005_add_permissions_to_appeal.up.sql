@@ -12,6 +12,8 @@ WITH "provider_resources" AS (
     jsonb_array_elements("config" -> 'resources') AS "resource"
   FROM
     "providers"
+  WHERE
+    "type" NOT IN ('gcloud_iam', 'noop')
 ),
 "provider_role_configs" AS (
   SELECT
@@ -48,6 +50,7 @@ SET
   "permissions" = (
     CASE
       WHEN "resources"."provider_type" = 'gcloud_iam' THEN string_to_array(a."role", ',')
+      WHEN "resources"."provider_type" = 'noop' THEN '{}'
       ELSE "provider_roles"."permissions"
     END
   )
@@ -56,6 +59,8 @@ FROM
   LEFT JOIN "resources" ON a."resource_id" = "resources"."id"
   LEFT JOIN "provider_roles" ON "resources"."provider_type" = "provider_roles"."type"
   AND "resources"."provider_urn" = "provider_roles"."urn"
+  AND "resources"."type" = "provider_roles"."resource_type"
+  AND a."role" = "provider_roles"."role"
 WHERE
   "appeals"."id" = a."id";
 
