@@ -136,22 +136,6 @@ func (s *ServiceTestSuite) TestFind() {
 		s.Equal(expectedResult, actualResult)
 		s.Nil(actualError)
 	})
-
-	s.Run("should treat 'active' and 'approved' filter the same way", func() {
-		expectedFilters := &domain.ListAppealsFilter{
-			Statuses: []string{domain.AppealStatusActive, domain.AppealStatusPending},
-		}
-		expectedResult := []*domain.Appeal{}
-		s.mockRepository.On("Find", expectedFilters).Return(expectedResult, nil).Once()
-
-		actualResult, actualError := s.service.Find(context.Background(), &domain.ListAppealsFilter{
-			Statuses: []string{domain.AppealStatusApproved, domain.AppealStatusPending},
-		})
-
-		s.mockRepository.AssertExpectations(s.T())
-		s.NoError(actualError)
-		s.Equal(expectedResult, actualResult)
-	})
 }
 
 func (s *ServiceTestSuite) TestCreate() {
@@ -1004,7 +988,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			URN: "urn",
 		},
 		Role:   "role_id",
-		Status: domain.AppealStatusActive,
+		Status: domain.AppealStatusApproved,
 	}
 	expectedExistingGrants := []domain.Grant{currentActiveGrant}
 
@@ -1040,7 +1024,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			Resource:      resources[i],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
-			Status:        domain.AppealStatusActive,
+			Status:        domain.AppealStatusApproved,
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
@@ -1075,7 +1059,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			Resource:      resources[0],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
-			Status:        domain.AppealStatusActive,
+			Status:        domain.AppealStatusApproved,
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
@@ -1127,7 +1111,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 	s.mockGrantService.EXPECT().
 		List(mock.AnythingOfType("*context.emptyCtx"), domain.ListGrantsFilter{
-			Statuses: []string{domain.AppealStatusActive},
+			Statuses: []string{string(domain.GrantStatusActive)},
 		}).
 		Return(expectedExistingGrants, nil).Once()
 	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -1140,7 +1124,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 		Return(nil).
 		Run(func(args mock.Arguments) {
 			ap := args.Get(1).(*domain.Appeal)
-			ap.Status = domain.AppealStatusActive
+			ap.Status = domain.AppealStatusApproved
 			ap.Approvals[0].Status = domain.ApprovalStatusApproved
 		})
 
@@ -1275,8 +1259,8 @@ func (s *ServiceTestSuite) MakeAction() {
 			expectedError error
 		}{
 			{
-				name:          "appeal not eligible, status: active",
-				appealStatus:  domain.AppealStatusActive,
+				name:          "appeal not eligible, status: approved",
+				appealStatus:  domain.AppealStatusApproved,
 				expectedError: appeal.ErrAppealStatusApproved,
 			},
 			{
@@ -1547,7 +1531,7 @@ func (s *ServiceTestSuite) MakeAction() {
 		existingAppeals := []*domain.Appeal{
 			{
 				ID:         "2",
-				Status:     domain.AppealStatusActive,
+				Status:     domain.AppealStatusApproved,
 				AccountID:  "user@example.com",
 				ResourceID: "1",
 				Role:       "test-role",
@@ -1563,7 +1547,7 @@ func (s *ServiceTestSuite) MakeAction() {
 			AccountID:  appealDetails.AccountID,
 			ResourceID: appealDetails.ResourceID,
 			Role:       appealDetails.Role,
-			Statuses:   []string{domain.AppealStatusActive},
+			Statuses:   []string{domain.AppealStatusApproved},
 		}).
 			Return(existingAppeals, nil).
 			Once()
@@ -1630,7 +1614,7 @@ func (s *ServiceTestSuite) MakeAction() {
 						Name:         "test-resource-name",
 						ProviderType: "test-provider",
 					},
-					Status: domain.AppealStatusActive,
+					Status: domain.AppealStatusApproved,
 					Approvals: []*domain.Approval{
 						{
 							Name:   "approval_0",
@@ -2071,7 +2055,7 @@ func (s *ServiceTestSuite) TestAddApprover() {
 		approvalID := uuid.New().String()
 		expectedError := appeal.ErrUnableToAddApprover
 		expectedAppeal := &domain.Appeal{
-			Status: domain.AppealStatusActive,
+			Status: domain.AppealStatusApproved,
 			Approvals: []*domain.Approval{
 				{
 					ID: approvalID,
@@ -2288,7 +2272,7 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 		approvalID := uuid.New().String()
 		expectedError := appeal.ErrUnableToDeleteApprover
 		expectedAppeal := &domain.Appeal{
-			Status: domain.AppealStatusActive,
+			Status: domain.AppealStatusApproved,
 			Approvals: []*domain.Approval{
 				{
 					ID: approvalID,

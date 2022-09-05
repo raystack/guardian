@@ -121,7 +121,7 @@ func (s *Service) AdvanceApproval(ctx context.Context, appeal *domain.Appeal) er
 			}
 		}
 		if i == len(appeal.Approvals)-1 && (approval.Status == domain.ApprovalStatusSkipped || approval.Status == domain.ApprovalStatusApproved) {
-			appeal.Status = domain.AppealStatusActive
+			appeal.Status = domain.AppealStatusApproved
 		}
 	}
 

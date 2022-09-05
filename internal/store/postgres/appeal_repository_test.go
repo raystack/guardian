@@ -378,10 +378,10 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 			},
 			{
 				filters: &domain.ListAppealsFilter{
-					Statuses: []string{domain.AppealStatusActive, domain.AppealStatusTerminated},
+					Statuses: []string{domain.AppealStatusApproved, domain.AppealStatusPending},
 				},
 				expectedClauseQuery: `"appeals"."status" IN ($1,$2) AND "appeals"."deleted_at" IS NULL`,
-				expectedArgs:        []driver.Value{domain.AppealStatusActive, domain.AppealStatusTerminated},
+				expectedArgs:        []driver.Value{domain.AppealStatusApproved, domain.AppealStatusPending},
 			},
 			{
 				filters: &domain.ListAppealsFilter{

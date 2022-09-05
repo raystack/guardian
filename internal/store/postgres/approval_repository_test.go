@@ -154,7 +154,7 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 		s.dbmock.ExpectQuery(expectedListApprovalsQuery).
 			WithArgs(expectedUser, expectedStatuses[0], expectedStatuses[1], expectedAccountID, domain.AppealStatusCanceled,
 				domain.AppealStatusPending,
-				domain.AppealStatusActive,
+				domain.AppealStatusApproved,
 				domain.AppealStatusRejected,
 				domain.AppealStatusTerminated,
 				domain.AppealStatusCanceled,

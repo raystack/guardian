@@ -11,7 +11,6 @@ const (
 
 	AppealStatusPending    = "pending"
 	AppealStatusCanceled   = "canceled"
-	AppealStatusActive     = "active" // TODO: rename AppealStatusActive to AppealStatusApproved in all business logic for the next release related to new Access entity
 	AppealStatusApproved   = "approved"
 	AppealStatusRejected   = "rejected"
 	AppealStatusTerminated = "terminated"
@@ -76,8 +75,8 @@ func (a *Appeal) Cancel() {
 	a.Status = AppealStatusCanceled
 }
 
-func (a *Appeal) Activate() error {
-	a.Status = AppealStatusActive
+func (a *Appeal) Approve() error {
+	a.Status = AppealStatusApproved
 
 	if a.Options == nil || a.Options.Duration == "" {
 		return nil

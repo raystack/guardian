@@ -165,11 +165,6 @@ func (s *Service) GetByID(ctx context.Context, id string) (*domain.Appeal, error
 
 // Find appeals by filters
 func (s *Service) Find(ctx context.Context, filters *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
-	for i, v := range filters.Statuses {
-		if v == domain.AppealStatusApproved {
-			filters.Statuses[i] = domain.AppealStatusActive
-		}
-	}
 	return s.repo.Find(filters)
 }
 
@@ -397,7 +392,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 				return nil, ErrActionInvalidValue
 			}
 
-			if appeal.Status == domain.AppealStatusActive {
+			if appeal.Status == domain.AppealStatusApproved {
 				newGrant, revokedGrant, err := s.prepareGrant(ctx, appeal)
 				if err != nil {
 					return nil, fmt.Errorf("preparing grant: %w", err)
@@ -426,7 +421,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 			}
 
 			notifications := []domain.Notification{}
-			if appeal.Status == domain.AppealStatusActive {
+			if appeal.Status == domain.AppealStatusApproved {
 				notifications = append(notifications, domain.Notification{
 					User: appeal.CreatedBy,
 					Message: domain.NotificationMessage{
@@ -810,7 +805,7 @@ func checkIfAppealStatusStillPending(status string) error {
 	switch status {
 	case domain.AppealStatusCanceled:
 		err = ErrAppealStatusCanceled
-	case domain.AppealStatusActive:
+	case domain.AppealStatusApproved:
 		err = ErrAppealStatusApproved
 	case domain.AppealStatusRejected:
 		err = ErrAppealStatusRejected
@@ -1121,7 +1116,7 @@ func (s *Service) prepareGrant(ctx context.Context, appeal *domain.Appeal) (newG
 		}
 	}
 
-	if err := appeal.Activate(); err != nil {
+	if err := appeal.Approve(); err != nil {
 		return nil, nil, fmt.Errorf("activating appeal: %w", err)
 	}
 

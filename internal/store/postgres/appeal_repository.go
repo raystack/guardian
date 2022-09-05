@@ -15,7 +15,7 @@ import (
 var (
 	AppealStatusDefaultSort = []string{
 		domain.AppealStatusPending,
-		domain.AppealStatusActive,
+		domain.AppealStatusApproved,
 		domain.AppealStatusRejected,
 		domain.AppealStatusTerminated,
 		domain.AppealStatusCanceled,
