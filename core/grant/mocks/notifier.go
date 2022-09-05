@@ -4,6 +4,7 @@ package mocks
 
 import (
 	domain "github.com/odpf/guardian/domain"
+
 	mock "github.com/stretchr/testify/mock"
 )
 

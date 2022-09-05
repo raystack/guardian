@@ -284,7 +284,7 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 	return nil
 }
 
-func (s *Service) GrantAccess(ctx context.Context, a domain.Access) error {
+func (s *Service) GrantAccess(ctx context.Context, a domain.Grant) error {
 	if err := s.validateAccessParam(a); err != nil {
 		return err
 	}
@@ -302,7 +302,7 @@ func (s *Service) GrantAccess(ctx context.Context, a domain.Access) error {
 	return c.GrantAccess(p.Config, a)
 }
 
-func (s *Service) RevokeAccess(ctx context.Context, a domain.Access) error {
+func (s *Service) RevokeAccess(ctx context.Context, a domain.Grant) error {
 	if err := s.validateAccessParam(a); err != nil {
 		return err
 	}
@@ -428,7 +428,7 @@ func (s *Service) validateAppealParam(a *domain.Appeal) error {
 	return nil
 }
 
-func (s *Service) validateAccessParam(a domain.Access) error {
+func (s *Service) validateAccessParam(a domain.Grant) error {
 	if a.Resource == nil {
 		return ErrNilResource
 	}

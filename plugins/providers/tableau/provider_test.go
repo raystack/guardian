@@ -663,7 +663,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -703,7 +703,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -745,7 +745,7 @@ func TestGrantAccess(t *testing.T) {
 			},
 			URN: "test-urn",
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -801,7 +801,7 @@ func TestGrantAccess(t *testing.T) {
 			testcases := []struct {
 				pc   *domain.ProviderConfig
 				name string
-				a    domain.Access
+				a    domain.Grant
 			}{
 				{
 					pc: &domain.ProviderConfig{
@@ -815,7 +815,7 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with Site Role Permissions",
-					a: domain.Access{
+					a: domain.Grant{
 						Resource: &domain.Resource{
 							Type: tableau.ResourceTypeWorkbook,
 							URN:  "999",
@@ -837,7 +837,7 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with Workook Permissions without site role permission",
-					a: domain.Access{
+					a: domain.Grant{
 						Resource: &domain.Resource{
 							Type: tableau.ResourceTypeWorkbook,
 							URN:  "999",
@@ -898,7 +898,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeWorkbook,
 					URN:  "workbook-id",
@@ -961,7 +961,7 @@ func TestGrantAccess(t *testing.T) {
 			testcases := []struct {
 				pc   *domain.ProviderConfig
 				name string
-				a    domain.Access
+				a    domain.Grant
 			}{
 				{
 					pc: &domain.ProviderConfig{
@@ -975,7 +975,7 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config to Update Site Role Permissions",
-					a: domain.Access{
+					a: domain.Grant{
 						Resource: &domain.Resource{
 							Type: tableau.ResourceTypeFlow,
 							URN:  "999",
@@ -997,7 +997,7 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with to Grant Flow Permission",
-					a: domain.Access{
+					a: domain.Grant{
 						Resource: &domain.Resource{
 							Type: tableau.ResourceTypeFlow,
 							URN:  "999",
@@ -1058,7 +1058,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeFlow,
 					URN:  "flow-id",
@@ -1121,7 +1121,7 @@ func TestGrantAccess(t *testing.T) {
 			testcases := []struct {
 				pc   *domain.ProviderConfig
 				name string
-				a    domain.Access
+				a    domain.Grant
 			}{
 				{
 					pc: &domain.ProviderConfig{
@@ -1135,7 +1135,7 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config to Update Site Role Permissions",
-					a: domain.Access{
+					a: domain.Grant{
 						Resource: &domain.Resource{
 							Type: tableau.ResourceTypeView,
 							URN:  "999",
@@ -1157,7 +1157,7 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with to Grant View Permission",
-					a: domain.Access{
+					a: domain.Grant{
 						Resource: &domain.Resource{
 							Type: tableau.ResourceTypeView,
 							URN:  "999",
@@ -1218,7 +1218,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeView,
 					URN:  "view-id",
@@ -1280,7 +1280,7 @@ func TestGrantAccess(t *testing.T) {
 			testcases := []struct {
 				pc   *domain.ProviderConfig
 				name string
-				a    domain.Access
+				a    domain.Grant
 			}{
 				{
 					pc: &domain.ProviderConfig{
@@ -1294,7 +1294,7 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config to Update Site Role Permissions",
-					a: domain.Access{
+					a: domain.Grant{
 						Resource: &domain.Resource{
 							Type: tableau.ResourceTypeMetric,
 							URN:  "999",
@@ -1316,7 +1316,7 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with to Grant Metric Permission",
-					a: domain.Access{
+					a: domain.Grant{
 						Resource: &domain.Resource{
 							Type: tableau.ResourceTypeMetric,
 							URN:  "999",
@@ -1377,7 +1377,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeMetric,
 					URN:  "metric-id",
@@ -1440,7 +1440,7 @@ func TestGrantAccess(t *testing.T) {
 			testcases := []struct {
 				pc   *domain.ProviderConfig
 				name string
-				a    domain.Access
+				a    domain.Grant
 			}{
 				{
 					pc: &domain.ProviderConfig{
@@ -1454,7 +1454,7 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config to Update Site Role Permissions",
-					a: domain.Access{
+					a: domain.Grant{
 						Resource: &domain.Resource{
 							Type: tableau.ResourceTypeDataSource,
 							URN:  "999",
@@ -1476,7 +1476,7 @@ func TestGrantAccess(t *testing.T) {
 						URN: providerURN,
 					},
 					name: "Provider Config with to Grant DataSource Permission",
-					a: domain.Access{
+					a: domain.Grant{
 						Resource: &domain.Resource{
 							Type: tableau.ResourceTypeDataSource,
 							URN:  "999",
@@ -1537,7 +1537,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeDataSource,
 					URN:  "datasource-id",
@@ -1579,7 +1579,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -1619,7 +1619,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -1661,7 +1661,7 @@ func TestRevokeAccess(t *testing.T) {
 			},
 			URN: "test-urn",
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -1709,7 +1709,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeWorkbook,
 					URN:  "999",
@@ -1764,7 +1764,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeWorkbook,
 					URN:  "workbook-id",
@@ -1818,7 +1818,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeFlow,
 					URN:  "999",
@@ -1874,7 +1874,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeFlow,
 					URN:  "flow-id",
@@ -1928,7 +1928,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeView,
 					URN:  "99",
@@ -1984,7 +1984,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeView,
 					URN:  "view-id",
@@ -2038,7 +2038,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeMetric,
 					URN:  "99",
@@ -2094,7 +2094,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeMetric,
 					URN:  "metric-id",
@@ -2148,7 +2148,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeDataSource,
 					URN:  "99",
@@ -2204,7 +2204,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: tableau.ResourceTypeDataSource,
 					URN:  "datasource-id",

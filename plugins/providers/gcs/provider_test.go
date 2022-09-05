@@ -275,7 +275,7 @@ func TestGrantAccess(t *testing.T) {
 		testCases := []struct {
 			name           string
 			providerConfig *domain.ProviderConfig
-			access         domain.Access
+			grant          domain.Grant
 			expectedError  error
 		}{
 			{
@@ -290,7 +290,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 				},
@@ -303,7 +303,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -320,7 +320,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -337,9 +337,9 @@ func TestGrantAccess(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				p := initProvider()
 				pc := tc.providerConfig
-				a := tc.access
+				g := tc.grant
 
-				actualError := p.GrantAccess(pc, a)
+				actualError := p.GrantAccess(pc, g)
 				assert.EqualError(t, actualError, tc.expectedError.Error())
 			})
 		}
@@ -362,13 +362,13 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		g := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
 			Role: "test-role",
 		}
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 		assert.Error(t, actualError)
 	})
 
@@ -406,7 +406,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		g := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",
@@ -422,7 +422,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 
 		assert.Error(t, actualError)
 	})
@@ -457,7 +457,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		g := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",
@@ -473,7 +473,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 
 		assert.Error(t, actualError)
 	})
@@ -515,7 +515,7 @@ func TestGrantAccess(t *testing.T) {
 			},
 		}
 
-		a := domain.Access{
+		g := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",
@@ -531,7 +531,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
 	})
@@ -543,7 +543,7 @@ func TestRevokeAccess(t *testing.T) {
 		testCases := []struct {
 			name           string
 			providerConfig *domain.ProviderConfig
-			access         domain.Access
+			grant          domain.Grant
 			expectedError  error
 		}{
 			{
@@ -558,7 +558,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 				},
@@ -571,7 +571,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -588,7 +588,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				access: domain.Access{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -605,7 +605,7 @@ func TestRevokeAccess(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				p := initProvider()
 				pc := tc.providerConfig
-				a := tc.access
+				a := tc.grant
 
 				actualError := p.RevokeAccess(pc, a)
 				assert.EqualError(t, actualError, tc.expectedError.Error())
@@ -630,7 +630,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -674,7 +674,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",
@@ -725,7 +725,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",
@@ -783,7 +783,7 @@ func TestRevokeAccess(t *testing.T) {
 			},
 		}
 
-		a := domain.Access{
+		a := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",

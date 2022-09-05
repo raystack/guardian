@@ -331,7 +331,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -367,7 +367,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -405,7 +405,7 @@ func TestGrantAccess(t *testing.T) {
 			},
 			URN: "test-urn",
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -448,7 +448,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: grafana.ResourceTypeDashboard,
 					URN:  "999",
@@ -498,7 +498,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: grafana.ResourceTypeDashboard,
 					URN:  "999",
@@ -536,7 +536,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -572,7 +572,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -610,7 +610,7 @@ func TestRevokeAccess(t *testing.T) {
 			},
 			URN: "test-urn",
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -653,7 +653,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := domain.Access{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: grafana.ResourceTypeDashboard,
 					URN:  "999",
@@ -704,7 +704,7 @@ func TestRevokeAccess(t *testing.T) {
 			},
 			URN: providerURN,
 		}
-		a := domain.Access{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: grafana.ResourceTypeDashboard,
 				URN:  "999",

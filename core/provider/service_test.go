@@ -314,11 +314,11 @@ func (s *ServiceTestSuite) TestFetchResources() {
 func (s *ServiceTestSuite) TestGrantAccess() {
 	s.Run("should return error if got error on appeal param validation", func() {
 		testCases := []struct {
-			appealParam   domain.Access
+			appealParam   domain.Grant
 			expectedError error
 		}{
 			{
-				appealParam:   domain.Access{},
+				appealParam:   domain.Grant{},
 				expectedError: provider.ErrNilResource,
 			},
 		}
@@ -329,7 +329,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 	})
 
 	s.Run("should return error if provider is not exists", func() {
-		appeal := domain.Access{
+		appeal := domain.Grant{
 			Resource: &domain.Resource{
 				ProviderType: "invalid-provider-type",
 			},
@@ -339,7 +339,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	validAppeal := domain.Access{
+	validAppeal := domain.Grant{
 		Resource: &domain.Resource{
 			ProviderType: mockProviderType,
 			ProviderURN:  "urn",
@@ -408,11 +408,11 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 func (s *ServiceTestSuite) TestRevokeAccess() {
 	s.Run("should return error if got error on appeal param validation", func() {
 		testCases := []struct {
-			appealParam   domain.Access
+			appealParam   domain.Grant
 			expectedError error
 		}{
 			{
-				appealParam:   domain.Access{},
+				appealParam:   domain.Grant{},
 				expectedError: provider.ErrNilResource,
 			},
 		}
@@ -423,7 +423,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 	})
 
 	s.Run("should return error if provider is not exists", func() {
-		appeal := domain.Access{
+		appeal := domain.Grant{
 			Resource: &domain.Resource{
 				ProviderType: "invalid-provider-type",
 			},
@@ -433,7 +433,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	validAppeal := domain.Access{
+	validAppeal := domain.Grant{
 		Resource: &domain.Resource{
 			ProviderType: mockProviderType,
 			ProviderURN:  "urn",

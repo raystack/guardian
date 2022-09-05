@@ -6,9 +6,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core"
-	"github.com/odpf/guardian/core/access"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/core/approval"
+	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
@@ -35,7 +35,7 @@ type Services struct {
 	PolicyService   *policy.Service
 	ApprovalService *approval.Service
 	AppealService   *appeal.Service
-	AccessService   *access.Service
+	GrantService    *grant.Service
 }
 
 type ServiceDeps struct {
@@ -89,7 +89,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 	resourceRepository := postgres.NewResourceRepository(store.DB())
 	appealRepository := postgres.NewAppealRepository(store.DB())
 	approvalRepository := postgres.NewApprovalRepository(store.DB())
-	accessRepository := postgres.NewAccessRepository(store.DB())
+	grantRepository := postgres.NewGrantRepository(store.DB())
 
 	providerClients := []provider.Client{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, deps.Crypto),
@@ -129,8 +129,8 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Repository:    approvalRepository,
 		PolicyService: policyService,
 	})
-	accessService := access.NewService(access.ServiceDeps{
-		Repository:      accessRepository,
+	grantService := grant.NewService(grant.ServiceDeps{
+		Repository:      grantRepository,
 		ProviderService: providerService,
 		Notifier:        deps.Notifier,
 		Logger:          deps.Logger,
@@ -143,7 +143,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		ApprovalService: approvalService,
 		ProviderService: providerService,
 		PolicyService:   policyService,
-		AccessService:   accessService,
+		GrantService:    grantService,
 		IAMManager:      iamManager,
 		Notifier:        deps.Notifier,
 		Validator:       deps.Validator,
@@ -157,6 +157,6 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		policyService,
 		approvalService,
 		appealService,
-		accessService,
+		grantService,
 	}, nil
 }

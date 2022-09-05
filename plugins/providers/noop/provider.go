@@ -79,11 +79,11 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	}, nil
 }
 
-func (p *Provider) GrantAccess(*domain.ProviderConfig, domain.Access) error {
+func (p *Provider) GrantAccess(*domain.ProviderConfig, domain.Grant) error {
 	return nil
 }
 
-func (p *Provider) RevokeAccess(*domain.ProviderConfig, domain.Access) error {
+func (p *Provider) RevokeAccess(*domain.ProviderConfig, domain.Grant) error {
 	return nil
 }
 

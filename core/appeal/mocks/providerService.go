@@ -118,11 +118,11 @@ func (_c *ProviderService_GetPermissions_Call) Return(_a0 []interface{}, _a1 err
 }
 
 // GrantAccess provides a mock function with given fields: _a0, _a1
-func (_m *ProviderService) GrantAccess(_a0 context.Context, _a1 domain.Access) error {
+func (_m *ProviderService) GrantAccess(_a0 context.Context, _a1 domain.Grant) error {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.Access) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Grant) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -138,14 +138,14 @@ type ProviderService_GrantAccess_Call struct {
 
 // GrantAccess is a helper method to define mock.On call
 //  - _a0 context.Context
-//  - _a1 domain.Access
+//  - _a1 domain.Grant
 func (_e *ProviderService_Expecter) GrantAccess(_a0 interface{}, _a1 interface{}) *ProviderService_GrantAccess_Call {
 	return &ProviderService_GrantAccess_Call{Call: _e.mock.On("GrantAccess", _a0, _a1)}
 }
 
-func (_c *ProviderService_GrantAccess_Call) Run(run func(_a0 context.Context, _a1 domain.Access)) *ProviderService_GrantAccess_Call {
+func (_c *ProviderService_GrantAccess_Call) Run(run func(_a0 context.Context, _a1 domain.Grant)) *ProviderService_GrantAccess_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.Access))
+		run(args[0].(context.Context), args[1].(domain.Grant))
 	})
 	return _c
 }
@@ -156,11 +156,11 @@ func (_c *ProviderService_GrantAccess_Call) Return(_a0 error) *ProviderService_G
 }
 
 // RevokeAccess provides a mock function with given fields: _a0, _a1
-func (_m *ProviderService) RevokeAccess(_a0 context.Context, _a1 domain.Access) error {
+func (_m *ProviderService) RevokeAccess(_a0 context.Context, _a1 domain.Grant) error {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.Access) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Grant) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -176,14 +176,14 @@ type ProviderService_RevokeAccess_Call struct {
 
 // RevokeAccess is a helper method to define mock.On call
 //  - _a0 context.Context
-//  - _a1 domain.Access
+//  - _a1 domain.Grant
 func (_e *ProviderService_Expecter) RevokeAccess(_a0 interface{}, _a1 interface{}) *ProviderService_RevokeAccess_Call {
 	return &ProviderService_RevokeAccess_Call{Call: _e.mock.On("RevokeAccess", _a0, _a1)}
 }
 
-func (_c *ProviderService_RevokeAccess_Call) Run(run func(_a0 context.Context, _a1 domain.Access)) *ProviderService_RevokeAccess_Call {
+func (_c *ProviderService_RevokeAccess_Call) Run(run func(_a0 context.Context, _a1 domain.Grant)) *ProviderService_RevokeAccess_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.Access))
+		run(args[0].(context.Context), args[1].(domain.Grant))
 	})
 	return _c
 }

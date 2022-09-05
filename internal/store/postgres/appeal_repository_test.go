@@ -29,7 +29,7 @@ type AppealRepositoryTestSuite struct {
 	repository *postgres.AppealRepository
 
 	columnNames         []string
-	accessColumnNames   []string
+	grantColumnNames    []string
 	approvalColumnNames []string
 	approverColumnNames []string
 	resourceColumnNames []string
@@ -59,7 +59,7 @@ func (s *AppealRepositoryTestSuite) SetupTest() {
 		"created_at",
 		"updated_at",
 	}
-	s.accessColumnNames = []string{
+	s.grantColumnNames = []string{
 		"id", "status", "account_id", "account_type", "resource_id", "role", "permissions",
 		"expiration_date", "appeal_id", "revoked_by", "revoked_at", "revoke_reason",
 		"created_by", "created_at", "updated_at",
@@ -93,6 +93,8 @@ func (s *AppealRepositoryTestSuite) SetupTest() {
 		"created_at",
 		"updated_at",
 	}
+
+	s.dbmock.MatchExpectationsInOrder(false)
 }
 
 func (s *AppealRepositoryTestSuite) TearDownTest() {
@@ -205,7 +207,7 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 					},
 					CreatedAt: timeNow,
 					UpdatedAt: timeNow,
-					Access: &domain.Access{
+					Grant: &domain.Grant{
 						ID:          uuid.NewString(),
 						AppealID:    expectedID,
 						Status:      "test-status",
@@ -246,28 +248,28 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 				WithArgs(tc.expectedID).
 				WillReturnRows(expectedRows)
 
-			expectedAccessesPreloadQuery := regexp.QuoteMeta(`SELECT * FROM "accesses" WHERE "accesses"."appeal_id" = $1 AND "accesses"."deleted_at" IS NULL`)
-			expectedAccessRows := sqlmock.NewRows(s.accessColumnNames).AddRow(
-				tc.expectedRecord.Access.ID,
-				tc.expectedRecord.Access.Status,
-				tc.expectedRecord.Access.AccountID,
-				tc.expectedRecord.Access.AccountType,
-				tc.expectedRecord.Access.ResourceID,
-				tc.expectedRecord.Access.Role,
-				fmt.Sprintf("{%s}", strings.Join(tc.expectedRecord.Access.Permissions, ",")),
-				tc.expectedRecord.Access.ExpirationDate,
-				tc.expectedRecord.Access.AppealID,
-				tc.expectedRecord.Access.RevokedBy,
-				tc.expectedRecord.Access.RevokedAt,
-				tc.expectedRecord.Access.RevokeReason,
-				tc.expectedRecord.Access.CreatedBy,
-				tc.expectedRecord.Access.CreatedAt,
-				tc.expectedRecord.Access.UpdatedAt,
+			expectedGrantsPreloadQuery := regexp.QuoteMeta(`SELECT * FROM "grants" WHERE "grants"."appeal_id" = $1 AND "grants"."deleted_at" IS NULL`)
+			expectedGrantRows := sqlmock.NewRows(s.grantColumnNames).AddRow(
+				tc.expectedRecord.Grant.ID,
+				tc.expectedRecord.Grant.Status,
+				tc.expectedRecord.Grant.AccountID,
+				tc.expectedRecord.Grant.AccountType,
+				tc.expectedRecord.Grant.ResourceID,
+				tc.expectedRecord.Grant.Role,
+				fmt.Sprintf("{%s}", strings.Join(tc.expectedRecord.Grant.Permissions, ",")),
+				tc.expectedRecord.Grant.ExpirationDate,
+				tc.expectedRecord.Grant.AppealID,
+				tc.expectedRecord.Grant.RevokedBy,
+				tc.expectedRecord.Grant.RevokedAt,
+				tc.expectedRecord.Grant.RevokeReason,
+				tc.expectedRecord.Grant.CreatedBy,
+				tc.expectedRecord.Grant.CreatedAt,
+				tc.expectedRecord.Grant.UpdatedAt,
 			)
 			s.dbmock.
-				ExpectQuery(expectedAccessesPreloadQuery).
+				ExpectQuery(expectedGrantsPreloadQuery).
 				WithArgs(tc.expectedID).
-				WillReturnRows(expectedAccessRows)
+				WillReturnRows(expectedGrantRows)
 
 			expectedApprovalsPreloadQuery := regexp.QuoteMeta(`SELECT * FROM "approvals" WHERE "approvals"."appeal_id" = $1 AND "approvals"."deleted_at" IS NULL`)
 			expectedApprovalRows := sqlmock.NewRows(s.approvalColumnNames)
@@ -342,7 +344,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 	})
 
 	s.Run("should run query based on filters", func() {
-		selectAppealsJoinsWithResourceSql := `SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."permissions","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted","Access"."id" AS "Access__id","Access"."status" AS "Access__status","Access"."account_id" AS "Access__account_id","Access"."account_type" AS "Access__account_type","Access"."resource_id" AS "Access__resource_id","Access"."role" AS "Access__role","Access"."permissions" AS "Access__permissions","Access"."expiration_date" AS "Access__expiration_date","Access"."appeal_id" AS "Access__appeal_id","Access"."revoked_by" AS "Access__revoked_by","Access"."revoked_at" AS "Access__revoked_at","Access"."revoke_reason" AS "Access__revoke_reason","Access"."created_by" AS "Access__created_by","Access"."created_at" AS "Access__created_at","Access"."updated_at" AS "Access__updated_at","Access"."deleted_at" AS "Access__deleted_at" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" LEFT JOIN "accesses" "Access" ON "appeals"."id" = "Access"."appeal_id" WHERE`
+		selectAppealsJoinsWithResourceSql := `SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."permissions","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted","Grant"."id" AS "Grant__id","Grant"."status" AS "Grant__status","Grant"."account_id" AS "Grant__account_id","Grant"."account_type" AS "Grant__account_type","Grant"."resource_id" AS "Grant__resource_id","Grant"."role" AS "Grant__role","Grant"."permissions" AS "Grant__permissions","Grant"."expiration_date" AS "Grant__expiration_date","Grant"."appeal_id" AS "Grant__appeal_id","Grant"."revoked_by" AS "Grant__revoked_by","Grant"."revoked_at" AS "Grant__revoked_at","Grant"."revoke_reason" AS "Grant__revoke_reason","Grant"."created_by" AS "Grant__created_by","Grant"."created_at" AS "Grant__created_at","Grant"."updated_at" AS "Grant__updated_at","Grant"."deleted_at" AS "Grant__deleted_at" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" LEFT JOIN "grants" "Grant" ON "appeals"."id" = "Grant"."appeal_id" WHERE`
 		timeNow := time.Now()
 		testCases := []struct {
 			filters             *domain.ListAppealsFilter
@@ -357,7 +359,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				filters: &domain.ListAppealsFilter{
 					CreatedBy: "user@email.com",
 				},
-				expectedClauseQuery: `"created_by" = $1 AND "appeals"."deleted_at" IS NULL`,
+				expectedClauseQuery: `"appeals"."created_by" = $1 AND "appeals"."deleted_at" IS NULL`,
 				expectedArgs:        []driver.Value{"user@email.com"},
 			},
 			{
@@ -441,7 +443,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				filters: &domain.ListAppealsFilter{
 					OrderBy: []string{"status"},
 				},
-				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$1,$2,$3,$4,$5], "status")`,
+				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$1,$2,$3,$4,$5], "appeals"."status")`,
 				expectedArgs: []driver.Value{
 					postgres.AppealStatusDefaultSort[0],
 					postgres.AppealStatusDefaultSort[1],
@@ -517,7 +519,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 	})
 
 	s.Run("should return records on success", func() {
-		expectedQuery := regexp.QuoteMeta(`SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."permissions","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted","Access"."id" AS "Access__id","Access"."status" AS "Access__status","Access"."account_id" AS "Access__account_id","Access"."account_type" AS "Access__account_type","Access"."resource_id" AS "Access__resource_id","Access"."role" AS "Access__role","Access"."permissions" AS "Access__permissions","Access"."expiration_date" AS "Access__expiration_date","Access"."appeal_id" AS "Access__appeal_id","Access"."revoked_by" AS "Access__revoked_by","Access"."revoked_at" AS "Access__revoked_at","Access"."revoke_reason" AS "Access__revoke_reason","Access"."created_by" AS "Access__created_by","Access"."created_at" AS "Access__created_at","Access"."updated_at" AS "Access__updated_at","Access"."deleted_at" AS "Access__deleted_at" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" LEFT JOIN "accesses" "Access" ON "appeals"."id" = "Access"."appeal_id" WHERE "appeals"."deleted_at" IS NULL`)
+		expectedQuery := regexp.QuoteMeta(`SELECT "appeals"."id","appeals"."resource_id","appeals"."policy_id","appeals"."policy_version","appeals"."status","appeals"."account_id","appeals"."account_type","appeals"."created_by","appeals"."creator","appeals"."role","appeals"."permissions","appeals"."options","appeals"."labels","appeals"."details","appeals"."revoked_by","appeals"."revoked_at","appeals"."revoke_reason","appeals"."created_at","appeals"."updated_at","appeals"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted","Grant"."id" AS "Grant__id","Grant"."status" AS "Grant__status","Grant"."account_id" AS "Grant__account_id","Grant"."account_type" AS "Grant__account_type","Grant"."resource_id" AS "Grant__resource_id","Grant"."role" AS "Grant__role","Grant"."permissions" AS "Grant__permissions","Grant"."expiration_date" AS "Grant__expiration_date","Grant"."appeal_id" AS "Grant__appeal_id","Grant"."revoked_by" AS "Grant__revoked_by","Grant"."revoked_at" AS "Grant__revoked_at","Grant"."revoke_reason" AS "Grant__revoke_reason","Grant"."created_by" AS "Grant__created_by","Grant"."created_at" AS "Grant__created_at","Grant"."updated_at" AS "Grant__updated_at","Grant"."deleted_at" AS "Grant__deleted_at" FROM "appeals" LEFT JOIN "resources" "Resource" ON "appeals"."resource_id" = "Resource"."id" LEFT JOIN "grants" "Grant" ON "appeals"."id" = "Grant"."appeal_id" WHERE "appeals"."deleted_at" IS NULL`)
 		resourceID1 := uuid.New().String()
 		resourceID2 := uuid.New().String()
 		expectedRecords := []*domain.Appeal{
@@ -537,7 +539,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				AccountID:     "user@email.com",
 				Role:          "role_name",
 				Permissions:   []string{"test-permission"},
-				Access: &domain.Access{
+				Grant: &domain.Grant{
 					ID:          uuid.NewString(),
 					Status:      "test-status",
 					Permissions: []string{"test-permission"},
@@ -559,7 +561,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				AccountID:     "user@email.com",
 				Role:          "role_name",
 				Permissions:   []string{"test-permission"},
-				Access: &domain.Access{
+				Grant: &domain.Grant{
 					ID:          uuid.NewString(),
 					Status:      "test-status",
 					Permissions: []string{"test-permission"},
@@ -570,8 +572,8 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 		for _, c := range s.resourceColumnNames {
 			aggregatedColumns = append(aggregatedColumns, fmt.Sprintf("Resource__%s", c))
 		}
-		for _, c := range s.accessColumnNames {
-			aggregatedColumns = append(aggregatedColumns, fmt.Sprintf("Access__%s", c))
+		for _, c := range s.grantColumnNames {
+			aggregatedColumns = append(aggregatedColumns, fmt.Sprintf("Grant__%s", c))
 		}
 		expectedRows := sqlmock.NewRows(aggregatedColumns)
 		for _, r := range expectedRecords {
@@ -605,10 +607,10 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				r.Resource.CreatedAt,
 				r.Resource.UpdatedAt,
 
-				// access
-				r.Access.ID, r.Access.Status, r.Access.AccountID, r.Access.AccountType, r.Access.ResourceID, r.Access.Role, fmt.Sprintf("{%s}", strings.Join(r.Access.Permissions, ",")),
-				r.Access.ExpirationDate, r.Access.AppealID, r.Access.RevokedBy, r.Access.RevokedAt, r.Access.RevokeReason,
-				r.Access.CreatedBy, r.Access.CreatedAt, r.Access.UpdatedAt,
+				// grant
+				r.Grant.ID, r.Grant.Status, r.Grant.AccountID, r.Grant.AccountType, r.Grant.ResourceID, r.Grant.Role, fmt.Sprintf("{%s}", strings.Join(r.Grant.Permissions, ",")),
+				r.Grant.ExpirationDate, r.Grant.AppealID, r.Grant.RevokedBy, r.Grant.RevokedAt, r.Grant.RevokeReason,
+				r.Grant.CreatedBy, r.Grant.CreatedAt, r.Grant.UpdatedAt,
 			)
 		}
 		s.dbmock.

@@ -118,7 +118,7 @@ func RunServer(config *Config) error {
 		services.PolicyService,
 		services.AppealService,
 		services.ApprovalService,
-		services.AccessService,
+		services.GrantService,
 		protoAdapter,
 		config.AuthenticatedUserHeaderKey,
 	))

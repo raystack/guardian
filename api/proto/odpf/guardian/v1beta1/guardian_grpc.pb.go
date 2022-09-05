@@ -48,11 +48,11 @@ type GuardianServiceClient interface {
 	DeleteApprover(ctx context.Context, in *DeleteApproverRequest, opts ...grpc.CallOption) (*DeleteApproverResponse, error)
 	// Deprecated: Do not use.
 	RevokeAppeals(ctx context.Context, in *RevokeAppealsRequest, opts ...grpc.CallOption) (*RevokeAppealsResponse, error)
-	ListAccesses(ctx context.Context, in *ListAccessesRequest, opts ...grpc.CallOption) (*ListAccessesResponse, error)
-	ListUserAccesses(ctx context.Context, in *ListUserAccessesRequest, opts ...grpc.CallOption) (*ListUserAccessesResponse, error)
-	GetAccess(ctx context.Context, in *GetAccessRequest, opts ...grpc.CallOption) (*GetAccessResponse, error)
-	RevokeAccess(ctx context.Context, in *RevokeAccessRequest, opts ...grpc.CallOption) (*RevokeAccessResponse, error)
-	RevokeAccesses(ctx context.Context, in *RevokeAccessesRequest, opts ...grpc.CallOption) (*RevokeAccessesResponse, error)
+	ListGrants(ctx context.Context, in *ListGrantsRequest, opts ...grpc.CallOption) (*ListGrantsResponse, error)
+	ListUserGrants(ctx context.Context, in *ListUserGrantsRequest, opts ...grpc.CallOption) (*ListUserGrantsResponse, error)
+	GetGrant(ctx context.Context, in *GetGrantRequest, opts ...grpc.CallOption) (*GetGrantResponse, error)
+	RevokeGrant(ctx context.Context, in *RevokeGrantRequest, opts ...grpc.CallOption) (*RevokeGrantResponse, error)
+	RevokeGrants(ctx context.Context, in *RevokeGrantsRequest, opts ...grpc.CallOption) (*RevokeGrantsResponse, error)
 }
 
 type guardianServiceClient struct {
@@ -317,45 +317,45 @@ func (c *guardianServiceClient) RevokeAppeals(ctx context.Context, in *RevokeApp
 	return out, nil
 }
 
-func (c *guardianServiceClient) ListAccesses(ctx context.Context, in *ListAccessesRequest, opts ...grpc.CallOption) (*ListAccessesResponse, error) {
-	out := new(ListAccessesResponse)
-	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/ListAccesses", in, out, opts...)
+func (c *guardianServiceClient) ListGrants(ctx context.Context, in *ListGrantsRequest, opts ...grpc.CallOption) (*ListGrantsResponse, error) {
+	out := new(ListGrantsResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/ListGrants", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *guardianServiceClient) ListUserAccesses(ctx context.Context, in *ListUserAccessesRequest, opts ...grpc.CallOption) (*ListUserAccessesResponse, error) {
-	out := new(ListUserAccessesResponse)
-	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/ListUserAccesses", in, out, opts...)
+func (c *guardianServiceClient) ListUserGrants(ctx context.Context, in *ListUserGrantsRequest, opts ...grpc.CallOption) (*ListUserGrantsResponse, error) {
+	out := new(ListUserGrantsResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/ListUserGrants", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *guardianServiceClient) GetAccess(ctx context.Context, in *GetAccessRequest, opts ...grpc.CallOption) (*GetAccessResponse, error) {
-	out := new(GetAccessResponse)
-	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/GetAccess", in, out, opts...)
+func (c *guardianServiceClient) GetGrant(ctx context.Context, in *GetGrantRequest, opts ...grpc.CallOption) (*GetGrantResponse, error) {
+	out := new(GetGrantResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/GetGrant", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *guardianServiceClient) RevokeAccess(ctx context.Context, in *RevokeAccessRequest, opts ...grpc.CallOption) (*RevokeAccessResponse, error) {
-	out := new(RevokeAccessResponse)
-	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeAccess", in, out, opts...)
+func (c *guardianServiceClient) RevokeGrant(ctx context.Context, in *RevokeGrantRequest, opts ...grpc.CallOption) (*RevokeGrantResponse, error) {
+	out := new(RevokeGrantResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeGrant", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *guardianServiceClient) RevokeAccesses(ctx context.Context, in *RevokeAccessesRequest, opts ...grpc.CallOption) (*RevokeAccessesResponse, error) {
-	out := new(RevokeAccessesResponse)
-	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeAccesses", in, out, opts...)
+func (c *guardianServiceClient) RevokeGrants(ctx context.Context, in *RevokeGrantsRequest, opts ...grpc.CallOption) (*RevokeGrantsResponse, error) {
+	out := new(RevokeGrantsResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeGrants", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -396,11 +396,11 @@ type GuardianServiceServer interface {
 	DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error)
 	// Deprecated: Do not use.
 	RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error)
-	ListAccesses(context.Context, *ListAccessesRequest) (*ListAccessesResponse, error)
-	ListUserAccesses(context.Context, *ListUserAccessesRequest) (*ListUserAccessesResponse, error)
-	GetAccess(context.Context, *GetAccessRequest) (*GetAccessResponse, error)
-	RevokeAccess(context.Context, *RevokeAccessRequest) (*RevokeAccessResponse, error)
-	RevokeAccesses(context.Context, *RevokeAccessesRequest) (*RevokeAccessesResponse, error)
+	ListGrants(context.Context, *ListGrantsRequest) (*ListGrantsResponse, error)
+	ListUserGrants(context.Context, *ListUserGrantsRequest) (*ListUserGrantsResponse, error)
+	GetGrant(context.Context, *GetGrantRequest) (*GetGrantResponse, error)
+	RevokeGrant(context.Context, *RevokeGrantRequest) (*RevokeGrantResponse, error)
+	RevokeGrants(context.Context, *RevokeGrantsRequest) (*RevokeGrantsResponse, error)
 	mustEmbedUnimplementedGuardianServiceServer()
 }
 
@@ -492,20 +492,20 @@ func (UnimplementedGuardianServiceServer) DeleteApprover(context.Context, *Delet
 func (UnimplementedGuardianServiceServer) RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RevokeAppeals not implemented")
 }
-func (UnimplementedGuardianServiceServer) ListAccesses(context.Context, *ListAccessesRequest) (*ListAccessesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListAccesses not implemented")
+func (UnimplementedGuardianServiceServer) ListGrants(context.Context, *ListGrantsRequest) (*ListGrantsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListGrants not implemented")
 }
-func (UnimplementedGuardianServiceServer) ListUserAccesses(context.Context, *ListUserAccessesRequest) (*ListUserAccessesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListUserAccesses not implemented")
+func (UnimplementedGuardianServiceServer) ListUserGrants(context.Context, *ListUserGrantsRequest) (*ListUserGrantsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUserGrants not implemented")
 }
-func (UnimplementedGuardianServiceServer) GetAccess(context.Context, *GetAccessRequest) (*GetAccessResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAccess not implemented")
+func (UnimplementedGuardianServiceServer) GetGrant(context.Context, *GetGrantRequest) (*GetGrantResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGrant not implemented")
 }
-func (UnimplementedGuardianServiceServer) RevokeAccess(context.Context, *RevokeAccessRequest) (*RevokeAccessResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RevokeAccess not implemented")
+func (UnimplementedGuardianServiceServer) RevokeGrant(context.Context, *RevokeGrantRequest) (*RevokeGrantResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeGrant not implemented")
 }
-func (UnimplementedGuardianServiceServer) RevokeAccesses(context.Context, *RevokeAccessesRequest) (*RevokeAccessesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RevokeAccesses not implemented")
+func (UnimplementedGuardianServiceServer) RevokeGrants(context.Context, *RevokeGrantsRequest) (*RevokeGrantsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RevokeGrants not implemented")
 }
 func (UnimplementedGuardianServiceServer) mustEmbedUnimplementedGuardianServiceServer() {}
 
@@ -1024,92 +1024,92 @@ func _GuardianService_RevokeAppeals_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GuardianService_ListAccesses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListAccessesRequest)
+func _GuardianService_ListGrants_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListGrantsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GuardianServiceServer).ListAccesses(ctx, in)
+		return srv.(GuardianServiceServer).ListGrants(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/odpf.guardian.v1beta1.GuardianService/ListAccesses",
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/ListGrants",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GuardianServiceServer).ListAccesses(ctx, req.(*ListAccessesRequest))
+		return srv.(GuardianServiceServer).ListGrants(ctx, req.(*ListGrantsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GuardianService_ListUserAccesses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListUserAccessesRequest)
+func _GuardianService_ListUserGrants_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserGrantsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GuardianServiceServer).ListUserAccesses(ctx, in)
+		return srv.(GuardianServiceServer).ListUserGrants(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/odpf.guardian.v1beta1.GuardianService/ListUserAccesses",
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/ListUserGrants",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GuardianServiceServer).ListUserAccesses(ctx, req.(*ListUserAccessesRequest))
+		return srv.(GuardianServiceServer).ListUserGrants(ctx, req.(*ListUserGrantsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GuardianService_GetAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAccessRequest)
+func _GuardianService_GetGrant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGrantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GuardianServiceServer).GetAccess(ctx, in)
+		return srv.(GuardianServiceServer).GetGrant(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/odpf.guardian.v1beta1.GuardianService/GetAccess",
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/GetGrant",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GuardianServiceServer).GetAccess(ctx, req.(*GetAccessRequest))
+		return srv.(GuardianServiceServer).GetGrant(ctx, req.(*GetGrantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GuardianService_RevokeAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RevokeAccessRequest)
+func _GuardianService_RevokeGrant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeGrantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GuardianServiceServer).RevokeAccess(ctx, in)
+		return srv.(GuardianServiceServer).RevokeGrant(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/odpf.guardian.v1beta1.GuardianService/RevokeAccess",
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/RevokeGrant",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GuardianServiceServer).RevokeAccess(ctx, req.(*RevokeAccessRequest))
+		return srv.(GuardianServiceServer).RevokeGrant(ctx, req.(*RevokeGrantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GuardianService_RevokeAccesses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RevokeAccessesRequest)
+func _GuardianService_RevokeGrants_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeGrantsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GuardianServiceServer).RevokeAccesses(ctx, in)
+		return srv.(GuardianServiceServer).RevokeGrants(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/odpf.guardian.v1beta1.GuardianService/RevokeAccesses",
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/RevokeGrants",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GuardianServiceServer).RevokeAccesses(ctx, req.(*RevokeAccessesRequest))
+		return srv.(GuardianServiceServer).RevokeGrants(ctx, req.(*RevokeGrantsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1234,24 +1234,24 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _GuardianService_RevokeAppeals_Handler,
 		},
 		{
-			MethodName: "ListAccesses",
-			Handler:    _GuardianService_ListAccesses_Handler,
+			MethodName: "ListGrants",
+			Handler:    _GuardianService_ListGrants_Handler,
 		},
 		{
-			MethodName: "ListUserAccesses",
-			Handler:    _GuardianService_ListUserAccesses_Handler,
+			MethodName: "ListUserGrants",
+			Handler:    _GuardianService_ListUserGrants_Handler,
 		},
 		{
-			MethodName: "GetAccess",
-			Handler:    _GuardianService_GetAccess_Handler,
+			MethodName: "GetGrant",
+			Handler:    _GuardianService_GetGrant_Handler,
 		},
 		{
-			MethodName: "RevokeAccess",
-			Handler:    _GuardianService_RevokeAccess_Handler,
+			MethodName: "RevokeGrant",
+			Handler:    _GuardianService_RevokeGrant_Handler,
 		},
 		{
-			MethodName: "RevokeAccesses",
-			Handler:    _GuardianService_RevokeAccesses_Handler,
+			MethodName: "RevokeGrants",
+			Handler:    _GuardianService_RevokeGrants_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

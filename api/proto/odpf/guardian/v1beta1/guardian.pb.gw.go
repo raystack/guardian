@@ -1576,79 +1576,79 @@ func local_request_GuardianService_RevokeAppeals_0(ctx context.Context, marshale
 }
 
 var (
-	filter_GuardianService_ListAccesses_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_GuardianService_ListGrants_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_GuardianService_ListAccesses_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListAccessesRequest
+func request_GuardianService_ListGrants_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListGrantsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GuardianService_ListAccesses_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GuardianService_ListGrants_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.ListAccesses(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ListGrants(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_GuardianService_ListAccesses_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListAccessesRequest
+func local_request_GuardianService_ListGrants_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListGrantsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GuardianService_ListAccesses_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GuardianService_ListGrants_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.ListAccesses(ctx, &protoReq)
+	msg, err := server.ListGrants(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_GuardianService_ListUserAccesses_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_GuardianService_ListUserGrants_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_GuardianService_ListUserAccesses_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListUserAccessesRequest
+func request_GuardianService_ListUserGrants_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListUserGrantsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GuardianService_ListUserAccesses_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GuardianService_ListUserGrants_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.ListUserAccesses(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ListUserGrants(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_GuardianService_ListUserAccesses_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListUserAccessesRequest
+func local_request_GuardianService_ListUserGrants_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListUserGrantsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GuardianService_ListUserAccesses_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GuardianService_ListUserGrants_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.ListUserAccesses(ctx, &protoReq)
+	msg, err := server.ListUserGrants(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_GuardianService_GetAccess_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAccessRequest
+func request_GuardianService_GetGrant_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetGrantRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1668,13 +1668,13 @@ func request_GuardianService_GetAccess_0(ctx context.Context, marshaler runtime.
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := client.GetAccess(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetGrant(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_GuardianService_GetAccess_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAccessRequest
+func local_request_GuardianService_GetGrant_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetGrantRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1694,13 +1694,13 @@ func local_request_GuardianService_GetAccess_0(ctx context.Context, marshaler ru
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := server.GetAccess(ctx, &protoReq)
+	msg, err := server.GetGrant(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_GuardianService_RevokeAccess_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RevokeAccessRequest
+func request_GuardianService_RevokeGrant_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq RevokeGrantRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1728,13 +1728,13 @@ func request_GuardianService_RevokeAccess_0(ctx context.Context, marshaler runti
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := client.RevokeAccess(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.RevokeGrant(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_GuardianService_RevokeAccess_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RevokeAccessRequest
+func local_request_GuardianService_RevokeGrant_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq RevokeGrantRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1762,13 +1762,13 @@ func local_request_GuardianService_RevokeAccess_0(ctx context.Context, marshaler
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := server.RevokeAccess(ctx, &protoReq)
+	msg, err := server.RevokeGrant(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_GuardianService_RevokeAccesses_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RevokeAccessesRequest
+func request_GuardianService_RevokeGrants_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq RevokeGrantsRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1779,13 +1779,13 @@ func request_GuardianService_RevokeAccesses_0(ctx context.Context, marshaler run
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.RevokeAccesses(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.RevokeGrants(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_GuardianService_RevokeAccesses_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RevokeAccessesRequest
+func local_request_GuardianService_RevokeGrants_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq RevokeGrantsRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1796,7 +1796,7 @@ func local_request_GuardianService_RevokeAccesses_0(ctx context.Context, marshal
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.RevokeAccesses(ctx, &protoReq)
+	msg, err := server.RevokeGrants(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -2474,18 +2474,18 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 
 	})
 
-	mux.Handle("GET", pattern_GuardianService_ListAccesses_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GuardianService_ListGrants_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListAccesses", runtime.WithHTTPPathPattern("/v1beta1/accesses"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListGrants", runtime.WithHTTPPathPattern("/v1beta1/grants"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListAccesses_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListGrants_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2493,22 +2493,22 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 
-		forward_GuardianService_ListAccesses_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GuardianService_ListGrants_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_GuardianService_ListUserAccesses_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GuardianService_ListUserGrants_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserAccesses", runtime.WithHTTPPathPattern("/v1beta1/me/accesses"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserGrants", runtime.WithHTTPPathPattern("/v1beta1/me/grants"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListUserAccesses_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListUserGrants_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2516,22 +2516,22 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 
-		forward_GuardianService_ListUserAccesses_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GuardianService_ListUserGrants_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_GuardianService_GetAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GuardianService_GetGrant_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetAccess", runtime.WithHTTPPathPattern("/v1beta1/accesses/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetGrant", runtime.WithHTTPPathPattern("/v1beta1/grants/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_GetAccess_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_GetGrant_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2539,22 +2539,22 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 
-		forward_GuardianService_GetAccess_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GuardianService_GetGrant_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_GuardianService_RevokeAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_GuardianService_RevokeGrant_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeAccess", runtime.WithHTTPPathPattern("/v1beta1/accesses/{id}/revoke"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeGrant", runtime.WithHTTPPathPattern("/v1beta1/grants/{id}/revoke"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_RevokeAccess_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_RevokeGrant_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2562,22 +2562,22 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 
-		forward_GuardianService_RevokeAccess_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GuardianService_RevokeGrant_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_GuardianService_RevokeAccesses_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_GuardianService_RevokeGrants_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeAccesses", runtime.WithHTTPPathPattern("/v1beta1/accesses/revoke"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeGrants", runtime.WithHTTPPathPattern("/v1beta1/grants/revoke"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_RevokeAccesses_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_RevokeGrants_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2585,7 +2585,7 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 			return
 		}
 
-		forward_GuardianService_RevokeAccesses_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GuardianService_RevokeGrants_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -3210,103 +3210,103 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 
 	})
 
-	mux.Handle("GET", pattern_GuardianService_ListAccesses_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GuardianService_ListGrants_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListAccesses", runtime.WithHTTPPathPattern("/v1beta1/accesses"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListGrants", runtime.WithHTTPPathPattern("/v1beta1/grants"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListAccesses_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListGrants_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GuardianService_ListAccesses_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GuardianService_ListGrants_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_GuardianService_ListUserAccesses_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GuardianService_ListUserGrants_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserAccesses", runtime.WithHTTPPathPattern("/v1beta1/me/accesses"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/ListUserGrants", runtime.WithHTTPPathPattern("/v1beta1/me/grants"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListUserAccesses_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListUserGrants_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GuardianService_ListUserAccesses_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GuardianService_ListUserGrants_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_GuardianService_GetAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GuardianService_GetGrant_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetAccess", runtime.WithHTTPPathPattern("/v1beta1/accesses/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/GetGrant", runtime.WithHTTPPathPattern("/v1beta1/grants/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_GetAccess_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_GetGrant_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GuardianService_GetAccess_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GuardianService_GetGrant_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_GuardianService_RevokeAccess_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_GuardianService_RevokeGrant_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeAccess", runtime.WithHTTPPathPattern("/v1beta1/accesses/{id}/revoke"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeGrant", runtime.WithHTTPPathPattern("/v1beta1/grants/{id}/revoke"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_RevokeAccess_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_RevokeGrant_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GuardianService_RevokeAccess_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GuardianService_RevokeGrant_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_GuardianService_RevokeAccesses_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_GuardianService_RevokeGrants_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeAccesses", runtime.WithHTTPPathPattern("/v1beta1/accesses/revoke"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/odpf.guardian.v1beta1.GuardianService/RevokeGrants", runtime.WithHTTPPathPattern("/v1beta1/grants/revoke"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_RevokeAccesses_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_RevokeGrants_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GuardianService_RevokeAccesses_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GuardianService_RevokeGrants_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -3372,15 +3372,15 @@ var (
 
 	pattern_GuardianService_RevokeAppeals_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1beta1", "appeals", "revoke"}, ""))
 
-	pattern_GuardianService_ListAccesses_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "accesses"}, ""))
+	pattern_GuardianService_ListGrants_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "grants"}, ""))
 
-	pattern_GuardianService_ListUserAccesses_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1beta1", "me", "accesses"}, ""))
+	pattern_GuardianService_ListUserGrants_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1beta1", "me", "grants"}, ""))
 
-	pattern_GuardianService_GetAccess_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1beta1", "accesses", "id"}, ""))
+	pattern_GuardianService_GetGrant_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1beta1", "grants", "id"}, ""))
 
-	pattern_GuardianService_RevokeAccess_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1beta1", "accesses", "id", "revoke"}, ""))
+	pattern_GuardianService_RevokeGrant_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1beta1", "grants", "id", "revoke"}, ""))
 
-	pattern_GuardianService_RevokeAccesses_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1beta1", "accesses", "revoke"}, ""))
+	pattern_GuardianService_RevokeGrants_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1beta1", "grants", "revoke"}, ""))
 )
 
 var (
@@ -3442,13 +3442,13 @@ var (
 
 	forward_GuardianService_RevokeAppeals_0 = runtime.ForwardResponseMessage
 
-	forward_GuardianService_ListAccesses_0 = runtime.ForwardResponseMessage
+	forward_GuardianService_ListGrants_0 = runtime.ForwardResponseMessage
 
-	forward_GuardianService_ListUserAccesses_0 = runtime.ForwardResponseMessage
+	forward_GuardianService_ListUserGrants_0 = runtime.ForwardResponseMessage
 
-	forward_GuardianService_GetAccess_0 = runtime.ForwardResponseMessage
+	forward_GuardianService_GetGrant_0 = runtime.ForwardResponseMessage
 
-	forward_GuardianService_RevokeAccess_0 = runtime.ForwardResponseMessage
+	forward_GuardianService_RevokeGrant_0 = runtime.ForwardResponseMessage
 
-	forward_GuardianService_RevokeAccesses_0 = runtime.ForwardResponseMessage
+	forward_GuardianService_RevokeGrants_0 = runtime.ForwardResponseMessage
 )

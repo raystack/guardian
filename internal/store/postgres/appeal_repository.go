@@ -41,7 +41,7 @@ func (r *AppealRepository) GetByID(id string) (*domain.Appeal, error) {
 		}).
 		Preload("Approvals.Approvers").
 		Preload("Resource").
-		Preload("Access").
+		Preload("Grant").
 		First(&m, "id = ?", id).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -65,7 +65,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 
 	db := r.db
 	if filters.CreatedBy != "" {
-		db = db.Where(`"created_by" = ?`, filters.CreatedBy)
+		db = db.Where(`"appeals"."created_by" = ?`, filters.CreatedBy)
 	}
 	accounts := make([]string, 0)
 	if filters.AccountID != "" {
@@ -94,7 +94,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 	}
 	if filters.OrderBy != nil {
 		db = addOrderByClause(db, filters.OrderBy, addOrderByClauseOptions{
-			statusColumnName: `"status"`,
+			statusColumnName: `"appeals"."status"`,
 		})
 	}
 
@@ -113,7 +113,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 	}
 
 	var models []*model.Appeal
-	if err := db.Joins("Access").Find(&models).Error; err != nil {
+	if err := db.Joins("Grant").Find(&models).Error; err != nil {
 		return nil, err
 	}
 

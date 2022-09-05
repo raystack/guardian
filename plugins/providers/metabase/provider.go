@@ -199,7 +199,7 @@ func (p *provider) addTables(pc *domain.ProviderConfig, databases []*Database, r
 	return resources
 }
 
-func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Access) error {
+func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
 	// TODO: validate provider config and appeal
 
 	var creds Credentials
@@ -275,7 +275,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Access) error
 	return ErrInvalidResourceType
 }
 
-func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Access) error {
+func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -371,7 +371,7 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Metab
 	return client, nil
 }
 
-func getPermissions(a domain.Access) []Permission {
+func getPermissions(a domain.Grant) []Permission {
 	var permissions []Permission
 	for _, p := range a.Permissions {
 		permissions = append(permissions, Permission(p))
