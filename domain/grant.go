@@ -57,18 +57,20 @@ func (g *Grant) Revoke(actor, reason string) error {
 }
 
 type ListGrantsFilter struct {
-	Statuses      []string
-	AccountIDs    []string
-	AccountTypes  []string
-	ResourceIDs   []string
-	Roles         []string
-	Permissions   []string
-	ProviderTypes []string
-	ProviderURNs  []string
-	ResourceTypes []string
-	ResourceURNs  []string
-	CreatedBy     string
-	OrderBy       []string
+	Statuses                  []string
+	AccountIDs                []string
+	AccountTypes              []string
+	ResourceIDs               []string
+	Roles                     []string
+	Permissions               []string
+	ProviderTypes             []string
+	ProviderURNs              []string
+	ResourceTypes             []string
+	ResourceURNs              []string
+	CreatedBy                 string
+	OrderBy                   []string
+	ExpirationDateLessThan    time.Time
+	ExpirationDateGreaterThan time.Time
 }
 
 type RevokeGrantsFilter struct {

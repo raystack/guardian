@@ -84,7 +84,7 @@ func (s *GrantRepositoryTestSuite) TestList() {
 				UpdatedAt:      s.timeNow,
 			},
 		}
-		expectedQuery := regexp.QuoteMeta(`SELECT "grants"."id","grants"."status","grants"."account_id","grants"."account_type","grants"."resource_id","grants"."role","grants"."permissions","grants"."expiration_date","grants"."appeal_id","grants"."revoked_by","grants"."revoked_at","grants"."revoke_reason","grants"."created_by","grants"."created_at","grants"."updated_at","grants"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted","Appeal"."id" AS "Appeal__id","Appeal"."resource_id" AS "Appeal__resource_id","Appeal"."policy_id" AS "Appeal__policy_id","Appeal"."policy_version" AS "Appeal__policy_version","Appeal"."status" AS "Appeal__status","Appeal"."account_id" AS "Appeal__account_id","Appeal"."account_type" AS "Appeal__account_type","Appeal"."created_by" AS "Appeal__created_by","Appeal"."creator" AS "Appeal__creator","Appeal"."role" AS "Appeal__role","Appeal"."permissions" AS "Appeal__permissions","Appeal"."options" AS "Appeal__options","Appeal"."labels" AS "Appeal__labels","Appeal"."details" AS "Appeal__details","Appeal"."revoked_by" AS "Appeal__revoked_by","Appeal"."revoked_at" AS "Appeal__revoked_at","Appeal"."revoke_reason" AS "Appeal__revoke_reason","Appeal"."created_at" AS "Appeal__created_at","Appeal"."updated_at" AS "Appeal__updated_at","Appeal"."deleted_at" AS "Appeal__deleted_at" FROM "grants" LEFT JOIN "resources" "Resource" ON "grants"."resource_id" = "Resource"."id" LEFT JOIN "appeals" "Appeal" ON "grants"."appeal_id" = "Appeal"."id" WHERE "grants"."account_id" IN ($1) AND "grants"."account_type" IN ($2) AND "grants"."resource_id" IN ($3) AND "grants"."status" IN ($4) AND "grants"."role" IN ($5) AND "grants"."permissions" @> $6 AND "grants"."created_by" = $7 AND "Resource"."provider_type" IN ($8) AND "Resource"."provider_urn" IN ($9) AND "Resource"."type" IN ($10) AND "Resource"."urn" IN ($11) AND "grants"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$12,$13,$14,$15,$16], "grants"."status")`)
+		expectedQuery := regexp.QuoteMeta(`SELECT "grants"."id","grants"."status","grants"."account_id","grants"."account_type","grants"."resource_id","grants"."role","grants"."permissions","grants"."expiration_date","grants"."appeal_id","grants"."revoked_by","grants"."revoked_at","grants"."revoke_reason","grants"."created_by","grants"."created_at","grants"."updated_at","grants"."deleted_at","Resource"."id" AS "Resource__id","Resource"."provider_type" AS "Resource__provider_type","Resource"."provider_urn" AS "Resource__provider_urn","Resource"."type" AS "Resource__type","Resource"."urn" AS "Resource__urn","Resource"."name" AS "Resource__name","Resource"."details" AS "Resource__details","Resource"."labels" AS "Resource__labels","Resource"."created_at" AS "Resource__created_at","Resource"."updated_at" AS "Resource__updated_at","Resource"."deleted_at" AS "Resource__deleted_at","Resource"."is_deleted" AS "Resource__is_deleted","Appeal"."id" AS "Appeal__id","Appeal"."resource_id" AS "Appeal__resource_id","Appeal"."policy_id" AS "Appeal__policy_id","Appeal"."policy_version" AS "Appeal__policy_version","Appeal"."status" AS "Appeal__status","Appeal"."account_id" AS "Appeal__account_id","Appeal"."account_type" AS "Appeal__account_type","Appeal"."created_by" AS "Appeal__created_by","Appeal"."creator" AS "Appeal__creator","Appeal"."role" AS "Appeal__role","Appeal"."permissions" AS "Appeal__permissions","Appeal"."options" AS "Appeal__options","Appeal"."labels" AS "Appeal__labels","Appeal"."details" AS "Appeal__details","Appeal"."revoked_by" AS "Appeal__revoked_by","Appeal"."revoked_at" AS "Appeal__revoked_at","Appeal"."revoke_reason" AS "Appeal__revoke_reason","Appeal"."created_at" AS "Appeal__created_at","Appeal"."updated_at" AS "Appeal__updated_at","Appeal"."deleted_at" AS "Appeal__deleted_at" FROM "grants" LEFT JOIN "resources" "Resource" ON "grants"."resource_id" = "Resource"."id" LEFT JOIN "appeals" "Appeal" ON "grants"."appeal_id" = "Appeal"."id" WHERE "grants"."account_id" IN ($1) AND "grants"."account_type" IN ($2) AND "grants"."resource_id" IN ($3) AND "grants"."status" IN ($4) AND "grants"."role" IN ($5) AND "grants"."permissions" @> $6 AND "grants"."created_by" = $7 AND "grants"."expiration_date" < $8 AND "grants"."expiration_date" > $9 AND "Resource"."provider_type" IN ($10) AND "Resource"."provider_urn" IN ($11) AND "Resource"."type" IN ($12) AND "Resource"."urn" IN ($13) AND "grants"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$14,$15,$16,$17,$18], "grants"."status")`)
 		expectedRows := sqlmock.NewRows(s.columnNames).AddRow(s.toRow(expectedGrants[0])...)
 		s.dbmock.ExpectQuery(expectedQuery).
 			WithArgs(
@@ -95,6 +95,8 @@ func (s *GrantRepositoryTestSuite) TestList() {
 				"test-role",
 				pq.StringArray([]string{"test-permission"}),
 				"test-created-by",
+				s.timeNow,
+				s.timeNow,
 				"test-provider-type",
 				"test-provider-urn",
 				"test-resource-type",
@@ -108,18 +110,20 @@ func (s *GrantRepositoryTestSuite) TestList() {
 			WillReturnRows(expectedRows)
 
 		grants, err := s.repository.List(context.Background(), domain.ListGrantsFilter{
-			Statuses:      []string{"test-status"},
-			AccountIDs:    []string{"test-account-id"},
-			AccountTypes:  []string{"test-account-type"},
-			ResourceIDs:   []string{"test-resource-id"},
-			Roles:         []string{"test-role"},
-			Permissions:   []string{"test-permission"},
-			ProviderTypes: []string{"test-provider-type"},
-			ProviderURNs:  []string{"test-provider-urn"},
-			ResourceTypes: []string{"test-resource-type"},
-			ResourceURNs:  []string{"test-resource-urn"},
-			CreatedBy:     "test-created-by",
-			OrderBy:       []string{"status"},
+			Statuses:                  []string{"test-status"},
+			AccountIDs:                []string{"test-account-id"},
+			AccountTypes:              []string{"test-account-type"},
+			ResourceIDs:               []string{"test-resource-id"},
+			Roles:                     []string{"test-role"},
+			Permissions:               []string{"test-permission"},
+			ProviderTypes:             []string{"test-provider-type"},
+			ProviderURNs:              []string{"test-provider-urn"},
+			ResourceTypes:             []string{"test-resource-type"},
+			ResourceURNs:              []string{"test-resource-urn"},
+			CreatedBy:                 "test-created-by",
+			OrderBy:                   []string{"status"},
+			ExpirationDateLessThan:    s.timeNow,
+			ExpirationDateGreaterThan: s.timeNow,
 		})
 
 		s.NoError(err)

@@ -48,6 +48,12 @@ func (r *GrantRepository) List(ctx context.Context, filter domain.ListGrantsFilt
 			statusColumnName: `"grants"."status"`,
 		})
 	}
+	if !filter.ExpirationDateLessThan.IsZero() {
+		db = db.Where(`"grants"."expiration_date" < ?`, filter.ExpirationDateLessThan)
+	}
+	if !filter.ExpirationDateGreaterThan.IsZero() {
+		db = db.Where(`"grants"."expiration_date" > ?`, filter.ExpirationDateGreaterThan)
+	}
 	if filter.ProviderTypes != nil {
 		db = db.Where(`"Resource"."provider_type" IN ?`, filter.ProviderTypes)
 	}
