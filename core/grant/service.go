@@ -111,12 +111,6 @@ func (s *Service) Revoke(ctx context.Context, id, actor, reason string, opts ...
 	if err := grant.Revoke(actor, reason); err != nil {
 		return nil, err
 	}
-	// TODO: remove below logic in future release when appeal no longer for managing access
-	if grant.Appeal != nil {
-		if err := grant.Appeal.Revoke(actor, reason); err != nil {
-			return nil, fmt.Errorf("updating appeal status: %s", err)
-		}
-	}
 	if err := s.repo.Update(ctx, grant); err != nil {
 		return nil, fmt.Errorf("updating grant record in db: %w", err)
 	}
@@ -134,12 +128,12 @@ func (s *Service) Revoke(ctx context.Context, id, actor, reason string, opts ...
 
 	if !options.skipNotification {
 		if errs := s.notifier.Notify([]domain.Notification{{
-			User: grant.Appeal.CreatedBy,
+			User: grant.CreatedBy,
 			Message: domain.NotificationMessage{
 				Type: domain.NotificationTypeAccessRevoked,
 				Variables: map[string]interface{}{
 					"resource_name": fmt.Sprintf("%s (%s: %s)", grant.Resource.Name, grant.Resource.ProviderType, grant.Resource.URN),
-					"role":          grant.Appeal.Role,
+					"role":          grant.Role,
 					"account_type":  grant.AccountType,
 					"account_id":    grant.AccountID,
 				},
@@ -167,7 +161,7 @@ func (s *Service) BulkRevoke(ctx context.Context, filter domain.RevokeGrantsFilt
 	}
 
 	grants, err := s.List(ctx, domain.ListGrantsFilter{
-		Statuses:      []string{domain.AppealStatusActive},
+		Statuses:      []string{string(domain.GrantStatusActive)},
 		AccountIDs:    filter.AccountIDs,
 		ProviderTypes: filter.ProviderTypes,
 		ProviderURNs:  filter.ProviderURNs,
@@ -246,12 +240,6 @@ func (s *Service) expiredInActiveUserAccess(ctx context.Context, timeLimiter cha
 			s.logger.Error("failed to revoke grant", "id", grant.ID, "error", err)
 			return
 		}
-		// TODO: remove below logic in future release when appeal no longer for managing access
-		if err := grant.Appeal.Revoke(actor, reason); err != nil {
-			s.logger.Error("updating appeal status", "id", grant.Appeal.ID, "error", err)
-			return
-		}
-
 		if err := s.providerService.RevokeAccess(ctx, *grant); err != nil {
 			done <- grant
 			s.logger.Error("failed to revoke grant in provider", "id", grant.ID, "error", err)
