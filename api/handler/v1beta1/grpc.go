@@ -77,8 +77,6 @@ type appealService interface {
 	Create(context.Context, []*domain.Appeal, ...appeal.CreateAppealOption) error
 	MakeAction(context.Context, domain.ApprovalAction) (*domain.Appeal, error)
 	Cancel(context.Context, string) (*domain.Appeal, error)
-	Revoke(ctx context.Context, id, actor, reason string) (*domain.Appeal, error)
-	BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsFilter, actor, reason string) ([]*domain.Appeal, error)
 	AddApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
 	DeleteApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
 }

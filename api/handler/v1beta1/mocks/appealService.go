@@ -74,55 +74,6 @@ func (_c *AppealService_AddApprover_Call) Return(_a0 *domain.Appeal, _a1 error) 
 	return _c
 }
 
-// BulkRevoke provides a mock function with given fields: ctx, filters, actor, reason
-func (_m *AppealService) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsFilter, actor string, reason string) ([]*domain.Appeal, error) {
-	ret := _m.Called(ctx, filters, actor, reason)
-
-	var r0 []*domain.Appeal
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.RevokeAppealsFilter, string, string) []*domain.Appeal); ok {
-		r0 = rf(ctx, filters, actor, reason)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*domain.Appeal)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *domain.RevokeAppealsFilter, string, string) error); ok {
-		r1 = rf(ctx, filters, actor, reason)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// AppealService_BulkRevoke_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkRevoke'
-type AppealService_BulkRevoke_Call struct {
-	*mock.Call
-}
-
-// BulkRevoke is a helper method to define mock.On call
-//  - ctx context.Context
-//  - filters *domain.RevokeAppealsFilter
-//  - actor string
-//  - reason string
-func (_e *AppealService_Expecter) BulkRevoke(ctx interface{}, filters interface{}, actor interface{}, reason interface{}) *AppealService_BulkRevoke_Call {
-	return &AppealService_BulkRevoke_Call{Call: _e.mock.On("BulkRevoke", ctx, filters, actor, reason)}
-}
-
-func (_c *AppealService_BulkRevoke_Call) Run(run func(ctx context.Context, filters *domain.RevokeAppealsFilter, actor string, reason string)) *AppealService_BulkRevoke_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.RevokeAppealsFilter), args[2].(string), args[3].(string))
-	})
-	return _c
-}
-
-func (_c *AppealService_BulkRevoke_Call) Return(_a0 []*domain.Appeal, _a1 error) *AppealService_BulkRevoke_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
 // Cancel provides a mock function with given fields: _a0, _a1
 func (_m *AppealService) Cancel(_a0 context.Context, _a1 string) (*domain.Appeal, error) {
 	ret := _m.Called(_a0, _a1)
@@ -409,55 +360,6 @@ func (_c *AppealService_MakeAction_Call) Run(run func(_a0 context.Context, _a1 d
 }
 
 func (_c *AppealService_MakeAction_Call) Return(_a0 *domain.Appeal, _a1 error) *AppealService_MakeAction_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-// Revoke provides a mock function with given fields: ctx, id, actor, reason
-func (_m *AppealService) Revoke(ctx context.Context, id string, actor string, reason string) (*domain.Appeal, error) {
-	ret := _m.Called(ctx, id, actor, reason)
-
-	var r0 *domain.Appeal
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *domain.Appeal); ok {
-		r0 = rf(ctx, id, actor, reason)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.Appeal)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, id, actor, reason)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// AppealService_Revoke_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Revoke'
-type AppealService_Revoke_Call struct {
-	*mock.Call
-}
-
-// Revoke is a helper method to define mock.On call
-//  - ctx context.Context
-//  - id string
-//  - actor string
-//  - reason string
-func (_e *AppealService_Expecter) Revoke(ctx interface{}, id interface{}, actor interface{}, reason interface{}) *AppealService_Revoke_Call {
-	return &AppealService_Revoke_Call{Call: _e.mock.On("Revoke", ctx, id, actor, reason)}
-}
-
-func (_c *AppealService_Revoke_Call) Run(run func(ctx context.Context, id string, actor string, reason string)) *AppealService_Revoke_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
-	})
-	return _c
-}
-
-func (_c *AppealService_Revoke_Call) Return(_a0 *domain.Appeal, _a1 error) *AppealService_Revoke_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
