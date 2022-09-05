@@ -12,9 +12,9 @@ import (
 type JobType string
 
 const (
-	FetchResources             JobType = "fetch_resources"
-	ExpiringAccessNotification JobType = "appeal_expiration_reminder"
-	RevokeExpiredAccess        JobType = "appeal_expiration_revocation"
+	FetchResources            JobType = "fetch_resources"
+	ExpiringGrantNotification JobType = "grant_expiration_reminder"
+	RevokeExpiredGrants       JobType = "grant_expiration_revocation"
 )
 
 type JobConfig struct {
@@ -26,6 +26,8 @@ type JobConfig struct {
 
 type Jobs struct {
 	FetchResources             JobConfig `mapstructure:"fetch_resources"`
+	RevokeExpiredGrants        JobConfig `mapstructure:"revoke_expired_grants"`
+	ExpiringGrantNotification  JobConfig `mapstructure:"expiring_grant_notification"`
 	RevokeExpiredAccess        JobConfig `mapstructure:"revoke_expired_access"`
 	ExpiringAccessNotification JobConfig `mapstructure:"expiring_access_notification"`
 }
