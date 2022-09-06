@@ -42,10 +42,6 @@ type Appeal struct {
 	Details       map[string]interface{} `json:"details" yaml:"details"`
 	Labels        map[string]string      `json:"labels" yaml:"labels"`
 
-	RevokedBy    string    `json:"revoked_by,omitempty" yaml:"revoked_by,omitempty"`
-	RevokedAt    time.Time `json:"revoked_at,omitempty" yaml:"revoked_at,omitempty"`
-	RevokeReason string    `json:"revoke_reason,omitempty" yaml:"revoke_reason,omitempty"`
-
 	Policy    *Policy     `json:"-" yaml:"-"`
 	Resource  *Resource   `json:"resource,omitempty" yaml:"resource,omitempty"`
 	Approvals []*Approval `json:"approvals,omitempty" yaml:"approvals,omitempty"`

@@ -500,8 +500,6 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 		Permissions:   appeal.Permissions,
 		Options:       a.toAppealOptionsProto(appeal.Options),
 		Labels:        appeal.Labels,
-		RevokedBy:     appeal.RevokedBy,
-		RevokeReason:  appeal.RevokeReason,
 	}
 
 	if appeal.Resource != nil {
@@ -546,9 +544,6 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 	}
 	if !appeal.UpdatedAt.IsZero() {
 		appealProto.UpdatedAt = timestamppb.New(appeal.UpdatedAt)
-	}
-	if !appeal.RevokedAt.IsZero() {
-		appealProto.RevokedAt = timestamppb.New(appeal.RevokedAt)
 	}
 
 	grantProto, err := a.ToGrantProto(appeal.Grant)
