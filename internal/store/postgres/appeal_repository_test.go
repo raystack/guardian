@@ -443,13 +443,12 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				filters: &domain.ListAppealsFilter{
 					OrderBy: []string{"status"},
 				},
-				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$1,$2,$3,$4,$5], "appeals"."status")`,
+				expectedClauseQuery: `"appeals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$1,$2,$3,$4], "appeals"."status")`,
 				expectedArgs: []driver.Value{
 					postgres.AppealStatusDefaultSort[0],
 					postgres.AppealStatusDefaultSort[1],
 					postgres.AppealStatusDefaultSort[2],
 					postgres.AppealStatusDefaultSort[3],
-					postgres.AppealStatusDefaultSort[4],
 				},
 			},
 			{

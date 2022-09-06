@@ -53,6 +53,7 @@ func (r *ApprovalRepository) ListApprovals(conditions *domain.ListApprovalsFilte
 	if conditions.OrderBy != nil {
 		db = addOrderByClause(db, conditions.OrderBy, addOrderByClauseOptions{
 			statusColumnName: `"approvals"."status"`,
+			statusesOrder:    AppealStatusDefaultSort,
 		})
 	}
 

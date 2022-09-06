@@ -12,6 +12,13 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	GrantStatusDefaultSort = []string{
+		string(domain.GrantStatusActive),
+		string(domain.GrantStatusInactive),
+	}
+)
+
 type GrantRepository struct {
 	db *gorm.DB
 }
@@ -46,6 +53,7 @@ func (r *GrantRepository) List(ctx context.Context, filter domain.ListGrantsFilt
 	if filter.OrderBy != nil {
 		db = addOrderByClause(db, filter.OrderBy, addOrderByClauseOptions{
 			statusColumnName: `"grants"."status"`,
+			statusesOrder:    GrantStatusDefaultSort,
 		})
 	}
 	if !filter.ExpirationDateLessThan.IsZero() {
