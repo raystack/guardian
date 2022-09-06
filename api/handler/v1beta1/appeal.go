@@ -134,7 +134,6 @@ func (s *GRPCServer) CancelAppeal(ctx context.Context, req *guardianv1beta1.Canc
 		case appeal.ErrAppealStatusCanceled,
 			appeal.ErrAppealStatusApproved,
 			appeal.ErrAppealStatusRejected,
-			appeal.ErrAppealStatusTerminated,
 			appeal.ErrAppealStatusUnrecognized:
 			return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %v", err)
 		default:

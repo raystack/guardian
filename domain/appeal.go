@@ -9,11 +9,10 @@ const (
 	AppealActionNameApprove = "approve"
 	AppealActionNameReject  = "reject"
 
-	AppealStatusPending    = "pending"
-	AppealStatusCanceled   = "canceled"
-	AppealStatusApproved   = "approved"
-	AppealStatusRejected   = "rejected"
-	AppealStatusTerminated = "terminated"
+	AppealStatusPending  = "pending"
+	AppealStatusCanceled = "canceled"
+	AppealStatusApproved = "approved"
+	AppealStatusRejected = "rejected"
 
 	SystemActorName = "system"
 
@@ -99,10 +98,6 @@ func (a *Appeal) Approve() error {
 
 func (a *Appeal) Reject() {
 	a.Status = AppealStatusRejected
-}
-
-func (a *Appeal) Terminate() {
-	a.Status = AppealStatusTerminated
 }
 
 func (a *Appeal) SetDefaults() {

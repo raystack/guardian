@@ -1163,9 +1163,6 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 		Run(func(args mock.Arguments) {
 			appeals := args.Get(0).([]*domain.Appeal)
 			for i, a := range appeals {
-				if a.Status == domain.AppealStatusTerminated {
-					continue
-				}
 				a.ID = expectedResult[i].ID
 				for j, approval := range a.Approvals {
 					approval.ID = expectedResult[i].Approvals[j].ID

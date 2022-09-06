@@ -809,8 +809,6 @@ func checkIfAppealStatusStillPending(status string) error {
 		err = ErrAppealStatusApproved
 	case domain.AppealStatusRejected:
 		err = ErrAppealStatusRejected
-	case domain.AppealStatusTerminated:
-		err = ErrAppealStatusTerminated
 	default:
 		err = ErrAppealStatusUnrecognized
 	}

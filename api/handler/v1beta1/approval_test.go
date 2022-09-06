@@ -492,11 +492,6 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 				codes.InvalidArgument,
 			},
 			{
-				"should return invalid error if appeal status already terminated",
-				appeal.ErrAppealStatusTerminated,
-				codes.InvalidArgument,
-			},
-			{
 				"should return invalid error if appeal status unrecognized",
 				appeal.ErrAppealStatusUnrecognized,
 				codes.InvalidArgument,
