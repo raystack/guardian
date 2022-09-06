@@ -33,6 +33,7 @@ type ProtoAdapter interface {
 	ToApprovalProto(*domain.Approval) (*guardianv1beta1.Approval, error)
 
 	ToGrantProto(*domain.Grant) (*guardianv1beta1.Grant, error)
+	FromGrantProto(*guardianv1beta1.Grant) *domain.Grant
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter

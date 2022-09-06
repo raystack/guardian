@@ -28,8 +28,6 @@ func appealsCommand() *cobra.Command {
 			$ guardian appeal reject
 			$ guardian appeal list
 			$ guardian appeal status
-			$ guardian appeal revoke
-			$ guardian appeal bulk-revoke
 			$ guardian appeal cancel
 		`),
 	}
@@ -84,7 +82,7 @@ func listAppealsCommand() *cobra.Command {
 			appeals := res.GetAppeals()
 			spinner.Stop()
 
-			fmt.Printf(" \nShowing %d of %d policies\n \n", len(appeals), len(appeals))
+			fmt.Printf(" \nShowing %d of %d appeals\n \n", len(appeals), len(appeals))
 
 			report = append(report, []string{"ID", "USER", "RESOURCE ID", "ROLE", "STATUS"})
 			for _, a := range appeals {
