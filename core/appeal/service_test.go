@@ -136,22 +136,6 @@ func (s *ServiceTestSuite) TestFind() {
 		s.Equal(expectedResult, actualResult)
 		s.Nil(actualError)
 	})
-
-	s.Run("should treat 'active' and 'approved' filter the same way", func() {
-		expectedFilters := &domain.ListAppealsFilter{
-			Statuses: []string{domain.AppealStatusActive, domain.AppealStatusPending},
-		}
-		expectedResult := []*domain.Appeal{}
-		s.mockRepository.On("Find", expectedFilters).Return(expectedResult, nil).Once()
-
-		actualResult, actualError := s.service.Find(context.Background(), &domain.ListAppealsFilter{
-			Statuses: []string{domain.AppealStatusApproved, domain.AppealStatusPending},
-		})
-
-		s.mockRepository.AssertExpectations(s.T())
-		s.NoError(actualError)
-		s.Equal(expectedResult, actualResult)
-	})
 }
 
 func (s *ServiceTestSuite) TestCreate() {
@@ -1004,7 +988,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			URN: "urn",
 		},
 		Role:   "role_id",
-		Status: domain.AppealStatusActive,
+		Status: domain.AppealStatusApproved,
 	}
 	expectedExistingGrants := []domain.Grant{currentActiveGrant}
 
@@ -1040,7 +1024,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			Resource:      resources[i],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
-			Status:        domain.AppealStatusActive,
+			Status:        domain.AppealStatusApproved,
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
@@ -1075,7 +1059,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			Resource:      resources[0],
 			PolicyID:      "policy_1",
 			PolicyVersion: 1,
-			Status:        domain.AppealStatusActive,
+			Status:        domain.AppealStatusApproved,
 			AccountID:     accountID,
 			AccountType:   domain.DefaultAppealAccountType,
 			CreatedBy:     accountID,
@@ -1127,7 +1111,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
 	s.mockGrantService.EXPECT().
 		List(mock.AnythingOfType("*context.emptyCtx"), domain.ListGrantsFilter{
-			Statuses: []string{domain.AppealStatusActive},
+			Statuses: []string{string(domain.GrantStatusActive)},
 		}).
 		Return(expectedExistingGrants, nil).Once()
 	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -1140,7 +1124,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 		Return(nil).
 		Run(func(args mock.Arguments) {
 			ap := args.Get(1).(*domain.Appeal)
-			ap.Status = domain.AppealStatusActive
+			ap.Status = domain.AppealStatusApproved
 			ap.Approvals[0].Status = domain.ApprovalStatusApproved
 		})
 
@@ -1179,9 +1163,6 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 		Run(func(args mock.Arguments) {
 			appeals := args.Get(0).([]*domain.Appeal)
 			for i, a := range appeals {
-				if a.Status == domain.AppealStatusTerminated {
-					continue
-				}
 				a.ID = expectedResult[i].ID
 				for j, approval := range a.Approvals {
 					approval.ID = expectedResult[i].Approvals[j].ID
@@ -1198,7 +1179,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	s.Equal(expectedResult, appeals)
 }
 
-func (s *ServiceTestSuite) MakeAction() {
+func (s *ServiceTestSuite) TestMakeAction() {
 	timeNow := time.Now()
 	appeal.TimeNow = func() time.Time {
 		return timeNow
@@ -1234,6 +1215,8 @@ func (s *ServiceTestSuite) MakeAction() {
 		}
 
 		for _, param := range invalidApprovalActionParameters {
+			s.setup()
+
 			actualResult, actualError := s.service.MakeAction(context.Background(), param)
 
 			s.Nil(actualResult)
@@ -1249,20 +1232,27 @@ func (s *ServiceTestSuite) MakeAction() {
 	}
 
 	s.Run("should return error if got any from repository while getting appeal details", func() {
+		s.setup()
+
 		expectedError := errors.New("repository error")
-		s.mockRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
+		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.MakeAction(context.Background(), validApprovalActionParam)
 
+		s.mockRepository.AssertExpectations(s.T())
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should return error if appeal not found", func() {
-		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(nil, appeal.ErrAppealNotFound).Once()
+		s.setup()
+
+		expectedError := appeal.ErrAppealNotFound
+		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.MakeAction(context.Background(), validApprovalActionParam)
 
+		s.mockRepository.AssertExpectations(s.T())
 		s.Nil(actualResult)
 		s.EqualError(actualError, appeal.ErrAppealNotFound.Error())
 	})
@@ -1275,19 +1265,14 @@ func (s *ServiceTestSuite) MakeAction() {
 			expectedError error
 		}{
 			{
-				name:          "appeal not eligible, status: active",
-				appealStatus:  domain.AppealStatusActive,
+				name:          "appeal not eligible, status: approved",
+				appealStatus:  domain.AppealStatusApproved,
 				expectedError: appeal.ErrAppealStatusApproved,
 			},
 			{
 				name:          "appeal not eligible, status: rejected",
 				appealStatus:  domain.AppealStatusRejected,
 				expectedError: appeal.ErrAppealStatusRejected,
-			},
-			{
-				name:          "appeal not eligible, status: terminated",
-				appealStatus:  domain.AppealStatusTerminated,
-				expectedError: appeal.ErrAppealStatusTerminated,
 			},
 			{
 				name:          "invalid appeal status",
@@ -1433,6 +1418,8 @@ func (s *ServiceTestSuite) MakeAction() {
 		}
 
 		for _, tc := range testCases {
+			s.setup()
+
 			expectedAppeal := &domain.Appeal{
 				ID:        validApprovalActionParam.AppealID,
 				Status:    tc.appealStatus,
@@ -1460,70 +1447,35 @@ func (s *ServiceTestSuite) MakeAction() {
 				Status:    domain.ApprovalStatusPending,
 				Approvers: []string{"user@email.com"},
 			},
+			{
+				Name:      "approval_2",
+				Status:    domain.ApprovalStatusBlocked,
+				Approvers: []string{"user@email.com"},
+			},
 		},
 		PolicyID:      "policy-test",
 		PolicyVersion: 1,
 	}
 
-	s.Run("should return error if got any from policy service", func() {
-		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
-		s.mockApprovalService.On("AdvanceApproval", mock.Anything, expectedAppeal).Return(nil).Once()
-		expectedError := errors.New("policy service error")
-		s.mockRepository.On("Find", mock.Anything).Return([]*domain.Appeal{}, nil).Once()
-		s.mockPolicyService.
-			On("GetOne", expectedAppeal.PolicyID, expectedAppeal.PolicyVersion).
-			Return(nil, expectedError).
-			Once()
+	s.Run("should return error if got any from approvalService.AdvanceApproval", func() {
+		s.setup()
+
+		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		expectedError := errors.New("unexpected error")
+		s.mockApprovalService.EXPECT().AdvanceApproval(mock.Anything, mock.Anything).
+			Return(expectedError).Once()
 
 		actualResult, actualError := s.service.MakeAction(context.Background(), validApprovalActionParam)
 
+		s.mockRepository.AssertExpectations(s.T())
+		s.mockApprovalService.AssertExpectations(s.T())
+		s.ErrorIs(actualError, expectedError)
 		s.Nil(actualResult)
-		s.Contains(actualError.Error(), expectedError.Error())
-	})
-
-	expectedPolicy := &domain.Policy{
-		ID:      expectedAppeal.PolicyID,
-		Version: expectedAppeal.PolicyVersion,
-	}
-
-	s.Run("should return error if got any from repository while updating appeal", func() {
-		expectedAppeal := &domain.Appeal{
-			ID:     validApprovalActionParam.AppealID,
-			Status: domain.AppealStatusPending,
-			Approvals: []*domain.Approval{
-				{
-					Name:   "approval_0",
-					Status: domain.ApprovalStatusApproved,
-				},
-				{
-					Name:      "approval_1",
-					Status:    domain.ApprovalStatusPending,
-					Approvers: []string{"user@email.com"},
-				},
-			},
-			PolicyID:      "policy-test",
-			PolicyVersion: 1,
-		}
-
-		s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
-		expectedError := errors.New("repository error")
-		s.mockApprovalService.On("AdvanceApproval", mock.Anything, expectedAppeal).Return(nil).Once()
-		s.mockRepository.On("Find", mock.Anything).Return([]*domain.Appeal{}, nil).Once()
-		s.mockPolicyService.
-			On("GetOne", expectedAppeal.PolicyID, expectedAppeal.PolicyVersion).
-			Return(expectedPolicy, nil).
-			Once()
-		s.mockProviderService.On("GrantAccess", mock.Anything, expectedAppeal).Return(nil).Once()
-		s.mockRepository.On("Update", mock.Anything).Return(expectedError)
-		s.mockProviderService.On("RevokeAccess", mock.Anything, expectedAppeal).Return(nil).Once()
-
-		actualResult, actualError := s.service.MakeAction(context.Background(), validApprovalActionParam)
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should terminate existing active grant if present", func() {
+		s.setup()
+
 		action := domain.ApprovalAction{
 			AppealID:     "1",
 			ApprovalName: "test-approval-step",
@@ -1543,52 +1495,75 @@ func (s *ServiceTestSuite) MakeAction() {
 					Approvers: []string{"approver@example.com"},
 				},
 			},
+			Resource: &domain.Resource{
+				ID: "1",
+			},
 		}
-		existingAppeals := []*domain.Appeal{
+		existingGrants := []domain.Grant{
 			{
 				ID:         "2",
-				Status:     domain.AppealStatusActive,
+				Status:     domain.GrantStatusActive,
 				AccountID:  "user@example.com",
 				ResourceID: "1",
 				Role:       "test-role",
 			},
 		}
-		expectedTerminatedAppeal := &domain.Appeal{}
-		*expectedTerminatedAppeal = *existingAppeals[0]
-		expectedTerminatedAppeal.Status = domain.AppealStatusTerminated
+		expectedRevokedGrant := &domain.Grant{}
+		*expectedRevokedGrant = existingGrants[0]
+		expectedRevokedGrant.Status = domain.GrantStatusInactive
 
-		s.mockRepository.On("GetByID", action.AppealID).Return(appealDetails, nil).Once()
-		s.mockApprovalService.On("AdvanceApproval", mock.Anything, appealDetails).Return(nil).Once()
-		s.mockRepository.On("Find", &domain.ListAppealsFilter{
+		s.mockRepository.EXPECT().
+			GetByID(mock.Anything).Return(appealDetails, nil).Once()
+		s.mockApprovalService.EXPECT().
+			AdvanceApproval(mock.Anything, mock.Anything).Return(nil).
+			Run(func(_a0 context.Context, a *domain.Appeal) {
+				a.Approvals[0].Status = domain.ApprovalStatusApproved
+				a.Status = domain.AppealStatusApproved
+			}).Once()
+		s.mockGrantService.EXPECT().
+			List(mock.Anything, mock.Anything).Return(existingGrants, nil).Once()
+		expectedNewGrant := &domain.Grant{
+			Status:     domain.GrantStatusActive,
 			AccountID:  appealDetails.AccountID,
 			ResourceID: appealDetails.ResourceID,
-			Role:       appealDetails.Role,
-			Statuses:   []string{domain.AppealStatusActive},
-		}).
-			Return(existingAppeals, nil).
-			Once()
-		s.mockPolicyService.
-			On("GetOne", mock.Anything, mock.Anything).
-			Return(expectedPolicy, nil).
-			Once()
-		s.mockProviderService.On("GrantAccess", mock.Anything, appealDetails).Return(nil).Once()
-		s.mockRepository.On("Update", expectedTerminatedAppeal).Return(nil).Once()
-		s.mockRepository.On("Update", appealDetails).Return(nil).Once()
-		s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
+		}
+		s.mockGrantService.EXPECT().
+			Prepare(mock.Anything, mock.Anything).Return(expectedNewGrant, nil).Once()
+		s.mockGrantService.EXPECT().
+			Revoke(mock.Anything, expectedRevokedGrant.ID, domain.SystemActorName,
+				appeal.RevokeReasonForExtension, mock.Anything, mock.Anything).
+			Return(expectedNewGrant, nil).Once()
+		s.mockRepository.EXPECT().Update(appealDetails).Return(nil).Once()
+		s.mockNotifier.EXPECT().Notify(mock.Anything).Return(nil).Once()
+		s.mockAuditLogger.EXPECT().Log(mock.Anything, mock.Anything, mock.Anything).
+			Return(nil).Once()
 
 		_, actualError := s.service.MakeAction(context.Background(), action)
+
+		s.mockRepository.AssertExpectations(s.T())
+		s.mockApprovalService.AssertExpectations(s.T())
+		s.mockGrantService.AssertExpectations(s.T())
+		s.mockNotifier.AssertExpectations(s.T())
+		s.mockAuditLogger.AssertExpectations(s.T())
 		s.Nil(actualError)
 	})
 
 	s.Run("should return updated appeal on success", func() {
 		creator := "creator@email.com"
 		user := "user@email.com"
+		dummyResource := &domain.Resource{
+			ID:           "1",
+			URN:          "urn",
+			Name:         "test-resource-name",
+			ProviderType: "test-provider",
+		}
 		testCases := []struct {
 			name                   string
 			expectedApprovalAction domain.ApprovalAction
 			expectedAppealDetails  *domain.Appeal
 			expectedResult         *domain.Appeal
 			expectedNotifications  []domain.Notification
+			expectedGrant          *domain.Grant
 		}{
 			{
 				name:                   "approve",
@@ -1624,13 +1599,8 @@ func (s *ServiceTestSuite) MakeAction() {
 					CreatedBy:  creator,
 					ResourceID: "1",
 					Role:       "test-role",
-					Resource: &domain.Resource{
-						ID:           "1",
-						URN:          "urn",
-						Name:         "test-resource-name",
-						ProviderType: "test-provider",
-					},
-					Status: domain.AppealStatusActive,
+					Resource:   dummyResource,
+					Status:     domain.AppealStatusApproved,
 					Approvals: []*domain.Approval{
 						{
 							Name:   "approval_0",
@@ -1644,6 +1614,22 @@ func (s *ServiceTestSuite) MakeAction() {
 							UpdatedAt: timeNow,
 						},
 					},
+					Grant: &domain.Grant{
+						Status:      domain.GrantStatusActive,
+						AccountID:   "user@email.com",
+						AccountType: domain.DefaultAppealAccountType,
+						ResourceID:  "1",
+						Resource:    dummyResource,
+						Role:        "test-role",
+					},
+				},
+				expectedGrant: &domain.Grant{
+					Status:      domain.GrantStatusActive,
+					AccountID:   "user@email.com",
+					AccountType: domain.DefaultAppealAccountType,
+					ResourceID:  "1",
+					Resource:    dummyResource,
+					Role:        "test-role",
 				},
 				expectedNotifications: []domain.Notification{
 					{
@@ -1883,6 +1869,14 @@ func (s *ServiceTestSuite) MakeAction() {
 						},
 					},
 				},
+				expectedGrant: &domain.Grant{
+					Status:      domain.GrantStatusActive,
+					AccountID:   "user@email.com",
+					AccountType: domain.DefaultAppealAccountType,
+					ResourceID:  "1",
+					Resource:    dummyResource,
+					Role:        "test-role",
+				},
 				expectedNotifications: []domain.Notification{
 					{
 						User: "nextapprover1@email.com",
@@ -1913,32 +1907,41 @@ func (s *ServiceTestSuite) MakeAction() {
 		}
 		for _, tc := range testCases {
 			s.Run(tc.name, func() {
-				s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).
-					Return(tc.expectedAppealDetails, nil).
-					Once()
-				s.mockApprovalService.On("AdvanceApproval", mock.Anything, tc.expectedAppealDetails).
-					Return(nil).Once()
+				s.setup()
+
+				s.mockRepository.EXPECT().
+					GetByID(validApprovalActionParam.AppealID).
+					Return(tc.expectedAppealDetails, nil).Once()
+				s.mockApprovalService.EXPECT().
+					AdvanceApproval(mock.Anything, tc.expectedAppealDetails).Return(nil).
+					Run(func(_a0 context.Context, a *domain.Appeal) {
+						a.Approvals = tc.expectedResult.Approvals
+						a.Status = tc.expectedResult.Status
+					}).Once()
 				if tc.expectedApprovalAction.Action == "approve" {
-					s.mockRepository.On("Find", mock.Anything).
-						Return([]*domain.Appeal{}, nil).
-						Once()
+					s.mockGrantService.EXPECT().
+						List(mock.Anything, domain.ListGrantsFilter{
+							AccountIDs:  []string{tc.expectedAppealDetails.AccountID},
+							ResourceIDs: []string{tc.expectedAppealDetails.ResourceID},
+							Statuses:    []string{string(domain.GrantStatusActive)},
+							Permissions: tc.expectedAppealDetails.Permissions,
+						}).Return([]domain.Grant{}, nil).Once()
+					s.mockGrantService.EXPECT().
+						Prepare(mock.Anything, mock.Anything).Return(tc.expectedGrant, nil).Once()
+					s.mockPolicyService.EXPECT().
+						GetOne(mock.Anything, tc.expectedAppealDetails.PolicyID, tc.expectedAppealDetails.PolicyVersion).
+						Return(&domain.Policy{}, nil).Once()
+					s.mockProviderService.EXPECT().GrantAccess(mock.Anything, *tc.expectedGrant).Return(nil).Once()
 				}
-				s.mockPolicyService.
-					On("GetOne", tc.expectedAppealDetails.PolicyID, tc.expectedAppealDetails.PolicyVersion).
-					Return(expectedPolicy, nil).
-					Once()
-				s.mockProviderService.On("GrantAccess", mock.Anything, tc.expectedAppealDetails).
-					Return(nil).
-					Once()
-				s.mockRepository.On("Update", mock.Anything).
-					Return(nil).
-					Once()
-				s.mockNotifier.On("Notify", tc.expectedNotifications).Return(nil).Once()
+				s.mockRepository.EXPECT().Update(tc.expectedResult).Return(nil).Once()
+				s.mockNotifier.EXPECT().Notify(mock.Anything).Return(nil).Once()
+				s.mockAuditLogger.EXPECT().Log(mock.Anything, mock.Anything, mock.Anything).
+					Return(nil).Once()
 
 				actualResult, actualError := s.service.MakeAction(context.Background(), tc.expectedApprovalAction)
 
+				s.NoError(actualError)
 				s.Equal(tc.expectedResult, actualResult)
-				s.Nil(actualError)
 			})
 		}
 	})
@@ -1947,87 +1950,6 @@ func (s *ServiceTestSuite) MakeAction() {
 // func (s *ServiceTestSuite) TestCancel() {
 // 	s.Run("should return error from")
 // }
-
-func (s *ServiceTestSuite) TestRevoke() {
-	s.Run("should return error if got any while getting appeal details", func() {
-		expectedError := errors.New("repository error")
-		s.mockRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
-
-		actualResult, actualError := s.service.Revoke(context.Background(), "", "", "")
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
-	})
-
-	s.Run("should return error if appeal not found", func() {
-		s.mockRepository.On("GetByID", mock.Anything).Return(nil, appeal.ErrAppealNotFound).Once()
-		expectedError := appeal.ErrAppealNotFound
-
-		actualResult, actualError := s.service.Revoke(context.Background(), "", "", "")
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
-	})
-
-	appealID := "1"
-	actor := "user@email.com"
-	reason := "test-reason"
-
-	appealDetails := &domain.Appeal{
-		ID:         appealID,
-		ResourceID: "1",
-		Resource: &domain.Resource{
-			ID:  "1",
-			URN: "urn",
-		},
-		Status: domain.AppealStatusActive,
-		Grant: &domain.Grant{
-			Status:    domain.GrantStatusActive,
-			AccountID: "test-account-id",
-		},
-	}
-
-	s.Run("should return error if got any while updating appeal", func() {
-		s.mockRepository.On("GetByID", appealID).Return(appealDetails, nil).Once()
-		expectedError := errors.New("repository error")
-		s.mockRepository.On("Update", mock.Anything).Return(expectedError).Once()
-
-		actualResult, actualError := s.service.Revoke(context.Background(), appealID, actor, reason)
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
-	})
-
-	s.Run("should return error and rollback updated appeal if failed granting the access to the provider", func() {
-		s.mockRepository.On("GetByID", appealID).Return(appealDetails, nil).Once()
-		s.mockRepository.On("Update", mock.Anything).Return(nil).Once()
-		expectedError := errors.New("provider service error")
-		s.mockProviderService.On("RevokeAccess", mock.Anything, mock.Anything).Return(expectedError).Once()
-		s.mockRepository.On("Update", appealDetails).Return(nil).Once()
-
-		actualResult, actualError := s.service.Revoke(context.Background(), appealID, actor, reason)
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
-	})
-
-	s.Run("should return appeal and nil error on success", func() {
-		s.mockRepository.On("GetByID", appealID).Return(appealDetails, nil).Once()
-		s.mockRepository.On("Update", mock.AnythingOfType("*domain.Appeal")).Return(nil).Once()
-		s.mockProviderService.On("RevokeAccess", mock.Anything, mock.AnythingOfType("domain.Grant")).Return(nil).Once()
-		s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
-		s.mockAuditLogger.On("Log", mock.Anything, appeal.AuditKeyRevoke, mock.Anything).Return(nil).Once()
-
-		actualResult, actualError := s.service.Revoke(context.Background(), appealID, actor, reason)
-
-		s.mockRepository.AssertExpectations(s.T())
-		s.mockProviderService.AssertExpectations(s.T())
-		s.Equal(domain.AppealStatusTerminated, actualResult.Status)
-		s.Equal(actor, actualResult.RevokedBy)
-		s.Equal(reason, actualResult.RevokeReason)
-		s.Nil(actualError)
-	})
-}
 
 func (s *ServiceTestSuite) TestAddApprover() {
 	s.Run("should return appeal on success", func() {
@@ -2152,7 +2074,7 @@ func (s *ServiceTestSuite) TestAddApprover() {
 		approvalID := uuid.New().String()
 		expectedError := appeal.ErrUnableToAddApprover
 		expectedAppeal := &domain.Appeal{
-			Status: domain.AppealStatusActive,
+			Status: domain.AppealStatusApproved,
 			Approvals: []*domain.Approval{
 				{
 					ID: approvalID,
@@ -2369,7 +2291,7 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 		approvalID := uuid.New().String()
 		expectedError := appeal.ErrUnableToDeleteApprover
 		expectedAppeal := &domain.Appeal{
-			Status: domain.AppealStatusActive,
+			Status: domain.AppealStatusApproved,
 			Approvals: []*domain.Approval{
 				{
 					ID: approvalID,

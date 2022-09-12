@@ -500,8 +500,6 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 		Permissions:   appeal.Permissions,
 		Options:       a.toAppealOptionsProto(appeal.Options),
 		Labels:        appeal.Labels,
-		RevokedBy:     appeal.RevokedBy,
-		RevokeReason:  appeal.RevokeReason,
 	}
 
 	if appeal.Resource != nil {
@@ -546,9 +544,6 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 	}
 	if !appeal.UpdatedAt.IsZero() {
 		appealProto.UpdatedAt = timestamppb.New(appeal.UpdatedAt)
-	}
-	if !appeal.RevokedAt.IsZero() {
-		appealProto.RevokedAt = timestamppb.New(appeal.RevokedAt)
 	}
 
 	grantProto, err := a.ToGrantProto(appeal.Grant)
@@ -624,6 +619,45 @@ func (a *adapter) ToApprovalProto(approval *domain.Approval) (*guardianv1beta1.A
 	}
 
 	return approvalProto, nil
+}
+
+func (a *adapter) FromGrantProto(g *guardianv1beta1.Grant) *domain.Grant {
+	if g == nil {
+		return nil
+	}
+
+	grant := &domain.Grant{
+		ID:           g.GetId(),
+		Status:       domain.GrantStatus(g.GetStatus()),
+		AccountID:    g.GetAccountId(),
+		AccountType:  g.GetAccountType(),
+		ResourceID:   g.GetResourceId(),
+		Role:         g.GetRole(),
+		Permissions:  g.GetPermissions(),
+		AppealID:     g.GetAppealId(),
+		RevokedBy:    g.GetRevokedBy(),
+		RevokeReason: g.GetRevokeReason(),
+		CreatedBy:    g.GetCreatedBy(),
+		Resource:     a.FromResourceProto(g.GetResource()),
+		// Appeal: a.fromappeal,
+	}
+
+	if g.GetExpirationDate() != nil {
+		t := g.GetExpirationDate().AsTime()
+		grant.ExpirationDate = &t
+	}
+	if g.GetRevokedAt() != nil {
+		t := g.GetRevokedAt().AsTime()
+		grant.RevokedAt = &t
+	}
+	if g.GetCreatedAt() != nil {
+		grant.CreatedAt = g.GetCreatedAt().AsTime()
+	}
+	if g.GetUpdatedAt() != nil {
+		grant.UpdatedAt = g.GetUpdatedAt().AsTime()
+	}
+
+	return grant
 }
 
 func (a *adapter) ToGrantProto(grant *domain.Grant) (*guardianv1beta1.Grant, error) {

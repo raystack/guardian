@@ -40,12 +40,14 @@ func runJobCmd() *cobra.Command {
 		Short: "Fire a specific job",
 		Example: heredoc.Doc(`
 			$ guardian job run fetch_resources
-			$ guardian job run appeal_expiration_reminder
-			$ guardian job run appeal_expiration_revocation
+			$ guardian job run grant_expiration_reminder
+			$ guardian job run grant_expiration_revocation
 		`),
 		Args: cobra.ExactValidArgs(1),
 		ValidArgs: []string{
 			"fetch_resources",
+			"grant_expiration_reminder",
+			"grant_expiration_revocation",
 			"appeal_expiration_reminder",
 			"appeal_expiration_revocation",
 		},
@@ -80,15 +82,17 @@ func runJobCmd() *cobra.Command {
 
 			handler := jobs.NewHandler(
 				logger,
-				services.AppealService,
+				services.GrantService,
 				services.ProviderService,
 				notifier,
 			)
 
 			jobsMap := map[string]func(context.Context) error{
 				"fetch_resources":              handler.FetchResources,
-				"appeal_expiration_reminder":   handler.AppealExpirationReminder,
-				"appeal_expiration_revocation": handler.RevokeExpiredAppeals,
+				"grant_expiration_reminder":    handler.GrantExpirationReminder,
+				"grant_expiration_revocation":  handler.RevokeExpiredGrants,
+				"appeal_expiration_reminder":   handler.GrantExpirationReminder,
+				"appeal_expiration_revocation": handler.RevokeExpiredGrants,
 			}
 
 			jobName := args[0]

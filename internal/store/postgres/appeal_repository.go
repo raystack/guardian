@@ -15,9 +15,8 @@ import (
 var (
 	AppealStatusDefaultSort = []string{
 		domain.AppealStatusPending,
-		domain.AppealStatusActive,
+		domain.AppealStatusApproved,
 		domain.AppealStatusRejected,
-		domain.AppealStatusTerminated,
 		domain.AppealStatusCanceled,
 	}
 )
@@ -95,6 +94,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 	if filters.OrderBy != nil {
 		db = addOrderByClause(db, filters.OrderBy, addOrderByClauseOptions{
 			statusColumnName: `"appeals"."status"`,
+			statusesOrder:    AppealStatusDefaultSort,
 		})
 	}
 

@@ -11,6 +11,7 @@ import (
 
 type addOrderByClauseOptions struct {
 	statusColumnName string
+	statusesOrder    []string
 }
 
 func addOrderByClause(db *gorm.DB, conditions []string, options addOrderByClauseOptions) *gorm.DB {
@@ -20,7 +21,7 @@ func addOrderByClause(db *gorm.DB, conditions []string, options addOrderByClause
 	for _, orderBy := range conditions {
 		if strings.Contains(orderBy, "status") {
 			orderByClauses = append(orderByClauses, fmt.Sprintf(`ARRAY_POSITION(ARRAY[?], %s)`, options.statusColumnName))
-			vars = append(vars, AppealStatusDefaultSort)
+			vars = append(vars, options.statusesOrder)
 		} else {
 			columnOrder := strings.Split(orderBy, ":")
 			column := columnOrder[0]

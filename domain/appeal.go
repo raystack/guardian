@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"errors"
 	"fmt"
 	"time"
 )
@@ -10,12 +9,10 @@ const (
 	AppealActionNameApprove = "approve"
 	AppealActionNameReject  = "reject"
 
-	AppealStatusPending    = "pending"
-	AppealStatusCanceled   = "canceled"
-	AppealStatusActive     = "active" // TODO: rename AppealStatusActive to AppealStatusApproved in all business logic for the next release related to new Access entity
-	AppealStatusApproved   = "approved"
-	AppealStatusRejected   = "rejected"
-	AppealStatusTerminated = "terminated"
+	AppealStatusPending  = "pending"
+	AppealStatusCanceled = "canceled"
+	AppealStatusApproved = "approved"
+	AppealStatusRejected = "rejected"
 
 	SystemActorName = "system"
 
@@ -45,10 +42,6 @@ type Appeal struct {
 	Details       map[string]interface{} `json:"details" yaml:"details"`
 	Labels        map[string]string      `json:"labels" yaml:"labels"`
 
-	RevokedBy    string    `json:"revoked_by,omitempty" yaml:"revoked_by,omitempty"`
-	RevokedAt    time.Time `json:"revoked_at,omitempty" yaml:"revoked_at,omitempty"`
-	RevokeReason string    `json:"revoke_reason,omitempty" yaml:"revoke_reason,omitempty"`
-
 	Policy    *Policy     `json:"-" yaml:"-"`
 	Resource  *Resource   `json:"resource,omitempty" yaml:"resource,omitempty"`
 	Approvals []*Approval `json:"approvals,omitempty" yaml:"approvals,omitempty"`
@@ -77,8 +70,8 @@ func (a *Appeal) Cancel() {
 	a.Status = AppealStatusCanceled
 }
 
-func (a *Appeal) Activate() error {
-	a.Status = AppealStatusActive
+func (a *Appeal) Approve() error {
+	a.Status = AppealStatusApproved
 
 	if a.Options == nil || a.Options.Duration == "" {
 		return nil
@@ -101,25 +94,6 @@ func (a *Appeal) Activate() error {
 
 func (a *Appeal) Reject() {
 	a.Status = AppealStatusRejected
-}
-
-func (a *Appeal) Terminate() {
-	a.Status = AppealStatusTerminated
-}
-
-func (a *Appeal) Revoke(actor, reason string) error {
-	if a == nil {
-		return errors.New("apppeal is nil")
-	}
-	if actor == "" {
-		return errors.New("actor shouldn't be empty")
-	}
-
-	a.Status = AppealStatusTerminated
-	a.RevokedBy = actor
-	a.RevokeReason = reason
-	a.RevokedAt = time.Now()
-	return nil
 }
 
 func (a *Appeal) SetDefaults() {
@@ -190,12 +164,4 @@ type ListAppealsFilter struct {
 	ResourceTypes             []string  `mapstructure:"resource_types" validate:"omitempty,min=1"`
 	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 	OrderBy                   []string  `mapstructure:"order_by" validate:"omitempty,min=1"`
-}
-
-type RevokeAppealsFilter struct {
-	AccountIDs    []string `mapstructure:"account_ids" validate:"omitempty,required"`
-	ProviderTypes []string `mapstructure:"provider_types" validate:"omitempty,min=1"`
-	ProviderURNs  []string `mapstructure:"provider_urns" validate:"omitempty,min=1"`
-	ResourceTypes []string `mapstructure:"resource_types" validate:"omitempty,min=1"`
-	ResourceURNs  []string `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 }

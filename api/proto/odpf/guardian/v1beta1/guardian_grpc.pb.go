@@ -38,16 +38,12 @@ type GuardianServiceClient interface {
 	ListAppeals(ctx context.Context, in *ListAppealsRequest, opts ...grpc.CallOption) (*ListAppealsResponse, error)
 	GetAppeal(ctx context.Context, in *GetAppealRequest, opts ...grpc.CallOption) (*GetAppealResponse, error)
 	CancelAppeal(ctx context.Context, in *CancelAppealRequest, opts ...grpc.CallOption) (*CancelAppealResponse, error)
-	// Deprecated: Do not use.
-	RevokeAppeal(ctx context.Context, in *RevokeAppealRequest, opts ...grpc.CallOption) (*RevokeAppealResponse, error)
 	CreateAppeal(ctx context.Context, in *CreateAppealRequest, opts ...grpc.CallOption) (*CreateAppealResponse, error)
 	ListUserApprovals(ctx context.Context, in *ListUserApprovalsRequest, opts ...grpc.CallOption) (*ListUserApprovalsResponse, error)
 	ListApprovals(ctx context.Context, in *ListApprovalsRequest, opts ...grpc.CallOption) (*ListApprovalsResponse, error)
 	UpdateApproval(ctx context.Context, in *UpdateApprovalRequest, opts ...grpc.CallOption) (*UpdateApprovalResponse, error)
 	AddApprover(ctx context.Context, in *AddApproverRequest, opts ...grpc.CallOption) (*AddApproverResponse, error)
 	DeleteApprover(ctx context.Context, in *DeleteApproverRequest, opts ...grpc.CallOption) (*DeleteApproverResponse, error)
-	// Deprecated: Do not use.
-	RevokeAppeals(ctx context.Context, in *RevokeAppealsRequest, opts ...grpc.CallOption) (*RevokeAppealsResponse, error)
 	ListGrants(ctx context.Context, in *ListGrantsRequest, opts ...grpc.CallOption) (*ListGrantsResponse, error)
 	ListUserGrants(ctx context.Context, in *ListUserGrantsRequest, opts ...grpc.CallOption) (*ListUserGrantsResponse, error)
 	GetGrant(ctx context.Context, in *GetGrantRequest, opts ...grpc.CallOption) (*GetGrantResponse, error)
@@ -243,16 +239,6 @@ func (c *guardianServiceClient) CancelAppeal(ctx context.Context, in *CancelAppe
 	return out, nil
 }
 
-// Deprecated: Do not use.
-func (c *guardianServiceClient) RevokeAppeal(ctx context.Context, in *RevokeAppealRequest, opts ...grpc.CallOption) (*RevokeAppealResponse, error) {
-	out := new(RevokeAppealResponse)
-	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeAppeal", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *guardianServiceClient) CreateAppeal(ctx context.Context, in *CreateAppealRequest, opts ...grpc.CallOption) (*CreateAppealResponse, error) {
 	out := new(CreateAppealResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/CreateAppeal", in, out, opts...)
@@ -301,16 +287,6 @@ func (c *guardianServiceClient) AddApprover(ctx context.Context, in *AddApprover
 func (c *guardianServiceClient) DeleteApprover(ctx context.Context, in *DeleteApproverRequest, opts ...grpc.CallOption) (*DeleteApproverResponse, error) {
 	out := new(DeleteApproverResponse)
 	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/DeleteApprover", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Deprecated: Do not use.
-func (c *guardianServiceClient) RevokeAppeals(ctx context.Context, in *RevokeAppealsRequest, opts ...grpc.CallOption) (*RevokeAppealsResponse, error) {
-	out := new(RevokeAppealsResponse)
-	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/RevokeAppeals", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -386,16 +362,12 @@ type GuardianServiceServer interface {
 	ListAppeals(context.Context, *ListAppealsRequest) (*ListAppealsResponse, error)
 	GetAppeal(context.Context, *GetAppealRequest) (*GetAppealResponse, error)
 	CancelAppeal(context.Context, *CancelAppealRequest) (*CancelAppealResponse, error)
-	// Deprecated: Do not use.
-	RevokeAppeal(context.Context, *RevokeAppealRequest) (*RevokeAppealResponse, error)
 	CreateAppeal(context.Context, *CreateAppealRequest) (*CreateAppealResponse, error)
 	ListUserApprovals(context.Context, *ListUserApprovalsRequest) (*ListUserApprovalsResponse, error)
 	ListApprovals(context.Context, *ListApprovalsRequest) (*ListApprovalsResponse, error)
 	UpdateApproval(context.Context, *UpdateApprovalRequest) (*UpdateApprovalResponse, error)
 	AddApprover(context.Context, *AddApproverRequest) (*AddApproverResponse, error)
 	DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error)
-	// Deprecated: Do not use.
-	RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error)
 	ListGrants(context.Context, *ListGrantsRequest) (*ListGrantsResponse, error)
 	ListUserGrants(context.Context, *ListUserGrantsRequest) (*ListUserGrantsResponse, error)
 	GetGrant(context.Context, *GetGrantRequest) (*GetGrantResponse, error)
@@ -468,9 +440,6 @@ func (UnimplementedGuardianServiceServer) GetAppeal(context.Context, *GetAppealR
 func (UnimplementedGuardianServiceServer) CancelAppeal(context.Context, *CancelAppealRequest) (*CancelAppealResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelAppeal not implemented")
 }
-func (UnimplementedGuardianServiceServer) RevokeAppeal(context.Context, *RevokeAppealRequest) (*RevokeAppealResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RevokeAppeal not implemented")
-}
 func (UnimplementedGuardianServiceServer) CreateAppeal(context.Context, *CreateAppealRequest) (*CreateAppealResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateAppeal not implemented")
 }
@@ -488,9 +457,6 @@ func (UnimplementedGuardianServiceServer) AddApprover(context.Context, *AddAppro
 }
 func (UnimplementedGuardianServiceServer) DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteApprover not implemented")
-}
-func (UnimplementedGuardianServiceServer) RevokeAppeals(context.Context, *RevokeAppealsRequest) (*RevokeAppealsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RevokeAppeals not implemented")
 }
 func (UnimplementedGuardianServiceServer) ListGrants(context.Context, *ListGrantsRequest) (*ListGrantsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListGrants not implemented")
@@ -880,24 +846,6 @@ func _GuardianService_CancelAppeal_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GuardianService_RevokeAppeal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RevokeAppealRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GuardianServiceServer).RevokeAppeal(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/odpf.guardian.v1beta1.GuardianService/RevokeAppeal",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GuardianServiceServer).RevokeAppeal(ctx, req.(*RevokeAppealRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _GuardianService_CreateAppeal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateAppealRequest)
 	if err := dec(in); err != nil {
@@ -1002,24 +950,6 @@ func _GuardianService_DeleteApprover_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GuardianServiceServer).DeleteApprover(ctx, req.(*DeleteApproverRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _GuardianService_RevokeAppeals_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RevokeAppealsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GuardianServiceServer).RevokeAppeals(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/odpf.guardian.v1beta1.GuardianService/RevokeAppeals",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GuardianServiceServer).RevokeAppeals(ctx, req.(*RevokeAppealsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1202,10 +1132,6 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _GuardianService_CancelAppeal_Handler,
 		},
 		{
-			MethodName: "RevokeAppeal",
-			Handler:    _GuardianService_RevokeAppeal_Handler,
-		},
-		{
 			MethodName: "CreateAppeal",
 			Handler:    _GuardianService_CreateAppeal_Handler,
 		},
@@ -1228,10 +1154,6 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteApprover",
 			Handler:    _GuardianService_DeleteApprover_Handler,
-		},
-		{
-			MethodName: "RevokeAppeals",
-			Handler:    _GuardianService_RevokeAppeals_Handler,
 		},
 		{
 			MethodName: "ListGrants",
