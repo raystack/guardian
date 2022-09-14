@@ -16,3 +16,14 @@ type Resource struct {
 	UpdatedAt    time.Time              `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
 	IsDeleted    bool                   `json:"is_deleted,omitempty" yaml:"is_deleted,omitempty"`
 }
+
+type ListResourcesFilter struct {
+	IDs          []string          `mapstructure:"ids" validate:"omitempty,min=1"`
+	IsDeleted    bool              `mapstructure:"is_deleted" validate:"omitempty"`
+	ProviderType string            `mapstructure:"provider_type" validate:"omitempty"`
+	ProviderURN  string            `mapstructure:"provider_urn" validate:"omitempty"`
+	Name         string            `mapstructure:"name" validate:"omitempty"`
+	ResourceURN  string            `mapstructure:"urn" validate:"omitempty"`
+	ResourceType string            `mapstructure:"type" validate:"omitempty"`
+	Details      map[string]string `mapstructure:"details"`
+}

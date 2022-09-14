@@ -785,7 +785,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			},
 		}
 
-		expectedResourceFilters := map[string]interface{}{"ids": resourceIDs}
+		expectedResourceFilters := domain.ListResourcesFilter{IDs: resourceIDs}
 		s.mockResourceService.On("Find", mock.Anything, expectedResourceFilters).Return(resources, nil).Once()
 		s.mockProviderService.On("Find", mock.Anything).Return(providers, nil).Once()
 		s.mockPolicyService.On("Find", mock.Anything).Return(policies, nil).Once()
@@ -1117,7 +1117,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 		},
 	}
 
-	expectedResourceFilters := map[string]interface{}{"ids": resourceIDs}
+	expectedResourceFilters := domain.ListResourcesFilter{IDs: resourceIDs}
 	s.mockResourceService.On("Find", mock.Anything, expectedResourceFilters).Return(resources, nil).Once()
 	s.mockProviderService.On("Find", mock.Anything).Return(providers, nil).Once()
 	s.mockPolicyService.On("Find", mock.Anything).Return(policies, nil).Once()

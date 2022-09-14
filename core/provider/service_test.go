@@ -123,9 +123,9 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockAuditLogger.On("Log", mock.Anything, provider.AuditKeyCreate, mock.Anything).Return(nil).Once()
 
 		expectedResources := []*domain.Resource{}
-		s.mockResourceService.On("Find", mock.Anything, map[string]interface{}{
-			"provider_type": p.Type,
-			"provider_urn":  p.URN,
+		s.mockResourceService.On("Find", mock.Anything, domain.ListResourcesFilter{
+			ProviderType: p.Type,
+			ProviderURN:  p.URN,
 		}).Return([]*domain.Resource{}, nil).Once()
 		s.mockProvider.On("GetResources", p.Config).Return(expectedResources, nil).Once()
 		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil).Once()
@@ -551,9 +551,9 @@ func (s *ServiceTestSuite) TestDelete() {
 		dummyResources := []*domain.Resource{{ID: "a"}, {ID: "b"}}
 
 		s.mockProviderRepository.On("GetByID", testID).Return(dummyProvider, nil).Once()
-		s.mockResourceService.On("Find", mock.Anything, map[string]interface{}{
-			"provider_type": dummyProvider.Type,
-			"provider_urn":  dummyProvider.URN,
+		s.mockResourceService.On("Find", mock.Anything, domain.ListResourcesFilter{
+			ProviderType: dummyProvider.Type,
+			ProviderURN:  dummyProvider.URN,
 		}).Return(dummyResources, nil).Once()
 		s.mockResourceService.On("BatchDelete", mock.Anything, []string{"a", "b"}).Return(nil).Once()
 		s.mockProviderRepository.On("Delete", testID).Return(nil).Once()
