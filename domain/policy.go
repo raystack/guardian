@@ -196,6 +196,7 @@ type Policy struct {
 
 type PolicyAppealConfig struct {
 	DurationOptions []AppealDurationOption `json:"duration_options" yaml:"duration_options" validate:"omitempty,min=1,dive"`
+	AllowOnBehalf   bool                   `json:"allow_on_behalf" yaml:"allow_on_behalf"`
 }
 
 type AppealDurationOption struct {

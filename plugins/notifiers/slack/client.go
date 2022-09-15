@@ -149,6 +149,8 @@ func parseMessage(message domain.NotificationMessage, templates domain.Notificat
 		text = templates.ApproverNotification
 	case domain.NotificationTypeExpirationReminder:
 		text = templates.ExpirationReminder
+	case domain.NotificationTypeOnBehalfAppealApproved:
+		text = templates.OthersAppealApproved
 	}
 
 	t, err := template.New("notification_messages").Parse(text)

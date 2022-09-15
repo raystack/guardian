@@ -291,6 +291,7 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
 		}
 		policy.AppealConfig = &domain.PolicyAppealConfig{
 			DurationOptions: durationOptions,
+			AllowOnBehalf:   p.GetAppeal().GetAllowOnBehalf(),
 		}
 	}
 

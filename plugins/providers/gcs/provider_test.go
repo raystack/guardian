@@ -212,7 +212,6 @@ func TestGetResources(t *testing.T) {
 		assert.Nil(t, actualResources)
 		assert.Error(t, actualError)
 		crypto.AssertExpectations(t)
-
 	})
 
 	t.Run("should get the bucket resources defined in the provider config", func(t *testing.T) {
@@ -270,7 +269,6 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
-
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			name           string
@@ -479,7 +477,6 @@ func TestGrantAccess(t *testing.T) {
 	})
 
 	t.Run("should grant the access to bucket resource and return nil error", func(t *testing.T) {
-
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
 
@@ -538,7 +535,6 @@ func TestGrantAccess(t *testing.T) {
 }
 
 func TestRevokeAccess(t *testing.T) {
-
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			name           string
@@ -747,7 +743,6 @@ func TestRevokeAccess(t *testing.T) {
 	})
 
 	t.Run("should revoke the access to bucket resource and return nil error", func(t *testing.T) {
-
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
 

@@ -54,7 +54,6 @@ func (c *gcsClient) GetBuckets(ctx context.Context, projectID string) ([]*Bucket
 }
 
 func (c *gcsClient) GrantBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error {
-
 	bucketName := b.Name
 	bucket := c.client.Bucket(bucketName)
 	policy, err := bucket.IAM().Policy(ctx)
@@ -71,7 +70,6 @@ func (c *gcsClient) GrantBucketAccess(ctx context.Context, b Bucket, identity st
 }
 
 func (c *gcsClient) RevokeBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error {
-
 	bucketName := b.Name
 	bucket := c.client.Bucket(bucketName)
 	policy, err := bucket.IAM().Policy(ctx)

@@ -233,14 +233,24 @@ func (s *ServiceTestSuite) TestCreate() {
 			expectedError                 error
 		}{
 			{
-				name: "creating appeal for other normal user",
+				name: "creating appeal for other normal user with allow_on_behalf=false",
 				appeals: []*domain.Appeal{{
-					CreatedBy:  "test-user",
-					AccountID:  "test-user-2",
+					CreatedBy:  "addOnBehalfApprovedNotification-user",
+					AccountID:  "addOnBehalfApprovedNotification-user-2",
 					ResourceID: "1",
-					Role:       "test-role",
+					Role:       "addOnBehalfApprovedNotification-role",
 				}},
-				expectedError: appeal.ErrCannotCreateAppealForOtherUser,
+				resources: []*domain.Resource{{
+					ID:           "1",
+					ProviderType: testProvider.Type,
+					ProviderURN:  testProvider.URN,
+					Type:         "resource_type",
+				}},
+				providers:              []*domain.Provider{testProvider},
+				policies:               []*domain.Policy{{ID: "policy_id", Version: 1, AppealConfig: &domain.PolicyAppealConfig{AllowOnBehalf: false}}},
+				callMockValidateAppeal: true,
+				callMockGetPermissions: true,
+				expectedError:          appeal.ErrCannotCreateAppealForOtherUser,
 			},
 			{
 				name: "duplicate appeal",
@@ -659,6 +669,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						"url": "http://localhost",
 					},
 				},
+				AppealConfig: &domain.PolicyAppealConfig{AllowOnBehalf: true},
 			},
 		}
 		expectedCreatorUser := map[string]interface{}{
@@ -666,7 +677,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		expectedAppealsInsertionParam := []*domain.Appeal{}
 		for i, r := range resourceIDs {
-			expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, &domain.Appeal{
+			appeal := &domain.Appeal{
 				ResourceID:    r,
 				Resource:      resources[i],
 				PolicyID:      "policy_1",
@@ -696,7 +707,11 @@ func (s *ServiceTestSuite) TestCreate() {
 						Approvers:     []string{"user.approver@email.com"},
 					},
 				},
-			})
+			}
+			if r == "2" {
+				appeal.AccountID = "addOnBehalfApprovedNotification-user"
+			}
+			expectedAppealsInsertionParam = append(expectedAppealsInsertionParam, appeal)
 		}
 		expectedResult := []*domain.Appeal{
 			{
@@ -740,7 +755,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				PolicyID:      "policy_1",
 				PolicyVersion: 1,
 				Status:        domain.AppealStatusPending,
-				AccountID:     accountID,
+				AccountID:     "addOnBehalfApprovedNotification-user",
 				AccountType:   domain.DefaultAppealAccountType,
 				CreatedBy:     accountID,
 				Creator:       expectedCreatorUser,
@@ -818,7 +833,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			},
 			{
 				CreatedBy:  accountID,
-				AccountID:  accountID,
+				AccountID:  "addOnBehalfApprovedNotification-user",
 				ResourceID: "2",
 				Resource: &domain.Resource{
 					ID:  "2",
