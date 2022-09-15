@@ -368,7 +368,12 @@ func (s *Service) ListAccess(ctx context.Context, providerID string, resources [
 	filteredAccessEntries := domain.ResourceAccess{}
 	for _, r := range resources {
 		if providerAccesses[r.URN] != nil {
-			filteredAccessEntries[r.URN] = providerAccesses[r.URN]
+			filteredAccessEntries[r.URN] = []domain.AccessEntry{}
+			for _, ae := range providerAccesses[r.URN] {
+				if utils.ContainsString(p.Config.AllowedAccountTypes, ae.AccountType) {
+					filteredAccessEntries[r.URN] = append(filteredAccessEntries[r.URN], ae)
+				}
+			}
 		}
 	}
 
