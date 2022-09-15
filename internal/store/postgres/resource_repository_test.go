@@ -149,6 +149,20 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 			{
 				name: "filter by details",
 				filters: domain.ListResourcesFilter{
+					ResourceURNs: []string{"test-urn"},
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "urn" IN ($2) AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{false, "test-urn"},
+			},
+			{
+				filters: domain.ListResourcesFilter{
+					ResourceTypes: []string{"test-type"},
+				},
+				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "type" IN ($2) AND "resources"."deleted_at" IS NULL`),
+				expectedArgs:  []driver.Value{false, "test-type"},
+			},
+			{
+				filters: domain.ListResourcesFilter{
 					Details: map[string]string{
 						"foo": "bar",
 					},

@@ -49,6 +49,12 @@ func (r *ResourceRepository) Find(filter domain.ListResourcesFilter) ([]*domain.
 	if filter.ResourceURN != "" {
 		db = db.Where(`"urn" = ?`, filter.ResourceURN)
 	}
+	if filter.ResourceURNs != nil {
+		db = db.Where(`"urn" IN ?`, filter.ResourceURNs)
+	}
+	if filter.ResourceTypes != nil {
+		db = db.Where(`"type" IN ?`, filter.ResourceTypes)
+	}
 	for path, v := range filter.Details {
 		pathArr := "{" + strings.Join(strings.Split(path, "."), ",") + "}"
 		db = db.Where(`"details" #>> ? = ?`, pathArr, v)
