@@ -120,13 +120,13 @@ func (_c *GrantService_GetByID_Call) Return(_a0 *domain.Grant, _a1 error) *Grant
 	return _c
 }
 
-// ImportAccess provides a mock function with given fields: ctx, providerID
-func (_m *GrantService) ImportAccess(ctx context.Context, providerID string) ([]*domain.Grant, error) {
-	ret := _m.Called(ctx, providerID)
+// ImportAccess provides a mock function with given fields: ctx, criteria
+func (_m *GrantService) ImportAccess(ctx context.Context, criteria grant.ImportAccessCriteria) ([]*domain.Grant, error) {
+	ret := _m.Called(ctx, criteria)
 
 	var r0 []*domain.Grant
-	if rf, ok := ret.Get(0).(func(context.Context, string) []*domain.Grant); ok {
-		r0 = rf(ctx, providerID)
+	if rf, ok := ret.Get(0).(func(context.Context, grant.ImportAccessCriteria) []*domain.Grant); ok {
+		r0 = rf(ctx, criteria)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*domain.Grant)
@@ -134,8 +134,8 @@ func (_m *GrantService) ImportAccess(ctx context.Context, providerID string) ([]
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, providerID)
+	if rf, ok := ret.Get(1).(func(context.Context, grant.ImportAccessCriteria) error); ok {
+		r1 = rf(ctx, criteria)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -150,14 +150,14 @@ type GrantService_ImportAccess_Call struct {
 
 // ImportAccess is a helper method to define mock.On call
 //  - ctx context.Context
-//  - providerID string
-func (_e *GrantService_Expecter) ImportAccess(ctx interface{}, providerID interface{}) *GrantService_ImportAccess_Call {
-	return &GrantService_ImportAccess_Call{Call: _e.mock.On("ImportAccess", ctx, providerID)}
+//  - criteria grant.ImportAccessCriteria
+func (_e *GrantService_Expecter) ImportAccess(ctx interface{}, criteria interface{}) *GrantService_ImportAccess_Call {
+	return &GrantService_ImportAccess_Call{Call: _e.mock.On("ImportAccess", ctx, criteria)}
 }
 
-func (_c *GrantService_ImportAccess_Call) Run(run func(ctx context.Context, providerID string)) *GrantService_ImportAccess_Call {
+func (_c *GrantService_ImportAccess_Call) Run(run func(ctx context.Context, criteria grant.ImportAccessCriteria)) *GrantService_ImportAccess_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(grant.ImportAccessCriteria))
 	})
 	return _c
 }

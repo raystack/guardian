@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
+	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"google.golang.org/grpc/codes"
@@ -148,7 +149,12 @@ func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1beta1.ListRol
 }
 
 func (s *GRPCServer) ImportAccess(ctx context.Context, req *guardianv1beta1.ImportAccessRequest) (*guardianv1beta1.ImportAccessResponse, error) {
-	grants, err := s.grantService.ImportAccess(ctx, req.GetId())
+	grants, err := s.grantService.ImportAccess(ctx, grant.ImportAccessCriteria{
+		ProviderID:   req.GetId(),
+		ResourceIDs:  req.GetResourceIds(),
+		ResouceTypes: req.GetResourceTypes(),
+		ResourceURNs: req.GetResourceTypes(),
+	})
 	if err != nil {
 		if errors.Is(err, provider.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "provider with id %q not found: %v", req.GetId(), err)

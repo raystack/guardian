@@ -25,13 +25,14 @@ type repository interface {
 
 //go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
+	GetByID(context.Context, string) (*domain.Provider, error)
 	RevokeAccess(context.Context, domain.Grant) error
-	ListAccess(context.Context, string) (*domain.Provider, domain.ResourceAccess, error)
+	ListAccess(context.Context, string, []*domain.Resource) (*domain.Provider, domain.ResourceAccess, error)
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter
 type resourceService interface {
-	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
+	Find(context.Context, domain.ListResourcesFilter) ([]*domain.Resource, error)
 }
 
 //go:generate mockery --name=auditLogger --exported --with-expecter
@@ -268,19 +269,39 @@ func (s *Service) expiredInActiveUserAccess(ctx context.Context, timeLimiter cha
 	}
 }
 
-func (s *Service) ImportAccess(ctx context.Context, providerID string) ([]*domain.Grant, error) {
-	p, resourceAccess, err := s.providerService.ListAccess(ctx, providerID)
+type ImportAccessCriteria struct {
+	ProviderID   string `validate:"required"`
+	ResourceIDs  []string
+	ResouceTypes []string
+	ResourceURNs []string
+}
+
+func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteria) ([]*domain.Grant, error) {
+	p, err := s.providerService.GetByID(ctx, criteria.ProviderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting provider details: %w", err)
+	}
+
+	listResourcesFilter := domain.ListResourcesFilter{
+		ProviderType: p.Type,
+		ProviderURN:  p.URN,
+	}
+	if criteria.ResourceIDs != nil {
+		listResourcesFilter.IDs = criteria.ResourceIDs
+	} else {
+		listResourcesFilter.ResourceTypes = criteria.ResouceTypes
+		listResourcesFilter.ResourceURNs = criteria.ResourceURNs
+	}
+	resources, err := s.resourceService.Find(ctx, listResourcesFilter)
+	if err != nil {
+		return nil, fmt.Errorf("getting resources: %w", err)
+	}
+
+	_, resourceAccess, err := s.providerService.ListAccess(ctx, criteria.ProviderID, resources)
 	if err != nil {
 		return nil, fmt.Errorf("fetching access from provider: %w", err)
 	}
 
-	resources, err := s.resourceService.Find(ctx, map[string]interface{}{
-		"provider_type": p.Type,
-		"provider_urn":  p.URN,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("getting resources: %w", err)
-	}
 	resourcesMap := map[string]*domain.Resource{}
 	for _, r := range resources {
 		resourcesMap[r.URN] = r
@@ -289,6 +310,8 @@ func (s *Service) ImportAccess(ctx context.Context, providerID string) ([]*domai
 	grants, err := s.repo.List(ctx, domain.ListGrantsFilter{
 		ProviderTypes: []string{p.Type},
 		ProviderURNs:  []string{p.URN},
+		ResourceTypes: criteria.ResouceTypes,
+		ResourceURNs:  criteria.ResourceURNs,
 		Statuses:      []string{string(domain.GrantStatusActive)},
 	})
 	if err != nil {
