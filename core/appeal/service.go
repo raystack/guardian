@@ -362,7 +362,7 @@ func validateAppealDurationConfig(appeal *domain.Appeal, policy *domain.Policy) 
 
 func validateAppealOnBehalf(a *domain.Appeal, policy *domain.Policy) error {
 	if a.AccountType == domain.DefaultAppealAccountType {
-		if policy.AppealConfig != nil && policy.AppealConfig.AllowOnBehalf == true {
+		if policy.AppealConfig != nil && policy.AppealConfig.AllowOnBehalf {
 			return nil
 		}
 		if a.AccountID != a.CreatedBy {
