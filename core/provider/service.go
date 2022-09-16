@@ -360,24 +360,22 @@ func (s *Service) ListAccess(ctx context.Context, providerID string, resources [
 	}
 
 	c := s.getClient(p.Type)
-	providerAccesses, err := c.ListAccess(ctx, *p.Config)
+	providerAccesses, err := c.ListAccess(ctx, *p.Config, resources)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	filteredAccessEntries := domain.ResourceAccess{}
-	for _, r := range resources {
-		if providerAccesses[r.URN] != nil {
-			filteredAccessEntries[r.URN] = []domain.AccessEntry{}
-			for _, ae := range providerAccesses[r.URN] {
-				if utils.ContainsString(p.Config.AllowedAccountTypes, ae.AccountType) {
-					filteredAccessEntries[r.URN] = append(filteredAccessEntries[r.URN], ae)
-				}
+	for resourceURN, accessEntries := range providerAccesses {
+		var filteredAccessEntries []domain.AccessEntry
+		for _, ae := range accessEntries {
+			if utils.ContainsString(p.Config.AllowedAccountTypes, ae.AccountType) {
+				filteredAccessEntries = append(filteredAccessEntries, ae)
 			}
 		}
+		providerAccesses[resourceURN] = filteredAccessEntries
 	}
 
-	return p, filteredAccessEntries, nil
+	return p, providerAccesses, nil
 }
 
 func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*domain.Resource, error) {

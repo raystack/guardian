@@ -21,7 +21,7 @@ type BigQueryClient interface {
 	GrantTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
 	RevokeTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
 	ResolveDatasetRole(role string) (bq.AccessRole, error)
-	ListAccess(ctx context.Context, resourceTypes []string) (domain.ResourceAccess, error)
+	ListAccess(ctx context.Context, resources []*domain.Resource) (domain.ResourceAccess, error)
 }
 
 //go:generate mockery --name=crypto --exported --with-expecter
@@ -226,7 +226,7 @@ func (p *Provider) GetAccountTypes() []string {
 	}
 }
 
-func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig) (domain.ResourceAccess, error) {
+func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, resources []*domain.Resource) (domain.ResourceAccess, error) {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return nil, fmt.Errorf("parsing credentials: %w", err)
@@ -236,7 +236,7 @@ func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig) (do
 		return nil, fmt.Errorf("initializing bigquery client: %w", err)
 	}
 
-	return bqClient.ListAccess(ctx, pc.GetResourceTypes())
+	return bqClient.ListAccess(ctx, resources)
 }
 
 func (p *Provider) getBigQueryClient(credentials Credentials) (BigQueryClient, error) {

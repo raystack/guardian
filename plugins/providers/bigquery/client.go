@@ -8,7 +8,6 @@ import (
 
 	bq "cloud.google.com/go/bigquery"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/utils"
 	bqApi "google.golang.org/api/bigquery/v2"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/iterator"
@@ -266,27 +265,23 @@ func (c *bigQueryClient) RevokeTableAccess(ctx context.Context, t *Table, accoun
 	return err
 }
 
-func (c *bigQueryClient) ListAccess(ctx context.Context, resourceTypes []string) (domain.ResourceAccess, error) {
+func (c *bigQueryClient) ListAccess(ctx context.Context, resources []*domain.Resource) (domain.ResourceAccess, error) {
 	access := make(domain.ResourceAccess)
 
-	datasetIt := c.client.Datasets(ctx)
-	for {
-		d, err := datasetIt.Next()
-		if errors.Is(err, iterator.Done) {
-			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("listing datasets: %w", err)
-		}
+	for _, r := range resources {
+		var accessEntries []domain.AccessEntry
 
-		if utils.ContainsString(resourceTypes, ResourceTypeDataset) {
-			m, err := d.Metadata(ctx)
+		switch r.Type {
+		case ResourceTypeDataset:
+			d := new(Dataset)
+			d.FromDomain(r)
+
+			md, err := c.client.Dataset(d.DatasetID).Metadata(ctx)
 			if err != nil {
-				return nil, fmt.Errorf("getting dataset access: %w", err)
+				return nil, fmt.Errorf("getting dataset access entries of %q, %w", r.URN, err)
 			}
 
-			var accessEntries []domain.AccessEntry
-			for _, a := range m.Access {
+			for _, a := range md.Access {
 				ae := datasetAccessEntry(*a)
 				accessEntries = append(accessEntries, domain.AccessEntry{
 					AccountID:   a.Entity,
@@ -294,50 +289,38 @@ func (c *bigQueryClient) ListAccess(ctx context.Context, resourceTypes []string)
 					Permission:  string(a.Role),
 				})
 			}
+		case ResourceTypeTable:
+			t := new(Table)
+			t.FromDomain(r)
 
-			urn := fmt.Sprintf("%s:%s", d.ProjectID, d.DatasetID)
-			access[urn] = accessEntries
+			resourceName := fmt.Sprintf("projects/%s/datasets/%s/tables/%s", c.projectID, t.DatasetID, t.TableID)
+			getIamPolicyRequest := &bqApi.GetIamPolicyRequest{
+				Options: &bqApi.GetPolicyOptions{RequestedPolicyVersion: 1},
+			}
+			policy, err := c.apiClient.Tables.GetIamPolicy(resourceName, getIamPolicyRequest).Do()
+			if err != nil {
+				return nil, fmt.Errorf("getting table access entries of %q, %w", r.URN, err)
+			}
+
+			for _, b := range policy.Bindings {
+				for _, m := range b.Members {
+					member := strings.Split(m, ":")
+					if len(member) != 2 {
+						return nil, errors.New("invalid table access member signature")
+					}
+					accountType := member[0]
+					accountID := member[1]
+					accessEntries = append(accessEntries, domain.AccessEntry{
+						AccountID:   accountID,
+						AccountType: accountType,
+						Permission:  b.Role,
+					})
+				}
+			}
 		}
 
-		if utils.ContainsString(resourceTypes, ResourceTypeTable) {
-			tableIt := d.Tables(ctx)
-			for {
-				t, err := tableIt.Next()
-				if errors.Is(err, iterator.Done) {
-					break
-				}
-				if err != nil {
-					return nil, fmt.Errorf("listing tables: %w", err)
-				}
-
-				resourceName := fmt.Sprintf("projects/%s/datasets/%s/tables/%s", c.projectID, t.DatasetID, t.TableID)
-				getIamPolicyRequest := &bqApi.GetIamPolicyRequest{
-					Options: &bqApi.GetPolicyOptions{RequestedPolicyVersion: 1},
-				}
-				policy, err := c.apiClient.Tables.GetIamPolicy(resourceName, getIamPolicyRequest).Do()
-				if err != nil {
-					return nil, fmt.Errorf("getting access for %q: %w", resourceName, err)
-				}
-				var accessEntries []domain.AccessEntry
-				for _, b := range policy.Bindings {
-					for _, m := range b.Members {
-						member := strings.Split(m, ":")
-						if len(member) != 2 {
-							return nil, errors.New("invalid table access member signature")
-						}
-						accountType := member[0]
-						accountID := member[1]
-						accessEntries = append(accessEntries, domain.AccessEntry{
-							AccountID:   accountID,
-							AccountType: accountType,
-							Permission:  b.Role,
-						})
-					}
-				}
-
-				urn := fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID)
-				access[urn] = accessEntries
-			}
+		if accessEntries != nil {
+			access[r.URN] = accessEntries
 		}
 	}
 

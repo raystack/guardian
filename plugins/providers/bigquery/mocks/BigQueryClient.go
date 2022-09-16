@@ -201,13 +201,13 @@ func (_c *BigQueryClient_GrantTableAccess_Call) Return(_a0 error) *BigQueryClien
 	return _c
 }
 
-// ListAccess provides a mock function with given fields: ctx, resourceTypes
-func (_m *BigQueryClient) ListAccess(ctx context.Context, resourceTypes []string) (domain.ResourceAccess, error) {
-	ret := _m.Called(ctx, resourceTypes)
+// ListAccess provides a mock function with given fields: ctx, resources
+func (_m *BigQueryClient) ListAccess(ctx context.Context, resources []*domain.Resource) (domain.ResourceAccess, error) {
+	ret := _m.Called(ctx, resources)
 
 	var r0 domain.ResourceAccess
-	if rf, ok := ret.Get(0).(func(context.Context, []string) domain.ResourceAccess); ok {
-		r0 = rf(ctx, resourceTypes)
+	if rf, ok := ret.Get(0).(func(context.Context, []*domain.Resource) domain.ResourceAccess); ok {
+		r0 = rf(ctx, resources)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(domain.ResourceAccess)
@@ -215,8 +215,8 @@ func (_m *BigQueryClient) ListAccess(ctx context.Context, resourceTypes []string
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, []string) error); ok {
-		r1 = rf(ctx, resourceTypes)
+	if rf, ok := ret.Get(1).(func(context.Context, []*domain.Resource) error); ok {
+		r1 = rf(ctx, resources)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -231,14 +231,14 @@ type BigQueryClient_ListAccess_Call struct {
 
 // ListAccess is a helper method to define mock.On call
 //  - ctx context.Context
-//  - resourceTypes []string
-func (_e *BigQueryClient_Expecter) ListAccess(ctx interface{}, resourceTypes interface{}) *BigQueryClient_ListAccess_Call {
-	return &BigQueryClient_ListAccess_Call{Call: _e.mock.On("ListAccess", ctx, resourceTypes)}
+//  - resources []*domain.Resource
+func (_e *BigQueryClient_Expecter) ListAccess(ctx interface{}, resources interface{}) *BigQueryClient_ListAccess_Call {
+	return &BigQueryClient_ListAccess_Call{Call: _e.mock.On("ListAccess", ctx, resources)}
 }
 
-func (_c *BigQueryClient_ListAccess_Call) Run(run func(ctx context.Context, resourceTypes []string)) *BigQueryClient_ListAccess_Call {
+func (_c *BigQueryClient_ListAccess_Call) Run(run func(ctx context.Context, resources []*domain.Resource)) *BigQueryClient_ListAccess_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]string))
+		run(args[0].(context.Context), args[1].([]*domain.Resource))
 	})
 	return _c
 }

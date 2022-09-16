@@ -59,6 +59,6 @@ func (c *UnimplementedClient) GetRoles(*domain.ProviderConfig, string) ([]*domai
 	return nil, fmt.Errorf("GetRoles %w", ErrUnimplementedMethod)
 }
 
-func (c *UnimplementedClient) ListAccess(context.Context, domain.ProviderConfig) (domain.ResourceAccess, error) {
+func (c *UnimplementedClient) ListAccess(context.Context, domain.ProviderConfig, []*domain.Resource) (domain.ResourceAccess, error) {
 	return nil, fmt.Errorf("ListAccess %w", ErrUnimplementedMethod)
 }
