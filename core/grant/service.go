@@ -357,6 +357,9 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 			})
 		}
 	}
+	if len(importedGrants) == 0 {
+		return nil, ErrEmptyImportedGrants
+	}
 
 	if err := s.repo.BulkInsert(ctx, importedGrants); err != nil {
 		return nil, fmt.Errorf("inserting imported grants into the db: %w", err)

@@ -156,9 +156,13 @@ func (s *GRPCServer) ImportAccess(ctx context.Context, req *guardianv1beta1.Impo
 		ResourceURNs: req.GetResourceTypes(),
 	})
 	if err != nil {
-		if errors.Is(err, provider.ErrRecordNotFound) {
+		switch {
+		case errors.Is(err, provider.ErrRecordNotFound):
 			return nil, status.Errorf(codes.NotFound, "provider with id %q not found: %v", req.GetId(), err)
+		case errors.Is(err, grant.ErrEmptyImportedGrants):
+			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
+
 		return nil, status.Errorf(codes.Internal, "failed to import access: %v", err)
 	}
 
