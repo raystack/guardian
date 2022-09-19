@@ -92,7 +92,7 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *guardianv1beta1.Upda
 	}, nil
 }
 
-func (s *GRPCServer) GetPolicyAppealConfig(ctx context.Context, req *guardianv1beta1.GetPolicyPreferencesRequest) (*guardianv1beta1.GetPolicyPreferencesResponse, error) {
+func (s *GRPCServer) GetPolicyPreferences(ctx context.Context, req *guardianv1beta1.GetPolicyPreferencesRequest) (*guardianv1beta1.GetPolicyPreferencesResponse, error) {
 	p, err := s.policyService.GetOne(ctx, req.GetId(), uint(req.GetVersion()))
 	if err != nil {
 		switch err {
