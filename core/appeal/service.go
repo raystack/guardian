@@ -766,12 +766,12 @@ func (s *Service) getPoliciesMap(ctx context.Context) (map[string]map[uint]*doma
 }
 
 func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) ([]string, error) {
-	var approvers []string
+	distinctApprovers := map[string]bool{}
 
 	// TODO: validate from policyService.Validate(policy)
 	for _, expr := range expressions {
 		if err := s.validator.Var(expr, "email"); err == nil {
-			approvers = append(approvers, expr)
+			distinctApprovers[expr] = true
 		} else {
 			appealMap, err := structToMap(appeal)
 			if err != nil {
@@ -789,13 +789,13 @@ func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) 
 			value := reflect.ValueOf(approversValue)
 			switch value.Type().Kind() {
 			case reflect.String:
-				approvers = append(approvers, value.String())
+				distinctApprovers[value.String()] = true
 			case reflect.Slice:
 				for i := 0; i < value.Len(); i++ {
 					itemValue := reflect.ValueOf(value.Index(i).Interface())
 					switch itemValue.Type().Kind() {
 					case reflect.String:
-						approvers = append(approvers, itemValue.String())
+						distinctApprovers[itemValue.String()] = true
 					default:
 						return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, itemValue.Type().Kind())
 					}
@@ -804,6 +804,11 @@ func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) 
 				return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, value.Type().Kind())
 			}
 		}
+	}
+
+	var approvers []string
+	for email := range distinctApprovers {
+		approvers = append(approvers, email)
 	}
 
 	if err := s.validator.Var(approvers, "dive,email"); err != nil {
