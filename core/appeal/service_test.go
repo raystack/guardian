@@ -660,6 +660,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						Strategy: "manual",
 						Approvers: []string{
 							"$appeal.creator.managers",
+							"$appeal.creator.managers", // test duplicate approvers
 						},
 					},
 				},
