@@ -806,10 +806,11 @@ func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) 
 		}
 	}
 
-	if err := s.validator.Var(approvers, "dive,email"); err != nil {
+	distinctApprovers := uniqueSlice(approvers)
+	if err := s.validator.Var(distinctApprovers, "dive,email"); err != nil {
 		return nil, err
 	}
-	return approvers, nil
+	return distinctApprovers, nil
 }
 
 func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
@@ -1158,4 +1159,17 @@ func (s *Service) prepareGrant(ctx context.Context, appeal *domain.Appeal) (newG
 	}
 
 	return grant, deactivatedGrant, nil
+}
+
+func uniqueSlice(arr []string) []string {
+	keys := map[string]bool{}
+	result := []string{}
+
+	for _, v := range arr {
+		if _, exist := keys[v]; !exist {
+			result = append(result, v)
+			keys[v] = true
+		}
+	}
+	return result
 }
