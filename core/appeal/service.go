@@ -766,12 +766,12 @@ func (s *Service) getPoliciesMap(ctx context.Context) (map[string]map[uint]*doma
 }
 
 func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) ([]string, error) {
-	distinctApprovers := map[string]bool{}
+	var approvers []string
 
 	// TODO: validate from policyService.Validate(policy)
 	for _, expr := range expressions {
 		if err := s.validator.Var(expr, "email"); err == nil {
-			distinctApprovers[expr] = true
+			approvers = append(approvers, expr)
 		} else {
 			appealMap, err := structToMap(appeal)
 			if err != nil {
@@ -789,13 +789,13 @@ func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) 
 			value := reflect.ValueOf(approversValue)
 			switch value.Type().Kind() {
 			case reflect.String:
-				distinctApprovers[value.String()] = true
+				approvers = append(approvers, value.String())
 			case reflect.Slice:
 				for i := 0; i < value.Len(); i++ {
 					itemValue := reflect.ValueOf(value.Index(i).Interface())
 					switch itemValue.Type().Kind() {
 					case reflect.String:
-						distinctApprovers[itemValue.String()] = true
+						approvers = append(approvers, itemValue.String())
 					default:
 						return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, itemValue.Type().Kind())
 					}
@@ -806,15 +806,11 @@ func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) 
 		}
 	}
 
-	var approvers []string
-	for email := range distinctApprovers {
-		approvers = append(approvers, email)
-	}
-
-	if err := s.validator.Var(approvers, "dive,email"); err != nil {
+	distinctApprovers := uniqueSlice(approvers)
+	if err := s.validator.Var(distinctApprovers, "dive,email"); err != nil {
 		return nil, err
 	}
-	return approvers, nil
+	return distinctApprovers, nil
 }
 
 func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
@@ -1163,4 +1159,17 @@ func (s *Service) prepareGrant(ctx context.Context, appeal *domain.Appeal) (newG
 	}
 
 	return grant, deactivatedGrant, nil
+}
+
+func uniqueSlice(arr []string) []string {
+	keys := map[string]bool{}
+	result := []string{}
+
+	for _, v := range arr {
+		if _, exist := keys[v]; !exist {
+			result = append(result, v)
+			keys[v] = true
+		}
+	}
+	return result
 }
