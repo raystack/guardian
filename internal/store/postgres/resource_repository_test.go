@@ -60,154 +60,123 @@ func (s *ResourceRepositoryTestSuite) TearDownSuite() {
 	}
 }
 
-//func (s *ResourceRepositoryTestSuite) TestFind() {
-//	s.Run("should pass conditions based on filters", func() {
-//		resourceID1 := uuid.New().String()
-//		resourceID2 := uuid.New().String()
-//		testCases := []struct {
-//			filters       map[string]interface{}
-//			expectedQuery string
-//			expectedArgs  []driver.Value
-//		}{
-//			{
-//				filters:       map[string]interface{}{},
-//				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "resources"."deleted_at" IS NULL`),
-//				expectedArgs:  []driver.Value{false},
-//			},
-//			{
-//				filters: map[string]interface{}{
-//					"ids": []string{resourceID1, resourceID2},
-//				},
-//				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."id" IN ($1,$2) AND "is_deleted" = $3 AND "resources"."deleted_at" IS NULL`),
-//				expectedArgs:  []driver.Value{resourceID1, resourceID2, false},
-//			},
-//			{
-//				filters: map[string]interface{}{
-//					"type": "test-type",
-//				},
-//				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "type" = $2 AND "resources"."deleted_at" IS NULL`),
-//				expectedArgs:  []driver.Value{false, "test-type"},
-//			},
-//			{
-//				filters: map[string]interface{}{
-//					"name": "test-name",
-//				},
-//				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "name" = $2 AND "resources"."deleted_at" IS NULL`),
-//				expectedArgs:  []driver.Value{false, "test-name"},
-//			},
-//			{
-//				filters: map[string]interface{}{
-//					"provider_type": "test-provider-type",
-//				},
-//				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "provider_type" = $2 AND "resources"."deleted_at" IS NULL`),
-//				expectedArgs:  []driver.Value{false, "test-provider-type"},
-//			},
-//			{
-//				filters: map[string]interface{}{
-//					"provider_urn": "test-provider-urn",
-//				},
-//				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "provider_urn" = $2 AND "resources"."deleted_at" IS NULL`),
-//				expectedArgs:  []driver.Value{false, "test-provider-urn"},
-//			},
-//			{
-//				filters: map[string]interface{}{
-//					"urn": "test-urn",
-//				},
-//				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "urn" = $2 AND "resources"."deleted_at" IS NULL`),
-//				expectedArgs:  []driver.Value{false, "test-urn"},
-//			},
-//			{
-//				filters: map[string]interface{}{
-//					"details": map[string]string{
-//						"foo": "bar",
-//					},
-//				},
-//				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "details" #>> $2 = $3 AND "resources"."deleted_at" IS NULL`),
-//				expectedArgs:  []driver.Value{false, "{foo}", "bar"},
-//			},
-//		}
-//
-//		for _, tc := range testCases {
-//			s.dbmock.ExpectQuery(tc.expectedQuery).WithArgs(tc.expectedArgs...).WillReturnRows(sqlmock.NewRows(s.columnNames))
-//
-//			_, actualError := s.repository.Find(tc.filters)
-//
-//			s.Nil(actualError)
-//			s.NoError(s.dbmock.ExpectationsWereMet())
-//		}
-//	})
-//
-//	s.Run("should return error if filters has invalid value", func() {
-//		invalidFilters := map[string]interface{}{
-//			"name": make(chan int), // invalid value
-//		}
-//		actualRecords, actualError := s.repository.Find(invalidFilters)
-//
-//		s.Error(actualError)
-//		s.Nil(actualRecords)
-//	})
-//
-//	s.Run("should return error if filters validation returns an error", func() {
-//		invalidFilters := map[string]interface{}{
-//			"ids": []string{},
-//		}
-//		actualRecords, actualError := s.repository.Find(invalidFilters)
-//
-//		s.Error(actualError)
-//		s.Nil(actualRecords)
-//	})
-//
-//	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "resources"."deleted_at" IS NULL`)
-//	expectedArgs := []driver.Value{false}
-//	s.Run("should return error if db returns error", func() {
-//		expectedError := errors.New("unexpected error")
-//
-//		s.dbmock.ExpectQuery(expectedQuery).WithArgs(expectedArgs...).
-//			WillReturnError(expectedError)
-//
-//		actualRecords, actualError := s.repository.Find(map[string]interface{}{})
-//
-//		s.EqualError(actualError, expectedError.Error())
-//		s.Nil(actualRecords)
-//		s.NoError(s.dbmock.ExpectationsWereMet())
-//	})
-//
-//	s.Run("should return list of records on success", func() {
-//		timeNow := time.Now()
-//		resourceID := uuid.New().String()
-//		expectedRecords := []*domain.Resource{
-//			{
-//				ID:           resourceID,
-//				ProviderType: "provider_type_test",
-//				ProviderURN:  "provider_urn_test",
-//				Type:         "type_test",
-//				URN:          "urn_test",
-//				CreatedAt:    timeNow,
-//				UpdatedAt:    timeNow,
-//			},
-//		}
-//		expectedRows := sqlmock.NewRows(s.columnNames).
-//			AddRow(
-//				resourceID,
-//				"provider_type_test",
-//				"provider_urn_test",
-//				"type_test",
-//				"urn_test",
-//				"null",
-//				"null",
-//				timeNow,
-//				timeNow,
-//			)
-//
-//		s.dbmock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
-//
-//		actualRecords, actualError := s.repository.Find(map[string]interface{}{})
-//
-//		s.Equal(expectedRecords, actualRecords)
-//		s.Nil(actualError)
-//		s.NoError(s.dbmock.ExpectationsWereMet())
-//	})
-//}
+func (s *ResourceRepositoryTestSuite) TestFind() {
+	s.Run("should pass conditions based on filters", func() {
+		dummyResources := []*domain.Resource{
+			{
+				ProviderType: s.dummyProvider.Type,
+				ProviderURN:  s.dummyProvider.URN,
+				Type:         "test_type",
+				URN:          "test_urn_1",
+				Name:         "test_name_1",
+				Details: map[string]interface{}{
+					"foo": "bar",
+				},
+			},
+			{
+				ProviderType: s.dummyProvider.Type,
+				ProviderURN:  s.dummyProvider.URN,
+				Type:         "test_type",
+				URN:          "test_urn_2",
+				Name:         "test_name_2",
+			},
+		}
+		err := s.repository.BulkUpsert(dummyResources)
+		s.Require().NoError(err)
+
+		testCases := []struct {
+			name           string
+			filters        map[string]interface{}
+			expectedResult []*domain.Resource
+		}{
+			{
+				filters:        map[string]interface{}{},
+				expectedResult: dummyResources,
+			},
+			{
+				filters: map[string]interface{}{
+					"ids": []string{dummyResources[0].ID},
+				},
+				expectedResult: []*domain.Resource{dummyResources[0]},
+			},
+			{
+				filters: map[string]interface{}{
+					"type": "test_type",
+				},
+				expectedResult: dummyResources,
+			},
+			{
+				filters: map[string]interface{}{
+					"name": "test_name_1",
+				},
+				expectedResult: []*domain.Resource{dummyResources[0]},
+			},
+			{
+				filters: map[string]interface{}{
+					"provider_type": s.dummyProvider.Type,
+				},
+				expectedResult: dummyResources,
+			},
+			{
+				filters: map[string]interface{}{
+					"provider_urn": s.dummyProvider.URN,
+				},
+				expectedResult: dummyResources,
+			},
+			{
+				filters: map[string]interface{}{
+					"urn": "test_urn_1",
+				},
+				expectedResult: []*domain.Resource{dummyResources[0]},
+			},
+			{
+				filters: map[string]interface{}{
+					"details": map[string]string{
+						"foo": "bar",
+					},
+				},
+				expectedResult: []*domain.Resource{dummyResources[0]},
+			},
+		}
+
+		for _, tc := range testCases {
+			actualResult, actualError := s.repository.Find(tc.filters)
+
+			s.NoError(actualError)
+			s.Equal(tc.expectedResult, actualResult)
+		}
+	})
+
+	s.Run("should return error if filters has invalid value", func() {
+		invalidFilters := map[string]interface{}{
+			"name": make(chan int), // invalid value
+		}
+		actualRecords, actualError := s.repository.Find(invalidFilters)
+
+		s.Error(actualError)
+		s.Nil(actualRecords)
+	})
+
+	s.Run("should return error if filters validation returns an error", func() {
+		invalidFilters := map[string]interface{}{
+			"ids": []string{},
+		}
+		actualRecords, actualError := s.repository.Find(invalidFilters)
+
+		s.Error(actualError)
+		s.Nil(actualRecords)
+	})
+
+	s.Run("should return error if db returns error", func() {
+		invalidFilters := map[string]interface{}{
+			"ids": []string{"invalid-uuid"},
+		}
+		actualRecords, actualError := s.repository.Find(invalidFilters)
+
+		s.Error(actualError)
+		s.Nil(actualRecords)
+	})
+}
 
 func (s *ResourceRepositoryTestSuite) TestGetOne() {
 	s.Run("should return error if id is empty", func() {
@@ -302,19 +271,6 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 
 		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
-
-	// s.Run("should return error if got error from transaction", func() {
-	// 	expectedError := errors.New("db error")
-	// 	s.dbmock.ExpectBegin()
-	// 	s.dbmock.ExpectExec(".*").
-	// 		WillReturnError(expectedError)
-	// 	s.dbmock.ExpectRollback()
-
-	// 	actualError := s.repository.Update(&domain.Resource{ID: uuid.New().String()})
-
-	// 	s.EqualError(actualError, expectedError.Error())
-	// 	s.NoError(s.dbmock.ExpectationsWereMet())
-	// })
 
 	s.Run("should update record", func() {
 		dummyResource := &domain.Resource{
