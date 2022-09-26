@@ -2,25 +2,27 @@ package postgres
 
 import (
 	"context"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 type ResourceRepositoryTestSuite struct {
 	suite.Suite
-	ctx        context.Context
-	store      *Store
-	pool       *dockertest.Pool
-	resource   *dockertest.Resource
-	repository *ResourceRepository
+	ctx           context.Context
+	store         *Store
+	pool          *dockertest.Pool
+	resource      *dockertest.Resource
+	dummyProvider *domain.Provider
+	repository    *ResourceRepository
 }
 
-func (s *ResourceRepositoryTestSuite) SetUpSuite() {
+func (s *ResourceRepositoryTestSuite) SetupSuite() {
 	var err error
 
 	logger := log.NewLogrus(log.LogrusWithLevel("debug"))
@@ -31,6 +33,14 @@ func (s *ResourceRepositoryTestSuite) SetUpSuite() {
 
 	s.ctx = context.TODO()
 	s.repository = NewResourceRepository(s.store.DB())
+
+	s.dummyProvider = &domain.Provider{
+		Type: "provider_test",
+		URN:  "provider_urn_test",
+	}
+	providerRepository := NewProviderRepository(s.store.DB())
+	err = providerRepository.Create(s.dummyProvider)
+	s.Require().NoError(err)
 }
 
 func (s *ResourceRepositoryTestSuite) TearDownSuite() {
@@ -220,7 +230,7 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 	})
 
 	s.Run("should return record and nil error on success", func() {
-		resources := getTestResources()
+		resources := s.getTestResources()
 		err := s.repository.BulkUpsert(resources)
 		s.Nil(err)
 
@@ -234,22 +244,7 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 
 func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
 	s.Run("should return records with existing or new IDs", func() {
-		resources := []*domain.Resource{
-			{
-				ProviderType: "provider_test",
-				ProviderURN:  "provider_urn_test",
-				Type:         "resource_type",
-				URN:          "resource_type.resource_name",
-				Name:         "resource_name",
-			},
-			{
-				ProviderType: "provider_test",
-				ProviderURN:  "provider_urn_test",
-				Type:         "resource_type",
-				URN:          "resource_type.resource_name_2",
-				Name:         "resource_name_2",
-			},
-		}
+		resources := s.getTestResources()
 
 		err := s.repository.BulkUpsert(resources)
 
@@ -308,45 +303,46 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
 
-	//	s.Run("should return error if got error from transaction", func() {
-	//		expectedError := errors.New("db error")
-	//		s.dbmock.ExpectBegin()
-	//		s.dbmock.ExpectExec(".*").
-	//			WillReturnError(expectedError)
-	//		s.dbmock.ExpectRollback()
-	//
-	//		actualError := s.repository.Update(&domain.Resource{ID: uuid.New().String()})
-	//
-	//		s.EqualError(actualError, expectedError.Error())
-	//		s.NoError(s.dbmock.ExpectationsWereMet())
-	//	})
+	// s.Run("should return error if got error from transaction", func() {
+	// 	expectedError := errors.New("db error")
+	// 	s.dbmock.ExpectBegin()
+	// 	s.dbmock.ExpectExec(".*").
+	// 		WillReturnError(expectedError)
+	// 	s.dbmock.ExpectRollback()
 
-	//	expectedQuery := regexp.QuoteMeta(`UPDATE "resources" SET "id"=$1,"details"=$2,"labels"=$3,"updated_at"=$4 WHERE id = $5`)
-	//	s.Run("should return error if got error from transaction", func() {
-	//		expectedID := uuid.New().String()
-	//		resource := &domain.Resource{
-	//			ID: expectedID,
-	//		}
-	//
-	//		s.dbmock.ExpectBegin()
-	//		s.dbmock.ExpectExec(expectedQuery).
-	//			WillReturnResult(sqlmock.NewResult(1, 1))
-	//		s.dbmock.ExpectCommit()
-	//
-	//		err := s.repository.Update(resource)
-	//
-	//		actualID := resource.ID
-	//
-	//		s.Nil(err)
-	//		s.Equal(expectedID, actualID)
-	//		s.NoError(s.dbmock.ExpectationsWereMet())
-	//	})
+	// 	actualError := s.repository.Update(&domain.Resource{ID: uuid.New().String()})
+
+	// 	s.EqualError(actualError, expectedError.Error())
+	// 	s.NoError(s.dbmock.ExpectationsWereMet())
+	// })
+
+	s.Run("should update record", func() {
+		dummyResource := &domain.Resource{
+			ProviderType: s.dummyProvider.Type,
+			ProviderURN:  s.dummyProvider.URN,
+			Type:         "test_type",
+			URN:          "test_urn",
+			Name:         "test_name",
+		}
+		err := s.repository.BulkUpsert([]*domain.Resource{dummyResource})
+		s.Require().NoError(err)
+		expectedID := dummyResource.ID
+		payload := &domain.Resource{
+			ID:   expectedID,
+			Name: "test_new_name",
+		}
+
+		err = s.repository.Update(payload)
+
+		actualID := payload.ID
+
+		s.NoError(err)
+		s.Equal(expectedID, actualID)
+		s.NotEqual(dummyResource.Name, payload.Name)
+	})
 }
 
 func (s *ResourceRepositoryTestSuite) TestDelete() {
-	err1 := setup(s.store)
-	s.Nil(err1)
-
 	s.Run("should return error if ID param is empty", func() {
 		err := s.repository.Delete("")
 
@@ -355,7 +351,6 @@ func (s *ResourceRepositoryTestSuite) TestDelete() {
 	})
 
 	s.Run("should return error if resource not found", func() {
-
 		sampleUUID := uuid.New().String()
 		err := s.repository.Delete(sampleUUID)
 
@@ -364,22 +359,22 @@ func (s *ResourceRepositoryTestSuite) TestDelete() {
 	})
 
 	s.Run("should return nil on success", func() {
-		resources := getTestResources()
-		err := s.repository.BulkUpsert(resources)
-		s.Nil(err)
+		dummyResource := &domain.Resource{
+			ProviderType: s.dummyProvider.Type,
+			ProviderURN:  s.dummyProvider.URN,
+			Type:         "test_type",
+			URN:          "test_urn_deletion",
+		}
+		err := s.repository.BulkUpsert([]*domain.Resource{dummyResource})
+		s.Require().NoError(err)
 
-		toBeDeletedID := resources[0].ID
-
+		toBeDeletedID := dummyResource.ID
 		err = s.repository.Delete(toBeDeletedID)
 		s.Nil(err)
 	})
 }
 
 func (s *ResourceRepositoryTestSuite) TestBatchDelete() {
-
-	err := setup(s.store)
-	s.Nil(err)
-
 	s.Run("should return error if ID param is empty", func() {
 		err := s.repository.BatchDelete(nil)
 
@@ -387,32 +382,32 @@ func (s *ResourceRepositoryTestSuite) TestBatchDelete() {
 		s.ErrorIs(err, resource.ErrEmptyIDParam)
 	})
 
-	// TODO: fix the panic error
-	//s.Run("should return error if resource(s) not found", func() {
-	//	sampleUUID := uuid.New().String()
-	//	err := s.repository.BatchDelete([]string{sampleUUID})
-	//
-	//	s.Error(err)
-	//	s.ErrorIs(err, resource.ErrRecordNotFound)
-	//})
+	s.Run("should return error if resource(s) not found", func() {
+		sampleUUID := uuid.New().String()
+		err := s.repository.BatchDelete([]string{sampleUUID})
+
+		s.Error(err)
+		s.ErrorIs(err, resource.ErrRecordNotFound)
+	})
 
 	s.Run("should return nil on success", func() {
-		// create resources for setup
-		resources := getTestResources()
-		err := s.repository.BulkUpsert(resources)
-		s.Nil(err)
-
-		expectedIDs := make([]string, 0)
-		for _, r := range resources {
-			expectedIDs = append(expectedIDs, r.ID)
+		dummyResource := &domain.Resource{
+			ProviderType: s.dummyProvider.Type,
+			ProviderURN:  s.dummyProvider.URN,
+			Type:         "test_type",
+			URN:          "test_urn_batch_deletion",
 		}
+		err := s.repository.BulkUpsert([]*domain.Resource{dummyResource})
+		s.Require().NoError(err)
+
+		expectedIDs := []string{dummyResource.ID}
 
 		err = s.repository.BatchDelete(expectedIDs)
-		s.Nil(err)
+		s.NoError(err)
 	})
 }
 
-func getTestResources() []*domain.Resource {
+func (s *ResourceRepositoryTestSuite) getTestResources() []*domain.Resource {
 	return []*domain.Resource{
 		{
 			ProviderType: "provider_test",
