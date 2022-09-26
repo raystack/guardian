@@ -3,22 +3,25 @@ package postgres
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 type ProviderRepositoryTestSuite struct {
 	suite.Suite
-	ctx        context.Context
-	store      *Store
-	pool       *dockertest.Pool
-	resource   *dockertest.Resource
-	repository *ProviderRepository
+	ctx                context.Context
+	store              *Store
+	pool               *dockertest.Pool
+	resource           *dockertest.Resource
+	repository         *ProviderRepository
+	resourceRepository *ResourceRepository
+	providerRepository *ProviderRepository
 }
 
 func (s *ProviderRepositoryTestSuite) SetupSuite() {
@@ -32,6 +35,8 @@ func (s *ProviderRepositoryTestSuite) SetupSuite() {
 
 	s.ctx = context.TODO()
 	s.repository = NewProviderRepository(s.store.DB())
+	s.resourceRepository = NewResourceRepository(s.store.DB())
+	s.providerRepository = NewProviderRepository(s.store.DB())
 }
 
 func (s *ProviderRepositoryTestSuite) TearDownSuite() {
@@ -241,27 +246,40 @@ func (s *ProviderRepositoryTestSuite) TestGetTypes() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	//TODO: to fix this
-	//s.Run("should return providerTypes and nil error on success", func() {
-	//	expectedResult := []domain.ProviderType{
-	//		{Name: "bigquery", ResourceTypes: []string{"dataset", "table"}},
-	//		{Name: "metabase", ResourceTypes: []string{"group", "collection", "database"}},
-	//	}
-	//
-	//	expectedRows := sqlmock.NewRows([]string{"provider_type", "resource_type"}).
-	//		AddRow("bigquery", "dataset").
-	//		AddRow("bigquery", "table").
-	//		AddRow("metabase", "group").
-	//		AddRow("metabase", "collection").
-	//		AddRow("metabase", "database")
-	//
-	//	s.dbmock.ExpectQuery("select distinct provider_type, type as resource_type from resources").WillReturnRows(expectedRows)
-	//
-	//	actualResult, actualError := s.repository.GetTypes()
-	//
-	//	s.ElementsMatch(expectedResult, actualResult)
-	//	s.Nil(actualError)
-	//})
+	s.Run("should return providerTypes and nil error on success", func() {
+		expectedProviderTypes := map[string][]string{
+			"metabase": {"group", "collection", "database"},
+			"bigquery": {"dataset", "table"},
+		}
+
+		err := s.providerRepository.Create(&domain.Provider{
+			Type: "bigquery",
+			URN:  "my-bigquery",
+		})
+		s.Require().NoError(err)
+		err = s.providerRepository.Create(&domain.Provider{
+			Type: "metabase",
+			URN:  "my-metabase",
+		})
+		s.Require().NoError(err)
+
+		err = s.resourceRepository.BulkUpsert([]*domain.Resource{
+			{ProviderType: "bigquery", ProviderURN: "my-bigquery", Type: "dataset"},
+			{ProviderType: "bigquery", ProviderURN: "my-bigquery", Type: "table"},
+			{ProviderType: "metabase", ProviderURN: "my-metabase", Type: "group"},
+			{ProviderType: "metabase", ProviderURN: "my-metabase", Type: "collection"},
+			{ProviderType: "metabase", ProviderURN: "my-metabase", Type: "database", URN: "db1"},
+			{ProviderType: "metabase", ProviderURN: "my-metabase", Type: "database", URN: "db2"},
+		})
+		s.Require().NoError(err)
+
+		actualResult, actualError := s.repository.GetTypes()
+
+		for _, pt := range actualResult {
+			s.ElementsMatch(expectedProviderTypes[pt.Name], pt.ResourceTypes)
+		}
+		s.Nil(actualError)
+	})
 
 }
 
