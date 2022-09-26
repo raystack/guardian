@@ -2,13 +2,14 @@ package postgres
 
 import (
 	"context"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 type PolicyRepositoryTestSuite struct {
@@ -59,11 +60,13 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 		}
 		actualError := s.repository.Create(p)
 
-		s.EqualError(actualError, "serializing p: json: unsupported type: chan int")
+		s.EqualError(actualError, "serializing policy: json: unsupported type: chan int")
 	})
 
 	s.Run("should return nil error on success", func() {
-		p := &domain.Policy{}
+		p := &domain.Policy{
+			ID: "test_policy",
+		}
 		err := s.repository.Create(p)
 		s.Nil(err)
 		s.NotEmpty(p.ID)
