@@ -21,6 +21,6 @@ WHERE
 UPDATE
   "appeals"
 SET
-  "status" = "terminated"
+  "status" = 'terminated'
 WHERE
-  "revoked_by" <> "";
+  "revoked_by" <> '';
