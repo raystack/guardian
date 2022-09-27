@@ -44,6 +44,12 @@ func (s *ResourceRepositoryTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
+func (s *ResourceRepositoryTestSuite) AfterTest(suiteName, testName string) {
+	if err := truncateTable(s.store, "resources"); err != nil {
+		s.T().Fatal(err)
+	}
+}
+
 func (s *ResourceRepositoryTestSuite) TearDownSuite() {
 	// Clean tests
 	db, err := s.store.DB().DB()
@@ -91,46 +97,54 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 			expectedResult []*domain.Resource
 		}{
 			{
+				name:           "empty filter",
 				filters:        map[string]interface{}{},
 				expectedResult: dummyResources,
 			},
 			{
+				name: "filter by ids",
 				filters: map[string]interface{}{
 					"ids": []string{dummyResources[0].ID},
 				},
 				expectedResult: []*domain.Resource{dummyResources[0]},
 			},
 			{
+				name: "filter by type",
 				filters: map[string]interface{}{
 					"type": "test_type",
 				},
 				expectedResult: dummyResources,
 			},
 			{
+				name: "filter by name",
 				filters: map[string]interface{}{
 					"name": "test_name_1",
 				},
 				expectedResult: []*domain.Resource{dummyResources[0]},
 			},
 			{
+				name: "filter by provider type",
 				filters: map[string]interface{}{
 					"provider_type": s.dummyProvider.Type,
 				},
 				expectedResult: dummyResources,
 			},
 			{
+				name: "filter by provider urn",
 				filters: map[string]interface{}{
 					"provider_urn": s.dummyProvider.URN,
 				},
 				expectedResult: dummyResources,
 			},
 			{
+				name: "filter by urn",
 				filters: map[string]interface{}{
 					"urn": "test_urn_1",
 				},
 				expectedResult: []*domain.Resource{dummyResources[0]},
 			},
 			{
+				name: "filter by details",
 				filters: map[string]interface{}{
 					"details": map[string]string{
 						"foo": "bar",
@@ -141,10 +155,12 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 		}
 
 		for _, tc := range testCases {
-			actualResult, actualError := s.repository.Find(tc.filters)
+			s.Run(tc.name, func() {
+				actualResult, actualError := s.repository.Find(tc.filters)
 
-			s.NoError(actualError)
-			s.Equal(tc.expectedResult, actualResult)
+				s.NoError(actualError)
+				s.Equal(tc.expectedResult, actualResult)
+			})
 		}
 	})
 

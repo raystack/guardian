@@ -128,3 +128,8 @@ func setup(store *postgres.Store) error {
 
 	return nil
 }
+
+func truncateTable(store *postgres.Store, tableName string) error {
+	query := fmt.Sprintf(`TRUNCATE "%s" CASCADE;`, tableName)
+	return store.DB().Exec(query).Error
+}
