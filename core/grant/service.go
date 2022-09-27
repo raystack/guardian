@@ -334,6 +334,11 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 
 	importedGrants := []*domain.Grant{}
 	for rURN, access := range resourceAccess {
+		r := resourcesMap[rURN]
+		if r == nil {
+			continue // skip access for resources that not yet added to guardian
+		}
+
 		for _, ae := range access {
 			accountSignature := getAccountSignature(ae.AccountType, ae.AccountID)
 			if grantsMap[rURN] != nil &&
@@ -342,10 +347,6 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 				continue // access already registered
 			}
 
-			r := resourcesMap[rURN]
-			if r == nil {
-				continue // skip access for resources that not yet added to guardian
-			}
 			importedGrants = append(importedGrants, &domain.Grant{
 				ResourceID:  r.ID,
 				Status:      domain.GrantStatusActive,
