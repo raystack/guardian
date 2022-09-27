@@ -87,6 +87,7 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 		AccountType:   domain.DefaultAppealAccountType,
 		Role:          "role_test",
 		Permissions:   []string{"permission_test"},
+		CreatedBy:     "user@example.com",
 	}
 	appealRepository := postgres.NewAppealRepository(s.store.DB())
 	err = appealRepository.BulkUpsert([]*domain.Appeal{s.dummyAppeal})
