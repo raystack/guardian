@@ -1,11 +1,11 @@
 UPDATE
   "appeals"
 SET
-  "status" = "approved"
+  "status" = 'approved'
 WHERE
-  "status" = "terminated";
+  "status" = 'terminated';
 
 ALTER TABLE
   "appeals" DROP COLUMN IF EXISTS "revoked_by",
-  "revoked_at",
-  "revoke_reason";
+  DROP COLUMN IF EXISTS "revoked_at",
+  DROP COLUMN IF EXISTS "revoke_reason";
