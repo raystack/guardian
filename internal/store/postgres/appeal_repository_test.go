@@ -74,7 +74,6 @@ func (s *AppealRepositoryTestSuite) SetupSuite() {
 	resourceRepository := postgres.NewResourceRepository(s.store.DB())
 	err = resourceRepository.BulkUpsert([]*domain.Resource{s.dummyResource})
 	s.Require().NoError(err)
-
 }
 
 func (s *AppealRepositoryTestSuite) TearDownSuite() {
@@ -106,7 +105,6 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 	})
 
 	s.Run("should return records on success", func() {
-
 		dummyAppeal := &domain.Appeal{
 			ResourceID:    s.dummyResource.ID,
 			PolicyID:      s.dummyPolicy.ID,

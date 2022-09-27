@@ -178,7 +178,6 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 	})
 
 	s.Run("should return error if db execution returns an error on listing approvers", func() {
-
 		approvals, err := s.repository.ListApprovals(&domain.ListApprovalsFilter{
 			OrderBy: []string{"not-a-column"},
 		})
@@ -224,7 +223,6 @@ func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
 }
 
 func (s *ApprovalRepositoryTestSuite) TestAddApprover() {
-
 	actor := "user@email.com"
 	dummyApprovals := []*domain.Approval{
 		{

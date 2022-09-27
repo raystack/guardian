@@ -22,7 +22,6 @@ var (
 )
 
 func newTestStore(logger log.Logger) (*postgres.Store, *dockertest.Pool, *dockertest.Resource, error) {
-
 	opts := &dockertest.RunOptions{
 		Repository: "postgres",
 		Tag:        "13",

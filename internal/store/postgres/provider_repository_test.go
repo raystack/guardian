@@ -58,7 +58,6 @@ func (s *ProviderRepositoryTestSuite) TearDownSuite() {
 }
 
 func (s *ProviderRepositoryTestSuite) TestCreate() {
-
 	s.Run("should update model's ID with the returned ID", func() {
 		config := &domain.ProviderConfig{}
 		p := &domain.Provider{
@@ -102,7 +101,6 @@ func (s *ProviderRepositoryTestSuite) TestFind() {
 	s.Nil(err1)
 
 	s.Run("should return list of records on success", func() {
-
 		expectedRecords := []*domain.Provider{
 			{
 				Type:   "type_test",
@@ -125,7 +123,6 @@ func (s *ProviderRepositoryTestSuite) TestFind() {
 	})
 }
 
-//
 func (s *ProviderRepositoryTestSuite) TestGetByID() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := provider.ErrEmptyIDParam
@@ -167,7 +164,6 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 
 func (s *ProviderRepositoryTestSuite) TestGetOne() {
 	s.Run("should return provider details on success", func() {
-
 		expectedType := "test-provider-type"
 		expectedURN := "test-provider-urn"
 		expectedProvider := &domain.Provider{
@@ -237,7 +233,6 @@ func (s *ProviderRepositoryTestSuite) TestGetOne() {
 }
 
 func (s *ProviderRepositoryTestSuite) TestGetTypes() {
-
 	s.Run("should return error if results empty", func() {
 		expectedError := errors.New("no provider types found")
 
@@ -281,11 +276,9 @@ func (s *ProviderRepositoryTestSuite) TestGetTypes() {
 		}
 		s.Nil(actualError)
 	})
-
 }
 
 func (s *ProviderRepositoryTestSuite) TestUpdate() {
-
 	s.Run("should return error if id is empty", func() {
 		expectedError := provider.ErrEmptyIDParam
 
@@ -336,7 +329,6 @@ func (s *ProviderRepositoryTestSuite) TestDelete() {
 	})
 
 	s.Run("should return error if resource not found", func() {
-
 		id := uuid.New().String()
 		err := s.repository.Delete(id)
 

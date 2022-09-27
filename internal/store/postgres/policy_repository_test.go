@@ -75,7 +75,6 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 }
 
 func (s *PolicyRepositoryTestSuite) TestFind() {
-
 	err1 := setup(s.store)
 	s.Nil(err1)
 

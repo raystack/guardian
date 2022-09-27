@@ -157,7 +157,7 @@ func (s *GrantRepositoryTestSuite) TestList() {
 		s.Equal(*expectedGrant, grants[0])
 	})
 
-	s.Run("sould return error if db returns an error", func() {
+	s.Run("could return error if db returns an error", func() {
 		grants, err := s.repository.List(context.Background(), domain.ListGrantsFilter{
 			ResourceIDs: []string{"invalid uuid"},
 		})
