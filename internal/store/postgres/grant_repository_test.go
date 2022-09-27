@@ -2,9 +2,6 @@ package postgres_test
 
 import (
 	"context"
-	"database/sql/driver"
-	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -28,9 +25,6 @@ type GrantRepositoryTestSuite struct {
 	dummyPolicy   *domain.Policy
 	dummyResource *domain.Resource
 	dummyAppeal   *domain.Appeal
-
-	timeNow     time.Time
-	columnNames []string
 }
 
 func TestGrantRepository(t *testing.T) {
@@ -38,27 +32,6 @@ func TestGrantRepository(t *testing.T) {
 }
 
 func (s *GrantRepositoryTestSuite) SetupSuite() {
-	s.setup()
-}
-
-func (s *GrantRepositoryTestSuite) TearDownSuite() {
-	// Clean tests
-	db, err := s.store.DB().DB()
-	if err != nil {
-		s.T().Fatal(err)
-	}
-	err = db.Close()
-	if err != nil {
-		s.T().Fatal(err)
-	}
-
-	err = purgeTestDocker(s.pool, s.resource)
-	if err != nil {
-		s.T().Fatal(err)
-	}
-}
-
-func (s *GrantRepositoryTestSuite) setup() {
 	var err error
 	logger := log.NewLogrus(log.LogrusWithLevel("debug"))
 	s.store, s.pool, s.resource, err = newTestStore(logger)
@@ -118,21 +91,22 @@ func (s *GrantRepositoryTestSuite) setup() {
 	appealRepository := postgres.NewAppealRepository(s.store.DB())
 	err = appealRepository.BulkUpsert([]*domain.Appeal{s.dummyAppeal})
 	s.Require().NoError(err)
-
-	s.timeNow = time.Now()
-	s.columnNames = []string{
-		"id", "status", "account_id", "account_type", "resource_id", "role", "permissions",
-		"expiration_date", "appeal_id", "revoked_by", "revoked_at", "revoke_reason",
-		"created_by", "created_at", "updated_at",
-	}
 }
 
-func (s *GrantRepositoryTestSuite) toRow(a domain.Grant) []driver.Value {
-	permissions := fmt.Sprintf("{%s}", strings.Join(a.Permissions, ","))
-	return []driver.Value{
-		a.ID, a.Status, a.AccountID, a.AccountType, a.ResourceID, a.Role, permissions,
-		a.ExpirationDate, a.AppealID, a.RevokedBy, a.RevokedAt, a.RevokeReason,
-		a.CreatedBy, a.CreatedAt, a.UpdatedAt,
+func (s *GrantRepositoryTestSuite) TearDownSuite() {
+	// Clean tests
+	db, err := s.store.DB().DB()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+	err = db.Close()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+
+	err = purgeTestDocker(s.pool, s.resource)
+	if err != nil {
+		s.T().Fatal(err)
 	}
 }
 
@@ -227,5 +201,50 @@ func (s *GrantRepositoryTestSuite) TestGetByID() {
 
 		s.ErrorIs(err, grant.ErrGrantNotFound)
 		s.Nil(actualGrant)
+	})
+}
+
+func (s *GrantRepositoryTestSuite) TestUpdate() {
+	dummyGrants := []*domain.Grant{
+		{
+			Status:      domain.GrantStatusActive,
+			AppealID:    s.dummyAppeal.ID,
+			AccountID:   s.dummyAppeal.AccountID,
+			AccountType: s.dummyAppeal.AccountType,
+			ResourceID:  s.dummyAppeal.ResourceID,
+			Role:        s.dummyAppeal.Role,
+			Permissions: s.dummyAppeal.Permissions,
+			CreatedBy:   s.dummyAppeal.CreatedBy,
+		},
+	}
+	err := s.repository.BulkInsert(context.Background(), dummyGrants)
+	s.Require().NoError(err)
+
+	s.Run("should return nil error on success", func() {
+		expectedID := dummyGrants[0].ID
+		payload := &domain.Grant{
+			ID:     expectedID,
+			Status: domain.GrantStatusInactive,
+		}
+
+		err := s.repository.Update(context.Background(), payload)
+		s.NoError(err)
+
+		updatedGrant, err := s.repository.GetByID(context.Background(), expectedID)
+		s.Require().NoError(err)
+
+		s.Equal(payload.Status, updatedGrant.Status)
+		s.Greater(updatedGrant.UpdatedAt, dummyGrants[0].UpdatedAt)
+	})
+
+	s.Run("should return error if db execution returns an error", func() {
+		payload := &domain.Grant{
+			ID:     "invalid-uuid",
+			Status: domain.GrantStatusInactive,
+		}
+
+		err := s.repository.Update(context.Background(), payload)
+
+		s.Error(err)
 	})
 }
