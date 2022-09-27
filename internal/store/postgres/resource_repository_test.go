@@ -1,4 +1,4 @@
-package postgres
+package postgres_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
@@ -15,11 +16,11 @@ import (
 type ResourceRepositoryTestSuite struct {
 	suite.Suite
 	ctx           context.Context
-	store         *Store
+	store         *postgres.Store
 	pool          *dockertest.Pool
 	resource      *dockertest.Resource
 	dummyProvider *domain.Provider
-	repository    *ResourceRepository
+	repository    *postgres.ResourceRepository
 }
 
 func (s *ResourceRepositoryTestSuite) SetupSuite() {
@@ -32,13 +33,13 @@ func (s *ResourceRepositoryTestSuite) SetupSuite() {
 	}
 
 	s.ctx = context.TODO()
-	s.repository = NewResourceRepository(s.store.DB())
+	s.repository = postgres.NewResourceRepository(s.store.DB())
 
 	s.dummyProvider = &domain.Provider{
 		Type: "provider_test",
 		URN:  "provider_urn_test",
 	}
-	providerRepository := NewProviderRepository(s.store.DB())
+	providerRepository := postgres.NewProviderRepository(s.store.DB())
 	err = providerRepository.Create(s.dummyProvider)
 	s.Require().NoError(err)
 }

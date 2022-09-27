@@ -1,4 +1,4 @@
-package postgres
+package postgres_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
@@ -15,10 +16,10 @@ import (
 type PolicyRepositoryTestSuite struct {
 	suite.Suite
 	ctx        context.Context
-	store      *Store
+	store      *postgres.Store
 	pool       *dockertest.Pool
 	resource   *dockertest.Resource
-	repository *PolicyRepository
+	repository *postgres.PolicyRepository
 }
 
 func (s *PolicyRepositoryTestSuite) SetupSuite() {
@@ -31,7 +32,7 @@ func (s *PolicyRepositoryTestSuite) SetupSuite() {
 	}
 
 	s.ctx = context.TODO()
-	s.repository = NewPolicyRepository(s.store.DB())
+	s.repository = postgres.NewPolicyRepository(s.store.DB())
 }
 
 func (s *PolicyRepositoryTestSuite) TearDownSuite() {

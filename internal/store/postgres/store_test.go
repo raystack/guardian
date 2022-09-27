@@ -1,12 +1,14 @@
-package postgres
+package postgres_test
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/odpf/guardian/internal/store"
+	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"time"
 )
 
 var (
@@ -19,7 +21,7 @@ var (
 	}
 )
 
-func newTestStore(logger log.Logger) (*Store, *dockertest.Pool, *dockertest.Resource, error) {
+func newTestStore(logger log.Logger) (*postgres.Store, *dockertest.Pool, *dockertest.Resource, error) {
 
 	opts := &dockertest.RunOptions{
 		Repository: "postgres",
@@ -84,10 +86,10 @@ func newTestStore(logger log.Logger) (*Store, *dockertest.Pool, *dockertest.Reso
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	pool.MaxWait = 60 * time.Second
 
-	var st *Store
+	var st *postgres.Store
 	time.Sleep(5 * time.Second)
 	if err = pool.Retry(func() error {
-		st, err = NewStore(&storeConfig)
+		st, err = postgres.NewStore(&storeConfig)
 		if err != nil {
 			return err
 		}
@@ -111,7 +113,7 @@ func purgeTestDocker(pool *dockertest.Pool, resource *dockertest.Resource) error
 	return nil
 }
 
-func setup(store *Store) error {
+func setup(store *postgres.Store) error {
 	var queries = []string{
 		"DROP SCHEMA public CASCADE",
 		"CREATE SCHEMA public",

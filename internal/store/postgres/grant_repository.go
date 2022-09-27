@@ -131,3 +131,34 @@ func (r *GrantRepository) Update(ctx context.Context, a *domain.Grant) error {
 		return nil
 	})
 }
+
+func (r *GrantRepository) BulkInsert(ctx context.Context, grants []*domain.Grant) error {
+	var models []*model.Grant
+	for _, g := range grants {
+		m := &model.Grant{}
+		if err := m.FromDomain(*g); err != nil {
+			return fmt.Errorf("serializing grant: %w", err)
+		}
+		models = append(models, m)
+	}
+
+	if len(models) > 0 {
+		return r.db.Transaction(func(tx *gorm.DB) error {
+			if err := r.db.Create(models).Error; err != nil {
+				return err
+			}
+
+			for i, m := range models {
+				g, err := m.ToDomain()
+				if err != nil {
+					return fmt.Errorf("deserializing grant %q: %w", m.ID, err)
+				}
+				*grants[i] = *g
+			}
+
+			return nil
+		})
+	}
+
+	return nil
+}

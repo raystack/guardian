@@ -1,4 +1,4 @@
-package postgres
+package postgres_test
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
@@ -16,12 +17,12 @@ import (
 type ProviderRepositoryTestSuite struct {
 	suite.Suite
 	ctx                context.Context
-	store              *Store
+	store              *postgres.Store
 	pool               *dockertest.Pool
 	resource           *dockertest.Resource
-	repository         *ProviderRepository
-	resourceRepository *ResourceRepository
-	providerRepository *ProviderRepository
+	repository         *postgres.ProviderRepository
+	resourceRepository *postgres.ResourceRepository
+	providerRepository *postgres.ProviderRepository
 }
 
 func (s *ProviderRepositoryTestSuite) SetupSuite() {
@@ -34,9 +35,9 @@ func (s *ProviderRepositoryTestSuite) SetupSuite() {
 	}
 
 	s.ctx = context.TODO()
-	s.repository = NewProviderRepository(s.store.DB())
-	s.resourceRepository = NewResourceRepository(s.store.DB())
-	s.providerRepository = NewProviderRepository(s.store.DB())
+	s.repository = postgres.NewProviderRepository(s.store.DB())
+	s.resourceRepository = postgres.NewResourceRepository(s.store.DB())
+	s.providerRepository = postgres.NewProviderRepository(s.store.DB())
 }
 
 func (s *ProviderRepositoryTestSuite) TearDownSuite() {
