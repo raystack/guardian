@@ -353,7 +353,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Service) ListAccess(ctx context.Context, providerID string, resources []*domain.Resource) (*domain.Provider, domain.ResourceAccess, error) {
+func (s *Service) ListAccess(ctx context.Context, providerID string, resources []*domain.Resource) (*domain.Provider, domain.MapResourceAccess, error) {
 	p, err := s.GetByID(ctx, providerID)
 	if err != nil {
 		return nil, nil, err

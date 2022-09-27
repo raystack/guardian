@@ -27,7 +27,7 @@ type repository interface {
 type providerService interface {
 	GetByID(context.Context, string) (*domain.Provider, error)
 	RevokeAccess(context.Context, domain.Grant) error
-	ListAccess(context.Context, string, []*domain.Resource) (*domain.Provider, domain.ResourceAccess, error)
+	ListAccess(context.Context, string, []*domain.Resource) (*domain.Provider, domain.MapResourceAccess, error)
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter

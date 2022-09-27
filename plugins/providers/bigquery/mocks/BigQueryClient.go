@@ -202,15 +202,15 @@ func (_c *BigQueryClient_GrantTableAccess_Call) Return(_a0 error) *BigQueryClien
 }
 
 // ListAccess provides a mock function with given fields: ctx, resources
-func (_m *BigQueryClient) ListAccess(ctx context.Context, resources []*domain.Resource) (domain.ResourceAccess, error) {
+func (_m *BigQueryClient) ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error) {
 	ret := _m.Called(ctx, resources)
 
-	var r0 domain.ResourceAccess
-	if rf, ok := ret.Get(0).(func(context.Context, []*domain.Resource) domain.ResourceAccess); ok {
+	var r0 domain.MapResourceAccess
+	if rf, ok := ret.Get(0).(func(context.Context, []*domain.Resource) domain.MapResourceAccess); ok {
 		r0 = rf(ctx, resources)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(domain.ResourceAccess)
+			r0 = ret.Get(0).(domain.MapResourceAccess)
 		}
 	}
 
@@ -243,7 +243,7 @@ func (_c *BigQueryClient_ListAccess_Call) Run(run func(ctx context.Context, reso
 	return _c
 }
 
-func (_c *BigQueryClient_ListAccess_Call) Return(_a0 domain.ResourceAccess, _a1 error) *BigQueryClient_ListAccess_Call {
+func (_c *BigQueryClient_ListAccess_Call) Return(_a0 domain.MapResourceAccess, _a1 error) *BigQueryClient_ListAccess_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }

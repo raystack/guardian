@@ -24,7 +24,7 @@ func (_m *ProviderService) EXPECT() *ProviderService_Expecter {
 }
 
 // ListAccess provides a mock function with given fields: _a0, _a1, _a2
-func (_m *ProviderService) ListAccess(_a0 context.Context, _a1 string, _a2 []*domain.Resource) (*domain.Provider, domain.ResourceAccess, error) {
+func (_m *ProviderService) ListAccess(_a0 context.Context, _a1 string, _a2 []*domain.Resource) (*domain.Provider, domain.MapResourceAccess, error) {
 	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 *domain.Provider
@@ -36,12 +36,12 @@ func (_m *ProviderService) ListAccess(_a0 context.Context, _a1 string, _a2 []*do
 		}
 	}
 
-	var r1 domain.ResourceAccess
-	if rf, ok := ret.Get(1).(func(context.Context, string, []*domain.Resource) domain.ResourceAccess); ok {
+	var r1 domain.MapResourceAccess
+	if rf, ok := ret.Get(1).(func(context.Context, string, []*domain.Resource) domain.MapResourceAccess); ok {
 		r1 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(domain.ResourceAccess)
+			r1 = ret.Get(1).(domain.MapResourceAccess)
 		}
 	}
 
@@ -75,7 +75,7 @@ func (_c *ProviderService_ListAccess_Call) Run(run func(_a0 context.Context, _a1
 	return _c
 }
 
-func (_c *ProviderService_ListAccess_Call) Return(_a0 *domain.Provider, _a1 domain.ResourceAccess, _a2 error) *ProviderService_ListAccess_Call {
+func (_c *ProviderService_ListAccess_Call) Return(_a0 *domain.Provider, _a1 domain.MapResourceAccess, _a2 error) *ProviderService_ListAccess_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }

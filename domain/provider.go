@@ -88,5 +88,5 @@ type AccessEntry struct {
 	Permission  string
 }
 
-// ResourceAccess is list of UserAccess grouped by resource identifier
-type ResourceAccess map[string][]AccessEntry
+// MapResourceAccess is list of UserAccess grouped by resource identifier
+type MapResourceAccess map[string][]AccessEntry

@@ -265,8 +265,8 @@ func (c *bigQueryClient) RevokeTableAccess(ctx context.Context, t *Table, accoun
 	return err
 }
 
-func (c *bigQueryClient) ListAccess(ctx context.Context, resources []*domain.Resource) (domain.ResourceAccess, error) {
-	access := make(domain.ResourceAccess)
+func (c *bigQueryClient) ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error) {
+	access := make(domain.MapResourceAccess)
 
 	for _, r := range resources {
 		var accessEntries []domain.AccessEntry
