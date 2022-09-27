@@ -24,8 +24,8 @@ type BigQueryClient interface {
 	ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error)
 }
 
-//go:generate mockery --name=crypto --exported --with-expecter
-type crypto interface {
+//go:generate mockery --name=encryptor --exported --with-expecter
+type encryptor interface {
 	domain.Crypto
 }
 
@@ -33,17 +33,17 @@ type crypto interface {
 type Provider struct {
 	provider.PermissionManager
 
-	typeName string
-	Clients  map[string]BigQueryClient
-	crypto   crypto
+	typeName  string
+	Clients   map[string]BigQueryClient
+	encryptor encryptor
 }
 
 // NewProvider returns bigquery provider
-func NewProvider(typeName string, c crypto) *Provider {
+func NewProvider(typeName string, c encryptor) *Provider {
 	return &Provider{
-		typeName: typeName,
-		Clients:  map[string]BigQueryClient{},
-		crypto:   c,
+		typeName:  typeName,
+		Clients:   map[string]BigQueryClient{},
+		encryptor: c,
 	}
 }
 
@@ -54,7 +54,7 @@ func (p *Provider) GetType() string {
 
 // CreateConfig validates provider config
 func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
-	c := NewConfig(pc, p.crypto)
+	c := NewConfig(pc, p.encryptor)
 
 	if err := c.ParseAndValidate(); err != nil {
 		return err
@@ -245,7 +245,7 @@ func (p *Provider) getBigQueryClient(credentials Credentials) (BigQueryClient, e
 		return p.Clients[projectID], nil
 	}
 
-	credentials.Decrypt(p.crypto)
+	credentials.Decrypt(p.encryptor)
 	client, err := newBigQueryClient(projectID, []byte(credentials.ServiceAccountKey))
 	if err != nil {
 		return nil, err
