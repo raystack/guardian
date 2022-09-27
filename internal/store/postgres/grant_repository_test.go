@@ -238,6 +238,17 @@ func (s *GrantRepositoryTestSuite) TestUpdate() {
 		s.Greater(updatedGrant.UpdatedAt, dummyGrants[0].UpdatedAt)
 	})
 
+	s.Run("should return error if id param is empty", func() {
+		payload := &domain.Grant{
+			ID:     "",
+			Status: domain.GrantStatusInactive,
+		}
+
+		err := s.repository.Update(context.Background(), payload)
+
+		s.ErrorIs(err, grant.ErrEmptyIDParam)
+	})
+
 	s.Run("should return error if db execution returns an error", func() {
 		payload := &domain.Grant{
 			ID:     "invalid-uuid",
