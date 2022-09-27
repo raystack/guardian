@@ -324,21 +324,21 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 			grantsMap[g.Resource.URN] = map[string]map[string]*domain.Grant{}
 		}
 
-		userSignature := fmt.Sprintf("%s:%s", g.AccountType, g.AccountID)
-		if grantsMap[g.Resource.URN][userSignature] == nil {
-			grantsMap[g.Resource.URN][userSignature] = map[string]*domain.Grant{}
+		accountSignature := getAccountSignature(g.AccountType, g.AccountID)
+		if grantsMap[g.Resource.URN][accountSignature] == nil {
+			grantsMap[g.Resource.URN][accountSignature] = map[string]*domain.Grant{}
 		}
 
-		grantsMap[g.Resource.URN][userSignature][g.Role] = &g
+		grantsMap[g.Resource.URN][accountSignature][g.Role] = &g
 	}
 
 	importedGrants := []*domain.Grant{}
 	for rURN, access := range resourceAccess {
 		for _, ae := range access {
-			userSignature := fmt.Sprintf("%s:%s", ae.AccountType, ae.AccountID)
+			accountSignature := getAccountSignature(ae.AccountType, ae.AccountID)
 			if grantsMap[rURN] != nil &&
-				grantsMap[rURN][userSignature] != nil &&
-				grantsMap[rURN][userSignature][ae.Permission] != nil {
+				grantsMap[rURN][accountSignature] != nil &&
+				grantsMap[rURN][accountSignature][ae.Permission] != nil {
 				continue // access already registered
 			}
 
@@ -366,4 +366,8 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 	}
 
 	return importedGrants, nil
+}
+
+func getAccountSignature(accountType, accountID string) string {
+	return fmt.Sprintf("%s:%s", accountType, accountID)
 }
