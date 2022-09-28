@@ -53,7 +53,6 @@ func (h *handler) GrantExpirationReminder(ctx context.Context) error {
 			for _, err1 := range errs {
 				h.logger.Error("failed to send notifications", "error", err1)
 			}
-			//return nil
 		}
 	}
 

@@ -88,9 +88,11 @@ func runJobCmd() *cobra.Command {
 			)
 
 			jobsMap := map[string]func(context.Context) error{
-				"fetch_resources":             handler.FetchResources,
-				"grant_expiration_reminder":   handler.GrantExpirationReminder,
-				"grant_expiration_revocation": handler.RevokeExpiredGrants,
+				"fetch_resources":              handler.FetchResources,
+				"grant_expiration_reminder":    handler.GrantExpirationReminder,
+				"grant_expiration_revocation":  handler.RevokeExpiredGrants,
+				"appeal_expiration_reminder":   handler.GrantExpirationReminder,
+				"appeal_expiration_revocation": handler.RevokeExpiredGrants,
 			}
 
 			jobName := args[0]
