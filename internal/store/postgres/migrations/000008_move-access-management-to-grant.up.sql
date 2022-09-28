@@ -3,7 +3,7 @@ UPDATE
 SET
   "status" = 'approved'
 WHERE
-  "status" = 'terminated';
+      "status" in ('terminated', 'active');
 
 ALTER TABLE
   "appeals" DROP COLUMN IF EXISTS "revoked_by",

@@ -428,6 +428,7 @@ func (a *adapter) ToPolicyAppealConfigProto(p *domain.Policy) *guardianv1beta1.P
 		}
 	}
 	policyAppealConfigProto.DurationOptions = durationOptions
+	policyAppealConfigProto.AllowOnBehalf = p.AppealConfig.AllowOnBehalf
 	return policyAppealConfigProto
 }
 

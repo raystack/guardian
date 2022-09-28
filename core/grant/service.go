@@ -38,7 +38,7 @@ type notifier interface {
 }
 
 type grantCreation struct {
-	AppealStatus string `validate:"required,eq=active"`
+	AppealStatus string `validate:"required,eq=approved"`
 	AccountID    string `validate:"required"`
 	AccountType  string `validate:"required"`
 	ResourceID   string `validate:"required"`
