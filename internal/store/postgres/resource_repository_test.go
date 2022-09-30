@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
@@ -159,7 +161,9 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 				actualResult, actualError := s.repository.Find(tc.filters)
 
 				s.NoError(actualError)
-				s.Equal(tc.expectedResult, actualResult)
+				if diff := cmp.Diff(tc.expectedResult, actualResult, cmpopts.IgnoreFields(domain.Resource{}, "CreatedAt", "UpdatedAt")); diff != "" {
+					s.T().Errorf("result not match, diff: %v", diff)
+				}
 			})
 		}
 	})

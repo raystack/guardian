@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
@@ -158,7 +160,9 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 		actual, actualError := s.repository.GetByID(p.ID)
 
 		s.Nil(actualError)
-		s.Equal(p, actual)
+		if diff := cmp.Diff(p, actual, cmpopts.IgnoreFields(domain.Provider{}, "CreatedAt", "UpdatedAt")); diff != "" {
+			s.T().Errorf("result not match, diff: %v", diff)
+		}
 	})
 }
 

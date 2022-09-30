@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/domain"
@@ -154,7 +156,9 @@ func (s *GrantRepositoryTestSuite) TestList() {
 
 		s.NoError(err)
 		s.Len(grants, 1)
-		s.Equal(*expectedGrant, grants[0])
+		if diff := cmp.Diff(*expectedGrant, grants[0], cmpopts.IgnoreFields(domain.Grant{}, "CreatedAt", "UpdatedAt")); diff != "" {
+			s.T().Errorf("result not match, diff: %v", diff)
+		}
 	})
 
 	s.Run("could return error if db returns an error", func() {
@@ -193,7 +197,9 @@ func (s *GrantRepositoryTestSuite) TestGetByID() {
 		grant, err := s.repository.GetByID(context.Background(), expectedID)
 
 		s.NoError(err)
-		s.Equal(expectedGrant, grant)
+		if diff := cmp.Diff(expectedGrant, grant, cmpopts.IgnoreFields(domain.Grant{}, "CreatedAt", "UpdatedAt")); diff != "" {
+			s.T().Errorf("result not match, diff: %v", diff)
+		}
 	})
 
 	s.Run("should return not found error if record not found", func() {

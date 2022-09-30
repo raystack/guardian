@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/domain"
@@ -94,7 +96,9 @@ func (s *PolicyRepositoryTestSuite) TestFind() {
 
 		actualPolicies, actualError := s.repository.Find()
 
-		s.Equal(expectedPolicies, actualPolicies)
+		if diff := cmp.Diff(expectedPolicies, actualPolicies, cmpopts.IgnoreFields(domain.Policy{}, "CreatedAt", "UpdatedAt")); diff != "" {
+			s.T().Errorf("result not match, diff: %v", diff)
+		}
 		s.Nil(actualError)
 	})
 }
