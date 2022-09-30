@@ -197,7 +197,16 @@ func (s *GrantRepositoryTestSuite) TestGetByID() {
 		grant, err := s.repository.GetByID(context.Background(), expectedID)
 
 		s.NoError(err)
-		if diff := cmp.Diff(expectedGrant, grant, cmpopts.IgnoreFields(domain.Grant{}, "CreatedAt", "UpdatedAt")); diff != "" {
+		if diff := cmp.Diff(expectedGrant, grant,
+			cmpopts.IgnoreFields(
+				domain.Grant{},
+				"CreatedAt",
+				"UpdatedAt",
+				"Resource.CreatedAt",
+				"Resource.UpdatedAt",
+				"Appeal.CreatedAt",
+				"Appeal.UpdatedAt",
+			)); diff != "" {
 			s.T().Errorf("result not match, diff: %v", diff)
 		}
 	})
