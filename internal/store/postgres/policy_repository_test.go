@@ -3,6 +3,7 @@ package postgres_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -96,7 +97,7 @@ func (s *PolicyRepositoryTestSuite) TestFind() {
 
 		actualPolicies, actualError := s.repository.Find()
 
-		if diff := cmp.Diff(expectedPolicies, actualPolicies, cmpopts.IgnoreFields(domain.Policy{}, "CreatedAt", "UpdatedAt")); diff != "" {
+		if diff := cmp.Diff(expectedPolicies, actualPolicies, cmpopts.EquateApproxTime(time.Nanosecond)); diff != "" {
 			s.T().Errorf("result not match, diff: %v", diff)
 		}
 		s.Nil(actualError)

@@ -3,6 +3,7 @@ package postgres_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -161,7 +162,7 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 				actualResult, actualError := s.repository.Find(tc.filters)
 
 				s.NoError(actualError)
-				if diff := cmp.Diff(tc.expectedResult, actualResult, cmpopts.IgnoreFields(domain.Resource{}, "CreatedAt", "UpdatedAt")); diff != "" {
+				if diff := cmp.Diff(tc.expectedResult, actualResult, cmpopts.EquateApproxTime(time.Nanosecond)); diff != "" {
 					s.T().Errorf("result not match, diff: %v", diff)
 				}
 			})

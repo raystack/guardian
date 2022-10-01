@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -160,7 +161,7 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 		actual, actualError := s.repository.GetByID(p.ID)
 
 		s.Nil(actualError)
-		if diff := cmp.Diff(p, actual, cmpopts.IgnoreFields(domain.Provider{}, "CreatedAt", "UpdatedAt")); diff != "" {
+		if diff := cmp.Diff(p, actual, cmpopts.EquateApproxTime(time.Nanosecond)); diff != "" {
 			s.T().Errorf("result not match, diff: %v", diff)
 		}
 	})

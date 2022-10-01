@@ -156,16 +156,7 @@ func (s *GrantRepositoryTestSuite) TestList() {
 
 		s.NoError(err)
 		s.Len(grants, 1)
-		if diff := cmp.Diff(*expectedGrant, grants[0],
-			cmpopts.IgnoreFields(
-				domain.Grant{},
-				"CreatedAt",
-				"UpdatedAt",
-				"Resource.CreatedAt",
-				"Resource.UpdatedAt",
-				"Appeal.CreatedAt",
-				"Appeal.UpdatedAt",
-			)); diff != "" {
+		if diff := cmp.Diff(*expectedGrant, grants[0], cmpopts.EquateApproxTime(time.Nanosecond)); diff != "" {
 			s.T().Errorf("result not match, diff: %v", diff)
 		}
 	})
@@ -206,16 +197,7 @@ func (s *GrantRepositoryTestSuite) TestGetByID() {
 		grant, err := s.repository.GetByID(context.Background(), expectedID)
 
 		s.NoError(err)
-		if diff := cmp.Diff(expectedGrant, grant,
-			cmpopts.IgnoreFields(
-				domain.Grant{},
-				"CreatedAt",
-				"UpdatedAt",
-				"Resource.CreatedAt",
-				"Resource.UpdatedAt",
-				"Appeal.CreatedAt",
-				"Appeal.UpdatedAt",
-			)); diff != "" {
+		if diff := cmp.Diff(expectedGrant, grant, cmpopts.EquateApproxTime(time.Nanosecond)); diff != "" {
 			s.T().Errorf("result not match, diff: %v", diff)
 		}
 	})
