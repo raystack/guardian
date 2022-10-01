@@ -156,7 +156,16 @@ func (s *GrantRepositoryTestSuite) TestList() {
 
 		s.NoError(err)
 		s.Len(grants, 1)
-		if diff := cmp.Diff(*expectedGrant, grants[0], cmpopts.IgnoreFields(domain.Grant{}, "CreatedAt", "UpdatedAt")); diff != "" {
+		if diff := cmp.Diff(*expectedGrant, grants[0],
+			cmpopts.IgnoreFields(
+				domain.Grant{},
+				"CreatedAt",
+				"UpdatedAt",
+				"Resource.CreatedAt",
+				"Resource.UpdatedAt",
+				"Appeal.CreatedAt",
+				"Appeal.UpdatedAt",
+			)); diff != "" {
 			s.T().Errorf("result not match, diff: %v", diff)
 		}
 	})
