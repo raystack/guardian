@@ -97,7 +97,7 @@ func (s *PolicyRepositoryTestSuite) TestFind() {
 
 		actualPolicies, actualError := s.repository.Find()
 
-		if diff := cmp.Diff(expectedPolicies, actualPolicies, cmpopts.EquateApproxTime(time.Nanosecond)); diff != "" {
+		if diff := cmp.Diff(expectedPolicies, actualPolicies, cmpopts.EquateApproxTime(time.Microsecond)); diff != "" {
 			s.T().Errorf("result not match, diff: %v", diff)
 		}
 		s.Nil(actualError)

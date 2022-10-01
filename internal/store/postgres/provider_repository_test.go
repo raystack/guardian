@@ -161,7 +161,7 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 		actual, actualError := s.repository.GetByID(p.ID)
 
 		s.Nil(actualError)
-		if diff := cmp.Diff(p, actual, cmpopts.EquateApproxTime(time.Nanosecond)); diff != "" {
+		if diff := cmp.Diff(p, actual, cmpopts.EquateApproxTime(time.Microsecond)); diff != "" {
 			s.T().Errorf("result not match, diff: %v", diff)
 		}
 	})
