@@ -1,7 +1,9 @@
 ALTER TABLE
   "grants"
 ADD
-  IF NOT EXISTS "source" text;
+  COLUMN IF NOT EXISTS "source" text,
+ADD
+  COLUMN IF NOT EXISTS "status_in_provider" text;
 
 UPDATE
   "grants"
