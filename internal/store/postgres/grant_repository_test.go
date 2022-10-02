@@ -127,6 +127,7 @@ func (s *GrantRepositoryTestSuite) TestList() {
 			CreatedBy:      s.dummyAppeal.CreatedBy,
 			ExpirationDate: &expDate,
 			IsPermanent:    true,
+			Source:         domain.GrantSourceImport,
 		},
 	}
 	err := s.repository.BulkInsert(context.Background(), dummyGrants)
@@ -185,6 +186,7 @@ func (s *GrantRepositoryTestSuite) TestGetByID() {
 			Role:        s.dummyAppeal.Role,
 			Permissions: s.dummyAppeal.Permissions,
 			CreatedBy:   s.dummyAppeal.CreatedBy,
+			Source:      domain.GrantSourceImport,
 		},
 	}
 	err := s.repository.BulkInsert(context.Background(), dummyGrants)

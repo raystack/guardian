@@ -637,11 +637,11 @@ func (a *adapter) FromGrantProto(g *guardianv1beta1.Grant) *domain.Grant {
 		Role:         g.GetRole(),
 		Permissions:  g.GetPermissions(),
 		AppealID:     g.GetAppealId(),
+		Source:       domain.GrantSource(g.Source),
 		RevokedBy:    g.GetRevokedBy(),
 		RevokeReason: g.GetRevokeReason(),
 		CreatedBy:    g.GetCreatedBy(),
 		Resource:     a.FromResourceProto(g.GetResource()),
-		// Appeal: a.fromappeal,
 	}
 
 	if g.GetExpirationDate() != nil {
@@ -677,6 +677,7 @@ func (a *adapter) ToGrantProto(grant *domain.Grant) (*guardianv1beta1.Grant, err
 		Permissions:  grant.Permissions,
 		IsPermanent:  grant.IsPermanent,
 		AppealId:     grant.AppealID,
+		Source:       string(grant.Source),
 		RevokedBy:    grant.RevokedBy,
 		RevokeReason: grant.RevokeReason,
 		CreatedBy:    grant.CreatedBy,

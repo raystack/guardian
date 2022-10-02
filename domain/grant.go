@@ -12,6 +12,13 @@ const (
 	GrantStatusInactive GrantStatus = "inactive"
 )
 
+type GrantSource string
+
+const (
+	GrantSourceAppeal GrantSource = "appeal"
+	GrantSourceImport GrantSource = "import"
+)
+
 type Grant struct {
 	ID             string      `json:"id" yaml:"id"`
 	Status         GrantStatus `json:"status" yaml:"status"`
@@ -23,6 +30,7 @@ type Grant struct {
 	IsPermanent    bool        `json:"is_permanent" yaml:"is_permanent"`
 	ExpirationDate *time.Time  `json:"expiration_date" yaml:"expiration_date"`
 	AppealID       string      `json:"appeal_id" yaml:"appeal_id"`
+	Source         GrantSource `json:"source" yaml:"source"`
 	RevokedBy      string      `json:"revoked_by,omitempty" yaml:"revoked_by,omitempty"`
 	RevokedAt      *time.Time  `json:"revoked_at,omitempty" yaml:"revoked_at,omitempty"`
 	RevokeReason   string      `json:"revoke_reason,omitempty" yaml:"revoke_reason,omitempty"`
