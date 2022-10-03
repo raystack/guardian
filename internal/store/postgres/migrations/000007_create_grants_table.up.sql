@@ -55,7 +55,7 @@ SELECT
   "revoked_at",
   "revoke_reason",
   "created_by",
-  "created_at",
+  "updated_at" AS "created_at",
   "updated_at"
 FROM
   "appeals"
