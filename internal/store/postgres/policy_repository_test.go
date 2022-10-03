@@ -118,60 +118,51 @@ func (s *PolicyRepositoryTestSuite) TestGetOne() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	//TODO: fix test case
-	/*
-		s.Run("should pass args based on the version param", func() {
-			testCases := []struct {
-				name            string
-				expectedID      string
-				expectedVersion uint
-				expectedQuery   string
-				expectedArgs    []driver.Value
-			}{
-				{
-					name:            "should not apply version condition if version param given is 0",
-					expectedID:      "test-id",
-					expectedVersion: 0,
-					expectedQuery:   regexp.QuoteMeta(`SELECT * FROM "policies" WHERE id = $1 AND "policies"."deleted_at" IS NULL ORDER BY version desc,"policies"."id" LIMIT 1`),
-					expectedArgs:    []driver.Value{"test-id"},
-				},
-				{
-					name:            "should apply version condition if version param is exists",
-					expectedID:      "test-id",
-					expectedVersion: 1,
-					expectedQuery:   regexp.QuoteMeta(`SELECT * FROM "policies" WHERE (id = $1 AND version = $2) AND "policies"."deleted_at" IS NULL ORDER BY version desc,"policies"."id" LIMIT 1`),
-					expectedArgs:    []driver.Value{"test-id", 1},
-				},
-			}
+	s.Run("should pass args based on the version param", func() {
+		dummyPolicies := []*domain.Policy{
+			{
+				ID:      "test-id",
+				Version: 0,
+			},
+			{
+				ID:      "test-id",
+				Version: 1,
+			},
+			{
+				ID:      "test-id",
+				Version: 2,
+			},
+		}
+		for _, p := range dummyPolicies {
+			err := s.repository.Create(p)
+			s.Require().NoError(err)
+		}
 
-			for _, tc := range testCases {
-				s.Run(tc.name, func() {
-					now := time.Now()
-					expectedRowValues := []driver.Value{
-						tc.expectedID,
-						tc.expectedVersion,
-						"",
-						"null",
-						"null",
-						"null",
-						"null",
-						"null",
-						now,
-						now,
-					}
-					s.dbmock.ExpectQuery(tc.expectedQuery).
-						WithArgs(tc.expectedArgs...).
-						WillReturnRows(sqlmock.NewRows(s.rows).AddRow(expectedRowValues...))
+		testCases := []struct {
+			name            string
+			versionParam    uint
+			expectedVersion uint
+		}{
+			{
+				name:            "should return latest version if version param is empty",
+				expectedVersion: 2,
+			},
+			{
+				name:            "should return expected version",
+				versionParam:    1,
+				expectedVersion: 1,
+			},
+		}
 
-					_, actualError := s.repository.GetOne(tc.expectedID, tc.expectedVersion)
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				actualPolicy, actualError := s.repository.GetOne("test-id", tc.versionParam)
 
-					s.Nil(actualError)
-					s.dbmock.ExpectationsWereMet()
-				})
-			}
-		})
-
-	*/
+				s.NoError(actualError)
+				s.Equal(tc.expectedVersion, actualPolicy.Version)
+			})
+		}
+	})
 }
 
 func TestPolicyRepository(t *testing.T) {
