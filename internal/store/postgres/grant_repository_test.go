@@ -114,7 +114,7 @@ func (s *GrantRepositoryTestSuite) TearDownSuite() {
 }
 
 func (s *GrantRepositoryTestSuite) TestList() {
-	expDate := time.Now().Truncate(time.Nanosecond)
+	expDate := time.Now()
 	dummyGrants := []*domain.Grant{
 		{
 			Status:         domain.GrantStatusActive,
