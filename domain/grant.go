@@ -20,6 +20,7 @@ type Grant struct {
 	ResourceID     string      `json:"resource_id" yaml:"resource_id"`
 	Role           string      `json:"role" yaml:"role"`
 	Permissions    []string    `json:"permissions" yaml:"permissions"`
+	IsPermanent    bool        `json:"is_permanent" yaml:"is_permanent"`
 	ExpirationDate *time.Time  `json:"expiration_date" yaml:"expiration_date"`
 	AppealID       string      `json:"appeal_id" yaml:"appeal_id"`
 	RevokedBy      string      `json:"revoked_by,omitempty" yaml:"revoked_by,omitempty"`

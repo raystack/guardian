@@ -675,6 +675,7 @@ func (a *adapter) ToGrantProto(grant *domain.Grant) (*guardianv1beta1.Grant, err
 		ResourceId:   grant.ResourceID,
 		Role:         grant.Role,
 		Permissions:  grant.Permissions,
+		IsPermanent:  grant.IsPermanent,
 		AppealId:     grant.AppealID,
 		RevokedBy:    grant.RevokedBy,
 		RevokeReason: grant.RevokeReason,
