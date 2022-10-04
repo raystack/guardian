@@ -1,194 +1,168 @@
 package postgres_test
 
 import (
-	"database/sql"
-	"database/sql/driver"
 	"errors"
-	"fmt"
-	"regexp"
 	"testing"
-	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
-	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/utils"
+	"github.com/odpf/salt/log"
+	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/gorm"
 )
 
 type ApprovalRepositoryTestSuite struct {
 	suite.Suite
-	sqldb      *sql.DB
-	dbmock     sqlmock.Sqlmock
+	store      *postgres.Store
+	pool       *dockertest.Pool
+	resource   *dockertest.Resource
 	repository *postgres.ApprovalRepository
 
-	approvalColumnNames []string
-	approverColumnNames []string
-	appealColumnNames   []string
-	resourceColumnNames []string
+	dummyProvider *domain.Provider
+	dummyPolicy   *domain.Policy
+	dummyResource *domain.Resource
+	dummyAppeal   *domain.Appeal
 }
 
 func TestApprovalRepository(t *testing.T) {
 	suite.Run(t, new(ApprovalRepositoryTestSuite))
 }
 
-func (s *ApprovalRepositoryTestSuite) SetupTest() {
-	db, mock, _ := mocks.NewStore()
-	s.sqldb, _ = db.DB()
-	s.dbmock = mock
-	s.repository = postgres.NewApprovalRepository(db)
+func (s *ApprovalRepositoryTestSuite) SetupSuite() {
+	var err error
+	logger := log.NewLogrus(log.LogrusWithLevel("debug"))
+	s.store, s.pool, s.resource, err = newTestStore(logger)
+	if err != nil {
+		s.T().Fatal(err)
+	}
 
-	s.approvalColumnNames = []string{
-		"id",
-		"name",
-		"appeal_id",
-		"status",
-		"policy_id",
-		"policy_version",
-		"created_at",
-		"updated_at",
+	s.repository = postgres.NewApprovalRepository(s.store.DB())
+
+	s.dummyPolicy = &domain.Policy{
+		ID:      "policy_test",
+		Version: 1,
 	}
-	s.approverColumnNames = []string{
-		"id",
-		"email",
-		"appeal_id",
-		"approval_id",
-		"created_at",
-		"updated_at",
+	policyRepository := postgres.NewPolicyRepository(s.store.DB())
+	err = policyRepository.Create(s.dummyPolicy)
+	s.Require().NoError(err)
+
+	s.dummyProvider = &domain.Provider{
+		Type: "provider_test",
+		URN:  "provider_urn_test",
+		Config: &domain.ProviderConfig{
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "resource_type_test",
+					Policy: &domain.PolicyConfig{
+						ID:      s.dummyPolicy.ID,
+						Version: int(s.dummyPolicy.Version),
+					},
+				},
+			},
+		},
 	}
-	s.appealColumnNames = []string{
-		"id",
-		"resource_id",
-		"policy_id",
-		"policy_version",
-		"status",
-		"account_id",
-		"account_type",
-		"created_by",
-		"creator",
-		"role",
-		"options",
-		"labels",
-		"details",
-		"created_at",
-		"updated_at",
+	providerRepository := postgres.NewProviderRepository(s.store.DB())
+	err = providerRepository.Create(s.dummyProvider)
+	s.Require().NoError(err)
+
+	s.dummyResource = &domain.Resource{
+		ProviderType: s.dummyProvider.Type,
+		ProviderURN:  s.dummyProvider.URN,
+		Type:         "resource_type_test",
+		URN:          "resource_urn_test",
+		Name:         "resource_name_test",
 	}
-	s.resourceColumnNames = []string{
-		"id",
-		"provider_type",
-		"provider_urn",
-		"type",
-		"urn",
-		"name",
-		"details",
-		"labels",
-		"created_at",
-		"updated_at",
+	resourceRepository := postgres.NewResourceRepository(s.store.DB())
+	err = resourceRepository.BulkUpsert([]*domain.Resource{s.dummyResource})
+	s.Require().NoError(err)
+
+	s.dummyAppeal = &domain.Appeal{
+		ResourceID:    s.dummyResource.ID,
+		PolicyID:      s.dummyPolicy.ID,
+		PolicyVersion: s.dummyPolicy.Version,
+		AccountID:     "user@example.com",
+		AccountType:   domain.DefaultAppealAccountType,
+		Role:          "role_test",
+		Permissions:   []string{"permission_test"},
+		CreatedBy:     "user@example.com",
 	}
+	appealRepository := postgres.NewAppealRepository(s.store.DB())
+	err = appealRepository.BulkUpsert([]*domain.Appeal{s.dummyAppeal})
+	s.Require().NoError(err)
 }
 
-func (s *ApprovalRepositoryTestSuite) TearDownTest() {
-	s.sqldb.Close()
+func (s *ApprovalRepositoryTestSuite) TearDownSuite() {
+	// Clean tests
+	db, err := s.store.DB().DB()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+	err = db.Close()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+
+	err = purgeTestDocker(s.pool, s.resource)
+	if err != nil {
+		s.T().Fatal(err)
+	}
 }
 
 func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
+	dummyApprovals := []*domain.Approval{
+		{
+			Name:          "test-approval-name-1",
+			Index:         0,
+			AppealID:      s.dummyAppeal.ID,
+			Status:        "test-status-1",
+			PolicyID:      "test-policy-id",
+			PolicyVersion: 1,
+
+			Appeal: s.dummyAppeal,
+		},
+		{
+			Name:          "test-approval-name-2",
+			Index:         1,
+			AppealID:      s.dummyAppeal.ID,
+			Status:        "test-status-2",
+			PolicyID:      "test-policy-id",
+			PolicyVersion: 1,
+			Appeal:        s.dummyAppeal,
+		},
+	}
+
+	err := s.repository.BulkInsert(dummyApprovals)
+	s.Require().NoError(err)
+
+	dummyApprover := []*domain.Approver{
+		{
+			ApprovalID: dummyApprovals[0].ID,
+			AppealID:   s.dummyAppeal.ID,
+			Email:      "approver1@email.com",
+		},
+		{
+			ApprovalID: dummyApprovals[1].ID,
+			AppealID:   s.dummyAppeal.ID,
+			Email:      "approver2@email.com",
+		},
+	}
+
+	err = s.repository.AddApprover(dummyApprover[0])
+	s.Require().NoError(err)
+	err = s.repository.AddApprover(dummyApprover[1])
+	s.Require().NoError(err)
+
 	s.Run("should return list of approvals on success", func() {
-		timeNow := time.Now()
-
-		appealID := uuid.New().String()
-		approvalID := uuid.New().String()
-		resourceID := uuid.New().String()
-
-		expectedUser := "user@example.com"
-		expectedAccountID := "account@example.com"
-		expectedStatuses := []string{"test-status-1", "test-status-2"}
-		expectedApprovals := []*domain.Approval{
-			{
-				ID:            approvalID,
-				Name:          "test-approval-name",
-				Index:         0,
-				AppealID:      appealID,
-				Status:        "test-status",
-				PolicyID:      "test-policy-id",
-				PolicyVersion: 1,
-				Appeal: &domain.Appeal{
-					ID:         appealID,
-					ResourceID: resourceID,
-					Resource: &domain.Resource{
-						ID:           resourceID,
-						ProviderType: "test-provider-type",
-						ProviderURN:  "test-provider-urn",
-						Type:         "test-resource-type",
-						URN:          "test-resource-urn",
-						Name:         "test-name",
-						CreatedAt:    timeNow,
-						UpdatedAt:    timeNow,
-					},
-					CreatedAt: timeNow,
-					UpdatedAt: timeNow,
-				},
-				CreatedAt: timeNow,
-				UpdatedAt: timeNow,
-			},
-		}
-
-		expectedListApprovalsQuery := regexp.QuoteMeta(`SELECT "approvals"."id","approvals"."name","approvals"."index","approvals"."appeal_id","approvals"."status","approvals"."actor","approvals"."reason","approvals"."policy_id","approvals"."policy_version","approvals"."created_at","approvals"."updated_at","approvals"."deleted_at","Appeal"."id" AS "Appeal__id","Appeal"."resource_id" AS "Appeal__resource_id","Appeal"."policy_id" AS "Appeal__policy_id","Appeal"."policy_version" AS "Appeal__policy_version","Appeal"."status" AS "Appeal__status","Appeal"."account_id" AS "Appeal__account_id","Appeal"."account_type" AS "Appeal__account_type","Appeal"."created_by" AS "Appeal__created_by","Appeal"."creator" AS "Appeal__creator","Appeal"."role" AS "Appeal__role","Appeal"."permissions" AS "Appeal__permissions","Appeal"."options" AS "Appeal__options","Appeal"."labels" AS "Appeal__labels","Appeal"."details" AS "Appeal__details","Appeal"."created_at" AS "Appeal__created_at","Appeal"."updated_at" AS "Appeal__updated_at","Appeal"."deleted_at" AS "Appeal__deleted_at" FROM "approvals" LEFT JOIN "appeals" "Appeal" ON "approvals"."appeal_id" = "Appeal"."id" JOIN "approvers" ON "approvals"."id" = "approvers"."approval_id" WHERE "approvers"."email" = $1 AND "approvals"."status" IN ($2,$3) AND "Appeal"."account_id" = $4 AND "Appeal"."status" != $5 AND "approvals"."deleted_at" IS NULL ORDER BY ARRAY_POSITION(ARRAY[$6,$7,$8,$9], "approvals"."status"), "updated_at" desc, "created_at"`)
-		approvalColumnNames := s.approvalColumnNames
-		for _, c := range s.appealColumnNames {
-			approvalColumnNames = append(approvalColumnNames, fmt.Sprintf("Appeal__%s", c))
-		}
-		expectedApprovalRows := sqlmock.NewRows(approvalColumnNames)
-		for _, a := range expectedApprovals {
-			expectedApprovalRows.AddRow(
-				// approval
-				a.ID, a.Name, a.AppealID, a.Status, a.PolicyID, a.PolicyVersion, a.CreatedAt, a.UpdatedAt,
-
-				// appeal
-				a.Appeal.ID, a.Appeal.ResourceID, a.Appeal.PolicyID, a.Appeal.PolicyVersion, a.Appeal.Status, a.Appeal.AccountID, a.Appeal.AccountType, a.Appeal.CreatedBy, a.Appeal.Creator, a.Appeal.Role, "null", "null", "null", a.CreatedAt, a.UpdatedAt,
-			)
-		}
-		s.dbmock.ExpectQuery(expectedListApprovalsQuery).
-			WithArgs(expectedUser, expectedStatuses[0], expectedStatuses[1], expectedAccountID, domain.AppealStatusCanceled,
-				domain.AppealStatusPending,
-				domain.AppealStatusApproved,
-				domain.AppealStatusRejected,
-				domain.AppealStatusCanceled,
-			).
-			WillReturnRows(expectedApprovalRows)
-
-		expectedListAppealsQuery := regexp.QuoteMeta(`SELECT * FROM "appeals" WHERE "appeals"."id" = $1 AND "appeals"."deleted_at" IS NULL`)
-		expectedAppealRows := sqlmock.NewRows(s.appealColumnNames)
-		for _, a := range expectedApprovals {
-			expectedAppealRows.AddRow(a.Appeal.ID, a.Appeal.ResourceID, a.Appeal.PolicyID, a.Appeal.PolicyVersion, a.Appeal.Status, a.Appeal.AccountID, a.Appeal.AccountType, a.Appeal.CreatedBy, a.Appeal.Creator, a.Appeal.Role, "null", "null", "null", a.CreatedAt, a.UpdatedAt)
-		}
-		s.dbmock.ExpectQuery(expectedListAppealsQuery).
-			WithArgs(appealID).
-			WillReturnRows(expectedAppealRows)
-
-		expectedListResourcesQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."id" = $1 AND "resources"."deleted_at" IS NULL`)
-		expectedResourceRows := sqlmock.NewRows(s.resourceColumnNames)
-		for _, a := range expectedApprovals {
-			expectedResourceRows.AddRow(
-				a.Appeal.Resource.ID, a.Appeal.Resource.ProviderType, a.Appeal.Resource.ProviderURN, a.Appeal.Resource.Type, a.Appeal.Resource.URN, a.Appeal.Resource.Name, "null", "null", a.Appeal.Resource.CreatedAt, a.Appeal.Resource.UpdatedAt)
-		}
-		s.dbmock.ExpectQuery(expectedListResourcesQuery).
-			WithArgs(resourceID).
-			WillReturnRows(expectedResourceRows)
-
 		approvals, err := s.repository.ListApprovals(&domain.ListApprovalsFilter{
-			AccountID: expectedAccountID,
-			CreatedBy: expectedUser,
-			Statuses:  expectedStatuses,
+			AccountID: s.dummyAppeal.AccountID,
+			CreatedBy: dummyApprover[0].Email,
+			Statuses:  []string{"test-status-1"},
 			OrderBy:   []string{"status", "updated_at:desc", "created_at"},
 		})
 
 		s.NoError(err)
-		s.Equal(expectedApprovals, approvals)
-		s.NoError(s.dbmock.ExpectationsWereMet())
+		s.Len(approvals, 1)
+		s.Equal(dummyApprovals[0].ID, approvals[0].ID)
 	})
 
 	s.Run("should return error if conditions invalid", func() {
@@ -204,27 +178,22 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 	})
 
 	s.Run("should return error if db execution returns an error on listing approvers", func() {
-		expectedError := errors.New("unexpected error")
-		s.dbmock.ExpectQuery(".*").WillReturnError(expectedError)
+		approvals, err := s.repository.ListApprovals(&domain.ListApprovalsFilter{
+			OrderBy: []string{"not-a-column"},
+		})
 
-		approvals, err := s.repository.ListApprovals(&domain.ListApprovalsFilter{})
-
-		s.ErrorIs(err, expectedError)
+		s.Error(err)
 		s.Nil(approvals)
-		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
 
 func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvals" ("name","index","appeal_id","status","actor","reason","policy_id","policy_version","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING "id"`)
-
 	actor := "user@email.com"
-	appealID := uuid.New().String()
 	approvals := []*domain.Approval{
 		{
 			Name:          "approval_step_1",
 			Index:         0,
-			AppealID:      appealID,
+			AppealID:      s.dummyAppeal.ID,
 			Status:        domain.ApprovalStatusPending,
 			Actor:         &actor,
 			PolicyID:      "policy_1",
@@ -233,7 +202,7 @@ func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
 		{
 			Name:          "approval_step_2",
 			Index:         1,
-			AppealID:      appealID,
+			AppealID:      s.dummyAppeal.ID,
 			Status:        domain.ApprovalStatusPending,
 			Actor:         &actor,
 			PolicyID:      "policy_1",
@@ -241,87 +210,53 @@ func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
 		},
 	}
 
-	expectedArgs := []driver.Value{}
-	for _, a := range approvals {
-		expectedArgs = append(expectedArgs,
-			a.Name,
-			a.Index,
-			a.AppealID,
-			a.Status,
-			a.Actor,
-			a.Reason,
-			a.PolicyID,
-			a.PolicyVersion,
-			utils.AnyTime{},
-			utils.AnyTime{},
-			gorm.DeletedAt{},
-		)
-	}
-
 	s.Run("should return error if got any from transaction", func() {
-		expectedError := errors.New("transaction error")
-		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectQuery(expectedQuery).
-			WithArgs(expectedArgs...).
-			WillReturnError(expectedError)
-		s.dbmock.ExpectRollback()
-
-		actualError := s.repository.BulkInsert(approvals)
-
+		expectedError := errors.New("empty slice found")
+		actualError := s.repository.BulkInsert([]*domain.Approval{})
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	expectedIDs := []string{
-		uuid.New().String(),
-		uuid.New().String(),
-	}
-	expectedRows := sqlmock.NewRows([]string{"id"})
-	for _, id := range expectedIDs {
-		expectedRows.AddRow(id)
-	}
-
 	s.Run("should return nil error on success", func() {
-		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectQuery(expectedQuery).
-			WithArgs(expectedArgs...).
-			WillReturnRows(expectedRows)
-		s.dbmock.ExpectCommit()
-
-		actualError := s.repository.BulkInsert(approvals)
-
-		s.Nil(actualError)
-		for i, a := range approvals {
-			s.Equal(expectedIDs[i], a.ID)
-		}
+		err := s.repository.BulkInsert(approvals)
+		s.Nil(err)
 	})
 }
 
 func (s *ApprovalRepositoryTestSuite) TestAddApprover() {
+	actor := "user@email.com"
+	dummyApprovals := []*domain.Approval{
+		{
+			Name:          "approval_step_1",
+			Index:         0,
+			AppealID:      s.dummyAppeal.ID,
+			Status:        domain.ApprovalStatusPending,
+			Actor:         &actor,
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+		},
+		{
+			Name:          "approval_step_2",
+			Index:         1,
+			AppealID:      s.dummyAppeal.ID,
+			Status:        domain.ApprovalStatusPending,
+			Actor:         &actor,
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+		},
+	}
+
+	err := s.repository.BulkInsert(dummyApprovals)
+	s.Require().NoError(err)
+
 	s.Run("should return nil error on success", func() {
-		approval := &domain.Approver{
-			ApprovalID: uuid.New().String(),
+		dummyApprover := &domain.Approver{
+			ApprovalID: dummyApprovals[0].ID,
 			Email:      "user@example.com",
+			AppealID:   s.dummyAppeal.ID,
 		}
 
-		expectedID := uuid.New().String()
-		expectedQuery := regexp.QuoteMeta(`INSERT INTO "approvers" ("approval_id","appeal_id","email","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"`)
-		expectedRows := sqlmock.NewRows([]string{"id"}).AddRow(expectedID)
-		s.dbmock.ExpectQuery(expectedQuery).
-			WithArgs(
-				approval.ApprovalID,
-				approval.AppealID,
-				approval.Email,
-				utils.AnyTime{},
-				utils.AnyTime{},
-				nil,
-			).
-			WillReturnRows(expectedRows)
-
-		err := s.repository.AddApprover(approval)
-
+		err := s.repository.AddApprover(dummyApprover)
 		s.NoError(err)
-		s.Equal(expectedID, approval.ID)
-		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return error if approver payload is invalid", func() {
@@ -333,51 +268,50 @@ func (s *ApprovalRepositoryTestSuite) TestAddApprover() {
 
 		s.EqualError(err, "parsing approver: parsing uuid: invalid UUID length: 12")
 	})
-
-	s.Run("should return error if db returns an error", func() {
-		expectedError := errors.New("unexpected error")
-		s.dbmock.ExpectQuery(".*").WillReturnError(expectedError)
-
-		err := s.repository.AddApprover(&domain.Approver{})
-
-		s.ErrorIs(err, expectedError)
-		s.NoError(s.dbmock.ExpectationsWereMet())
-	})
 }
 
 func (s *ApprovalRepositoryTestSuite) TestDeleteApprover() {
+	actor := "user@email.com"
+	dummyApprovals := []*domain.Approval{
+		{
+			Name:          "approval_step_1",
+			Index:         0,
+			AppealID:      s.dummyAppeal.ID,
+			Status:        domain.ApprovalStatusPending,
+			Actor:         &actor,
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+		},
+		{
+			Name:          "approval_step_2",
+			Index:         1,
+			AppealID:      s.dummyAppeal.ID,
+			Status:        domain.ApprovalStatusPending,
+			Actor:         &actor,
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+		},
+	}
+
+	err := s.repository.BulkInsert(dummyApprovals)
+	s.Require().NoError(err)
+
+	dummyApprover := &domain.Approver{
+		ApprovalID: dummyApprovals[0].ID,
+		Email:      "user@example.com",
+		AppealID:   s.dummyAppeal.ID,
+	}
+
+	err = s.repository.AddApprover(dummyApprover)
+	s.NoError(err)
+
 	s.Run("should return nil error on success", func() {
-		approvalID := uuid.New().String()
-		approverEmail := "user@example.com"
-
-		expectedQuery := regexp.QuoteMeta(`UPDATE "approvers" SET "deleted_at"=$1 WHERE approval_id = $2 AND email = $3 AND "approvers"."deleted_at" IS NULL`)
-		s.dbmock.ExpectExec(expectedQuery).
-			WithArgs(utils.AnyTime{}, approvalID, approverEmail).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-
-		err := s.repository.DeleteApprover(approvalID, approverEmail)
-
+		err := s.repository.DeleteApprover(dummyApprovals[0].ID, dummyApprover.Email)
 		s.NoError(err)
-		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return error if db returns an error", func() {
-		expectedError := errors.New("unexpected error")
-		s.dbmock.ExpectExec(".*").WillReturnError(expectedError)
-
 		err := s.repository.DeleteApprover("", "")
-
-		s.ErrorIs(err, expectedError)
-		s.NoError(s.dbmock.ExpectationsWereMet())
-	})
-
-	s.Run("should return error if db returns an error", func() {
-		expectedError := appeal.ErrApproverNotFound
-		s.dbmock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(1, 0))
-
-		err := s.repository.DeleteApprover("", "")
-
-		s.ErrorIs(err, expectedError)
-		s.NoError(s.dbmock.ExpectationsWereMet())
+		s.Error(err)
 	})
 }

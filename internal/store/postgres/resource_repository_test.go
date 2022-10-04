@@ -1,130 +1,171 @@
 package postgres_test
 
 import (
-	"database/sql"
-	"database/sql/driver"
-	"errors"
-	"regexp"
+	"context"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/utils"
+	"github.com/odpf/salt/log"
+	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/gorm"
 )
 
 type ResourceRepositoryTestSuite struct {
 	suite.Suite
-	sqldb      *sql.DB
-	dbmock     sqlmock.Sqlmock
-	repository *postgres.ResourceRepository
-
-	columnNames []string
+	ctx           context.Context
+	store         *postgres.Store
+	pool          *dockertest.Pool
+	resource      *dockertest.Resource
+	dummyProvider *domain.Provider
+	repository    *postgres.ResourceRepository
 }
 
-func (s *ResourceRepositoryTestSuite) SetupTest() {
-	db, mock, _ := mocks.NewStore()
-	s.sqldb, _ = db.DB()
-	s.dbmock = mock
-	s.repository = postgres.NewResourceRepository(db)
+func (s *ResourceRepositoryTestSuite) SetupSuite() {
+	var err error
 
-	s.columnNames = []string{
-		"id",
-		"provider_type",
-		"provider_urn",
-		"type",
-		"urn",
-		"details",
-		"labels",
-		"created_at",
-		"updated_at",
+	logger := log.NewLogrus(log.LogrusWithLevel("debug"))
+	s.store, s.pool, s.resource, err = newTestStore(logger)
+	if err != nil {
+		s.T().Fatal(err)
+	}
+
+	s.ctx = context.TODO()
+	s.repository = postgres.NewResourceRepository(s.store.DB())
+
+	s.dummyProvider = &domain.Provider{
+		Type: "provider_test",
+		URN:  "provider_urn_test",
+	}
+	providerRepository := postgres.NewProviderRepository(s.store.DB())
+	err = providerRepository.Create(s.dummyProvider)
+	s.Require().NoError(err)
+}
+
+func (s *ResourceRepositoryTestSuite) AfterTest(suiteName, testName string) {
+	if err := truncateTable(s.store, "resources"); err != nil {
+		s.T().Fatal(err)
 	}
 }
 
-func (s *ResourceRepositoryTestSuite) TearDownTest() {
-	s.sqldb.Close()
+func (s *ResourceRepositoryTestSuite) TearDownSuite() {
+	// Clean tests
+	db, err := s.store.DB().DB()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+	err = db.Close()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+
+	err = purgeTestDocker(s.pool, s.resource)
+	if err != nil {
+		s.T().Fatal(err)
+	}
 }
 
 func (s *ResourceRepositoryTestSuite) TestFind() {
 	s.Run("should pass conditions based on filters", func() {
-		resourceID1 := uuid.New().String()
-		resourceID2 := uuid.New().String()
+		dummyResources := []*domain.Resource{
+			{
+				ProviderType: s.dummyProvider.Type,
+				ProviderURN:  s.dummyProvider.URN,
+				Type:         "test_type",
+				URN:          "test_urn_1",
+				Name:         "test_name_1",
+				Details: map[string]interface{}{
+					"foo": "bar",
+				},
+			},
+			{
+				ProviderType: s.dummyProvider.Type,
+				ProviderURN:  s.dummyProvider.URN,
+				Type:         "test_type",
+				URN:          "test_urn_2",
+				Name:         "test_name_2",
+			},
+		}
+		err := s.repository.BulkUpsert(dummyResources)
+		s.Require().NoError(err)
+
 		testCases := []struct {
-			filters       map[string]interface{}
-			expectedQuery string
-			expectedArgs  []driver.Value
+			name           string
+			filters        map[string]interface{}
+			expectedResult []*domain.Resource
 		}{
 			{
-				filters:       map[string]interface{}{},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "resources"."deleted_at" IS NULL`),
-				expectedArgs:  []driver.Value{false},
+				name:           "empty filter",
+				filters:        map[string]interface{}{},
+				expectedResult: dummyResources,
 			},
 			{
+				name: "filter by ids",
 				filters: map[string]interface{}{
-					"ids": []string{resourceID1, resourceID2},
+					"ids": []string{dummyResources[0].ID},
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "resources"."id" IN ($1,$2) AND "is_deleted" = $3 AND "resources"."deleted_at" IS NULL`),
-				expectedArgs:  []driver.Value{resourceID1, resourceID2, false},
+				expectedResult: []*domain.Resource{dummyResources[0]},
 			},
 			{
+				name: "filter by type",
 				filters: map[string]interface{}{
-					"type": "test-type",
+					"type": "test_type",
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "type" = $2 AND "resources"."deleted_at" IS NULL`),
-				expectedArgs:  []driver.Value{false, "test-type"},
+				expectedResult: dummyResources,
 			},
 			{
+				name: "filter by name",
 				filters: map[string]interface{}{
-					"name": "test-name",
+					"name": "test_name_1",
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "name" = $2 AND "resources"."deleted_at" IS NULL`),
-				expectedArgs:  []driver.Value{false, "test-name"},
+				expectedResult: []*domain.Resource{dummyResources[0]},
 			},
 			{
+				name: "filter by provider type",
 				filters: map[string]interface{}{
-					"provider_type": "test-provider-type",
+					"provider_type": s.dummyProvider.Type,
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "provider_type" = $2 AND "resources"."deleted_at" IS NULL`),
-				expectedArgs:  []driver.Value{false, "test-provider-type"},
+				expectedResult: dummyResources,
 			},
 			{
+				name: "filter by provider urn",
 				filters: map[string]interface{}{
-					"provider_urn": "test-provider-urn",
+					"provider_urn": s.dummyProvider.URN,
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "provider_urn" = $2 AND "resources"."deleted_at" IS NULL`),
-				expectedArgs:  []driver.Value{false, "test-provider-urn"},
+				expectedResult: dummyResources,
 			},
 			{
+				name: "filter by urn",
 				filters: map[string]interface{}{
-					"urn": "test-urn",
+					"urn": "test_urn_1",
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "urn" = $2 AND "resources"."deleted_at" IS NULL`),
-				expectedArgs:  []driver.Value{false, "test-urn"},
+				expectedResult: []*domain.Resource{dummyResources[0]},
 			},
 			{
+				name: "filter by details",
 				filters: map[string]interface{}{
 					"details": map[string]string{
 						"foo": "bar",
 					},
 				},
-				expectedQuery: regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "details" #>> $2 = $3 AND "resources"."deleted_at" IS NULL`),
-				expectedArgs:  []driver.Value{false, "{foo}", "bar"},
+				expectedResult: []*domain.Resource{dummyResources[0]},
 			},
 		}
 
 		for _, tc := range testCases {
-			s.dbmock.ExpectQuery(tc.expectedQuery).WithArgs(tc.expectedArgs...).WillReturnRows(sqlmock.NewRows(s.columnNames))
+			s.Run(tc.name, func() {
+				actualResult, actualError := s.repository.Find(tc.filters)
 
-			_, actualError := s.repository.Find(tc.filters)
-
-			s.Nil(actualError)
-			s.NoError(s.dbmock.ExpectationsWereMet())
+				s.NoError(actualError)
+				if diff := cmp.Diff(tc.expectedResult, actualResult, cmpopts.EquateApproxTime(time.Microsecond)); diff != "" {
+					s.T().Errorf("result not match, diff: %v", diff)
+				}
+			})
 		}
 	})
 
@@ -148,55 +189,14 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 		s.Nil(actualRecords)
 	})
 
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE "is_deleted" = $1 AND "resources"."deleted_at" IS NULL`)
-	expectedArgs := []driver.Value{false}
 	s.Run("should return error if db returns error", func() {
-		expectedError := errors.New("unexpected error")
-
-		s.dbmock.ExpectQuery(expectedQuery).WithArgs(expectedArgs...).
-			WillReturnError(expectedError)
-
-		actualRecords, actualError := s.repository.Find(map[string]interface{}{})
-
-		s.EqualError(actualError, expectedError.Error())
-		s.Nil(actualRecords)
-		s.NoError(s.dbmock.ExpectationsWereMet())
-	})
-
-	s.Run("should return list of records on success", func() {
-		timeNow := time.Now()
-		resourceID := uuid.New().String()
-		expectedRecords := []*domain.Resource{
-			{
-				ID:           resourceID,
-				ProviderType: "provider_type_test",
-				ProviderURN:  "provider_urn_test",
-				Type:         "type_test",
-				URN:          "urn_test",
-				CreatedAt:    timeNow,
-				UpdatedAt:    timeNow,
-			},
+		invalidFilters := map[string]interface{}{
+			"ids": []string{"invalid-uuid"},
 		}
-		expectedRows := sqlmock.NewRows(s.columnNames).
-			AddRow(
-				resourceID,
-				"provider_type_test",
-				"provider_urn_test",
-				"type_test",
-				"urn_test",
-				"null",
-				"null",
-				timeNow,
-				timeNow,
-			)
+		actualRecords, actualError := s.repository.Find(invalidFilters)
 
-		s.dbmock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
-
-		actualRecords, actualError := s.repository.Find(map[string]interface{}{})
-
-		s.Equal(expectedRecords, actualRecords)
-		s.Nil(actualError)
-		s.NoError(s.dbmock.ExpectationsWereMet())
+		s.Error(actualError)
+		s.Nil(actualRecords)
 	})
 }
 
@@ -211,114 +211,43 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 	})
 
 	s.Run("should return error if record not found", func() {
-		expectedDBError := gorm.ErrRecordNotFound
-		s.dbmock.ExpectQuery(".*").
-			WillReturnError(expectedDBError)
 		expectedError := resource.ErrRecordNotFound
 
-		actualResult, actualError := s.repository.GetOne("1")
+		sampleUUID := uuid.New().String()
+		actualResult, actualError := s.repository.GetOne(sampleUUID)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
-		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
-	s.Run("should return error if got error from db", func() {
-		expectedError := errors.New("unexpected error")
-		s.dbmock.ExpectQuery(".*").
-			WillReturnError(expectedError)
-
-		actualResult, actualError := s.repository.GetOne("1")
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
-		s.NoError(s.dbmock.ExpectationsWereMet())
-	})
-
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "resources" WHERE id = $1 AND "resources"."deleted_at" IS NULL LIMIT 1`)
 	s.Run("should return record and nil error on success", func() {
-		expectedID := uuid.New().String()
-		timeNow := time.Now()
-		expectedRows := sqlmock.NewRows(s.columnNames).
-			AddRow(
-				expectedID,
-				"provider_type_test",
-				"provider_urn_test",
-				"type_test",
-				"urn_test",
-				"null",
-				"null",
-				timeNow,
-				timeNow,
-			)
-		s.dbmock.ExpectQuery(expectedQuery).
-			WithArgs(expectedID).
-			WillReturnRows(expectedRows)
+		resources := s.getTestResources()
+		err := s.repository.BulkUpsert(resources)
+		s.Nil(err)
 
-		_, actualError := s.repository.GetOne(expectedID)
+		expectedResource := resources[0]
 
+		r, actualError := s.repository.GetOne(expectedResource.ID)
 		s.Nil(actualError)
-		s.NoError(s.dbmock.ExpectationsWereMet())
+		s.Equal(expectedResource.URN, r.URN)
 	})
 }
 
 func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
-	s.Run("should return records with with existing or new IDs", func() {
-		resources := []*domain.Resource{
-			{
-				ProviderType: "provider_test",
-				ProviderURN:  "provider_urn_test",
-				Type:         "resource_type",
-				URN:          "resource_type.resource_name",
-				Name:         "resource_name",
-			},
-			{
-				ProviderType: "provider_test",
-				ProviderURN:  "provider_urn_test",
-				Type:         "resource_type",
-				URN:          "resource_type.resource_name_2",
-				Name:         "resource_name_2",
-			},
-		}
-
-		expectedQuery := regexp.QuoteMeta(`INSERT INTO "resources" ("provider_type","provider_urn","type","urn","name","details","labels","created_at","updated_at","deleted_at","is_deleted") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11),($12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) ON CONFLICT ("provider_type","provider_urn","type","urn") DO UPDATE SET "name"="excluded"."name","details"="excluded"."details","updated_at"="excluded"."updated_at","is_deleted"="excluded"."is_deleted" RETURNING "id"`)
-		expectedArgs := []driver.Value{}
-		for _, r := range resources {
-			expectedArgs = append(expectedArgs,
-				r.ProviderType,
-				r.ProviderURN,
-				r.Type,
-				r.URN,
-				r.Name,
-				"null",
-				"null",
-				utils.AnyTime{},
-				utils.AnyTime{},
-				gorm.DeletedAt{},
-				false,
-			)
-		}
-		expectedIDs := []string{
-			uuid.New().String(),
-			uuid.New().String(),
-		}
-		expectedRows := sqlmock.NewRows([]string{"id"})
-		for _, id := range expectedIDs {
-			expectedRows.AddRow(id)
-		}
-		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectQuery(expectedQuery).
-			WithArgs(expectedArgs...).
-			WillReturnRows(expectedRows)
-		s.dbmock.ExpectCommit()
+	s.Run("should return records with existing or new IDs", func() {
+		resources := s.getTestResources()
 
 		err := s.repository.BulkUpsert(resources)
 
-		s.Nil(err)
-		for i, r := range resources {
-			s.Equal(expectedIDs[i], r.ID)
+		actualIDs := make([]string, 0)
+		for _, r := range resources {
+			if r.ID != "" {
+				actualIDs = append(actualIDs, r.ID)
+			}
 		}
-		s.NoError(s.dbmock.ExpectationsWereMet())
+
+		s.Nil(err)
+		s.Equal(len(resources), len(actualIDs))
 	})
 
 	s.Run("should return nil error if resources input is empty", func() {
@@ -365,38 +294,29 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
 
-	s.Run("should return error if got error from transaction", func() {
-		expectedError := errors.New("db error")
-		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectExec(".*").
-			WillReturnError(expectedError)
-		s.dbmock.ExpectRollback()
-
-		actualError := s.repository.Update(&domain.Resource{ID: uuid.New().String()})
-
-		s.EqualError(actualError, expectedError.Error())
-		s.NoError(s.dbmock.ExpectationsWereMet())
-	})
-
-	expectedQuery := regexp.QuoteMeta(`UPDATE "resources" SET "id"=$1,"details"=$2,"labels"=$3,"updated_at"=$4 WHERE id = $5`)
-	s.Run("should return error if got error from transaction", func() {
-		expectedID := uuid.New().String()
-		resource := &domain.Resource{
-			ID: expectedID,
+	s.Run("should update record", func() {
+		dummyResource := &domain.Resource{
+			ProviderType: s.dummyProvider.Type,
+			ProviderURN:  s.dummyProvider.URN,
+			Type:         "test_type",
+			URN:          "test_urn",
+			Name:         "test_name",
+		}
+		err := s.repository.BulkUpsert([]*domain.Resource{dummyResource})
+		s.Require().NoError(err)
+		expectedID := dummyResource.ID
+		payload := &domain.Resource{
+			ID:   expectedID,
+			Name: "test_new_name",
 		}
 
-		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectExec(expectedQuery).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-		s.dbmock.ExpectCommit()
+		err = s.repository.Update(payload)
 
-		err := s.repository.Update(resource)
+		actualID := payload.ID
 
-		actualID := resource.ID
-
-		s.Nil(err)
+		s.NoError(err)
 		s.Equal(expectedID, actualID)
-		s.NoError(s.dbmock.ExpectationsWereMet())
+		s.NotEqual(dummyResource.Name, payload.Name)
 	})
 }
 
@@ -408,37 +328,27 @@ func (s *ResourceRepositoryTestSuite) TestDelete() {
 		s.ErrorIs(err, resource.ErrEmptyIDParam)
 	})
 
-	s.Run("should return error if db.Delete returns error", func() {
-		expectedError := errors.New("test error")
-		s.dbmock.ExpectExec(".*").WillReturnError(expectedError)
-
-		err := s.repository.Delete("abc")
-
-		s.Error(err)
-		s.ErrorIs(err, expectedError)
-		s.NoError(s.dbmock.ExpectationsWereMet())
-	})
-
 	s.Run("should return error if resource not found", func() {
-		s.dbmock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 0))
-
-		err := s.repository.Delete("abc")
+		sampleUUID := uuid.New().String()
+		err := s.repository.Delete(sampleUUID)
 
 		s.Error(err)
 		s.ErrorIs(err, resource.ErrRecordNotFound)
-		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return nil on success", func() {
-		expectedID := "abcd"
-		s.dbmock.ExpectExec(regexp.QuoteMeta(`UPDATE "resources" SET "deleted_at"=$1 WHERE id = $2 AND "resources"."deleted_at" IS NULL`)).
-			WithArgs(utils.AnyTime{}, expectedID).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+		dummyResource := &domain.Resource{
+			ProviderType: s.dummyProvider.Type,
+			ProviderURN:  s.dummyProvider.URN,
+			Type:         "test_type",
+			URN:          "test_urn_deletion",
+		}
+		err := s.repository.BulkUpsert([]*domain.Resource{dummyResource})
+		s.Require().NoError(err)
 
-		err := s.repository.Delete(expectedID)
-
+		toBeDeletedID := dummyResource.ID
+		err = s.repository.Delete(toBeDeletedID)
 		s.Nil(err)
-		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
 
@@ -450,38 +360,48 @@ func (s *ResourceRepositoryTestSuite) TestBatchDelete() {
 		s.ErrorIs(err, resource.ErrEmptyIDParam)
 	})
 
-	s.Run("should return error if db.Delete returns error", func() {
-		expectedError := errors.New("test error")
-		s.dbmock.ExpectExec(".*").WillReturnError(expectedError)
-
-		err := s.repository.BatchDelete([]string{"abc"})
-
-		s.Error(err)
-		s.ErrorIs(err, expectedError)
-		s.NoError(s.dbmock.ExpectationsWereMet())
-	})
-
 	s.Run("should return error if resource(s) not found", func() {
-		s.dbmock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 0))
-
-		err := s.repository.BatchDelete([]string{"abc"})
+		sampleUUID := uuid.New().String()
+		err := s.repository.BatchDelete([]string{sampleUUID})
 
 		s.Error(err)
 		s.ErrorIs(err, resource.ErrRecordNotFound)
-		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 
 	s.Run("should return nil on success", func() {
-		expectedIDs := []string{"abcd", "efgh"}
-		s.dbmock.ExpectExec(regexp.QuoteMeta(`UPDATE "resources" SET "deleted_at"=$1 WHERE "resources"."id" IN ($2,$3) AND "resources"."deleted_at" IS NULL`)).
-			WithArgs(utils.AnyTime{}, expectedIDs[0], expectedIDs[1]).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+		dummyResource := &domain.Resource{
+			ProviderType: s.dummyProvider.Type,
+			ProviderURN:  s.dummyProvider.URN,
+			Type:         "test_type",
+			URN:          "test_urn_batch_deletion",
+		}
+		err := s.repository.BulkUpsert([]*domain.Resource{dummyResource})
+		s.Require().NoError(err)
 
-		err := s.repository.BatchDelete(expectedIDs)
+		expectedIDs := []string{dummyResource.ID}
 
-		s.Nil(err)
-		s.NoError(s.dbmock.ExpectationsWereMet())
+		err = s.repository.BatchDelete(expectedIDs)
+		s.NoError(err)
 	})
+}
+
+func (s *ResourceRepositoryTestSuite) getTestResources() []*domain.Resource {
+	return []*domain.Resource{
+		{
+			ProviderType: "provider_test",
+			ProviderURN:  "provider_urn_test",
+			Type:         "resource_type",
+			URN:          "resource_type.resource_name",
+			Name:         "resource_name",
+		},
+		{
+			ProviderType: "provider_test",
+			ProviderURN:  "provider_urn_test",
+			Type:         "resource_type",
+			URN:          "resource_type.resource_name_2",
+			Name:         "resource_name_2",
+		},
+	}
 }
 
 func TestResourceRepository(t *testing.T) {
