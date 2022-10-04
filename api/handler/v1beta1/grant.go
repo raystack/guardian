@@ -3,7 +3,6 @@ package v1beta1
 import (
 	"context"
 	"errors"
-
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/domain"
