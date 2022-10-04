@@ -50,6 +50,9 @@ func (r *GrantRepository) List(ctx context.Context, filter domain.ListGrantsFilt
 	if filter.CreatedBy != "" {
 		db = db.Where(`"grants"."created_by" = ?`, filter.CreatedBy)
 	}
+	if filter.IsPermanent != nil && *filter.IsPermanent {
+		db = db.Where(`"grants"."is_permanent" = ?`, *filter.IsPermanent)
+	}
 	if filter.OrderBy != nil {
 		db = addOrderByClause(db, filter.OrderBy, addOrderByClauseOptions{
 			statusColumnName: `"grants"."status"`,

@@ -126,6 +126,7 @@ func (s *GrantRepositoryTestSuite) TestList() {
 			Permissions:    s.dummyAppeal.Permissions,
 			CreatedBy:      s.dummyAppeal.CreatedBy,
 			ExpirationDate: &expDate,
+			IsPermanent:    true,
 		},
 	}
 	err := s.repository.BulkInsert(context.Background(), dummyGrants)
@@ -137,6 +138,7 @@ func (s *GrantRepositoryTestSuite) TestList() {
 		expectedGrant.Resource = s.dummyResource
 		expectedGrant.Appeal = s.dummyAppeal
 
+		trueBool := true
 		grants, err := s.repository.List(context.Background(), domain.ListGrantsFilter{
 			Statuses:                  []string{string(domain.GrantStatusActive)},
 			AccountIDs:                []string{s.dummyAppeal.AccountID},
@@ -152,6 +154,7 @@ func (s *GrantRepositoryTestSuite) TestList() {
 			OrderBy:                   []string{"status"},
 			ExpirationDateLessThan:    time.Now(),
 			ExpirationDateGreaterThan: time.Now().Add(-24 * time.Hour),
+			IsPermanent:               &trueBool,
 		})
 
 		s.NoError(err)

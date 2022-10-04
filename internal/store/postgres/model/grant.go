@@ -18,6 +18,7 @@ type Grant struct {
 	ResourceID     string
 	Role           string
 	Permissions    pq.StringArray `gorm:"type:text[]"`
+	IsPermanent    bool
 	ExpirationDate time.Time
 	AppealID       string
 	RevokedBy      string
@@ -71,6 +72,7 @@ func (m *Grant) FromDomain(g domain.Grant) error {
 	m.ResourceID = g.ResourceID
 	m.Role = g.Role
 	m.Permissions = pq.StringArray(g.Permissions)
+	m.IsPermanent = g.IsPermanent
 	m.AppealID = g.AppealID
 	m.RevokedBy = g.RevokedBy
 	m.RevokeReason = g.RevokeReason
@@ -89,6 +91,7 @@ func (m Grant) ToDomain() (*domain.Grant, error) {
 		ResourceID:   m.ResourceID,
 		Role:         m.Role,
 		Permissions:  []string(m.Permissions),
+		IsPermanent:  m.IsPermanent,
 		AppealID:     m.AppealID,
 		RevokedBy:    m.RevokedBy,
 		RevokeReason: m.RevokeReason,

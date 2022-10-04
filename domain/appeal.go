@@ -130,6 +130,8 @@ func (a Appeal) ToGrant() (*Grant, error) {
 		}
 		expDate := time.Now().Add(duration)
 		grant.ExpirationDate = &expDate
+	} else {
+		grant.IsPermanent = true
 	}
 
 	return grant, nil
