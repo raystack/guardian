@@ -1637,6 +1637,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 						ResourceID:  "1",
 						Resource:    dummyResource,
 						Role:        "test-role",
+						IsPermanent: true,
 					},
 				},
 				expectedGrant: &domain.Grant{
@@ -1646,6 +1647,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 					ResourceID:  "1",
 					Resource:    dummyResource,
 					Role:        "test-role",
+					IsPermanent: true,
 				},
 				expectedNotifications: []domain.Notification{
 					{

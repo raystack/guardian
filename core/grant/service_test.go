@@ -4,7 +4,11 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
+	"github.com/go-playground/validator/v10"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/core/grant/mocks"
@@ -29,6 +33,7 @@ func (s *ServiceTestSuite) setup() {
 	s.service = grant.NewService(grant.ServiceDeps{
 		Repository: s.mockRepository,
 		Logger:     log.NewNoop(),
+		Validator:  validator.New(),
 	})
 }
 
@@ -108,5 +113,135 @@ func (s *ServiceTestSuite) TestGetByID() {
 		s.ErrorIs(err, expectedError)
 		s.Nil(grant)
 		s.mockRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *ServiceTestSuite) TestPrepare() {
+	s.Run("should return error if appeal is invalid", func() {
+		testCases := []struct {
+			name   string
+			appeal domain.Appeal
+		}{
+			{
+				"appeal status is not approved",
+				domain.Appeal{
+					Status:      domain.AppealStatusPending,
+					AccountID:   "user@example.com",
+					AccountType: "user",
+					ResourceID:  "test-resource-id",
+				},
+			},
+			{
+				"account id is empty",
+				domain.Appeal{
+					Status:      domain.AppealStatusApproved,
+					AccountID:   "",
+					AccountType: "user",
+					ResourceID:  "test-resource-id",
+				},
+			},
+			{
+				"account type is empty",
+				domain.Appeal{
+					Status:      domain.AppealStatusApproved,
+					AccountID:   "user@example.com",
+					AccountType: "",
+					ResourceID:  "test-resource-id",
+				},
+			},
+			{
+				"resource id is empty",
+				domain.Appeal{
+					Status:      domain.AppealStatusApproved,
+					AccountID:   "user@example.com",
+					AccountType: "user",
+					ResourceID:  "",
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				s.setup()
+				actualGrant, actualError := s.service.Prepare(context.Background(), tc.appeal)
+
+				s.Error(actualError)
+				s.Nil(actualGrant)
+			})
+		}
+	})
+
+	s.Run("should return valid grant", func() {
+		expDate := time.Now().Add(24 * time.Hour)
+		testCases := []struct {
+			name          string
+			appeal        domain.Appeal
+			expectedGrant *domain.Grant
+		}{
+			{
+				name: "appeal with permanent duration option",
+				appeal: domain.Appeal{
+					ID:          "test-appeal-id",
+					Status:      domain.AppealStatusApproved,
+					AccountID:   "user@example.com",
+					AccountType: "user",
+					ResourceID:  "test-user-id",
+					Role:        "test-role",
+					Permissions: []string{"test-permissions"},
+					CreatedBy:   "user@example.com",
+				},
+				expectedGrant: &domain.Grant{
+					Status:      domain.GrantStatusActive,
+					AccountID:   "user@example.com",
+					AccountType: "user",
+					ResourceID:  "test-user-id",
+					Role:        "test-role",
+					Permissions: []string{"test-permissions"},
+					AppealID:    "test-appeal-id",
+					CreatedBy:   "user@example.com",
+					IsPermanent: true,
+				},
+			},
+			{
+				name: "appeal with duration option",
+				appeal: domain.Appeal{
+					ID:          "test-appeal-id",
+					Status:      domain.AppealStatusApproved,
+					AccountID:   "user@example.com",
+					AccountType: "user",
+					ResourceID:  "test-user-id",
+					Role:        "test-role",
+					Permissions: []string{"test-permissions"},
+					CreatedBy:   "user@example.com",
+					Options: &domain.AppealOptions{
+						Duration: "24h",
+					},
+				},
+				expectedGrant: &domain.Grant{
+					Status:         domain.GrantStatusActive,
+					AccountID:      "user@example.com",
+					AccountType:    "user",
+					ResourceID:     "test-user-id",
+					Role:           "test-role",
+					Permissions:    []string{"test-permissions"},
+					AppealID:       "test-appeal-id",
+					CreatedBy:      "user@example.com",
+					IsPermanent:    false,
+					ExpirationDate: &expDate,
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				s.setup()
+				actualGrant, actualError := s.service.Prepare(context.Background(), tc.appeal)
+
+				s.NoError(actualError)
+				if diff := cmp.Diff(tc.expectedGrant, actualGrant, cmpopts.EquateApproxTime(time.Second)); diff != "" {
+					s.T().Errorf("result not match, diff: %v", diff)
+				}
+			})
+		}
 	})
 }
