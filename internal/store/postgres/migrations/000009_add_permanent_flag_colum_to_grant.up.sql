@@ -1,7 +1,7 @@
 ALTER TABLE
   "grants"
 ADD
-  COLUMN "is_permanent" boolean;
+  COLUMN "is_permanent" boolean NOT NULL DEFAULT false;
 
 UPDATE
   "grants"
