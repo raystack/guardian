@@ -11,9 +11,11 @@ import (
 func (h *handler) RevokeExpiredGrants(ctx context.Context) error {
 	h.logger.Info("running revoke expired grants job")
 
+	falseBool := false
 	filters := domain.ListGrantsFilter{
 		Statuses:               []string{string(domain.GrantStatusActive)},
 		ExpirationDateLessThan: time.Now(),
+		IsPermanent:            &falseBool,
 	}
 
 	h.logger.Info("retrieving active grant...")

@@ -72,6 +72,7 @@ type ListGrantsFilter struct {
 	OrderBy                   []string
 	ExpirationDateLessThan    time.Time
 	ExpirationDateGreaterThan time.Time
+	IsPermanent               *bool
 }
 
 type RevokeGrantsFilter struct {
