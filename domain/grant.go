@@ -2,6 +2,8 @@ package domain
 
 import (
 	"errors"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -41,6 +43,13 @@ type Grant struct {
 
 	Resource *Resource `json:"resource,omitempty" yaml:"resource,omitempty"`
 	Appeal   *Appeal   `json:"appeal,omitempty" yaml:"appeal,omitempty"`
+}
+
+func (g Grant) PermissionsKey() string {
+	permissions := make([]string, len(g.Permissions))
+	copy(permissions, g.Permissions)
+	sort.Strings(permissions)
+	return strings.Join(permissions, ";")
 }
 
 func (g Grant) IsEligibleForExtension(extensionDurationRule time.Duration) bool {
