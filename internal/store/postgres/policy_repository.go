@@ -1,8 +1,11 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
+	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres/model"
@@ -11,35 +14,33 @@ import (
 
 // PolicyRepository talks to the store to read or insert data
 type PolicyRepository struct {
-	db *gorm.DB
+	db    *gorm.DB
+	sqldb *sql.DB
 }
 
 // NewPolicyRepository returns repository struct
 func NewPolicyRepository(db *gorm.DB) *PolicyRepository {
-	return &PolicyRepository{db}
+	sqldb, _ := db.DB() // TODO: replace gormDB with sql.DB
+	return &PolicyRepository{db, sqldb}
 }
 
 // Create new record to database
 func (r *PolicyRepository) Create(p *domain.Policy) error {
+	p.CreatedAt = time.Now()
+	p.UpdatedAt = time.Now()
+
 	m := new(model.Policy)
 	if err := m.FromDomain(p); err != nil {
 		return fmt.Errorf("serializing policy: %w", err)
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		if result := tx.Create(m); result.Error != nil {
-			return result.Error
-		}
-
-		newPolicy, err := m.ToDomain()
-		if err != nil {
-			return fmt.Errorf("deserializing policy: %w", err)
-		}
-
-		*p = *newPolicy
-
-		return nil
-	})
+	_, err := sq.Insert("policies").
+		Columns("id", "version", "description", "steps", "appeal_config", "labels", "requirements", "iam", "created_at", "updated_at").
+		Values(m.ID, m.Version, m.Description, m.Steps, m.AppealConfig, m.Labels, m.Requirements, m.IAM, m.CreatedAt, m.UpdatedAt).
+		RunWith(r.sqldb).
+		PlaceholderFormat(sq.Dollar).
+		Exec()
+	return err
 }
 
 // Find records based on filters

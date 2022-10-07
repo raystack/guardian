@@ -11,17 +11,17 @@ import (
 
 // Policy is the database model for policy
 type Policy struct {
-	ID           string `gorm:"primaryKey"`
-	Version      uint   `gorm:"primaryKey"`
-	Description  string
-	Steps        datatypes.JSON
-	AppealConfig datatypes.JSON
-	Labels       datatypes.JSON
-	Requirements datatypes.JSON
-	IAM          datatypes.JSON
-	CreatedAt    time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt    time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	ID           string         `db:"id"`
+	Version      uint           `db:"version"`
+	Description  string         `db:"description"`
+	Steps        datatypes.JSON `db:"steps"`
+	AppealConfig datatypes.JSON `db:"appeal_config"`
+	Labels       datatypes.JSON `db:"labels"`
+	Requirements datatypes.JSON `db:"requirements"`
+	IAM          datatypes.JSON `db:"iam"`
+	CreatedAt    time.Time      `db:"created_at"`
+	UpdatedAt    time.Time      `db:"updated_at"`
+	DeletedAt    gorm.DeletedAt `db:"deleted_at"`
 }
 
 // TableName overrides the table name
