@@ -59,14 +59,14 @@ func (s *GrpcHandlersSuite) TestListResources() {
 				},
 			},
 		}
-		expectedFilters := map[string]interface{}{
-			"is_deleted":    true,
-			"type":          "test-type",
-			"urn":           "test-urn",
-			"provider_type": "test-provider-type",
-			"provider_urn":  "test-provider-urn",
-			"name":          "test-name",
-			"details": map[string]string{
+		expectedFilters := domain.ListResourcesFilter{
+			IsDeleted:    true,
+			ResourceType: "test-type",
+			ResourceURN:  "test-urn",
+			ProviderType: "test-provider-type",
+			ProviderURN:  "test-provider-urn",
+			Name:         "test-name",
+			Details: map[string]string{
 				"key1":      "value1",
 				"key2.key3": "value2",
 			},

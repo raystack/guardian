@@ -7,6 +7,7 @@ import (
 )
 
 type provider struct {
+	pv.UnimplementedClient
 	pv.PermissionManager
 
 	typeName string

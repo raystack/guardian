@@ -38,7 +38,7 @@ type ProtoAdapter interface {
 
 //go:generate mockery --name=resourceService --exported --with-expecter
 type resourceService interface {
-	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
+	Find(context.Context, domain.ListResourcesFilter) ([]*domain.Resource, error)
 	GetOne(string) (*domain.Resource, error)
 	BulkUpsert(context.Context, []*domain.Resource) error
 	Update(context.Context, *domain.Resource) error
@@ -95,6 +95,7 @@ type grantService interface {
 	GetByID(context.Context, string) (*domain.Grant, error)
 	Revoke(ctx context.Context, id, actor, reason string, opts ...grant.Option) (*domain.Grant, error)
 	BulkRevoke(ctx context.Context, filter domain.RevokeGrantsFilter, actor, reason string) ([]*domain.Grant, error)
+	ImportAccess(ctx context.Context, criteria grant.ImportAccessCriteria) ([]*domain.Grant, error)
 }
 
 type GRPCServer struct {

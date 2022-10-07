@@ -36,14 +36,14 @@ func (s *ServiceTestSuite) TestFind() {
 		expectedError := errors.New("error from repository")
 		s.mockRepository.On("Find", mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Find(context.Background(), map[string]interface{}{})
+		actualResult, actualError := s.service.Find(context.Background(), domain.ListResourcesFilter{})
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should return list of records on success", func() {
-		expectedFilters := map[string]interface{}{}
+		expectedFilters := domain.ListResourcesFilter{}
 		expectedResult := []*domain.Resource{}
 		s.mockRepository.On("Find", expectedFilters).Return(expectedResult, nil).Once()
 

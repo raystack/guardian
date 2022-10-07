@@ -132,6 +132,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 	grantService := grant.NewService(grant.ServiceDeps{
 		Repository:      grantRepository,
 		ProviderService: providerService,
+		ResourceService: resourceService,
 		Notifier:        deps.Notifier,
 		Logger:          deps.Logger,
 		Validator:       deps.Validator,

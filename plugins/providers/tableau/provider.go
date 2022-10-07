@@ -7,6 +7,7 @@ import (
 )
 
 type provider struct {
+	pv.UnimplementedClient
 	pv.PermissionManager
 
 	typeName string
@@ -47,11 +48,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
-	var resourceTypes []string
-	for _, rc := range pc.Resources {
-		resourceTypes = append(resourceTypes, rc.Type)
-	}
-
+	resourceTypes := pc.GetResourceTypes()
 	resources := []*domain.Resource{}
 
 	if containsString(resourceTypes, ResourceTypeWorkbook) {

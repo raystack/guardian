@@ -138,7 +138,7 @@ func (r *GrantRepository) Update(ctx context.Context, a *domain.Grant) error {
 func (r *GrantRepository) BulkInsert(ctx context.Context, grants []*domain.Grant) error {
 	var models []*model.Grant
 	for _, g := range grants {
-		m := &model.Grant{}
+		m := new(model.Grant)
 		if err := m.FromDomain(*g); err != nil {
 			return fmt.Errorf("serializing grant: %w", err)
 		}
@@ -152,11 +152,11 @@ func (r *GrantRepository) BulkInsert(ctx context.Context, grants []*domain.Grant
 			}
 
 			for i, m := range models {
-				g, err := m.ToDomain()
+				newGrant, err := m.ToDomain()
 				if err != nil {
-					return fmt.Errorf("deserializing grant %q: %w", m.ID, err)
+					return fmt.Errorf("deserializing grant %q: %w", newGrant.ID, err)
 				}
-				*grants[i] = *g
+				*grants[i] = *newGrant
 			}
 
 			return nil

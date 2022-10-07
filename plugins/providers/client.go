@@ -1,6 +1,10 @@
 package providers
 
-import "github.com/odpf/guardian/domain"
+import (
+	"context"
+
+	"github.com/odpf/guardian/domain"
+)
 
 type Client interface {
 	GetType() string
@@ -10,6 +14,7 @@ type Client interface {
 	RevokeAccess(*domain.ProviderConfig, domain.Grant) error
 	GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error)
 	GetAccountTypes() []string
+	ListAccess(context.Context, domain.ProviderConfig, []*domain.Resource) (domain.MapResourceAccess, error)
 }
 
 type PermissionManager interface {

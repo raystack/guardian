@@ -41,7 +41,7 @@ type Client interface {
 }
 
 type resourceService interface {
-	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
+	Find(context.Context, domain.ListResourcesFilter) ([]*domain.Resource, error)
 	BulkUpsert(context.Context, []*domain.Resource) error
 	BatchDelete(context.Context, []string) error
 }
@@ -326,9 +326,9 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 		return fmt.Errorf("getting provider details: %w", err)
 	}
 
-	resources, err := s.resourceService.Find(ctx, map[string]interface{}{
-		"provider_type": p.Type,
-		"provider_urn":  p.URN,
+	resources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
+		ProviderType: p.Type,
+		ProviderURN:  p.URN,
 	})
 	if err != nil {
 		return fmt.Errorf("retrieving related resources: %w", err)
@@ -353,6 +353,31 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+func (s *Service) ListAccess(ctx context.Context, providerID string, resources []*domain.Resource) (*domain.Provider, domain.MapResourceAccess, error) {
+	p, err := s.GetByID(ctx, providerID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	c := s.getClient(p.Type)
+	providerAccesses, err := c.ListAccess(ctx, *p.Config, resources)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for resourceURN, accessEntries := range providerAccesses {
+		var filteredAccessEntries []domain.AccessEntry
+		for _, ae := range accessEntries {
+			if utils.ContainsString(p.Config.AllowedAccountTypes, ae.AccountType) {
+				filteredAccessEntries = append(filteredAccessEntries, ae)
+			}
+		}
+		providerAccesses[resourceURN] = filteredAccessEntries
+	}
+
+	return p, providerAccesses, nil
+}
+
 func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*domain.Resource, error) {
 	resources := []*domain.Resource{}
 	c := s.getClient(p.Type)
@@ -360,9 +385,9 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 		return nil, fmt.Errorf("%w: %v", ErrInvalidProviderType, p.Type)
 	}
 
-	existingResources, err := s.resourceService.Find(ctx, map[string]interface{}{
-		"provider_type": p.Type,
-		"provider_urn":  p.URN,
+	existingResources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
+		ProviderType: p.Type,
+		ProviderURN:  p.URN,
 	})
 	if err != nil {
 		return nil, err

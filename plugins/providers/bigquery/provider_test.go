@@ -7,8 +7,8 @@ import (
 
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
+	"github.com/odpf/guardian/plugins/providers/bigquery/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -26,9 +26,9 @@ func TestGetType(t *testing.T) {
 
 func TestCreateConfig(t *testing.T) {
 	t.Run("should return error if error in credentials are invalid/mandatory fields are missing", func(t *testing.T) {
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -73,9 +73,9 @@ func TestCreateConfig(t *testing.T) {
 	})
 
 	t.Run("should return error if error in parse and validate configurations", func(t *testing.T) {
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -145,7 +145,7 @@ func TestCreateConfig(t *testing.T) {
 				},
 			},
 		}
-		crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
+		encryptor.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
 
 		for _, tc := range testcases {
 			t.Run(tc.name, func(t *testing.T) {
@@ -157,9 +157,9 @@ func TestCreateConfig(t *testing.T) {
 
 	t.Run("should return error if error in parsing or validaing permissions", func(t *testing.T) {
 		providerURN := "test-URN"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -190,9 +190,9 @@ func TestCreateConfig(t *testing.T) {
 
 	t.Run("should return error if error in encrypting the credentials", func(t *testing.T) {
 		providerURN := "test-URN"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -210,7 +210,7 @@ func TestCreateConfig(t *testing.T) {
 			URN: providerURN,
 		}
 		expectedError := errors.New("error in encrypting SAK")
-		crypto.On("Encrypt", `{"type":"service_account"}`).Return("", expectedError)
+		encryptor.On("Encrypt", `{"type":"service_account"}`).Return("", expectedError)
 		actualError := p.CreateConfig(pc)
 
 		assert.Equal(t, expectedError, actualError)
@@ -218,9 +218,9 @@ func TestCreateConfig(t *testing.T) {
 
 	t.Run("should return nil error and create the config on success", func(t *testing.T) {
 		providerURN := "test-URN"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -243,19 +243,19 @@ func TestCreateConfig(t *testing.T) {
 			},
 			URN: providerURN,
 		}
-		crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
+		encryptor.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
 
 		actualError := p.CreateConfig(pc)
 
 		assert.NoError(t, actualError)
-		crypto.AssertExpectations(t)
+		encryptor.AssertExpectations(t)
 	})
 }
 
 func TestGetResources(t *testing.T) {
 	t.Run("should error when credentials are invalid", func(t *testing.T) {
-		crypto := new(mocks.Crypto)
-		p := bigquery.NewProvider("", crypto)
+		encryptor := new(mocks.Encryptor)
+		p := bigquery.NewProvider("", encryptor)
 		pc := &domain.ProviderConfig{
 			Type:        domain.ProviderTypeBigQuery,
 			URN:         "test-project-id",
@@ -269,9 +269,9 @@ func TestGetResources(t *testing.T) {
 	})
 
 	t.Run("should return dataset resource object", func(t *testing.T) {
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -446,9 +446,9 @@ func TestGrantAccess(t *testing.T) {
 		expectedError := errors.New("Test-Error")
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -497,9 +497,9 @@ func TestGrantAccess(t *testing.T) {
 	t.Run("should grant access to dataset resource and return no error on success", func(t *testing.T) {
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -550,9 +550,9 @@ func TestGrantAccess(t *testing.T) {
 		providerURN := "test-URN"
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -702,9 +702,9 @@ func TestRevokeAccess(t *testing.T) {
 		expectedError := errors.New("Test-Error")
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -753,9 +753,9 @@ func TestRevokeAccess(t *testing.T) {
 	t.Run("should Revoke access to dataset resource and return no error on success", func(t *testing.T) {
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -805,9 +805,9 @@ func TestRevokeAccess(t *testing.T) {
 		providerURN := "test-URN"
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -935,6 +935,6 @@ func TestGetRoles(t *testing.T) {
 }
 
 func initProvider() *bigquery.Provider {
-	crypto := new(mocks.Crypto)
+	crypto := new(mocks.Encryptor)
 	return bigquery.NewProvider("bigquery", crypto)
 }

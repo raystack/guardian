@@ -7,6 +7,8 @@ import (
 
 	bigquery "github.com/odpf/guardian/plugins/providers/bigquery"
 
+	domain "github.com/odpf/guardian/domain"
+
 	gobigquery "cloud.google.com/go/bigquery"
 
 	mock "github.com/stretchr/testify/mock"
@@ -196,6 +198,53 @@ func (_c *BigQueryClient_GrantTableAccess_Call) Run(run func(ctx context.Context
 
 func (_c *BigQueryClient_GrantTableAccess_Call) Return(_a0 error) *BigQueryClient_GrantTableAccess_Call {
 	_c.Call.Return(_a0)
+	return _c
+}
+
+// ListAccess provides a mock function with given fields: ctx, resources
+func (_m *BigQueryClient) ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error) {
+	ret := _m.Called(ctx, resources)
+
+	var r0 domain.MapResourceAccess
+	if rf, ok := ret.Get(0).(func(context.Context, []*domain.Resource) domain.MapResourceAccess); ok {
+		r0 = rf(ctx, resources)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.MapResourceAccess)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, []*domain.Resource) error); ok {
+		r1 = rf(ctx, resources)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// BigQueryClient_ListAccess_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAccess'
+type BigQueryClient_ListAccess_Call struct {
+	*mock.Call
+}
+
+// ListAccess is a helper method to define mock.On call
+//  - ctx context.Context
+//  - resources []*domain.Resource
+func (_e *BigQueryClient_Expecter) ListAccess(ctx interface{}, resources interface{}) *BigQueryClient_ListAccess_Call {
+	return &BigQueryClient_ListAccess_Call{Call: _e.mock.On("ListAccess", ctx, resources)}
+}
+
+func (_c *BigQueryClient_ListAccess_Call) Run(run func(ctx context.Context, resources []*domain.Resource)) *BigQueryClient_ListAccess_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]*domain.Resource))
+	})
+	return _c
+}
+
+func (_c *BigQueryClient_ListAccess_Call) Return(_a0 domain.MapResourceAccess, _a1 error) *BigQueryClient_ListAccess_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 

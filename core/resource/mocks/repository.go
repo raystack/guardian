@@ -54,13 +54,13 @@ func (_m *Repository) Delete(id string) error {
 	return r0
 }
 
-// Find provides a mock function with given fields: filters
-func (_m *Repository) Find(filters map[string]interface{}) ([]*domain.Resource, error) {
-	ret := _m.Called(filters)
+// Find provides a mock function with given fields: _a0
+func (_m *Repository) Find(_a0 domain.ListResourcesFilter) ([]*domain.Resource, error) {
+	ret := _m.Called(_a0)
 
 	var r0 []*domain.Resource
-	if rf, ok := ret.Get(0).(func(map[string]interface{}) []*domain.Resource); ok {
-		r0 = rf(filters)
+	if rf, ok := ret.Get(0).(func(domain.ListResourcesFilter) []*domain.Resource); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*domain.Resource)
@@ -68,8 +68,8 @@ func (_m *Repository) Find(filters map[string]interface{}) ([]*domain.Resource, 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(map[string]interface{}) error); ok {
-		r1 = rf(filters)
+	if rf, ok := ret.Get(1).(func(domain.ListResourcesFilter) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}

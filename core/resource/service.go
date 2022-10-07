@@ -19,7 +19,7 @@ const (
 )
 
 type repository interface {
-	Find(filters map[string]interface{}) ([]*domain.Resource, error)
+	Find(domain.ListResourcesFilter) ([]*domain.Resource, error)
 	GetOne(id string) (*domain.Resource, error)
 	BulkUpsert([]*domain.Resource) error
 	Update(*domain.Resource) error
@@ -57,8 +57,8 @@ func NewService(deps ServiceDeps) *Service {
 }
 
 // Find records based on filters
-func (s *Service) Find(_ context.Context, filters map[string]interface{}) ([]*domain.Resource, error) {
-	return s.repo.Find(filters)
+func (s *Service) Find(_ context.Context, filter domain.ListResourcesFilter) ([]*domain.Resource, error) {
+	return s.repo.Find(filter)
 }
 
 func (s *Service) GetOne(id string) (*domain.Resource, error) {
@@ -121,11 +121,11 @@ func (s *Service) Get(ctx context.Context, ri *domain.ResourceIdentifier) (*doma
 			resource = r
 		}
 	} else {
-		if resources, err := s.Find(ctx, map[string]interface{}{
-			"provider_type": ri.ProviderType,
-			"provider_urn":  ri.ProviderURN,
-			"type":          ri.Type,
-			"urn":           ri.URN,
+		if resources, err := s.Find(ctx, domain.ListResourcesFilter{
+			ProviderType: ri.ProviderType,
+			ProviderURN:  ri.ProviderURN,
+			ResourceType: ri.Type,
+			ResourceURN:  ri.URN,
 		}); err != nil {
 			return nil, err
 		} else {

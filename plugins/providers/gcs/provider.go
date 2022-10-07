@@ -18,6 +18,7 @@ type Crypto interface {
 	domain.Crypto
 }
 type Provider struct {
+	provider.UnimplementedClient
 	provider.PermissionManager
 
 	typeName string

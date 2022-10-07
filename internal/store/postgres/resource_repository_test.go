@@ -96,60 +96,60 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 
 		testCases := []struct {
 			name           string
-			filters        map[string]interface{}
+			filters        domain.ListResourcesFilter
 			expectedResult []*domain.Resource
 		}{
 			{
 				name:           "empty filter",
-				filters:        map[string]interface{}{},
+				filters:        domain.ListResourcesFilter{},
 				expectedResult: dummyResources,
 			},
 			{
 				name: "filter by ids",
-				filters: map[string]interface{}{
-					"ids": []string{dummyResources[0].ID},
+				filters: domain.ListResourcesFilter{
+					IDs: []string{dummyResources[0].ID},
 				},
 				expectedResult: []*domain.Resource{dummyResources[0]},
 			},
 			{
 				name: "filter by type",
-				filters: map[string]interface{}{
-					"type": "test_type",
+				filters: domain.ListResourcesFilter{
+					ResourceType: "test_type",
 				},
 				expectedResult: dummyResources,
 			},
 			{
 				name: "filter by name",
-				filters: map[string]interface{}{
-					"name": "test_name_1",
+				filters: domain.ListResourcesFilter{
+					Name: "test_name_1",
 				},
 				expectedResult: []*domain.Resource{dummyResources[0]},
 			},
 			{
 				name: "filter by provider type",
-				filters: map[string]interface{}{
-					"provider_type": s.dummyProvider.Type,
+				filters: domain.ListResourcesFilter{
+					ProviderType: s.dummyProvider.Type,
 				},
 				expectedResult: dummyResources,
 			},
 			{
 				name: "filter by provider urn",
-				filters: map[string]interface{}{
-					"provider_urn": s.dummyProvider.URN,
+				filters: domain.ListResourcesFilter{
+					ProviderURN: s.dummyProvider.URN,
 				},
 				expectedResult: dummyResources,
 			},
 			{
 				name: "filter by urn",
-				filters: map[string]interface{}{
-					"urn": "test_urn_1",
+				filters: domain.ListResourcesFilter{
+					ResourceURN: "test_urn_1",
 				},
 				expectedResult: []*domain.Resource{dummyResources[0]},
 			},
 			{
 				name: "filter by details",
-				filters: map[string]interface{}{
-					"details": map[string]string{
+				filters: domain.ListResourcesFilter{
+					Details: map[string]string{
 						"foo": "bar",
 					},
 				},
@@ -169,19 +169,9 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 		}
 	})
 
-	s.Run("should return error if filters has invalid value", func() {
-		invalidFilters := map[string]interface{}{
-			"name": make(chan int), // invalid value
-		}
-		actualRecords, actualError := s.repository.Find(invalidFilters)
-
-		s.Error(actualError)
-		s.Nil(actualRecords)
-	})
-
 	s.Run("should return error if filters validation returns an error", func() {
-		invalidFilters := map[string]interface{}{
-			"ids": []string{},
+		invalidFilters := domain.ListResourcesFilter{
+			IDs: []string{},
 		}
 		actualRecords, actualError := s.repository.Find(invalidFilters)
 
@@ -190,8 +180,8 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 	})
 
 	s.Run("should return error if db returns error", func() {
-		invalidFilters := map[string]interface{}{
-			"ids": []string{"invalid-uuid"},
+		invalidFilters := domain.ListResourcesFilter{
+			IDs: []string{"invalid-uuid"},
 		}
 		actualRecords, actualError := s.repository.Find(invalidFilters)
 

@@ -20,11 +20,19 @@ type repository interface {
 	List(context.Context, domain.ListGrantsFilter) ([]domain.Grant, error)
 	GetByID(context.Context, string) (*domain.Grant, error)
 	Update(context.Context, *domain.Grant) error
+	BulkInsert(context.Context, []*domain.Grant) error
 }
 
 //go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
+	GetByID(context.Context, string) (*domain.Provider, error)
 	RevokeAccess(context.Context, domain.Grant) error
+	ListAccess(context.Context, string, []*domain.Resource) (*domain.Provider, domain.MapResourceAccess, error)
+}
+
+//go:generate mockery --name=resourceService --exported --with-expecter
+type resourceService interface {
+	Find(context.Context, domain.ListResourcesFilter) ([]*domain.Resource, error)
 }
 
 //go:generate mockery --name=auditLogger --exported --with-expecter
@@ -47,6 +55,7 @@ type grantCreation struct {
 type Service struct {
 	repo            repository
 	providerService providerService
+	resourceService resourceService
 
 	notifier    notifier
 	validator   *validator.Validate
@@ -57,6 +66,7 @@ type Service struct {
 type ServiceDeps struct {
 	Repository      repository
 	ProviderService providerService
+	ResourceService resourceService
 
 	Notifier    notifier
 	Validator   *validator.Validate
@@ -68,6 +78,7 @@ func NewService(deps ServiceDeps) *Service {
 	return &Service{
 		repo:            deps.Repository,
 		providerService: deps.ProviderService,
+		resourceService: deps.ResourceService,
 
 		notifier:    deps.Notifier,
 		validator:   deps.Validator,
@@ -256,4 +267,109 @@ func (s *Service) expiredInActiveUserAccess(ctx context.Context, timeLimiter cha
 			s.logger.Info("grant revoked", "id", grant.ID)
 		}
 	}
+}
+
+type ImportAccessCriteria struct {
+	ProviderID   string `validate:"required"`
+	ResourceIDs  []string
+	ResouceTypes []string
+	ResourceURNs []string
+}
+
+func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteria) ([]*domain.Grant, error) {
+	p, err := s.providerService.GetByID(ctx, criteria.ProviderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting provider details: %w", err)
+	}
+
+	listResourcesFilter := domain.ListResourcesFilter{
+		ProviderType: p.Type,
+		ProviderURN:  p.URN,
+	}
+	if criteria.ResourceIDs != nil {
+		listResourcesFilter.IDs = criteria.ResourceIDs
+	} else {
+		listResourcesFilter.ResourceTypes = criteria.ResouceTypes
+		listResourcesFilter.ResourceURNs = criteria.ResourceURNs
+	}
+	resources, err := s.resourceService.Find(ctx, listResourcesFilter)
+	if err != nil {
+		return nil, fmt.Errorf("getting resources: %w", err)
+	}
+
+	_, resourceAccess, err := s.providerService.ListAccess(ctx, criteria.ProviderID, resources)
+	if err != nil {
+		return nil, fmt.Errorf("fetching access from provider: %w", err)
+	}
+
+	resourcesMap := map[string]*domain.Resource{}
+	for _, r := range resources {
+		resourcesMap[r.URN] = r
+	}
+
+	grants, err := s.repo.List(ctx, domain.ListGrantsFilter{
+		ProviderTypes: []string{p.Type},
+		ProviderURNs:  []string{p.URN},
+		ResourceTypes: criteria.ResouceTypes,
+		ResourceURNs:  criteria.ResourceURNs,
+		Statuses:      []string{string(domain.GrantStatusActive)},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("getting active grants: %w", err)
+	}
+	// map[resourceURN]map[accounttype:accountId]map[role]grant
+	grantsMap := map[string]map[string]map[string]*domain.Grant{}
+	for _, g := range grants {
+		if grantsMap[g.Resource.URN] == nil {
+			grantsMap[g.Resource.URN] = map[string]map[string]*domain.Grant{}
+		}
+
+		accountSignature := getAccountSignature(g.AccountType, g.AccountID)
+		if grantsMap[g.Resource.URN][accountSignature] == nil {
+			grantsMap[g.Resource.URN][accountSignature] = map[string]*domain.Grant{}
+		}
+
+		grantsMap[g.Resource.URN][accountSignature][g.Role] = &g
+	}
+
+	importedGrants := []*domain.Grant{}
+	for rURN, access := range resourceAccess {
+		r := resourcesMap[rURN]
+		if r == nil {
+			continue // skip access for resources that not yet added to guardian
+		}
+
+		for _, ae := range access {
+			accountSignature := getAccountSignature(ae.AccountType, ae.AccountID)
+			if grantsMap[rURN] != nil &&
+				grantsMap[rURN][accountSignature] != nil &&
+				grantsMap[rURN][accountSignature][ae.Permission] != nil {
+				continue // access already registered
+			}
+
+			importedGrants = append(importedGrants, &domain.Grant{
+				ResourceID:  r.ID,
+				Status:      domain.GrantStatusActive,
+				AccountID:   ae.AccountID,
+				AccountType: ae.AccountType,
+				CreatedBy:   domain.SystemActorName,
+				Role:        ae.Permission, // TODO: use existing role in provider
+				Permissions: []string{ae.Permission},
+				IsPermanent: true,
+			})
+		}
+	}
+	if len(importedGrants) == 0 {
+		return nil, ErrEmptyImportedGrants
+	}
+
+	if err := s.repo.BulkInsert(ctx, importedGrants); err != nil {
+		return nil, fmt.Errorf("inserting imported grants into the db: %w", err)
+	}
+
+	return importedGrants, nil
+}
+
+func getAccountSignature(accountType, accountID string) string {
+	return fmt.Sprintf("%s:%s", accountType, accountID)
 }

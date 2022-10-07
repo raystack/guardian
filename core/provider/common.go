@@ -1,6 +1,11 @@
 package provider
 
-import "github.com/odpf/guardian/domain"
+import (
+	"context"
+	"fmt"
+
+	"github.com/odpf/guardian/domain"
+)
 
 func GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {
 	for _, r := range pc.Resources {
@@ -30,4 +35,30 @@ func (m PermissionManager) GetPermissions(pc *domain.ProviderConfig, resourceTyp
 		return nil, ErrInvalidRole
 	}
 	return nil, ErrInvalidResourceType
+}
+
+type UnimplementedClient struct{}
+
+func (c *UnimplementedClient) CreateConfig(*domain.ProviderConfig) error {
+	return fmt.Errorf("CreateConfig %w", ErrUnimplementedMethod)
+}
+
+func (c *UnimplementedClient) GetResources(*domain.ProviderConfig) ([]*domain.Resource, error) {
+	return nil, fmt.Errorf("GetResources %w", ErrUnimplementedMethod)
+}
+
+func (c *UnimplementedClient) GrantAccess(*domain.ProviderConfig, *domain.Appeal) error {
+	return fmt.Errorf("GrantAccess %w", ErrUnimplementedMethod)
+}
+
+func (c *UnimplementedClient) RevokeAccess(*domain.ProviderConfig, *domain.Appeal) error {
+	return fmt.Errorf("RevokeAccess %w", ErrUnimplementedMethod)
+}
+
+func (c *UnimplementedClient) GetRoles(*domain.ProviderConfig, string) ([]*domain.Role, error) {
+	return nil, fmt.Errorf("GetRoles %w", ErrUnimplementedMethod)
+}
+
+func (c *UnimplementedClient) ListAccess(context.Context, domain.ProviderConfig, []*domain.Resource) (domain.MapResourceAccess, error) {
+	return nil, fmt.Errorf("ListAccess %w", ErrUnimplementedMethod)
 }

@@ -7,6 +7,7 @@ import (
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/core/resource"
+	"github.com/odpf/guardian/domain"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -24,14 +25,14 @@ func (s *GRPCServer) ListResources(ctx context.Context, req *guardianv1beta1.Lis
 			}
 		}
 	}
-	resources, err := s.resourceService.Find(ctx, map[string]interface{}{
-		"is_deleted":    req.GetIsDeleted(),
-		"type":          req.GetType(),
-		"urn":           req.GetUrn(),
-		"provider_type": req.GetProviderType(),
-		"provider_urn":  req.GetProviderUrn(),
-		"name":          req.GetName(),
-		"details":       details,
+	resources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
+		IsDeleted:    req.GetIsDeleted(),
+		ResourceType: req.GetType(),
+		ResourceURN:  req.GetUrn(),
+		ProviderType: req.GetProviderType(),
+		ProviderURN:  req.GetProviderUrn(),
+		Name:         req.GetName(),
+		Details:      details,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get resource list: %v", err)

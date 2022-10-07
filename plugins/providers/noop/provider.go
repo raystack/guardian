@@ -18,6 +18,7 @@ var (
 )
 
 type Provider struct {
+	provider.UnimplementedClient
 	provider.PermissionManager
 
 	typeName string

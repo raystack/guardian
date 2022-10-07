@@ -74,7 +74,7 @@ type providerService interface {
 
 //go:generate mockery --name=resourceService --exported --with-expecter
 type resourceService interface {
-	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
+	Find(context.Context, domain.ListResourcesFilter) ([]*domain.Resource, error)
 	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
 }
 
@@ -712,7 +712,7 @@ func (s *Service) getActiveGrantsMap(ctx context.Context) (map[string]map[string
 }
 
 func (s *Service) getResourcesMap(ctx context.Context, ids []string) (map[string]*domain.Resource, error) {
-	filters := map[string]interface{}{"ids": ids}
+	filters := domain.ListResourcesFilter{IDs: ids}
 	resources, err := s.resourceService.Find(ctx, filters)
 	if err != nil {
 		return nil, err

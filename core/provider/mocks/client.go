@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	domain "github.com/odpf/guardian/domain"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -137,6 +139,29 @@ func (_m *Client) GrantAccess(_a0 *domain.ProviderConfig, _a1 domain.Grant) erro
 	}
 
 	return r0
+}
+
+// ListAccess provides a mock function with given fields: _a0, _a1, _a2
+func (_m *Client) ListAccess(_a0 context.Context, _a1 domain.ProviderConfig, _a2 []*domain.Resource) (domain.MapResourceAccess, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	var r0 domain.MapResourceAccess
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ProviderConfig, []*domain.Resource) domain.MapResourceAccess); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(domain.MapResourceAccess)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, domain.ProviderConfig, []*domain.Resource) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // RevokeAccess provides a mock function with given fields: _a0, _a1

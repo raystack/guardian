@@ -3,7 +3,6 @@ package postgres
 import (
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres/model"
@@ -11,17 +10,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
-
-type resourceFindFilters struct {
-	IDs          []string          `mapstructure:"ids" validate:"omitempty,min=1"`
-	IsDeleted    bool              `mapstructure:"is_deleted" validate:"omitempty"`
-	ProviderType string            `mapstructure:"provider_type" validate:"omitempty"`
-	ProviderURN  string            `mapstructure:"provider_urn" validate:"omitempty"`
-	Name         string            `mapstructure:"name" validate:"omitempty"`
-	ResourceURN  string            `mapstructure:"urn" validate:"omitempty"`
-	ResourceType string            `mapstructure:"type" validate:"omitempty"`
-	Details      map[string]string `mapstructure:"details"`
-}
 
 // ResourceRepository talks to the store/database to read/insert data
 type ResourceRepository struct {
@@ -34,38 +22,40 @@ func NewResourceRepository(db *gorm.DB) *ResourceRepository {
 }
 
 // Find records based on filters
-func (r *ResourceRepository) Find(filters map[string]interface{}) ([]*domain.Resource, error) {
-	var conditions resourceFindFilters
-	if err := mapstructure.Decode(filters, &conditions); err != nil {
-		return nil, err
-	}
-	if err := utils.ValidateStruct(conditions); err != nil {
+func (r *ResourceRepository) Find(filter domain.ListResourcesFilter) ([]*domain.Resource, error) {
+	if err := utils.ValidateStruct(filter); err != nil {
 		return nil, err
 	}
 
 	db := r.db
-	if conditions.IDs != nil {
-		db = db.Where(conditions.IDs)
+	if filter.IDs != nil {
+		db = db.Where(filter.IDs)
 	}
-	if !conditions.IsDeleted {
-		db = db.Where(`"is_deleted" = ?`, conditions.IsDeleted)
+	if !filter.IsDeleted {
+		db = db.Where(`"is_deleted" = ?`, filter.IsDeleted)
 	}
-	if conditions.ResourceType != "" {
-		db = db.Where(`"type" = ?`, conditions.ResourceType)
+	if filter.ResourceType != "" {
+		db = db.Where(`"type" = ?`, filter.ResourceType)
 	}
-	if conditions.Name != "" {
-		db = db.Where(`"name" = ?`, conditions.Name)
+	if filter.Name != "" {
+		db = db.Where(`"name" = ?`, filter.Name)
 	}
-	if conditions.ProviderType != "" {
-		db = db.Where(`"provider_type" = ?`, conditions.ProviderType)
+	if filter.ProviderType != "" {
+		db = db.Where(`"provider_type" = ?`, filter.ProviderType)
 	}
-	if conditions.ProviderURN != "" {
-		db = db.Where(`"provider_urn" = ?`, conditions.ProviderURN)
+	if filter.ProviderURN != "" {
+		db = db.Where(`"provider_urn" = ?`, filter.ProviderURN)
 	}
-	if conditions.ResourceURN != "" {
-		db = db.Where(`"urn" = ?`, conditions.ResourceURN)
+	if filter.ResourceURN != "" {
+		db = db.Where(`"urn" = ?`, filter.ResourceURN)
 	}
-	for path, v := range conditions.Details {
+	if filter.ResourceURNs != nil {
+		db = db.Where(`"urn" IN ?`, filter.ResourceURNs)
+	}
+	if filter.ResourceTypes != nil {
+		db = db.Where(`"type" IN ?`, filter.ResourceTypes)
+	}
+	for path, v := range filter.Details {
 		pathArr := "{" + strings.Join(strings.Split(path, "."), ",") + "}"
 		db = db.Where(`"details" #>> ? = ?`, pathArr, v)
 	}

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/odpf/guardian/core/provider"
-
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 )
 
 type Provider struct {
 	provider.PermissionManager
+	provider.UnimplementedClient
 
 	typeName string
 	Clients  map[string]GcloudIamClient

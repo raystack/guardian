@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	bq "cloud.google.com/go/bigquery"
 	"github.com/odpf/guardian/domain"
 )
 
@@ -65,5 +66,19 @@ func (t *Table) ToDomain() *domain.Resource {
 		Type: ResourceTypeTable,
 		Name: t.TableID,
 		URN:  fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
+	}
+}
+
+type datasetAccessEntry bq.AccessEntry
+
+func (ae datasetAccessEntry) getEntityType() string {
+	switch bq.AccessEntry(ae).EntityType {
+	case bq.UserEmailEntity:
+		if strings.Contains(bq.AccessEntry(ae).Entity, "gserviceaccount.com") {
+			return AccountTypeServiceAccount
+		}
+		return AccountTypeUser
+	default:
+		return ""
 	}
 }
