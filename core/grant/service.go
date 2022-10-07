@@ -355,6 +355,7 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 				CreatedBy:   domain.SystemActorName,
 				Role:        ae.Permission, // TODO: use existing role in provider
 				Permissions: []string{ae.Permission},
+				IsPermanent: true,
 			})
 		}
 	}
