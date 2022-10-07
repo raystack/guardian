@@ -48,8 +48,10 @@ func (r *GrantRepository) List(ctx context.Context, filter domain.ListGrantsFilt
 	if filter.Permissions != nil {
 		db = db.Where(`"grants"."permissions" @> ?`, pq.StringArray(filter.Permissions))
 	}
-	if filter.CreatedBy != "" {
-		db = db.Where(`"grants"."created_by" = ?`, filter.CreatedBy)
+	if filter.Owner != "" {
+		db = db.Where(`"grants"."owner" = ?`, filter.Owner)
+	} else if filter.CreatedBy != "" {
+		db = db.Where(`"grants"."owner" = ?`, filter.CreatedBy)
 	}
 	if filter.IsPermanent != nil {
 		db = db.Where(`"grants"."is_permanent" = ?`, *filter.IsPermanent)

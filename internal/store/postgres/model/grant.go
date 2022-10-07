@@ -26,7 +26,7 @@ type Grant struct {
 	RevokedBy        string
 	RevokedAt        time.Time
 	RevokeReason     string
-	CreatedBy        string
+	Owner            string
 	CreatedAt        time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt        time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt        gorm.DeletedAt `gorm:"index"`
@@ -83,7 +83,7 @@ func (m *Grant) FromDomain(g domain.Grant) error {
 	m.Source = string(g.Source)
 	m.RevokedBy = g.RevokedBy
 	m.RevokeReason = g.RevokeReason
-	m.CreatedBy = g.CreatedBy
+	m.Owner = g.CreatedBy
 	m.CreatedAt = g.CreatedAt
 	m.UpdatedAt = g.UpdatedAt
 	return nil
@@ -103,7 +103,8 @@ func (m Grant) ToDomain() (*domain.Grant, error) {
 		Source:           domain.GrantSource(m.Source),
 		RevokedBy:        m.RevokedBy,
 		RevokeReason:     m.RevokeReason,
-		CreatedBy:        m.CreatedBy,
+		CreatedBy:        m.Owner,
+		Owner:            m.Owner,
 		CreatedAt:        m.CreatedAt,
 		UpdatedAt:        m.UpdatedAt,
 	}

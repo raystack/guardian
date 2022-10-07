@@ -642,6 +642,7 @@ func (a *adapter) FromGrantProto(g *guardianv1beta1.Grant) *domain.Grant {
 		RevokedBy:        g.GetRevokedBy(),
 		RevokeReason:     g.GetRevokeReason(),
 		CreatedBy:        g.GetCreatedBy(),
+		Owner:            g.GetOwner(),
 		Resource:         a.FromResourceProto(g.GetResource()),
 	}
 
@@ -683,6 +684,7 @@ func (a *adapter) ToGrantProto(grant *domain.Grant) (*guardianv1beta1.Grant, err
 		RevokedBy:        grant.RevokedBy,
 		RevokeReason:     grant.RevokeReason,
 		CreatedBy:        grant.CreatedBy,
+		Owner:            grant.Owner,
 	}
 
 	if grant.ExpirationDate != nil {
