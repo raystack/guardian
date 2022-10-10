@@ -240,7 +240,8 @@ func (r *ProviderRepository) Delete(id string) error {
 		return provider.ErrEmptyIDParam
 	}
 
-	rows, err := sq.Delete("providers").
+	rows, err := sq.Update("providers").
+		Set("deleted_at", time.Now()).
 		Where(sq.Eq{"id": id, "deleted_at": nil}).
 		RunWith(r.sqldb).
 		PlaceholderFormat(sq.Dollar).
