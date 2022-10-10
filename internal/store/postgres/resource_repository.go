@@ -149,10 +149,18 @@ func (r *ResourceRepository) BulkUpsert(resources []*domain.Resource) error {
 		}
 
 		for i, m := range models {
-			_, err := sq.Insert("resources").
+			_, err := sq.
+				Insert("resources").
 				Columns("id", "provider_type", "provider_urn", "type", "urn", "name", "details", "labels", "created_at", "updated_at", "is_deleted").
 				Values(m.ID, m.ProviderType, m.ProviderURN, m.Type, m.URN, m.Name, m.Details, m.Labels, m.CreatedAt, m.UpdatedAt, m.IsDeleted).
-				Suffix("ON CONFLICT (provider_type, provider_urn, type, urn) DO UPDATE SET name = EXCLUDED.name, details = EXCLUDED.details, updated_at = EXCLUDED.updated_at, is_deleted = EXCLUDED.is_deleted").
+				Suffix(`
+					ON CONFLICT (provider_type, provider_urn, type, urn) 
+					DO UPDATE 
+					SET name = EXCLUDED.name, 
+						details = EXCLUDED.details, 
+						updated_at = EXCLUDED.updated_at, 
+						is_deleted = EXCLUDED.is_deleted
+					`).
 				RunWith(tx).
 				PlaceholderFormat(sq.Dollar).
 				Exec()
