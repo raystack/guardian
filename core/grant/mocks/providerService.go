@@ -71,35 +71,26 @@ func (_c *ProviderService_GetByID_Call) Return(_a0 *domain.Provider, _a1 error) 
 }
 
 // ListAccess provides a mock function with given fields: _a0, _a1, _a2
-func (_m *ProviderService) ListAccess(_a0 context.Context, _a1 string, _a2 []*domain.Resource) (*domain.Provider, domain.MapResourceAccess, error) {
+func (_m *ProviderService) ListAccess(_a0 context.Context, _a1 domain.Provider, _a2 []*domain.Resource) (domain.MapResourceAccess, error) {
 	ret := _m.Called(_a0, _a1, _a2)
 
-	var r0 *domain.Provider
-	if rf, ok := ret.Get(0).(func(context.Context, string, []*domain.Resource) *domain.Provider); ok {
+	var r0 domain.MapResourceAccess
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Provider, []*domain.Resource) domain.MapResourceAccess); ok {
 		r0 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.Provider)
+			r0 = ret.Get(0).(domain.MapResourceAccess)
 		}
 	}
 
-	var r1 domain.MapResourceAccess
-	if rf, ok := ret.Get(1).(func(context.Context, string, []*domain.Resource) domain.MapResourceAccess); ok {
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, domain.Provider, []*domain.Resource) error); ok {
 		r1 = rf(_a0, _a1, _a2)
 	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(domain.MapResourceAccess)
-		}
+		r1 = ret.Error(1)
 	}
 
-	var r2 error
-	if rf, ok := ret.Get(2).(func(context.Context, string, []*domain.Resource) error); ok {
-		r2 = rf(_a0, _a1, _a2)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // ProviderService_ListAccess_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAccess'
@@ -109,21 +100,21 @@ type ProviderService_ListAccess_Call struct {
 
 // ListAccess is a helper method to define mock.On call
 //  - _a0 context.Context
-//  - _a1 string
+//  - _a1 domain.Provider
 //  - _a2 []*domain.Resource
 func (_e *ProviderService_Expecter) ListAccess(_a0 interface{}, _a1 interface{}, _a2 interface{}) *ProviderService_ListAccess_Call {
 	return &ProviderService_ListAccess_Call{Call: _e.mock.On("ListAccess", _a0, _a1, _a2)}
 }
 
-func (_c *ProviderService_ListAccess_Call) Run(run func(_a0 context.Context, _a1 string, _a2 []*domain.Resource)) *ProviderService_ListAccess_Call {
+func (_c *ProviderService_ListAccess_Call) Run(run func(_a0 context.Context, _a1 domain.Provider, _a2 []*domain.Resource)) *ProviderService_ListAccess_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].([]*domain.Resource))
+		run(args[0].(context.Context), args[1].(domain.Provider), args[2].([]*domain.Resource))
 	})
 	return _c
 }
 
-func (_c *ProviderService_ListAccess_Call) Return(_a0 *domain.Provider, _a1 domain.MapResourceAccess, _a2 error) *ProviderService_ListAccess_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *ProviderService_ListAccess_Call) Return(_a0 domain.MapResourceAccess, _a1 error) *ProviderService_ListAccess_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 

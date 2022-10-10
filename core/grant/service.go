@@ -29,7 +29,7 @@ type repository interface {
 type providerService interface {
 	GetByID(context.Context, string) (*domain.Provider, error)
 	RevokeAccess(context.Context, domain.Grant) error
-	ListAccess(context.Context, string, []*domain.Resource) (*domain.Provider, domain.MapResourceAccess, error)
+	ListAccess(context.Context, domain.Provider, []*domain.Resource) (domain.MapResourceAccess, error)
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter
@@ -299,7 +299,7 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 		return nil, fmt.Errorf("getting resources: %w", err)
 	}
 
-	_, resourceAccess, err := s.providerService.ListAccess(ctx, criteria.ProviderID, resources)
+	resourceAccess, err := s.providerService.ListAccess(ctx, *p, resources)
 	if err != nil {
 		return nil, fmt.Errorf("fetching access from provider: %w", err)
 	}
