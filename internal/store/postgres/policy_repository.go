@@ -45,13 +45,34 @@ func (r *PolicyRepository) Create(p *domain.Policy) error {
 
 // Find records based on filters
 func (r *PolicyRepository) Find() ([]*domain.Policy, error) {
-	policies := []*domain.Policy{}
+	rows, err := sq.
+		Select("id", "version", "description", "steps", "appeal_config", "labels", "requirements", "iam", "created_at", "updated_at").
+		From("policies").
+		RunWith(r.sqldb).
+		Query()
 
-	var models []*model.Policy
-	if err := r.db.Find(&models).Error; err != nil {
+	if err != nil {
 		return nil, err
 	}
-	for _, m := range models {
+
+	policies := []*domain.Policy{}
+	for rows.Next() {
+		m := &model.Policy{}
+		if err := rows.Scan(
+			&m.ID,
+			&m.Version,
+			&m.Description,
+			&m.Steps,
+			&m.AppealConfig,
+			&m.Labels,
+			&m.Requirements,
+			&m.IAM,
+			&m.CreatedAt,
+			&m.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+
 		p, err := m.ToDomain()
 		if err != nil {
 			return nil, err
@@ -67,25 +88,40 @@ func (r *PolicyRepository) Find() ([]*domain.Policy, error) {
 // If version is 0, the latest version will be returned
 func (r *PolicyRepository) GetOne(id string, version uint) (*domain.Policy, error) {
 	m := &model.Policy{}
-	condition := "id = ?"
-	args := []interface{}{id}
+
+	conds := sq.Eq{"id": id}
 	if version != 0 {
-		condition = "id = ? AND version = ?"
-		args = append(args, version)
+		conds["version"] = version
 	}
 
-	conds := append([]interface{}{condition}, args...)
-	if err := r.db.Order("version desc").First(m, conds...).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, policy.ErrPolicyNotFound
-		}
-		return nil, err
+	err := sq.
+		Select("id", "version", "description", "steps", "appeal_config", "labels", "requirements", "iam", "created_at", "updated_at").
+		From("policies").
+		Where(conds).
+		OrderBy("version DESC").
+		RunWith(r.sqldb).
+		PlaceholderFormat(sq.Dollar).
+		QueryRow().
+		Scan(
+			&m.ID,
+			&m.Version,
+			&m.Description,
+			&m.Steps,
+			&m.AppealConfig,
+			&m.Labels,
+			&m.Requirements,
+			&m.IAM,
+			&m.CreatedAt,
+			&m.UpdatedAt,
+		)
+
+	if err == sql.ErrNoRows {
+		return nil, policy.ErrPolicyNotFound
 	}
 
-	p, err := m.ToDomain()
 	if err != nil {
 		return nil, err
 	}
 
-	return p, nil
+	return m.ToDomain()
 }
