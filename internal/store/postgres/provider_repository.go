@@ -1,8 +1,12 @@
 package postgres
 
 import (
+	"database/sql"
 	"errors"
+	"time"
 
+	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres/model"
@@ -11,46 +15,70 @@ import (
 
 // ProviderRepository talks to the store to read or insert data
 type ProviderRepository struct {
-	db *gorm.DB
+	db    *gorm.DB
+	sqldb *sql.DB
 }
 
 // NewProviderRepository returns repository struct
 func NewProviderRepository(db *gorm.DB) *ProviderRepository {
-	return &ProviderRepository{db}
+	sqldb, _ := db.DB() // TODO: replace gormDB with sql.DB
+	return &ProviderRepository{db, sqldb}
 }
 
 // Create new record to database
 func (r *ProviderRepository) Create(p *domain.Provider) error {
+	p.CreatedAt = time.Now()
+	p.UpdatedAt = time.Now()
+	p.ID = uuid.NewString()
+
 	m := new(model.Provider)
 	if err := m.FromDomain(p); err != nil {
 		return err
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		if result := tx.Create(m); result.Error != nil {
-			return result.Error
-		}
+	_, err := sq.
+		Insert("providers").
+		Columns("id", "type", "urn", "config", "created_at", "updated_at").
+		Values(m.ID.String(), m.Type, m.URN, m.Config, m.CreatedAt, m.UpdatedAt).
+		RunWith(r.sqldb).
+		PlaceholderFormat(sq.Dollar).
+		Exec()
 
-		newProvider, err := m.ToDomain()
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		*p = *newProvider
+	newProvider, err := m.ToDomain()
+	if err != nil {
+		return err
+	}
 
-		return nil
-	})
+	*p = *newProvider
+
+	return nil
 }
 
 // Find records based on filters
 func (r *ProviderRepository) Find() ([]*domain.Provider, error) {
-	providers := []*domain.Provider{}
+	rows, err := sq.
+		Select("id", "type", "urn", "config", "created_at", "updated_at").
+		From("providers").
+		Where(sq.Eq{"deleted_at": nil}).
+		RunWith(r.sqldb).
+		Query()
 
-	var models []*model.Provider
-	if err := r.db.Find(&models).Error; err != nil {
+	if err != nil {
 		return nil, err
 	}
-	for _, m := range models {
+
+	providers := []*domain.Provider{}
+
+	for rows.Next() {
+		m := &model.Provider{}
+		if err := rows.Scan(&m.ID, &m.Type, &m.URN, &m.Config, &m.CreatedAt, &m.UpdatedAt); err != nil {
+			return nil, err
+		}
+
 		p, err := m.ToDomain()
 		if err != nil {
 			return nil, err
@@ -58,7 +86,6 @@ func (r *ProviderRepository) Find() ([]*domain.Provider, error) {
 
 		providers = append(providers, p)
 	}
-
 	return providers, nil
 }
 
@@ -68,20 +95,25 @@ func (r *ProviderRepository) GetByID(id string) (*domain.Provider, error) {
 		return nil, provider.ErrEmptyIDParam
 	}
 
-	var m model.Provider
-	if err := r.db.First(&m, "id = ?", id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, provider.ErrRecordNotFound
-		}
-		return nil, err
+	m := &model.Provider{}
+	err := sq.
+		Select("id", "type", "urn", "config", "created_at", "updated_at").
+		From("providers").
+		Where(sq.Eq{"id": id, "deleted_at": nil}).
+		RunWith(r.sqldb).
+		PlaceholderFormat(sq.Dollar).
+		QueryRow().
+		Scan(&m.ID, &m.Type, &m.URN, &m.Config, &m.CreatedAt, &m.UpdatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, provider.ErrRecordNotFound
 	}
 
-	p, err := m.ToDomain()
 	if err != nil {
 		return nil, err
 	}
 
-	return p, nil
+	return m.ToDomain()
 }
 
 func (r *ProviderRepository) GetTypes() ([]domain.ProviderType, error) {
@@ -90,7 +122,22 @@ func (r *ProviderRepository) GetTypes() ([]domain.ProviderType, error) {
 		ResourceType string
 	}
 
-	r.db.Raw("select distinct provider_type, type as resource_type from resources").Scan(&results)
+	rows, err := r.sqldb.Query("SELECT DISTINCT provider_type, type AS resource_type FROM resources")
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var result struct {
+			ProviderType string
+			ResourceType string
+		}
+		err := rows.Scan(&result.ProviderType, &result.ResourceType)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
 
 	if len(results) == 0 {
 		return nil, errors.New("no provider types found")
@@ -126,20 +173,25 @@ func (r *ProviderRepository) GetOne(pType, urn string) (*domain.Provider, error)
 	}
 
 	m := &model.Provider{}
-	db := r.db.Where("type = ?", pType).Where("urn = ?", urn)
-	if err := db.Take(m).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, provider.ErrRecordNotFound
-		}
-		return nil, err
+
+	err := sq.
+		Select("id", "type", "urn", "config", "created_at", "updated_at").
+		From("providers").
+		Where(sq.Eq{"type": pType, "urn": urn, "deleted_at": nil}).
+		RunWith(r.sqldb).
+		PlaceholderFormat(sq.Dollar).
+		QueryRow().
+		Scan(&m.ID, &m.Type, &m.URN, &m.Config, &m.CreatedAt, &m.UpdatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, provider.ErrRecordNotFound
 	}
 
-	p, err := m.ToDomain()
 	if err != nil {
 		return nil, err
 	}
 
-	return p, err
+	return m.ToDomain()
 }
 
 // Update record by ID
@@ -148,25 +200,38 @@ func (r *ProviderRepository) Update(p *domain.Provider) error {
 		return provider.ErrEmptyIDParam
 	}
 
+	p.UpdatedAt = time.Now()
+
 	m := new(model.Provider)
 	if err := m.FromDomain(p); err != nil {
 		return err
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(m).Updates(*m).Error; err != nil {
-			return err
-		}
+	_, err := sq.
+		Update("providers").
+		SetMap(map[string]interface{}{
+			"type":       m.Type,
+			"urn":        m.URN,
+			"config":     m.Config,
+			"updated_at": m.UpdatedAt,
+		}).
+		Where(sq.Eq{"id": m.ID, "deleted_at": nil}).
+		RunWith(r.sqldb).
+		PlaceholderFormat(sq.Dollar).
+		Exec()
 
-		newRecord, err := m.ToDomain()
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		*p = *newRecord
+	newRecord, err := m.ToDomain()
+	if err != nil {
+		return err
+	}
 
-		return nil
-	})
+	*p = *newRecord
+
+	return nil
 }
 
 // Delete record by ID
@@ -175,11 +240,22 @@ func (r *ProviderRepository) Delete(id string) error {
 		return provider.ErrEmptyIDParam
 	}
 
-	result := r.db.Where("id = ?", id).Delete(&model.Provider{})
-	if result.Error != nil {
-		return result.Error
+	rows, err := sq.Delete("providers").
+		Where(sq.Eq{"id": id, "deleted_at": nil}).
+		RunWith(r.sqldb).
+		PlaceholderFormat(sq.Dollar).
+		Exec()
+
+	if err != nil {
+		return err
 	}
-	if result.RowsAffected == 0 {
+
+	affected, err := rows.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
 		return provider.ErrRecordNotFound
 	}
 

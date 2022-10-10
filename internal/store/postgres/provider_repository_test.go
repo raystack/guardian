@@ -95,7 +95,7 @@ func (s *ProviderRepositoryTestSuite) TestCreate() {
 
 		err2 := s.repository.Create(p)
 		s.NotNil(err2)
-		s.EqualError(err2, "ERROR: duplicate key value violates unique constraint \"providers_pkey\" (SQLSTATE 23505)")
+		s.EqualError(err2, "ERROR: duplicate key value violates unique constraint \"provider_index\" (SQLSTATE 23505)")
 	})
 }
 
