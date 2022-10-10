@@ -1,24 +1,29 @@
 package postgres
 
 import (
+	"database/sql"
 	"strings"
+	"time"
 
+	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // ResourceRepository talks to the store/database to read/insert data
 type ResourceRepository struct {
-	db *gorm.DB
+	db    *gorm.DB
+	sqldb *sql.DB
 }
 
 // NewResourceRepository returns *Repository
 func NewResourceRepository(db *gorm.DB) *ResourceRepository {
-	return &ResourceRepository{db}
+	sqldb, _ := db.DB() // TODO: replace gormDB with sql.DB
+	return &ResourceRepository{db, sqldb}
 }
 
 // Find records based on filters
@@ -27,42 +32,57 @@ func (r *ResourceRepository) Find(filter domain.ListResourcesFilter) ([]*domain.
 		return nil, err
 	}
 
-	db := r.db
+	queryBuilder := sq.Select("id", "provider_type", "provider_urn", "type", "urn", "name", "details", "labels", "created_at", "updated_at").
+		From("resources").
+		Where(sq.Eq{"deleted_at": nil})
+
 	if filter.IDs != nil {
-		db = db.Where(filter.IDs)
+		queryBuilder = queryBuilder.Where(sq.Eq{"id": filter.IDs})
 	}
 	if !filter.IsDeleted {
-		db = db.Where(`"is_deleted" = ?`, filter.IsDeleted)
+		queryBuilder = queryBuilder.Where(sq.Eq{"is_deleted": filter.IsDeleted})
 	}
 	if filter.ResourceType != "" {
-		db = db.Where(`"type" = ?`, filter.ResourceType)
+		queryBuilder = queryBuilder.Where(sq.Eq{"type": filter.ResourceType})
 	}
 	if filter.Name != "" {
-		db = db.Where(`"name" = ?`, filter.Name)
+		queryBuilder = queryBuilder.Where(sq.Eq{"name": filter.Name})
 	}
 	if filter.ProviderType != "" {
-		db = db.Where(`"provider_type" = ?`, filter.ProviderType)
+		queryBuilder = queryBuilder.Where(sq.Eq{"provider_type": filter.ProviderType})
 	}
 	if filter.ProviderURN != "" {
-		db = db.Where(`"provider_urn" = ?`, filter.ProviderURN)
+		queryBuilder = queryBuilder.Where(sq.Eq{"provider_urn": filter.ProviderURN})
 	}
 	if filter.ResourceURN != "" {
-		db = db.Where(`"urn" = ?`, filter.ResourceURN)
+		queryBuilder = queryBuilder.Where(sq.Eq{"urn": filter.ResourceURN})
 	}
 	if filter.ResourceURNs != nil {
-		db = db.Where(`"urn" IN ?`, filter.ResourceURNs)
+		queryBuilder = queryBuilder.Where(sq.Eq{"urn": filter.ResourceURNs})
 	}
 	if filter.ResourceTypes != nil {
-		db = db.Where(`"type" IN ?`, filter.ResourceTypes)
+		queryBuilder = queryBuilder.Where(sq.Eq{"type": filter.ResourceTypes})
 	}
 	for path, v := range filter.Details {
 		pathArr := "{" + strings.Join(strings.Split(path, "."), ",") + "}"
-		db = db.Where(`"details" #>> ? = ?`, pathArr, v)
+		queryBuilder = queryBuilder.Where(sq.Expr(`details #>> ? = ?`, pathArr, v))
 	}
 
 	var models []*model.Resource
-	if err := db.Find(&models).Error; err != nil {
+
+	rows, err := queryBuilder.RunWith(r.sqldb).PlaceholderFormat(sq.Dollar).Query()
+
+	if err != nil {
 		return nil, err
+	}
+
+	for rows.Next() {
+		var m model.Resource
+		err := rows.Scan(&m.ID, &m.ProviderType, &m.ProviderURN, &m.Type, &m.URN, &m.Name, &m.Details, &m.Labels, &m.CreatedAt, &m.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		models = append(models, &m)
 	}
 
 	records := []*domain.Resource{}
@@ -85,25 +105,35 @@ func (r *ResourceRepository) GetOne(id string) (*domain.Resource, error) {
 	}
 
 	var m model.Resource
-	if err := r.db.Where("id = ?", id).Take(&m).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, resource.ErrRecordNotFound
-		}
-		return nil, err
+
+	err := sq.
+		Select("id", "provider_type", "provider_urn", "type", "urn", "name", "details", "labels", "created_at", "updated_at").
+		From("resources").
+		Where(sq.Eq{"id": id, "deleted_at": nil}).
+		RunWith(r.sqldb).
+		PlaceholderFormat(sq.Dollar).
+		QueryRow().
+		Scan(&m.ID, &m.ProviderType, &m.ProviderURN, &m.Type, &m.URN, &m.Name, &m.Details, &m.Labels, &m.CreatedAt, &m.UpdatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, resource.ErrRecordNotFound
 	}
 
-	res, err := m.ToDomain()
 	if err != nil {
 		return nil, err
 	}
 
-	return res, nil
+	return m.ToDomain()
 }
 
 // BulkUpsert inserts records if the records are not exist, or updates the records if they are already exist
 func (r *ResourceRepository) BulkUpsert(resources []*domain.Resource) error {
 	var models []*model.Resource
 	for _, r := range resources {
+		r.ID = uuid.NewString()
+		r.CreatedAt = time.Now()
+		r.UpdatedAt = time.Now()
+
 		m := new(model.Resource)
 		if err := m.FromDomain(r); err != nil {
 			return err
@@ -113,30 +143,34 @@ func (r *ResourceRepository) BulkUpsert(resources []*domain.Resource) error {
 	}
 
 	if len(models) > 0 {
-		return r.db.Transaction(func(tx *gorm.DB) error {
-			upsertClause := clause.OnConflict{
-				Columns: []clause.Column{
-					{Name: "provider_type"},
-					{Name: "provider_urn"},
-					{Name: "type"},
-					{Name: "urn"},
-				},
-				DoUpdates: clause.AssignmentColumns([]string{"name", "details", "updated_at", "is_deleted"}),
-			}
-			if err := r.db.Clauses(upsertClause).Create(models).Error; err != nil {
+		tx, err := r.sqldb.Begin()
+		if err != nil {
+			return err
+		}
+
+		for i, m := range models {
+			_, err := sq.Insert("resources").
+				Columns("id", "provider_type", "provider_urn", "type", "urn", "name", "details", "labels", "created_at", "updated_at", "is_deleted").
+				Values(m.ID, m.ProviderType, m.ProviderURN, m.Type, m.URN, m.Name, m.Details, m.Labels, m.CreatedAt, m.UpdatedAt, m.IsDeleted).
+				Suffix("ON CONFLICT (provider_type, provider_urn, type, urn) DO UPDATE SET name = EXCLUDED.name, details = EXCLUDED.details, updated_at = EXCLUDED.updated_at, is_deleted = EXCLUDED.is_deleted").
+				RunWith(tx).
+				PlaceholderFormat(sq.Dollar).
+				Exec()
+
+			if err != nil {
+				tx.Rollback()
 				return err
 			}
 
-			for i, m := range models {
-				r, err := m.ToDomain()
-				if err != nil {
-					return err
-				}
-				*resources[i] = *r
+			r, err := m.ToDomain()
+			if err != nil {
+				return err
 			}
-
-			return nil
-		})
+			*resources[i] = *r
+		}
+		if err := tx.Commit(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -148,25 +182,71 @@ func (r *ResourceRepository) Update(res *domain.Resource) error {
 		return resource.ErrEmptyIDParam
 	}
 
+	res.UpdatedAt = time.Now()
+
 	m := new(model.Resource)
 	if err := m.FromDomain(res); err != nil {
 		return err
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(m).Where("id = ?", m.ID).Updates(*m).Error; err != nil {
-			return err
-		}
+	queryBuilder := sq.
+		Update("resources").
+		SetMap(sq.Eq{
+			"updated_at": m.UpdatedAt,
+		}).
+		Where(sq.Eq{"id": m.ID, "deleted_at": nil})
 
-		newRecord, err := m.ToDomain()
-		if err != nil {
-			return err
-		}
+	if m.ProviderType != "" {
+		queryBuilder = queryBuilder.Set("provider_type", m.ProviderType)
+	}
 
-		*res = *newRecord
+	if m.ProviderURN != "" {
+		queryBuilder = queryBuilder.Set("provider_urn", m.ProviderURN)
+	}
 
-		return nil
-	})
+	if m.Type != "" {
+		queryBuilder = queryBuilder.Set("type", m.Type)
+	}
+
+	if m.URN != "" {
+		queryBuilder = queryBuilder.Set("urn", m.URN)
+	}
+
+	if m.Name != "" {
+		queryBuilder = queryBuilder.Set("name", m.Name)
+	}
+
+	if m.Details != nil {
+		queryBuilder = queryBuilder.Set("details", m.Details)
+	}
+
+	if m.Labels != nil {
+		queryBuilder = queryBuilder.Set("labels", m.Labels)
+	}
+
+	result, err := queryBuilder.RunWith(r.sqldb).PlaceholderFormat(sq.Dollar).Exec()
+
+	if err != nil {
+		return err
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
+		return resource.ErrRecordNotFound
+	}
+
+	newRecord, err := m.ToDomain()
+	if err != nil {
+		return err
+	}
+
+	*res = *newRecord
+
+	return nil
 }
 
 func (r *ResourceRepository) Delete(id string) error {
@@ -174,11 +254,23 @@ func (r *ResourceRepository) Delete(id string) error {
 		return resource.ErrEmptyIDParam
 	}
 
-	result := r.db.Where("id = ?", id).Delete(&model.Resource{})
-	if result.Error != nil {
-		return result.Error
+	rows, err := sq.Update("resources").
+		Set("deleted_at", time.Now()).
+		Where(sq.Eq{"id": id, "deleted_at": nil}).
+		RunWith(r.sqldb).
+		PlaceholderFormat(sq.Dollar).
+		Exec()
+
+	if err != nil {
+		return err
 	}
-	if result.RowsAffected == 0 {
+
+	affected, err := rows.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
 		return resource.ErrRecordNotFound
 	}
 
@@ -190,11 +282,23 @@ func (r *ResourceRepository) BatchDelete(ids []string) error {
 		return resource.ErrEmptyIDParam
 	}
 
-	result := r.db.Delete(&model.Resource{}, ids)
-	if result.Error != nil {
-		return result.Error
+	rows, err := sq.Update("resources").
+		Set("deleted_at", time.Now()).
+		Where(sq.Eq{"id": ids, "deleted_at": nil}).
+		RunWith(r.sqldb).
+		PlaceholderFormat(sq.Dollar).
+		Exec()
+
+	if err != nil {
+		return err
 	}
-	if result.RowsAffected == 0 {
+
+	affected, err := rows.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
 		return resource.ErrRecordNotFound
 	}
 
