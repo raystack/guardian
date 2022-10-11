@@ -339,7 +339,7 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 		activeGrantsMap[g.Resource.URN][accountSignature][g.PermissionsKey()] = &g
 	}
 
-	var newGrants []*domain.Grant
+	var newAndUpdatedGrants []*domain.Grant
 	for rURN, accessEntries := range resourceAccess {
 		resource, ok := resourcesMap[rURN]
 		if !ok {
@@ -358,11 +358,14 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 			rc := resourceConfigMap[resource.Type]
 			importedGrants = append(importedGrants, reduceGrantsByProviderRole(rc, accountGrants)...)
 
-			for _, g := range importedGrants {
+			for _, importedGrant := range importedGrants {
 				if grantsByAccountSignature, ok := activeGrantsMap[rURN]; ok {
 					if grantsByPermissionsKey, ok := grantsByAccountSignature[accountSignature]; ok {
-						g.ID = grantsByPermissionsKey[g.PermissionsKey()].ID
-						delete(grantsByPermissionsKey, g.PermissionsKey())
+						existingGrant := grantsByPermissionsKey[importedGrant.PermissionsKey()]
+						importedGrant.ID = existingGrant.ID
+						importedGrant.Source = existingGrant.Source
+
+						delete(grantsByPermissionsKey, importedGrant.PermissionsKey()) // remove updated grant from active grants map
 					}
 				}
 			}
@@ -370,12 +373,13 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 
 		if len(importedGrants) > 0 {
 			if err := s.repo.BulkUpsert(ctx, importedGrants); err != nil {
-				return nil, fmt.Errorf("inserting imported grants into the db for %q: %w", rURN, err)
+				return nil, fmt.Errorf("inserting new and updated grants into the db for %q: %w", rURN, err)
 			}
-			newGrants = append(newGrants, importedGrants...)
+			newAndUpdatedGrants = append(newAndUpdatedGrants, importedGrants...)
 		}
 	}
 
+	// mark all remaining active grants as inactive
 	var providerInactiveGrants []*domain.Grant
 	for _, v := range activeGrantsMap {
 		for _, v2 := range v {
@@ -391,7 +395,7 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 		}
 	}
 
-	return newGrants, nil
+	return newAndUpdatedGrants, nil
 }
 
 func getAccountSignature(accountType, accountID string) string {
