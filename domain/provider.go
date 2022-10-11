@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+	"sort"
 	"time"
 )
 
@@ -40,6 +42,20 @@ type ResourceConfig struct {
 	Type   string        `json:"type" yaml:"type" validate:"required"`
 	Policy *PolicyConfig `json:"policy" yaml:"policy"`
 	Roles  []*Role       `json:"roles" yaml:"roles" validate:"required"`
+}
+
+// GetRolePermissionsMap returns map[Role.ID][]PermissionStr
+func (rc ResourceConfig) GetRolePermissionsMap() map[string][]string {
+	rolePermissions := map[string][]string{}
+	for _, r := range rc.Roles {
+		var permissionsStr []string
+		for _, v := range r.Permissions {
+			permissionsStr = append(permissionsStr, fmt.Sprintf("%s", v))
+		}
+		sort.Strings(permissionsStr)
+		rolePermissions[r.ID] = permissionsStr
+	}
+	return rolePermissions
 }
 
 // AppealConfig is the policy configuration of the appeal
@@ -82,11 +98,24 @@ type ProviderType struct {
 }
 
 type AccessEntry struct {
-	Resource    string
 	AccountID   string
 	AccountType string
 	Permission  string
 }
 
-// MapResourceAccess is list of UserAccess grouped by resource identifier
+func (ae AccessEntry) ToGrant(resource Resource) Grant {
+	return Grant{
+		ResourceID:       resource.ID,
+		Status:           GrantStatusActive,
+		StatusInProvider: GrantStatusActive,
+		AccountID:        ae.AccountID,
+		AccountType:      ae.AccountType,
+		CreatedBy:        SystemActorName,
+		Permissions:      []string{ae.Permission},
+		Source:           GrantSourceImport,
+		IsPermanent:      true,
+	}
+}
+
+// MapResourceAccess is list of UserAccess grouped by resource urn
 type MapResourceAccess map[string][]AccessEntry

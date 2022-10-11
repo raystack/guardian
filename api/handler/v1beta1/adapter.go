@@ -629,19 +629,21 @@ func (a *adapter) FromGrantProto(g *guardianv1beta1.Grant) *domain.Grant {
 	}
 
 	grant := &domain.Grant{
-		ID:           g.GetId(),
-		Status:       domain.GrantStatus(g.GetStatus()),
-		AccountID:    g.GetAccountId(),
-		AccountType:  g.GetAccountType(),
-		ResourceID:   g.GetResourceId(),
-		Role:         g.GetRole(),
-		Permissions:  g.GetPermissions(),
-		AppealID:     g.GetAppealId(),
-		RevokedBy:    g.GetRevokedBy(),
-		RevokeReason: g.GetRevokeReason(),
-		CreatedBy:    g.GetCreatedBy(),
-		Resource:     a.FromResourceProto(g.GetResource()),
-		// Appeal: a.fromappeal,
+		ID:               g.GetId(),
+		Status:           domain.GrantStatus(g.GetStatus()),
+		StatusInProvider: domain.GrantStatus(g.GetStatusInProvider()),
+		AccountID:        g.GetAccountId(),
+		AccountType:      g.GetAccountType(),
+		ResourceID:       g.GetResourceId(),
+		Role:             g.GetRole(),
+		Permissions:      g.GetPermissions(),
+		AppealID:         g.GetAppealId(),
+		Source:           domain.GrantSource(g.Source),
+		RevokedBy:        g.GetRevokedBy(),
+		RevokeReason:     g.GetRevokeReason(),
+		CreatedBy:        g.GetCreatedBy(),
+		Owner:            g.GetOwner(),
+		Resource:         a.FromResourceProto(g.GetResource()),
 	}
 
 	if g.GetExpirationDate() != nil {
@@ -668,18 +670,21 @@ func (a *adapter) ToGrantProto(grant *domain.Grant) (*guardianv1beta1.Grant, err
 	}
 
 	grantProto := &guardianv1beta1.Grant{
-		Id:           grant.ID,
-		Status:       string(grant.Status),
-		AccountId:    grant.AccountID,
-		AccountType:  grant.AccountType,
-		ResourceId:   grant.ResourceID,
-		Role:         grant.Role,
-		Permissions:  grant.Permissions,
-		IsPermanent:  grant.IsPermanent,
-		AppealId:     grant.AppealID,
-		RevokedBy:    grant.RevokedBy,
-		RevokeReason: grant.RevokeReason,
-		CreatedBy:    grant.CreatedBy,
+		Id:               grant.ID,
+		Status:           string(grant.Status),
+		StatusInProvider: string(grant.StatusInProvider),
+		AccountId:        grant.AccountID,
+		AccountType:      grant.AccountType,
+		ResourceId:       grant.ResourceID,
+		Role:             grant.Role,
+		Permissions:      grant.Permissions,
+		IsPermanent:      grant.IsPermanent,
+		AppealId:         grant.AppealID,
+		Source:           string(grant.Source),
+		RevokedBy:        grant.RevokedBy,
+		RevokeReason:     grant.RevokeReason,
+		CreatedBy:        grant.CreatedBy,
+		Owner:            grant.Owner,
 	}
 
 	if grant.ExpirationDate != nil {
