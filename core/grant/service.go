@@ -368,10 +368,12 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 			}
 		}
 
-		if err := s.repo.BulkUpsert(ctx, importedGrants); err != nil {
-			return nil, fmt.Errorf("inserting imported grants into the db for %q: %w", rURN, err)
+		if len(importedGrants) > 0 {
+			if err := s.repo.BulkUpsert(ctx, importedGrants); err != nil {
+				return nil, fmt.Errorf("inserting imported grants into the db for %q: %w", rURN, err)
+			}
+			newGrants = append(newGrants, importedGrants...)
 		}
-		newGrants = append(newGrants, importedGrants...)
 	}
 
 	var providerInactiveGrants []*domain.Grant
@@ -383,8 +385,10 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 			}
 		}
 	}
-	if err := s.repo.BulkUpsert(ctx, providerInactiveGrants); err != nil {
-		return nil, fmt.Errorf("updating grants provider status: %w", err)
+	if len(providerInactiveGrants) > 0 {
+		if err := s.repo.BulkUpsert(ctx, providerInactiveGrants); err != nil {
+			return nil, fmt.Errorf("updating grants provider status: %w", err)
+		}
 	}
 
 	return newGrants, nil
