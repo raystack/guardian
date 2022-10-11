@@ -98,7 +98,6 @@ type ProviderType struct {
 }
 
 type AccessEntry struct {
-	Resource    string
 	AccountID   string
 	AccountType string
 	Permission  string
@@ -118,5 +117,5 @@ func (ae AccessEntry) ToGrant(resource Resource) Grant {
 	}
 }
 
-// MapResourceAccess is list of UserAccess grouped by resource identifier
+// MapResourceAccess is list of UserAccess grouped by resource urn
 type MapResourceAccess map[string][]AccessEntry
