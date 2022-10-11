@@ -353,16 +353,11 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *Service) ListAccess(ctx context.Context, providerID string, resources []*domain.Resource) (*domain.Provider, domain.MapResourceAccess, error) {
-	p, err := s.GetByID(ctx, providerID)
-	if err != nil {
-		return nil, nil, err
-	}
-
+func (s *Service) ListAccess(ctx context.Context, p domain.Provider, resources []*domain.Resource) (domain.MapResourceAccess, error) {
 	c := s.getClient(p.Type)
 	providerAccesses, err := c.ListAccess(ctx, *p.Config, resources)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	for resourceURN, accessEntries := range providerAccesses {
@@ -375,7 +370,7 @@ func (s *Service) ListAccess(ctx context.Context, providerID string, resources [
 		providerAccesses[resourceURN] = filteredAccessEntries
 	}
 
-	return p, providerAccesses, nil
+	return providerAccesses, nil
 }
 
 func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*domain.Resource, error) {

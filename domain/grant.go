@@ -2,6 +2,8 @@ package domain
 
 import (
 	"errors"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -12,26 +14,43 @@ const (
 	GrantStatusInactive GrantStatus = "inactive"
 )
 
+type GrantSource string
+
+const (
+	GrantSourceAppeal GrantSource = "appeal"
+	GrantSourceImport GrantSource = "import"
+)
+
 type Grant struct {
-	ID             string      `json:"id" yaml:"id"`
-	Status         GrantStatus `json:"status" yaml:"status"`
-	AccountID      string      `json:"account_id" yaml:"account_id"`
-	AccountType    string      `json:"account_type" yaml:"account_type"`
-	ResourceID     string      `json:"resource_id" yaml:"resource_id"`
-	Role           string      `json:"role" yaml:"role"`
-	Permissions    []string    `json:"permissions" yaml:"permissions"`
-	IsPermanent    bool        `json:"is_permanent" yaml:"is_permanent"`
-	ExpirationDate *time.Time  `json:"expiration_date" yaml:"expiration_date"`
-	AppealID       string      `json:"appeal_id" yaml:"appeal_id"`
-	RevokedBy      string      `json:"revoked_by,omitempty" yaml:"revoked_by,omitempty"`
-	RevokedAt      *time.Time  `json:"revoked_at,omitempty" yaml:"revoked_at,omitempty"`
-	RevokeReason   string      `json:"revoke_reason,omitempty" yaml:"revoke_reason,omitempty"`
-	CreatedBy      string      `json:"created_by" yaml:"created_by"`
-	CreatedAt      time.Time   `json:"created_at" yaml:"created_at"`
-	UpdatedAt      time.Time   `json:"updated_at" yaml:"updated_at"`
+	ID               string      `json:"id" yaml:"id"`
+	Status           GrantStatus `json:"status" yaml:"status"`
+	StatusInProvider GrantStatus `json:"status_in_provider" yaml:"status_in_provider"`
+	AccountID        string      `json:"account_id" yaml:"account_id"`
+	AccountType      string      `json:"account_type" yaml:"account_type"`
+	ResourceID       string      `json:"resource_id" yaml:"resource_id"`
+	Role             string      `json:"role" yaml:"role"`
+	Permissions      []string    `json:"permissions" yaml:"permissions"`
+	IsPermanent      bool        `json:"is_permanent" yaml:"is_permanent"`
+	ExpirationDate   *time.Time  `json:"expiration_date" yaml:"expiration_date"`
+	AppealID         string      `json:"appeal_id" yaml:"appeal_id"`
+	Source           GrantSource `json:"source" yaml:"source"`
+	RevokedBy        string      `json:"revoked_by,omitempty" yaml:"revoked_by,omitempty"`
+	RevokedAt        *time.Time  `json:"revoked_at,omitempty" yaml:"revoked_at,omitempty"`
+	RevokeReason     string      `json:"revoke_reason,omitempty" yaml:"revoke_reason,omitempty"`
+	CreatedBy        string      `json:"created_by" yaml:"created_by"`
+	Owner            string      `json:"owner" yaml:"owner"`
+	CreatedAt        time.Time   `json:"created_at" yaml:"created_at"`
+	UpdatedAt        time.Time   `json:"updated_at" yaml:"updated_at"`
 
 	Resource *Resource `json:"resource,omitempty" yaml:"resource,omitempty"`
 	Appeal   *Appeal   `json:"appeal,omitempty" yaml:"appeal,omitempty"`
+}
+
+func (g Grant) PermissionsKey() string {
+	permissions := make([]string, len(g.Permissions))
+	copy(permissions, g.Permissions)
+	sort.Strings(permissions)
+	return strings.Join(permissions, ";")
 }
 
 func (g Grant) IsEligibleForExtension(extensionDurationRule time.Duration) bool {
@@ -69,6 +88,7 @@ type ListGrantsFilter struct {
 	ResourceTypes             []string
 	ResourceURNs              []string
 	CreatedBy                 string
+	Owner                     string
 	OrderBy                   []string
 	ExpirationDateLessThan    time.Time
 	ExpirationDateGreaterThan time.Time

@@ -153,7 +153,7 @@ func (s *GRPCServer) ImportAccess(ctx context.Context, req *guardianv1beta1.Impo
 		ProviderID:   req.GetId(),
 		ResourceIDs:  req.GetResourceIds(),
 		ResouceTypes: req.GetResourceTypes(),
-		ResourceURNs: req.GetResourceTypes(),
+		ResourceURNs: req.GetResourceUrns(),
 	})
 	if err != nil {
 		switch {
