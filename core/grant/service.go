@@ -380,17 +380,17 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 	}
 
 	// mark all remaining active grants as inactive
-	var providerInactiveGrants []*domain.Grant
+	var deactivatedGrants []*domain.Grant
 	for _, v := range activeGrantsMap {
 		for _, v2 := range v {
 			for _, g := range v2 {
 				g.StatusInProvider = domain.GrantStatusInactive
-				providerInactiveGrants = append(providerInactiveGrants, g)
+				deactivatedGrants = append(deactivatedGrants, g)
 			}
 		}
 	}
-	if len(providerInactiveGrants) > 0 {
-		if err := s.repo.BulkUpsert(ctx, providerInactiveGrants); err != nil {
+	if len(deactivatedGrants) > 0 {
+		if err := s.repo.BulkUpsert(ctx, deactivatedGrants); err != nil {
 			return nil, fmt.Errorf("updating grants provider status: %w", err)
 		}
 	}
