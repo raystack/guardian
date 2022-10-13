@@ -179,7 +179,7 @@ func (s *ServiceTestSuite) TestPrepare() {
 			expectedGrant *domain.Grant
 		}{
 			{
-				name: "appeal with permanent duration option",
+				name: "appeal with empty permanent duration option",
 				appeal: domain.Appeal{
 					ID:          "test-appeal-id",
 					Status:      domain.AppealStatusApproved,
@@ -189,6 +189,32 @@ func (s *ServiceTestSuite) TestPrepare() {
 					Role:        "test-role",
 					Permissions: []string{"test-permissions"},
 					CreatedBy:   "user@example.com",
+				},
+				expectedGrant: &domain.Grant{
+					Status:      domain.GrantStatusActive,
+					AccountID:   "user@example.com",
+					AccountType: "user",
+					ResourceID:  "test-user-id",
+					Role:        "test-role",
+					Permissions: []string{"test-permissions"},
+					AppealID:    "test-appeal-id",
+					CreatedBy:   "user@example.com",
+					IsPermanent: true,
+				},
+			}, {
+				name: "appeal with 0h as permanent duration option",
+				appeal: domain.Appeal{
+					ID:          "test-appeal-id",
+					Status:      domain.AppealStatusApproved,
+					AccountID:   "user@example.com",
+					AccountType: "user",
+					ResourceID:  "test-user-id",
+					Role:        "test-role",
+					Permissions: []string{"test-permissions"},
+					CreatedBy:   "user@example.com",
+					Options: &domain.AppealOptions{
+						Duration: "0h",
+					},
 				},
 				expectedGrant: &domain.Grant{
 					Status:      domain.GrantStatusActive,
