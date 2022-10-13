@@ -128,7 +128,7 @@ func (a Appeal) ToGrant() (*Grant, error) {
 		if err != nil {
 			return nil, fmt.Errorf("parsing duration %q: %w", a.Options.Duration, err)
 		}
-		if duration == 0*time.Second {
+		if duration == 0 {
 			grant.IsPermanent = true
 		} else {
 			expDate := time.Now().Add(duration)
