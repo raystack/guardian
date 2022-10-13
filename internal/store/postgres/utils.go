@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -45,4 +46,34 @@ func addOrderByClause(db *gorm.DB, conditions []string, options addOrderByClause
 			WithoutParentheses: true,
 		},
 	})
+}
+
+func getOrderByClauses(qb sq.SelectBuilder, conditions []string, options addOrderByClauseOptions) sq.SelectBuilder {
+	// var orderByClauses []string
+	// var vars []interface{}
+
+	for _, orderBy := range conditions {
+		if strings.Contains(orderBy, "status") {
+			qb = qb.OrderByClause(fmt.Sprintf(`ARRAY_POSITION(?, %s)`, options.statusColumnName), options.statusesOrder)
+			// orderByClauses = append(orderByClauses, fmt.Sprintf(`ARRAY_POSITION(ARRAY[?], %s)`, options.statusColumnName))
+			// vars = append(vars, options.statusesOrder)
+		} else {
+			columnOrder := strings.Split(orderBy, ":")
+			column := columnOrder[0]
+			if utils.ContainsString([]string{"updated_at", "created_at"}, column) {
+				if len(columnOrder) == 1 {
+					qb = qb.OrderByClause(column)
+					// orderByClauses = append(orderByClauses, fmt.Sprintf(`"%s"`, column))
+				} else if len(columnOrder) == 2 {
+					direction := columnOrder[1]
+					if utils.ContainsString([]string{"asc", "desc"}, strings.ToLower(direction)) {
+						qb = qb.OrderBy(fmt.Sprintf(`%s %s`, column, direction))
+						// orderByClauses = append(orderByClauses, fmt.Sprintf(`"%s" %s`, column, order))
+					}
+				}
+			}
+		}
+	}
+
+	return qb
 }

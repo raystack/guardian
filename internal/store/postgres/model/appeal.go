@@ -1,42 +1,92 @@
 package model
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx/types"
 	"github.com/lib/pq"
 	"github.com/odpf/guardian/domain"
-	"gorm.io/datatypes"
-	"gorm.io/gorm"
 )
+
+type ColumnNames []string
+
+func (c ColumnNames) WithTableName(tableName string) []string {
+	var columns []string
+	for _, column := range c {
+		columns = append(columns, fmt.Sprintf(`"%s"."%s"`, tableName, column))
+	}
+	return columns
+}
+
+var AppealColumns = ColumnNames{
+	"id",
+	"resource_id",
+	"policy_id",
+	"policy_version",
+	"status",
+	"account_id",
+	"account_type",
+	"created_by",
+	"creator",
+	"role",
+	"permissions",
+	"options",
+	"labels",
+	"details",
+	"created_at",
+	"updated_at",
+}
 
 // Appeal database model
 type Appeal struct {
-	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	ResourceID    string
-	PolicyID      string
-	PolicyVersion uint
-	Status        string
-	AccountID     string
-	AccountType   string
-	CreatedBy     string
-	Creator       datatypes.JSON
-	Role          string
-	Permissions   pq.StringArray `gorm:"type:text[]"`
-	Options       datatypes.JSON
-	Labels        datatypes.JSON
-	Details       datatypes.JSON
+	ID            uuid.UUID      `db:"id"`
+	ResourceID    string         `db:"resource_id"`
+	PolicyID      string         `db:"policy_id"`
+	PolicyVersion uint           `db:"policy_version"`
+	Status        string         `db:"status"`
+	AccountID     string         `db:"account_id"`
+	AccountType   string         `db:"account_type"`
+	CreatedBy     string         `db:"created_by"`
+	Creator       types.JSONText `db:"creator"`
+	Role          string         `db:"role"`
+	Permissions   pq.StringArray `db:"permissions"`
+	Options       types.JSONText `db:"options"`
+	Labels        types.JSONText `db:"labels"`
+	Details       types.JSONText `db:"details"`
 
-	Resource  *Resource `gorm:"ForeignKey:ResourceID;References:ID"`
-	Policy    Policy    `gorm:"ForeignKey:PolicyID,PolicyVersion;References:ID,Version"`
-	Approvals []*Approval
-	Grant     *Grant
+	Resource  *Resource   `db:"resource"`
+	Policy    Policy      `db:"-"`
+	Approvals []*Approval `db:"-"`
+	Grant     *Grant      `db:"grant"`
 
-	CreatedAt time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	CreatedAt time.Time    `db:"created_at"`
+	UpdatedAt time.Time    `db:"updated_at"`
+	DeletedAt sql.NullTime `db:"deleted_at"`
+}
+
+func (m *Appeal) Values() []interface{} {
+	return []interface{}{
+		m.ID,
+		m.ResourceID,
+		m.PolicyID,
+		m.PolicyVersion,
+		m.Status,
+		m.AccountID,
+		m.AccountType,
+		m.CreatedBy,
+		m.Creator,
+		m.Role,
+		m.Permissions,
+		m.Options,
+		m.Labels,
+		m.Details,
+		m.CreatedAt,
+		m.UpdatedAt,
+	}
 }
 
 // FromDomain transforms *domain.Appeal values into the model
@@ -104,12 +154,12 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	m.AccountID = a.AccountID
 	m.AccountType = a.AccountType
 	m.CreatedBy = a.CreatedBy
-	m.Creator = datatypes.JSON(creator)
+	m.Creator = creator
 	m.Role = a.Role
-	m.Permissions = pq.StringArray(a.Permissions)
-	m.Options = datatypes.JSON(options)
-	m.Labels = datatypes.JSON(labels)
-	m.Details = datatypes.JSON(details)
+	m.Permissions = a.Permissions
+	m.Options = options
+	m.Labels = labels
+	m.Details = details
 	m.Approvals = approvals
 	m.CreatedAt = a.CreatedAt
 	m.UpdatedAt = a.UpdatedAt
@@ -121,27 +171,27 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 	var labels map[string]string
 	if err := json.Unmarshal(m.Labels, &labels); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing labels: %w", err)
 	}
 
 	var options *domain.AppealOptions
 	if m.Options != nil {
 		if err := json.Unmarshal(m.Options, &options); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parsing options: %w", err)
 		}
 	}
 
 	var details map[string]interface{}
 	if m.Details != nil {
 		if err := json.Unmarshal(m.Details, &details); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parsing details: %w", err)
 		}
 	}
 
 	var creator interface{}
 	if m.Creator != nil {
 		if err := json.Unmarshal(m.Creator, &creator); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parsing creator: %w", err)
 		}
 	}
 

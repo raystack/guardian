@@ -1,33 +1,46 @@
 package model
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/domain"
-	"gorm.io/datatypes"
-	"gorm.io/gorm"
 )
+
+var ResourceColumns = []string{
+	`resources.id as "resource.id"`,
+	`resources.provider_type as "resource.provider_type"`,
+	`resources.provider_urn as "resource.provider_urn"`,
+	`resources.type as "resource.type"`,
+	`resources.urn as "resource.urn"`,
+	`resources.name as "resource.name"`,
+	`resources.details as "resource.details"`,
+	`resources.labels as "resource.labels"`,
+	`resources.created_at as "resource.created_at"`,
+	`resources.updated_at as "resource.updated_at"`,
+	`resources.is_deleted as "resource.is_deleted"`,
+}
 
 // Resource is the database model for resource
 type Resource struct {
-	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	ProviderType string    `gorm:"uniqueIndex:resource_index"`
-	ProviderURN  string    `gorm:"uniqueIndex:resource_index"`
-	Type         string    `gorm:"uniqueIndex:resource_index"`
-	URN          string    `gorm:"uniqueIndex:resource_index"`
-	Name         string
-	Details      datatypes.JSON
-	Labels       datatypes.JSON
+	ID           uuid.UUID       `db:"id"`
+	ProviderType string          `db:"provider_type"`
+	ProviderURN  string          `db:"provider_urn"`
+	Type         string          `db:"type"`
+	URN          string          `db:"urn"`
+	Name         string          `db:"name"`
+	Details      json.RawMessage `db:"details"`
+	Labels       json.RawMessage `db:"labels"`
 
-	Provider Provider `gorm:"ForeignKey:ProviderType,ProviderURN;References:Type,URN"`
+	Provider Provider `db:"provider"`
 
-	CreatedAt time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt gorm.DeletedAt `gorm:"index"`
-	IsDeleted bool
+	CreatedAt time.Time    `db:"created_at"`
+	UpdatedAt time.Time    `db:"updated_at"`
+	DeletedAt sql.NullTime `db:"deleted_at"`
+	IsDeleted bool         `db:"is_deleted"`
 }
 
 // TableName overrides the table name
@@ -61,8 +74,8 @@ func (m *Resource) FromDomain(r *domain.Resource) error {
 	m.Type = r.Type
 	m.URN = r.URN
 	m.Name = r.Name
-	m.Details = datatypes.JSON(details)
-	m.Labels = datatypes.JSON(labels)
+	m.Details = details
+	m.Labels = labels
 	m.CreatedAt = r.CreatedAt
 	m.UpdatedAt = r.UpdatedAt
 	m.IsDeleted = r.IsDeleted

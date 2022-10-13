@@ -40,6 +40,7 @@ func NewStore(c *store.Config) (*Store, error) {
 	if err != nil {
 		log.Panic(err)
 	}
+	gormDB = gormDB.Debug()
 
 	return &Store{gormDB, c}, nil
 }

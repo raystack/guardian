@@ -300,7 +300,7 @@ func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
 
 		actualErr := s.repository.BulkUpsert(invalidAppeals)
 
-		s.EqualError(actualErr, "json: unsupported type: chan int")
+		s.EqualError(actualErr, "parsing appeal: json: unsupported type: chan int")
 	})
 
 	dummyAppeals := []*domain.Appeal{

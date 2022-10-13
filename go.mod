@@ -17,6 +17,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/imdario/mergo v0.3.12
+	github.com/jmoiron/sqlx v1.3.1
 	github.com/lib/pq v1.10.0
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mcuadros/go-lookup v0.0.0-20200831155250-80f87a4fa5ee

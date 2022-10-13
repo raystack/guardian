@@ -1,15 +1,21 @@
 package postgres
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
 
+	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
+	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 var (
@@ -23,12 +29,16 @@ var (
 
 // AppealRepository talks to the store to read or insert data
 type AppealRepository struct {
-	db *gorm.DB
+	db     *gorm.DB
+	sqldb  *sql.DB
+	sqlxdb *sqlx.DB
 }
 
 // NewAppealRepository returns repository struct
 func NewAppealRepository(db *gorm.DB) *AppealRepository {
-	return &AppealRepository{db}
+	sqldb, _ := db.DB() // TODO: replace gormDB with sql.DB
+	sqlxdb := sqlx.NewDb(sqldb, "postgres")
+	return &AppealRepository{db, sqldb, sqlxdb}
 }
 
 // GetByID returns appeal record by id along with the approvals and the approvers
@@ -62,11 +72,25 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 		return nil, err
 	}
 
-	db := r.db
-	if filters.CreatedBy != "" {
-		db = db.Where(`"appeals"."created_by" = ?`, filters.CreatedBy)
+	var filtersMap map[string]interface{}
+	if err := mapstructure.Decode(filters, &filtersMap); err != nil {
+		return nil, fmt.Errorf("decoding filters: %w", err)
 	}
-	accounts := make([]string, 0)
+
+	columns := []string{}
+	columns = append(columns, model.AppealColumns.WithTableName("appeals")...)
+	columns = append(columns, model.ResourceColumns...)
+	columns = append(columns, model.GrantColumns...)
+	queryBuilder := sq.Select(columns...).From("appeals").
+		Where(sq.Eq{"appeals.deleted_at": nil}).
+		LeftJoin("resources ON resources.id = appeals.resource_id").
+		Join("grants ON grants.appeal_id = appeals.id").
+		PlaceholderFormat(sq.Dollar)
+
+	if filters.CreatedBy != "" {
+		queryBuilder = queryBuilder.Where("created_by = ?", filters.CreatedBy)
+	}
+	var accounts []string
 	if filters.AccountID != "" {
 		accounts = append(accounts, filters.AccountID)
 	}
@@ -74,92 +98,109 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 		accounts = append(accounts, filters.AccountIDs...)
 	}
 	if len(accounts) > 0 {
-		db = db.Where(`"appeals"."account_id" IN ?`, accounts)
+		queryBuilder = queryBuilder.Where(sq.Eq{"appeals.account_id": accounts})
 	}
 	if filters.Statuses != nil {
-		db = db.Where(`"appeals"."status" IN ?`, filters.Statuses)
+		queryBuilder = queryBuilder.Where(sq.Eq{"appeals.status": filters.Statuses})
 	}
 	if filters.ResourceID != "" {
-		db = db.Where(`"appeals"."resource_id" = ?`, filters.ResourceID)
+		queryBuilder = queryBuilder.Where(sq.Eq{"appeals.resource_id": filters.ResourceID})
 	}
 	if filters.Role != "" {
-		db = db.Where(`"appeals"."role" = ?`, filters.Role)
+		queryBuilder = queryBuilder.Where("appeals.role = ?", filters.Role)
 	}
 	if !filters.ExpirationDateLessThan.IsZero() {
-		db = db.Where(`"options" -> 'expiration_date' < ?`, filters.ExpirationDateLessThan)
+		queryBuilder = queryBuilder.Where("options->'expiration_date' < ?", filters.ExpirationDateLessThan)
 	}
 	if !filters.ExpirationDateGreaterThan.IsZero() {
-		db = db.Where(`"options" -> 'expiration_date' > ?`, filters.ExpirationDateGreaterThan)
+		queryBuilder = queryBuilder.Where("options->'expiration_date' > ?", filters.ExpirationDateGreaterThan)
 	}
 	if filters.OrderBy != nil {
-		db = addOrderByClause(db, filters.OrderBy, addOrderByClauseOptions{
+		queryBuilder = getOrderByClauses(queryBuilder, filters.OrderBy, addOrderByClauseOptions{
 			statusColumnName: `"appeals"."status"`,
 			statusesOrder:    AppealStatusDefaultSort,
 		})
 	}
 
-	db = db.Joins("Resource")
 	if filters.ProviderTypes != nil {
-		db = db.Where(`"Resource"."provider_type" IN ?`, filters.ProviderTypes)
+		queryBuilder = queryBuilder.Where(sq.Eq{"resources.provider_type": filters.ProviderTypes})
 	}
 	if filters.ProviderURNs != nil {
-		db = db.Where(`"Resource"."provider_urn" IN ?`, filters.ProviderURNs)
+		queryBuilder = queryBuilder.Where(sq.Eq{"resources.provider_urn": filters.ProviderURNs})
 	}
 	if filters.ResourceTypes != nil {
-		db = db.Where(`"Resource"."type" IN ?`, filters.ResourceTypes)
+		queryBuilder = queryBuilder.Where(sq.Eq{"resources.type": filters.ResourceTypes})
 	}
 	if filters.ResourceURNs != nil {
-		db = db.Where(`"Resource"."urn" IN ?`, filters.ResourceURNs)
+		queryBuilder = queryBuilder.Where(sq.Eq{"resources.urn": filters.ResourceURNs})
+	}
+
+	sql, args, err := queryBuilder.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("building sql: %w", err)
 	}
 
 	var models []*model.Appeal
-	if err := db.Joins("Grant").Find(&models).Error; err != nil {
+	if err := r.sqlxdb.Select(&models, sql, args...); err != nil {
 		return nil, err
 	}
 
-	records := []*domain.Appeal{}
+	var result []*domain.Appeal
 	for _, m := range models {
 		a, err := m.ToDomain()
 		if err != nil {
 			return nil, fmt.Errorf("parsing appeal: %w", err)
 		}
-
-		records = append(records, a)
+		result = append(result, a)
 	}
 
-	return records, nil
+	return result, nil
 }
 
 // BulkUpsert new record to database
 func (r *AppealRepository) BulkUpsert(appeals []*domain.Appeal) error {
+	queryBuilder := sq.Insert("appeals").Columns(model.AppealColumns...).
+		PlaceholderFormat(sq.Dollar)
+
+	var onConflictUpdatedFields []string
+	for _, c := range model.AppealColumns {
+		switch c {
+		case "id", "created_at":
+			continue
+		default:
+			onConflictUpdatedFields = append(onConflictUpdatedFields, fmt.Sprintf("%s = excluded.%s", c, c))
+		}
+	}
+	queryBuilder = queryBuilder.Suffix("ON CONFLICT (id) DO UPDATE SET " + strings.Join(onConflictUpdatedFields, ", "))
+
 	models := []*model.Appeal{}
 	for _, a := range appeals {
+		if a.ID == "" {
+			a.ID = uuid.New().String()
+			a.CreatedAt = time.Now()
+		}
+		a.UpdatedAt = time.Now()
 		m := new(model.Appeal)
 		if err := m.FromDomain(a); err != nil {
-			return err
+			return fmt.Errorf("parsing appeal: %w", err)
 		}
+		queryBuilder = queryBuilder.Values(m.Values()...)
 		models = append(models, m)
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.
-			Clauses(clause.OnConflict{UpdateAll: true}).
-			Create(models).
-			Error; err != nil {
-			return err
+	if _, err := queryBuilder.RunWith(r.sqlxdb).Exec(); err != nil {
+		return fmt.Errorf("inserting appeals: %w", err)
+	}
+
+	for i, m := range models {
+		a, err := m.ToDomain()
+		if err != nil {
+			return fmt.Errorf("parsing appeal: %w", err)
 		}
+		*appeals[i] = *a
+	}
 
-		for i, m := range models {
-			newAppeal, err := m.ToDomain()
-			if err != nil {
-				return fmt.Errorf("parsing appeal: %w", err)
-			}
-
-			*appeals[i] = *newAppeal
-		}
-
-		return nil
-	})
+	return nil
 }
 
 // Update an approval step

@@ -1,38 +1,84 @@
 package model
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/odpf/guardian/domain"
-	"gorm.io/gorm"
 )
 
-type Grant struct {
-	ID               uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	Status           string
-	StatusInProvider string
-	AccountID        string
-	AccountType      string
-	ResourceID       string
-	Role             string
-	Permissions      pq.StringArray `gorm:"type:text[]"`
-	IsPermanent      bool
-	ExpirationDate   time.Time
-	AppealID         *string
-	Source           string
-	RevokedBy        string
-	RevokedAt        time.Time
-	RevokeReason     string
-	Owner            string
-	CreatedAt        time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt        time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt        gorm.DeletedAt `gorm:"index"`
+var GrantColumns = []string{
+	`grants.id as "grant.id"`,
+	`grants.status as "grant.status"`,
+	`grants.status_in_provider as "grant.status_in_provider"`,
+	`grants.account_id as "grant.account_id"`,
+	`grants.account_type as "grant.account_type"`,
+	`grants.resource_id as "grant.resource_id"`,
+	`grants.role as "grant.role"`,
+	`grants.permissions as "grant.permissions"`,
+	`grants.is_permanent as "grant.is_permanent"`,
+	`grants.expiration_date as "grant.expiration_date"`,
+	`grants.appeal_id as "grant.appeal_id"`,
+	`grants.source as "grant.source"`,
+	`grants.revoked_by as "grant.revoked_by"`,
+	`grants.revoked_at as "grant.revoked_at"`,
+	`grants.revoke_reason as "grant.revoke_reason"`,
+	`grants.owner as "grant.owner"`,
+	`grants.created_at as "grant.created_at"`,
+	`grants.updated_at as "grant.updated_at"`,
+	`grants.deleted_at as "grant.deleted_at"`,
+}
 
-	Resource *Resource `gorm:"ForeignKey:ResourceID;References:ID"`
-	Appeal   *Appeal   `gorm:"ForeignKey:AppealID;References:ID"`
+type Grant struct {
+	ID               uuid.UUID      `db:"id"`
+	Status           string         `db:"status"`
+	StatusInProvider string         `db:"status_in_provider"`
+	AccountID        string         `db:"account_id"`
+	AccountType      string         `db:"account_type"`
+	ResourceID       string         `db:"resource_id"`
+	Role             string         `db:"role"`
+	Permissions      pq.StringArray `db:"permissions"`
+	IsPermanent      bool           `db:"is_permanent"`
+	ExpirationDate   sql.NullTime   `db:"expiration_date"`
+	AppealID         *string        `db:"appeal_id"`
+	Source           string         `db:"source"`
+	RevokedBy        string         `db:"revoked_by"`
+	RevokedAt        time.Time      `db:"revoked_at"`
+	RevokeReason     string         `db:"revoke_reason"`
+	Owner            string         `db:"owner"`
+	CreatedAt        time.Time      `db:"created_at"`
+	UpdatedAt        time.Time      `db:"updated_at"`
+	DeletedAt        sql.NullTime   `db:"deleted_at"`
+
+	Resource *Resource `db:"resource"`
+	Appeal   *Appeal   `db:"appeal"`
+}
+
+func (m *Grant) Values() []interface{} {
+	return []interface{}{
+		m.ID,
+		m.Status,
+		m.StatusInProvider,
+		m.AccountID,
+		m.AccountType,
+		m.ResourceID,
+		m.Role,
+		m.Permissions,
+		m.IsPermanent,
+		m.ExpirationDate,
+		m.AppealID,
+		m.Source,
+		m.RevokedBy,
+		m.RevokedAt,
+		m.RevokeReason,
+		m.Owner,
+		m.CreatedAt,
+		m.UpdatedAt,
+		m.DeletedAt,
+	}
 }
 
 func (m *Grant) FromDomain(g domain.Grant) error {
@@ -65,7 +111,7 @@ func (m *Grant) FromDomain(g domain.Grant) error {
 	}
 
 	if g.ExpirationDate != nil {
-		m.ExpirationDate = *g.ExpirationDate
+		m.ExpirationDate = sql.NullTime{Time: *g.ExpirationDate, Valid: true}
 	}
 
 	if g.RevokedAt != nil {
@@ -129,8 +175,9 @@ func (m Grant) ToDomain() (*domain.Grant, error) {
 		grant.Appeal = a
 	}
 
-	if !m.ExpirationDate.IsZero() {
-		grant.ExpirationDate = &m.ExpirationDate
+	if m.ExpirationDate.Valid {
+		d := m.ExpirationDate.Time
+		grant.ExpirationDate = &d
 	}
 	if !m.RevokedAt.IsZero() {
 		grant.RevokedAt = &m.RevokedAt
