@@ -12,16 +12,6 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
-type ColumnNames []string
-
-func (c ColumnNames) WithTableName(tableName string) []string {
-	var columns []string
-	for _, column := range c {
-		columns = append(columns, fmt.Sprintf(`"%s"."%s"`, tableName, column))
-	}
-	return columns
-}
-
 var AppealColumns = ColumnNames{
 	"id",
 	"resource_id",
@@ -60,7 +50,7 @@ type Appeal struct {
 
 	Resource  *Resource   `db:"resource"`
 	Policy    Policy      `db:"-"`
-	Approvals []*Approval `db:"-"`
+	Approvals []*Approval `db:"approvals"`
 	Grant     *Grant      `db:"grant"`
 
 	CreatedAt time.Time    `db:"created_at"`

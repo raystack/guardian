@@ -1,24 +1,33 @@
 package model
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/domain"
-	"gorm.io/gorm"
 )
+
+var ApproverColumns = ColumnNames{
+	"id",
+	"approval_id",
+	"appeal_id",
+	"email",
+	"created_at",
+	"updated_at",
+}
 
 // Approver database model
 type Approver struct {
-	ID         uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	ApprovalID string
-	AppealID   string `gorm:"index"`
-	Email      string `gorm:"index"`
+	ID         uuid.UUID `db:"id"`
+	ApprovalID string    `db:"approval_id"`
+	AppealID   string    `db:"appeal_id"`
+	Email      string    `db:"email"`
 
-	CreatedAt time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	CreatedAt time.Time    `db:"created_at"`
+	UpdatedAt time.Time    `db:"updated_at"`
+	DeletedAt sql.NullTime `db:"deleted_at"`
 }
 
 // FromDomain transforms *domain.Approver values into the model

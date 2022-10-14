@@ -114,6 +114,16 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 			Role:          "role_test",
 			Permissions:   []string{"permission_test"},
 			CreatedBy:     "user@example.com",
+			Approvals: []*domain.Approval{
+				{
+					Name:          "test-approval",
+					Index:         0,
+					Status:        domain.ApprovalStatusPending,
+					Approvers:     []string{"approver@example.com"},
+					PolicyID:      s.dummyPolicy.ID,
+					PolicyVersion: s.dummyPolicy.Version,
+				},
+			},
 		}
 
 		err := s.repository.BulkUpsert([]*domain.Appeal{dummyAppeal})

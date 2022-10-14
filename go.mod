@@ -17,6 +17,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/imdario/mergo v0.3.12
+	github.com/jackskj/carta v0.2.0
 	github.com/jmoiron/sqlx v1.3.1
 	github.com/lib/pq v1.10.0
 	github.com/mcuadros/go-defaults v1.2.0
@@ -25,7 +26,7 @@ require (
 	github.com/odpf/salt v0.1.1-0.20220821030850-77ce10e39145
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sergi/go-diff v1.0.0
+	github.com/sergi/go-diff v1.1.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.1
@@ -33,7 +34,7 @@ require (
 	google.golang.org/api v0.62.0
 	google.golang.org/genproto v0.0.0-20220314164441-57ef72a4c106
 	google.golang.org/grpc v1.45.0
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gorm.io/datatypes v1.0.0
 	gorm.io/driver/postgres v1.0.8

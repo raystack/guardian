@@ -10,26 +10,26 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
-var GrantColumns = []string{
-	`grants.id as "grant.id"`,
-	`grants.status as "grant.status"`,
-	`grants.status_in_provider as "grant.status_in_provider"`,
-	`grants.account_id as "grant.account_id"`,
-	`grants.account_type as "grant.account_type"`,
-	`grants.resource_id as "grant.resource_id"`,
-	`grants.role as "grant.role"`,
-	`grants.permissions as "grant.permissions"`,
-	`grants.is_permanent as "grant.is_permanent"`,
-	`grants.expiration_date as "grant.expiration_date"`,
-	`grants.appeal_id as "grant.appeal_id"`,
-	`grants.source as "grant.source"`,
-	`grants.revoked_by as "grant.revoked_by"`,
-	`grants.revoked_at as "grant.revoked_at"`,
-	`grants.revoke_reason as "grant.revoke_reason"`,
-	`grants.owner as "grant.owner"`,
-	`grants.created_at as "grant.created_at"`,
-	`grants.updated_at as "grant.updated_at"`,
-	`grants.deleted_at as "grant.deleted_at"`,
+var GrantColumns = ColumnNames{
+	"id",
+	"status",
+	"status_in_provider",
+	"account_id",
+	"account_type",
+	"resource_id",
+	"role",
+	"permissions",
+	"is_permanent",
+	"expiration_date",
+	"appeal_id",
+	"source",
+	"revoked_by",
+	"revoked_at",
+	"revoke_reason",
+	"owner",
+	"created_at",
+	"updated_at",
+	"deleted_at",
 }
 
 type Grant struct {
@@ -46,7 +46,7 @@ type Grant struct {
 	AppealID         *string        `db:"appeal_id"`
 	Source           string         `db:"source"`
 	RevokedBy        string         `db:"revoked_by"`
-	RevokedAt        time.Time      `db:"revoked_at"`
+	RevokedAt        sql.NullTime   `db:"revoked_at"`
 	RevokeReason     string         `db:"revoke_reason"`
 	Owner            string         `db:"owner"`
 	CreatedAt        time.Time      `db:"created_at"`
@@ -115,7 +115,7 @@ func (m *Grant) FromDomain(g domain.Grant) error {
 	}
 
 	if g.RevokedAt != nil {
-		m.RevokedAt = *g.RevokedAt
+		m.RevokedAt = sql.NullTime{Time: *g.RevokedAt, Valid: true}
 	}
 
 	m.Status = string(g.Status)
@@ -179,8 +179,8 @@ func (m Grant) ToDomain() (*domain.Grant, error) {
 		d := m.ExpirationDate.Time
 		grant.ExpirationDate = &d
 	}
-	if !m.RevokedAt.IsZero() {
-		grant.RevokedAt = &m.RevokedAt
+	if m.RevokedAt.Valid {
+		grant.RevokedAt = &m.RevokedAt.Time
 	}
 
 	return grant, nil

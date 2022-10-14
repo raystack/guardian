@@ -43,20 +43,106 @@ func NewAppealRepository(db *gorm.DB) *AppealRepository {
 
 // GetByID returns appeal record by id along with the approvals and the approvers
 func (r *AppealRepository) GetByID(id string) (*domain.Appeal, error) {
-	m := new(model.Appeal)
-	if err := r.db.
-		Preload("Approvals", func(db *gorm.DB) *gorm.DB {
-			return db.Order("Approvals.index ASC")
-		}).
-		Preload("Approvals.Approvers").
-		Preload("Resource").
-		Preload("Grant").
-		First(&m, "id = ?", id).
-		Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	query := `
+	SELECT
+		appeals.id,
+		appeals.resource_id,
+		appeals.policy_id,
+		appeals.policy_version,
+		appeals.status,
+		appeals.account_id,
+		appeals.account_type,
+		appeals.created_by,
+		appeals.creator,
+		appeals.role,
+		appeals.permissions,
+		appeals.options,
+		appeals.labels,
+		appeals.details,
+		appeals.created_at,
+		appeals.updated_at,
+
+		COALESCE(grants.id, NULL) AS "grant.id",
+		COALESCE(grants.status, '') AS "grant.status",
+		COALESCE(grants.status_in_provider, '') AS "grant.status_in_provider",
+		COALESCE(grants.account_id, '') AS "grant.account_id",
+		COALESCE(grants.account_type, '') AS "grant.account_type",
+		COALESCE(grants.resource_id, '00000000-0000-0000-0000-000000000000') AS "grant.resource_id",
+		COALESCE(grants.role, '') AS "grant.role",
+		COALESCE(grants.permissions, '{}') AS "grant.permissions",
+		COALESCE(grants.is_permanent, FALSE) AS "grant.is_permanent",
+		COALESCE(grants.expiration_date, NULL) AS "grant.expiration_date",
+		COALESCE(grants.appeal_id, '00000000-0000-0000-0000-000000000000') AS "grant.appeal_id",
+		COALESCE(grants.source, '') AS "grant.source",
+		COALESCE(grants.revoked_by, '') AS "grant.revoked_by",
+		COALESCE(grants.revoked_at, NULL) AS "grant.revoked_at",
+		COALESCE(grants.revoke_reason, '') AS "grant.revoke_reason",
+		COALESCE(grants.owner, '') AS "grant.owner",
+		COALESCE(grants.created_at, '0001-01-01 00:00:00+07') AS "grant.created_at",
+		COALESCE(grants.updated_at, '0001-01-01 00:00:00+07') AS "grant.updated_at",
+
+		COALESCE(resources.id, NULL) AS "resource.id",
+		COALESCE(resources.provider_type, '') AS "resource.provider_type",
+		COALESCE(resources.provider_urn, '') AS "resource.provider_urn",
+		COALESCE(resources.type, '') AS "resource.type",
+		COALESCE(resources.urn, '') AS "resource.urn",
+		COALESCE(resources.name, '') AS "resource.name",
+		COALESCE(resources.details, 'null') AS "resource.details",
+		COALESCE(resources.labels, 'null') AS "resource.labels",
+		COALESCE(resources.created_at, '0001-01-01 00:00:00+07') AS "resource.created_at",
+		COALESCE(resources.updated_at, '0001-01-01 00:00:00+07') AS "resource.updated_at",
+		COALESCE(resources.is_deleted, FALSE) AS "resource.is_deleted"
+	FROM
+		appeals
+		LEFT JOIN resources ON appeals.resource_id = resources.id
+		LEFT JOIN grants ON grants.appeal_id = appeals.id
+	WHERE appeals.id = $1 LIMIT 1;
+	`
+
+	var m model.Appeal
+	err := r.sqlxdb.Get(&m, query, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, appeal.ErrAppealNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("querying appeal: %w", err)
+	}
+	if m.Grant.ID == uuid.Nil {
+		m.Grant = nil
+	}
+	if m.Resource.ID == uuid.Nil {
+		m.Resource = nil
+	}
+
+	approvalColumns := []string{}
+	approvalColumns = append(approvalColumns, model.ApprovalColumns.WithTableAliases("approvals", "approval")...)
+	approvalColumns = append(approvalColumns, model.ApproverColumns.WithTableAliases("approvers", "approver")...)
+	query, args, err := sq.Select(approvalColumns...).From("approvals").
+		Where(sq.Eq{"approvals.appeal_id": id}).
+		LeftJoin("approvers ON approvers.approval_id = approvals.id").
+		PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("building query: %w", err)
+	}
+	type approvalWithApprover struct {
+		model.Approval `db:"approval"`
+		model.Approver `db:"approver"`
+	}
+	var approvalWithApprovers []*approvalWithApprover
+	if err := r.sqlxdb.Select(&approvalWithApprovers, query, args...); err != nil {
+		return nil, fmt.Errorf("querying approvals: %w", err)
+	}
+	fmt.Printf("len(approvalWithApprovers): %v\n", len(approvalWithApprovers))
+	approvalsMap := make(map[string]*model.Approval)
+	for _, aa := range approvalWithApprovers {
+		approval, ok := approvalsMap[aa.Approval.ID.String()]
+		if !ok {
+			approval = &aa.Approval
+		}
+		approval.Approvers = append(approval.Approvers, aa.Approver)
+	}
+	for _, approval := range approvalsMap {
+		m.Approvals = append(m.Approvals, approval)
 	}
 
 	a, err := m.ToDomain()
@@ -79,12 +165,12 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 
 	columns := []string{}
 	columns = append(columns, model.AppealColumns.WithTableName("appeals")...)
-	columns = append(columns, model.ResourceColumns...)
-	columns = append(columns, model.GrantColumns...)
+	columns = append(columns, model.ResourceColumns.WithTableAliases("resources", "resource")...)
+	columns = append(columns, model.GrantColumns.WithTableAliases("grants", "grant")...)
 	queryBuilder := sq.Select(columns...).From("appeals").
 		Where(sq.Eq{"appeals.deleted_at": nil}).
 		LeftJoin("resources ON resources.id = appeals.resource_id").
-		Join("grants ON grants.appeal_id = appeals.id").
+		LeftJoin("grants ON grants.appeal_id = appeals.id").
 		PlaceholderFormat(sq.Dollar)
 
 	if filters.CreatedBy != "" {

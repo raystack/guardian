@@ -10,18 +10,18 @@ import (
 	"github.com/odpf/guardian/domain"
 )
 
-var ResourceColumns = []string{
-	`resources.id as "resource.id"`,
-	`resources.provider_type as "resource.provider_type"`,
-	`resources.provider_urn as "resource.provider_urn"`,
-	`resources.type as "resource.type"`,
-	`resources.urn as "resource.urn"`,
-	`resources.name as "resource.name"`,
-	`resources.details as "resource.details"`,
-	`resources.labels as "resource.labels"`,
-	`resources.created_at as "resource.created_at"`,
-	`resources.updated_at as "resource.updated_at"`,
-	`resources.is_deleted as "resource.is_deleted"`,
+var ResourceColumns = ColumnNames{
+	"id",
+	"provider_type",
+	"provider_urn",
+	"type",
+	"urn",
+	"name",
+	"details",
+	"labels",
+	"created_at",
+	"updated_at",
+	"is_deleted",
 }
 
 // Resource is the database model for resource
