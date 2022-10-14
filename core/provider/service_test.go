@@ -16,6 +16,7 @@ import (
 
 const (
 	mockProviderType = "mock_provider_type"
+	mockProvider     = "mock_provider"
 )
 
 type ServiceTestSuite struct {
@@ -273,6 +274,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 		{
 			ID:     "1",
 			Type:   mockProviderType,
+			URN:    mockProvider,
 			Config: &domain.ProviderConfig{},
 		},
 	}
@@ -282,7 +284,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 		for _, p := range providers {
 			s.mockProvider.On("GetResources", p.Config).Return([]*domain.Resource{}, nil).Once()
 		}
-		expectedError := errors.New("any error")
+		expectedError := errors.New("failed to add resources providers - [mock_provider]")
 		s.mockResourceService.On("BulkUpsert", mock.Anything, mock.Anything).Return(expectedError).Once()
 		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
 		actualError := s.service.FetchResources(context.Background())
