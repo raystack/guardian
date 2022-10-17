@@ -275,12 +275,16 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 	}
 
 	// Default to use provider config if policy config is not set
-	AllowPermanentAccess := p.Config.Appeal.AllowPermanentAccess
+	AllowPermanentAccess := false
+	if p.Config.Appeal != nil {
+		AllowPermanentAccess = p.Config.Appeal.AllowPermanentAccess
+	}
+
 	if policy != nil && policy.AppealConfig != nil {
 		AllowPermanentAccess = policy.AppealConfig.AllowPermanentAccess
 	}
 
-	if p.Config.Appeal != nil && !AllowPermanentAccess {
+	if !AllowPermanentAccess {
 		if a.Options == nil {
 			return ErrOptionsDurationNotFound
 		}
