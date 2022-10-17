@@ -272,10 +272,10 @@ func (s *Service) expiredInActiveUserAccess(ctx context.Context, timeLimiter cha
 }
 
 type ImportAccessCriteria struct {
-	ProviderID   string `validate:"required"`
-	ResourceIDs  []string
-	ResouceTypes []string
-	ResourceURNs []string
+	ProviderID    string `validate:"required"`
+	ResourceIDs   []string
+	ResourceTypes []string
+	ResourceURNs  []string
 }
 
 func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteria) ([]*domain.Grant, error) {
@@ -291,7 +291,7 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 	if criteria.ResourceIDs != nil {
 		listResourcesFilter.IDs = criteria.ResourceIDs
 	} else {
-		listResourcesFilter.ResourceTypes = criteria.ResouceTypes
+		listResourcesFilter.ResourceTypes = criteria.ResourceTypes
 		listResourcesFilter.ResourceURNs = criteria.ResourceURNs
 	}
 	resources, err := s.resourceService.Find(ctx, listResourcesFilter)
@@ -317,7 +317,7 @@ func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteri
 	activeGrants, err := s.repo.List(ctx, domain.ListGrantsFilter{
 		ProviderTypes: []string{p.Type},
 		ProviderURNs:  []string{p.URN},
-		ResourceTypes: criteria.ResouceTypes,
+		ResourceTypes: criteria.ResourceTypes,
 		ResourceURNs:  criteria.ResourceURNs,
 		Statuses:      []string{string(domain.GrantStatusActive)},
 	})
