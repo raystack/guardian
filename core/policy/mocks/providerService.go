@@ -14,6 +14,14 @@ type ProviderService struct {
 	mock.Mock
 }
 
+type ProviderService_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ProviderService) EXPECT() *ProviderService_Expecter {
+	return &ProviderService_Expecter{mock: &_m.Mock}
+}
+
 // GetOne provides a mock function with given fields: ctx, pType, urn
 func (_m *ProviderService) GetOne(ctx context.Context, pType string, urn string) (*domain.Provider, error) {
 	ret := _m.Called(ctx, pType, urn)
@@ -37,6 +45,31 @@ func (_m *ProviderService) GetOne(ctx context.Context, pType string, urn string)
 	return r0, r1
 }
 
+// ProviderService_GetOne_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOne'
+type ProviderService_GetOne_Call struct {
+	*mock.Call
+}
+
+// GetOne is a helper method to define mock.On call
+//  - ctx context.Context
+//  - pType string
+//  - urn string
+func (_e *ProviderService_Expecter) GetOne(ctx interface{}, pType interface{}, urn interface{}) *ProviderService_GetOne_Call {
+	return &ProviderService_GetOne_Call{Call: _e.mock.On("GetOne", ctx, pType, urn)}
+}
+
+func (_c *ProviderService_GetOne_Call) Run(run func(ctx context.Context, pType string, urn string)) *ProviderService_GetOne_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *ProviderService_GetOne_Call) Return(_a0 *domain.Provider, _a1 error) *ProviderService_GetOne_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
 // ValidateAppeal provides a mock function with given fields: _a0, _a1, _a2
 func (_m *ProviderService) ValidateAppeal(_a0 context.Context, _a1 *domain.Appeal, _a2 *domain.Provider) error {
 	ret := _m.Called(_a0, _a1, _a2)
@@ -49,4 +82,29 @@ func (_m *ProviderService) ValidateAppeal(_a0 context.Context, _a1 *domain.Appea
 	}
 
 	return r0
+}
+
+// ProviderService_ValidateAppeal_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidateAppeal'
+type ProviderService_ValidateAppeal_Call struct {
+	*mock.Call
+}
+
+// ValidateAppeal is a helper method to define mock.On call
+//  - _a0 context.Context
+//  - _a1 *domain.Appeal
+//  - _a2 *domain.Provider
+func (_e *ProviderService_Expecter) ValidateAppeal(_a0 interface{}, _a1 interface{}, _a2 interface{}) *ProviderService_ValidateAppeal_Call {
+	return &ProviderService_ValidateAppeal_Call{Call: _e.mock.On("ValidateAppeal", _a0, _a1, _a2)}
+}
+
+func (_c *ProviderService_ValidateAppeal_Call) Run(run func(_a0 context.Context, _a1 *domain.Appeal, _a2 *domain.Provider)) *ProviderService_ValidateAppeal_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*domain.Appeal), args[2].(*domain.Provider))
+	})
+	return _c
+}
+
+func (_c *ProviderService_ValidateAppeal_Call) Return(_a0 error) *ProviderService_ValidateAppeal_Call {
+	_c.Call.Return(_a0)
+	return _c
 }
