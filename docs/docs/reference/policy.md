@@ -76,7 +76,9 @@ requirements:
 
 | Field            | Type                      | Description              | Required |
 |:-----------------|:--------------------------|:-------------------------|:---------|
-| duration_options | []object(DurationOptions) | list of duration options | NO       | 
+| `duration_options` | []object(DurationOptions) | list of duration options | NO       | 
+| `allow_permanent_access`| `boolean` | Set this to true if you want to allow users to have permanent access to the resources. Default: false | No |
+| `allow_active_access_extension_in` | `string` | Duration before the access expiration date when the user allowed to create appeal to the same resource \(extend their current access\). | No |
 
 ### `DurationOptions`
 

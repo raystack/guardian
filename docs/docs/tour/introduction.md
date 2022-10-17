@@ -20,7 +20,7 @@ $ guardian version
 $ guardian --help
 ```
 
-The list of all availiable commands are as follows:
+The list of all available commands are as follows:
 
 ```text
 CORE COMMANDS

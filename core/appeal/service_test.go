@@ -550,7 +550,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
 					Return(tc.activeGrants, nil).Once()
 				if tc.callMockValidateAppeal {
-					s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedAppealValidationError).Once()
+					s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedAppealValidationError).Once()
 				}
 				if tc.callMockGetPermissions {
 					s.mockProviderService.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -808,7 +808,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				Statuses: []string{string(domain.GrantStatusActive)},
 			}).
 			Return(expectedActiveGrants, nil).Once()
-		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		s.mockProviderService.On("GetPermissions", mock.Anything, mock.Anything, "resource_type_1", "role_id").
 			Return([]interface{}{"test-permission-1"}, nil)
 		s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
@@ -933,7 +933,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			s.mockGrantService.EXPECT().
 				List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
 				Return([]domain.Grant{}, nil).Once()
-			s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			s.mockProviderService.On("GetPermissions", mock.Anything, dummyProvider.Config, dummyResource.Type, input.Role).
 				Return(dummyProvider.Config.Resources[0].Roles[0].Permissions, nil)
 			s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
@@ -1145,7 +1145,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			Statuses: []string{string(domain.GrantStatusActive)},
 		}).
 		Return(expectedExistingGrants, nil).Once()
-	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	s.mockProviderService.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return([]interface{}{"test-permission"}, nil)
 	s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)

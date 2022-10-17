@@ -72,7 +72,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "id contains tab(s)",
 				policy: &domain.Policy{
-					ID: "a	a",
+					ID:      "a	a",
 					Version: 1,
 					Steps:   validSteps,
 				},
@@ -223,6 +223,44 @@ func (s *ServiceTestSuite) TestCreate() {
 					},
 				},
 			},
+			{
+				name: "step: invalid AllowActiveAccessExtensionIn",
+				policy: &domain.Policy{
+					ID:      "test-id",
+					Version: 1,
+					Steps: []*domain.Step{
+						{
+							Name:     "step-1",
+							Strategy: "manual",
+							Approvers: []string{
+								"approver@email.com",
+							},
+						},
+					},
+					AppealConfig: &domain.PolicyAppealConfig{
+						AllowActiveAccessExtensionIn: "invalid-duration",
+					},
+					Requirements: []*domain.Requirement{
+						{
+							On: &domain.RequirementTrigger{
+								ProviderType: "test-provider-type",
+							},
+							Appeals: []*domain.AdditionalAppeal{
+								{
+									Resource: &domain.ResourceIdentifier{
+										ID: "test-resource-id",
+									},
+									Role: "test-role",
+									Policy: &domain.PolicyConfig{
+										ID:      "test-policy",
+										Version: 1,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		}
 
 		for _, tc := range testCases {
@@ -272,6 +310,20 @@ func (s *ServiceTestSuite) TestCreate() {
 					"user@email.com",
 				},
 			},
+		},
+		AppealConfig: &domain.PolicyAppealConfig{
+			DurationOptions: []domain.AppealDurationOption{
+				{
+					Name:  "1 day",
+					Value: "24h",
+				},
+				{
+					Name:  "2 days",
+					Value: "48h",
+				},
+			},
+			AllowPermanentAccess:         false,
+			AllowActiveAccessExtensionIn: "24h",
 		},
 	}
 
@@ -421,7 +473,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 									Options:    aa.Options,
 								}
 								s.mockProviderService.
-									EXPECT().ValidateAppeal(mock.Anything, expectedAppeal, tc.expectedProvider).
+									EXPECT().ValidateAppeal(mock.Anything, expectedAppeal, tc.expectedProvider, mock.Anything).
 									Return(tc.expectedProviderServiceValidateAppealError).
 									Once()
 							}
@@ -537,7 +589,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 						}
 						expectedAppeal.SetDefaults()
 						s.mockProviderService.
-							EXPECT().ValidateAppeal(mock.Anything, expectedAppeal, expectedProvider).
+							EXPECT().ValidateAppeal(mock.Anything, expectedAppeal, expectedProvider, mock.Anything).
 							Return(nil).
 							Once()
 					}

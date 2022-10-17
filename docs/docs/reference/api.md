@@ -357,7 +357,7 @@ Resource in Guardian represents the actual resource in the provider e.g. for Big
 
 ### Listing Resources
 
-To get the list of all the resources availiable, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/resources`**
+To get the list of all the resources available, call the **`GET`** Method on **`{{HOST}}/api/v1beta1/resources`**
 
 ##### Query Parameters
 

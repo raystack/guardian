@@ -193,13 +193,13 @@ func (_c *ProviderService_RevokeAccess_Call) Return(_a0 error) *ProviderService_
 	return _c
 }
 
-// ValidateAppeal provides a mock function with given fields: _a0, _a1, _a2
-func (_m *ProviderService) ValidateAppeal(_a0 context.Context, _a1 *domain.Appeal, _a2 *domain.Provider) error {
-	ret := _m.Called(_a0, _a1, _a2)
+// ValidateAppeal provides a mock function with given fields: _a0, _a1, _a2, _a3
+func (_m *ProviderService) ValidateAppeal(_a0 context.Context, _a1 *domain.Appeal, _a2 *domain.Provider, _a3 *domain.Policy) error {
+	ret := _m.Called(_a0, _a1, _a2, _a3)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.Appeal, *domain.Provider) error); ok {
-		r0 = rf(_a0, _a1, _a2)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.Appeal, *domain.Provider, *domain.Policy) error); ok {
+		r0 = rf(_a0, _a1, _a2, _a3)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -216,13 +216,14 @@ type ProviderService_ValidateAppeal_Call struct {
 //  - _a0 context.Context
 //  - _a1 *domain.Appeal
 //  - _a2 *domain.Provider
-func (_e *ProviderService_Expecter) ValidateAppeal(_a0 interface{}, _a1 interface{}, _a2 interface{}) *ProviderService_ValidateAppeal_Call {
-	return &ProviderService_ValidateAppeal_Call{Call: _e.mock.On("ValidateAppeal", _a0, _a1, _a2)}
+//  - _a3 *domain.Provider
+func (_e *ProviderService_Expecter) ValidateAppeal(_a0 interface{}, _a1 interface{}, _a2 interface{}, _a3 interface{}) *ProviderService_ValidateAppeal_Call {
+	return &ProviderService_ValidateAppeal_Call{Call: _e.mock.On("ValidateAppeal", _a0, _a1, _a2, _a3)}
 }
 
-func (_c *ProviderService_ValidateAppeal_Call) Run(run func(_a0 context.Context, _a1 *domain.Appeal, _a2 *domain.Provider)) *ProviderService_ValidateAppeal_Call {
+func (_c *ProviderService_ValidateAppeal_Call) Run(run func(_a0 context.Context, _a1 *domain.Appeal, _a2 *domain.Provider, _a3 *domain.Policy)) *ProviderService_ValidateAppeal_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.Appeal), args[2].(*domain.Provider))
+		run(args[0].(context.Context), args[1].(*domain.Appeal), args[2].(*domain.Provider), args[3].(*domain.Policy))
 	})
 	return _c
 }

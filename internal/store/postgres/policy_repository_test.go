@@ -59,6 +59,10 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 			IAM: &domain.IAMConfig{
 				Config: make(chan int),
 			},
+			AppealConfig: &domain.PolicyAppealConfig{
+				AllowPermanentAccess:         false,
+				AllowActiveAccessExtensionIn: "24h",
+			},
 		}
 		actualError := s.repository.Create(context.Background(), p)
 
