@@ -65,7 +65,7 @@ func (s *ApprovalRepositoryTestSuite) SetupSuite() {
 		},
 	}
 	providerRepository := postgres.NewProviderRepository(s.store.DB())
-	err = providerRepository.Create(s.dummyProvider)
+	err = providerRepository.Create(ctx, s.dummyProvider)
 	s.Require().NoError(err)
 
 	s.dummyResource = &domain.Resource{

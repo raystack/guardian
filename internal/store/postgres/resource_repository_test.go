@@ -41,7 +41,7 @@ func (s *ResourceRepositoryTestSuite) SetupSuite() {
 		URN:  "provider_urn_test",
 	}
 	providerRepository := postgres.NewProviderRepository(s.store.DB())
-	err = providerRepository.Create(s.dummyProvider)
+	err = providerRepository.Create(context.Background(), s.dummyProvider)
 	s.Require().NoError(err)
 }
 
