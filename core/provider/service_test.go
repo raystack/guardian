@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/go-playground/validator/v10"
@@ -564,6 +565,266 @@ func (s *ServiceTestSuite) TestDelete() {
 		err := s.service.Delete(context.Background(), "test-provider")
 
 		s.NoError(err)
+	})
+}
+
+func (s *ServiceTestSuite) TestValidateAppeal() {
+	s.Run("should return error if got error if appeal is nil", func() {
+		expectedError := provider.ErrNilAppeal
+
+		var appeal *domain.Appeal
+		provider := &domain.Provider{}
+		policy := &domain.Policy{}
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if got error if resource is nil", func() {
+		expectedError := provider.ErrNilResource
+
+		appeal := &domain.Appeal{
+			Resource: nil,
+		}
+		provider := &domain.Provider{}
+		policy := &domain.Policy{}
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if account type is not allowed", func() {
+		appeal := &domain.Appeal{
+			AccountType: "invalid",
+			Resource: &domain.Resource{
+				ProviderType: mockProviderType,
+			},
+		}
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				AllowedAccountTypes: []string{"test"},
+			},
+			Type: mockProviderType,
+		}
+		policy := &domain.Policy{}
+
+		expectedError := fmt.Errorf("invalid account type: %v. allowed account types for %v: %v", appeal.AccountType, mockProviderType, provider.Config.AllowedAccountTypes[0])
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if get roles failed", func() {
+		expectedError := fmt.Errorf("mock error")
+
+		appeal := &domain.Appeal{
+			AccountType: "test",
+			Resource: &domain.Resource{
+				ProviderType: mockProviderType,
+			},
+		}
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				AllowedAccountTypes: []string{"test"},
+			},
+			Type: mockProviderType,
+		}
+		policy := &domain.Policy{}
+
+		s.mockProvider.On("GetRoles", mock.Anything, mock.Anything).Return(nil, expectedError).Once()
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if get roles not exist", func() {
+		expectedError := provider.ErrInvalidRole
+
+		appeal := &domain.Appeal{
+			AccountType: "test",
+			Resource: &domain.Resource{
+				ProviderType: mockProviderType,
+			},
+			Role: "invalid-role",
+		}
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				AllowedAccountTypes: []string{"test"},
+			},
+			Type: mockProviderType,
+		}
+		policy := &domain.Policy{}
+
+		role1 := &domain.Role{ID: "role-1"}
+		s.mockProvider.On("GetRoles", mock.Anything, mock.Anything).Return([]*domain.Role{role1}, nil).Once()
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if not allow permanent access and duration option not found", func() {
+		expectedError := provider.ErrOptionsDurationNotFound
+		role1 := &domain.Role{ID: "role-1"}
+
+		appeal := &domain.Appeal{
+			AccountType: "test",
+			Resource: &domain.Resource{
+				ProviderType: mockProviderType,
+			},
+			Role: role1.ID,
+		}
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				AllowedAccountTypes: []string{"test"},
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess: false,
+				},
+			},
+			Type: mockProviderType,
+		}
+		policy := &domain.Policy{}
+
+		s.mockProvider.On("GetRoles", mock.Anything, mock.Anything).Return([]*domain.Role{role1}, nil).Once()
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if not allow permanent access and duration is empty", func() {
+		expectedError := provider.ErrDurationIsRequired
+		role1 := &domain.Role{ID: "role-1"}
+
+		appeal := &domain.Appeal{
+			AccountType: "test",
+			Resource: &domain.Resource{
+				ProviderType: mockProviderType,
+			},
+			Role: role1.ID,
+			Options: &domain.AppealOptions{
+				Duration: "",
+			},
+		}
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				AllowedAccountTypes: []string{"test"},
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess: false,
+				},
+			},
+			Type: mockProviderType,
+		}
+		policy := &domain.Policy{}
+
+		s.mockProvider.On("GetRoles", mock.Anything, mock.Anything).Return([]*domain.Role{role1}, nil).Once()
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if not allow permanent access and duration is empty", func() {
+		role1 := &domain.Role{ID: "role-1"}
+		appeal := &domain.Appeal{
+			AccountType: "test",
+			Resource: &domain.Resource{
+				ProviderType: mockProviderType,
+			},
+			Role: role1.ID,
+			Options: &domain.AppealOptions{
+				Duration: "invalid-duration",
+			},
+		}
+		expectedError := fmt.Errorf("invalid duration: parsing duration: time: invalid duration \"invalid-duration\"")
+
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				AllowedAccountTypes: []string{"test"},
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess: false,
+				},
+			},
+			Type: mockProviderType,
+		}
+		policy := &domain.Policy{}
+
+		s.mockProvider.On("GetRoles", mock.Anything, mock.Anything).Return([]*domain.Role{role1}, nil).Once()
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error if not allow permanent access and duration is empty", func() {
+		role1 := &domain.Role{ID: "role-1"}
+		appeal := &domain.Appeal{
+			AccountType: "test",
+			Resource: &domain.Resource{
+				ProviderType: mockProviderType,
+			},
+			Role: role1.ID,
+			Options: &domain.AppealOptions{
+				Duration: "invalid-duration",
+			},
+		}
+		expectedError := fmt.Errorf("invalid duration: parsing duration: time: invalid duration \"invalid-duration\"")
+
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				AllowedAccountTypes: []string{"test"},
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess: true,
+				},
+			},
+			Type: mockProviderType,
+		}
+		policy := &domain.Policy{
+			AppealConfig: &domain.PolicyAppealConfig{
+				AllowPermanentAccess: false,
+			},
+		}
+
+		s.mockProvider.On("GetRoles", mock.Anything, mock.Anything).Return([]*domain.Role{role1}, nil).Once()
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return nil when all valids", func() {
+		role1 := &domain.Role{ID: "role-1"}
+		appeal := &domain.Appeal{
+			AccountType: "test",
+			Resource: &domain.Resource{
+				ProviderType: mockProviderType,
+			},
+			Role: role1.ID,
+			Options: &domain.AppealOptions{
+				Duration: "24h",
+			},
+		}
+
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				AllowedAccountTypes: []string{"test"},
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess: false,
+				},
+			},
+			Type: mockProviderType,
+		}
+		policy := &domain.Policy{}
+
+		s.mockProvider.On("GetRoles", mock.Anything, mock.Anything).Return([]*domain.Role{role1}, nil).Once()
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.NoError(actualError)
 	})
 }
 
