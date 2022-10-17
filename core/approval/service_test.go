@@ -38,7 +38,9 @@ func (s *ServiceTestSuite) SetupTest() {
 func (s *ServiceTestSuite) TestBulkInsert() {
 	s.Run("should return error if got error from repository", func() {
 		expectedError := errors.New("repository error")
-		s.mockRepository.On("BulkInsert", mock.Anything).Return(expectedError).Once()
+		s.mockRepository.EXPECT().
+			BulkInsert(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedError).Once()
 
 		actualError := s.service.BulkInsert(context.Background(), []*domain.Approval{})
 
@@ -301,7 +303,7 @@ func (s *ServiceTestSuite) TestAddApprover() {
 			ApprovalID: uuid.New().String(),
 			Email:      "user@example.com",
 		}
-		s.mockRepository.EXPECT().AddApprover(expectedApprover).Return(nil)
+		s.mockRepository.EXPECT().AddApprover(mock.AnythingOfType("*context.emptyCtx"), expectedApprover).Return(nil)
 
 		err := s.service.AddApprover(context.Background(), expectedApprover.ApprovalID, expectedApprover.Email)
 
@@ -311,7 +313,7 @@ func (s *ServiceTestSuite) TestAddApprover() {
 
 	s.Run("should return error if repository returns an error", func() {
 		expectedError := errors.New("unexpected error")
-		s.mockRepository.EXPECT().AddApprover(mock.Anything).Return(expectedError)
+		s.mockRepository.EXPECT().AddApprover(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(expectedError)
 
 		err := s.service.AddApprover(context.Background(), "", "")
 
@@ -325,7 +327,7 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 		approvalID := uuid.New().String()
 		approverEmail := "user@example.com"
 
-		s.mockRepository.EXPECT().DeleteApprover(approvalID, approverEmail).Return(nil)
+		s.mockRepository.EXPECT().DeleteApprover(mock.AnythingOfType("*context.emptyCtx"), approvalID, approverEmail).Return(nil)
 
 		err := s.service.DeleteApprover(context.Background(), approvalID, approverEmail)
 
@@ -335,7 +337,7 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 
 	s.Run("should return error if repository returns an error", func() {
 		expectedError := errors.New("unexpected error")
-		s.mockRepository.EXPECT().DeleteApprover(mock.Anything, mock.Anything).Return(expectedError)
+		s.mockRepository.EXPECT().DeleteApprover(mock.AnythingOfType("*context.emptyCtx"), mock.Anything, mock.Anything).Return(expectedError)
 
 		err := s.service.DeleteApprover(context.Background(), "", "")
 

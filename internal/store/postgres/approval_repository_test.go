@@ -134,7 +134,7 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 		},
 	}
 
-	err := s.repository.BulkInsert(dummyApprovals)
+	err := s.repository.BulkInsert(context.Background(), dummyApprovals)
 	s.Require().NoError(err)
 
 	dummyApprover := []*domain.Approver{
@@ -150,13 +150,14 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 		},
 	}
 
-	err = s.repository.AddApprover(dummyApprover[0])
+	ctx := context.Background()
+	err = s.repository.AddApprover(ctx, dummyApprover[0])
 	s.Require().NoError(err)
-	err = s.repository.AddApprover(dummyApprover[1])
+	err = s.repository.AddApprover(ctx, dummyApprover[1])
 	s.Require().NoError(err)
 
 	s.Run("should return list of approvals on success", func() {
-		approvals, err := s.repository.ListApprovals(&domain.ListApprovalsFilter{
+		approvals, err := s.repository.ListApprovals(context.Background(), &domain.ListApprovalsFilter{
 			AccountID: s.dummyAppeal.AccountID,
 			CreatedBy: dummyApprover[0].Email,
 			Statuses:  []string{"test-status-1"},
@@ -169,7 +170,7 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 	})
 
 	s.Run("should return error if conditions invalid", func() {
-		approvals, err := s.repository.ListApprovals(&domain.ListApprovalsFilter{
+		approvals, err := s.repository.ListApprovals(context.Background(), &domain.ListApprovalsFilter{
 			AccountID: "",
 			CreatedBy: "",
 			Statuses:  []string{},
@@ -181,7 +182,7 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 	})
 
 	s.Run("should return error if db execution returns an error on listing approvers", func() {
-		approvals, err := s.repository.ListApprovals(&domain.ListApprovalsFilter{
+		approvals, err := s.repository.ListApprovals(context.Background(), &domain.ListApprovalsFilter{
 			OrderBy: []string{"not-a-column"},
 		})
 
@@ -215,12 +216,12 @@ func (s *ApprovalRepositoryTestSuite) TestBulkInsert() {
 
 	s.Run("should return error if got any from transaction", func() {
 		expectedError := errors.New("empty slice found")
-		actualError := s.repository.BulkInsert([]*domain.Approval{})
+		actualError := s.repository.BulkInsert(context.Background(), []*domain.Approval{})
 		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should return nil error on success", func() {
-		err := s.repository.BulkInsert(approvals)
+		err := s.repository.BulkInsert(context.Background(), approvals)
 		s.Nil(err)
 	})
 }
@@ -248,7 +249,7 @@ func (s *ApprovalRepositoryTestSuite) TestAddApprover() {
 		},
 	}
 
-	err := s.repository.BulkInsert(dummyApprovals)
+	err := s.repository.BulkInsert(context.Background(), dummyApprovals)
 	s.Require().NoError(err)
 
 	s.Run("should return nil error on success", func() {
@@ -258,7 +259,7 @@ func (s *ApprovalRepositoryTestSuite) TestAddApprover() {
 			AppealID:   s.dummyAppeal.ID,
 		}
 
-		err := s.repository.AddApprover(dummyApprover)
+		err := s.repository.AddApprover(context.Background(), dummyApprover)
 		s.NoError(err)
 	})
 
@@ -267,7 +268,7 @@ func (s *ApprovalRepositoryTestSuite) TestAddApprover() {
 			ID: "invalid-uuid",
 		}
 
-		err := s.repository.AddApprover(invalidApprover)
+		err := s.repository.AddApprover(context.Background(), invalidApprover)
 
 		s.EqualError(err, "parsing approver: parsing uuid: invalid UUID length: 12")
 	})
@@ -296,7 +297,8 @@ func (s *ApprovalRepositoryTestSuite) TestDeleteApprover() {
 		},
 	}
 
-	err := s.repository.BulkInsert(dummyApprovals)
+	ctx := context.Background()
+	err := s.repository.BulkInsert(ctx, dummyApprovals)
 	s.Require().NoError(err)
 
 	dummyApprover := &domain.Approver{
@@ -305,16 +307,16 @@ func (s *ApprovalRepositoryTestSuite) TestDeleteApprover() {
 		AppealID:   s.dummyAppeal.ID,
 	}
 
-	err = s.repository.AddApprover(dummyApprover)
+	err = s.repository.AddApprover(ctx, dummyApprover)
 	s.NoError(err)
 
 	s.Run("should return nil error on success", func() {
-		err := s.repository.DeleteApprover(dummyApprovals[0].ID, dummyApprover.Email)
+		err := s.repository.DeleteApprover(context.Background(), dummyApprovals[0].ID, dummyApprover.Email)
 		s.NoError(err)
 	})
 
 	s.Run("should return error if db returns an error", func() {
-		err := s.repository.DeleteApprover("", "")
+		err := s.repository.DeleteApprover(context.Background(), "", "")
 		s.Error(err)
 	})
 }
