@@ -140,7 +140,7 @@ func (s *GrpcHandlersSuite) TestGetResource() {
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		}
-		s.resourceService.EXPECT().GetOne(expectedID).Return(expectedResource, nil).Once()
+		s.resourceService.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), expectedID).Return(expectedResource, nil).Once()
 		expectedResponse := &guardianv1beta1.GetResourceResponse{
 			Resource: &guardianv1beta1.Resource{
 				Id:        expectedID,
@@ -160,7 +160,7 @@ func (s *GrpcHandlersSuite) TestGetResource() {
 	s.Run("should return not found error if resource not found", func() {
 		s.setup()
 
-		s.resourceService.EXPECT().GetOne(mock.Anything).Return(nil, resource.ErrRecordNotFound)
+		s.resourceService.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, resource.ErrRecordNotFound)
 
 		req := &guardianv1beta1.GetResourceRequest{Id: "unknown-id"}
 		res, err := s.grpcServer.GetResource(context.Background(), req)
@@ -174,7 +174,7 @@ func (s *GrpcHandlersSuite) TestGetResource() {
 		s.setup()
 
 		expectedError := errors.New("randome error")
-		s.resourceService.EXPECT().GetOne(mock.Anything).Return(nil, expectedError)
+		s.resourceService.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, expectedError)
 
 		req := &guardianv1beta1.GetResourceRequest{Id: "unknown-id"}
 		res, err := s.grpcServer.GetResource(context.Background(), req)
@@ -197,7 +197,7 @@ func (s *GrpcHandlersSuite) TestGetResource() {
 				"key": make(chan int), // invalid json
 			},
 		}
-		s.resourceService.EXPECT().GetOne(expectedID).Return(expectedResource, nil).Once()
+		s.resourceService.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), expectedID).Return(expectedResource, nil).Once()
 
 		req := &guardianv1beta1.GetResourceRequest{Id: expectedID}
 		res, err := s.grpcServer.GetResource(context.Background(), req)

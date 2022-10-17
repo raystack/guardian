@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"strings"
 
 	"github.com/odpf/guardian/core/resource"
@@ -22,12 +23,12 @@ func NewResourceRepository(db *gorm.DB) *ResourceRepository {
 }
 
 // Find records based on filters
-func (r *ResourceRepository) Find(filter domain.ListResourcesFilter) ([]*domain.Resource, error) {
+func (r *ResourceRepository) Find(ctx context.Context, filter domain.ListResourcesFilter) ([]*domain.Resource, error) {
 	if err := utils.ValidateStruct(filter); err != nil {
 		return nil, err
 	}
 
-	db := r.db
+	db := r.db.WithContext(ctx)
 	if filter.IDs != nil {
 		db = db.Where(filter.IDs)
 	}
@@ -79,13 +80,13 @@ func (r *ResourceRepository) Find(filter domain.ListResourcesFilter) ([]*domain.
 }
 
 // GetOne record by ID
-func (r *ResourceRepository) GetOne(id string) (*domain.Resource, error) {
+func (r *ResourceRepository) GetOne(ctx context.Context, id string) (*domain.Resource, error) {
 	if id == "" {
 		return nil, resource.ErrEmptyIDParam
 	}
 
 	var m model.Resource
-	if err := r.db.Where("id = ?", id).Take(&m).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ?", id).Take(&m).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, resource.ErrRecordNotFound
 		}
@@ -101,7 +102,7 @@ func (r *ResourceRepository) GetOne(id string) (*domain.Resource, error) {
 }
 
 // BulkUpsert inserts records if the records are not exist, or updates the records if they are already exist
-func (r *ResourceRepository) BulkUpsert(resources []*domain.Resource) error {
+func (r *ResourceRepository) BulkUpsert(ctx context.Context, resources []*domain.Resource) error {
 	var models []*model.Resource
 	for _, r := range resources {
 		m := new(model.Resource)
@@ -113,7 +114,7 @@ func (r *ResourceRepository) BulkUpsert(resources []*domain.Resource) error {
 	}
 
 	if len(models) > 0 {
-		return r.db.Transaction(func(tx *gorm.DB) error {
+		return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			upsertClause := clause.OnConflict{
 				Columns: []clause.Column{
 					{Name: "provider_type"},
@@ -143,7 +144,7 @@ func (r *ResourceRepository) BulkUpsert(resources []*domain.Resource) error {
 }
 
 // Update record by ID
-func (r *ResourceRepository) Update(res *domain.Resource) error {
+func (r *ResourceRepository) Update(ctx context.Context, res *domain.Resource) error {
 	if res.ID == "" {
 		return resource.ErrEmptyIDParam
 	}
@@ -153,7 +154,7 @@ func (r *ResourceRepository) Update(res *domain.Resource) error {
 		return err
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(m).Where("id = ?", m.ID).Updates(*m).Error; err != nil {
 			return err
 		}
@@ -169,12 +170,12 @@ func (r *ResourceRepository) Update(res *domain.Resource) error {
 	})
 }
 
-func (r *ResourceRepository) Delete(id string) error {
+func (r *ResourceRepository) Delete(ctx context.Context, id string) error {
 	if id == "" {
 		return resource.ErrEmptyIDParam
 	}
 
-	result := r.db.Where("id = ?", id).Delete(&model.Resource{})
+	result := r.db.WithContext(ctx).Where("id = ?", id).Delete(&model.Resource{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -185,12 +186,12 @@ func (r *ResourceRepository) Delete(id string) error {
 	return nil
 }
 
-func (r *ResourceRepository) BatchDelete(ids []string) error {
+func (r *ResourceRepository) BatchDelete(ctx context.Context, ids []string) error {
 	if ids == nil {
 		return resource.ErrEmptyIDParam
 	}
 
-	result := r.db.Delete(&model.Resource{}, ids)
+	result := r.db.WithContext(ctx).Delete(&model.Resource{}, ids)
 	if result.Error != nil {
 		return result.Error
 	}

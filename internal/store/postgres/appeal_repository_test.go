@@ -1,6 +1,7 @@
 package postgres_test
 
 import (
+	"context"
 	"database/sql/driver"
 	"errors"
 	"testing"
@@ -72,7 +73,7 @@ func (s *AppealRepositoryTestSuite) SetupSuite() {
 		Name:         "resource_name_test",
 	}
 	resourceRepository := postgres.NewResourceRepository(s.store.DB())
-	err = resourceRepository.BulkUpsert([]*domain.Resource{s.dummyResource})
+	err = resourceRepository.BulkUpsert(context.Background(), []*domain.Resource{s.dummyResource})
 	s.Require().NoError(err)
 }
 

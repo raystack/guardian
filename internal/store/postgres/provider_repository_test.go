@@ -19,7 +19,6 @@ import (
 
 type ProviderRepositoryTestSuite struct {
 	suite.Suite
-	ctx                context.Context
 	store              *postgres.Store
 	pool               *dockertest.Pool
 	resource           *dockertest.Resource
@@ -37,7 +36,6 @@ func (s *ProviderRepositoryTestSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	s.ctx = context.TODO()
 	s.repository = postgres.NewProviderRepository(s.store.DB())
 	s.resourceRepository = postgres.NewResourceRepository(s.store.DB())
 	s.providerRepository = postgres.NewProviderRepository(s.store.DB())
@@ -264,7 +262,7 @@ func (s *ProviderRepositoryTestSuite) TestGetTypes() {
 		})
 		s.Require().NoError(err)
 
-		err = s.resourceRepository.BulkUpsert([]*domain.Resource{
+		err = s.resourceRepository.BulkUpsert(context.Background(), []*domain.Resource{
 			{ProviderType: "bigquery", ProviderURN: "my-bigquery", Type: "dataset"},
 			{ProviderType: "bigquery", ProviderURN: "my-bigquery", Type: "table"},
 			{ProviderType: "metabase", ProviderURN: "my-metabase", Type: "group"},

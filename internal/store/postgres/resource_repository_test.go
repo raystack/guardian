@@ -18,7 +18,6 @@ import (
 
 type ResourceRepositoryTestSuite struct {
 	suite.Suite
-	ctx           context.Context
 	store         *postgres.Store
 	pool          *dockertest.Pool
 	resource      *dockertest.Resource
@@ -35,7 +34,6 @@ func (s *ResourceRepositoryTestSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	s.ctx = context.TODO()
 	s.repository = postgres.NewResourceRepository(s.store.DB())
 
 	s.dummyProvider = &domain.Provider{
@@ -91,7 +89,7 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 				Name:         "test_name_2",
 			},
 		}
-		err := s.repository.BulkUpsert(dummyResources)
+		err := s.repository.BulkUpsert(context.Background(), dummyResources)
 		s.Require().NoError(err)
 
 		testCases := []struct {
@@ -159,7 +157,7 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 
 		for _, tc := range testCases {
 			s.Run(tc.name, func() {
-				actualResult, actualError := s.repository.Find(tc.filters)
+				actualResult, actualError := s.repository.Find(context.Background(), tc.filters)
 
 				s.NoError(actualError)
 				if diff := cmp.Diff(tc.expectedResult, actualResult, cmpopts.EquateApproxTime(time.Microsecond)); diff != "" {
@@ -173,7 +171,7 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 		invalidFilters := domain.ListResourcesFilter{
 			IDs: []string{},
 		}
-		actualRecords, actualError := s.repository.Find(invalidFilters)
+		actualRecords, actualError := s.repository.Find(context.Background(), invalidFilters)
 
 		s.Error(actualError)
 		s.Nil(actualRecords)
@@ -183,7 +181,7 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 		invalidFilters := domain.ListResourcesFilter{
 			IDs: []string{"invalid-uuid"},
 		}
-		actualRecords, actualError := s.repository.Find(invalidFilters)
+		actualRecords, actualError := s.repository.Find(context.Background(), invalidFilters)
 
 		s.Error(actualError)
 		s.Nil(actualRecords)
@@ -194,7 +192,7 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := resource.ErrEmptyIDParam
 
-		actualResult, actualError := s.repository.GetOne("")
+		actualResult, actualError := s.repository.GetOne(context.Background(), "")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -204,7 +202,7 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 		expectedError := resource.ErrRecordNotFound
 
 		sampleUUID := uuid.New().String()
-		actualResult, actualError := s.repository.GetOne(sampleUUID)
+		actualResult, actualError := s.repository.GetOne(context.Background(), sampleUUID)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -212,12 +210,12 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 
 	s.Run("should return record and nil error on success", func() {
 		resources := s.getTestResources()
-		err := s.repository.BulkUpsert(resources)
+		err := s.repository.BulkUpsert(context.Background(), resources)
 		s.Nil(err)
 
 		expectedResource := resources[0]
 
-		r, actualError := s.repository.GetOne(expectedResource.ID)
+		r, actualError := s.repository.GetOne(context.Background(), expectedResource.ID)
 		s.Nil(actualError)
 		s.Equal(expectedResource.URN, r.URN)
 	})
@@ -227,7 +225,7 @@ func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
 	s.Run("should return records with existing or new IDs", func() {
 		resources := s.getTestResources()
 
-		err := s.repository.BulkUpsert(resources)
+		err := s.repository.BulkUpsert(context.Background(), resources)
 
 		actualIDs := make([]string, 0)
 		for _, r := range resources {
@@ -243,7 +241,7 @@ func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
 	s.Run("should return nil error if resources input is empty", func() {
 		var resources []*domain.Resource
 
-		err := s.repository.BulkUpsert(resources)
+		err := s.repository.BulkUpsert(context.Background(), resources)
 
 		s.Nil(err)
 	})
@@ -257,7 +255,7 @@ func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
 			},
 		}
 
-		actualError := s.repository.BulkUpsert(invalidResources)
+		actualError := s.repository.BulkUpsert(context.Background(), invalidResources)
 
 		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
@@ -267,7 +265,7 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := resource.ErrEmptyIDParam
 
-		actualError := s.repository.Update(&domain.Resource{})
+		actualError := s.repository.Update(context.Background(), &domain.Resource{})
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -279,7 +277,7 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 				"foo": make(chan int), // invalid value
 			},
 		}
-		actualError := s.repository.Update(invalidResource)
+		actualError := s.repository.Update(context.Background(), invalidResource)
 
 		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
@@ -292,7 +290,7 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 			URN:          "test_urn",
 			Name:         "test_name",
 		}
-		err := s.repository.BulkUpsert([]*domain.Resource{dummyResource})
+		err := s.repository.BulkUpsert(context.Background(), []*domain.Resource{dummyResource})
 		s.Require().NoError(err)
 		expectedID := dummyResource.ID
 		payload := &domain.Resource{
@@ -300,7 +298,7 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 			Name: "test_new_name",
 		}
 
-		err = s.repository.Update(payload)
+		err = s.repository.Update(context.Background(), payload)
 
 		actualID := payload.ID
 
@@ -312,7 +310,7 @@ func (s *ResourceRepositoryTestSuite) TestUpdate() {
 
 func (s *ResourceRepositoryTestSuite) TestDelete() {
 	s.Run("should return error if ID param is empty", func() {
-		err := s.repository.Delete("")
+		err := s.repository.Delete(context.Background(), "")
 
 		s.Error(err)
 		s.ErrorIs(err, resource.ErrEmptyIDParam)
@@ -320,7 +318,7 @@ func (s *ResourceRepositoryTestSuite) TestDelete() {
 
 	s.Run("should return error if resource not found", func() {
 		sampleUUID := uuid.New().String()
-		err := s.repository.Delete(sampleUUID)
+		err := s.repository.Delete(context.Background(), sampleUUID)
 
 		s.Error(err)
 		s.ErrorIs(err, resource.ErrRecordNotFound)
@@ -333,18 +331,18 @@ func (s *ResourceRepositoryTestSuite) TestDelete() {
 			Type:         "test_type",
 			URN:          "test_urn_deletion",
 		}
-		err := s.repository.BulkUpsert([]*domain.Resource{dummyResource})
+		err := s.repository.BulkUpsert(context.Background(), []*domain.Resource{dummyResource})
 		s.Require().NoError(err)
 
 		toBeDeletedID := dummyResource.ID
-		err = s.repository.Delete(toBeDeletedID)
+		err = s.repository.Delete(context.Background(), toBeDeletedID)
 		s.Nil(err)
 	})
 }
 
 func (s *ResourceRepositoryTestSuite) TestBatchDelete() {
 	s.Run("should return error if ID param is empty", func() {
-		err := s.repository.BatchDelete(nil)
+		err := s.repository.BatchDelete(context.Background(), nil)
 
 		s.Error(err)
 		s.ErrorIs(err, resource.ErrEmptyIDParam)
@@ -352,7 +350,7 @@ func (s *ResourceRepositoryTestSuite) TestBatchDelete() {
 
 	s.Run("should return error if resource(s) not found", func() {
 		sampleUUID := uuid.New().String()
-		err := s.repository.BatchDelete([]string{sampleUUID})
+		err := s.repository.BatchDelete(context.Background(), []string{sampleUUID})
 
 		s.Error(err)
 		s.ErrorIs(err, resource.ErrRecordNotFound)
@@ -365,12 +363,12 @@ func (s *ResourceRepositoryTestSuite) TestBatchDelete() {
 			Type:         "test_type",
 			URN:          "test_urn_batch_deletion",
 		}
-		err := s.repository.BulkUpsert([]*domain.Resource{dummyResource})
+		err := s.repository.BulkUpsert(context.Background(), []*domain.Resource{dummyResource})
 		s.Require().NoError(err)
 
 		expectedIDs := []string{dummyResource.ID}
 
-		err = s.repository.BatchDelete(expectedIDs)
+		err = s.repository.BatchDelete(context.Background(), expectedIDs)
 		s.NoError(err)
 	})
 }

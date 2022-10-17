@@ -53,7 +53,7 @@ func (s *GRPCServer) ListResources(ctx context.Context, req *guardianv1beta1.Lis
 }
 
 func (s *GRPCServer) GetResource(ctx context.Context, req *guardianv1beta1.GetResourceRequest) (*guardianv1beta1.GetResourceResponse, error) {
-	r, err := s.resourceService.GetOne(req.GetId())
+	r, err := s.resourceService.GetOne(ctx, req.GetId())
 	if err != nil {
 		switch err {
 		case resource.ErrRecordNotFound:
