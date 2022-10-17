@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -32,9 +33,10 @@ func NewAppealRepository(db *gorm.DB) *AppealRepository {
 }
 
 // GetByID returns appeal record by id along with the approvals and the approvers
-func (r *AppealRepository) GetByID(id string) (*domain.Appeal, error) {
+func (r *AppealRepository) GetByID(ctx context.Context, id string) (*domain.Appeal, error) {
 	m := new(model.Appeal)
 	if err := r.db.
+		WithContext(ctx).
 		Preload("Approvals", func(db *gorm.DB) *gorm.DB {
 			return db.Order("Approvals.index ASC")
 		}).
@@ -57,12 +59,12 @@ func (r *AppealRepository) GetByID(id string) (*domain.Appeal, error) {
 	return a, nil
 }
 
-func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
+func (r *AppealRepository) Find(ctx context.Context, filters *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
 	if err := utils.ValidateStruct(filters); err != nil {
 		return nil, err
 	}
 
-	db := r.db
+	db := r.db.WithContext(ctx)
 	if filters.CreatedBy != "" {
 		db = db.Where(`"appeals"."created_by" = ?`, filters.CreatedBy)
 	}
@@ -131,7 +133,7 @@ func (r *AppealRepository) Find(filters *domain.ListAppealsFilter) ([]*domain.Ap
 }
 
 // BulkUpsert new record to database
-func (r *AppealRepository) BulkUpsert(appeals []*domain.Appeal) error {
+func (r *AppealRepository) BulkUpsert(ctx context.Context, appeals []*domain.Appeal) error {
 	models := []*model.Appeal{}
 	for _, a := range appeals {
 		m := new(model.Appeal)
@@ -141,7 +143,7 @@ func (r *AppealRepository) BulkUpsert(appeals []*domain.Appeal) error {
 		models = append(models, m)
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.
 			Clauses(clause.OnConflict{UpdateAll: true}).
 			Create(models).
@@ -163,13 +165,13 @@ func (r *AppealRepository) BulkUpsert(appeals []*domain.Appeal) error {
 }
 
 // Update an approval step
-func (r *AppealRepository) Update(a *domain.Appeal) error {
+func (r *AppealRepository) Update(ctx context.Context, a *domain.Appeal) error {
 	m := new(model.Appeal)
 	if err := m.FromDomain(a); err != nil {
 		return err
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Omit("Approvals.Approvers").Session(&gorm.Session{FullSaveAssociations: true}).Save(&m).Error; err != nil {
 			return err
 		}

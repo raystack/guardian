@@ -101,7 +101,7 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 		someID := uuid.New().String()
 		expectedError := appeal.ErrAppealNotFound
 
-		actualResult, actualError := s.repository.GetByID(someID)
+		actualResult, actualError := s.repository.GetByID(context.Background(), someID)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -119,10 +119,11 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 			CreatedBy:     "user@example.com",
 		}
 
-		err := s.repository.BulkUpsert([]*domain.Appeal{dummyAppeal})
+		ctx := context.Background()
+		err := s.repository.BulkUpsert(ctx, []*domain.Appeal{dummyAppeal})
 		s.Require().NoError(err)
 
-		actualRecord, actualError := s.repository.GetByID(dummyAppeal.ID)
+		actualRecord, actualError := s.repository.GetByID(ctx, dummyAppeal.ID)
 
 		s.Nil(actualError)
 		s.Equal(dummyAppeal.ID, actualRecord.ID)
@@ -162,7 +163,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 		},
 	}
 
-	err := s.repository.BulkUpsert(dummyAppeals)
+	err := s.repository.BulkUpsert(context.Background(), dummyAppeals)
 	s.Require().NoError(err)
 
 	s.Run("should return error if filters validation returns an error", func() {
@@ -170,7 +171,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 			Statuses: []string{},
 		}
 
-		actualAppeals, actualError := s.repository.Find(invalidFilters)
+		actualAppeals, actualError := s.repository.Find(context.Background(), invalidFilters)
 
 		s.Error(actualError)
 		s.Nil(actualAppeals)
@@ -179,7 +180,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 	s.Run("should return error if got any from db", func() {
 		expectedError := errors.New("ERROR: invalid input syntax for type uuid: \"not-an-uuid\" (SQLSTATE 22P02)")
 
-		actualResult, actualError := s.repository.Find(&domain.ListAppealsFilter{
+		actualResult, actualError := s.repository.Find(context.Background(), &domain.ListAppealsFilter{
 			ResourceID: "not-an-uuid",
 		})
 
@@ -285,7 +286,7 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 		}
 
 		for _, tc := range testCases {
-			_, actualError := s.repository.Find(tc.filters)
+			_, actualError := s.repository.Find(context.Background(), tc.filters)
 			s.Nil(actualError)
 		}
 	})
@@ -301,7 +302,7 @@ func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
 			},
 		}
 
-		actualErr := s.repository.BulkUpsert(invalidAppeals)
+		actualErr := s.repository.BulkUpsert(context.Background(), invalidAppeals)
 
 		s.EqualError(actualErr, "json: unsupported type: chan int")
 	})
@@ -332,7 +333,7 @@ func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
 	}
 
 	s.Run("should return nil error on success", func() {
-		actualError := s.repository.BulkUpsert(dummyAppeals)
+		actualError := s.repository.BulkUpsert(context.Background(), dummyAppeals)
 		s.Nil(actualError)
 	})
 }
@@ -346,7 +347,7 @@ func (s *AppealRepositoryTestSuite) TestUpdate() {
 			},
 		}
 
-		actualError := s.repository.Update(invalidAppeal)
+		actualError := s.repository.Update(context.Background(), invalidAppeal)
 
 		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
@@ -377,10 +378,11 @@ func (s *AppealRepositoryTestSuite) TestUpdate() {
 			},
 		}
 
-		actualError := s.repository.BulkUpsert(dummyAppeals)
+		ctx := context.Background()
+		actualError := s.repository.BulkUpsert(ctx, dummyAppeals)
 		s.Nil(actualError)
 
-		err := s.repository.Update(dummyAppeals[0])
+		err := s.repository.Update(ctx, dummyAppeals[0])
 		s.Nil(err)
 	})
 }

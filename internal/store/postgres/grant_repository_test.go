@@ -94,7 +94,7 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 		CreatedBy:     "user@example.com",
 	}
 	appealRepository := postgres.NewAppealRepository(s.store.DB())
-	err = appealRepository.BulkUpsert([]*domain.Appeal{s.dummyAppeal})
+	err = appealRepository.BulkUpsert(ctx, []*domain.Appeal{s.dummyAppeal})
 	s.Require().NoError(err)
 }
 
