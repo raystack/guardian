@@ -218,12 +218,14 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("retrieving provider: %w", err)
 		}
 
-		var err2 error
 		var policy *domain.Policy
 		if isAdditionalAppealCreation && appeal.PolicyID != "" && appeal.PolicyVersion != 0 {
 			policy = policies[appeal.PolicyID][appeal.PolicyVersion]
 		} else {
-			policy, err2 = getPolicy(appeal, provider, policies)
+			policy, err = getPolicy(appeal, provider, policies)
+			if err != nil {
+				return fmt.Errorf("retrieving policy: %w", err)
+			}
 		}
 
 		if err := s.checkExtensionEligibility(appeal, provider, policy, activeGrants); err != nil {
@@ -239,10 +241,6 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("getting permissions list: %w", err)
 		}
 		appeal.Permissions = strPermissions
-
-		if err2 != nil {
-			return fmt.Errorf("retrieving policy: %w", err2)
-		}
 
 		if err := validateAppealDurationConfig(appeal, policy); err != nil {
 			return fmt.Errorf("validating appeal duration: %w", err)
