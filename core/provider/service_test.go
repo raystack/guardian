@@ -595,6 +595,28 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
+	s.Run("should return error if provider type is invalid", func() {
+		expectedError := provider.ErrInvalidProviderType
+
+		appeal := &domain.Appeal{
+			AccountType: "invalid",
+			Resource: &domain.Resource{
+				ProviderType: mockProviderType,
+			},
+		}
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				AllowedAccountTypes: []string{"test"},
+			},
+			Type: "invalid-provider-type",
+		}
+		policy := &domain.Policy{}
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
 	s.Run("should return error if account type is not allowed", func() {
 		appeal := &domain.Appeal{
 			AccountType: "invalid",
