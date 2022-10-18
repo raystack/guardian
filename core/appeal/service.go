@@ -34,10 +34,10 @@ var TimeNow = time.Now
 
 //go:generate mockery --name=repository --exported --with-expecter
 type repository interface {
-	BulkUpsert([]*domain.Appeal) error
-	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
-	GetByID(id string) (*domain.Appeal, error)
-	Update(*domain.Appeal) error
+	BulkUpsert(context.Context, []*domain.Appeal) error
+	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
+	GetByID(ctx context.Context, id string) (*domain.Appeal, error)
+	Update(context.Context, *domain.Appeal) error
 }
 
 //go:generate mockery --name=iamManager --exported --with-expecter
@@ -160,12 +160,12 @@ func (s *Service) GetByID(ctx context.Context, id string) (*domain.Appeal, error
 		return nil, ErrAppealIDEmptyParam
 	}
 
-	return s.repo.GetByID(id)
+	return s.repo.GetByID(ctx, id)
 }
 
 // Find appeals by filters
 func (s *Service) Find(ctx context.Context, filters *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
-	return s.repo.Find(filters)
+	return s.repo.Find(ctx, filters)
 }
 
 // Create record
@@ -193,7 +193,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		return err
 	}
 
-	pendingAppeals, err := s.getPendingAppealsMap()
+	pendingAppeals, err := s.getPendingAppealsMap(ctx)
 	if err != nil {
 		return fmt.Errorf("listing pending appeals: %w", err)
 	}
@@ -304,7 +304,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		}
 	}
 
-	if err := s.repo.BulkUpsert(appeals); err != nil {
+	if err := s.repo.BulkUpsert(ctx, appeals); err != nil {
 		return fmt.Errorf("inserting appeals into db: %w", err)
 	}
 
@@ -377,7 +377,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 	if err := utils.ValidateStruct(approvalAction); err != nil {
 		return nil, err
 	}
-	appeal, err := s.repo.GetByID(approvalAction.AppealID)
+	appeal, err := s.repo.GetByID(ctx, approvalAction.AppealID)
 	if err != nil {
 		return nil, err
 	}
@@ -450,7 +450,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 				}
 			}
 
-			if err := s.repo.Update(appeal); err != nil {
+			if err := s.repo.Update(ctx, appeal); err != nil {
 				if err := s.providerService.RevokeAccess(ctx, *appeal.Grant); err != nil {
 					return nil, fmt.Errorf("revoking access: %w", err)
 				}
@@ -524,7 +524,7 @@ func (s *Service) Cancel(ctx context.Context, id string) (*domain.Appeal, error)
 	}
 
 	appeal.Cancel()
-	if err := s.repo.Update(appeal); err != nil {
+	if err := s.repo.Update(ctx, appeal); err != nil {
 		return nil, err
 	}
 
@@ -542,7 +542,7 @@ func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email s
 		return nil, fmt.Errorf("%w: %s", ErrApproverEmail, err)
 	}
 
-	appeal, approval, err := s.getApproval(appealID, approvalID)
+	appeal, approval, err := s.getApproval(ctx, appealID, approvalID)
 	if err != nil {
 		return nil, err
 	}
@@ -600,7 +600,7 @@ func (s *Service) DeleteApprover(ctx context.Context, appealID, approvalID, emai
 		return nil, fmt.Errorf("%w: %s", ErrApproverEmail, err)
 	}
 
-	appeal, approval, err := s.getApproval(appealID, approvalID)
+	appeal, approval, err := s.getApproval(ctx, appealID, approvalID)
 	if err != nil {
 		return nil, err
 	}
@@ -645,7 +645,7 @@ func (s *Service) DeleteApprover(ctx context.Context, appealID, approvalID, emai
 	return appeal, nil
 }
 
-func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *domain.Approval, error) {
+func (s *Service) getApproval(ctx context.Context, appealID, approvalID string) (*domain.Appeal, *domain.Approval, error) {
 	if appealID == "" {
 		return nil, nil, ErrAppealIDEmptyParam
 	}
@@ -653,7 +653,7 @@ func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *dom
 		return nil, nil, ErrApprovalIDEmptyParam
 	}
 
-	appeal, err := s.repo.GetByID(appealID)
+	appeal, err := s.repo.GetByID(ctx, appealID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("getting appeal details: %w", err)
 	}
@@ -667,8 +667,8 @@ func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *dom
 }
 
 // getPendingAppealsMap returns map[account_id]map[resource_id]map[role]*domain.Appeal, error
-func (s *Service) getPendingAppealsMap() (map[string]map[string]map[string]*domain.Appeal, error) {
-	appeals, err := s.repo.Find(&domain.ListAppealsFilter{
+func (s *Service) getPendingAppealsMap(ctx context.Context) (map[string]map[string]map[string]*domain.Appeal, error) {
+	appeals, err := s.repo.Find(ctx, &domain.ListAppealsFilter{
 		Statuses: []string{domain.AppealStatusPending},
 	})
 	if err != nil {

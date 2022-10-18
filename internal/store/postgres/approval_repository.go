@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/odpf/guardian/core/appeal"
@@ -28,14 +29,15 @@ func NewApprovalRepository(db *gorm.DB) *ApprovalRepository {
 	return &ApprovalRepository{db}
 }
 
-func (r *ApprovalRepository) ListApprovals(conditions *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
+func (r *ApprovalRepository) ListApprovals(ctx context.Context, conditions *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
 	if err := utils.ValidateStruct(conditions); err != nil {
 		return nil, err
 	}
 
 	records := []*domain.Approval{}
 
-	db := r.db.Preload("Appeal.Resource")
+	db := r.db.WithContext(ctx)
+	db = db.Preload("Appeal.Resource")
 	db = db.Joins("Appeal")
 	db = db.Joins(`JOIN "approvers" ON "approvals"."id" = "approvers"."approval_id"`)
 
@@ -74,7 +76,7 @@ func (r *ApprovalRepository) ListApprovals(conditions *domain.ListApprovalsFilte
 	return records, nil
 }
 
-func (r *ApprovalRepository) BulkInsert(approvals []*domain.Approval) error {
+func (r *ApprovalRepository) BulkInsert(ctx context.Context, approvals []*domain.Approval) error {
 	models := []*model.Approval{}
 	for _, a := range approvals {
 		m := new(model.Approval)
@@ -85,7 +87,7 @@ func (r *ApprovalRepository) BulkInsert(approvals []*domain.Approval) error {
 		models = append(models, m)
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(models).Error; err != nil {
 			return err
 		}
@@ -103,7 +105,7 @@ func (r *ApprovalRepository) BulkInsert(approvals []*domain.Approval) error {
 	})
 }
 
-func (r *ApprovalRepository) AddApprover(approver *domain.Approver) error {
+func (r *ApprovalRepository) AddApprover(ctx context.Context, approver *domain.Approver) error {
 	m := new(model.Approver)
 	if err := m.FromDomain(approver); err != nil {
 		return fmt.Errorf("parsing approver: %w", err)
@@ -119,8 +121,9 @@ func (r *ApprovalRepository) AddApprover(approver *domain.Approver) error {
 	return nil
 }
 
-func (r *ApprovalRepository) DeleteApprover(approvalID, email string) error {
+func (r *ApprovalRepository) DeleteApprover(ctx context.Context, approvalID, email string) error {
 	result := r.db.
+		WithContext(ctx).
 		Where("approval_id = ?", approvalID).
 		Where("email = ?", email).
 		Delete(&model.Approver{})

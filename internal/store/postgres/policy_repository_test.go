@@ -18,7 +18,6 @@ import (
 
 type PolicyRepositoryTestSuite struct {
 	suite.Suite
-	ctx        context.Context
 	store      *postgres.Store
 	pool       *dockertest.Pool
 	resource   *dockertest.Resource
@@ -34,7 +33,6 @@ func (s *PolicyRepositoryTestSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	s.ctx = context.TODO()
 	s.repository = postgres.NewPolicyRepository(s.store.DB())
 }
 
@@ -62,7 +60,7 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 				Config: make(chan int),
 			},
 		}
-		actualError := s.repository.Create(p)
+		actualError := s.repository.Create(context.Background(), p)
 
 		s.EqualError(actualError, "serializing policy: json: unsupported type: chan int")
 	})
@@ -71,7 +69,7 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 		p := &domain.Policy{
 			ID: "test_policy",
 		}
-		err := s.repository.Create(p)
+		err := s.repository.Create(context.Background(), p)
 		s.Nil(err)
 		s.NotEmpty(p.ID)
 	})
@@ -82,6 +80,7 @@ func (s *PolicyRepositoryTestSuite) TestFind() {
 	s.Nil(err1)
 
 	s.Run("should return list of policies on success", func() {
+		ctx := context.Background()
 		expectedPolicies := []*domain.Policy{
 			{
 				Version:      1,
@@ -91,11 +90,11 @@ func (s *PolicyRepositoryTestSuite) TestFind() {
 		}
 
 		for _, pol := range expectedPolicies {
-			err := s.repository.Create(pol)
+			err := s.repository.Create(ctx, pol)
 			s.Nil(err)
 		}
 
-		actualPolicies, actualError := s.repository.Find()
+		actualPolicies, actualError := s.repository.Find(ctx)
 
 		if diff := cmp.Diff(expectedPolicies, actualPolicies, cmpopts.EquateApproxTime(time.Microsecond)); diff != "" {
 			s.T().Errorf("result not match, diff: %v", diff)
@@ -112,7 +111,7 @@ func (s *PolicyRepositoryTestSuite) TestGetOne() {
 		expectedError := policy.ErrPolicyNotFound
 
 		sampleUUID := uuid.New().String()
-		actualResult, actualError := s.repository.GetOne(sampleUUID, 0)
+		actualResult, actualError := s.repository.GetOne(context.Background(), sampleUUID, 0)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -134,7 +133,7 @@ func (s *PolicyRepositoryTestSuite) TestGetOne() {
 			},
 		}
 		for _, p := range dummyPolicies {
-			err := s.repository.Create(p)
+			err := s.repository.Create(context.Background(), p)
 			s.Require().NoError(err)
 		}
 
@@ -156,7 +155,7 @@ func (s *PolicyRepositoryTestSuite) TestGetOne() {
 
 		for _, tc := range testCases {
 			s.Run(tc.name, func() {
-				actualPolicy, actualError := s.repository.GetOne("test-id", tc.versionParam)
+				actualPolicy, actualError := s.repository.GetOne(context.Background(), "test-id", tc.versionParam)
 
 				s.NoError(actualError)
 				s.Equal(tc.expectedVersion, actualPolicy.Version)

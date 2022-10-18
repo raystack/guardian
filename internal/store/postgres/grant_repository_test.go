@@ -43,12 +43,14 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 
 	s.repository = postgres.NewGrantRepository(s.store.DB())
 
+	ctx := context.Background()
+
 	s.dummyPolicy = &domain.Policy{
 		ID:      "policy_test",
 		Version: 1,
 	}
 	policyRepository := postgres.NewPolicyRepository(s.store.DB())
-	err = policyRepository.Create(s.dummyPolicy)
+	err = policyRepository.Create(ctx, s.dummyPolicy)
 	s.Require().NoError(err)
 
 	s.dummyProvider = &domain.Provider{
@@ -67,7 +69,7 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 		},
 	}
 	providerRepository := postgres.NewProviderRepository(s.store.DB())
-	err = providerRepository.Create(s.dummyProvider)
+	err = providerRepository.Create(ctx, s.dummyProvider)
 	s.Require().NoError(err)
 
 	s.dummyResource = &domain.Resource{
@@ -78,7 +80,7 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 		Name:         "resource_name_test",
 	}
 	resourceRepository := postgres.NewResourceRepository(s.store.DB())
-	err = resourceRepository.BulkUpsert([]*domain.Resource{s.dummyResource})
+	err = resourceRepository.BulkUpsert(ctx, []*domain.Resource{s.dummyResource})
 	s.Require().NoError(err)
 
 	s.dummyAppeal = &domain.Appeal{
@@ -92,7 +94,7 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 		CreatedBy:     "user@example.com",
 	}
 	appealRepository := postgres.NewAppealRepository(s.store.DB())
-	err = appealRepository.BulkUpsert([]*domain.Appeal{s.dummyAppeal})
+	err = appealRepository.BulkUpsert(ctx, []*domain.Appeal{s.dummyAppeal})
 	s.Require().NoError(err)
 }
 
@@ -239,10 +241,11 @@ func (s *GrantRepositoryTestSuite) TestUpdate() {
 			Status: domain.GrantStatusInactive,
 		}
 
-		err := s.repository.Update(context.Background(), payload)
+		ctx := context.Background()
+		err := s.repository.Update(ctx, payload)
 		s.NoError(err)
 
-		updatedGrant, err := s.repository.GetByID(context.Background(), expectedID)
+		updatedGrant, err := s.repository.GetByID(ctx, expectedID)
 		s.Require().NoError(err)
 
 		s.Equal(payload.Status, updatedGrant.Status)

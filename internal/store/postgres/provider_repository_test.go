@@ -19,7 +19,6 @@ import (
 
 type ProviderRepositoryTestSuite struct {
 	suite.Suite
-	ctx                context.Context
 	store              *postgres.Store
 	pool               *dockertest.Pool
 	resource           *dockertest.Resource
@@ -37,7 +36,6 @@ func (s *ProviderRepositoryTestSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	s.ctx = context.TODO()
 	s.repository = postgres.NewProviderRepository(s.store.DB())
 	s.resourceRepository = postgres.NewResourceRepository(s.store.DB())
 	s.providerRepository = postgres.NewProviderRepository(s.store.DB())
@@ -67,7 +65,7 @@ func (s *ProviderRepositoryTestSuite) TestCreate() {
 			Config: config,
 		}
 
-		err := s.repository.Create(p)
+		err := s.repository.Create(context.Background(), p)
 		s.Nil(err)
 		s.NotEmpty(p.ID)
 	})
@@ -79,7 +77,7 @@ func (s *ProviderRepositoryTestSuite) TestCreate() {
 			},
 		}
 
-		actualError := s.repository.Create(invalidProvider)
+		actualError := s.repository.Create(context.Background(), invalidProvider)
 
 		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
@@ -88,12 +86,13 @@ func (s *ProviderRepositoryTestSuite) TestCreate() {
 		err := setup(s.store)
 		s.NoError(err)
 
+		ctx := context.Background()
 		p := &domain.Provider{}
-		err1 := s.repository.Create(p)
+		err1 := s.repository.Create(ctx, p)
 		s.Nil(err1)
 		s.NotEmpty(p.ID)
 
-		err2 := s.repository.Create(p)
+		err2 := s.repository.Create(ctx, p)
 		s.NotNil(err2)
 		s.EqualError(err2, "ERROR: duplicate key value violates unique constraint \"providers_pkey\" (SQLSTATE 23505)")
 	})
@@ -104,6 +103,7 @@ func (s *ProviderRepositoryTestSuite) TestFind() {
 	s.Nil(err1)
 
 	s.Run("should return list of records on success", func() {
+		ctx := context.Background()
 		expectedRecords := []*domain.Provider{
 			{
 				Type:   "type_test",
@@ -112,13 +112,13 @@ func (s *ProviderRepositoryTestSuite) TestFind() {
 			},
 		}
 		for _, p := range expectedRecords {
-			err := s.repository.Create(p)
+			err := s.repository.Create(ctx, p)
 			if err != nil {
 				s.Nil(err)
 			}
 		}
 
-		actualRecords, actualError := s.repository.Find()
+		actualRecords, actualError := s.repository.Find(ctx)
 
 		s.Nil(actualError)
 		s.NotEmpty(actualRecords)
@@ -130,7 +130,7 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := provider.ErrEmptyIDParam
 
-		actualResult, actualError := s.repository.GetByID("")
+		actualResult, actualError := s.repository.GetByID(context.Background(), "")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -140,7 +140,7 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 		expectedError := provider.ErrRecordNotFound
 
 		sampleUUID := uuid.New().String()
-		actualResult, actualError := s.repository.GetByID(sampleUUID)
+		actualResult, actualError := s.repository.GetByID(context.Background(), sampleUUID)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -154,11 +154,11 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 			Config: &domain.ProviderConfig{},
 		}
 
-		err = s.repository.Create(p)
+		err = s.repository.Create(context.Background(), p)
 		s.Nil(err)
 		s.NotEmpty(p.ID)
 
-		actual, actualError := s.repository.GetByID(p.ID)
+		actual, actualError := s.repository.GetByID(context.Background(), p.ID)
 
 		s.Nil(actualError)
 		if diff := cmp.Diff(p, actual, cmpopts.EquateApproxTime(time.Microsecond)); diff != "" {
@@ -205,32 +205,33 @@ func (s *ProviderRepositoryTestSuite) TestGetOne() {
 			},
 		}
 
-		err := s.repository.Create(expectedProvider)
+		ctx := context.Background()
+		err := s.repository.Create(ctx, expectedProvider)
 		s.Nil(err)
 		s.NotEmpty(expectedProvider.ID)
 
-		actualProvider, actualError := s.repository.GetOne(expectedType, expectedURN)
+		actualProvider, actualError := s.repository.GetOne(ctx, expectedType, expectedURN)
 
 		s.NoError(actualError)
 		s.Equal(expectedProvider.Config, actualProvider.Config)
 	})
 
 	s.Run("should return error if provider type is empty", func() {
-		actualProvider, actualError := s.repository.GetOne("", "test-urn")
+		actualProvider, actualError := s.repository.GetOne(context.Background(), "", "test-urn")
 
 		s.ErrorIs(actualError, provider.ErrEmptyProviderType)
 		s.Nil(actualProvider)
 	})
 
 	s.Run("should return error if provider urn is empty", func() {
-		actualProvider, actualError := s.repository.GetOne("test-type", "")
+		actualProvider, actualError := s.repository.GetOne(context.Background(), "test-type", "")
 
 		s.ErrorIs(actualError, provider.ErrEmptyProviderURN)
 		s.Nil(actualProvider)
 	})
 
 	s.Run("should return not found error if record not found", func() {
-		actualProvider, actualError := s.repository.GetOne("test-type", "test-urn")
+		actualProvider, actualError := s.repository.GetOne(context.Background(), "test-type", "test-urn")
 
 		s.ErrorIs(actualError, provider.ErrRecordNotFound)
 		s.Nil(actualProvider)
@@ -241,7 +242,7 @@ func (s *ProviderRepositoryTestSuite) TestGetTypes() {
 	s.Run("should return error if results empty", func() {
 		expectedError := errors.New("no provider types found")
 
-		actualResult, actualError := s.repository.GetTypes()
+		actualResult, actualError := s.repository.GetTypes(context.Background())
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -253,18 +254,19 @@ func (s *ProviderRepositoryTestSuite) TestGetTypes() {
 			"bigquery": {"dataset", "table"},
 		}
 
-		err := s.providerRepository.Create(&domain.Provider{
+		ctx := context.Background()
+		err := s.providerRepository.Create(ctx, &domain.Provider{
 			Type: "bigquery",
 			URN:  "my-bigquery",
 		})
 		s.Require().NoError(err)
-		err = s.providerRepository.Create(&domain.Provider{
+		err = s.providerRepository.Create(ctx, &domain.Provider{
 			Type: "metabase",
 			URN:  "my-metabase",
 		})
 		s.Require().NoError(err)
 
-		err = s.resourceRepository.BulkUpsert([]*domain.Resource{
+		err = s.resourceRepository.BulkUpsert(context.Background(), []*domain.Resource{
 			{ProviderType: "bigquery", ProviderURN: "my-bigquery", Type: "dataset"},
 			{ProviderType: "bigquery", ProviderURN: "my-bigquery", Type: "table"},
 			{ProviderType: "metabase", ProviderURN: "my-metabase", Type: "group"},
@@ -274,7 +276,7 @@ func (s *ProviderRepositoryTestSuite) TestGetTypes() {
 		})
 		s.Require().NoError(err)
 
-		actualResult, actualError := s.repository.GetTypes()
+		actualResult, actualError := s.repository.GetTypes(ctx)
 
 		for _, pt := range actualResult {
 			s.ElementsMatch(expectedProviderTypes[pt.Name], pt.ResourceTypes)
@@ -287,7 +289,7 @@ func (s *ProviderRepositoryTestSuite) TestUpdate() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := provider.ErrEmptyIDParam
 
-		actualError := s.repository.Update(&domain.Provider{})
+		actualError := s.repository.Update(context.Background(), &domain.Provider{})
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -300,7 +302,7 @@ func (s *ProviderRepositoryTestSuite) TestUpdate() {
 			},
 		}
 
-		actualError := s.repository.Update(invalidProvider)
+		actualError := s.repository.Update(context.Background(), invalidProvider)
 
 		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
@@ -314,7 +316,7 @@ func (s *ProviderRepositoryTestSuite) TestUpdate() {
 			Config: &domain.ProviderConfig{},
 		}
 
-		err := s.repository.Update(p)
+		err := s.repository.Update(context.Background(), p)
 		actualID := p.ID
 
 		s.Nil(err)
@@ -327,7 +329,7 @@ func (s *ProviderRepositoryTestSuite) TestDelete() {
 	s.Nil(err1)
 
 	s.Run("should return error if ID param is empty", func() {
-		err := s.repository.Delete("")
+		err := s.repository.Delete(context.Background(), "")
 
 		s.Error(err)
 		s.ErrorIs(err, provider.ErrEmptyIDParam)
@@ -335,7 +337,7 @@ func (s *ProviderRepositoryTestSuite) TestDelete() {
 
 	s.Run("should return error if resource not found", func() {
 		id := uuid.New().String()
-		err := s.repository.Delete(id)
+		err := s.repository.Delete(context.Background(), id)
 
 		s.Error(err)
 		s.ErrorIs(err, provider.ErrRecordNotFound)
@@ -346,11 +348,12 @@ func (s *ProviderRepositoryTestSuite) TestDelete() {
 			Config: &domain.ProviderConfig{},
 		}
 
-		err := s.repository.Create(p)
+		ctx := context.Background()
+		err := s.repository.Create(ctx, p)
 		s.Nil(err)
 		s.NotEmpty(p.ID)
 
-		err = s.repository.Delete(p.ID)
+		err = s.repository.Delete(ctx, p.ID)
 		s.Nil(err)
 	})
 }

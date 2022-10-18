@@ -39,7 +39,7 @@ type ProtoAdapter interface {
 //go:generate mockery --name=resourceService --exported --with-expecter
 type resourceService interface {
 	Find(context.Context, domain.ListResourcesFilter) ([]*domain.Resource, error)
-	GetOne(string) (*domain.Resource, error)
+	GetOne(context.Context, string) (*domain.Resource, error)
 	BulkUpsert(context.Context, []*domain.Resource) error
 	Update(context.Context, *domain.Resource) error
 	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)

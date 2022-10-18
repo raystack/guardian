@@ -84,7 +84,7 @@ func (s *ServiceTestSuite) TestGetByID() {
 
 	s.Run("should return error if got any from repository", func() {
 		expectedError := errors.New("repository error")
-		s.mockRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
+		s.mockRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.GetByID(context.Background(), "1")
 
@@ -97,7 +97,7 @@ func (s *ServiceTestSuite) TestGetByID() {
 		expectedResult := &domain.Appeal{
 			ID: expectedID,
 		}
-		s.mockRepository.On("GetByID", expectedID).Return(expectedResult, nil).Once()
+		s.mockRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), expectedID).Return(expectedResult, nil).Once()
 
 		actualResult, actualError := s.service.GetByID(context.Background(), expectedID)
 
@@ -109,7 +109,7 @@ func (s *ServiceTestSuite) TestGetByID() {
 func (s *ServiceTestSuite) TestFind() {
 	s.Run("should return error if got any from repository", func() {
 		expectedError := errors.New("unexpected repository error")
-		s.mockRepository.On("Find", mock.Anything).Return(nil, expectedError).Once()
+		s.mockRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.Find(context.Background(), &domain.ListAppealsFilter{})
 
@@ -129,7 +129,7 @@ func (s *ServiceTestSuite) TestFind() {
 				Role:       "viewer",
 			},
 		}
-		s.mockRepository.On("Find", expectedFilters).Return(expectedResult, nil).Once()
+		s.mockRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx"), expectedFilters).Return(expectedResult, nil).Once()
 
 		actualResult, actualError := s.service.Find(context.Background(), expectedFilters)
 
@@ -184,7 +184,9 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockProviderService.On("Find", mock.Anything).Return(expectedProviders, nil).Once()
 		s.mockPolicyService.On("Find", mock.Anything).Return(expectedPolicies, nil).Once()
 		expectedError := errors.New("appeal repository error")
-		s.mockRepository.On("Find", mock.Anything).Return(nil, expectedError).Once()
+		s.mockRepository.EXPECT().
+			Find(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(nil, expectedError).Once()
 
 		actualError := s.service.Create(context.Background(), []*domain.Appeal{})
 
@@ -541,7 +543,9 @@ func (s *ServiceTestSuite) TestCreate() {
 				s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(tc.resources, nil).Once()
 				s.mockProviderService.On("Find", mock.Anything).Return(tc.providers, nil).Once()
 				s.mockPolicyService.On("Find", mock.Anything).Return(tc.policies, nil).Once()
-				s.mockRepository.On("Find", mock.Anything).Return(tc.existingAppeals, nil).Once()
+				s.mockRepository.EXPECT().
+					Find(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+					Return(tc.existingAppeals, nil).Once()
 				s.mockGrantService.EXPECT().
 					List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
 					Return(tc.activeGrants, nil).Once()
@@ -571,12 +575,16 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(expectedResources, nil).Once()
 		s.mockProviderService.On("Find", mock.Anything).Return(expectedProviders, nil).Once()
 		s.mockPolicyService.On("Find", mock.Anything).Return(expectedPolicies, nil).Once()
-		s.mockRepository.On("Find", mock.Anything).Return(expectedPendingAppeals, nil).Once()
+		s.mockRepository.EXPECT().
+			Find(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedPendingAppeals, nil).Once()
 		s.mockGrantService.EXPECT().
 			List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
 			Return(expectedActiveGrants, nil).Once()
 		expectedError := errors.New("repository error")
-		s.mockRepository.On("BulkUpsert", mock.Anything).Return(expectedError).Once()
+		s.mockRepository.EXPECT().
+			BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedError).Once()
 
 		actualError := s.service.Create(context.Background(), []*domain.Appeal{})
 
@@ -792,7 +800,9 @@ func (s *ServiceTestSuite) TestCreate() {
 		expectedExistingAppealsFilters := &domain.ListAppealsFilter{
 			Statuses: []string{domain.AppealStatusPending},
 		}
-		s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
+		s.mockRepository.EXPECT().
+			Find(mock.AnythingOfType("*context.emptyCtx"), expectedExistingAppealsFilters).
+			Return(expectedExistingAppeals, nil).Once()
 		s.mockGrantService.EXPECT().
 			List(mock.AnythingOfType("*context.emptyCtx"), domain.ListGrantsFilter{
 				Statuses: []string{string(domain.GrantStatusActive)},
@@ -805,11 +815,10 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockIAMManager.On("GetClient", mock.Anything, mock.Anything).Return(s.mockIAMClient, nil)
 		s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
 		s.mockApprovalService.On("AdvanceApproval", mock.Anything, mock.Anything).Return(nil)
-		s.mockRepository.
-			On("BulkUpsert", expectedAppealsInsertionParam).
+		s.mockRepository.EXPECT().
+			BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), expectedAppealsInsertionParam).
 			Return(nil).
-			Run(func(args mock.Arguments) {
-				appeals := args.Get(0).([]*domain.Appeal)
+			Run(func(_a0 context.Context, appeals []*domain.Appeal) {
 				for i, a := range appeals {
 					a.ID = expectedResult[i].ID
 					for j, approval := range a.Approvals {
@@ -918,7 +927,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{dummyResource}, nil).Once()
 			s.mockProviderService.On("Find", mock.Anything).Return([]*domain.Provider{dummyProvider}, nil).Once()
 			s.mockPolicyService.On("Find", mock.Anything).Return([]*domain.Policy{dummyPolicy, overriddingPolicy}, nil).Once()
-			s.mockRepository.On("Find", mock.Anything).Return([]*domain.Appeal{}, nil).Once()
+			s.mockRepository.EXPECT().
+				Find(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+				Return([]*domain.Appeal{}, nil).Once()
 			s.mockGrantService.EXPECT().
 				List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
 				Return([]domain.Grant{}, nil).Once()
@@ -929,7 +940,9 @@ func (s *ServiceTestSuite) TestCreate() {
 			s.mockIAMManager.On("GetClient", mock.Anything, mock.Anything).Return(s.mockIAMClient, nil)
 			s.mockIAMClient.On("GetUser", input.AccountID).Return(map[string]interface{}{}, nil)
 			s.mockApprovalService.On("AdvanceApproval", mock.Anything, mock.Anything).Return(nil)
-			s.mockRepository.On("BulkUpsert", mock.Anything).Return(nil).Once()
+			s.mockRepository.EXPECT().
+				BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+				Return(nil).Once()
 			s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 			s.mockAuditLogger.On("Log", mock.Anything, appeal.AuditKeyBulkInsert, mock.Anything).Return(nil).Once()
 
@@ -1124,7 +1137,9 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	expectedExistingAppealsFilters := &domain.ListAppealsFilter{
 		Statuses: []string{domain.AppealStatusPending},
 	}
-	s.mockRepository.On("Find", expectedExistingAppealsFilters).Return(expectedExistingAppeals, nil).Once()
+	s.mockRepository.EXPECT().
+		Find(mock.AnythingOfType("*context.emptyCtx"), expectedExistingAppealsFilters).
+		Return(expectedExistingAppeals, nil).Once()
 	s.mockGrantService.EXPECT().
 		List(mock.AnythingOfType("*context.emptyCtx"), domain.ListGrantsFilter{
 			Statuses: []string{string(domain.GrantStatusActive)},
@@ -1173,19 +1188,17 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	s.mockResourceService.On("Get", mock.Anything, appeals[0].Resource).Return(resources[0], nil).Once()
 	s.mockProviderService.On("GrantAccess", mock.Anything, appeals[0]).Return(nil).Once()
 
-	s.mockRepository.
-		On("BulkUpsert", expectedAppealsInsertionParam).
+	s.mockRepository.EXPECT().
+		BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), expectedAppealsInsertionParam).
 		Return(nil).
-		Run(func(args mock.Arguments) {
-			appeals := args.Get(0).([]*domain.Appeal)
+		Run(func(_a0 context.Context, appeals []*domain.Appeal) {
 			for i, a := range appeals {
 				a.ID = expectedResult[i].ID
 				for j, approval := range a.Approvals {
 					approval.ID = expectedResult[i].Approvals[j].ID
 				}
 			}
-		}).
-		Once()
+		}).Once()
 	s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 	s.mockAuditLogger.On("Log", mock.Anything, appeal.AuditKeyBulkInsert, mock.Anything).Return(nil).Once()
 
@@ -1251,7 +1264,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		s.setup()
 
 		expectedError := errors.New("repository error")
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(nil, expectedError).Once()
+		s.mockRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.MakeAction(context.Background(), validApprovalActionParam)
 
@@ -1264,7 +1277,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		s.setup()
 
 		expectedError := appeal.ErrAppealNotFound
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(nil, expectedError).Once()
+		s.mockRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.MakeAction(context.Background(), validApprovalActionParam)
 
@@ -1441,7 +1454,9 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				Status:    tc.appealStatus,
 				Approvals: tc.approvals,
 			}
-			s.mockRepository.On("GetByID", validApprovalActionParam.AppealID).Return(expectedAppeal, nil).Once()
+			s.mockRepository.EXPECT().
+				GetByID(mock.AnythingOfType("*context.emptyCtx"), validApprovalActionParam.AppealID).
+				Return(expectedAppeal, nil).Once()
 
 			actualResult, actualError := s.service.MakeAction(context.Background(), validApprovalActionParam)
 
@@ -1476,7 +1491,9 @@ func (s *ServiceTestSuite) TestMakeAction() {
 	s.Run("should return error if got any from approvalService.AdvanceApproval", func() {
 		s.setup()
 
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedAppeal, nil).Once()
 		expectedError := errors.New("unexpected error")
 		s.mockApprovalService.EXPECT().AdvanceApproval(mock.Anything, mock.Anything).
 			Return(expectedError).Once()
@@ -1529,7 +1546,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		expectedRevokedGrant.Status = domain.GrantStatusInactive
 
 		s.mockRepository.EXPECT().
-			GetByID(mock.Anything).Return(appealDetails, nil).Once()
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(appealDetails, nil).Once()
 		s.mockApprovalService.EXPECT().
 			AdvanceApproval(mock.Anything, mock.Anything).Return(nil).
 			Run(func(_a0 context.Context, a *domain.Appeal) {
@@ -1549,7 +1567,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 			Revoke(mock.Anything, expectedRevokedGrant.ID, domain.SystemActorName,
 				appeal.RevokeReasonForExtension, mock.Anything, mock.Anything).
 			Return(expectedNewGrant, nil).Once()
-		s.mockRepository.EXPECT().Update(appealDetails).Return(nil).Once()
+		s.mockRepository.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), appealDetails).Return(nil).Once()
 		s.mockNotifier.EXPECT().Notify(mock.Anything).Return(nil).Once()
 		s.mockAuditLogger.EXPECT().Log(mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Once()
@@ -1928,7 +1946,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				s.setup()
 
 				s.mockRepository.EXPECT().
-					GetByID(validApprovalActionParam.AppealID).
+					GetByID(mock.AnythingOfType("*context.emptyCtx"), validApprovalActionParam.AppealID).
 					Return(tc.expectedAppealDetails, nil).Once()
 				s.mockApprovalService.EXPECT().
 					AdvanceApproval(mock.Anything, tc.expectedAppealDetails).Return(nil).
@@ -1951,7 +1969,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 						Return(&domain.Policy{}, nil).Once()
 					s.mockProviderService.EXPECT().GrantAccess(mock.Anything, *tc.expectedGrant).Return(nil).Once()
 				}
-				s.mockRepository.EXPECT().Update(tc.expectedResult).Return(nil).Once()
+				s.mockRepository.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), tc.expectedResult).Return(nil).Once()
 				s.mockNotifier.EXPECT().Notify(mock.Anything).Return(nil).Once()
 				s.mockAuditLogger.EXPECT().Log(mock.Anything, mock.Anything, mock.Anything).
 					Return(nil).Once()
@@ -2015,7 +2033,9 @@ func (s *ServiceTestSuite) TestAddApprover() {
 						tc.newApprover,
 					},
 				}
-				s.mockRepository.EXPECT().GetByID(appealID).Return(expectedAppeal, nil).Once()
+				s.mockRepository.EXPECT().
+					GetByID(mock.AnythingOfType("*context.emptyCtx"), appealID).
+					Return(expectedAppeal, nil).Once()
 				s.mockApprovalService.EXPECT().
 					AddApprover(mock.AnythingOfType("*context.emptyCtx"), approvalID, newApprover).
 					Return(nil).Once()
@@ -2079,7 +2099,9 @@ func (s *ServiceTestSuite) TestAddApprover() {
 
 	s.Run("should return error if getting appeal details returns an error", func() {
 		expectedError := errors.New("unexpected error")
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(nil, expectedError).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(nil, expectedError).Once()
 
 		appeal, err := s.service.AddApprover(context.Background(), uuid.New().String(), uuid.New().String(), "user@example.com")
 
@@ -2099,7 +2121,9 @@ func (s *ServiceTestSuite) TestAddApprover() {
 				},
 			},
 		}
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedAppeal, nil).Once()
 
 		appeal, err := s.service.AddApprover(context.Background(), uuid.New().String(), approvalID, "user@example.com")
 
@@ -2118,7 +2142,9 @@ func (s *ServiceTestSuite) TestAddApprover() {
 				},
 			},
 		}
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedAppeal, nil).Once()
 
 		appeal, err := s.service.AddApprover(context.Background(), uuid.New().String(), uuid.New().String(), "user@example.com")
 
@@ -2139,7 +2165,9 @@ func (s *ServiceTestSuite) TestAddApprover() {
 				},
 			},
 		}
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedAppeal, nil).Once()
 
 		appeal, err := s.service.AddApprover(context.Background(), uuid.New().String(), approvalID, "user@example.com")
 
@@ -2161,7 +2189,9 @@ func (s *ServiceTestSuite) TestAddApprover() {
 				},
 			},
 		}
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedAppeal, nil).Once()
 
 		appeal, err := s.service.AddApprover(context.Background(), uuid.New().String(), approvalID, "user@example.com")
 
@@ -2183,7 +2213,9 @@ func (s *ServiceTestSuite) TestAddApprover() {
 				},
 			},
 		}
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedAppeal, nil).Once()
 		s.mockApprovalService.EXPECT().AddApprover(mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 
 		appeal, err := s.service.AddApprover(context.Background(), uuid.New().String(), approvalID, "user@example.com")
@@ -2240,7 +2272,9 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 						"approver1@example.com",
 					},
 				}
-				s.mockRepository.EXPECT().GetByID(appealID).Return(expectedAppeal, nil).Once()
+				s.mockRepository.EXPECT().
+					GetByID(mock.AnythingOfType("*context.emptyCtx"), appealID).
+					Return(expectedAppeal, nil).Once()
 				s.mockApprovalService.EXPECT().
 					DeleteApprover(mock.AnythingOfType("*context.emptyCtx"), approvalID, approverEmail).
 					Return(nil).Once()
@@ -2296,7 +2330,9 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 
 	s.Run("should return error if getting appeal details returns an error", func() {
 		expectedError := errors.New("unexpected error")
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(nil, expectedError).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(nil, expectedError).Once()
 
 		appeal, err := s.service.DeleteApprover(context.Background(), uuid.New().String(), uuid.New().String(), "user@example.com")
 
@@ -2316,7 +2352,9 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 				},
 			},
 		}
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedAppeal, nil).Once()
 
 		appeal, err := s.service.DeleteApprover(context.Background(), uuid.New().String(), approvalID, "user@example.com")
 
@@ -2337,7 +2375,9 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 				},
 			},
 		}
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedAppeal, nil).Once()
 
 		appeal, err := s.service.DeleteApprover(context.Background(), uuid.New().String(), approvalID, "user@example.com")
 
@@ -2359,7 +2399,9 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 				},
 			},
 		}
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedAppeal, nil).Once()
 
 		appeal, err := s.service.DeleteApprover(context.Background(), uuid.New().String(), approvalID, "user@example.com")
 
@@ -2381,7 +2423,9 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 				},
 			},
 		}
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedAppeal, nil).Once()
 
 		appeal, err := s.service.DeleteApprover(context.Background(), uuid.New().String(), approvalID, "user@example.com")
 
@@ -2404,7 +2448,9 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 				},
 			},
 		}
-		s.mockRepository.EXPECT().GetByID(mock.Anything).Return(expectedAppeal, nil).Once()
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedAppeal, nil).Once()
 		s.mockApprovalService.EXPECT().DeleteApprover(mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 
 		appeal, err := s.service.DeleteApprover(context.Background(), uuid.New().String(), approvalID, approverEmail)
