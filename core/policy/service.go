@@ -375,7 +375,7 @@ func structToMap(item interface{}) (map[string]interface{}, error) {
 func (s *Service) validateAppealConfig(cfg *domain.PolicyAppealConfig) error {
 	if cfg != nil && cfg.AllowActiveAccessExtensionIn != "" {
 		if err := validateDuration(cfg.AllowActiveAccessExtensionIn); err != nil {
-			return fmt.Errorf("invalid appeal extension policy: %v", err)
+			return fmt.Errorf("invalid appeal extension policy: %w", err)
 		}
 	}
 	return nil
@@ -383,7 +383,7 @@ func (s *Service) validateAppealConfig(cfg *domain.PolicyAppealConfig) error {
 
 func validateDuration(d string) error {
 	if _, err := time.ParseDuration(d); err != nil {
-		return fmt.Errorf("parsing duration: %v", err)
+		return fmt.Errorf("parsing duration: %w", err)
 	}
 	return nil
 }
