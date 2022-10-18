@@ -251,3 +251,81 @@ func (s *GrpcHandlersSuite) TestGetGrant() {
 		s.grantService.AssertExpectations(s.T())
 	})
 }
+
+func (s *GrpcHandlersSuite) TestImportFromProvider() {
+	s.Run("should return grants on success", func() {
+		s.setup()
+		timeNow := time.Now()
+
+		dummyGrant := &domain.Grant{
+			ID:             "test-id",
+			Status:         "test-status",
+			AccountID:      "test-account-id",
+			AccountType:    "test-account-type",
+			ResourceID:     "test-resource-id",
+			Permissions:    []string{"test-permission"},
+			ExpirationDate: &timeNow,
+			AppealID:       "test-appeal-id",
+			RevokedBy:      "test-revoked-by",
+			RevokedAt:      &timeNow,
+			RevokeReason:   "test-revoke-reason",
+			CreatedAt:      timeNow,
+			UpdatedAt:      timeNow,
+			Resource: &domain.Resource{
+				ID:   "test-resource-id",
+				Type: "test-resource-type",
+				URN:  "test-resource-urn",
+			},
+			Appeal: &domain.Appeal{
+				ID: "test-appeal-id",
+			},
+		}
+		expectedResponse := &guardianv1beta1.ImportGrantsFromProviderResponse{
+			Grants: []*guardianv1beta1.Grant{
+				{
+					Id:             "test-id",
+					Status:         "test-status",
+					AccountId:      "test-account-id",
+					AccountType:    "test-account-type",
+					ResourceId:     "test-resource-id",
+					Permissions:    []string{"test-permission"},
+					ExpirationDate: timestamppb.New(timeNow),
+					AppealId:       "test-appeal-id",
+					RevokedBy:      "test-revoked-by",
+					RevokedAt:      timestamppb.New(timeNow),
+					RevokeReason:   "test-revoke-reason",
+					CreatedAt:      timestamppb.New(timeNow),
+					UpdatedAt:      timestamppb.New(timeNow),
+					Resource: &guardianv1beta1.Resource{
+						Id:   "test-resource-id",
+						Type: "test-resource-type",
+						Urn:  "test-resource-urn",
+					},
+					Appeal: &guardianv1beta1.Appeal{
+						Id: "test-appeal-id",
+					},
+				},
+			},
+		}
+		s.grantService.EXPECT().
+			ImportFromProvider(mock.AnythingOfType("*context.emptyCtx"), grant.ImportFromProviderCriteria{
+				ProviderID:    "test-provider-id",
+				ResourceIDs:   []string{"test-resource-id"},
+				ResourceTypes: []string{"test-resource-type"},
+				ResourceURNs:  []string{"test-resource-urn"},
+			}).
+			Return([]*domain.Grant{dummyGrant}, nil).Once()
+
+		req := &guardianv1beta1.ImportGrantsFromProviderRequest{
+			ProviderId:    "test-provider-id",
+			ResourceIds:   []string{"test-resource-id"},
+			ResourceTypes: []string{"test-resource-type"},
+			ResourceUrns:  []string{"test-resource-urn"},
+		}
+
+		res, err := s.grpcServer.ImportGrantsFromProvider(context.Background(), req)
+
+		s.NoError(err)
+		s.Equal(expectedResponse, res)
+	})
+}

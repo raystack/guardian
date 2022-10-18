@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"google.golang.org/grpc/codes"
@@ -145,37 +144,5 @@ func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1beta1.ListRol
 
 	return &guardianv1beta1.ListRolesResponse{
 		Roles: roleProtos,
-	}, nil
-}
-
-func (s *GRPCServer) ImportAccess(ctx context.Context, req *guardianv1beta1.ImportAccessRequest) (*guardianv1beta1.ImportAccessResponse, error) {
-	grants, err := s.grantService.ImportAccess(ctx, grant.ImportAccessCriteria{
-		ProviderID:   req.GetId(),
-		ResourceIDs:  req.GetResourceIds(),
-		ResouceTypes: req.GetResourceTypes(),
-		ResourceURNs: req.GetResourceUrns(),
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, provider.ErrRecordNotFound):
-			return nil, status.Errorf(codes.NotFound, "provider with id %q not found: %v", req.GetId(), err)
-		case errors.Is(err, grant.ErrEmptyImportedGrants):
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-
-		return nil, status.Errorf(codes.Internal, "failed to import access: %v", err)
-	}
-
-	grantsProto := []*guardianv1beta1.Grant{}
-	for _, g := range grants {
-		grantProto, err := s.adapter.ToGrantProto(g)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse appeal proto %q: %v", g.ID, err)
-		}
-		grantsProto = append(grantsProto, grantProto)
-	}
-
-	return &guardianv1beta1.ImportAccessResponse{
-		Grants: grantsProto,
 	}, nil
 }
