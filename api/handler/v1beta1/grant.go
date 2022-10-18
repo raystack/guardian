@@ -159,8 +159,8 @@ func (s *GRPCServer) listGrants(ctx context.Context, filter domain.ListGrantsFil
 	return grantProtos, nil
 }
 
-func (s *GRPCServer) ImportAccess(ctx context.Context, req *guardianv1beta1.ImportAccessRequest) (*guardianv1beta1.ImportAccessResponse, error) {
-	grants, err := s.grantService.ImportAccess(ctx, grant.ImportAccessCriteria{
+func (s *GRPCServer) ImportGrantsFromProvider(ctx context.Context, req *guardianv1beta1.ImportGrantsFromProviderRequest) (*guardianv1beta1.ImportGrantsFromProviderResponse, error) {
+	grants, err := s.grantService.ImportFromProvider(ctx, grant.ImportFromProviderCriteria{
 		ProviderID:    req.GetProviderId(),
 		ResourceIDs:   req.GetResourceIds(),
 		ResourceTypes: req.GetResourceTypes(),
@@ -186,7 +186,7 @@ func (s *GRPCServer) ImportAccess(ctx context.Context, req *guardianv1beta1.Impo
 		grantsProto = append(grantsProto, grantProto)
 	}
 
-	return &guardianv1beta1.ImportAccessResponse{
+	return &guardianv1beta1.ImportGrantsFromProviderResponse{
 		Grants: grantsProto,
 	}, nil
 }

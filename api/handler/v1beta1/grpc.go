@@ -95,7 +95,7 @@ type grantService interface {
 	GetByID(context.Context, string) (*domain.Grant, error)
 	Revoke(ctx context.Context, id, actor, reason string, opts ...grant.Option) (*domain.Grant, error)
 	BulkRevoke(ctx context.Context, filter domain.RevokeGrantsFilter, actor, reason string) ([]*domain.Grant, error)
-	ImportAccess(ctx context.Context, criteria grant.ImportAccessCriteria) ([]*domain.Grant, error)
+	ImportFromProvider(ctx context.Context, criteria grant.ImportFromProviderCriteria) ([]*domain.Grant, error)
 }
 
 type GRPCServer struct {

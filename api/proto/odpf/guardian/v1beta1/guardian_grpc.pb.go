@@ -49,7 +49,7 @@ type GuardianServiceClient interface {
 	GetGrant(ctx context.Context, in *GetGrantRequest, opts ...grpc.CallOption) (*GetGrantResponse, error)
 	RevokeGrant(ctx context.Context, in *RevokeGrantRequest, opts ...grpc.CallOption) (*RevokeGrantResponse, error)
 	RevokeGrants(ctx context.Context, in *RevokeGrantsRequest, opts ...grpc.CallOption) (*RevokeGrantsResponse, error)
-	ImportAccess(ctx context.Context, in *ImportAccessRequest, opts ...grpc.CallOption) (*ImportAccessResponse, error)
+	ImportGrantsFromProvider(ctx context.Context, in *ImportGrantsFromProviderRequest, opts ...grpc.CallOption) (*ImportGrantsFromProviderResponse, error)
 }
 
 type guardianServiceClient struct {
@@ -339,9 +339,9 @@ func (c *guardianServiceClient) RevokeGrants(ctx context.Context, in *RevokeGran
 	return out, nil
 }
 
-func (c *guardianServiceClient) ImportAccess(ctx context.Context, in *ImportAccessRequest, opts ...grpc.CallOption) (*ImportAccessResponse, error) {
-	out := new(ImportAccessResponse)
-	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/ImportAccess", in, out, opts...)
+func (c *guardianServiceClient) ImportGrantsFromProvider(ctx context.Context, in *ImportGrantsFromProviderRequest, opts ...grpc.CallOption) (*ImportGrantsFromProviderResponse, error) {
+	out := new(ImportGrantsFromProviderResponse)
+	err := c.cc.Invoke(ctx, "/odpf.guardian.v1beta1.GuardianService/ImportGrantsFromProvider", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -383,7 +383,7 @@ type GuardianServiceServer interface {
 	GetGrant(context.Context, *GetGrantRequest) (*GetGrantResponse, error)
 	RevokeGrant(context.Context, *RevokeGrantRequest) (*RevokeGrantResponse, error)
 	RevokeGrants(context.Context, *RevokeGrantsRequest) (*RevokeGrantsResponse, error)
-	ImportAccess(context.Context, *ImportAccessRequest) (*ImportAccessResponse, error)
+	ImportGrantsFromProvider(context.Context, *ImportGrantsFromProviderRequest) (*ImportGrantsFromProviderResponse, error)
 	mustEmbedUnimplementedGuardianServiceServer()
 }
 
@@ -484,8 +484,8 @@ func (UnimplementedGuardianServiceServer) RevokeGrant(context.Context, *RevokeGr
 func (UnimplementedGuardianServiceServer) RevokeGrants(context.Context, *RevokeGrantsRequest) (*RevokeGrantsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RevokeGrants not implemented")
 }
-func (UnimplementedGuardianServiceServer) ImportAccess(context.Context, *ImportAccessRequest) (*ImportAccessResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ImportAccess not implemented")
+func (UnimplementedGuardianServiceServer) ImportGrantsFromProvider(context.Context, *ImportGrantsFromProviderRequest) (*ImportGrantsFromProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ImportGrantsFromProvider not implemented")
 }
 func (UnimplementedGuardianServiceServer) mustEmbedUnimplementedGuardianServiceServer() {}
 
@@ -1058,20 +1058,20 @@ func _GuardianService_RevokeGrants_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GuardianService_ImportAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ImportAccessRequest)
+func _GuardianService_ImportGrantsFromProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ImportGrantsFromProviderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GuardianServiceServer).ImportAccess(ctx, in)
+		return srv.(GuardianServiceServer).ImportGrantsFromProvider(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/odpf.guardian.v1beta1.GuardianService/ImportAccess",
+		FullMethod: "/odpf.guardian.v1beta1.GuardianService/ImportGrantsFromProvider",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GuardianServiceServer).ImportAccess(ctx, req.(*ImportAccessRequest))
+		return srv.(GuardianServiceServer).ImportGrantsFromProvider(ctx, req.(*ImportGrantsFromProviderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1208,8 +1208,8 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _GuardianService_RevokeGrants_Handler,
 		},
 		{
-			MethodName: "ImportAccess",
-			Handler:    _GuardianService_ImportAccess_Handler,
+			MethodName: "ImportGrantsFromProvider",
+			Handler:    _GuardianService_ImportGrantsFromProvider_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

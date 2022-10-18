@@ -252,7 +252,7 @@ func (s *GrpcHandlersSuite) TestGetGrant() {
 	})
 }
 
-func (s *GrpcHandlersSuite) TestImportAccess() {
+func (s *GrpcHandlersSuite) TestImportFromProvider() {
 	s.Run("should return grants on success", func() {
 		s.setup()
 		timeNow := time.Now()
@@ -280,7 +280,7 @@ func (s *GrpcHandlersSuite) TestImportAccess() {
 				ID: "test-appeal-id",
 			},
 		}
-		expectedResponse := &guardianv1beta1.ImportAccessResponse{
+		expectedResponse := &guardianv1beta1.ImportGrantsFromProviderResponse{
 			Grants: []*guardianv1beta1.Grant{
 				{
 					Id:             "test-id",
@@ -308,7 +308,7 @@ func (s *GrpcHandlersSuite) TestImportAccess() {
 			},
 		}
 		s.grantService.EXPECT().
-			ImportAccess(mock.AnythingOfType("*context.emptyCtx"), grant.ImportAccessCriteria{
+			ImportFromProvider(mock.AnythingOfType("*context.emptyCtx"), grant.ImportFromProviderCriteria{
 				ProviderID:    "test-provider-id",
 				ResourceIDs:   []string{"test-resource-id"},
 				ResourceTypes: []string{"test-resource-type"},
@@ -316,14 +316,14 @@ func (s *GrpcHandlersSuite) TestImportAccess() {
 			}).
 			Return([]*domain.Grant{dummyGrant}, nil).Once()
 
-		req := &guardianv1beta1.ImportAccessRequest{
+		req := &guardianv1beta1.ImportGrantsFromProviderRequest{
 			ProviderId:    "test-provider-id",
 			ResourceIds:   []string{"test-resource-id"},
 			ResourceTypes: []string{"test-resource-type"},
 			ResourceUrns:  []string{"test-resource-urn"},
 		}
 
-		res, err := s.grpcServer.ImportAccess(context.Background(), req)
+		res, err := s.grpcServer.ImportGrantsFromProvider(context.Background(), req)
 
 		s.NoError(err)
 		s.Equal(expectedResponse, res)

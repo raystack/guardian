@@ -102,3 +102,26 @@ type RevokeGrantsFilter struct {
 	ResourceTypes []string `validate:"omitempty,min=1"`
 	ResourceURNs  []string `validate:"omitempty,min=1"`
 }
+
+type AccessEntry struct {
+	AccountID   string
+	AccountType string
+	Permission  string
+}
+
+func (ae AccessEntry) ToGrant(resource Resource) Grant {
+	return Grant{
+		ResourceID:       resource.ID,
+		Status:           GrantStatusActive,
+		StatusInProvider: GrantStatusActive,
+		AccountID:        ae.AccountID,
+		AccountType:      ae.AccountType,
+		CreatedBy:        SystemActorName,
+		Permissions:      []string{ae.Permission},
+		Source:           GrantSourceImport,
+		IsPermanent:      true,
+	}
+}
+
+// MapResourceAccess is list of UserAccess grouped by resource urn
+type MapResourceAccess map[string][]AccessEntry

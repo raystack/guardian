@@ -271,14 +271,14 @@ func (s *Service) expiredInActiveUserAccess(ctx context.Context, timeLimiter cha
 	}
 }
 
-type ImportAccessCriteria struct {
+type ImportFromProviderCriteria struct {
 	ProviderID    string `validate:"required"`
 	ResourceIDs   []string
 	ResourceTypes []string
 	ResourceURNs  []string
 }
 
-func (s *Service) ImportAccess(ctx context.Context, criteria ImportAccessCriteria) ([]*domain.Grant, error) {
+func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromProviderCriteria) ([]*domain.Grant, error) {
 	p, err := s.providerService.GetByID(ctx, criteria.ProviderID)
 	if err != nil {
 		return nil, fmt.Errorf("getting provider details: %w", err)
