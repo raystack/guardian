@@ -1005,32 +1005,36 @@ func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal, opts ...Cr
 }
 
 func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider, policy *domain.Policy, activeGrants map[string]map[string]map[string]*domain.Grant) error {
-	if activeGrants[a.AccountID] != nil &&
-		activeGrants[a.AccountID][a.ResourceID] != nil &&
-		activeGrants[a.AccountID][a.ResourceID][a.Role] != nil {
-		if p.Config.Appeal != nil {
-			// Default to use provider config if policy config is not set
-			AllowActiveAccessExtensionIn := p.Config.Appeal.AllowActiveAccessExtensionIn
-			if policy != nil &&
-				policy.AppealConfig != nil &&
-				policy.AppealConfig.AllowActiveAccessExtensionIn != "" {
-				AllowActiveAccessExtensionIn = policy.AppealConfig.AllowActiveAccessExtensionIn
-			}
+	grant, exists := activeGrants[a.AccountID][a.ResourceID][a.Role]
+	if !exists || grant == nil {
+		return nil
+	}
 
-			if AllowActiveAccessExtensionIn == "" {
-				return ErrAppealFoundActiveGrant
-			}
+	AllowActiveAccessExtensionIn := ""
 
-			extensionDurationRule, err := time.ParseDuration(AllowActiveAccessExtensionIn)
-			if err != nil {
-				return fmt.Errorf("%w: %v: %v", ErrAppealInvalidExtensionDuration, AllowActiveAccessExtensionIn, err)
-			}
+	// Default to use provider config if policy config is not set
+	if p.Config.Appeal != nil {
+		AllowActiveAccessExtensionIn = p.Config.Appeal.AllowActiveAccessExtensionIn
+	}
 
-			grant := activeGrants[a.AccountID][a.ResourceID][a.Role]
-			if !grant.IsEligibleForExtension(extensionDurationRule) {
-				return ErrGrantNotEligibleForExtension
-			}
-		}
+	// Use policy config if set
+	if policy != nil &&
+		policy.AppealConfig != nil &&
+		policy.AppealConfig.AllowActiveAccessExtensionIn != "" {
+		AllowActiveAccessExtensionIn = policy.AppealConfig.AllowActiveAccessExtensionIn
+	}
+
+	if AllowActiveAccessExtensionIn == "" {
+		return ErrAppealFoundActiveGrant
+	}
+
+	extensionDurationRule, err := time.ParseDuration(AllowActiveAccessExtensionIn)
+	if err != nil {
+		return fmt.Errorf("%w: %v: %v", ErrAppealInvalidExtensionDuration, AllowActiveAccessExtensionIn, err)
+	}
+
+	if !grant.IsEligibleForExtension(extensionDurationRule) {
+		return ErrGrantNotEligibleForExtension
 	}
 	return nil
 }
