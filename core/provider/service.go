@@ -200,9 +200,10 @@ func (s *Service) FetchResources(ctx context.Context) error {
 		return err
 	}
 
-	resources := []*domain.Resource{}
+	failedProviders := make([]string, 0)
 	for _, p := range providers {
 		s.logger.Info("fetching resources", "provider_urn", p.URN)
+		resources := []*domain.Resource{}
 		res, err := s.getResources(ctx, p)
 		if err != nil {
 			s.logger.Error("failed to send notifications", "error", err)
@@ -213,9 +214,16 @@ func (s *Service) FetchResources(ctx context.Context) error {
 			"count", len(resources),
 		)
 		resources = append(resources, res...)
+		if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
+			failedProviders = append(failedProviders, p.URN)
+			s.logger.Error("failed to add resources", "provider_urn", p.URN)
+		}
 	}
 
-	return s.resourceService.BulkUpsert(ctx, resources)
+	if len(failedProviders) == 0 {
+		return nil
+	}
+	return fmt.Errorf("failed to add resources %s - %v", "providers", failedProviders)
 }
 
 func (s *Service) GetRoles(ctx context.Context, id string, resourceType string) ([]*domain.Role, error) {
