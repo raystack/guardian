@@ -5,6 +5,8 @@ There are several approaches to install Guardian CLI
 1. [Using a pre-compiled binary](#binary-cross-platform)
 2. [Installing with package manager](#macOS)
 3. [Installing from source](#building-from-source)
+4. [Using the Docker image](#use-the-docker-image)
+5. [Using the Helm Chart](#use-the-helm-chart)
 
 #### Binary (Cross-platform)
 
@@ -48,27 +50,6 @@ To upgrade to the latest version:
 
 ```
 scoop update guardian
-```
-
-#### Docker
-
-We provide ready to use Docker container images. To pull the latest image:
-
-```
-docker pull odpf/guardian:latest
-```
-
-To pull a specific version:
-
-```
-docker pull odpf/guardian:v0.3.2
-```
-
-If you like to have a shell alias that runs the latest version of pscale from docker whenever you type `pscale`:
-
-```
-mkdir -p $HOME/.config/odpf
-alias guardian="docker run -e HOME=/tmp -v $HOME/.config/odpf:/tmp/.config/odpf --user $(id -u):$(id -g) --rm -it -p 3306:3306/tcp odpf/guardian:latest"
 ```
 
 ### Building from source
@@ -131,4 +112,51 @@ To verify if Guardian is properly installed, run `guardian --help` on your syste
 
 ```
 $ guardian --help
+```
+
+### Use the Docker image
+
+We provide ready to use Docker container images. To pull the latest image:
+
+```
+docker pull odpf/guardian:latest
+```
+
+To pull a specific version:
+
+```
+docker pull odpf/guardian:v0.3.2
+```
+
+If you like to have a shell alias that runs the latest version of pscale from docker whenever you type `pscale`:
+
+```
+mkdir -p $HOME/.config/odpf
+alias guardian="docker run -e HOME=/tmp -v $HOME/.config/odpf:/tmp/.config/odpf --user $(id -u):$(id -g) --rm -it -p 3306:3306/tcp odpf/guardian:latest"
+```
+
+### Use the Helm chart
+
+Guardian can be installed in Kubernetes using the Helm chart from https://github.com/odpf/charts.
+
+Ensure that the following requirements are met:
+- Kubernetes 1.14+
+- Helm version 3.x is [installed](https://helm.sh/docs/intro/install/)
+
+Add ODPF chart repository to Helm:
+
+```
+helm repo add odpf https://odpf.github.io/charts/
+```
+
+You can update the chart repository by running:
+
+```
+helm repo update
+```
+
+And install it with the helm command line:
+
+```
+helm install my-release odpf/guardian
 ```

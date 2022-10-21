@@ -1,6 +1,6 @@
 # CLI
 
-`Guardian` is a command line tool used to interact with the main guardian service. Follow the [installation](../installation) and [configuration](../guides/configuration) guides to set up the CLI tool for Guardian.
+`Guardian` is a command line tool used to interact with the main guardian service. Follow the [installation](../installation) and [configuration](../tour/configuration) guides to set up the CLI tool for Guardian.
 
 ## List of Commands
 
