@@ -79,7 +79,6 @@ func NewConfig(pc *domain.ProviderConfig, crypto domain.Crypto) *Config {
 }
 
 func (c *Config) parseAndValidate() error {
-
 	validationError := []error{}
 
 	credentials, err := c.validateCredentials(c.ProviderConfig.Credentials)

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/odpf/guardian/core/policy"
@@ -20,13 +21,13 @@ func NewPolicyRepository(db *gorm.DB) *PolicyRepository {
 }
 
 // Create new record to database
-func (r *PolicyRepository) Create(p *domain.Policy) error {
+func (r *PolicyRepository) Create(ctx context.Context, p *domain.Policy) error {
 	m := new(model.Policy)
 	if err := m.FromDomain(p); err != nil {
 		return fmt.Errorf("serializing policy: %w", err)
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if result := tx.Create(m); result.Error != nil {
 			return result.Error
 		}
@@ -43,11 +44,11 @@ func (r *PolicyRepository) Create(p *domain.Policy) error {
 }
 
 // Find records based on filters
-func (r *PolicyRepository) Find() ([]*domain.Policy, error) {
+func (r *PolicyRepository) Find(ctx context.Context) ([]*domain.Policy, error) {
 	policies := []*domain.Policy{}
 
 	var models []*model.Policy
-	if err := r.db.Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Find(&models).Error; err != nil {
 		return nil, err
 	}
 	for _, m := range models {
@@ -64,7 +65,7 @@ func (r *PolicyRepository) Find() ([]*domain.Policy, error) {
 
 // GetOne returns a policy record based on the id and version params.
 // If version is 0, the latest version will be returned
-func (r *PolicyRepository) GetOne(id string, version uint) (*domain.Policy, error) {
+func (r *PolicyRepository) GetOne(ctx context.Context, id string, version uint) (*domain.Policy, error) {
 	m := &model.Policy{}
 	condition := "id = ?"
 	args := []interface{}{id}
@@ -74,7 +75,7 @@ func (r *PolicyRepository) GetOne(id string, version uint) (*domain.Policy, erro
 	}
 
 	conds := append([]interface{}{condition}, args...)
-	if err := r.db.Order("version desc").First(m, conds...).Error; err != nil {
+	if err := r.db.WithContext(ctx).Order("version desc").First(m, conds...).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, policy.ErrPolicyNotFound
 		}

@@ -400,7 +400,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -430,7 +430,7 @@ func TestGrantAccess(t *testing.T) {
 				ResourceName:      "projects/test-resource-name",
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -473,7 +473,7 @@ func TestGrantAccess(t *testing.T) {
 			},
 			URN: providerURN,
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: gcloudiam.ResourceTypeProject,
 				URN:  "999",
@@ -522,7 +522,7 @@ func TestGrantAccess(t *testing.T) {
 			},
 			URN: providerURN,
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: gcloudiam.ResourceTypeProject,
 				URN:  "test-role",
@@ -560,7 +560,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -603,7 +603,7 @@ func TestRevokeAccess(t *testing.T) {
 			},
 			URN: providerURN,
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: gcloudiam.ResourceTypeProject,
 				URN:  "999",
@@ -652,7 +652,7 @@ func TestRevokeAccess(t *testing.T) {
 			},
 			URN: providerURN,
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: gcloudiam.ResourceTypeProject,
 				URN:  "test-role",

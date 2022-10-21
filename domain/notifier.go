@@ -6,14 +6,16 @@ type NotificationMessages struct {
 	AppealRejected       string `mapstructure:"appeal_rejected" default:"Your appeal to {{.resource_name}} with role {{.role}} has been rejected"`
 	AccessRevoked        string `mapstructure:"access_revoked" default:"Your access to {{.resource_name}}} with role {{.role}} has been revoked"`
 	ApproverNotification string `mapstructure:"approver_notification" default:"You have an appeal created by {{.requestor}} requesting access to {{.resource_name}} with role {{.role}}. Appeal ID: {{.appeal_id}}"`
+	OthersAppealApproved string `mapstructure:"others_appeal_approved" default:"Your appeal to {{.resource_name}} with role {{.role}} created by {{.requestor}} has been approved"`
 }
 
 const (
-	NotificationTypeExpirationReminder   = "ExpirationReminder"
-	NotificationTypeAppealApproved       = "AppealApproved"
-	NotificationTypeAppealRejected       = "AppealRejected"
-	NotificationTypeAccessRevoked        = "AccessRevoked"
-	NotificationTypeApproverNotification = "ApproverNotification"
+	NotificationTypeExpirationReminder     = "ExpirationReminder"
+	NotificationTypeAppealApproved         = "AppealApproved"
+	NotificationTypeOnBehalfAppealApproved = "OnBehalfAppealApproved"
+	NotificationTypeAppealRejected         = "AppealRejected"
+	NotificationTypeAccessRevoked          = "AccessRevoked"
+	NotificationTypeApproverNotification   = "ApproverNotification"
 )
 
 type NotificationMessage struct {

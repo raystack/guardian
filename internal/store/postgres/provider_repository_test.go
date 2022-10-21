@@ -1,76 +1,73 @@
 package postgres_test
 
 import (
-	"database/sql"
-	"encoding/json"
+	"context"
 	"errors"
-	"regexp"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/utils"
+	"github.com/odpf/salt/log"
+	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/gorm"
 )
 
 type ProviderRepositoryTestSuite struct {
 	suite.Suite
-	sqldb      *sql.DB
-	dbmock     sqlmock.Sqlmock
-	repository *postgres.ProviderRepository
-
-	rows []string
+	store              *postgres.Store
+	pool               *dockertest.Pool
+	resource           *dockertest.Resource
+	repository         *postgres.ProviderRepository
+	resourceRepository *postgres.ResourceRepository
+	providerRepository *postgres.ProviderRepository
 }
 
-func (s *ProviderRepositoryTestSuite) SetupTest() {
-	db, mock, _ := mocks.NewStore()
-	s.sqldb, _ = db.DB()
-	s.dbmock = mock
-	s.repository = postgres.NewProviderRepository(db)
+func (s *ProviderRepositoryTestSuite) SetupSuite() {
+	var err error
 
-	s.rows = []string{
-		"id",
-		"type",
-		"urn",
-		"config",
-		"created_at",
-		"updated_at",
+	logger := log.NewLogrus(log.LogrusWithLevel("debug"))
+	s.store, s.pool, s.resource, err = newTestStore(logger)
+	if err != nil {
+		s.T().Fatal(err)
+	}
+
+	s.repository = postgres.NewProviderRepository(s.store.DB())
+	s.resourceRepository = postgres.NewResourceRepository(s.store.DB())
+	s.providerRepository = postgres.NewProviderRepository(s.store.DB())
+}
+
+func (s *ProviderRepositoryTestSuite) TearDownSuite() {
+	// Clean tests
+	db, err := s.store.DB().DB()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+	err = db.Close()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+
+	err = purgeTestDocker(s.pool, s.resource)
+	if err != nil {
+		s.T().Fatal(err)
 	}
 }
 
-func (s *ProviderRepositoryTestSuite) TearDownTest() {
-	s.sqldb.Close()
-}
-
 func (s *ProviderRepositoryTestSuite) TestCreate() {
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "providers" ("type","urn","config","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"`)
-
 	s.Run("should update model's ID with the returned ID", func() {
 		config := &domain.ProviderConfig{}
-		provider := &domain.Provider{
+		p := &domain.Provider{
 			Config: config,
 		}
 
-		expectedID := uuid.New().String()
-		expectedRows := sqlmock.NewRows([]string{"id"}).
-			AddRow(expectedID)
-		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
-		s.dbmock.ExpectCommit()
-
-		err := s.repository.Create(provider)
-
-		actualID := provider.ID
-
+		err := s.repository.Create(context.Background(), p)
 		s.Nil(err)
-		s.Equal(expectedID, actualID)
-		s.NoError(s.dbmock.ExpectationsWereMet())
+		s.NotEmpty(p.ID)
 	})
 
 	s.Run("should return error if provider is invalid", func() {
@@ -80,68 +77,52 @@ func (s *ProviderRepositoryTestSuite) TestCreate() {
 			},
 		}
 
-		actualError := s.repository.Create(invalidProvider)
+		actualError := s.repository.Create(context.Background(), invalidProvider)
 
 		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
 
 	s.Run("should return error if db returns an error", func() {
-		expectedError := errors.New("unexpected error")
-		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectQuery(".*").
-			WillReturnError(expectedError)
-		s.dbmock.ExpectRollback()
+		err := setup(s.store)
+		s.NoError(err)
 
-		actualError := s.repository.Create(&domain.Provider{})
+		ctx := context.Background()
+		p := &domain.Provider{}
+		err1 := s.repository.Create(ctx, p)
+		s.Nil(err1)
+		s.NotEmpty(p.ID)
 
-		s.ErrorIs(actualError, expectedError)
+		err2 := s.repository.Create(ctx, p)
+		s.NotNil(err2)
+		s.EqualError(err2, "ERROR: duplicate key value violates unique constraint \"providers_pkey\" (SQLSTATE 23505)")
 	})
 }
 
 func (s *ProviderRepositoryTestSuite) TestFind() {
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "providers" WHERE "providers"."deleted_at" IS NULL`)
-
-	s.Run("should return error if db returns error", func() {
-		expectedError := errors.New("unexpected error")
-
-		s.dbmock.ExpectQuery(expectedQuery).
-			WillReturnError(expectedError)
-
-		actualRecords, actualError := s.repository.Find()
-
-		s.EqualError(actualError, expectedError.Error())
-		s.Nil(actualRecords)
-	})
+	err1 := setup(s.store)
+	s.Nil(err1)
 
 	s.Run("should return list of records on success", func() {
-		now := time.Now()
-		providerID := uuid.New().String()
+		ctx := context.Background()
 		expectedRecords := []*domain.Provider{
 			{
-				ID:        providerID,
-				Type:      "type_test",
-				URN:       "urn_test",
-				Config:    &domain.ProviderConfig{},
-				CreatedAt: now,
-				UpdatedAt: now,
+				Type:   "type_test",
+				URN:    "urn_test",
+				Config: &domain.ProviderConfig{},
 			},
 		}
-		expectedRows := sqlmock.NewRows(s.rows).
-			AddRow(
-				providerID,
-				"type_test",
-				"urn_test",
-				"null",
-				now,
-				now,
-			)
+		for _, p := range expectedRecords {
+			err := s.repository.Create(ctx, p)
+			if err != nil {
+				s.Nil(err)
+			}
+		}
 
-		s.dbmock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
+		actualRecords, actualError := s.repository.Find(ctx)
 
-		actualRecords, actualError := s.repository.Find()
-
-		s.Equal(expectedRecords, actualRecords)
 		s.Nil(actualError)
+		s.NotEmpty(actualRecords)
+		s.Equal(len(expectedRecords), len(actualRecords))
 	})
 }
 
@@ -149,66 +130,48 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := provider.ErrEmptyIDParam
 
-		actualResult, actualError := s.repository.GetByID("")
+		actualResult, actualError := s.repository.GetByID(context.Background(), "")
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should return error if record not found", func() {
-		expectedDBError := gorm.ErrRecordNotFound
-		s.dbmock.ExpectQuery(".*").
-			WillReturnError(expectedDBError)
 		expectedError := provider.ErrRecordNotFound
 
-		actualResult, actualError := s.repository.GetByID("1")
+		sampleUUID := uuid.New().String()
+		actualResult, actualError := s.repository.GetByID(context.Background(), sampleUUID)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	s.Run("should return error if got error from db", func() {
-		expectedError := errors.New("unexpected error")
-		s.dbmock.ExpectQuery(".*").
-			WillReturnError(expectedError)
-
-		actualResult, actualError := s.repository.GetByID("1")
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
-	})
-
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "providers" WHERE id = $1 AND "providers"."deleted_at" IS NULL ORDER BY "providers"."id" LIMIT 1`)
 	s.Run("should return record and nil error on success", func() {
-		expectedID := uuid.New().String()
-		timeNow := time.Now()
-		expectedRows := sqlmock.NewRows(s.rows).
-			AddRow(
-				expectedID,
-				"type_test",
-				"urn_test",
-				"null",
-				timeNow,
-				timeNow,
-			)
-		s.dbmock.ExpectQuery(expectedQuery).
-			WillReturnRows(expectedRows)
+		err := setup(s.store)
+		s.Nil(err)
 
-		_, actualError := s.repository.GetByID(expectedID)
+		p := &domain.Provider{
+			Config: &domain.ProviderConfig{},
+		}
+
+		err = s.repository.Create(context.Background(), p)
+		s.Nil(err)
+		s.NotEmpty(p.ID)
+
+		actual, actualError := s.repository.GetByID(context.Background(), p.ID)
 
 		s.Nil(actualError)
-		s.dbmock.ExpectationsWereMet()
+		if diff := cmp.Diff(p, actual, cmpopts.EquateApproxTime(time.Microsecond)); diff != "" {
+			s.T().Errorf("result not match, diff: %v", diff)
+		}
 	})
 }
 
 func (s *ProviderRepositoryTestSuite) TestGetOne() {
 	s.Run("should return provider details on success", func() {
-		timeNow := time.Now()
-
 		expectedType := "test-provider-type"
 		expectedURN := "test-provider-urn"
 		expectedProvider := &domain.Provider{
-			ID:   uuid.New().String(),
 			Type: expectedType,
 			URN:  expectedURN,
 			Config: &domain.ProviderConfig{
@@ -240,56 +203,38 @@ func (s *ProviderRepositoryTestSuite) TestGetOne() {
 					},
 				},
 			},
-			CreatedAt: timeNow,
-			UpdatedAt: timeNow,
 		}
-		expectedConfig, err := json.Marshal(expectedProvider.Config)
-		s.Require().NoError(err)
 
-		expectedQuery := regexp.QuoteMeta(`SELECT * FROM "providers" WHERE type = $1 AND urn = $2 AND "providers"."deleted_at" IS NULL LIMIT 1`)
-		expectedRows := sqlmock.NewRows(s.rows).AddRow(expectedProvider.ID, expectedProvider.Type, expectedProvider.URN, string(expectedConfig), expectedProvider.CreatedAt, expectedProvider.UpdatedAt)
-		s.dbmock.ExpectQuery(expectedQuery).
-			WithArgs(expectedType, expectedURN).
-			WillReturnRows(expectedRows)
+		ctx := context.Background()
+		err := s.repository.Create(ctx, expectedProvider)
+		s.Nil(err)
+		s.NotEmpty(expectedProvider.ID)
 
-		actualProvider, actualError := s.repository.GetOne(expectedType, expectedURN)
+		actualProvider, actualError := s.repository.GetOne(ctx, expectedType, expectedURN)
 
 		s.NoError(actualError)
-		s.Equal(expectedProvider, actualProvider)
-		s.NoError(s.dbmock.ExpectationsWereMet())
+		s.Equal(expectedProvider.Config, actualProvider.Config)
 	})
 
 	s.Run("should return error if provider type is empty", func() {
-		actualProvider, actualError := s.repository.GetOne("", "test-urn")
+		actualProvider, actualError := s.repository.GetOne(context.Background(), "", "test-urn")
 
 		s.ErrorIs(actualError, provider.ErrEmptyProviderType)
 		s.Nil(actualProvider)
 	})
 
 	s.Run("should return error if provider urn is empty", func() {
-		actualProvider, actualError := s.repository.GetOne("test-type", "")
+		actualProvider, actualError := s.repository.GetOne(context.Background(), "test-type", "")
 
 		s.ErrorIs(actualError, provider.ErrEmptyProviderURN)
 		s.Nil(actualProvider)
 	})
 
 	s.Run("should return not found error if record not found", func() {
-		s.dbmock.ExpectQuery(".*").WillReturnError(gorm.ErrRecordNotFound)
-		actualProvider, actualError := s.repository.GetOne("test-type", "test-urn")
+		actualProvider, actualError := s.repository.GetOne(context.Background(), "test-type", "test-urn")
 
 		s.ErrorIs(actualError, provider.ErrRecordNotFound)
 		s.Nil(actualProvider)
-		s.NoError(s.dbmock.ExpectationsWereMet())
-	})
-
-	s.Run("should return error if db returns any error", func() {
-		expectedError := errors.New("unexpected error")
-		s.dbmock.ExpectQuery(".*").WillReturnError(expectedError)
-		actualProvider, actualError := s.repository.GetOne("test-type", "test-urn")
-
-		s.ErrorIs(actualError, expectedError)
-		s.Nil(actualProvider)
-		s.NoError(s.dbmock.ExpectationsWereMet())
 	})
 }
 
@@ -297,31 +242,45 @@ func (s *ProviderRepositoryTestSuite) TestGetTypes() {
 	s.Run("should return error if results empty", func() {
 		expectedError := errors.New("no provider types found")
 
-		s.dbmock.ExpectQuery("select distinct provider_type, type as resource_type from resources").WillReturnRows(sqlmock.NewRows([]string{"provider_type", "resource_type"}))
-
-		actualResult, actualError := s.repository.GetTypes()
+		actualResult, actualError := s.repository.GetTypes(context.Background())
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should return providerTypes and nil error on success", func() {
-		expectedResult := []domain.ProviderType{
-			{Name: "bigquery", ResourceTypes: []string{"dataset", "table"}},
-			{Name: "metabase", ResourceTypes: []string{"group", "collection", "database"}},
+		expectedProviderTypes := map[string][]string{
+			"metabase": {"group", "collection", "database"},
+			"bigquery": {"dataset", "table"},
 		}
-		expectedRows := sqlmock.NewRows([]string{"provider_type", "resource_type"}).
-			AddRow("bigquery", "dataset").
-			AddRow("bigquery", "table").
-			AddRow("metabase", "group").
-			AddRow("metabase", "collection").
-			AddRow("metabase", "database")
 
-		s.dbmock.ExpectQuery("select distinct provider_type, type as resource_type from resources").WillReturnRows(expectedRows)
+		ctx := context.Background()
+		err := s.providerRepository.Create(ctx, &domain.Provider{
+			Type: "bigquery",
+			URN:  "my-bigquery",
+		})
+		s.Require().NoError(err)
+		err = s.providerRepository.Create(ctx, &domain.Provider{
+			Type: "metabase",
+			URN:  "my-metabase",
+		})
+		s.Require().NoError(err)
 
-		actualResult, actualError := s.repository.GetTypes()
+		err = s.resourceRepository.BulkUpsert(context.Background(), []*domain.Resource{
+			{ProviderType: "bigquery", ProviderURN: "my-bigquery", Type: "dataset"},
+			{ProviderType: "bigquery", ProviderURN: "my-bigquery", Type: "table"},
+			{ProviderType: "metabase", ProviderURN: "my-metabase", Type: "group"},
+			{ProviderType: "metabase", ProviderURN: "my-metabase", Type: "collection"},
+			{ProviderType: "metabase", ProviderURN: "my-metabase", Type: "database", URN: "db1"},
+			{ProviderType: "metabase", ProviderURN: "my-metabase", Type: "database", URN: "db2"},
+		})
+		s.Require().NoError(err)
 
-		s.ElementsMatch(expectedResult, actualResult)
+		actualResult, actualError := s.repository.GetTypes(ctx)
+
+		for _, pt := range actualResult {
+			s.ElementsMatch(expectedProviderTypes[pt.Name], pt.ResourceTypes)
+		}
 		s.Nil(actualError)
 	})
 }
@@ -330,7 +289,7 @@ func (s *ProviderRepositoryTestSuite) TestUpdate() {
 	s.Run("should return error if id is empty", func() {
 		expectedError := provider.ErrEmptyIDParam
 
-		actualError := s.repository.Update(&domain.Provider{})
+		actualError := s.repository.Update(context.Background(), &domain.Provider{})
 
 		s.EqualError(actualError, expectedError.Error())
 	})
@@ -343,42 +302,22 @@ func (s *ProviderRepositoryTestSuite) TestUpdate() {
 			},
 		}
 
-		actualError := s.repository.Update(invalidProvider)
+		actualError := s.repository.Update(context.Background(), invalidProvider)
 
 		s.EqualError(actualError, "json: unsupported type: chan int")
 	})
 
-	s.Run("should return error if got error from transaction", func() {
-		expectedError := errors.New("db error")
-		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectExec(".*").
-			WillReturnError(expectedError)
-		s.dbmock.ExpectRollback()
-
-		actualError := s.repository.Update(&domain.Provider{ID: uuid.New().String(), Type: "test-type", URN: "test-urn"})
-
-		s.EqualError(actualError, expectedError.Error())
-	})
-
-	expectedQuery := regexp.QuoteMeta(`UPDATE "providers" SET "id"=$1,"type"=$2,"urn"=$3,"config"=$4,"updated_at"=$5 WHERE "id" = $6`)
-	s.Run("should return error if got error from transaction", func() {
-		config := &domain.ProviderConfig{}
+	s.Run("should return nil error on successful update", func() {
 		expectedID := uuid.New().String()
-		provider := &domain.Provider{
+		p := &domain.Provider{
 			ID:     expectedID,
 			Type:   "test-type",
 			URN:    "test-urn",
-			Config: config,
+			Config: &domain.ProviderConfig{},
 		}
 
-		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectExec(expectedQuery).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-		s.dbmock.ExpectCommit()
-
-		err := s.repository.Update(provider)
-
-		actualID := provider.ID
+		err := s.repository.Update(context.Background(), p)
+		actualID := p.ID
 
 		s.Nil(err)
 		s.Equal(expectedID, actualID)
@@ -386,40 +325,35 @@ func (s *ProviderRepositoryTestSuite) TestUpdate() {
 }
 
 func (s *ProviderRepositoryTestSuite) TestDelete() {
+	err1 := setup(s.store)
+	s.Nil(err1)
+
 	s.Run("should return error if ID param is empty", func() {
-		err := s.repository.Delete("")
+		err := s.repository.Delete(context.Background(), "")
 
 		s.Error(err)
 		s.ErrorIs(err, provider.ErrEmptyIDParam)
 	})
 
-	s.Run("should return error if db.Delete returns error", func() {
-		expectedError := errors.New("test error")
-		s.dbmock.ExpectExec(".*").WillReturnError(expectedError)
-
-		err := s.repository.Delete("abc")
-
-		s.Error(err)
-		s.ErrorIs(err, expectedError)
-	})
-
 	s.Run("should return error if resource not found", func() {
-		s.dbmock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 0))
-
-		err := s.repository.Delete("abc")
+		id := uuid.New().String()
+		err := s.repository.Delete(context.Background(), id)
 
 		s.Error(err)
 		s.ErrorIs(err, provider.ErrRecordNotFound)
 	})
 
 	s.Run("should return nil on success", func() {
-		expectedID := "abcd"
-		s.dbmock.ExpectExec(regexp.QuoteMeta(`UPDATE "providers" SET "deleted_at"=$1 WHERE id = $2 AND "providers"."deleted_at" IS NULL`)).
-			WithArgs(utils.AnyTime{}, expectedID).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+		p := &domain.Provider{
+			Config: &domain.ProviderConfig{},
+		}
 
-		err := s.repository.Delete(expectedID)
+		ctx := context.Background()
+		err := s.repository.Create(ctx, p)
+		s.Nil(err)
+		s.NotEmpty(p.ID)
 
+		err = s.repository.Delete(ctx, p.ID)
 		s.Nil(err)
 	})
 }

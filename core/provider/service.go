@@ -1,8 +1,3 @@
-//go:generate mockery --name=repository --exported
-//go:generate mockery --name=Client --exported
-//go:generate mockery --name=resourceService --exported
-//go:generate mockery --name=auditLogger --exported
-
 package provider
 
 import (
@@ -25,27 +20,31 @@ const (
 	AuditKeyDelete = "provider.delete"
 )
 
+//go:generate mockery --name=repository --exported --with-expecter
 type repository interface {
-	Create(*domain.Provider) error
-	Update(*domain.Provider) error
-	Find() ([]*domain.Provider, error)
-	GetByID(id string) (*domain.Provider, error)
-	GetTypes() ([]domain.ProviderType, error)
-	GetOne(pType, urn string) (*domain.Provider, error)
-	Delete(id string) error
+	Create(context.Context, *domain.Provider) error
+	Update(context.Context, *domain.Provider) error
+	Find(context.Context) ([]*domain.Provider, error)
+	GetByID(ctx context.Context, id string) (*domain.Provider, error)
+	GetTypes(context.Context) ([]domain.ProviderType, error)
+	GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error)
+	Delete(ctx context.Context, id string) error
 }
 
+//go:generate mockery --name=Client --exported --with-expecter
 type Client interface {
 	providers.PermissionManager
 	providers.Client
 }
 
+//go:generate mockery --name=resourceService --exported --with-expecter
 type resourceService interface {
-	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
+	Find(context.Context, domain.ListResourcesFilter) ([]*domain.Resource, error)
 	BulkUpsert(context.Context, []*domain.Resource) error
 	BatchDelete(context.Context, []string) error
 }
 
+//go:generate mockery --name=auditLogger --exported --with-expecter
 type auditLogger interface {
 	Log(ctx context.Context, action string, data interface{}) error
 }
@@ -111,7 +110,7 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 		return err
 	}
 
-	if err := s.repository.Create(p); err != nil {
+	if err := s.repository.Create(ctx, p); err != nil {
 		return err
 	}
 
@@ -141,7 +140,7 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 
 // Find records
 func (s *Service) Find(ctx context.Context) ([]*domain.Provider, error) {
-	providers, err := s.repository.Find()
+	providers, err := s.repository.Find(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -150,15 +149,15 @@ func (s *Service) Find(ctx context.Context) ([]*domain.Provider, error) {
 }
 
 func (s *Service) GetByID(ctx context.Context, id string) (*domain.Provider, error) {
-	return s.repository.GetByID(id)
+	return s.repository.GetByID(ctx, id)
 }
 
 func (s *Service) GetTypes(ctx context.Context) ([]domain.ProviderType, error) {
-	return s.repository.GetTypes()
+	return s.repository.GetTypes(ctx)
 }
 
 func (s *Service) GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error) {
-	return s.repository.GetOne(pType, urn)
+	return s.repository.GetOne(ctx, pType, urn)
 }
 
 // Update updates the non-zero value(s) only
@@ -183,7 +182,7 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 		return err
 	}
 
-	if err := s.repository.Update(p); err != nil {
+	if err := s.repository.Update(ctx, p); err != nil {
 		return err
 	}
 
@@ -196,14 +195,15 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 
 // FetchResources fetches all resources for all registered providers
 func (s *Service) FetchResources(ctx context.Context) error {
-	providers, err := s.repository.Find()
+	providers, err := s.repository.Find(ctx)
 	if err != nil {
 		return err
 	}
 
-	resources := []*domain.Resource{}
+	failedProviders := make([]string, 0)
 	for _, p := range providers {
 		s.logger.Info("fetching resources", "provider_urn", p.URN)
+		resources := []*domain.Resource{}
 		res, err := s.getResources(ctx, p)
 		if err != nil {
 			s.logger.Error("failed to send notifications", "error", err)
@@ -214,9 +214,16 @@ func (s *Service) FetchResources(ctx context.Context) error {
 			"count", len(resources),
 		)
 		resources = append(resources, res...)
+		if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
+			failedProviders = append(failedProviders, p.URN)
+			s.logger.Error("failed to add resources", "provider_urn", p.URN)
+		}
 	}
 
-	return s.resourceService.BulkUpsert(ctx, resources)
+	if len(failedProviders) == 0 {
+		return nil
+	}
+	return fmt.Errorf("failed to add resources %s - %v", "providers", failedProviders)
 }
 
 func (s *Service) GetRoles(ctx context.Context, id string, resourceType string) ([]*domain.Role, error) {
@@ -284,8 +291,8 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 	return nil
 }
 
-func (s *Service) GrantAccess(ctx context.Context, a *domain.Appeal) error {
-	if err := s.validateAppealParam(a); err != nil {
+func (s *Service) GrantAccess(ctx context.Context, a domain.Grant) error {
+	if err := s.validateAccessParam(a); err != nil {
 		return err
 	}
 
@@ -302,8 +309,8 @@ func (s *Service) GrantAccess(ctx context.Context, a *domain.Appeal) error {
 	return c.GrantAccess(p.Config, a)
 }
 
-func (s *Service) RevokeAccess(ctx context.Context, a *domain.Appeal) error {
-	if err := s.validateAppealParam(a); err != nil {
+func (s *Service) RevokeAccess(ctx context.Context, a domain.Grant) error {
+	if err := s.validateAccessParam(a); err != nil {
 		return err
 	}
 
@@ -318,19 +325,17 @@ func (s *Service) RevokeAccess(ctx context.Context, a *domain.Appeal) error {
 	}
 
 	return c.RevokeAccess(p.Config, a)
-	// TODO: handle if permission for the given user with the given role is not found
-	// handle the resolution for the appeal status
 }
 
 func (s *Service) Delete(ctx context.Context, id string) error {
-	p, err := s.repository.GetByID(id)
+	p, err := s.repository.GetByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("getting provider details: %w", err)
 	}
 
-	resources, err := s.resourceService.Find(ctx, map[string]interface{}{
-		"provider_type": p.Type,
-		"provider_urn":  p.URN,
+	resources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
+		ProviderType: p.Type,
+		ProviderURN:  p.URN,
 	})
 	if err != nil {
 		return fmt.Errorf("retrieving related resources: %w", err)
@@ -344,7 +349,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 		return fmt.Errorf("batch deleting resources: %w", err)
 	}
 
-	if err := s.repository.Delete(id); err != nil {
+	if err := s.repository.Delete(ctx, id); err != nil {
 		return err
 	}
 
@@ -355,6 +360,26 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+func (s *Service) ListAccess(ctx context.Context, p domain.Provider, resources []*domain.Resource) (domain.MapResourceAccess, error) {
+	c := s.getClient(p.Type)
+	providerAccesses, err := c.ListAccess(ctx, *p.Config, resources)
+	if err != nil {
+		return nil, err
+	}
+
+	for resourceURN, accessEntries := range providerAccesses {
+		var filteredAccessEntries []domain.AccessEntry
+		for _, ae := range accessEntries {
+			if utils.ContainsString(p.Config.AllowedAccountTypes, ae.AccountType) {
+				filteredAccessEntries = append(filteredAccessEntries, ae)
+			}
+		}
+		providerAccesses[resourceURN] = filteredAccessEntries
+	}
+
+	return providerAccesses, nil
+}
+
 func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*domain.Resource, error) {
 	resources := []*domain.Resource{}
 	c := s.getClient(p.Type)
@@ -362,9 +387,9 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 		return nil, fmt.Errorf("%w: %v", ErrInvalidProviderType, p.Type)
 	}
 
-	existingResources, err := s.resourceService.Find(ctx, map[string]interface{}{
-		"provider_type": p.Type,
-		"provider_urn":  p.URN,
+	existingResources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
+		ProviderType: p.Type,
+		ProviderURN:  p.URN,
 	})
 	if err != nil {
 		return nil, err
@@ -427,6 +452,13 @@ func (s *Service) validateAppealParam(a *domain.Appeal) error {
 	}
 	//TO-DO
 	//Make sure the user and role is required
+	return nil
+}
+
+func (s *Service) validateAccessParam(a domain.Grant) error {
+	if a.Resource == nil {
+		return ErrNilResource
+	}
 	return nil
 }
 

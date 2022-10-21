@@ -16,6 +16,7 @@ type GrpcHandlersSuite struct {
 	policyService   *mocks.PolicyService
 	appealService   *mocks.AppealService
 	approvalService *mocks.ApprovalService
+	grantService    *mocks.GrantService
 	grpcServer      *v1beta1.GRPCServer
 
 	authenticatedUserHeaderKey string
@@ -31,6 +32,7 @@ func (s *GrpcHandlersSuite) setup() {
 	s.policyService = new(mocks.PolicyService)
 	s.appealService = new(mocks.AppealService)
 	s.approvalService = new(mocks.ApprovalService)
+	s.grantService = new(mocks.GrantService)
 	s.authenticatedUserHeaderKey = "test-header-key"
 	s.grpcServer = v1beta1.NewGRPCServer(
 		s.resourceService,
@@ -38,6 +40,7 @@ func (s *GrpcHandlersSuite) setup() {
 		s.policyService,
 		s.appealService,
 		s.approvalService,
+		s.grantService,
 		v1beta1.NewAdapter(),
 		s.authenticatedUserHeaderKey,
 	)

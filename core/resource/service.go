@@ -1,6 +1,3 @@
-//go:generate mockery --name=repository --exported
-//go:generate mockery --name=auditLogger --exported
-
 package resource
 
 import (
@@ -18,15 +15,17 @@ const (
 	AuditKeyResourceBatchDelete = "resource.batchDelete"
 )
 
+//go:generate mockery --name=repository --exported --with-expecter
 type repository interface {
-	Find(filters map[string]interface{}) ([]*domain.Resource, error)
-	GetOne(id string) (*domain.Resource, error)
-	BulkUpsert([]*domain.Resource) error
-	Update(*domain.Resource) error
-	Delete(id string) error
-	BatchDelete([]string) error
+	Find(context.Context, domain.ListResourcesFilter) ([]*domain.Resource, error)
+	GetOne(ctx context.Context, id string) (*domain.Resource, error)
+	BulkUpsert(context.Context, []*domain.Resource) error
+	Update(context.Context, *domain.Resource) error
+	Delete(ctx context.Context, id string) error
+	BatchDelete(context.Context, []string) error
 }
 
+//go:generate mockery --name=auditLogger --exported --with-expecter
 type auditLogger interface {
 	Log(ctx context.Context, action string, data interface{}) error
 }
@@ -57,12 +56,12 @@ func NewService(deps ServiceDeps) *Service {
 }
 
 // Find records based on filters
-func (s *Service) Find(_ context.Context, filters map[string]interface{}) ([]*domain.Resource, error) {
-	return s.repo.Find(filters)
+func (s *Service) Find(ctx context.Context, filter domain.ListResourcesFilter) ([]*domain.Resource, error) {
+	return s.repo.Find(ctx, filter)
 }
 
-func (s *Service) GetOne(id string) (*domain.Resource, error) {
-	r, err := s.repo.GetOne(id)
+func (s *Service) GetOne(ctx context.Context, id string) (*domain.Resource, error) {
+	r, err := s.repo.GetOne(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +71,7 @@ func (s *Service) GetOne(id string) (*domain.Resource, error) {
 
 // BulkUpsert inserts or updates records
 func (s *Service) BulkUpsert(ctx context.Context, resources []*domain.Resource) error {
-	if err := s.repo.BulkUpsert(resources); err != nil {
+	if err := s.repo.BulkUpsert(ctx, resources); err != nil {
 		return err
 	}
 
@@ -85,7 +84,7 @@ func (s *Service) BulkUpsert(ctx context.Context, resources []*domain.Resource) 
 
 // Update updates only details and labels of a resource by ID
 func (s *Service) Update(ctx context.Context, r *domain.Resource) error {
-	existingResource, err := s.GetOne(r.ID)
+	existingResource, err := s.GetOne(ctx, r.ID)
 	if err != nil {
 		return err
 	}
@@ -99,7 +98,7 @@ func (s *Service) Update(ctx context.Context, r *domain.Resource) error {
 		Details: r.Details,
 		Labels:  r.Labels,
 	}
-	if err := s.repo.Update(res); err != nil {
+	if err := s.repo.Update(ctx, res); err != nil {
 		return err
 	}
 
@@ -115,17 +114,17 @@ func (s *Service) Update(ctx context.Context, r *domain.Resource) error {
 func (s *Service) Get(ctx context.Context, ri *domain.ResourceIdentifier) (*domain.Resource, error) {
 	var resource *domain.Resource
 	if ri.ID != "" {
-		if r, err := s.GetOne(ri.ID); err != nil {
+		if r, err := s.GetOne(ctx, ri.ID); err != nil {
 			return nil, err
 		} else {
 			resource = r
 		}
 	} else {
-		if resources, err := s.Find(ctx, map[string]interface{}{
-			"provider_type": ri.ProviderType,
-			"provider_urn":  ri.ProviderURN,
-			"type":          ri.Type,
-			"urn":           ri.URN,
+		if resources, err := s.Find(ctx, domain.ListResourcesFilter{
+			ProviderType: ri.ProviderType,
+			ProviderURN:  ri.ProviderURN,
+			ResourceType: ri.Type,
+			ResourceURN:  ri.URN,
 		}); err != nil {
 			return nil, err
 		} else {
@@ -140,7 +139,7 @@ func (s *Service) Get(ctx context.Context, ri *domain.ResourceIdentifier) (*doma
 }
 
 func (s *Service) Delete(ctx context.Context, id string) error {
-	if err := s.repo.Delete(id); err != nil {
+	if err := s.repo.Delete(ctx, id); err != nil {
 		return err
 	}
 
@@ -152,7 +151,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 }
 
 func (s *Service) BatchDelete(ctx context.Context, ids []string) error {
-	if err := s.repo.BatchDelete(ids); err != nil {
+	if err := s.repo.BatchDelete(ctx, ids); err != nil {
 		return err
 	}
 

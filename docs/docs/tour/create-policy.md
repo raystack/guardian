@@ -23,6 +23,13 @@ steps:
     strategy: manual
     approvers:
       - john.doe@company.com
+appeal:
+  - duration_options:
+    - name: 1 day
+      value: 24h
+    - name: 1 week
+      value: 98h
+  - allow_on_behalf: false
 ```
 
 Check [policy reference](../reference/policy.md) for more details on the policy configuration.<br/>
@@ -70,7 +77,20 @@ $ curl --request POST '{{HOST}}/api/v1beta1/policies' \
         "john.doe@company.com"
       ]
     }
-  ]
+  ],
+   "appeal": {
+        "duration_options": [
+            {
+                "name": "1 Day",
+                "value": "24h"
+            },
+            {
+                "name": "3 Day",
+                "value": "72h"
+            }
+        ],
+        "allow_on_behalf": true
+    }
 }'
 ```
 

@@ -8,6 +8,7 @@ import (
 	"github.com/odpf/guardian/core"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/core/approval"
+	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/core/resource"
@@ -34,6 +35,7 @@ type Services struct {
 	PolicyService   *policy.Service
 	ApprovalService *approval.Service
 	AppealService   *appeal.Service
+	GrantService    *grant.Service
 }
 
 type ServiceDeps struct {
@@ -87,6 +89,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 	resourceRepository := postgres.NewResourceRepository(store.DB())
 	appealRepository := postgres.NewAppealRepository(store.DB())
 	approvalRepository := postgres.NewApprovalRepository(store.DB())
+	grantRepository := postgres.NewGrantRepository(store.DB())
 
 	providerClients := []provider.Client{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, deps.Crypto),
@@ -126,12 +129,22 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Repository:    approvalRepository,
 		PolicyService: policyService,
 	})
+	grantService := grant.NewService(grant.ServiceDeps{
+		Repository:      grantRepository,
+		ProviderService: providerService,
+		ResourceService: resourceService,
+		Notifier:        deps.Notifier,
+		Logger:          deps.Logger,
+		Validator:       deps.Validator,
+		AuditLogger:     auditLogger,
+	})
 	appealService := appeal.NewService(appeal.ServiceDeps{
 		Repository:      appealRepository,
 		ResourceService: resourceService,
 		ApprovalService: approvalService,
 		ProviderService: providerService,
 		PolicyService:   policyService,
+		GrantService:    grantService,
 		IAMManager:      iamManager,
 		Notifier:        deps.Notifier,
 		Validator:       deps.Validator,
@@ -145,5 +158,6 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		policyService,
 		approvalService,
 		appealService,
+		grantService,
 	}, nil
 }

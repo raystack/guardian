@@ -17,4 +17,6 @@ var (
 	ErrInvalidRole             = errors.New("invalid role")
 	ErrDurationIsRequired      = errors.New("having permanent access to this resource is not allowed, access duration is required")
 	ErrOptionsDurationNotFound = errors.New("duration option not found")
+
+	ErrUnimplementedMethod = errors.New("method is not yet implemented")
 )

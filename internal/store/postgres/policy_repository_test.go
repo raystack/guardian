@@ -1,254 +1,164 @@
 package postgres_test
 
 import (
-	"database/sql"
-	"database/sql/driver"
-	"errors"
-	"regexp"
+	"context"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/google/uuid"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/utils"
+	"github.com/odpf/salt/log"
+	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
-	"gorm.io/gorm"
 )
 
 type PolicyRepositoryTestSuite struct {
 	suite.Suite
-	sqldb      *sql.DB
-	dbmock     sqlmock.Sqlmock
+	store      *postgres.Store
+	pool       *dockertest.Pool
+	resource   *dockertest.Resource
 	repository *postgres.PolicyRepository
-
-	rows []string
 }
 
-func (s *PolicyRepositoryTestSuite) SetupTest() {
-	db, mock, _ := mocks.NewStore()
-	s.sqldb, _ = db.DB()
-	s.dbmock = mock
-	s.repository = postgres.NewPolicyRepository(db)
+func (s *PolicyRepositoryTestSuite) SetupSuite() {
+	var err error
 
-	s.rows = []string{
-		"id",
-		"version",
-		"description",
-		"steps",
-		"appeal_config",
-		"labels",
-		"requirements",
-		"iam",
-		"created_at",
-		"updated_at",
+	logger := log.NewLogrus(log.LogrusWithLevel("debug"))
+	s.store, s.pool, s.resource, err = newTestStore(logger)
+	if err != nil {
+		s.T().Fatal(err)
 	}
+
+	s.repository = postgres.NewPolicyRepository(s.store.DB())
 }
 
-func (s *PolicyRepositoryTestSuite) TearDownTest() {
-	s.sqldb.Close()
+func (s *PolicyRepositoryTestSuite) TearDownSuite() {
+	// Clean tests
+	db, err := s.store.DB().DB()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+	err = db.Close()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+
+	err = purgeTestDocker(s.pool, s.resource)
+	if err != nil {
+		s.T().Fatal(err)
+	}
 }
 
 func (s *PolicyRepositoryTestSuite) TestCreate() {
 	s.Run("should return error if payload is invalid", func() {
-		policy := &domain.Policy{
+		p := &domain.Policy{
 			IAM: &domain.IAMConfig{
 				Config: make(chan int),
 			},
 		}
-		actualError := s.repository.Create(policy)
+		actualError := s.repository.Create(context.Background(), p)
 
 		s.EqualError(actualError, "serializing policy: json: unsupported type: chan int")
 	})
 
-	expectedQuery := regexp.QuoteMeta(`INSERT INTO "policies" ("id","version","description","steps","appeal_config","labels","requirements","iam","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`)
-
-	s.Run("should return error if got error from db transaction", func() {
-		p := &domain.Policy{}
-
-		expectedArgs := []driver.Value{
-			p.ID,
-			p.Version,
-			p.Description,
-			"null",
-			"null",
-			"null",
-			"null",
-			"null",
-			utils.AnyTime{},
-			utils.AnyTime{},
-			gorm.DeletedAt{},
-		}
-		expectedError := errors.New("unexpected error")
-
-		s.dbmock.ExpectBegin()
-		s.dbmock.
-			ExpectExec(expectedQuery).
-			WithArgs(expectedArgs...).
-			WillReturnError(expectedError)
-		s.dbmock.ExpectRollback()
-		s.dbmock.MatchExpectationsInOrder(false)
-
-		actualError := s.repository.Create(p)
-
-		s.EqualError(actualError, expectedError.Error())
-	})
-
 	s.Run("should return nil error on success", func() {
-		p := &domain.Policy{}
-
-		expectedArgs := []driver.Value{
-			p.ID,
-			p.Version,
-			p.Description,
-			"null",
-			"null",
-			"null",
-			"null",
-			"null",
-			utils.AnyTime{},
-			utils.AnyTime{},
-			gorm.DeletedAt{},
+		p := &domain.Policy{
+			ID: "test_policy",
 		}
-
-		expectedResult := sqlmock.NewResult(1, 1)
-
-		s.dbmock.ExpectBegin()
-		s.dbmock.ExpectExec(expectedQuery).
-			WithArgs(expectedArgs...).
-			WillReturnResult(expectedResult)
-		s.dbmock.ExpectCommit()
-		s.dbmock.MatchExpectationsInOrder(false)
-
-		err := s.repository.Create(p)
-
+		err := s.repository.Create(context.Background(), p)
 		s.Nil(err)
+		s.NotEmpty(p.ID)
 	})
 }
 
 func (s *PolicyRepositoryTestSuite) TestFind() {
-	expectedQuery := regexp.QuoteMeta(`SELECT * FROM "policies" WHERE "policies"."deleted_at" IS NULL`)
-
-	s.Run("should return error if db returns error", func() {
-		expectedError := errors.New("unexpected error")
-
-		s.dbmock.ExpectQuery(expectedQuery).
-			WillReturnError(expectedError)
-
-		actualPolicies, actualError := s.repository.Find()
-
-		s.EqualError(actualError, expectedError.Error())
-		s.Nil(actualPolicies)
-	})
+	err1 := setup(s.store)
+	s.Nil(err1)
 
 	s.Run("should return list of policies on success", func() {
-		now := time.Now()
+		ctx := context.Background()
 		expectedPolicies := []*domain.Policy{
 			{
-				ID:           "",
 				Version:      1,
-				Description:  "",
+				Description:  "test_policy",
 				AppealConfig: nil,
-				CreatedAt:    now,
-				UpdatedAt:    now,
 			},
 		}
-		expectedRows := sqlmock.NewRows(s.rows).
-			AddRow(
-				"",
-				1,
-				"",
-				"null",
-				"null",
-				"null",
-				"null",
-				"null",
-				now,
-				now,
-			)
 
-		s.dbmock.ExpectQuery(expectedQuery).WillReturnRows(expectedRows)
+		for _, pol := range expectedPolicies {
+			err := s.repository.Create(ctx, pol)
+			s.Nil(err)
+		}
 
-		actualPolicies, actualError := s.repository.Find()
+		actualPolicies, actualError := s.repository.Find(ctx)
 
-		s.Equal(expectedPolicies, actualPolicies)
+		if diff := cmp.Diff(expectedPolicies, actualPolicies, cmpopts.EquateApproxTime(time.Microsecond)); diff != "" {
+			s.T().Errorf("result not match, diff: %v", diff)
+		}
 		s.Nil(actualError)
 	})
 }
 
 func (s *PolicyRepositoryTestSuite) TestGetOne() {
+	err1 := setup(s.store)
+	s.Nil(err1)
+
 	s.Run("should return error if record not found", func() {
-		expectedDBError := gorm.ErrRecordNotFound
-		s.dbmock.ExpectQuery(".*").
-			WillReturnError(expectedDBError)
 		expectedError := policy.ErrPolicyNotFound
 
-		actualResult, actualError := s.repository.GetOne("", 0)
-
-		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
-	})
-
-	s.Run("should return error if got error from db", func() {
-		expectedError := errors.New("unexpected error")
-		s.dbmock.ExpectQuery(".*").
-			WillReturnError(expectedError)
-
-		actualResult, actualError := s.repository.GetOne("", 0)
+		sampleUUID := uuid.New().String()
+		actualResult, actualError := s.repository.GetOne(context.Background(), sampleUUID, 0)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should pass args based on the version param", func() {
-		testCases := []struct {
-			name            string
-			expectedID      string
-			expectedVersion uint
-			expectedQuery   string
-			expectedArgs    []driver.Value
-		}{
+		dummyPolicies := []*domain.Policy{
 			{
-				name:            "should not apply version condition if version param given is 0",
-				expectedID:      "test-id",
-				expectedVersion: 0,
-				expectedQuery:   regexp.QuoteMeta(`SELECT * FROM "policies" WHERE id = $1 AND "policies"."deleted_at" IS NULL ORDER BY version desc,"policies"."id" LIMIT 1`),
-				expectedArgs:    []driver.Value{"test-id"},
+				ID:      "test-id",
+				Version: 0,
 			},
 			{
-				name:            "should apply version condition if version param is exists",
-				expectedID:      "test-id",
+				ID:      "test-id",
+				Version: 1,
+			},
+			{
+				ID:      "test-id",
+				Version: 2,
+			},
+		}
+		for _, p := range dummyPolicies {
+			err := s.repository.Create(context.Background(), p)
+			s.Require().NoError(err)
+		}
+
+		testCases := []struct {
+			name            string
+			versionParam    uint
+			expectedVersion uint
+		}{
+			{
+				name:            "should return latest version if version param is empty",
+				expectedVersion: 2,
+			},
+			{
+				name:            "should return expected version",
+				versionParam:    1,
 				expectedVersion: 1,
-				expectedQuery:   regexp.QuoteMeta(`SELECT * FROM "policies" WHERE (id = $1 AND version = $2) AND "policies"."deleted_at" IS NULL ORDER BY version desc,"policies"."id" LIMIT 1`),
-				expectedArgs:    []driver.Value{"test-id", 1},
 			},
 		}
 
 		for _, tc := range testCases {
 			s.Run(tc.name, func() {
-				now := time.Now()
-				expectedRowValues := []driver.Value{
-					tc.expectedID,
-					tc.expectedVersion,
-					"",
-					"null",
-					"null",
-					"null",
-					"null",
-					"null",
-					now,
-					now,
-				}
-				s.dbmock.ExpectQuery(tc.expectedQuery).
-					WithArgs(tc.expectedArgs...).
-					WillReturnRows(sqlmock.NewRows(s.rows).AddRow(expectedRowValues...))
+				actualPolicy, actualError := s.repository.GetOne(context.Background(), "test-id", tc.versionParam)
 
-				_, actualError := s.repository.GetOne(tc.expectedID, tc.expectedVersion)
-
-				s.Nil(actualError)
-				s.dbmock.ExpectationsWereMet()
+				s.NoError(actualError)
+				s.Equal(tc.expectedVersion, actualPolicy.Version)
 			})
 		}
 	})

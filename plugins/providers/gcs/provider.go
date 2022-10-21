@@ -18,6 +18,7 @@ type Crypto interface {
 	domain.Crypto
 }
 type Provider struct {
+	provider.UnimplementedClient
 	provider.PermissionManager
 
 	typeName string
@@ -95,7 +96,7 @@ func (p *Provider) GetType() string {
 	return p.typeName
 }
 
-func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
+func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
 	if err := validateProviderConfigAndAppealParams(pc, a); err != nil {
 		return fmt.Errorf("invalid provider/appeal config: %w", err)
 	}
@@ -136,7 +137,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	return ErrInvalidResourceType
 }
 
-func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
+func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
 	if err := validateProviderConfigAndAppealParams(pc, a); err != nil {
 		return fmt.Errorf("invalid provider/appeal config: %w", err)
 	}
@@ -186,12 +187,9 @@ func (p *Provider) GetAccountTypes() []string {
 	return []string{AccountTypeUser, AccountTypeServiceAccount, AccountTypeGroup, AccountTypeDomain}
 }
 
-func validateProviderConfigAndAppealParams(pc *domain.ProviderConfig, a *domain.Appeal) error {
+func validateProviderConfigAndAppealParams(pc *domain.ProviderConfig, a domain.Grant) error {
 	if pc == nil {
 		return ErrNilProviderConfig
-	}
-	if a == nil {
-		return ErrNilAppeal
 	}
 	if a.Resource == nil {
 		return ErrNilResource
@@ -205,7 +203,7 @@ func validateProviderConfigAndAppealParams(pc *domain.ProviderConfig, a *domain.
 	return nil
 }
 
-func getPermissions(a *domain.Appeal) []Permission {
+func getPermissions(a domain.Grant) []Permission {
 	var permissions []Permission
 	for _, p := range a.Permissions {
 		permissions = append(permissions, Permission(p))

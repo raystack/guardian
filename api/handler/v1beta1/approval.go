@@ -67,7 +67,6 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 		case appeal.ErrAppealStatusCanceled,
 			appeal.ErrAppealStatusApproved,
 			appeal.ErrAppealStatusRejected,
-			appeal.ErrAppealStatusTerminated,
 			appeal.ErrAppealStatusUnrecognized,
 			appeal.ErrApprovalDependencyIsPending,
 			appeal.ErrApprovalStatusUnrecognized,

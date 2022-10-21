@@ -1,6 +1,8 @@
 package v1beta1
 
 import (
+	"fmt"
+
 	"github.com/mitchellh/mapstructure"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/domain"
@@ -289,6 +291,7 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
 		}
 		policy.AppealConfig = &domain.PolicyAppealConfig{
 			DurationOptions: durationOptions,
+			AllowOnBehalf:   p.GetAppeal().GetAllowOnBehalf(),
 		}
 	}
 
@@ -425,6 +428,7 @@ func (a *adapter) ToPolicyAppealConfigProto(p *domain.Policy) *guardianv1beta1.P
 		}
 	}
 	policyAppealConfigProto.DurationOptions = durationOptions
+	policyAppealConfigProto.AllowOnBehalf = p.AppealConfig.AllowOnBehalf
 	return policyAppealConfigProto
 }
 
@@ -498,8 +502,6 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 		Permissions:   appeal.Permissions,
 		Options:       a.toAppealOptionsProto(appeal.Options),
 		Labels:        appeal.Labels,
-		RevokedBy:     appeal.RevokedBy,
-		RevokeReason:  appeal.RevokeReason,
 	}
 
 	if appeal.Resource != nil {
@@ -545,9 +547,12 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 	if !appeal.UpdatedAt.IsZero() {
 		appealProto.UpdatedAt = timestamppb.New(appeal.UpdatedAt)
 	}
-	if !appeal.RevokedAt.IsZero() {
-		appealProto.RevokedAt = timestamppb.New(appeal.RevokedAt)
+
+	grantProto, err := a.ToGrantProto(appeal.Grant)
+	if err != nil {
+		return nil, fmt.Errorf("parsing grant: %w", err)
 	}
+	appealProto.Grant = grantProto
 
 	return appealProto, nil
 }
@@ -616,6 +621,100 @@ func (a *adapter) ToApprovalProto(approval *domain.Approval) (*guardianv1beta1.A
 	}
 
 	return approvalProto, nil
+}
+
+func (a *adapter) FromGrantProto(g *guardianv1beta1.Grant) *domain.Grant {
+	if g == nil {
+		return nil
+	}
+
+	grant := &domain.Grant{
+		ID:               g.GetId(),
+		Status:           domain.GrantStatus(g.GetStatus()),
+		StatusInProvider: domain.GrantStatus(g.GetStatusInProvider()),
+		AccountID:        g.GetAccountId(),
+		AccountType:      g.GetAccountType(),
+		ResourceID:       g.GetResourceId(),
+		Role:             g.GetRole(),
+		Permissions:      g.GetPermissions(),
+		AppealID:         g.GetAppealId(),
+		Source:           domain.GrantSource(g.Source),
+		RevokedBy:        g.GetRevokedBy(),
+		RevokeReason:     g.GetRevokeReason(),
+		CreatedBy:        g.GetCreatedBy(),
+		Owner:            g.GetOwner(),
+		Resource:         a.FromResourceProto(g.GetResource()),
+	}
+
+	if g.GetExpirationDate() != nil {
+		t := g.GetExpirationDate().AsTime()
+		grant.ExpirationDate = &t
+	}
+	if g.GetRevokedAt() != nil {
+		t := g.GetRevokedAt().AsTime()
+		grant.RevokedAt = &t
+	}
+	if g.GetCreatedAt() != nil {
+		grant.CreatedAt = g.GetCreatedAt().AsTime()
+	}
+	if g.GetUpdatedAt() != nil {
+		grant.UpdatedAt = g.GetUpdatedAt().AsTime()
+	}
+
+	return grant
+}
+
+func (a *adapter) ToGrantProto(grant *domain.Grant) (*guardianv1beta1.Grant, error) {
+	if grant == nil {
+		return nil, nil
+	}
+
+	grantProto := &guardianv1beta1.Grant{
+		Id:               grant.ID,
+		Status:           string(grant.Status),
+		StatusInProvider: string(grant.StatusInProvider),
+		AccountId:        grant.AccountID,
+		AccountType:      grant.AccountType,
+		ResourceId:       grant.ResourceID,
+		Role:             grant.Role,
+		Permissions:      grant.Permissions,
+		IsPermanent:      grant.IsPermanent,
+		AppealId:         grant.AppealID,
+		Source:           string(grant.Source),
+		RevokedBy:        grant.RevokedBy,
+		RevokeReason:     grant.RevokeReason,
+		CreatedBy:        grant.CreatedBy,
+		Owner:            grant.Owner,
+	}
+
+	if grant.ExpirationDate != nil {
+		grantProto.ExpirationDate = timestamppb.New(*grant.ExpirationDate)
+	}
+	if grant.RevokedAt != nil {
+		grantProto.RevokedAt = timestamppb.New(*grant.RevokedAt)
+	}
+	if !grant.CreatedAt.IsZero() {
+		grantProto.CreatedAt = timestamppb.New(grant.CreatedAt)
+	}
+	if !grant.UpdatedAt.IsZero() {
+		grantProto.UpdatedAt = timestamppb.New(grant.UpdatedAt)
+	}
+	if grant.Resource != nil {
+		resourceProto, err := a.ToResourceProto(grant.Resource)
+		if err != nil {
+			return nil, fmt.Errorf("parsing resource: %w", err)
+		}
+		grantProto.Resource = resourceProto
+	}
+	if grant.Appeal != nil {
+		appealProto, err := a.ToAppealProto(grant.Appeal)
+		if err != nil {
+			return nil, fmt.Errorf("parsing appeal: %w", err)
+		}
+		grantProto.Appeal = appealProto
+	}
+
+	return grantProto, nil
 }
 
 func (a *adapter) fromConditionProto(c *guardianv1beta1.Condition) *domain.Condition {

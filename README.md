@@ -37,36 +37,79 @@ Download the appropriate version for your platform from [releases](https://githu
 You don’t need to install it into a global location. This works well for shared hosts and other systems where you don’t have a privileged account.
 Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
 
-#### Homebrew
+#### macOS
+
+`guardian` is available via a Homebrew Tap, and as downloadable binary from the [releases](https://github.com/odpf/guardian/releases/latest) page:
 
 ```sh
-# Install guardian (requires homebrew installed)
-$ brew install odpf/tap/guardian
+brew install odpf/tap/guardian
+```
 
-# Upgrade guardian (requires homebrew installed)
-$ brew upgrade guardian
+To upgrade to the latest version:
 
-# Check for installed guardian version
-$ guardian version
+```
+brew upgrade guardian
+```
+
+Check for installed guardian version
+
+```sh
+guardian version
+```
+
+#### Linux
+
+`guardian` is available as downloadable binaries from the [releases](https://github.com/odpf/guardian/releases/latest) page. Download the `.deb` or `.rpm` from the releases page and install with `sudo dpkg -i` and `sudo rpm -i` respectively.
+
+#### Windows
+
+`guardian` is available via [scoop](https://scoop.sh/), and as a downloadable binary from the [releases](https://github.com/odpf/guardian/releases/latest) page:
+
+```
+scoop bucket add guardian https://github.com/odpf/scoop-bucket.git
+```
+
+To upgrade to the latest version:
+
+```
+scoop update guardian
+```
+
+#### Docker
+
+We provide ready to use Docker container images. To pull the latest image:
+
+```
+docker pull odpf/guardian:latest
+```
+
+To pull a specific version:
+
+```
+docker pull odpf/guardian:v0.3.2
 ```
 
 ## Usage
 
 Guardian is purely API-driven. It is very easy to get started with Guardian. It provides CLI, HTTP and GRPC APIs for simpler developer experience.
 
-### CLI
+#### CLI
 
 Guardian CLI is fully featured and simple to use, even for those who have very limited experience working from the command line. Run `guardian --help` to see list of all available commands and instructions to use.
 
-```
-# List of commands
-$ guardian --help
+List of commands
 
-# Print command reference
-$ guardian reference
+```
+guardian --help
 ```
 
-### API
+Print command reference
+
+```sh
+guardian reference
+```
+
+#### API
 
 Guardian provides a fully-featured GRPC and HTTP API to interact with Guardian server. Both APIs adheres to a set of standards that are rigidly followed. Please refer to [proton](https://github.com/odpf/proton/tree/main/odpf/guardian/v1beta1) for GRPC API definitions.
 
@@ -81,38 +124,60 @@ Guardian provides a fully-featured GRPC and HTTP API to interact with Guardian s
 
 </details>
 
-```sh
-# Clone the repo
-$ git clone git@github.com:odpf/guardian.git
+Clone the repo
 
-# Install all the golang dependencies
-$ make install
+```
+git clone git@github.com:odpf/guardian.git
+```
 
-# Check all build commands available
-$ make help
+Install all the golang dependencies
 
-# Build meteor binary file
-$ make build
+```
+make setup
+```
 
-# Init config
-$ cp internal/server/config.yaml config.yaml
-$ ./guardian config init
+Build guardian binary file
 
-# Run database migrations
-$ ./guardian server migrate
+```
+make build
+```
 
-# Start guardian server
-$ ./guardian server start
+Init server config. Customise with your local configurations.
+
+```
+make config
+```
+
+Run database migrations
+
+```
+./guardian server migrate -c config.yaml
+```
+
+Start guardian server
+
+```
+./guardian server start -c config.yaml
+```
+
+Initialise client configurations
+
+```
+./guardian config init
 ```
 
 ## Running tests
 
-```sh
-# Running all unit tests
-$ make test
+Running all unit tests
 
-# Print code coverage
-$ make coverage
+```sh
+make test
+```
+
+Print code coverage
+
+```
+make coverage
 ```
 
 ## Contribute

@@ -7,8 +7,8 @@ import (
 
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
+	"github.com/odpf/guardian/plugins/providers/bigquery/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -26,9 +26,9 @@ func TestGetType(t *testing.T) {
 
 func TestCreateConfig(t *testing.T) {
 	t.Run("should return error if error in credentials are invalid/mandatory fields are missing", func(t *testing.T) {
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -73,9 +73,9 @@ func TestCreateConfig(t *testing.T) {
 	})
 
 	t.Run("should return error if error in parse and validate configurations", func(t *testing.T) {
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -145,7 +145,7 @@ func TestCreateConfig(t *testing.T) {
 				},
 			},
 		}
-		crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
+		encryptor.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
 
 		for _, tc := range testcases {
 			t.Run(tc.name, func(t *testing.T) {
@@ -157,9 +157,9 @@ func TestCreateConfig(t *testing.T) {
 
 	t.Run("should return error if error in parsing or validaing permissions", func(t *testing.T) {
 		providerURN := "test-URN"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -190,9 +190,9 @@ func TestCreateConfig(t *testing.T) {
 
 	t.Run("should return error if error in encrypting the credentials", func(t *testing.T) {
 		providerURN := "test-URN"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -210,7 +210,7 @@ func TestCreateConfig(t *testing.T) {
 			URN: providerURN,
 		}
 		expectedError := errors.New("error in encrypting SAK")
-		crypto.On("Encrypt", `{"type":"service_account"}`).Return("", expectedError)
+		encryptor.On("Encrypt", `{"type":"service_account"}`).Return("", expectedError)
 		actualError := p.CreateConfig(pc)
 
 		assert.Equal(t, expectedError, actualError)
@@ -218,9 +218,9 @@ func TestCreateConfig(t *testing.T) {
 
 	t.Run("should return nil error and create the config on success", func(t *testing.T) {
 		providerURN := "test-URN"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -243,19 +243,19 @@ func TestCreateConfig(t *testing.T) {
 			},
 			URN: providerURN,
 		}
-		crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
+		encryptor.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
 
 		actualError := p.CreateConfig(pc)
 
 		assert.NoError(t, actualError)
-		crypto.AssertExpectations(t)
+		encryptor.AssertExpectations(t)
 	})
 }
 
 func TestGetResources(t *testing.T) {
 	t.Run("should error when credentials are invalid", func(t *testing.T) {
-		crypto := new(mocks.Crypto)
-		p := bigquery.NewProvider("", crypto)
+		encryptor := new(mocks.Encryptor)
+		p := bigquery.NewProvider("", encryptor)
 		pc := &domain.ProviderConfig{
 			Type:        domain.ProviderTypeBigQuery,
 			URN:         "test-project-id",
@@ -269,9 +269,9 @@ func TestGetResources(t *testing.T) {
 	})
 
 	t.Run("should return dataset resource object", func(t *testing.T) {
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", crypto)
+		p := bigquery.NewProvider("", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -350,7 +350,7 @@ func TestGrantAccess(t *testing.T) {
 		testCases := []struct {
 			name           string
 			providerConfig *domain.ProviderConfig
-			appeal         *domain.Appeal
+			grant          domain.Grant
 			expectedError  error
 		}{
 			{
@@ -363,16 +363,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal:        nil,
-				expectedError: bigquery.ErrNilAppeal,
-			},
-			{
-				providerConfig: &domain.ProviderConfig{
-					Type:                "bigquery",
-					URN:                 "test-URN",
-					AllowedAccountTypes: []string{"user", "serviceAccount"},
-				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 				},
@@ -384,7 +375,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -400,7 +391,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -416,7 +407,7 @@ func TestGrantAccess(t *testing.T) {
 		for _, tc := range testCases {
 			p := initProvider()
 			pc := tc.providerConfig
-			a := tc.appeal
+			a := tc.grant
 
 			actualError := p.GrantAccess(pc, a)
 			assert.EqualError(t, actualError, tc.expectedError.Error())
@@ -440,14 +431,14 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 		assert.Error(t, actualError)
 	})
 
@@ -455,9 +446,9 @@ func TestGrantAccess(t *testing.T) {
 		expectedError := errors.New("Test-Error")
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -484,7 +475,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -498,7 +489,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 
 		assert.Equal(t, expectedError, actualError)
 	})
@@ -506,9 +497,9 @@ func TestGrantAccess(t *testing.T) {
 	t.Run("should grant access to dataset resource and return no error on success", func(t *testing.T) {
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -535,7 +526,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -549,7 +540,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
@@ -559,9 +550,9 @@ func TestGrantAccess(t *testing.T) {
 		providerURN := "test-URN"
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -588,7 +579,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				URN:          "p_id:d_id.t_id",
@@ -604,7 +595,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
@@ -615,7 +606,7 @@ func TestRevokeAccess(t *testing.T) {
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			providerConfig *domain.ProviderConfig
-			appeal         *domain.Appeal
+			grant          domain.Grant
 			expectedError  error
 		}{
 			{
@@ -628,16 +619,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal:        nil,
-				expectedError: bigquery.ErrNilAppeal,
-			},
-			{
-				providerConfig: &domain.ProviderConfig{
-					Type:                "bigquery",
-					URN:                 "test-URN",
-					AllowedAccountTypes: []string{"user", "serviceAccount"},
-				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 				},
@@ -649,7 +631,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -665,7 +647,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -681,7 +663,7 @@ func TestRevokeAccess(t *testing.T) {
 		for _, tc := range testCases {
 			p := initProvider()
 			pc := tc.providerConfig
-			a := tc.appeal
+			a := tc.grant
 
 			actualError := p.RevokeAccess(pc, a)
 			assert.EqualError(t, actualError, tc.expectedError.Error())
@@ -705,14 +687,14 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
 			Role: "test-role",
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(pc, g)
 		assert.Error(t, actualError)
 	})
 
@@ -720,9 +702,9 @@ func TestRevokeAccess(t *testing.T) {
 		expectedError := errors.New("Test-Error")
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -749,7 +731,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -763,7 +745,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(pc, g)
 
 		assert.Equal(t, expectedError, actualError)
 	})
@@ -771,9 +753,9 @@ func TestRevokeAccess(t *testing.T) {
 	t.Run("should Revoke access to dataset resource and return no error on success", func(t *testing.T) {
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -800,7 +782,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				ProviderType: "bigquery",
@@ -814,7 +796,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(pc, g)
 
 		assert.Nil(t, actualError)
 	})
@@ -823,9 +805,9 @@ func TestRevokeAccess(t *testing.T) {
 		providerURN := "test-URN"
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		crypto := new(mocks.Crypto)
+		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", crypto)
+		p := bigquery.NewProvider("bigquery", encryptor)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -852,7 +834,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Role: "VIEWER",
 			Resource: &domain.Resource{
 				URN:          "p_id:d_id.t_id",
@@ -868,7 +850,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(pc, g)
 
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
@@ -953,6 +935,6 @@ func TestGetRoles(t *testing.T) {
 }
 
 func initProvider() *bigquery.Provider {
-	crypto := new(mocks.Crypto)
+	crypto := new(mocks.Encryptor)
 	return bigquery.NewProvider("bigquery", crypto)
 }

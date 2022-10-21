@@ -14,6 +14,14 @@ type ResourceService struct {
 	mock.Mock
 }
 
+type ResourceService_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ResourceService) EXPECT() *ResourceService_Expecter {
+	return &ResourceService_Expecter{mock: &_m.Mock}
+}
+
 // BatchDelete provides a mock function with given fields: _a0, _a1
 func (_m *ResourceService) BatchDelete(_a0 context.Context, _a1 []string) error {
 	ret := _m.Called(_a0, _a1)
@@ -26,6 +34,30 @@ func (_m *ResourceService) BatchDelete(_a0 context.Context, _a1 []string) error 
 	}
 
 	return r0
+}
+
+// ResourceService_BatchDelete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BatchDelete'
+type ResourceService_BatchDelete_Call struct {
+	*mock.Call
+}
+
+// BatchDelete is a helper method to define mock.On call
+//  - _a0 context.Context
+//  - _a1 []string
+func (_e *ResourceService_Expecter) BatchDelete(_a0 interface{}, _a1 interface{}) *ResourceService_BatchDelete_Call {
+	return &ResourceService_BatchDelete_Call{Call: _e.mock.On("BatchDelete", _a0, _a1)}
+}
+
+func (_c *ResourceService_BatchDelete_Call) Run(run func(_a0 context.Context, _a1 []string)) *ResourceService_BatchDelete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]string))
+	})
+	return _c
+}
+
+func (_c *ResourceService_BatchDelete_Call) Return(_a0 error) *ResourceService_BatchDelete_Call {
+	_c.Call.Return(_a0)
+	return _c
 }
 
 // BulkUpsert provides a mock function with given fields: _a0, _a1
@@ -42,12 +74,36 @@ func (_m *ResourceService) BulkUpsert(_a0 context.Context, _a1 []*domain.Resourc
 	return r0
 }
 
+// ResourceService_BulkUpsert_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkUpsert'
+type ResourceService_BulkUpsert_Call struct {
+	*mock.Call
+}
+
+// BulkUpsert is a helper method to define mock.On call
+//  - _a0 context.Context
+//  - _a1 []*domain.Resource
+func (_e *ResourceService_Expecter) BulkUpsert(_a0 interface{}, _a1 interface{}) *ResourceService_BulkUpsert_Call {
+	return &ResourceService_BulkUpsert_Call{Call: _e.mock.On("BulkUpsert", _a0, _a1)}
+}
+
+func (_c *ResourceService_BulkUpsert_Call) Run(run func(_a0 context.Context, _a1 []*domain.Resource)) *ResourceService_BulkUpsert_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]*domain.Resource))
+	})
+	return _c
+}
+
+func (_c *ResourceService_BulkUpsert_Call) Return(_a0 error) *ResourceService_BulkUpsert_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
 // Find provides a mock function with given fields: _a0, _a1
-func (_m *ResourceService) Find(_a0 context.Context, _a1 map[string]interface{}) ([]*domain.Resource, error) {
+func (_m *ResourceService) Find(_a0 context.Context, _a1 domain.ListResourcesFilter) ([]*domain.Resource, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 []*domain.Resource
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]interface{}) []*domain.Resource); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ListResourcesFilter) []*domain.Resource); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -56,11 +112,35 @@ func (_m *ResourceService) Find(_a0 context.Context, _a1 map[string]interface{})
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, map[string]interface{}) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, domain.ListResourcesFilter) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
 
 	return r0, r1
+}
+
+// ResourceService_Find_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Find'
+type ResourceService_Find_Call struct {
+	*mock.Call
+}
+
+// Find is a helper method to define mock.On call
+//  - _a0 context.Context
+//  - _a1 domain.ListResourcesFilter
+func (_e *ResourceService_Expecter) Find(_a0 interface{}, _a1 interface{}) *ResourceService_Find_Call {
+	return &ResourceService_Find_Call{Call: _e.mock.On("Find", _a0, _a1)}
+}
+
+func (_c *ResourceService_Find_Call) Run(run func(_a0 context.Context, _a1 domain.ListResourcesFilter)) *ResourceService_Find_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(domain.ListResourcesFilter))
+	})
+	return _c
+}
+
+func (_c *ResourceService_Find_Call) Return(_a0 []*domain.Resource, _a1 error) *ResourceService_Find_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
 }

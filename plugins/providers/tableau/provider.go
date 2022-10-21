@@ -7,6 +7,7 @@ import (
 )
 
 type provider struct {
+	pv.UnimplementedClient
 	pv.PermissionManager
 
 	typeName string
@@ -47,11 +48,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		return nil, err
 	}
 
-	var resourceTypes []string
-	for _, rc := range pc.Resources {
-		resourceTypes = append(resourceTypes, rc.Type)
-	}
-
+	resourceTypes := pc.GetResourceTypes()
 	resources := []*domain.Resource{}
 
 	if containsString(resourceTypes, ResourceTypeWorkbook) {
@@ -122,7 +119,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	return resources, nil
 }
 
-func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
+func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -234,7 +231,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	return ErrInvalidResourceType
 }
 
-func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
+func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -375,7 +372,7 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Table
 	return client, nil
 }
 
-func getPermissions(a *domain.Appeal) []Permission {
+func getPermissions(a domain.Grant) []Permission {
 	var permissions []Permission
 	for _, p := range a.Permissions {
 		permissions = append(permissions, toPermission(p))

@@ -1,8 +1,3 @@
-//go:generate mockery --name=repository --exported
-//go:generate mockery --name=providerService --exported
-//go:generate mockery --name=resourceService --exported
-//go:generate mockery --name=auditLogger --exported
-
 package policy
 
 import (
@@ -24,21 +19,25 @@ const (
 	AuditKeyPolicyUpdate = "policy.update"
 )
 
+//go:generate mockery --name=repository --exported --with-expecter
 type repository interface {
-	Create(*domain.Policy) error
-	Find() ([]*domain.Policy, error)
-	GetOne(id string, version uint) (*domain.Policy, error)
+	Create(context.Context, *domain.Policy) error
+	Find(context.Context) ([]*domain.Policy, error)
+	GetOne(ctx context.Context, id string, version uint) (*domain.Policy, error)
 }
 
+//go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
 	GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error)
 	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
 }
 
+//go:generate mockery --name=resourceService --exported --with-expecter
 type resourceService interface {
 	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
 }
 
+//go:generate mockery --name=auditLogger --exported --with-expecter
 type auditLogger interface {
 	Log(ctx context.Context, action string, data interface{}) error
 }
@@ -104,7 +103,7 @@ func (s *Service) Create(ctx context.Context, p *domain.Policy) error {
 		}
 		p.IAM.Config = sensitiveConfig
 	}
-	if err := s.repository.Create(p); err != nil {
+	if err := s.repository.Create(ctx, p); err != nil {
 		return err
 	}
 
@@ -123,7 +122,7 @@ func (s *Service) Create(ctx context.Context, p *domain.Policy) error {
 
 // Find records
 func (s *Service) Find(ctx context.Context) ([]*domain.Policy, error) {
-	policies, err := s.repository.Find()
+	policies, err := s.repository.Find(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +139,7 @@ func (s *Service) Find(ctx context.Context) ([]*domain.Policy, error) {
 
 // GetOne record
 func (s *Service) GetOne(ctx context.Context, id string, version uint) (*domain.Policy, error) {
-	p, err := s.repository.GetOne(id, version)
+	p, err := s.repository.GetOne(ctx, id, version)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +187,7 @@ func (s *Service) Update(ctx context.Context, p *domain.Policy) error {
 		p.IAM.Config = sensitiveConfig
 	}
 
-	if err := s.repository.Create(p); err != nil {
+	if err := s.repository.Create(ctx, p); err != nil {
 		return err
 	}
 

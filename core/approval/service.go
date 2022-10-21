@@ -1,6 +1,3 @@
-//go:generate mockery --name=repository --exported --with-expecter
-//go:generate mockery --name=policyService --exported
-
 package approval
 
 import (
@@ -13,13 +10,15 @@ import (
 	"github.com/odpf/guardian/pkg/evaluator"
 )
 
+//go:generate mockery --name=repository --exported --with-expecter
 type repository interface {
-	BulkInsert([]*domain.Approval) error
-	ListApprovals(*domain.ListApprovalsFilter) ([]*domain.Approval, error)
-	AddApprover(*domain.Approver) error
-	DeleteApprover(approvalID, email string) error
+	BulkInsert(context.Context, []*domain.Approval) error
+	ListApprovals(context.Context, *domain.ListApprovalsFilter) ([]*domain.Approval, error)
+	AddApprover(context.Context, *domain.Approver) error
+	DeleteApprover(ctx context.Context, approvalID, email string) error
 }
 
+//go:generate mockery --name=policyService --exported --with-expecter
 type policyService interface {
 	GetOne(context.Context, string, uint) (*domain.Policy, error)
 }
@@ -41,11 +40,11 @@ func NewService(deps ServiceDeps) *Service {
 }
 
 func (s *Service) ListApprovals(ctx context.Context, filters *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
-	return s.repo.ListApprovals(filters)
+	return s.repo.ListApprovals(ctx, filters)
 }
 
 func (s *Service) BulkInsert(ctx context.Context, approvals []*domain.Approval) error {
-	return s.repo.BulkInsert(approvals)
+	return s.repo.BulkInsert(ctx, approvals)
 }
 
 func (s *Service) AdvanceApproval(ctx context.Context, appeal *domain.Appeal) error {
@@ -121,22 +120,22 @@ func (s *Service) AdvanceApproval(ctx context.Context, appeal *domain.Appeal) er
 			}
 		}
 		if i == len(appeal.Approvals)-1 && (approval.Status == domain.ApprovalStatusSkipped || approval.Status == domain.ApprovalStatusApproved) {
-			appeal.Status = domain.AppealStatusActive
+			appeal.Status = domain.AppealStatusApproved
 		}
 	}
 
 	return nil
 }
 
-func (s *Service) AddApprover(_ context.Context, approvalID, email string) error {
-	return s.repo.AddApprover(&domain.Approver{
+func (s *Service) AddApprover(ctx context.Context, approvalID, email string) error {
+	return s.repo.AddApprover(ctx, &domain.Approver{
 		ApprovalID: approvalID,
 		Email:      email,
 	})
 }
 
-func (s *Service) DeleteApprover(_ context.Context, approvalID, email string) error {
-	return s.repo.DeleteApprover(approvalID, email)
+func (s *Service) DeleteApprover(ctx context.Context, approvalID, email string) error {
+	return s.repo.DeleteApprover(ctx, approvalID, email)
 }
 
 func structToMap(item interface{}) (map[string]interface{}, error) {

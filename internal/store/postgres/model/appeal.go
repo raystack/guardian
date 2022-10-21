@@ -29,13 +29,10 @@ type Appeal struct {
 	Labels        datatypes.JSON
 	Details       datatypes.JSON
 
-	RevokedBy    string
-	RevokedAt    time.Time
-	RevokeReason string
-
 	Resource  *Resource `gorm:"ForeignKey:ResourceID;References:ID"`
 	Policy    Policy    `gorm:"ForeignKey:PolicyID,PolicyVersion;References:ID,Version"`
 	Approvals []*Approval
+	Grant     *Grant
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
@@ -83,6 +80,14 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 		m.Resource = r
 	}
 
+	if a.Grant != nil {
+		grant := new(Grant)
+		if err := grant.FromDomain(*a.Grant); err != nil {
+			return fmt.Errorf("parsing grant: %w", err)
+		}
+		m.Grant = grant
+	}
+
 	var id uuid.UUID
 	if a.ID != "" {
 		uuid, err := uuid.Parse(a.ID)
@@ -105,9 +110,6 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	m.Options = datatypes.JSON(options)
 	m.Labels = datatypes.JSON(labels)
 	m.Details = datatypes.JSON(details)
-	m.RevokedBy = a.RevokedBy
-	m.RevokedAt = a.RevokedAt
-	m.RevokeReason = a.RevokeReason
 	m.Approvals = approvals
 	m.CreatedAt = a.CreatedAt
 	m.UpdatedAt = a.UpdatedAt
@@ -165,6 +167,15 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		resource = r
 	}
 
+	var grant *domain.Grant
+	if m.Grant != nil {
+		a, err := m.Grant.ToDomain()
+		if err != nil {
+			return nil, fmt.Errorf("parsing grant: %w", err)
+		}
+		grant = a
+	}
+
 	return &domain.Appeal{
 		ID:            m.ID.String(),
 		ResourceID:    m.ResourceID,
@@ -179,12 +190,10 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		Permissions:   []string(m.Permissions),
 		Options:       options,
 		Details:       details,
-		RevokedBy:     m.RevokedBy,
-		RevokedAt:     m.RevokedAt,
-		RevokeReason:  m.RevokeReason,
 		Labels:        labels,
 		Approvals:     approvals,
 		Resource:      resource,
+		Grant:         grant,
 		CreatedAt:     m.CreatedAt,
 		UpdatedAt:     m.UpdatedAt,
 	}, nil

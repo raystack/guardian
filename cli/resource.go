@@ -23,7 +23,7 @@ func ResourceCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian resource set
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 	}
 
@@ -50,7 +50,7 @@ func listResourcesCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian resource list --details=key1.key2:value --details=key1.key3:value
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			spinner := printer.Spin("")
@@ -89,7 +89,7 @@ func listResourcesCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 				spinner.Stop()
 
-				if err := printer.Text(resources, format); err != nil {
+				if err := printer.File(resources, format); err != nil {
 					return fmt.Errorf("failed to parse resources: %v", err)
 				}
 				return nil
@@ -138,7 +138,7 @@ func viewResourceCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian resource view <resource-id> --output=json --metadata=true
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -167,7 +167,7 @@ func viewResourceCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			if format != "" {
 				r := adapter.FromResourceProto(res.GetResource())
 				spinner.Stop()
-				if err := printer.Text(r, format); err != nil {
+				if err := printer.File(r, format); err != nil {
 					return fmt.Errorf("failed to parse resources: %v", err)
 				}
 			} else {
@@ -222,7 +222,7 @@ func setResourceCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian resource set <resource-id> --filePath=<file-path>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

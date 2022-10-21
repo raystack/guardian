@@ -134,7 +134,6 @@ func (s *GRPCServer) CancelAppeal(ctx context.Context, req *guardianv1beta1.Canc
 		case appeal.ErrAppealStatusCanceled,
 			appeal.ErrAppealStatusApproved,
 			appeal.ErrAppealStatusRejected,
-			appeal.ErrAppealStatusTerminated,
 			appeal.ErrAppealStatusUnrecognized:
 			return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %v", err)
 		default:
@@ -149,63 +148,6 @@ func (s *GRPCServer) CancelAppeal(ctx context.Context, req *guardianv1beta1.Canc
 
 	return &guardianv1beta1.CancelAppealResponse{
 		Appeal: appealProto,
-	}, nil
-}
-
-func (s *GRPCServer) RevokeAppeal(ctx context.Context, req *guardianv1beta1.RevokeAppealRequest) (*guardianv1beta1.RevokeAppealResponse, error) {
-	id := req.GetId()
-	actor, err := s.getUser(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "failed to get metadata: actor")
-	}
-	reason := req.GetReason().GetReason()
-
-	a, err := s.appealService.Revoke(ctx, id, actor, reason)
-	if err != nil {
-		switch err {
-		case appeal.ErrAppealNotFound:
-			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
-		default:
-			return nil, status.Errorf(codes.Internal, "failed to cancel appeal: %v", err)
-		}
-	}
-
-	appealProto, err := s.adapter.ToAppealProto(a)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
-	}
-
-	return &guardianv1beta1.RevokeAppealResponse{
-		Appeal: appealProto,
-	}, nil
-}
-
-func (s *GRPCServer) RevokeAppeals(ctx context.Context, req *guardianv1beta1.RevokeAppealsRequest) (*guardianv1beta1.RevokeAppealsResponse, error) {
-	if req.GetAccountIds() == nil || len(req.AccountIds) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "account_ids is required")
-	}
-	filters := &domain.RevokeAppealsFilter{
-		AccountIDs:    req.GetAccountIds(),
-		ProviderTypes: req.GetProviderTypes(),
-		ProviderURNs:  req.GetProviderUrns(),
-		ResourceTypes: req.GetResourceTypes(),
-		ResourceURNs:  req.GetResourceUrns(),
-	}
-
-	appeals, err := s.appealService.BulkRevoke(ctx, filters, domain.SystemActorName, req.GetReason())
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to revoke appeals in bulk")
-	}
-	appealsProto := make([]*guardianv1beta1.Appeal, 0)
-	for _, appeal := range appeals {
-		appealProto, err := s.adapter.ToAppealProto(appeal)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
-		}
-		appealsProto = append(appealsProto, appealProto)
-	}
-	return &guardianv1beta1.RevokeAppealsResponse{
-		Appeals: appealsProto,
 	}, nil
 }
 

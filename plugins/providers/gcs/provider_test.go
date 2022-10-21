@@ -212,7 +212,6 @@ func TestGetResources(t *testing.T) {
 		assert.Nil(t, actualResources)
 		assert.Error(t, actualError)
 		crypto.AssertExpectations(t)
-
 	})
 
 	t.Run("should get the bucket resources defined in the provider config", func(t *testing.T) {
@@ -270,12 +269,11 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
-
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			name           string
 			providerConfig *domain.ProviderConfig
-			appeal         *domain.Appeal
+			grant          domain.Grant
 			expectedError  error
 		}{
 			{
@@ -284,23 +282,13 @@ func TestGrantAccess(t *testing.T) {
 				expectedError:  fmt.Errorf("invalid provider/appeal config: %w", gcs.ErrNilProviderConfig),
 			},
 			{
-				name: "nil appeal config",
-				providerConfig: &domain.ProviderConfig{
-					Type:                domain.ProviderTypeGCS,
-					URN:                 "test-URN",
-					AllowedAccountTypes: []string{"user", "serviceAccount"},
-				},
-				appeal:        nil,
-				expectedError: fmt.Errorf("invalid provider/appeal config: %w", gcs.ErrNilAppeal),
-			},
-			{
 				name: "nil resource config",
 				providerConfig: &domain.ProviderConfig{
 					Type:                domain.ProviderTypeGCS,
 					URN:                 "test-URN",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 				},
@@ -313,7 +301,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -330,7 +318,7 @@ func TestGrantAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -347,9 +335,9 @@ func TestGrantAccess(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				p := initProvider()
 				pc := tc.providerConfig
-				a := tc.appeal
+				g := tc.grant
 
-				actualError := p.GrantAccess(pc, a)
+				actualError := p.GrantAccess(pc, g)
 				assert.EqualError(t, actualError, tc.expectedError.Error())
 			})
 		}
@@ -372,13 +360,13 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
 			Role: "test-role",
 		}
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 		assert.Error(t, actualError)
 	})
 
@@ -416,7 +404,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",
@@ -432,7 +420,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 
 		assert.Error(t, actualError)
 	})
@@ -467,7 +455,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",
@@ -483,13 +471,12 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 
 		assert.Error(t, actualError)
 	})
 
 	t.Run("should grant the access to bucket resource and return nil error", func(t *testing.T) {
-
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
 
@@ -525,7 +512,7 @@ func TestGrantAccess(t *testing.T) {
 			},
 		}
 
-		a := &domain.Appeal{
+		g := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",
@@ -541,19 +528,18 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(pc, g)
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
 	})
 }
 
 func TestRevokeAccess(t *testing.T) {
-
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			name           string
 			providerConfig *domain.ProviderConfig
-			appeal         *domain.Appeal
+			grant          domain.Grant
 			expectedError  error
 		}{
 			{
@@ -562,23 +548,13 @@ func TestRevokeAccess(t *testing.T) {
 				expectedError:  fmt.Errorf("invalid provider/appeal config: %w", gcs.ErrNilProviderConfig),
 			},
 			{
-				name: "nil appeal config",
-				providerConfig: &domain.ProviderConfig{
-					Type:                domain.ProviderTypeGCS,
-					URN:                 "test-URN",
-					AllowedAccountTypes: []string{"user", "serviceAccount"},
-				},
-				appeal:        nil,
-				expectedError: fmt.Errorf("invalid provider/appeal config: %w", gcs.ErrNilAppeal),
-			},
-			{
 				name: "nil resource config",
 				providerConfig: &domain.ProviderConfig{
 					Type:                domain.ProviderTypeGCS,
 					URN:                 "test-URN",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 				},
@@ -591,7 +567,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -608,7 +584,7 @@ func TestRevokeAccess(t *testing.T) {
 					URN:                 "test-URN-1",
 					AllowedAccountTypes: []string{"user", "serviceAccount"},
 				},
-				appeal: &domain.Appeal{
+				grant: domain.Grant{
 					ID:          "test-appeal-id",
 					AccountType: "user",
 					Resource: &domain.Resource{
@@ -625,7 +601,7 @@ func TestRevokeAccess(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				p := initProvider()
 				pc := tc.providerConfig
-				a := tc.appeal
+				a := tc.grant
 
 				actualError := p.RevokeAccess(pc, a)
 				assert.EqualError(t, actualError, tc.expectedError.Error())
@@ -650,7 +626,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -694,7 +670,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",
@@ -745,7 +721,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",
@@ -767,7 +743,6 @@ func TestRevokeAccess(t *testing.T) {
 	})
 
 	t.Run("should revoke the access to bucket resource and return nil error", func(t *testing.T) {
-
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
 
@@ -803,7 +778,7 @@ func TestRevokeAccess(t *testing.T) {
 			},
 		}
 
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Role: "Storage Legacy Bucket Writer",
 			Resource: &domain.Resource{
 				URN:          "test-bucket-name",

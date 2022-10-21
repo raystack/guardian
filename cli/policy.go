@@ -38,7 +38,7 @@ func PolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian policy init	
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 	}
 
@@ -65,13 +65,11 @@ func listPoliciesCmd() *cobra.Command {
 			$ guardian policy list
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			spinner := printer.Spin("")
 			defer spinner.Stop()
-
-			cs := term.NewColorScheme()
 
 			client, cancel, err := createClient(cmd)
 			if err != nil {
@@ -96,7 +94,7 @@ func listPoliciesCmd() *cobra.Command {
 			report = append(report, []string{"ID", "NAME", "DESCRIPTION", "VERSION", "STEPS"})
 			for _, p := range policies {
 				report = append(report, []string{
-					cs.Greenf("%02d", index),
+					term.Greenf("%02d", index),
 					fmt.Sprintf("%v", p.GetId()),
 					p.GetDescription(),
 					fmt.Sprintf("%v", p.GetVersion()),
@@ -127,7 +125,7 @@ func getPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian policy view <policy-id> --version=<policy-version>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -163,7 +161,7 @@ func getPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			spinner.Stop()
 
-			if err := printer.Text(p, format); err != nil {
+			if err := printer.File(p, format); err != nil {
 				return fmt.Errorf("failed to format policy: %v", err)
 			}
 			return nil
@@ -189,7 +187,7 @@ func createPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian policy create --file=<file-path>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			spinner := printer.Spin("")
@@ -245,7 +243,7 @@ func updatePolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 		`),
 
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			spinner := printer.Spin("")
@@ -302,7 +300,7 @@ func initPolicyCmd() *cobra.Command {
 			$ guardian policy init --file=<output-name>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pwd, _ := os.Getwd()
@@ -339,7 +337,7 @@ func applyPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian policy apply --file=<file-path>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			spinner := printer.Spin("")
@@ -420,7 +418,7 @@ func planPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			$ guardian policy plan --file=<file-path>
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			spinner := printer.Spin("")

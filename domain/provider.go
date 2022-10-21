@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+	"sort"
 	"time"
 )
 
@@ -42,6 +44,20 @@ type ResourceConfig struct {
 	Roles  []*Role       `json:"roles" yaml:"roles" validate:"required"`
 }
 
+// GetRolePermissionsMap returns map[Role.ID][]PermissionStr
+func (rc ResourceConfig) GetRolePermissionsMap() map[string][]string {
+	rolePermissions := map[string][]string{}
+	for _, r := range rc.Roles {
+		var permissionsStr []string
+		for _, v := range r.Permissions {
+			permissionsStr = append(permissionsStr, fmt.Sprintf("%s", v))
+		}
+		sort.Strings(permissionsStr)
+		rolePermissions[r.ID] = permissionsStr
+	}
+	return rolePermissions
+}
+
 // AppealConfig is the policy configuration of the appeal
 type AppealConfig struct {
 	AllowPermanentAccess         bool   `json:"allow_permanent_access" yaml:"allow_permanent_access"`
@@ -57,6 +73,13 @@ type ProviderConfig struct {
 	Credentials         interface{}       `json:"credentials,omitempty" yaml:"credentials" validate:"required"`
 	Appeal              *AppealConfig     `json:"appeal,omitempty" yaml:"appeal,omitempty" validate:"required"`
 	Resources           []*ResourceConfig `json:"resources" yaml:"resources" validate:"required"`
+}
+
+func (pc ProviderConfig) GetResourceTypes() (resourceTypes []string) {
+	for _, rc := range pc.Resources {
+		resourceTypes = append(resourceTypes, rc.Type)
+	}
+	return
 }
 
 // Provider domain structure

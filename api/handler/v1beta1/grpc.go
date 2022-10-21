@@ -1,9 +1,3 @@
-//go:generate mockery --name=resourceService --exported --with-expecter
-//go:generate mockery --name=providerService --exported --with-expecter
-//go:generate mockery --name=policyService --exported --with-expecter
-//go:generate mockery --name=appealService --exported --with-expecter
-//go:generate mockery --name=approvalService --exported --with-expecter
-
 package v1beta1
 
 import (
@@ -11,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/odpf/guardian/core/appeal"
+	"github.com/odpf/guardian/core/grant"
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/domain"
@@ -36,11 +31,15 @@ type ProtoAdapter interface {
 	ToAppealProto(*domain.Appeal) (*guardianv1beta1.Appeal, error)
 	FromCreateAppealProto(*guardianv1beta1.CreateAppealRequest, string) ([]*domain.Appeal, error)
 	ToApprovalProto(*domain.Approval) (*guardianv1beta1.Approval, error)
+
+	ToGrantProto(*domain.Grant) (*guardianv1beta1.Grant, error)
+	FromGrantProto(*guardianv1beta1.Grant) *domain.Grant
 }
 
+//go:generate mockery --name=resourceService --exported --with-expecter
 type resourceService interface {
-	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
-	GetOne(string) (*domain.Resource, error)
+	Find(context.Context, domain.ListResourcesFilter) ([]*domain.Resource, error)
+	GetOne(context.Context, string) (*domain.Resource, error)
 	BulkUpsert(context.Context, []*domain.Resource) error
 	Update(context.Context, *domain.Resource) error
 	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
@@ -48,6 +47,7 @@ type resourceService interface {
 	BatchDelete(context.Context, []string) error
 }
 
+//go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
 	Create(context.Context, *domain.Provider) error
 	Find(context.Context) ([]*domain.Provider, error)
@@ -58,11 +58,12 @@ type providerService interface {
 	FetchResources(context.Context) error
 	GetRoles(ctx context.Context, id, resourceType string) ([]*domain.Role, error)
 	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
-	GrantAccess(context.Context, *domain.Appeal) error
-	RevokeAccess(context.Context, *domain.Appeal) error
+	GrantAccess(context.Context, domain.Grant) error
+	RevokeAccess(context.Context, domain.Grant) error
 	Delete(context.Context, string) error
 }
 
+//go:generate mockery --name=policyService --exported --with-expecter
 type policyService interface {
 	Create(context.Context, *domain.Policy) error
 	Find(context.Context) ([]*domain.Policy, error)
@@ -70,22 +71,31 @@ type policyService interface {
 	Update(context.Context, *domain.Policy) error
 }
 
+//go:generate mockery --name=appealService --exported --with-expecter
 type appealService interface {
 	GetByID(context.Context, string) (*domain.Appeal, error)
 	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
 	Create(context.Context, []*domain.Appeal, ...appeal.CreateAppealOption) error
 	MakeAction(context.Context, domain.ApprovalAction) (*domain.Appeal, error)
 	Cancel(context.Context, string) (*domain.Appeal, error)
-	Revoke(ctx context.Context, id, actor, reason string) (*domain.Appeal, error)
-	BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsFilter, actor, reason string) ([]*domain.Appeal, error)
 	AddApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
 	DeleteApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
 }
 
+//go:generate mockery --name=approvalService --exported --with-expecter
 type approvalService interface {
 	ListApprovals(context.Context, *domain.ListApprovalsFilter) ([]*domain.Approval, error)
 	BulkInsert(context.Context, []*domain.Approval) error
 	AdvanceApproval(context.Context, *domain.Appeal) error
+}
+
+//go:generate mockery --name=grantService --exported --with-expecter
+type grantService interface {
+	List(context.Context, domain.ListGrantsFilter) ([]domain.Grant, error)
+	GetByID(context.Context, string) (*domain.Grant, error)
+	Revoke(ctx context.Context, id, actor, reason string, opts ...grant.Option) (*domain.Grant, error)
+	BulkRevoke(ctx context.Context, filter domain.RevokeGrantsFilter, actor, reason string) ([]*domain.Grant, error)
+	ImportFromProvider(ctx context.Context, criteria grant.ImportFromProviderCriteria) ([]*domain.Grant, error)
 }
 
 type GRPCServer struct {
@@ -94,6 +104,7 @@ type GRPCServer struct {
 	policyService   policyService
 	appealService   appealService
 	approvalService approvalService
+	grantService    grantService
 	adapter         ProtoAdapter
 
 	authenticatedUserHeaderKey string
@@ -107,6 +118,7 @@ func NewGRPCServer(
 	policyService policyService,
 	appealService appealService,
 	approvalService approvalService,
+	grantService grantService,
 	adapter ProtoAdapter,
 	authenticatedUserHeaderKey string,
 ) *GRPCServer {
@@ -116,6 +128,7 @@ func NewGRPCServer(
 		policyService:              policyService,
 		appealService:              appealService,
 		approvalService:            approvalService,
+		grantService:               grantService,
 		adapter:                    adapter,
 		authenticatedUserHeaderKey: authenticatedUserHeaderKey,
 	}

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"errors"
 
 	"github.com/odpf/guardian/core/provider"
@@ -20,13 +21,13 @@ func NewProviderRepository(db *gorm.DB) *ProviderRepository {
 }
 
 // Create new record to database
-func (r *ProviderRepository) Create(p *domain.Provider) error {
+func (r *ProviderRepository) Create(ctx context.Context, p *domain.Provider) error {
 	m := new(model.Provider)
 	if err := m.FromDomain(p); err != nil {
 		return err
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if result := tx.Create(m); result.Error != nil {
 			return result.Error
 		}
@@ -43,11 +44,11 @@ func (r *ProviderRepository) Create(p *domain.Provider) error {
 }
 
 // Find records based on filters
-func (r *ProviderRepository) Find() ([]*domain.Provider, error) {
+func (r *ProviderRepository) Find(ctx context.Context) ([]*domain.Provider, error) {
 	providers := []*domain.Provider{}
 
 	var models []*model.Provider
-	if err := r.db.Find(&models).Error; err != nil {
+	if err := r.db.WithContext(ctx).Find(&models).Error; err != nil {
 		return nil, err
 	}
 	for _, m := range models {
@@ -63,13 +64,13 @@ func (r *ProviderRepository) Find() ([]*domain.Provider, error) {
 }
 
 // GetByID record by ID
-func (r *ProviderRepository) GetByID(id string) (*domain.Provider, error) {
+func (r *ProviderRepository) GetByID(ctx context.Context, id string) (*domain.Provider, error) {
 	if id == "" {
 		return nil, provider.ErrEmptyIDParam
 	}
 
 	var m model.Provider
-	if err := r.db.First(&m, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&m, "id = ?", id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, provider.ErrRecordNotFound
 		}
@@ -84,13 +85,14 @@ func (r *ProviderRepository) GetByID(id string) (*domain.Provider, error) {
 	return p, nil
 }
 
-func (r *ProviderRepository) GetTypes() ([]domain.ProviderType, error) {
+func (r *ProviderRepository) GetTypes(ctx context.Context) ([]domain.ProviderType, error) {
 	var results []struct {
 		ProviderType string
 		ResourceType string
 	}
 
-	r.db.Raw("select distinct provider_type, type as resource_type from resources").Scan(&results)
+	r.db.WithContext(ctx).
+		Raw("select distinct provider_type, type as resource_type from resources").Scan(&results)
 
 	if len(results) == 0 {
 		return nil, errors.New("no provider types found")
@@ -117,7 +119,7 @@ func (r *ProviderRepository) GetTypes() ([]domain.ProviderType, error) {
 }
 
 // GetOne returns provider by type and urn
-func (r *ProviderRepository) GetOne(pType, urn string) (*domain.Provider, error) {
+func (r *ProviderRepository) GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error) {
 	if pType == "" {
 		return nil, provider.ErrEmptyProviderType
 	}
@@ -126,7 +128,7 @@ func (r *ProviderRepository) GetOne(pType, urn string) (*domain.Provider, error)
 	}
 
 	m := &model.Provider{}
-	db := r.db.Where("type = ?", pType).Where("urn = ?", urn)
+	db := r.db.WithContext(ctx).Where("type = ?", pType).Where("urn = ?", urn)
 	if err := db.Take(m).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, provider.ErrRecordNotFound
@@ -143,7 +145,7 @@ func (r *ProviderRepository) GetOne(pType, urn string) (*domain.Provider, error)
 }
 
 // Update record by ID
-func (r *ProviderRepository) Update(p *domain.Provider) error {
+func (r *ProviderRepository) Update(ctx context.Context, p *domain.Provider) error {
 	if p.ID == "" {
 		return provider.ErrEmptyIDParam
 	}
@@ -153,7 +155,7 @@ func (r *ProviderRepository) Update(p *domain.Provider) error {
 		return err
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(m).Updates(*m).Error; err != nil {
 			return err
 		}
@@ -170,12 +172,12 @@ func (r *ProviderRepository) Update(p *domain.Provider) error {
 }
 
 // Delete record by ID
-func (r *ProviderRepository) Delete(id string) error {
+func (r *ProviderRepository) Delete(ctx context.Context, id string) error {
 	if id == "" {
 		return provider.ErrEmptyIDParam
 	}
 
-	result := r.db.Where("id = ?", id).Delete(&model.Provider{})
+	result := r.db.WithContext(ctx).Where("id = ?", id).Delete(&model.Provider{})
 	if result.Error != nil {
 		return result.Error
 	}

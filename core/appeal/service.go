@@ -1,12 +1,3 @@
-//go:generate mockery --name=repository --exported --with-expecter
-//go:generate mockery --name=iamManager --exported
-//go:generate mockery --name=notifier --exported --with-expecter
-//go:generate mockery --name=policyService --exported
-//go:generate mockery --name=approvalService --exported --with-expecter
-//go:generate mockery --name=providerService --exported
-//go:generate mockery --name=resourceService --exported
-//go:generate mockery --name=auditLogger --exported --with-expecter
-
 package appeal
 
 import (
@@ -18,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/pkg/evaluator"
 	"github.com/odpf/guardian/plugins/notifiers"
@@ -34,49 +26,66 @@ const (
 	AuditKeyExtend         = "appeal.extend"
 	AuditKeyAddApprover    = "appeal.addApprover"
 	AuditKeyDeleteApprover = "appeal.deleteApprover"
+
+	RevokeReasonForExtension = "Automatically revoked for grant extension"
 )
 
 var TimeNow = time.Now
 
+//go:generate mockery --name=repository --exported --with-expecter
 type repository interface {
-	BulkUpsert([]*domain.Appeal) error
-	Find(*domain.ListAppealsFilter) ([]*domain.Appeal, error)
-	GetByID(id string) (*domain.Appeal, error)
-	Update(*domain.Appeal) error
+	BulkUpsert(context.Context, []*domain.Appeal) error
+	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
+	GetByID(ctx context.Context, id string) (*domain.Appeal, error)
+	Update(context.Context, *domain.Appeal) error
 }
 
+//go:generate mockery --name=iamManager --exported --with-expecter
 type iamManager interface {
 	domain.IAMManager
 }
 
+//go:generate mockery --name=notifier --exported --with-expecter
 type notifier interface {
 	notifiers.Client
 }
 
+//go:generate mockery --name=policyService --exported --with-expecter
 type policyService interface {
 	Find(context.Context) ([]*domain.Policy, error)
 	GetOne(context.Context, string, uint) (*domain.Policy, error)
 }
 
+//go:generate mockery --name=approvalService --exported --with-expecter
 type approvalService interface {
 	AdvanceApproval(context.Context, *domain.Appeal) error
 	AddApprover(ctx context.Context, approvalID, email string) error
 	DeleteApprover(ctx context.Context, approvalID, email string) error
 }
 
+//go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
 	Find(context.Context) ([]*domain.Provider, error)
-	GrantAccess(context.Context, *domain.Appeal) error
-	RevokeAccess(context.Context, *domain.Appeal) error
+	GrantAccess(context.Context, domain.Grant) error
+	RevokeAccess(context.Context, domain.Grant) error
 	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
 	GetPermissions(context.Context, *domain.ProviderConfig, string, string) ([]interface{}, error)
 }
 
+//go:generate mockery --name=resourceService --exported --with-expecter
 type resourceService interface {
-	Find(context.Context, map[string]interface{}) ([]*domain.Resource, error)
+	Find(context.Context, domain.ListResourcesFilter) ([]*domain.Resource, error)
 	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
 }
 
+//go:generate mockery --name=grantService --exported --with-expecter
+type grantService interface {
+	List(context.Context, domain.ListGrantsFilter) ([]domain.Grant, error)
+	Prepare(context.Context, domain.Appeal) (*domain.Grant, error)
+	Revoke(ctx context.Context, id, actor, reason string, opts ...grant.Option) (*domain.Grant, error)
+}
+
+//go:generate mockery --name=auditLogger --exported --with-expecter
 type auditLogger interface {
 	Log(ctx context.Context, action string, data interface{}) error
 }
@@ -99,6 +108,7 @@ type ServiceDeps struct {
 	ResourceService resourceService
 	ProviderService providerService
 	PolicyService   policyService
+	GrantService    grantService
 	IAMManager      iamManager
 
 	Notifier    notifier
@@ -114,6 +124,7 @@ type Service struct {
 	resourceService resourceService
 	providerService providerService
 	policyService   policyService
+	grantService    grantService
 	iam             domain.IAMManager
 
 	notifier    notifier
@@ -132,6 +143,7 @@ func NewService(deps ServiceDeps) *Service {
 		deps.ResourceService,
 		deps.ProviderService,
 		deps.PolicyService,
+		deps.GrantService,
 		deps.IAMManager,
 
 		deps.Notifier,
@@ -148,12 +160,12 @@ func (s *Service) GetByID(ctx context.Context, id string) (*domain.Appeal, error
 		return nil, ErrAppealIDEmptyParam
 	}
 
-	return s.repo.GetByID(id)
+	return s.repo.GetByID(ctx, id)
 }
 
 // Find appeals by filters
 func (s *Service) Find(ctx context.Context, filters *domain.ListAppealsFilter) ([]*domain.Appeal, error) {
-	return s.repo.Find(filters)
+	return s.repo.Find(ctx, filters)
 }
 
 // Create record
@@ -181,19 +193,17 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		return err
 	}
 
-	appealsGroupedByStatus, err := s.getAppealsMapGroupedByStatus([]string{
-		domain.AppealStatusPending,
-		domain.AppealStatusActive,
-	})
+	pendingAppeals, err := s.getPendingAppealsMap(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("listing pending appeals: %w", err)
 	}
-	pendingAppeals := appealsGroupedByStatus[domain.AppealStatusPending]
-	activeAppeals := appealsGroupedByStatus[domain.AppealStatusActive]
+	activeGrants, err := s.getActiveGrantsMap(ctx)
+	if err != nil {
+		return fmt.Errorf("listing active grants: %w", err)
+	}
 
 	notifications := []domain.Notification{}
 
-	var oldExtendedAppeals []*domain.Appeal
 	for _, appeal := range appeals {
 		appeal.SetDefaults()
 
@@ -208,12 +218,8 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("retrieving provider: %w", err)
 		}
 
-		ok, err := s.isEligibleToExtend(appeal, provider, activeAppeals)
-		if err != nil {
-			return fmt.Errorf("checking appeal extension eligibility: %w", err)
-		}
-		if !ok {
-			return ErrAppealNotEligibleForExtension
+		if err := s.checkExtensionEligibility(appeal, provider, activeGrants); err != nil {
+			return fmt.Errorf("checking grant extension eligibility: %w", err)
 		}
 
 		if err := s.providerService.ValidateAppeal(ctx, appeal, provider); err != nil {
@@ -241,6 +247,10 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("validating appeal duration: %w", err)
 		}
 
+		if err := validateAppealOnBehalf(appeal, policy); err != nil {
+			return fmt.Errorf("validating cross-individual appeal: %w", err)
+		}
+
 		if err := s.addCreatorDetails(appeal, policy); err != nil {
 			return fmt.Errorf("retrieving creator details: %w", err)
 		}
@@ -259,26 +269,25 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 
 		for _, approval := range appeal.Approvals {
 			if approval.Index == len(appeal.Approvals)-1 && approval.Status == domain.ApprovalStatusApproved {
-				var oldExtendedAppeal *domain.Appeal
-				activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
-					AccountID:  appeal.AccountID,
-					ResourceID: appeal.ResourceID,
-					Role:       appeal.Role,
-					Statuses:   []string{domain.AppealStatusActive},
-				})
+				newGrant, revokedGrant, err := s.prepareGrant(ctx, appeal)
 				if err != nil {
-					return fmt.Errorf("unable to retrieve existing active appeal from db: %w", err)
+					return fmt.Errorf("preparing grant: %w", err)
+				}
+				newGrant.Resource = appeal.Resource
+				appeal.Grant = newGrant
+				if revokedGrant != nil {
+					if _, err := s.grantService.Revoke(ctx, revokedGrant.ID, domain.SystemActorName, RevokeReasonForExtension,
+						grant.SkipNotifications(),
+						grant.SkipRevokeAccessInProvider(),
+					); err != nil {
+						return fmt.Errorf("revoking previous grant: %w", err)
+					}
+				} else {
+					if err := s.CreateAccess(ctx, appeal); err != nil {
+						return fmt.Errorf("granting access: %w", err)
+					}
 				}
 
-				if len(activeAppeals) > 0 {
-					oldExtendedAppeal = activeAppeals[0]
-					oldExtendedAppeal.Terminate()
-					oldExtendedAppeals = append(oldExtendedAppeals, oldExtendedAppeal)
-				}
-
-				if err := s.CreateAccess(ctx, appeal, opts...); err != nil {
-					return fmt.Errorf("creating access: %w", err)
-				}
 				notifications = append(notifications, domain.Notification{
 					User: appeal.CreatedBy,
 					Message: domain.NotificationMessage{
@@ -289,16 +298,13 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 						},
 					},
 				})
+
+				notifications = addOnBehalfApprovedNotification(appeal, notifications)
 			}
 		}
 	}
 
-	var appealsToUpdate []*domain.Appeal
-
-	appealsToUpdate = append(appealsToUpdate, appeals...)
-	appealsToUpdate = append(appealsToUpdate, oldExtendedAppeals...)
-
-	if err := s.repo.BulkUpsert(appealsToUpdate); err != nil {
+	if err := s.repo.BulkUpsert(ctx, appeals); err != nil {
 		return fmt.Errorf("inserting appeals into db: %w", err)
 	}
 
@@ -321,6 +327,25 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 	return nil
 }
 
+func addOnBehalfApprovedNotification(appeal *domain.Appeal, notifications []domain.Notification) []domain.Notification {
+	if appeal.AccountType == domain.DefaultAppealAccountType && appeal.AccountID != appeal.CreatedBy {
+		notifications = append(notifications, domain.Notification{
+			User: appeal.AccountID,
+			Message: domain.NotificationMessage{
+				Type: domain.NotificationTypeOnBehalfAppealApproved,
+				Variables: map[string]interface{}{
+					"appeal_id":     appeal.ID,
+					"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+					"role":          appeal.Role,
+					"account_id":    appeal.AccountID,
+					"requestor":     appeal.CreatedBy,
+				},
+			},
+		})
+	}
+	return notifications
+}
+
 func validateAppealDurationConfig(appeal *domain.Appeal, policy *domain.Policy) error {
 	// return nil if duration options are not configured for this policy
 	if policy.AppealConfig == nil || policy.AppealConfig.DurationOptions == nil {
@@ -335,12 +360,24 @@ func validateAppealDurationConfig(appeal *domain.Appeal, policy *domain.Policy) 
 	return fmt.Errorf("%w: %s", ErrOptionsDurationNotFound, appeal.Options.Duration)
 }
 
+func validateAppealOnBehalf(a *domain.Appeal, policy *domain.Policy) error {
+	if a.AccountType == domain.DefaultAppealAccountType {
+		if policy.AppealConfig != nil && policy.AppealConfig.AllowOnBehalf {
+			return nil
+		}
+		if a.AccountID != a.CreatedBy {
+			return ErrCannotCreateAppealForOtherUser
+		}
+	}
+	return nil
+}
+
 // MakeAction Approve an approval step
 func (s *Service) MakeAction(ctx context.Context, approvalAction domain.ApprovalAction) (*domain.Appeal, error) {
 	if err := utils.ValidateStruct(approvalAction); err != nil {
 		return nil, err
 	}
-	appeal, err := s.repo.GetByID(approvalAction.AppealID)
+	appeal, err := s.repo.GetByID(ctx, approvalAction.AppealID)
 	if err != nil {
 		return nil, err
 	}
@@ -392,42 +429,36 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 				return nil, ErrActionInvalidValue
 			}
 
-			if appeal.Status == domain.AppealStatusActive {
-				var oldExtendedAppeal *domain.Appeal
-				activeAppeals, err := s.repo.Find(&domain.ListAppealsFilter{
-					AccountID:  appeal.AccountID,
-					ResourceID: appeal.ResourceID,
-					Role:       appeal.Role,
-					Statuses:   []string{domain.AppealStatusActive},
-				})
+			if appeal.Status == domain.AppealStatusApproved {
+				newGrant, revokedGrant, err := s.prepareGrant(ctx, appeal)
 				if err != nil {
-					return nil, fmt.Errorf("unable to retrieve existing active appeal from db: %w", err)
+					return nil, fmt.Errorf("preparing grant: %w", err)
 				}
-				if len(activeAppeals) > 0 {
-					oldExtendedAppeal = activeAppeals[0]
-					oldExtendedAppeal.Terminate()
-					if err := s.repo.Update(oldExtendedAppeal); err != nil {
-						return nil, fmt.Errorf("failed to update existing active appeal: %w", err)
+				newGrant.Resource = appeal.Resource
+				appeal.Grant = newGrant
+				if revokedGrant != nil {
+					if _, err := s.grantService.Revoke(ctx, revokedGrant.ID, domain.SystemActorName, RevokeReasonForExtension,
+						grant.SkipNotifications(),
+						grant.SkipRevokeAccessInProvider(),
+					); err != nil {
+						return nil, fmt.Errorf("revoking previous grant: %w", err)
 					}
 				} else {
 					if err := s.CreateAccess(ctx, appeal); err != nil {
-						return nil, err
+						return nil, fmt.Errorf("granting access: %w", err)
 					}
 				}
-
-				if err := appeal.Activate(); err != nil {
-					return nil, fmt.Errorf("activating appeal: %w", err)
-				}
 			}
-			if err := s.repo.Update(appeal); err != nil {
-				if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
-					return nil, err
+
+			if err := s.repo.Update(ctx, appeal); err != nil {
+				if err := s.providerService.RevokeAccess(ctx, *appeal.Grant); err != nil {
+					return nil, fmt.Errorf("revoking access: %w", err)
 				}
-				return nil, err
+				return nil, fmt.Errorf("updating appeal: %w", err)
 			}
 
 			notifications := []domain.Notification{}
-			if appeal.Status == domain.AppealStatusActive {
+			if appeal.Status == domain.AppealStatusApproved {
 				notifications = append(notifications, domain.Notification{
 					User: appeal.CreatedBy,
 					Message: domain.NotificationMessage{
@@ -438,6 +469,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 						},
 					},
 				})
+				notifications = addOnBehalfApprovedNotification(appeal, notifications)
 			} else if appeal.Status == domain.AppealStatusRejected {
 				notifications = append(notifications, domain.Notification{
 					User: appeal.CreatedBy,
@@ -492,7 +524,7 @@ func (s *Service) Cancel(ctx context.Context, id string) (*domain.Appeal, error)
 	}
 
 	appeal.Cancel()
-	if err := s.repo.Update(appeal); err != nil {
+	if err := s.repo.Update(ctx, appeal); err != nil {
 		return nil, err
 	}
 
@@ -505,167 +537,12 @@ func (s *Service) Cancel(ctx context.Context, id string) (*domain.Appeal, error)
 	return appeal, nil
 }
 
-func (s *Service) Revoke(ctx context.Context, id string, actor, reason string) (*domain.Appeal, error) {
-	appeal, err := s.repo.GetByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	revokedAppeal := &domain.Appeal{}
-	*revokedAppeal = *appeal
-	revokedAppeal.Status = domain.AppealStatusTerminated
-	revokedAppeal.RevokedAt = s.TimeNow()
-	revokedAppeal.RevokedBy = actor
-	revokedAppeal.RevokeReason = reason
-
-	if err := s.repo.Update(revokedAppeal); err != nil {
-		return nil, err
-	}
-
-	if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
-		if err := s.repo.Update(appeal); err != nil {
-			return nil, err
-		}
-		return nil, err
-	}
-
-	if errs := s.notifier.Notify([]domain.Notification{{
-		User: appeal.CreatedBy,
-		Message: domain.NotificationMessage{
-			Type: domain.NotificationTypeAccessRevoked,
-			Variables: map[string]interface{}{
-				"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
-				"role":          appeal.Role,
-				"account_type":  appeal.AccountType,
-				"account_id":    appeal.AccountID,
-			},
-		},
-	}}); errs != nil {
-		for _, err1 := range errs {
-			s.logger.Error("failed to send notifications", "error", err1.Error())
-		}
-	}
-
-	if err := s.auditLogger.Log(ctx, AuditKeyRevoke, map[string]interface{}{
-		"appeal_id": id,
-		"reason":    reason,
-	}); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
-	}
-
-	return revokedAppeal, nil
-}
-
-func (s *Service) BulkRevoke(ctx context.Context, filters *domain.RevokeAppealsFilter, actor, reason string) ([]*domain.Appeal, error) {
-	if filters.AccountIDs == nil || len(filters.AccountIDs) == 0 {
-		return nil, fmt.Errorf("account_ids is required")
-	}
-
-	result := make([]*domain.Appeal, 0)
-	appeals, err := s.Find(ctx, &domain.ListAppealsFilter{
-		Statuses:      []string{domain.AppealStatusActive},
-		AccountIDs:    filters.AccountIDs,
-		ProviderTypes: filters.ProviderTypes,
-		ProviderURNs:  filters.ProviderURNs,
-		ResourceTypes: filters.ResourceTypes,
-		ResourceURNs:  filters.ResourceURNs,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if len(appeals) == 0 {
-		return nil, nil
-	}
-
-	batchSize := 10
-	timeLimiter := make(chan int, batchSize)
-
-	for i := 1; i <= batchSize; i++ {
-		timeLimiter <- i
-	}
-
-	go func() {
-		for range time.Tick(1 * time.Second) {
-			for i := 1; i <= batchSize; i++ {
-				timeLimiter <- i
-			}
-		}
-	}()
-
-	totalRequests := len(appeals)
-	done := make(chan *domain.Appeal, totalRequests)
-	resourceAppealMap := make(map[string][]*domain.Appeal, 0)
-
-	for _, appeal := range appeals {
-		var resourceAppeals []*domain.Appeal
-		var ok bool
-		if resourceAppeals, ok = resourceAppealMap[appeal.ResourceID]; ok {
-			resourceAppeals = append(resourceAppeals, appeal)
-		} else {
-			resourceAppeals = []*domain.Appeal{appeal}
-		}
-		resourceAppealMap[appeal.ResourceID] = resourceAppeals
-	}
-
-	for _, resourceAppeals := range resourceAppealMap {
-		go s.expiredInActiveUserAppeal(ctx, timeLimiter, done, actor, reason, resourceAppeals)
-	}
-
-	var successRevoke []string
-	var failedRevoke []string
-	for {
-		select {
-		case appeal, _ := <-done:
-			if appeal.Status == domain.AppealStatusTerminated {
-				successRevoke = append(successRevoke, appeal.ID)
-			} else {
-				failedRevoke = append(failedRevoke, appeal.ID)
-			}
-			result = append(result, appeal)
-			if len(result) == totalRequests {
-				s.logger.Info("successful appeal revocation", "count", len(successRevoke), "ids", successRevoke)
-				s.logger.Info("failed appeal revocation", "count", len(failedRevoke), "ids", failedRevoke)
-				return result, nil
-			}
-		}
-	}
-}
-
-func (s *Service) expiredInActiveUserAppeal(ctx context.Context, timeLimiter chan int, done chan *domain.Appeal, actor string, reason string, appeals []*domain.Appeal) {
-	for _, appeal := range appeals {
-		<-timeLimiter
-
-		revokedAppeal := &domain.Appeal{}
-		*revokedAppeal = *appeal
-		revokedAppeal.RevokedAt = s.TimeNow()
-		revokedAppeal.RevokedBy = actor
-		revokedAppeal.RevokeReason = reason
-
-		if err := s.providerService.RevokeAccess(ctx, appeal); err != nil {
-			done <- appeal
-			s.logger.Error("failed to revoke appeal-access in provider", "id", appeal.ID, "error", err)
-			return
-		}
-
-		revokedAppeal.Status = domain.AppealStatusTerminated
-		if err := s.repo.Update(revokedAppeal); err != nil {
-			done <- appeal
-			s.logger.Error("failed to update appeal-revoke status", "id", appeal.ID, "error", err)
-			return
-		} else {
-			done <- revokedAppeal
-			s.logger.Info("appeal revoked", "id", appeal.ID)
-		}
-	}
-}
-
 func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error) {
 	if err := s.validator.Var(email, "email"); err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrApproverEmail, err)
 	}
 
-	appeal, approval, err := s.getApproval(appealID, approvalID)
+	appeal, approval, err := s.getApproval(ctx, appealID, approvalID)
 	if err != nil {
 		return nil, err
 	}
@@ -723,7 +600,7 @@ func (s *Service) DeleteApprover(ctx context.Context, appealID, approvalID, emai
 		return nil, fmt.Errorf("%w: %s", ErrApproverEmail, err)
 	}
 
-	appeal, approval, err := s.getApproval(appealID, approvalID)
+	appeal, approval, err := s.getApproval(ctx, appealID, approvalID)
 	if err != nil {
 		return nil, err
 	}
@@ -768,7 +645,7 @@ func (s *Service) DeleteApprover(ctx context.Context, appealID, approvalID, emai
 	return appeal, nil
 }
 
-func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *domain.Approval, error) {
+func (s *Service) getApproval(ctx context.Context, appealID, approvalID string) (*domain.Appeal, *domain.Approval, error) {
 	if appealID == "" {
 		return nil, nil, ErrAppealIDEmptyParam
 	}
@@ -776,7 +653,7 @@ func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *dom
 		return nil, nil, ErrApprovalIDEmptyParam
 	}
 
-	appeal, err := s.repo.GetByID(appealID)
+	appeal, err := s.repo.GetByID(ctx, appealID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("getting appeal details: %w", err)
 	}
@@ -789,32 +666,53 @@ func (s *Service) getApproval(appealID, approvalID string) (*domain.Appeal, *dom
 	return appeal, approval, nil
 }
 
-// getAppealsMapGroupedByStatus returns map[status]map[account_id]map[resource_id]map[role]*domain.Appeal, error
-func (s *Service) getAppealsMapGroupedByStatus(statuses []string) (map[string]map[string]map[string]map[string]*domain.Appeal, error) {
-	appeals, err := s.repo.Find(&domain.ListAppealsFilter{Statuses: statuses})
+// getPendingAppealsMap returns map[account_id]map[resource_id]map[role]*domain.Appeal, error
+func (s *Service) getPendingAppealsMap(ctx context.Context) (map[string]map[string]map[string]*domain.Appeal, error) {
+	appeals, err := s.repo.Find(ctx, &domain.ListAppealsFilter{
+		Statuses: []string{domain.AppealStatusPending},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	appealsMap := map[string]map[string]map[string]map[string]*domain.Appeal{}
+	appealsMap := map[string]map[string]map[string]*domain.Appeal{}
 	for _, a := range appeals {
-		if appealsMap[a.Status] == nil {
-			appealsMap[a.Status] = map[string]map[string]map[string]*domain.Appeal{}
+		if appealsMap[a.AccountID] == nil {
+			appealsMap[a.AccountID] = map[string]map[string]*domain.Appeal{}
 		}
-		if appealsMap[a.Status][a.AccountID] == nil {
-			appealsMap[a.Status][a.AccountID] = map[string]map[string]*domain.Appeal{}
+		if appealsMap[a.AccountID][a.ResourceID] == nil {
+			appealsMap[a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
 		}
-		if appealsMap[a.Status][a.AccountID][a.ResourceID] == nil {
-			appealsMap[a.Status][a.AccountID][a.ResourceID] = map[string]*domain.Appeal{}
-		}
-		appealsMap[a.Status][a.AccountID][a.ResourceID][a.Role] = a
+		appealsMap[a.AccountID][a.ResourceID][a.Role] = a
 	}
 
 	return appealsMap, nil
 }
 
+func (s *Service) getActiveGrantsMap(ctx context.Context) (map[string]map[string]map[string]*domain.Grant, error) {
+	grants, err := s.grantService.List(ctx, domain.ListGrantsFilter{
+		Statuses: []string{string(domain.GrantStatusActive)},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	grantsMap := map[string]map[string]map[string]*domain.Grant{}
+	for i, a := range grants {
+		if grantsMap[a.AccountID] == nil {
+			grantsMap[a.AccountID] = map[string]map[string]*domain.Grant{}
+		}
+		if grantsMap[a.AccountID][a.ResourceID] == nil {
+			grantsMap[a.AccountID][a.ResourceID] = map[string]*domain.Grant{}
+		}
+		grantsMap[a.AccountID][a.ResourceID][a.Role] = &grants[i]
+	}
+
+	return grantsMap, nil
+}
+
 func (s *Service) getResourcesMap(ctx context.Context, ids []string) (map[string]*domain.Resource, error) {
-	filters := map[string]interface{}{"ids": ids}
+	filters := domain.ListResourcesFilter{IDs: ids}
 	resources, err := s.resourceService.Find(ctx, filters)
 	if err != nil {
 		return nil, err
@@ -908,10 +806,11 @@ func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) 
 		}
 	}
 
-	if err := s.validator.Var(approvers, "dive,email"); err != nil {
+	distinctApprovers := uniqueSlice(approvers)
+	if err := s.validator.Var(distinctApprovers, "dive,email"); err != nil {
 		return nil, err
 	}
-	return approvers, nil
+	return distinctApprovers, nil
 }
 
 func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
@@ -945,12 +844,10 @@ func checkIfAppealStatusStillPending(status string) error {
 	switch status {
 	case domain.AppealStatusCanceled:
 		err = ErrAppealStatusCanceled
-	case domain.AppealStatusActive:
+	case domain.AppealStatusApproved:
 		err = ErrAppealStatusApproved
 	case domain.AppealStatusRejected:
 		err = ErrAppealStatusRejected
-	case domain.AppealStatusTerminated:
-		err = ErrAppealStatusTerminated
 	default:
 		err = ErrAppealStatusUnrecognized
 	}
@@ -1077,6 +974,7 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 }
 
 func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal, opts ...CreateAppealOption) error {
+	// TODO: rename to GrantAccess
 	policy := a.Policy
 	if policy == nil {
 		p, err := s.policyService.GetOne(ctx, a.PolicyID, a.PolicyVersion)
@@ -1098,45 +996,34 @@ func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal, opts ...Cr
 		}
 	}
 
-	if err := s.providerService.GrantAccess(ctx, a); err != nil {
+	if err := s.providerService.GrantAccess(ctx, *a.Grant); err != nil {
 		return fmt.Errorf("granting access: %w", err)
-	}
-
-	if err := a.Activate(); err != nil {
-		return fmt.Errorf("activating appeal: %w", err)
 	}
 
 	return nil
 }
 
-func (s *Service) isEligibleToExtend(a *domain.Appeal, p *domain.Provider, activeAppealsMap map[string]map[string]map[string]*domain.Appeal) (bool, error) {
-	if activeAppealsMap[a.AccountID] != nil &&
-		activeAppealsMap[a.AccountID][a.ResourceID] != nil &&
-		activeAppealsMap[a.AccountID][a.ResourceID][a.Role] != nil {
+func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider, activeGrants map[string]map[string]map[string]*domain.Grant) error {
+	if activeGrants[a.AccountID] != nil &&
+		activeGrants[a.AccountID][a.ResourceID] != nil &&
+		activeGrants[a.AccountID][a.ResourceID][a.Role] != nil {
 		if p.Config.Appeal != nil {
 			if p.Config.Appeal.AllowActiveAccessExtensionIn == "" {
-				return false, ErrAppealFoundActiveAccess
+				return ErrAppealFoundActiveGrant
 			}
 
-			duration, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
+			extensionDurationRule, err := time.ParseDuration(p.Config.Appeal.AllowActiveAccessExtensionIn)
 			if err != nil {
-				return false, fmt.Errorf("%v: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
+				return fmt.Errorf("%w: %v: %v", ErrAppealInvalidExtensionDuration, p.Config.Appeal.AllowActiveAccessExtensionIn, err)
 			}
 
-			now := s.TimeNow()
-			appeal := activeAppealsMap[a.AccountID][a.ResourceID][a.Role]
-			var isEligibleForExtension bool
-			if appeal.Options != nil && appeal.Options.ExpirationDate != nil {
-				activeAppealExpDate := appeal.Options.ExpirationDate
-				isEligibleForExtension = activeAppealExpDate.Sub(now) <= duration
-			} else {
-				isEligibleForExtension = true
+			grant := activeGrants[a.AccountID][a.ResourceID][a.Role]
+			if !grant.IsEligibleForExtension(extensionDurationRule) {
+				return ErrGrantNotEligibleForExtension
 			}
-			return isEligibleForExtension, nil
 		}
 	}
-
-	return true, nil
+	return nil
 }
 
 func getPolicy(a *domain.Appeal, p *domain.Provider, policiesMap map[string]map[uint]*domain.Policy) (*domain.Policy, error) {
@@ -1218,10 +1105,6 @@ func getProvider(a *domain.Appeal, providersMap map[string]map[string]*domain.Pr
 }
 
 func validateAppeal(a *domain.Appeal, pendingAppealsMap map[string]map[string]map[string]*domain.Appeal) error {
-	if a.AccountType == domain.DefaultAppealAccountType && a.AccountID != a.CreatedBy {
-		return ErrCannotCreateAppealForOtherUser
-	}
-
 	if pendingAppealsMap[a.AccountID] != nil &&
 		pendingAppealsMap[a.AccountID][a.ResourceID] != nil &&
 		pendingAppealsMap[a.AccountID][a.ResourceID][a.Role] != nil {
@@ -1246,4 +1129,47 @@ func (s *Service) getPermissions(ctx context.Context, pc *domain.ProviderConfig,
 		strPermissions = append(strPermissions, fmt.Sprintf("%s", p))
 	}
 	return strPermissions, nil
+}
+
+func (s *Service) prepareGrant(ctx context.Context, appeal *domain.Appeal) (newGrant *domain.Grant, deactivatedGrant *domain.Grant, err error) {
+	activeGrants, err := s.grantService.List(ctx, domain.ListGrantsFilter{
+		AccountIDs:  []string{appeal.AccountID},
+		ResourceIDs: []string{appeal.ResourceID},
+		Statuses:    []string{string(domain.GrantStatusActive)},
+		Permissions: appeal.Permissions,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to retrieve existing active grants: %w", err)
+	}
+
+	if len(activeGrants) > 0 {
+		deactivatedGrant = &activeGrants[0]
+		if err := deactivatedGrant.Revoke(domain.SystemActorName, "Extended to a new grant"); err != nil {
+			return nil, nil, fmt.Errorf("revoking previous grant: %w", err)
+		}
+	}
+
+	if err := appeal.Approve(); err != nil {
+		return nil, nil, fmt.Errorf("activating appeal: %w", err)
+	}
+
+	grant, err := s.grantService.Prepare(ctx, *appeal)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return grant, deactivatedGrant, nil
+}
+
+func uniqueSlice(arr []string) []string {
+	keys := map[string]bool{}
+	result := []string{}
+
+	for _, v := range arr {
+		if _, exist := keys[v]; !exist {
+			result = append(result, v)
+			keys[v] = true
+		}
+	}
+	return result
 }

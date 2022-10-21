@@ -16,15 +16,13 @@ func VersionCmd() *cobra.Command {
 		Aliases: []string{"v"},
 		Short:   "Print version information",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cs := term.NewColorScheme()
-
 			if core.Version == "" {
-				fmt.Println(cs.Yellow("guardian version (built from source)"))
+				fmt.Println(term.Yellow("guardian version (built from source)"))
 				return nil
 			}
 
 			fmt.Printf("guardian version %s (%s)\n\n", core.Version, core.BuildDate)
-			fmt.Println(cs.Yellow(version.UpdateNotice(core.Version, "odpf/guardian")))
+			fmt.Println(term.Yellow(version.UpdateNotice(core.Version, "odpf/guardian")))
 			return nil
 		},
 	}

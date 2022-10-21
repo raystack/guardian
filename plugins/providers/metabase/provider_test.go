@@ -453,7 +453,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -489,7 +489,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -527,7 +527,7 @@ func TestGrantAccess(t *testing.T) {
 			},
 			URN: "test-urn",
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -577,7 +577,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeDatabase,
 					URN:  "database:999",
@@ -635,7 +635,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeDatabase,
 					URN:  "database:999",
@@ -692,7 +692,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeCollection,
 					URN:  "collection:999",
@@ -751,7 +751,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeCollection,
 					URN:  "collection:999",
@@ -807,7 +807,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeGroup,
 					URN:  "group:999",
@@ -861,7 +861,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeGroup,
 					URN:  "group:999",
@@ -920,7 +920,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeTable,
 					URN:  "table:999.1000",
@@ -983,7 +983,7 @@ func TestGrantAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeTable,
 					URN:  "table:999.1000",
@@ -1024,7 +1024,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -1060,7 +1060,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 			},
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -1098,7 +1098,7 @@ func TestRevokeAccess(t *testing.T) {
 			},
 			URN: "test-urn",
 		}
-		a := &domain.Appeal{
+		a := domain.Grant{
 			Resource: &domain.Resource{
 				Type: "test-type",
 			},
@@ -1142,7 +1142,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeDatabase,
 					URN:  "database:999",
@@ -1193,7 +1193,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeDatabase,
 					URN:  "database:999",
@@ -1245,7 +1245,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeCollection,
 					URN:  "collection:999",
@@ -1297,7 +1297,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeCollection,
 					URN:  "collection:999",
@@ -1349,7 +1349,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeGroup,
 					URN:  "group:999",
@@ -1397,7 +1397,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeTable,
 					URN:  "table:999.1000",
@@ -1453,7 +1453,7 @@ func TestRevokeAccess(t *testing.T) {
 				},
 				URN: providerURN,
 			}
-			a := &domain.Appeal{
+			a := domain.Grant{
 				Resource: &domain.Resource{
 					Type: metabase.ResourceTypeTable,
 					URN:  "table:999.1000",

@@ -277,7 +277,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 	s.Run("should return error if got error from the policy repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockPolicyRepository.On("Create", mock.Anything).Return(expectedError).Once()
+		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(expectedError).Once()
 
 		actualError := s.service.Create(context.Background(), validPolicy)
 
@@ -291,8 +291,8 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 
 		expectedVersion := uint(1)
-		s.mockPolicyRepository.On("Create", p).Return(nil).Once()
-		s.mockAuditLogger.On("Log", mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
+		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), p).Return(nil).Once()
+		s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
 
 		actualError := s.service.Create(context.Background(), p)
 
@@ -303,8 +303,8 @@ func (s *ServiceTestSuite) TestCreate() {
 	})
 
 	s.Run("should pass the model from the param", func() {
-		s.mockPolicyRepository.On("Create", validPolicy).Return(nil).Once()
-		s.mockAuditLogger.On("Log", mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
+		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), validPolicy).Return(nil).Once()
+		s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
 
 		actualError := s.service.Create(context.Background(), validPolicy)
 
@@ -405,12 +405,12 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 				for _, r := range tc.requirements {
 					for _, aa := range r.Appeals {
 						s.mockResourceService.
-							On("Get", mock.Anything, &domain.ResourceIdentifier{}).
+							EXPECT().Get(mock.Anything, &domain.ResourceIdentifier{}).
 							Return(tc.expectedResource, tc.expectedResourceServiceGetError).
 							Once()
 						if tc.expectedResource != nil {
 							s.mockProviderService.
-								On("GetOne", mock.Anything, tc.expectedResource.ProviderType, tc.expectedResource.ProviderURN).
+								EXPECT().GetOne(mock.Anything, tc.expectedResource.ProviderType, tc.expectedResource.ProviderURN).
 								Return(tc.expectedProvider, tc.expectedProviderServiceGetOneError).
 								Once()
 							if tc.expectedProviderServiceGetOneError == nil {
@@ -421,7 +421,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 									Options:    aa.Options,
 								}
 								s.mockProviderService.
-									On("ValidateAppeal", mock.Anything, expectedAppeal, tc.expectedProvider).
+									EXPECT().ValidateAppeal(mock.Anything, expectedAppeal, tc.expectedProvider).
 									Return(tc.expectedProviderServiceValidateAppealError).
 									Once()
 							}
@@ -522,11 +522,11 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 				for _, r := range tc.requirements {
 					for _, aa := range r.Appeals {
 						s.mockResourceService.
-							On("Get", mock.Anything, aa.Resource).
+							EXPECT().Get(mock.Anything, aa.Resource).
 							Return(expectedResource, nil).
 							Once()
 						s.mockProviderService.
-							On("GetOne", mock.Anything, expectedResource.ProviderType, expectedResource.ProviderURN).
+							EXPECT().GetOne(mock.Anything, expectedResource.ProviderType, expectedResource.ProviderURN).
 							Return(expectedProvider, nil).
 							Once()
 						expectedAppeal := &domain.Appeal{
@@ -537,13 +537,13 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 						}
 						expectedAppeal.SetDefaults()
 						s.mockProviderService.
-							On("ValidateAppeal", mock.Anything, expectedAppeal, expectedProvider).
+							EXPECT().ValidateAppeal(mock.Anything, expectedAppeal, expectedProvider).
 							Return(nil).
 							Once()
 					}
 				}
-				s.mockPolicyRepository.On("Create", p).Return(nil).Once()
-				s.mockAuditLogger.On("Log", mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
+				s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), p).Return(nil).Once()
+				s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
 
 				actualError := s.service.Create(context.Background(), p)
 				s.Nil(actualError)
@@ -555,7 +555,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 func (s *ServiceTestSuite) TestFind() {
 	s.Run("should return nil and error if got error from repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockPolicyRepository.On("Find").Return(nil, expectedError).Once()
+		s.mockPolicyRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.Find(context.Background())
 
@@ -565,7 +565,7 @@ func (s *ServiceTestSuite) TestFind() {
 
 	s.Run("should return list of records on success", func() {
 		expectedResult := []*domain.Policy{}
-		s.mockPolicyRepository.On("Find").Return(expectedResult, nil).Once()
+		s.mockPolicyRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(expectedResult, nil).Once()
 
 		actualResult, actualError := s.service.Find(context.Background())
 
@@ -578,7 +578,7 @@ func (s *ServiceTestSuite) TestFind() {
 func (s *ServiceTestSuite) TestGetOne() {
 	s.Run("should return nil and error if got error from repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockPolicyRepository.On("GetOne", mock.Anything, mock.Anything).Return(nil, expectedError).Once()
+		s.mockPolicyRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything, mock.Anything).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.GetOne(context.Background(), "", 0)
 
@@ -588,7 +588,7 @@ func (s *ServiceTestSuite) TestGetOne() {
 
 	s.Run("should return list of records on success", func() {
 		expectedResult := &domain.Policy{}
-		s.mockPolicyRepository.On("GetOne", mock.Anything, mock.Anything).Return(expectedResult, nil).Once()
+		s.mockPolicyRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything, mock.Anything).Return(expectedResult, nil).Once()
 
 		actualResult, actualError := s.service.GetOne(context.Background(), "", 0)
 
@@ -628,9 +628,9 @@ func (s *ServiceTestSuite) TestUpdate() {
 			Version: 5,
 		}
 		expectedNewVersion := uint(6)
-		s.mockPolicyRepository.On("GetOne", p.ID, uint(0)).Return(expectedLatestPolicy, nil).Once()
-		s.mockPolicyRepository.On("Create", p).Return(nil)
-		s.mockAuditLogger.On("Log", mock.Anything, policy.AuditKeyPolicyUpdate, mock.Anything).Return(nil).Once()
+		s.mockPolicyRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), p.ID, uint(0)).Return(expectedLatestPolicy, nil).Once()
+		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), p).Return(nil)
+		s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyUpdate, mock.Anything).Return(nil).Once()
 
 		s.service.Update(context.Background(), p)
 

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -8,11 +9,10 @@ const (
 	AppealActionNameApprove = "approve"
 	AppealActionNameReject  = "reject"
 
-	AppealStatusPending    = "pending"
-	AppealStatusCanceled   = "canceled"
-	AppealStatusActive     = "active"
-	AppealStatusRejected   = "rejected"
-	AppealStatusTerminated = "terminated"
+	AppealStatusPending  = "pending"
+	AppealStatusCanceled = "canceled"
+	AppealStatusApproved = "approved"
+	AppealStatusRejected = "rejected"
 
 	SystemActorName = "system"
 
@@ -42,13 +42,10 @@ type Appeal struct {
 	Details       map[string]interface{} `json:"details" yaml:"details"`
 	Labels        map[string]string      `json:"labels" yaml:"labels"`
 
-	RevokedBy    string    `json:"revoked_by,omitempty" yaml:"revoked_by,omitempty"`
-	RevokedAt    time.Time `json:"revoked_at,omitempty" yaml:"revoked_at,omitempty"`
-	RevokeReason string    `json:"revoke_reason,omitempty" yaml:"revoke_reason,omitempty"`
-
 	Policy    *Policy     `json:"-" yaml:"-"`
 	Resource  *Resource   `json:"resource,omitempty" yaml:"resource,omitempty"`
 	Approvals []*Approval `json:"approvals,omitempty" yaml:"approvals,omitempty"`
+	Grant     *Grant      `json:"grant,omitempty" yaml:"grant,omitempty"`
 
 	CreatedAt time.Time `json:"created_at,omitempty" yaml:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
@@ -73,8 +70,8 @@ func (a *Appeal) Cancel() {
 	a.Status = AppealStatusCanceled
 }
 
-func (a *Appeal) Activate() error {
-	a.Status = AppealStatusActive
+func (a *Appeal) Approve() error {
+	a.Status = AppealStatusApproved
 
 	if a.Options == nil || a.Options.Duration == "" {
 		return nil
@@ -99,10 +96,6 @@ func (a *Appeal) Reject() {
 	a.Status = AppealStatusRejected
 }
 
-func (a *Appeal) Terminate() {
-	a.Status = AppealStatusTerminated
-}
-
 func (a *Appeal) SetDefaults() {
 	if a.AccountType == "" {
 		a.AccountType = DefaultAppealAccountType
@@ -116,6 +109,36 @@ func (a *Appeal) GetApproval(id string) *Approval {
 		}
 	}
 	return nil
+}
+
+func (a Appeal) ToGrant() (*Grant, error) {
+	grant := &Grant{
+		Status:      GrantStatusActive,
+		AccountID:   a.AccountID,
+		AccountType: a.AccountType,
+		ResourceID:  a.ResourceID,
+		Role:        a.Role,
+		Permissions: a.Permissions,
+		AppealID:    a.ID,
+		CreatedBy:   a.CreatedBy,
+	}
+
+	if a.Options != nil && a.Options.Duration != "" {
+		duration, err := time.ParseDuration(a.Options.Duration)
+		if err != nil {
+			return nil, fmt.Errorf("parsing duration %q: %w", a.Options.Duration, err)
+		}
+		if duration == 0 {
+			grant.IsPermanent = true
+		} else {
+			expDate := time.Now().Add(duration)
+			grant.ExpirationDate = &expDate
+		}
+	} else {
+		grant.IsPermanent = true
+	}
+
+	return grant, nil
 }
 
 type ApprovalActionType string
@@ -147,12 +170,4 @@ type ListAppealsFilter struct {
 	ResourceTypes             []string  `mapstructure:"resource_types" validate:"omitempty,min=1"`
 	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 	OrderBy                   []string  `mapstructure:"order_by" validate:"omitempty,min=1"`
-}
-
-type RevokeAppealsFilter struct {
-	AccountIDs    []string `mapstructure:"account_ids" validate:"omitempty,required"`
-	ProviderTypes []string `mapstructure:"provider_types" validate:"omitempty,min=1"`
-	ProviderURNs  []string `mapstructure:"provider_urns" validate:"omitempty,min=1"`
-	ResourceTypes []string `mapstructure:"resource_types" validate:"omitempty,min=1"`
-	ResourceURNs  []string `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 }

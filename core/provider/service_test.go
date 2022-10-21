@@ -16,6 +16,7 @@ import (
 
 const (
 	mockProviderType = "mock_provider_type"
+	mockProvider     = "mock_provider"
 )
 
 type ServiceTestSuite struct {
@@ -109,7 +110,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		expectedError := errors.New("error from repository")
 		s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 		s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
-		s.mockProviderRepository.On("Create", mock.Anything).Return(expectedError).Once()
+		s.mockProviderRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(expectedError).Once()
 
 		actualError := s.service.Create(context.Background(), p)
 
@@ -119,13 +120,13 @@ func (s *ServiceTestSuite) TestCreate() {
 	s.Run("should pass the model from the param and trigger fetch resources on success", func() {
 		s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 		s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
-		s.mockProviderRepository.On("Create", p).Return(nil).Once()
+		s.mockProviderRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), p).Return(nil).Once()
 		s.mockAuditLogger.On("Log", mock.Anything, provider.AuditKeyCreate, mock.Anything).Return(nil).Once()
 
 		expectedResources := []*domain.Resource{}
-		s.mockResourceService.On("Find", mock.Anything, map[string]interface{}{
-			"provider_type": p.Type,
-			"provider_urn":  p.URN,
+		s.mockResourceService.On("Find", mock.Anything, domain.ListResourcesFilter{
+			ProviderType: p.Type,
+			ProviderURN:  p.URN,
 		}).Return([]*domain.Resource{}, nil).Once()
 		s.mockProvider.On("GetResources", p.Config).Return(expectedResources, nil).Once()
 		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil).Once()
@@ -141,7 +142,7 @@ func (s *ServiceTestSuite) TestCreate() {
 func (s *ServiceTestSuite) TestFind() {
 	s.Run("should return nil and error if got error from repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockProviderRepository.On("Find").Return(nil, expectedError).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.Find(context.Background())
 
@@ -151,7 +152,7 @@ func (s *ServiceTestSuite) TestFind() {
 
 	s.Run("should return list of records on success", func() {
 		expectedResult := []*domain.Provider{}
-		s.mockProviderRepository.On("Find").Return(expectedResult, nil).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(expectedResult, nil).Once()
 
 		actualResult, actualError := s.service.Find(context.Background())
 
@@ -171,10 +172,10 @@ func (s *ServiceTestSuite) TestUpdateValidation() {
 				},
 			}
 
-			s.mockProviderRepository.On("GetByID", mock.Anything).
+			s.mockProviderRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
 				Return(&domain.Provider{}, nil).
 				Once()
-			s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
+			s.mockProviderRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything, mock.Anything).
 				Return(&domain.Provider{}, nil)
 			s.mockProvider.On("GetAccountTypes").Return([]string{"non-user-only"}).Once()
 			actualError := s.service.Update(context.Background(), p)
@@ -192,7 +193,7 @@ func (s *ServiceTestSuite) TestUpdateValidation() {
 				},
 			}
 
-			s.mockProviderRepository.On("GetByID", mock.Anything).
+			s.mockProviderRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
 				Return(&domain.Provider{}, nil).
 				Once()
 			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
@@ -249,7 +250,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 		for _, tc := range testCases {
 			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
 			s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
-			s.mockProviderRepository.On("Update", tc.expectedNewProvider).Return(nil)
+			s.mockProviderRepository.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), tc.expectedNewProvider).Return(nil)
 			s.mockAuditLogger.On("Log", mock.Anything, provider.AuditKeyUpdate, mock.Anything).Return(nil).Once()
 
 			actualError := s.service.Update(context.Background(), tc.updatePayload)
@@ -262,7 +263,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 func (s *ServiceTestSuite) TestFetchResources() {
 	s.Run("should return error if got any from provider repository", func() {
 		expectedError := errors.New("any error")
-		s.mockProviderRepository.On("Find").Return(nil, expectedError).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(nil, expectedError).Once()
 
 		actualError := s.service.FetchResources(context.Background())
 
@@ -273,16 +274,17 @@ func (s *ServiceTestSuite) TestFetchResources() {
 		{
 			ID:     "1",
 			Type:   mockProviderType,
+			URN:    mockProvider,
 			Config: &domain.ProviderConfig{},
 		},
 	}
 
 	s.Run("should return error if got any from resource service", func() {
-		s.mockProviderRepository.On("Find").Return(providers, nil).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(providers, nil).Once()
 		for _, p := range providers {
 			s.mockProvider.On("GetResources", p.Config).Return([]*domain.Resource{}, nil).Once()
 		}
-		expectedError := errors.New("any error")
+		expectedError := errors.New("failed to add resources providers - [mock_provider]")
 		s.mockResourceService.On("BulkUpsert", mock.Anything, mock.Anything).Return(expectedError).Once()
 		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
 		actualError := s.service.FetchResources(context.Background())
@@ -291,7 +293,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 	})
 
 	s.Run("should upsert all resources on success", func() {
-		s.mockProviderRepository.On("Find").Return(providers, nil).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(providers, nil).Once()
 		expectedResources := []*domain.Resource{}
 		for _, p := range providers {
 			resources := []*domain.Resource{
@@ -314,15 +316,11 @@ func (s *ServiceTestSuite) TestFetchResources() {
 func (s *ServiceTestSuite) TestGrantAccess() {
 	s.Run("should return error if got error on appeal param validation", func() {
 		testCases := []struct {
-			appealParam   *domain.Appeal
+			appealParam   domain.Grant
 			expectedError error
 		}{
 			{
-				appealParam:   nil,
-				expectedError: provider.ErrNilAppeal,
-			},
-			{
-				appealParam:   &domain.Appeal{},
+				appealParam:   domain.Grant{},
 				expectedError: provider.ErrNilResource,
 			},
 		}
@@ -333,7 +331,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 	})
 
 	s.Run("should return error if provider is not exists", func() {
-		appeal := &domain.Appeal{
+		appeal := domain.Grant{
 			Resource: &domain.Resource{
 				ProviderType: "invalid-provider-type",
 			},
@@ -343,7 +341,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	validAppeal := &domain.Appeal{
+	validAppeal := domain.Grant{
 		Resource: &domain.Resource{
 			ProviderType: mockProviderType,
 			ProviderURN:  "urn",
@@ -352,7 +350,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 
 	s.Run("should return error if got any from provider repository", func() {
 		expectedError := errors.New("any error")
-		s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
+		s.mockProviderRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything, mock.Anything).
 			Return(nil, expectedError).
 			Once()
 
@@ -362,7 +360,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 	})
 
 	s.Run("should return error if provider not found", func() {
-		s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
+		s.mockProviderRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything, mock.Anything).
 			Return(nil, provider.ErrRecordNotFound).
 			Once()
 		expectedError := provider.ErrRecordNotFound
@@ -377,7 +375,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 			Config: &domain.ProviderConfig{},
 		}
 		s.mockProviderRepository.
-			On("GetOne", validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
+			EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
 			Return(provider, nil).
 			Once()
 		expectedError := errors.New("any error")
@@ -395,7 +393,7 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 			Config: &domain.ProviderConfig{},
 		}
 		s.mockProviderRepository.
-			On("GetOne", validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
+			EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
 			Return(provider, nil).
 			Once()
 		s.mockProvider.
@@ -412,15 +410,11 @@ func (s *ServiceTestSuite) TestGrantAccess() {
 func (s *ServiceTestSuite) TestRevokeAccess() {
 	s.Run("should return error if got error on appeal param validation", func() {
 		testCases := []struct {
-			appealParam   *domain.Appeal
+			appealParam   domain.Grant
 			expectedError error
 		}{
 			{
-				appealParam:   nil,
-				expectedError: provider.ErrNilAppeal,
-			},
-			{
-				appealParam:   &domain.Appeal{},
+				appealParam:   domain.Grant{},
 				expectedError: provider.ErrNilResource,
 			},
 		}
@@ -431,7 +425,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 	})
 
 	s.Run("should return error if provider is not exists", func() {
-		appeal := &domain.Appeal{
+		appeal := domain.Grant{
 			Resource: &domain.Resource{
 				ProviderType: "invalid-provider-type",
 			},
@@ -441,7 +435,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	validAppeal := &domain.Appeal{
+	validAppeal := domain.Grant{
 		Resource: &domain.Resource{
 			ProviderType: mockProviderType,
 			ProviderURN:  "urn",
@@ -450,7 +444,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 
 	s.Run("should return error if got any from provider repository", func() {
 		expectedError := errors.New("any error")
-		s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
+		s.mockProviderRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything, mock.Anything).
 			Return(nil, expectedError).
 			Once()
 
@@ -460,7 +454,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 	})
 
 	s.Run("should return error if provider not found", func() {
-		s.mockProviderRepository.On("GetOne", mock.Anything, mock.Anything).
+		s.mockProviderRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything, mock.Anything).
 			Return(nil, provider.ErrRecordNotFound).
 			Once()
 		expectedError := provider.ErrRecordNotFound
@@ -475,7 +469,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 			Config: &domain.ProviderConfig{},
 		}
 		s.mockProviderRepository.
-			On("GetOne", validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
+			EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
 			Return(provider, nil).
 			Once()
 		expectedError := errors.New("any error")
@@ -493,7 +487,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 			Config: &domain.ProviderConfig{},
 		}
 		s.mockProviderRepository.
-			On("GetOne", validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
+			EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), validAppeal.Resource.ProviderType, validAppeal.Resource.ProviderURN).
 			Return(provider, nil).
 			Once()
 		s.mockProvider.
@@ -510,7 +504,7 @@ func (s *ServiceTestSuite) TestRevokeAccess() {
 func (s *ServiceTestSuite) TestDelete() {
 	s.Run("should return error if provider repository returns error", func() {
 		expectedError := errors.New("random error")
-		s.mockProviderRepository.On("GetByID", mock.Anything).Return(nil, expectedError).Once()
+		s.mockProviderRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, expectedError).Once()
 
 		err := s.service.Delete(context.Background(), "test-provider")
 
@@ -518,7 +512,7 @@ func (s *ServiceTestSuite) TestDelete() {
 	})
 
 	s.Run("should return error if resourceService.Find returns error", func() {
-		s.mockProviderRepository.On("GetByID", mock.Anything).Return(&domain.Provider{}, nil).Once()
+		s.mockProviderRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(&domain.Provider{}, nil).Once()
 		expectedError := errors.New("random error")
 		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(nil, expectedError).Once()
 
@@ -528,7 +522,7 @@ func (s *ServiceTestSuite) TestDelete() {
 	})
 
 	s.Run("should return error if resourceService.BatchDelete returns error", func() {
-		s.mockProviderRepository.On("GetByID", mock.Anything).Return(&domain.Provider{}, nil).Once()
+		s.mockProviderRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(&domain.Provider{}, nil).Once()
 		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
 		expectedError := errors.New("random error")
 		s.mockResourceService.On("BatchDelete", mock.Anything, mock.Anything).Return(expectedError).Once()
@@ -539,11 +533,11 @@ func (s *ServiceTestSuite) TestDelete() {
 	})
 
 	s.Run("should return error if providerRepository.Delete returns error", func() {
-		s.mockProviderRepository.On("GetByID", mock.Anything).Return(&domain.Provider{}, nil).Once()
+		s.mockProviderRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(&domain.Provider{}, nil).Once()
 		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
 		s.mockResourceService.On("BatchDelete", mock.Anything, mock.Anything).Return(nil).Once()
 		expectedError := errors.New("random error")
-		s.mockProviderRepository.On("Delete", mock.Anything).Return(expectedError).Once()
+		s.mockProviderRepository.EXPECT().Delete(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(expectedError).Once()
 
 		err := s.service.Delete(context.Background(), "test-provider")
 
@@ -558,13 +552,13 @@ func (s *ServiceTestSuite) TestDelete() {
 		}
 		dummyResources := []*domain.Resource{{ID: "a"}, {ID: "b"}}
 
-		s.mockProviderRepository.On("GetByID", testID).Return(dummyProvider, nil).Once()
-		s.mockResourceService.On("Find", mock.Anything, map[string]interface{}{
-			"provider_type": dummyProvider.Type,
-			"provider_urn":  dummyProvider.URN,
+		s.mockProviderRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), testID).Return(dummyProvider, nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, domain.ListResourcesFilter{
+			ProviderType: dummyProvider.Type,
+			ProviderURN:  dummyProvider.URN,
 		}).Return(dummyResources, nil).Once()
 		s.mockResourceService.On("BatchDelete", mock.Anything, []string{"a", "b"}).Return(nil).Once()
-		s.mockProviderRepository.On("Delete", testID).Return(nil).Once()
+		s.mockProviderRepository.EXPECT().Delete(mock.AnythingOfType("*context.emptyCtx"), testID).Return(nil).Once()
 		s.mockAuditLogger.On("Log", mock.Anything, provider.AuditKeyDelete, dummyProvider).Return(nil).Once()
 
 		err := s.service.Delete(context.Background(), "test-provider")

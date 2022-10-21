@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/odpf/guardian/core/provider"
-
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 )
 
 type Provider struct {
 	provider.PermissionManager
+	provider.UnimplementedClient
 
 	typeName string
 	Clients  map[string]GcloudIamClient
@@ -76,7 +76,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	}, nil
 }
 
-func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
+func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
 	// TODO: validate provider config and appeal
 
 	var creds Credentials
@@ -105,7 +105,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a *domain.Appeal) erro
 	return ErrInvalidResourceType
 }
 
-func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a *domain.Appeal) error {
+func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err

@@ -1,41 +1,41 @@
-//go:generate mockery --name=appealService --exported
-//go:generate mockery --name=providerService --exported
-
 package jobs
 
 import (
 	"context"
 
+	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/salt/log"
 )
 
-type appealService interface {
-	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
-	Revoke(ctx context.Context, id, actor, reason string) (*domain.Appeal, error)
+//go:generate mockery --name=grantService --exported
+type grantService interface {
+	List(context.Context, domain.ListGrantsFilter) ([]domain.Grant, error)
+	Revoke(ctx context.Context, id, actor, reason string, opts ...grant.Option) (*domain.Grant, error)
 }
 
+//go:generate mockery --name=providerService --exported
 type providerService interface {
 	FetchResources(context.Context) error
 }
 
 type handler struct {
 	logger          log.Logger
-	appealService   appealService
+	grantService    grantService
 	providerService providerService
 	notifier        notifiers.Client
 }
 
 func NewHandler(
 	logger log.Logger,
-	appealService appealService,
+	grantService grantService,
 	providerService providerService,
 	notifier notifiers.Client,
 ) *handler {
 	return &handler{
 		logger:          logger,
-		appealService:   appealService,
+		grantService:    grantService,
 		providerService: providerService,
 		notifier:        notifier,
 	}
