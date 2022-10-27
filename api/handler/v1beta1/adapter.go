@@ -444,6 +444,17 @@ func (a *adapter) FromResourceProto(r *guardianv1beta1.Resource) *domain.Resourc
 		IsDeleted:    r.GetIsDeleted(),
 	}
 
+	if r.GetParentId() != "" {
+		id := r.GetParentId()
+		resource.ParentID = &id
+	}
+
+	if r.GetChildren() != nil {
+		for _, c := range r.GetChildren() {
+			resource.Children = append(resource.Children, a.FromResourceProto(c))
+		}
+	}
+
 	if r.GetDetails() != nil {
 		resource.Details = r.GetDetails().AsMap()
 	}
@@ -468,6 +479,20 @@ func (a *adapter) ToResourceProto(r *domain.Resource) (*guardianv1beta1.Resource
 		Name:         r.Name,
 		Labels:       r.Labels,
 		IsDeleted:    r.IsDeleted,
+	}
+
+	if r.ParentID != nil {
+		resourceProto.ParentId = *r.ParentID
+	}
+
+	if r.Children != nil {
+		for _, c := range r.Children {
+			childProto, err := a.ToResourceProto(c)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert child resource to proto %q: %w", c.ID, err)
+			}
+			resourceProto.Children = append(resourceProto.Children, childProto)
+		}
 	}
 
 	if r.Details != nil {

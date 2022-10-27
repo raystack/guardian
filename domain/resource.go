@@ -15,6 +15,16 @@ type Resource struct {
 	CreatedAt    time.Time              `json:"created_at,omitempty" yaml:"created_at,omitempty"`
 	UpdatedAt    time.Time              `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
 	IsDeleted    bool                   `json:"is_deleted,omitempty" yaml:"is_deleted,omitempty"`
+	ParentID     *string                `json:"parent_id,omitempty" yaml:"parent_id,omitempty"`
+	Children     []*Resource            `json:"children,omitempty" yaml:"children,omitempty"`
+}
+
+func (r *Resource) GetFlattened() []*Resource {
+	resources := []*Resource{r}
+	for _, child := range r.Children {
+		resources = append(resources, child.GetFlattened()...)
+	}
+	return resources
 }
 
 type ListResourcesFilter struct {

@@ -203,17 +203,15 @@ func (s *Service) FetchResources(ctx context.Context) error {
 	failedProviders := make([]string, 0)
 	for _, p := range providers {
 		s.logger.Info("fetching resources", "provider_urn", p.URN)
-		resources := []*domain.Resource{}
-		res, err := s.getResources(ctx, p)
+		resources, err := s.getResources(ctx, p)
 		if err != nil {
 			s.logger.Error("failed to send notifications", "error", err)
 			continue
 		}
 		s.logger.Info("resources added",
 			"provider_urn", p.URN,
-			"count", len(resources),
+			"count", len(flattenResources(resources)),
 		)
-		resources = append(resources, res...)
 		if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
 			failedProviders = append(failedProviders, p.URN)
 			s.logger.Error("failed to add resources", "provider_urn", p.URN)
@@ -381,13 +379,12 @@ func (s *Service) ListAccess(ctx context.Context, p domain.Provider, resources [
 }
 
 func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*domain.Resource, error) {
-	resources := []*domain.Resource{}
 	c := s.getClient(p.Type)
 	if c == nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidProviderType, p.Type)
 	}
 
-	existingResources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
+	existingGuardianResources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
 		ProviderType: p.Type,
 		ProviderURN:  p.URN,
 	})
@@ -395,14 +392,15 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 		return nil, err
 	}
 
-	res, err := c.GetResources(p.Config)
+	newProviderResources, err := c.GetResources(p.Config)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching resources for %v: %w", p.ID, err)
 	}
+	flattenedProviderResources := flattenResources(newProviderResources)
 
-	for _, er := range existingResources {
-		isFound := false
-		for _, r := range res {
+	existingProviderResources := map[string]bool{}
+	for _, r := range flattenedProviderResources {
+		for _, er := range existingGuardianResources {
 			if er.URN == r.URN {
 				existingMetadata := er.Details
 				if existingMetadata != nil {
@@ -417,30 +415,23 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 					}
 				}
 
-				resources = append(resources, r)
-				isFound = true
+				existingProviderResources[er.ID] = true
 				break
 			}
-		}
-		if !isFound {
-			er.IsDeleted = true
-			resources = append(resources, er)
-		}
-	}
-	for _, r := range res {
-		isAdded := false
-		for _, rr := range resources {
-			if r.URN == rr.URN {
-				isAdded = true
-				break
-			}
-		}
-		if !isAdded {
-			resources = append(resources, r)
 		}
 	}
 
-	return resources, nil
+	// mark IsDeleted of guardian resources that no longer exist in provider
+	updatedResources := []*domain.Resource{}
+	for _, r := range existingGuardianResources {
+		if _, ok := existingProviderResources[r.ID]; !ok {
+			r.IsDeleted = true
+			updatedResources = append(updatedResources, r)
+		}
+	}
+
+	newProviderResources = append(newProviderResources, updatedResources...)
+	return newProviderResources, nil
 }
 
 func (s *Service) validateAppealParam(a *domain.Appeal) error {
@@ -508,4 +499,12 @@ func validateDuration(d string) error {
 		return fmt.Errorf("parsing duration: %v", err)
 	}
 	return nil
+}
+
+func flattenResources(resources []*domain.Resource) []*domain.Resource {
+	flattenedResources := []*domain.Resource{}
+	for _, r := range resources {
+		flattenedResources = append(flattenedResources, r.GetFlattened()...)
+	}
+	return flattenedResources
 }

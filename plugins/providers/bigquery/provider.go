@@ -101,7 +101,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 				table := t.ToDomain()
 				table.ProviderType = pc.Type
 				table.ProviderURN = pc.URN
-				resources = append(resources, table)
+				dataset.Children = append(dataset.Children, table)
 			}
 		}
 	}

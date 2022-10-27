@@ -328,13 +328,15 @@ func TestGetResources(t *testing.T) {
 				Type:         "dataset",
 				Name:         "d_id",
 				URN:          "p_id:d_id",
-			},
-			{
-				ProviderType: domain.ProviderTypeBigQuery,
-				ProviderURN:  "test-project-id",
-				Name:         "t_id",
-				URN:          "p_id:d_id.t_id",
-				Type:         "table",
+				Children: []*domain.Resource{
+					{
+						ProviderType: domain.ProviderTypeBigQuery,
+						ProviderURN:  "test-project-id",
+						Name:         "t_id",
+						URN:          "p_id:d_id.t_id",
+						Type:         "table",
+					},
+				},
 			},
 		}
 		actualResources, actualError := p.GetResources(pc)

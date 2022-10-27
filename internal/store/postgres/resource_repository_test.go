@@ -222,7 +222,7 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 }
 
 func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
-	s.Run("should return records with existing or new IDs", func() {
+	s.Run("should return records with existing or new IDs on insertion", func() {
 		resources := s.getTestResources()
 
 		err := s.repository.BulkUpsert(context.Background(), resources)
@@ -236,6 +236,29 @@ func (s *ResourceRepositoryTestSuite) TestBulkUpsert() {
 
 		s.Nil(err)
 		s.Equal(len(resources), len(actualIDs))
+	})
+
+	s.Run("should update specified fields on existing records", func() {
+		resources := s.getTestResources()
+		err := s.repository.BulkUpsert(context.Background(), resources)
+		s.Require().NoError(err)
+
+		toBeUpdatedResource := &domain.Resource{}
+		*toBeUpdatedResource = *resources[0]
+		toBeUpdatedResource.Name = "updated_name"
+		toBeUpdatedResource.Details = map[string]interface{}{"foo": "updated_bar"}
+		toBeUpdatedResource.IsDeleted = true
+		toBeUpdatedResource.ParentID = &resources[1].ID
+		ctx := context.Background()
+		err = s.repository.BulkUpsert(ctx, []*domain.Resource{toBeUpdatedResource})
+		s.NoError(err)
+
+		newResource, err := s.repository.GetOne(ctx, toBeUpdatedResource.ID)
+		s.NoError(err)
+		s.Equal(toBeUpdatedResource.Name, newResource.Name)
+		s.Equal(toBeUpdatedResource.Details, newResource.Details)
+		s.Equal(toBeUpdatedResource.IsDeleted, newResource.IsDeleted)
+		s.Equal(toBeUpdatedResource.ParentID, newResource.ParentID)
 	})
 
 	s.Run("should return nil error if resources input is empty", func() {
