@@ -49,6 +49,7 @@ module.exports = {
         "reference/resource",
         "reference/jobs",
         "reference/glossary",
+        "reference/configuration",
       ],
     },
     {
@@ -57,7 +58,13 @@ module.exports = {
       items: [
         "contribute/architecture",
         "contribute/contribution",
-        "contribute/development",
+        {
+          type: "category",
+          label: "Development Guide",
+          items: [
+            "contribute/provider",
+          ]
+        },
       ],
     },
   ],
