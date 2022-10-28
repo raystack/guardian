@@ -1,25 +1,16 @@
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
+# Configuration Reference
 
-# Configuration
-
-<Tabs groupId="api">
-  <TabItem value="client" label="Client" default>
-
-## Client Configuration Reference
+## Client Configuration
 
 ```yml
-host: localhost:8080
+host: "localhost:8080"
 ```
 
-| Key      | Description                            |
-| -------- | -------------------------------------- |
-| `host`   | Guardian Server Host (`<host>:<port>`) |
+| Field    | Type     | Description                            |
+| -------- | -------- | -------------------------------------- |
+| `host`   | `string` | Guardian server host (`<host>:<port>`) |
 
-  </TabItem>
-  <TabItem value="server" label="Server">
-
-## Server Configuration Reference
+## Server Configuration
 
 ```yml
 port: 8080
@@ -55,52 +46,69 @@ jobs:
     expiring_grant_notification:
         enabled: true
         interval: "0 9 * * *"
-    revoke_expired_access:
-        enabled: true
-        interval: ""
-    expiring_access_notification:
-        enabled: true
-        interval: ""
 ```
 
-| Field                                        | Type      | Description                                                             |
-| -------------------------------------------- | --------- | ----------------------------------------------------------------------- |
-| `port`                                       | `int`     | Server Listen Port  (eg: `8080`)                                        |
-| `encryption_secret_key`                      | `string`  | Encryption secret key encrypt and decrypt credentials                   |
-| `notifier.provider`                          | `string`  | Provider for notification (Only `slack` supported for now)              |
-| `notifier.access_token`                      | `string`  | Access Token for notification provider (eg: slack access token)         |
-| `notifier.messages.expiration_reminder`      | `string`  | Message template for expiration reminder                                |
-| `notifier.messages.appeal_approved`          | `string`  | Message template for appeal approved                                    |
-| `notifier.messages.appeal_rejected`          | `string`  | Message template for appeal rejected                                    |
-| `notifier.messages.access_revoked`           | `string`  | Message template for access revoked                                     |
-| `notifier.messages.approver_notification`    | `string`  | Message template for approver notification                              |
-| `notifier.messages.others_appeal_approved`   | `string`  | Message template for other appeal approved                              |
-| `log_level`                                  | `string`  | Log level (default: `info`)                                             |
-| `db.host`                                    | `string`  | Database host                                                           |
-| `db.user`                                    | `string`  | Database user                                                           |
-| `db.password`                                | `string`  | Database password                                                       |
-| `db.name`                                    | `string`  | Database name                                                           |
-| `db.port`                                    | `string`  | Database port                                                           |
-| `db.sslmode`                                 | `string`  | Database sslmode                                                        |
-| `db.log_level`                               | `string`  | Database log_level                                                      |
-| `authenticated_user_header_key`              | `string`  | Header key name for authenticated user (eg: `X-Auth-Email`)             |
-| `audit_log_trace_id_header_key`              | `string`  | Header key name for trace id (eg: `X-Trace-Id`)                         |
-| `jobs.fetch_resources.enabled`               | `boolean` | Enable fetch resources job                                              |
-| `jobs.fetch_resources.interval`              | `string`  | Fetch resources job interval ([cron format](https://crontab.guru), eg: `0 */2 * * *`)           |
-| `jobs.revoke_expired_grants.enabled`         | `boolean` | Enable revoke expired grants job                                        |
-| `jobs.revoke_expired_grants.interval`        | `string`  | Revoke expired grants Job interval ([cron format](https://crontab.guru), eg: `*/20 * * * *`)    |
-| `jobs.expiring_grant_notification.enabled`   | `boolean` | Enable expiring grant notification job                                  |
-| `jobs.expiring_grant_notification.interval`  | `string`  | Expiring grant notification job interval ([cron format](https://crontab.guru), eg: `0 9 * * *`) |
-| `jobs.revoke_expired_access.enabled`         | `boolean` | Enable Revoke expired access                                            |
-| `jobs.revoke_expired_access.interval`        | `string`  | Revoke expired access job interval ([cron format](https://crontab.guru), eg: `*/20 * * * *`)     |
-| `jobs.expiring_access_notification.enabled`  | `boolean` | Enable expiring access notification job                                 |
-| `jobs.expiring_access_notification.interval` | `string`  | Expiring access notification job interval ([cron format](https://crontab.guru), eg: `0 9 * * *`) |
 
-  </TabItem>
-</Tabs>
+### Config
+
+| Field                                        | Type                             | Description                                                             |
+| -------------------------------------------- | -------------------------------- | ----------------------------------------------------------------------- |
+| `port`                                       | `int`                            | Server Listen Port  (eg: `8080`)                                        |
+| `encryption_secret_key`                      | `string`                         | Encryption secret key encrypt and decrypt credentials                   |
+| `notifier`                                   | [`Object(NotifierConfig)`](#notifierconfig)  | Notification Configuration                                              |
+| `log_level`                                  | `string`                         | Log level (default: `info`)                                             |
+| `db`                                         | [`Object(DatabaseConfig)`](#databaseconfig)  | Database configuration                                                  |
+| `authenticated_user_header_key`              | `string`                         | Header key name for authenticated user (eg: `X-Auth-Email`)             |
+| `audit_log_trace_id_header_key`              | `string`                         | Header key name for trace id (eg: `X-Trace-Id`)                         |
+| `jobs`                                       | [`Object(Jobs)`](#jobs)          | Server Jobs Configuration                                               |
+
+### NotifierConfig
+
+| Field          | Type                                                     | Description                                                             |
+| -------------- | -------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `provider`     | `string`                                                 | Provider for notification (Only `slack` supported for now)              |
+| `access_token` | `string`                                                 | Access Token for notification provider (eg: slack access token)         |
+| `messages`     | [`Object(NotificationMessages)`](#notificationmessages)  | Message templates configuration                                         |
+
+### NotificationMessages
+
+| Field                    | Type      | Description                                                             |
+| -------------------------| --------- | ----------------------------------------------------------------------- |
+| `expiration_reminder`    | `string`  | Message template for expiration reminder                                |
+| `appeal_approved`        | `string`  | Message template for appeal approved                                    |
+| `appeal_rejected`        | `string`  | Message template for appeal rejected                                    |
+| `access_revoked`         | `string`  | Message template for access revoked                                     |
+| `approver_notification`  | `string`  | Message template for approver notification                              |
+| `others_appeal_approved` | `string`  | Message template for other appeal approved                              |
 
 
 
+### DatabaseConfig
+
+| Field        | Type                             | Description                                                             |
+| ------------ | -------------------------------- | ----------------------------------------------------------------------- |
+| `host`       | `string`                         | Database host                                                           |
+| `user`       | `string`                         | Database user                                                           |
+| `password`   | `string`                         | Database password                                                       |
+| `name`       | `string`                         | Database name                                                           |
+| `port`       | `string`                         | Database port                                                           |
+| `sslmode`    | `string`                         | Database sslmode                                                        |
+| `log_level`  | `string`                         | Database log_level                                                      |
+
+### Jobs
+
+| Field                                | Type                              | Description                                                             |
+| -------------------------------------| --------------------------------- | ----------------------------------------------------------------------- |
+| `fetch_resources`                    | [`Object(JobConfig)`](#jobconfig) | When Enabled, the Guardian server fetches resources from the providers and updated the database.                                              |
+| `revoke_expired_grants`              | [`Object(JobConfig)`](#jobconfig) | When Enabled, the Guardian server will revoke the user permissions for the resource                                        |
+| `expiring_grant_notification`        | [`Object(JobConfig)`](#jobconfig) | When Enabled, the Guardian server will notify the user on the notifier (currently slack only) before the user appeal is about to expire. The user gets notified before 7 days, 3 days and 1 day of appeal expiry                                  |
+
+### JobConfig
+
+| Field      | Type                             | Description                                                             |
+| -----------| -------------------------------- | ----------------------------------------------------------------------- |
+| `enabled`  | `boolean`                        | Job Enabled                                                             |
+| `interval` | `string`                         | Job interval ([cron format](https://crontab.guru), eg: `0 */2 * * *`)   |
 
 ## Using environment variables
 
