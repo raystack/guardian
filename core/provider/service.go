@@ -241,7 +241,7 @@ func (s *Service) GetPermissions(_ context.Context, pc *domain.ProviderConfig, r
 	return c.GetPermissions(pc, resourceType, role)
 }
 
-func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domain.Provider) error {
+func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domain.Provider, policy *domain.Policy) error {
 	if err := s.validateAppealParam(a); err != nil {
 		return err
 	}
@@ -274,7 +274,17 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 		return ErrInvalidRole
 	}
 
-	if p.Config.Appeal != nil && !p.Config.Appeal.AllowPermanentAccess {
+	// Default to use provider config if policy config is not set
+	AllowPermanentAccess := false
+	if p.Config.Appeal != nil {
+		AllowPermanentAccess = p.Config.Appeal.AllowPermanentAccess
+	}
+
+	if policy != nil && policy.AppealConfig != nil {
+		AllowPermanentAccess = policy.AppealConfig.AllowPermanentAccess
+	}
+
+	if !AllowPermanentAccess {
 		if a.Options == nil {
 			return ErrOptionsDurationNotFound
 		}

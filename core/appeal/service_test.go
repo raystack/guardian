@@ -221,6 +221,9 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 		timeNow := time.Now()
 		expDate := timeNow.Add(24 * time.Hour)
+
+		testPolicies := []*domain.Policy{{ID: "policy_id", Version: 1}}
+
 		testCases := []struct {
 			name                          string
 			resources                     []*domain.Resource
@@ -299,6 +302,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				name: "user still have active grant",
 				resources: []*domain.Resource{{
 					ID:           "1",
+					Type:         "resource_type",
 					ProviderType: testProvider.Type,
 					ProviderURN:  testProvider.URN,
 				}},
@@ -308,6 +312,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Role:       "test-role",
 					Status:     domain.GrantStatusActive,
 				}},
+				policies: testPolicies,
 				appeals: []*domain.Appeal{{
 					CreatedBy:  "test-user",
 					AccountID:  "test-user",
@@ -321,6 +326,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				name: "invalid extension duration",
 				resources: []*domain.Resource{{
 					ID:           "1",
+					Type:         "resource_type",
 					ProviderType: testProvider.Type,
 					ProviderURN:  testProvider.URN,
 				}},
@@ -336,6 +342,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ResourceID: "1",
 					Role:       "test-role",
 				}},
+				policies: testPolicies,
 				providers: []*domain.Provider{{
 					ID:   "1",
 					Type: testProvider.Type,
@@ -344,6 +351,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						Appeal: &domain.AppealConfig{
 							AllowActiveAccessExtensionIn: "invalid",
 						},
+						Resources: testProvider.Config.Resources,
 					},
 				}},
 				expectedError: appeal.ErrAppealInvalidExtensionDuration,
@@ -352,6 +360,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				name: "extension not eligible",
 				resources: []*domain.Resource{{
 					ID:           "1",
+					Type:         "resource_type",
 					ProviderType: testProvider.Type,
 					ProviderURN:  testProvider.URN,
 				}},
@@ -368,6 +377,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ResourceID: "1",
 					Role:       "test-role",
 				}},
+				policies: testPolicies,
 				providers: []*domain.Provider{{
 					ID:   "1",
 					Type: testProvider.Type,
@@ -376,6 +386,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						Appeal: &domain.AppealConfig{
 							AllowActiveAccessExtensionIn: "23h",
 						},
+						Resources: testProvider.Config.Resources,
 					},
 				}},
 				expectedError: appeal.ErrGrantNotEligibleForExtension,
@@ -399,6 +410,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
+				policies:                      []*domain.Policy{{ID: "policy_id", Version: 1}},
 				providers:                     []*domain.Provider{testProvider},
 				callMockValidateAppeal:        true,
 				expectedAppealValidationError: provider.ErrOptionsDurationNotFound,
@@ -415,6 +427,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
+				policies:                      testPolicies,
 				providers:                     []*domain.Provider{testProvider},
 				callMockValidateAppeal:        true,
 				expectedAppealValidationError: provider.ErrDurationIsRequired,
@@ -434,6 +447,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
+				policies:                      testPolicies,
 				providers:                     []*domain.Provider{testProvider},
 				callMockValidateAppeal:        true,
 				expectedAppealValidationError: provider.ErrInvalidRole,
@@ -454,11 +468,10 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "invalid_resource_type",
 				}},
-				providers:              []*domain.Provider{testProvider},
-				callMockValidateAppeal: true,
-				callMockGetPermissions: true,
-				appeals:                []*domain.Appeal{{ResourceID: "1"}},
-				expectedError:          appeal.ErrResourceTypeNotFound,
+				policies:      testPolicies,
+				providers:     []*domain.Provider{testProvider},
+				appeals:       []*domain.Appeal{{ResourceID: "1"}},
+				expectedError: appeal.ErrResourceTypeNotFound,
 			},
 			{
 				name: "policy id not found",
@@ -468,9 +481,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
-				providers:              []*domain.Provider{testProvider},
-				callMockValidateAppeal: true,
-				callMockGetPermissions: true,
+				providers: []*domain.Provider{testProvider},
 				appeals: []*domain.Appeal{{
 					ResourceID: "1",
 					Role:       "role_1",
@@ -488,9 +499,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
-				callMockValidateAppeal: true,
-				callMockGetPermissions: true,
-				providers:              []*domain.Provider{testProvider},
+				providers: []*domain.Provider{testProvider},
 				policies: []*domain.Policy{{
 					ID: "policy_id",
 				}},
@@ -511,9 +520,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					ProviderURN:  "provider_urn",
 					Type:         "resource_type",
 				}},
-				callMockValidateAppeal: true,
-				callMockGetPermissions: true,
-				providers:              []*domain.Provider{testProvider},
+				providers: []*domain.Provider{testProvider},
 				policies: []*domain.Policy{{
 					ID:      "policy_id",
 					Version: uint(1),
@@ -525,6 +532,8 @@ func (s *ServiceTestSuite) TestCreate() {
 						},
 					},
 				}},
+				callMockValidateAppeal: true,
+				callMockGetPermissions: true,
 				appeals: []*domain.Appeal{{
 					ResourceID:    "1",
 					Role:          "role_1",
@@ -550,7 +559,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
 					Return(tc.activeGrants, nil).Once()
 				if tc.callMockValidateAppeal {
-					s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedAppealValidationError).Once()
+					s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedAppealValidationError).Once()
 				}
 				if tc.callMockGetPermissions {
 					s.mockProviderService.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -808,7 +817,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				Statuses: []string{string(domain.GrantStatusActive)},
 			}).
 			Return(expectedActiveGrants, nil).Once()
-		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		s.mockProviderService.On("GetPermissions", mock.Anything, mock.Anything, "resource_type_1", "role_id").
 			Return([]interface{}{"test-permission-1"}, nil)
 		s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
@@ -933,7 +942,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			s.mockGrantService.EXPECT().
 				List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
 				Return([]domain.Grant{}, nil).Once()
-			s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			s.mockProviderService.On("GetPermissions", mock.Anything, dummyProvider.Config, dummyResource.Type, input.Role).
 				Return(dummyProvider.Config.Resources[0].Roles[0].Permissions, nil)
 			s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
@@ -1145,7 +1154,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			Statuses: []string{string(domain.GrantStatusActive)},
 		}).
 		Return(expectedExistingGrants, nil).Once()
-	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	s.mockProviderService.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return([]interface{}{"test-permission"}, nil)
 	s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)

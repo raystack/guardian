@@ -195,8 +195,10 @@ type Policy struct {
 }
 
 type PolicyAppealConfig struct {
-	DurationOptions []AppealDurationOption `json:"duration_options" yaml:"duration_options" validate:"omitempty,min=1,dive"`
-	AllowOnBehalf   bool                   `json:"allow_on_behalf" yaml:"allow_on_behalf"`
+	DurationOptions              []AppealDurationOption `json:"duration_options" yaml:"duration_options" validate:"omitempty,min=1,dive"`
+	AllowOnBehalf                bool                   `json:"allow_on_behalf" yaml:"allow_on_behalf"`
+	AllowPermanentAccess         bool                   `json:"allow_permanent_access" yaml:"allow_permanent_access"`
+	AllowActiveAccessExtensionIn string                 `json:"allow_active_access_extension_in" yaml:"allow_active_access_extension_in"`
 }
 
 type AppealDurationOption struct {
