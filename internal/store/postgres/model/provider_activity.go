@@ -15,6 +15,7 @@ type ProviderActivity struct {
 	ID             uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
 	ProviderID     uuid.UUID
 	ResourceID     uuid.UUID
+	AccountType    string
 	AccountID      string
 	Timestamp      time.Time
 	Authorizations pq.StringArray `gorm:"type:text[]"`
@@ -52,6 +53,7 @@ func (m *ProviderActivity) FromDomain(pa *domain.ProviderActivity) error {
 		}
 		m.ResourceID = id
 	}
+	m.AccountType = pa.AccountType
 	m.AccountID = pa.AccountID
 	m.Timestamp = pa.Timestamp
 	m.Authorizations = pa.Authorizations
@@ -86,6 +88,7 @@ func (m *ProviderActivity) ToDomain() (*domain.ProviderActivity, error) {
 		ID:             m.ID.String(),
 		ProviderID:     m.ProviderID.String(),
 		ResourceID:     m.ResourceID.String(),
+		AccountType:    m.AccountType,
 		AccountID:      m.AccountID,
 		Timestamp:      m.Timestamp,
 		Authorizations: m.Authorizations,

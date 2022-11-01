@@ -3,15 +3,16 @@ module github.com/odpf/guardian
 go 1.17
 
 require (
-	cloud.google.com/go v0.99.0
 	cloud.google.com/go/bigquery v1.8.0
-	cloud.google.com/go/storage v1.10.0
+	cloud.google.com/go/iam v0.3.0
+	cloud.google.com/go/logging v1.5.0
+	cloud.google.com/go/storage v1.22.1
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/antonmedv/expr v1.9.0
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
-	github.com/google/go-cmp v0.5.6
+	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
@@ -27,11 +28,11 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.1
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
-	google.golang.org/api v0.62.0
-	google.golang.org/genproto v0.0.0-20220314164441-57ef72a4c106
-	google.golang.org/grpc v1.45.0
-	google.golang.org/protobuf v1.27.1
+	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
+	google.golang.org/api v0.84.0
+	google.golang.org/genproto v0.0.0-20220617124728-180714bec0ad
+	google.golang.org/grpc v1.47.0
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gorm.io/datatypes v1.0.0
 	gorm.io/driver/postgres v1.0.8
@@ -39,6 +40,8 @@ require (
 )
 
 require (
+	cloud.google.com/go v0.102.1 // indirect
+	cloud.google.com/go/compute v1.7.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
@@ -63,7 +66,9 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.0.0-20220520183353-fd19c99a87aa // indirect
+	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
+	github.com/googleapis/go-type-adapters v1.0.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -118,11 +123,12 @@ require (
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.0 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
+	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb // indirect
+	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
+	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

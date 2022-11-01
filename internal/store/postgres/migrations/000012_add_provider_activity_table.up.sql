@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS "provider_activities" (
   "id" uuid DEFAULT uuid_generate_v4(),
   "provider_id" uuid,
   "resource_id" uuid,
+  "account_type" text,
   "account_id" text,
   "timestamp" timestamptz,
   "authorizations" text [],
