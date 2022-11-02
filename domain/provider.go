@@ -66,13 +66,21 @@ type AppealConfig struct {
 
 // ProviderConfig is the configuration for a data provider
 type ProviderConfig struct {
-	Type                string            `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana tableau gcloud_iam noop gcs"`
-	URN                 string            `json:"urn" yaml:"urn" validate:"required"`
-	AllowedAccountTypes []string          `json:"allowed_account_types" yaml:"allowed_account_types" validate:"omitempty,min=1"`
-	Labels              map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
-	Credentials         interface{}       `json:"credentials,omitempty" yaml:"credentials" validate:"required"`
-	Appeal              *AppealConfig     `json:"appeal,omitempty" yaml:"appeal,omitempty" validate:"required"`
-	Resources           []*ResourceConfig `json:"resources" yaml:"resources" validate:"required"`
+	Type                string               `json:"type" yaml:"type" validate:"required,oneof=google_bigquery metabase grafana tableau gcloud_iam noop gcs"`
+	URN                 string               `json:"urn" yaml:"urn" validate:"required"`
+	AllowedAccountTypes []string             `json:"allowed_account_types" yaml:"allowed_account_types" validate:"omitempty,min=1"`
+	Labels              map[string]string    `json:"labels,omitempty" yaml:"labels,omitempty"`
+	Credentials         interface{}          `json:"credentials,omitempty" yaml:"credentials" validate:"required"`
+	Appeal              *AppealConfig        `json:"appeal,omitempty" yaml:"appeal,omitempty" validate:"required"`
+	Resources           []*ResourceConfig    `json:"resources" yaml:"resources" validate:"required"`
+	Parameters          []*ProviderParameter `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+}
+
+type ProviderParameter struct {
+	Key         string `json:"key" yaml:"key" validate:"required"`
+	Label       string `json:"label" yaml:"label" validate:"required"`
+	Required    bool   `json:"required" yaml:"required" validate:"required"`
+	Description string `json:"description" yaml:"description"`
 }
 
 func (pc ProviderConfig) GetResourceTypes() (resourceTypes []string) {

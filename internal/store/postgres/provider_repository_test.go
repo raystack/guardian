@@ -60,7 +60,16 @@ func (s *ProviderRepositoryTestSuite) TearDownSuite() {
 
 func (s *ProviderRepositoryTestSuite) TestCreate() {
 	s.Run("should update model's ID with the returned ID", func() {
-		config := &domain.ProviderConfig{}
+		config := &domain.ProviderConfig{
+			Parameters: []*domain.ProviderParameter{
+				{
+					Key:         "username",
+					Label:       "Username",
+					Required:    true,
+					Description: "Please enter your username",
+				},
+			},
+		}
 		p := &domain.Provider{
 			Config: config,
 		}
@@ -151,7 +160,16 @@ func (s *ProviderRepositoryTestSuite) TestGetByID() {
 		s.Nil(err)
 
 		p := &domain.Provider{
-			Config: &domain.ProviderConfig{},
+			Config: &domain.ProviderConfig{
+				Parameters: []*domain.ProviderParameter{
+					{
+						Key:         "username",
+						Label:       "Username",
+						Required:    true,
+						Description: "Please enter your username",
+					},
+				},
+			},
 		}
 
 		err = s.repository.Create(context.Background(), p)
