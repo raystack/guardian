@@ -282,6 +282,7 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
 
 	if p.GetAppeal() != nil {
 		var durationOptions []domain.AppealDurationOption
+		var questions []domain.Question
 		for _, d := range p.GetAppeal().GetDurationOptions() {
 			option := domain.AppealDurationOption{
 				Name:  d.GetName(),
@@ -289,9 +290,22 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
 			}
 			durationOptions = append(durationOptions, option)
 		}
+		for _, q := range p.GetAppeal().GetQuestions() {
+			question := domain.Question{
+				Key:         q.GetKey(),
+				Question:    q.GetQuestion(),
+				Required:    q.GetRequired(),
+				Description: q.GetDescription(),
+			}
+			questions = append(questions, question)
+		}
+
 		policy.AppealConfig = &domain.PolicyAppealConfig{
-			DurationOptions: durationOptions,
-			AllowOnBehalf:   p.GetAppeal().GetAllowOnBehalf(),
+			DurationOptions:              durationOptions,
+			AllowOnBehalf:                p.GetAppeal().GetAllowOnBehalf(),
+			Questions:                    questions,
+			AllowPermanentAccess:         p.GetAppeal().GetAllowPermanentAccess(),
+			AllowActiveAccessExtensionIn: p.GetAppeal().GetAllowActiveAccessExtensionIn(),
 		}
 	}
 
@@ -429,6 +443,17 @@ func (a *adapter) ToPolicyAppealConfigProto(p *domain.Policy) *guardianv1beta1.P
 	}
 	policyAppealConfigProto.DurationOptions = durationOptions
 	policyAppealConfigProto.AllowOnBehalf = p.AppealConfig.AllowOnBehalf
+	policyAppealConfigProto.AllowPermanentAccess = p.AppealConfig.AllowPermanentAccess
+	policyAppealConfigProto.AllowActiveAccessExtensionIn = p.AppealConfig.AllowActiveAccessExtensionIn
+
+	for _, q := range p.AppealConfig.Questions {
+		policyAppealConfigProto.Questions = append(policyAppealConfigProto.Questions, &guardianv1beta1.PolicyAppealConfig_Question{
+			Key:         q.Key,
+			Question:    q.Question,
+			Required:    q.Required,
+			Description: q.Description,
+		})
+	}
 	return policyAppealConfigProto
 }
 
