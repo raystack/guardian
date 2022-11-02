@@ -83,6 +83,19 @@ func (a *adapter) FromProviderConfigProto(pc *guardianv1beta1.ProviderConfig) *d
 		providerConfig.Resources = resources
 	}
 
+	if pc.GetParameters() != nil {
+		parameters := []*domain.ProviderParameter{}
+		for _, p := range pc.GetParameters() {
+			parameters = append(parameters, &domain.ProviderParameter{
+				Key:         p.GetKey(),
+				Label:       p.GetLabel(),
+				Required:    p.GetRequired(),
+				Description: p.GetDescription(),
+			})
+		}
+		providerConfig.Parameters = parameters
+	}
+
 	if pc.GetAllowedAccountTypes() != nil {
 		providerConfig.AllowedAccountTypes = pc.GetAllowedAccountTypes()
 	}
@@ -156,6 +169,19 @@ func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*guardianv1b
 			})
 		}
 		providerConfigProto.Resources = resources
+	}
+
+	if pc.Parameters != nil {
+		parameters := []*guardianv1beta1.ProviderConfig_ProviderParameter{}
+		for _, p := range pc.Parameters {
+			parameters = append(parameters, &guardianv1beta1.ProviderConfig_ProviderParameter{
+				Key:         p.Key,
+				Label:       p.Label,
+				Required:    p.Required,
+				Description: p.Description,
+			})
+		}
+		providerConfigProto.Parameters = parameters
 	}
 
 	if pc.AllowedAccountTypes != nil {
