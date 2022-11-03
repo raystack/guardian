@@ -5,12 +5,41 @@ A provider configuration is required when we want to register a provider instanc
 #### YAML representation
 
 ```yaml
-type: string
-urn: string
-credentials: object
-appeal: object
-resources: []object
+id: "fcbfd47a-7dc4-4d3a-aff1-97ea7b205ac4"
+type: "bigquery"
+urn: "test-bq-urn"
+config: 
+  type: "bigquery"
+  urn: "test-bq-urn"
+  appeal:
+    allow_permanent_access: false
+    allow_active_access_extension_in: 24h
+  resources:
+    - type: "dataset"
+      policy:
+        id: "my-policy"
+        version: 1
+      roles:
+        id: "viewer"
+        name: "Viewer"
+        permissions:
+          - "READER"
+  allowed_account_types:
+    - user
+created_at: "2021-10-26T09:29:48.838203Z"
+updated_at: "2022-10-26T07:41:52.676004Z"
 ```
+
+### `Provider`
+
+| Field      | Type                                      | Description                                |
+|------------|-------------------------------------------|--------------------------------------------|
+| id         | `string`                                  | Provider unique identifier                 |
+| type       | `string`                                  | Provider type                              |
+| urn        | `string`                                  | Unique provider URN                        |
+| config     | [object(ProviderConfig)](#providerconfig) | Provider Configuration                     |
+| created_at | `string`                                  | Timestamp when the provider created.       |
+| updated_at | `string`                                  | Timestamp when the provider last modified. |
 
 ### `ProviderConfig`
 | Field | Type | Description | Required | 
