@@ -13,10 +13,6 @@ import (
 )
 
 const (
-	DatasetRoleReader = "READER"
-	DatasetRoleWriter = "WRITER"
-	DatasetRoleOwner  = "OWNER"
-
 	AccountTypeUser           = "user"
 	AccountTypeServiceAccount = "serviceAccount"
 )
@@ -173,7 +169,18 @@ func (c *Config) validatePermission(value interface{}, resourceType string, clie
 	}
 
 	if resourceType == ResourceTypeDataset {
-		if !utils.ContainsString([]string{DatasetRoleReader, DatasetRoleWriter, DatasetRoleOwner}, permision) {
+		roles, err := client.getGrantAbleRoleForDataset()
+		if err != nil {
+			return nil, ErrCannotFetchDatabasePermission
+		}
+		findMatchingRole := false
+		for _, role := range roles {
+			if string(role) == permision {
+				findMatchingRole = true
+				break
+			}
+		}
+		if !findMatchingRole {
 			return nil, fmt.Errorf("%v: %v", ErrInvalidDatasetPermission, permision)
 		}
 	} else if resourceType == ResourceTypeTable {

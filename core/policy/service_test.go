@@ -72,7 +72,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "id contains tab(s)",
 				policy: &domain.Policy{
-					ID:      "a	a",
+					ID: "a	a",
 					Version: 1,
 					Steps:   validSteps,
 				},

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	bq "cloud.google.com/go/bigquery"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
@@ -20,7 +19,6 @@ type BigQueryClient interface {
 	RevokeDatasetAccess(ctx context.Context, d *Dataset, user, role string) error
 	GrantTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
 	RevokeTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
-	ResolveDatasetRole(role string) (bq.AccessRole, error)
 	ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error)
 }
 

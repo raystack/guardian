@@ -110,19 +110,6 @@ func (c *bigQueryClient) GetTables(ctx context.Context, datasetID string) ([]*Ta
 	return results, nil
 }
 
-func (c *bigQueryClient) ResolveDatasetRole(role string) (bq.AccessRole, error) {
-	switch role {
-	case DatasetRoleReader:
-		return bq.ReaderRole, nil
-	case DatasetRoleWriter:
-		return bq.WriterRole, nil
-	case DatasetRoleOwner:
-		return bq.OwnerRole, nil
-	default:
-		return "", ErrInvalidRole
-	}
-}
-
 func (c *bigQueryClient) GrantDatasetAccess(ctx context.Context, d *Dataset, user, role string) error {
 	dataset := c.client.Dataset(d.DatasetID)
 	metadata, err := dataset.Metadata(ctx)
@@ -130,18 +117,14 @@ func (c *bigQueryClient) GrantDatasetAccess(ctx context.Context, d *Dataset, use
 		return err
 	}
 
-	bqRole, err := c.ResolveDatasetRole(role)
-	if err != nil {
-		return err
-	}
 	for _, a := range metadata.Access {
-		if a.Entity == user && a.Role == bqRole {
+		if a.Entity == user && a.Role == bq.AccessRole(role) {
 			return ErrPermissionAlreadyExists
 		}
 	}
 	update := bq.DatasetMetadataToUpdate{
 		Access: append(metadata.Access, &bq.AccessEntry{
-			Role:       bqRole,
+			Role:       bq.AccessRole(role),
 			EntityType: bq.UserEmailEntity,
 			Entity:     user,
 		}),
@@ -157,14 +140,10 @@ func (c *bigQueryClient) RevokeDatasetAccess(ctx context.Context, d *Dataset, us
 	if err != nil {
 		return err
 	}
-	bqRole, err := c.ResolveDatasetRole(role)
-	if err != nil {
-		return err
-	}
 
 	remainingAccessEntries := []*bq.AccessEntry{}
 	for _, a := range metadata.Access {
-		if a.Entity == user && a.Role == bqRole {
+		if a.Entity == user && a.Role == bq.AccessRole(role) {
 			continue
 		}
 		remainingAccessEntries = append(remainingAccessEntries, a)
@@ -325,6 +304,34 @@ func (c *bigQueryClient) ListAccess(ctx context.Context, resources []*domain.Res
 	}
 
 	return access, nil
+}
+
+func (c *bigQueryClient) getGrantAbleRoleForDataset() ([]bq.AccessRole, error) {
+	var roles = []bq.AccessRole{bq.OwnerRole, bq.WriterRole, bq.ReaderRole}
+	var resourceName string
+	ctx := context.Background()
+	datasetIterator := c.client.Datasets(ctx)
+	for {
+		dataset, err := datasetIterator.Next()
+		if err == iterator.Done || err != nil {
+			break
+		}
+
+		resourceName = fmt.Sprintf("//bigquery.googleapis.com/projects/%v/datasets/%v", dataset.ProjectID, dataset.DatasetID)
+		request := &iam.QueryGrantableRolesRequest{
+			FullResourceName: resourceName,
+		}
+		response, err := c.iamService.Roles.QueryGrantableRoles(request).Do()
+		if err != nil {
+			return roles, err
+		}
+
+		for _, role := range response.Roles {
+			roles = append(roles, bq.AccessRole(role.Name))
+		}
+		return roles, nil
+	}
+	return roles, nil
 }
 
 func (c *bigQueryClient) getGrantableRolesForTables() ([]string, error) {
