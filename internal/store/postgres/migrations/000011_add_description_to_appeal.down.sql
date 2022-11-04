@@ -1,0 +1,1 @@
+ALTER TABLE "appeals" DROP COLUMN IF EXISTS "description";

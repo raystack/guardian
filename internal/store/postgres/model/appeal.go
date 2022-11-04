@@ -28,6 +28,7 @@ type Appeal struct {
 	Options       datatypes.JSON
 	Labels        datatypes.JSON
 	Details       datatypes.JSON
+	Description   string
 
 	Resource  *Resource `gorm:"ForeignKey:ResourceID;References:ID"`
 	Policy    Policy    `gorm:"ForeignKey:PolicyID,PolicyVersion;References:ID,Version"`
@@ -110,6 +111,7 @@ func (m *Appeal) FromDomain(a *domain.Appeal) error {
 	m.Options = datatypes.JSON(options)
 	m.Labels = datatypes.JSON(labels)
 	m.Details = datatypes.JSON(details)
+	m.Description = a.Description
 	m.Approvals = approvals
 	m.CreatedAt = a.CreatedAt
 	m.UpdatedAt = a.UpdatedAt
@@ -190,6 +192,7 @@ func (m *Appeal) ToDomain() (*domain.Appeal, error) {
 		Permissions:   []string(m.Permissions),
 		Options:       options,
 		Details:       details,
+		Description:   m.Description,
 		Labels:        labels,
 		Approvals:     approvals,
 		Resource:      resource,

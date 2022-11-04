@@ -725,6 +725,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						Approvers:     []string{"user.approver@email.com"},
 					},
 				},
+				Description: "The answer is 42",
 			}
 			if r == "2" {
 				appeal.AccountID = "addOnBehalfApprovedNotification-user"
@@ -765,6 +766,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						Approvers:     []string{"user.approver@email.com"},
 					},
 				},
+				Description: "The answer is 42",
 			},
 			{
 				ID:            "2",
@@ -799,6 +801,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						Approvers:     []string{"user.approver@email.com"},
 					},
 				},
+				Description: "The answer is 42",
 			},
 		}
 
@@ -848,7 +851,8 @@ func (s *ServiceTestSuite) TestCreate() {
 					ID:  "1",
 					URN: "urn",
 				},
-				Role: "role_id",
+				Role:        "role_id",
+				Description: "The answer is 42",
 			},
 			{
 				CreatedBy:  accountID,
@@ -858,7 +862,8 @@ func (s *ServiceTestSuite) TestCreate() {
 					ID:  "2",
 					URN: "urn",
 				},
-				Role: "role_id",
+				Role:        "role_id",
+				Description: "The answer is 42",
 			},
 		}
 		actualError := s.service.Create(context.Background(), appeals)

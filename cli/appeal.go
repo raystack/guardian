@@ -107,14 +107,14 @@ func listAppealsCommand() *cobra.Command {
 }
 
 func createAppealCommand() *cobra.Command {
-	var accountID, accountType, resourceID, role, optionsDuration string
+	var accountID, accountType, resourceID, role, optionsDuration, description string
 
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new appeal",
 		Example: heredoc.Doc(`
 			$ guardian appeal create
-			$ guardian appeal create --account=<account-id> --type=<account-type> --resource=<resource-id> --role=<role>
+			$ guardian appeal create --account=<account-id> --type=<account-type> --resource=<resource-id> --role=<role> --description="<description>"
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			spinner := printer.Spin("")
@@ -145,6 +145,7 @@ func createAppealCommand() *cobra.Command {
 						Options: optionsProto,
 					},
 				},
+				Description: description,
 			})
 			if err != nil {
 				fmt.Println("Create error")
@@ -172,6 +173,8 @@ func createAppealCommand() *cobra.Command {
 	cmd.MarkFlagRequired("role")
 
 	cmd.Flags().StringVarP(&optionsDuration, "duration", "d", "", "Duration of the access")
+
+	cmd.Flags().StringVar(&description, "description", "", "The description of the appeal")
 
 	return cmd
 }

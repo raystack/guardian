@@ -502,6 +502,7 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 		Permissions:   appeal.Permissions,
 		Options:       a.toAppealOptionsProto(appeal.Options),
 		Labels:        appeal.Labels,
+		Description:   appeal.Description,
 	}
 
 	if appeal.Resource != nil {
@@ -567,6 +568,7 @@ func (a *adapter) FromCreateAppealProto(ca *guardianv1beta1.CreateAppealRequest,
 			CreatedBy:   authenticatedUser,
 			ResourceID:  r.GetId(),
 			Role:        r.GetRole(),
+			Description: ca.GetDescription(),
 		}
 
 		if r.GetOptions() != nil {

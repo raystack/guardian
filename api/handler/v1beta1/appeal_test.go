@@ -398,6 +398,7 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 				Details: map[string]interface{}{
 					"foo": "bar",
 				},
+				Description: "The answer is 42",
 			},
 		}
 		expectedDetails, err := structpb.NewStruct(map[string]interface{}{
@@ -441,9 +442,10 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 						ExpirationDate: timestamppb.New(timeNow),
 						Duration:       "24h",
 					},
-					Details:   expectedDetails,
-					CreatedAt: timestamppb.New(timeNow),
-					UpdatedAt: timestamppb.New(timeNow),
+					Details:     expectedDetails,
+					Description: "The answer is 42",
+					CreatedAt:   timestamppb.New(timeNow),
+					UpdatedAt:   timestamppb.New(timeNow),
 				},
 			},
 		}
@@ -459,6 +461,7 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 					a.CreatedAt = timeNow
 					a.UpdatedAt = timeNow
 					a.Options = expectedOptions
+					a.Description = "The answer is 42"
 				}
 			}).
 			Return(nil).Once()
@@ -479,6 +482,7 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 					Details: expectedDetails,
 				},
 			},
+			Description: "The answer is 42",
 		}
 		ctx := context.Background()
 		md := metadata.New(map[string]string{
