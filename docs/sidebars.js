@@ -1,7 +1,18 @@
 module.exports = {
   docsSidebar: [
     'introduction',
-    'installation',
+    {
+      label: 'installation',
+      type: 'category',
+      link: {
+        type: 'doc',
+        id: 'installation/installation',
+      },
+      items: [
+        "installation/cli",
+        "installation/server",
+      ]
+    },
     'roadmap',
     {
       type: "category",
