@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 
+	"github.com/odpf/guardian/plugins/providers/policytag"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core"
@@ -99,6 +101,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, deps.Crypto),
 		noop.NewProvider(domain.ProviderTypeNoOp, deps.Logger),
 		gcs.NewProvider(domain.ProviderTypeGCS, deps.Crypto),
+		policytag.NewProvider(domain.ProviderTypePolicyTag, deps.Crypto),
 	}
 
 	iamManager := identities.NewManager(deps.Crypto, deps.Validator)

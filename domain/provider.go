@@ -21,6 +21,8 @@ const (
 	ProviderTypeNoOp = "noop"
 	//  ProviderTypeGCS is the type name for Google Cloud Storage provider
 	ProviderTypeGCS = "gcs"
+	// ProviderTypePolicyTag is the type name for Data Catalog Polciy Tag
+	ProviderTypePolicyTag = "policy_tag"
 )
 
 // Role is the configuration to define a role and mapping the permissions in the provider
