@@ -18,6 +18,9 @@ const (
 	AuditKeyCreate = "provider.create"
 	AuditKeyUpdate = "provider.update"
 	AuditKeyDelete = "provider.delete"
+
+	ReservedDetailsKeyProviderParameters = "__provider_parameters"
+	ReservedDetailsKeyPolicyQuestions    = "__policy_questions"
 )
 
 //go:generate mockery --name=repository --exported --with-expecter
@@ -298,7 +301,49 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 		}
 	}
 
+	if err = s.validateQuestions(a, p, policy); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (*Service) validateQuestions(a *domain.Appeal, p *domain.Provider, policy *domain.Policy) error {
+	parameterKeys := getFilledKeys(a, ReservedDetailsKeyProviderParameters)
+	questionKeys := getFilledKeys(a, ReservedDetailsKeyPolicyQuestions)
+
+	if p != nil && p.Config.Parameters != nil {
+		for _, param := range p.Config.Parameters {
+			if param.Required && !utils.ContainsString(parameterKeys, param.Key) {
+				return fmt.Errorf(`parameter "%s" is required`, param.Key)
+			}
+		}
+	}
+
+	if policy != nil && policy.AppealConfig != nil && len(policy.AppealConfig.Questions) > 0 {
+		for _, question := range policy.AppealConfig.Questions {
+			if question.Required && !utils.ContainsString(questionKeys, question.Key) {
+				return fmt.Errorf(`question "%s" is required`, question.Key)
+			}
+		}
+	}
+
+	return nil
+}
+
+func getFilledKeys(a *domain.Appeal, key string) (filledKeys []string) {
+	if a == nil {
+		return
+	}
+
+	if parameters, ok := a.Details[key].(map[string]interface{}); ok {
+		for k, v := range parameters {
+			if val, ok := v.(string); ok && val != "" {
+				filledKeys = append(filledKeys, k)
+			}
+		}
+	}
+	return
 }
 
 func (s *Service) GrantAccess(ctx context.Context, a domain.Grant) error {
