@@ -4,7 +4,7 @@
 
 ```json
 {
-  "id": 1,
+  "id": "1d73d22b-87d4-4c7e-9927-222d966f407a",
   "provider_type": "bigquery",
   "provider_urn": "my-bigquery",
   "type": "table",
@@ -22,7 +22,7 @@
 
 | Field | Type | Description |
 | :----- | :---- | :------ |
-| `id` | `uint`| Resource unique identifier |
+| `id` | `string`| Resource unique identifier |
 | `provider_type` | `string` |Type of the provider that manages this resource |
 | `provider_urn` | `string` | Provider URN |
 | `type` | `string`| Type of the resource according to `provider_type` |

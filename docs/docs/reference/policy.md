@@ -25,6 +25,8 @@ appeal_config:
       value: 72h
     - name: Permanent
       value: 0h
+  allow_permanent_access: true
+  allow_active_access_extension_in: 24h
 iam:
   provider: http
   config:
@@ -55,7 +57,7 @@ requirements:
 | `id`            | `string`                                | Policy unique identifier                                              | YES      |
 | `version`       | `uint`                                  | Auto increment value. Keeping the                                     | NO       |
 | `steps`         | [`[]object(Step)`](#step)               | Sequence of approval steps                                            | YES      |
-| `appeal_config` | `object(PolicyAppealConfig)`            | appeal configuration options                                          | NO       |
+| `appeal_config` | [`object(PolicyAppealConfig)`](#policyappealconfig)            | appeal configuration options                                          | NO       |
 | `iam`           | [`object(IAM)`](#iam)                   | Identity manager configuration for client and identity/creator schema | NO       |
 | `requirements`  | [`[]object(Requirement)`](#requirement) | Additional appeals                                                    | YES      |
 
@@ -76,16 +78,16 @@ requirements:
 
 | Field            | Type                      | Description              | Required |
 |:-----------------|:--------------------------|:-------------------------|:---------|
-| `duration_options` | []object(DurationOptions) | list of duration options | NO       | 
+| `duration_options` | [[]object(DurationOptions)](#durationoptions) | list of duration options | NO       | 
 | `allow_permanent_access`| `boolean` | Set this to true if you want to allow users to have permanent access to the resources. Default: false | No |
-| `allow_active_access_extension_in` | `string` | Duration before the access expiration date when the user allowed to create appeal to the same resource \(extend their current access\). | No |
+| `allow_active_access_extension_in` | `string` | Duration before the access expiration date when the user allowed to create appeal to the same resource \(extend their current access\).<br/> Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`. Reference: [ParseDuration](https://pkg.go.dev/time#ParseDuration) | No |
 
 ### `DurationOptions`
 
 | Field | Type   | Description                                                                                                                                                                                                                              | Required |
 |:------|:-------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------|
 | name  | string | name of duration                                                                                                                                                                                                                         | YES      |
-| value | string | actual value of duration such as `24h`, `72h`. value will be `0h` in case of permanent duration. <br/> Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". Reference: [ParseDuration](https://pkg.go.dev/time#ParseDuration) | YES      |
+| value | string | actual value of duration such as `24h`, `72h`. value will be `0h` in case of permanent duration. <br/> Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`. Reference: [ParseDuration](https://pkg.go.dev/time#ParseDuration) | YES      |
 
 ### `IAM`
 

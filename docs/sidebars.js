@@ -1,13 +1,25 @@
 module.exports = {
   docsSidebar: [
     'introduction',
-    'installation',
+    {
+      label: 'installation',
+      type: 'category',
+      link: {
+        type: 'doc',
+        id: 'installation/installation',
+      },
+      items: [
+        "installation/cli",
+        "installation/server",
+      ]
+    },
     'roadmap',
     {
       type: "category",
       label: "Concepts",
       items: [
         "concepts/overview",
+        "concepts/architecture",
       ],
     },
     {
@@ -49,6 +61,7 @@ module.exports = {
         "reference/resource",
         "reference/jobs",
         "reference/glossary",
+        "reference/configuration",
       ],
     },
     {
@@ -57,7 +70,13 @@ module.exports = {
       items: [
         "contribute/architecture",
         "contribute/contribution",
-        "contribute/development",
+        {
+          type: "category",
+          label: "Development Guide",
+          items: [
+            "contribute/provider",
+          ]
+        },
       ],
     },
   ],
