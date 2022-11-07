@@ -25,6 +25,8 @@ appeal_config:
       value: 72h
     - name: Permanent
       value: 0h
+  allow_permanent_access: true
+  allow_active_access_extension_in: 24h
 iam:
   provider: http
   config:
