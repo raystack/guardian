@@ -536,17 +536,18 @@ It helps us to create a new appeal.
 
 ```
 $ guardian appeal create
-$ guardian appeal create --account=<account-id> --type=<account-type> --resource=<resource-id> --role=<role>
+$ guardian appeal create --account=<account-id> --type=<account-type> --resource=<resource-id> --role=<role> --description="<description>"
 ```
 
 This command supports the following flags:
 
 ```
--a, --account string    Email of the account to appeal
--d, --duration string   Duration of the access
--R, --resource string   ID of the resource
--r, --role string       Role to be assigned
--t, --type string       Type of the account
+-a, --account string       Email of the account to appeal
+    --description string   The description of the appeal
+-d, --duration string      Duration of the access
+-R, --resource string      ID of the resource
+-r, --role string          Role to be assigned
+-t, --type string          Type of the account
 ```
 
 ```text

@@ -31,6 +31,7 @@
     "duration": "24h"
   },
   "details": {},
+  "description": "This is a test appeal",
   "approvals": [
     {
       "id": 1,
@@ -77,6 +78,7 @@
 | `options.duration` | `string`| This field is for specifying how long the access would be granted until it automatically gets revoked by the system. Only time units like `h`, `m`, `s`, and `ms` are supported. Examples: `48h`, `48h30m`, `20m`. |
 | `options.expiration_date` | `string`| Timestamp for when the appeal will expire. This field is automatically filled by Guardian by calculating the activation time plus the `duration`. |
 | `details` | `object` |Additional information for the appeal. Details can be added from the appeal creation.
+| `description` | `string` | Description of the appeal. |
 | `approvals` | [`[]object(Approval)`](#approval)| Approval steps applied for current appeal based on the applicable policy. |
 | `policy_id` | `string`| Policy identifier |
 | `policy_version` | `uint` | Policy version identifier. Used together with `policy_id` to reference to a policy.|

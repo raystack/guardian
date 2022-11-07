@@ -41,6 +41,7 @@ type Appeal struct {
 	Options       *AppealOptions         `json:"options" yaml:"options"`
 	Details       map[string]interface{} `json:"details" yaml:"details"`
 	Labels        map[string]string      `json:"labels" yaml:"labels"`
+	Description   string                 `json:"description" yaml:"description"`
 
 	Policy    *Policy     `json:"-" yaml:"-"`
 	Resource  *Resource   `json:"resource,omitempty" yaml:"resource,omitempty"`
