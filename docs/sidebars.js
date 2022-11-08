@@ -1,27 +1,8 @@
 module.exports = {
   docsSidebar: [
     'introduction',
-    {
-      label: 'installation',
-      type: 'category',
-      link: {
-        type: 'doc',
-        id: 'installation/installation',
-      },
-      items: [
-        "installation/cli",
-        "installation/server",
-      ]
-    },
+    'installation',
     'roadmap',
-    {
-      type: "category",
-      label: "Concepts",
-      items: [
-        "concepts/overview",
-        "concepts/architecture",
-      ],
-    },
     {
       type: "category",
       label: "Tour",
@@ -34,6 +15,21 @@ module.exports = {
         "tour/create-appeal",
         "tour/approve-reject-appeal",
         "tour/complex-use-case",
+      ],
+    },
+    {
+      type: "category",
+      label: "Concepts",
+      items: [
+        "concepts/overview",
+        "concepts/architecture",
+      ],
+    },
+    {
+      type: "category",
+      label: "Guides",
+      items: [
+        "guides/deployment",
       ],
     },
     {
@@ -66,17 +62,17 @@ module.exports = {
     },
     {
       type: "category",
+      label: "Extend",
+      items: [
+        "contribute/provider",
+      ]
+    },
+    {
+      type: "category",
       label: "Contribute",
       items: [
         "contribute/architecture",
         "contribute/contribution",
-        {
-          type: "category",
-          label: "Development Guide",
-          items: [
-            "contribute/provider",
-          ]
-        },
       ],
     },
   ],
