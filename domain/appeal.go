@@ -1,8 +1,14 @@
 package domain
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"reflect"
 	"time"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/odpf/guardian/pkg/evaluator"
 )
 
 const (
@@ -17,6 +23,10 @@ const (
 	SystemActorName = "system"
 
 	DefaultAppealAccountType = "user"
+)
+
+var (
+	ErrApproverInvalidType = errors.New("invalid approver type, expected an email string or array of email string")
 )
 
 // AppealOptions
@@ -140,6 +150,110 @@ func (a Appeal) ToGrant() (*Grant, error) {
 	}
 
 	return grant, nil
+}
+
+func (a *Appeal) InitApproval(p Policy) error {
+	approvals := []*Approval{}
+	for i, step := range p.Steps { // TODO: move this logic to approvalService
+		var approverEmails []string
+		var err error
+		if step.Strategy == ApprovalStepStrategyManual {
+			approverEmails, err = a.ResolveApprovers(step.Approvers)
+			if err != nil {
+				return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
+			}
+		}
+
+		approval := &Approval{}
+		if err := approval.Init(&p, i, approverEmails); err != nil {
+			return fmt.Errorf(`initializing approval "%s": %w`, step.Name, err)
+		}
+		approvals = append(approvals, approval)
+	}
+
+	a.Approvals = approvals
+	return nil
+}
+
+func (a Appeal) ResolveApprovers(expressions []string) ([]string, error) {
+	// FIXME: set proper validator
+	validator := validator.New()
+
+	var approvers []string
+
+	// TODO: validate from policyService.Validate(policy)
+	for _, expr := range expressions {
+		if err := validator.Var(expr, "email"); err == nil {
+			approvers = append(approvers, expr)
+		} else {
+			appealMap, err := structToMap(a)
+			if err != nil {
+				return nil, fmt.Errorf("parsing appeal to map: %w", err)
+			}
+			params := map[string]interface{}{
+				"appeal": appealMap,
+			}
+
+			approversValue, err := evaluator.Expression(expr).EvaluateWithVars(params)
+			if err != nil {
+				return nil, fmt.Errorf("evaluating aprrovers expression: %w", err)
+			}
+
+			value := reflect.ValueOf(approversValue)
+			switch value.Type().Kind() {
+			case reflect.String:
+				approvers = append(approvers, value.String())
+			case reflect.Slice:
+				for i := 0; i < value.Len(); i++ {
+					itemValue := reflect.ValueOf(value.Index(i).Interface())
+					switch itemValue.Type().Kind() {
+					case reflect.String:
+						approvers = append(approvers, itemValue.String())
+					default:
+						return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, itemValue.Type().Kind())
+					}
+				}
+			default:
+				return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, value.Type().Kind())
+			}
+		}
+	}
+
+	distinctApprovers := uniqueSlice(approvers)
+	if err := validator.Var(distinctApprovers, "dive,email"); err != nil {
+		return nil, err
+	}
+	return distinctApprovers, nil
+}
+
+func structToMap(item interface{}) (map[string]interface{}, error) {
+	result := map[string]interface{}{}
+
+	if item != nil {
+		jsonString, err := json.Marshal(item)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal(jsonString, &result); err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
+}
+
+func uniqueSlice(arr []string) []string {
+	keys := map[string]bool{}
+	result := []string{}
+
+	for _, v := range arr {
+		if _, exist := keys[v]; !exist {
+			result = append(result, v)
+			keys[v] = true
+		}
+	}
+	return result
 }
 
 type ApprovalActionType string

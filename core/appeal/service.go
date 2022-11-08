@@ -2,16 +2,13 @@ package appeal
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/pkg/evaluator"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
@@ -254,7 +251,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("retrieving creator details: %w", err)
 		}
 
-		if err := s.fillApprovals(appeal, policy); err != nil {
+		if err := appeal.InitApproval(*policy); err != nil {
 			return fmt.Errorf("populating approvals: %w", err)
 		}
 
@@ -282,7 +279,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 						return fmt.Errorf("revoking previous grant: %w", err)
 					}
 				} else {
-					if err := s.CreateAccess(ctx, appeal); err != nil {
+					if err := s.GrantAccessToProvider(ctx, appeal); err != nil {
 						return fmt.Errorf("granting access: %w", err)
 					}
 				}
@@ -446,7 +443,7 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 						return nil, fmt.Errorf("revoking previous grant: %w", err)
 					}
 				} else {
-					if err := s.CreateAccess(ctx, appeal); err != nil {
+					if err := s.GrantAccessToProvider(ctx, appeal); err != nil {
 						return nil, fmt.Errorf("granting access: %w", err)
 					}
 				}
@@ -774,54 +771,6 @@ func (s *Service) getPoliciesMap(ctx context.Context) (map[string]map[uint]*doma
 	return policiesMap, nil
 }
 
-func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) ([]string, error) {
-	var approvers []string
-
-	// TODO: validate from policyService.Validate(policy)
-	for _, expr := range expressions {
-		if err := s.validator.Var(expr, "email"); err == nil {
-			approvers = append(approvers, expr)
-		} else {
-			appealMap, err := structToMap(appeal)
-			if err != nil {
-				return nil, fmt.Errorf("parsing appeal to map: %w", err)
-			}
-			params := map[string]interface{}{
-				"appeal": appealMap,
-			}
-
-			approversValue, err := evaluator.Expression(expr).EvaluateWithVars(params)
-			if err != nil {
-				return nil, fmt.Errorf("evaluating aprrovers expression: %w", err)
-			}
-
-			value := reflect.ValueOf(approversValue)
-			switch value.Type().Kind() {
-			case reflect.String:
-				approvers = append(approvers, value.String())
-			case reflect.Slice:
-				for i := 0; i < value.Len(); i++ {
-					itemValue := reflect.ValueOf(value.Index(i).Interface())
-					switch itemValue.Type().Kind() {
-					case reflect.String:
-						approvers = append(approvers, itemValue.String())
-					default:
-						return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, itemValue.Type().Kind())
-					}
-				}
-			default:
-				return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, value.Type().Kind())
-			}
-		}
-	}
-
-	distinctApprovers := uniqueSlice(approvers)
-	if err := s.validator.Var(distinctApprovers, "dive,email"); err != nil {
-		return nil, err
-	}
-	return distinctApprovers, nil
-}
-
 func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 	notifications := []domain.Notification{}
 	approval := appeal.GetNextPendingApproval()
@@ -899,46 +848,6 @@ func checkApprovalStatus(status string) error {
 	return err
 }
 
-func structToMap(item interface{}) (map[string]interface{}, error) {
-	result := map[string]interface{}{}
-
-	if item != nil {
-		jsonString, err := json.Marshal(item)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := json.Unmarshal(jsonString, &result); err != nil {
-			return nil, err
-		}
-	}
-
-	return result, nil
-}
-
-func (s *Service) fillApprovals(a *domain.Appeal, p *domain.Policy) error {
-	approvals := []*domain.Approval{}
-	for i, step := range p.Steps { // TODO: move this logic to approvalService
-		var approverEmails []string
-		var err error
-		if step.Strategy == domain.ApprovalStepStrategyManual {
-			approverEmails, err = s.resolveApprovers(step.Approvers, a)
-			if err != nil {
-				return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
-			}
-		}
-
-		approval := &domain.Approval{}
-		if err := approval.Init(p, i, approverEmails); err != nil {
-			return fmt.Errorf(`initializing approval "%s": %w`, step.Name, err)
-		}
-		approvals = append(approvals, approval)
-	}
-
-	a.Approvals = approvals
-	return nil
-}
-
 func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal, p *domain.Policy) error {
 	if p.Requirements != nil && len(p.Requirements) > 0 {
 		for reqIndex, r := range p.Requirements {
@@ -983,7 +892,7 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 	return nil
 }
 
-func (s *Service) CreateAccess(ctx context.Context, a *domain.Appeal, opts ...CreateAppealOption) error {
+func (s *Service) GrantAccessToProvider(ctx context.Context, a *domain.Appeal, opts ...CreateAppealOption) error {
 	// TODO: rename to GrantAccess
 	policy := a.Policy
 	if policy == nil {
@@ -1181,17 +1090,4 @@ func (s *Service) prepareGrant(ctx context.Context, appeal *domain.Appeal) (newG
 	}
 
 	return grant, deactivatedGrant, nil
-}
-
-func uniqueSlice(arr []string) []string {
-	keys := map[string]bool{}
-	result := []string{}
-
-	for _, v := range arr {
-		if _, exist := keys[v]; !exist {
-			result = append(result, v)
-			keys[v] = true
-		}
-	}
-	return result
 }
