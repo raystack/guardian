@@ -110,6 +110,15 @@ requirements:
 | `required` | `boolean` | Indicates whether the question is required or not | YES |
 | `description` | `string` | The description to be shown to the appeal creator | NO |
 
+### `Question`
+
+| Field | Type | Description | Required |
+| :----- | :---- | :------ | :------ |
+| `key` | `string` | Unique key of the question | YES |
+| `question` | `string` | Question to be asked to the appeal creator | YES |
+| `required` | `boolean` | Indicates whether the question is required or not | YES |
+| `description` | `string` | The description to be shown to the appeal creator | NO |
+
 ### `IAM`
 
 | Field | Type | Description | Required |

@@ -50,6 +50,7 @@ updated_at: "2022-10-26T07:41:52.676004Z"
 | `credentials` | `object`| Credentials required to setup connection and access the provider <br/> <br/>  Possible values: <br/> BigQuery: [object(BigQuery)](../providers/bigquery.md#bigquerycredentials) <br/> Google Cloud Storage : [object(GCS)](../providers/gcs#gcs-credentials) <br/> Metabase: [object(Metabase)](../providers/metabase.md#metabasecredentials) <br/>Tableau: [object(Tableau)](../providers/tableau.md#tableau-credentials)<br/>Grafana:[object(Grafana)](../providers/grafana.md#grafanacredentials)<br/>Google Cloud IAM: [object(GCloudIAM)](../providers/gcloud_iam.md#gcloudiamcredentials)<br/>No-Op: `Nil`| Yes | 
 | `appeal`      | [`object(AppealConfig)`](provider.md#appealconfig) | Contains details of the tenure for which an access for a resource is provided. Contains two fields `allow_permanent_access` and `allow_active_access_extension_in` for permanent access and time before which the user can appeal for an extention | Yes | 
 | `resources` | [`[object(ResourceConfig)]`](provider.md#resourceconfig) | Contains the configurations for each resource . The fields `type` and `policy` stores the type of resource and the policy associated with it. `Roles` conatins the role (say Viewer, Editor, Writer) which the resource supports | Yes |
+| `parameters` | [`object(ProviderParameter)`](#providerparameter) | Optional. Contains the parameters for the provider. | No |
 
 
 ### `AppealConfig`
@@ -74,3 +75,12 @@ updated_at: "2022-10-26T07:41:52.676004Z"
 | `id` | `string` | Role identifier| Yes |
 | `name`| `string` | Display name for role| |
 | `permissions[]` | `object or string` | Set of permissions that will be granted to the requested resource.<br/> Possible values for Resource Permissions :<br/> - BigQuery: [object(BigQuery)](../providers/bigquery.md#bigqueryresourcepermission) <br/>- Google Cloud Storage: [object(GCS)](../providers/gcs#gcs-resource-permission) <br/>- Metabase: [object(Metabase)](../providers/metabase.md#metabaseresourcepermission) <br/>- Grafana: [object(Grafana)](../providers/grafana.md#grafanaresourcepermission) <br/>- Tableau: [object(Tableau)](../providers/tableau.md#table-resource-permission) <br/> - Google Cloud IAM: object(GCloudIAM) <br/>- No-Op : `Nil`| Yes |
+
+### `ProviderParameter`
+
+| Field | Type | Description | Required |
+| :----- | :---- | :------ | :------ |
+| `key` | `string` | The key is unique identifier for the parameter | Yes |
+| `label` | `string` | The label is used to display the parameter in the UI | Yes |
+| `required` | `boolean` | Indicates whether the parameter is required or not | Yes |
+| `description` | `string` | The description of the parameter | No |
