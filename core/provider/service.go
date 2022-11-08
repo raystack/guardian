@@ -301,14 +301,14 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 		}
 	}
 
-	if err = s.validateQuestions(a, p, policy); err != nil {
+	if err = s.validateQuestionsAndParameters(a, p, policy); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (*Service) validateQuestions(a *domain.Appeal, p *domain.Provider, policy *domain.Policy) error {
+func (*Service) validateQuestionsAndParameters(a *domain.Appeal, p *domain.Provider, policy *domain.Policy) error {
 	parameterKeys := getFilledKeys(a, ReservedDetailsKeyProviderParameters)
 	questionKeys := getFilledKeys(a, ReservedDetailsKeyPolicyQuestions)
 
