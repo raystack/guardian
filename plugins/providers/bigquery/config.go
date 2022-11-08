@@ -169,7 +169,7 @@ func (c *Config) validatePermission(value interface{}, resourceType string, clie
 	}
 
 	if resourceType == ResourceTypeDataset {
-		roles, err := client.getGrantAbleRoleForDataset()
+		roles, err := client.getGrantableRolesForDataset()
 		if err != nil {
 			return nil, ErrCannotFetchDatabasePermission
 		}

@@ -306,7 +306,7 @@ func (c *bigQueryClient) ListAccess(ctx context.Context, resources []*domain.Res
 	return access, nil
 }
 
-func (c *bigQueryClient) getGrantAbleRoleForDataset() ([]bq.AccessRole, error) {
+func (c *bigQueryClient) getGrantableRolesForDataset() ([]bq.AccessRole, error) {
 	var roles = []bq.AccessRole{bq.OwnerRole, bq.WriterRole, bq.ReaderRole}
 	var resourceName string
 	ctx := context.Background()
