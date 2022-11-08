@@ -344,6 +344,14 @@ func (s *GrpcHandlersSuite) TestCreateProvider() {
 					AllowPermanentAccess:         true,
 					AllowActiveAccessExtensionIn: "24h",
 				},
+				Parameters: []*domain.ProviderParameter{
+					{
+						Key:         "username",
+						Label:       "Username",
+						Required:    true,
+						Description: "Please enter your username",
+					},
+				},
 			},
 		}
 		expectedResponse := &guardianv1beta1.CreateProviderResponse{
@@ -373,6 +381,14 @@ func (s *GrpcHandlersSuite) TestCreateProvider() {
 					Appeal: &guardianv1beta1.ProviderConfig_AppealConfig{
 						AllowPermanentAccess:         true,
 						AllowActiveAccessExtensionIn: "24h",
+					},
+					Parameters: []*guardianv1beta1.ProviderConfig_ProviderParameter{
+						{
+							Key:         "username",
+							Label:       "Username",
+							Required:    true,
+							Description: "Please enter your username",
+						},
 					},
 				},
 				CreatedAt: timestamppb.New(timeNow),
@@ -409,6 +425,14 @@ func (s *GrpcHandlersSuite) TestCreateProvider() {
 				Appeal: &guardianv1beta1.ProviderConfig_AppealConfig{
 					AllowPermanentAccess:         true,
 					AllowActiveAccessExtensionIn: "24h",
+				},
+				Parameters: []*guardianv1beta1.ProviderConfig_ProviderParameter{
+					{
+						Key:         "username",
+						Label:       "Username",
+						Required:    true,
+						Description: "Please enter your username",
+					},
 				},
 			},
 		}

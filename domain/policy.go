@@ -199,6 +199,14 @@ type PolicyAppealConfig struct {
 	AllowOnBehalf                bool                   `json:"allow_on_behalf" yaml:"allow_on_behalf"`
 	AllowPermanentAccess         bool                   `json:"allow_permanent_access" yaml:"allow_permanent_access"`
 	AllowActiveAccessExtensionIn string                 `json:"allow_active_access_extension_in" yaml:"allow_active_access_extension_in"`
+	Questions                    []Question             `json:"questions" yaml:"questions"`
+}
+
+type Question struct {
+	Key         string `json:"key" yaml:"key"`
+	Question    string `json:"question" yaml:"question"`
+	Required    bool   `json:"required" yaml:"required"`
+	Description string `json:"description" yaml:"description"`
 }
 
 type AppealDurationOption struct {

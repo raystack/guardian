@@ -27,6 +27,17 @@ appeal_config:
       value: 0h
   allow_permanent_access: true
   allow_active_access_extension_in: 24h
+  questions:
+    - key: reason
+      question: 'Why do you need access to this dataset?'
+      required: true
+      description: |
+        Explain why you need access to this dataset. 
+        This will be sent to the dataset owner for approval.
+    - key: team
+      question: 'What team are you in?'
+      required: false
+      description: Please provide the name of the team you are in
 iam:
   provider: http
   config:
@@ -81,6 +92,7 @@ requirements:
 | `duration_options` | [[]object(DurationOptions)](#durationoptions) | list of duration options | NO       | 
 | `allow_permanent_access`| `boolean` | Set this to true if you want to allow users to have permanent access to the resources. Default: false | No |
 | `allow_active_access_extension_in` | `string` | Duration before the access expiration date when the user allowed to create appeal to the same resource \(extend their current access\).<br/> Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`. Reference: [ParseDuration](https://pkg.go.dev/time#ParseDuration) | No |
+| `questions` | [[]object(Question)](#question) | Questions to be asked to the user when creating an appeal | NO |
 
 ### `DurationOptions`
 
@@ -88,6 +100,24 @@ requirements:
 |:------|:-------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------|
 | name  | string | name of duration                                                                                                                                                                                                                         | YES      |
 | value | string | actual value of duration such as `24h`, `72h`. value will be `0h` in case of permanent duration. <br/> Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`. Reference: [ParseDuration](https://pkg.go.dev/time#ParseDuration) | YES      |
+
+### `Question`
+
+| Field | Type | Description | Required |
+| :----- | :---- | :------ | :------ |
+| `key` | `string` | Unique key of the question | YES |
+| `question` | `string` | Question to be asked to the appeal creator | YES |
+| `required` | `boolean` | Indicates whether the question is required or not | YES |
+| `description` | `string` | The description to be shown to the appeal creator | NO |
+
+### `Question`
+
+| Field | Type | Description | Required |
+| :----- | :---- | :------ | :------ |
+| `key` | `string` | Unique key of the question | YES |
+| `question` | `string` | Question to be asked to the appeal creator | YES |
+| `required` | `boolean` | Indicates whether the question is required or not | YES |
+| `description` | `string` | The description to be shown to the appeal creator | NO |
 
 ### `IAM`
 
