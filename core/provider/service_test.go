@@ -312,6 +312,43 @@ func (s *ServiceTestSuite) TestFetchResources() {
 
 		s.Nil(actualError)
 	})
+
+	s.Run("should upsert filter resources on success", func() {
+		providersWithResourceFilter := []*domain.Provider{
+			{
+				ID:   "1",
+				Type: mockProviderType,
+				URN:  mockProvider,
+				Config: &domain.ProviderConfig{Resources: []*domain.ResourceConfig{
+					{Type: "dataset", Filter: "$resource.urn == 'resource2'"},
+				}},
+			},
+		}
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(providersWithResourceFilter, nil).Once()
+		expectedResources := []*domain.Resource{}
+		for _, p := range providersWithResourceFilter {
+			resources := []*domain.Resource{
+				{
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+					Type:         "dataset",
+					URN:          "resource1",
+				}, {
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+					Type:         "dataset",
+					URN:          "resource2",
+				},
+			}
+			s.mockProvider.On("GetResources", p.Config).Return(resources, nil).Once()
+			expectedResources = append(expectedResources, resources[1])
+		}
+		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil)
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
+		actualError := s.service.FetchResources(context.Background())
+
+		s.Nil(actualError)
+	})
 }
 
 func (s *ServiceTestSuite) TestGrantAccess() {

@@ -2,7 +2,10 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/odpf/guardian/pkg/evaluator"
+	"reflect"
 	"strings"
 	"time"
 
@@ -450,14 +453,42 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 		return nil, err
 	}
 
+	resourceTypeFilterMap := make(map[string]string)
+	for _, rc := range p.Config.Resources {
+		if len(rc.Filter) > 0 {
+			resourceTypeFilterMap[rc.Type] = rc.Filter
+		}
+	}
 	res, err := c.GetResources(p.Config)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching resources for %v: %w", p.ID, err)
 	}
 
+	filteredResources := make([]*domain.Resource, 0)
+	for _, r := range res {
+		if filterExpression, ok := resourceTypeFilterMap[r.Type]; ok {
+			resourceMap, err := structToMap(r)
+			if err != nil {
+				return nil, fmt.Errorf("parsing resource struct to map: %w", err)
+			}
+
+			v, err := evaluator.Expression(filterExpression).EvaluateWithVars(map[string]interface{}{
+				"resource": resourceMap,
+			})
+			if err != nil {
+				return nil, err
+			}
+			if !reflect.ValueOf(v).IsZero() {
+				filteredResources = append(filteredResources, r)
+			}
+		} else {
+			filteredResources = append(filteredResources, r)
+		}
+	}
+
 	for _, er := range existingResources {
 		isFound := false
-		for _, r := range res {
+		for _, r := range filteredResources {
 			if er.URN == r.URN {
 				existingMetadata := er.Details
 				if existingMetadata != nil {
@@ -482,7 +513,7 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 			resources = append(resources, er)
 		}
 	}
-	for _, r := range res {
+	for _, r := range filteredResources {
 		isAdded := false
 		for _, rr := range resources {
 			if r.URN == rr.URN {
@@ -563,4 +594,21 @@ func validateDuration(d string) error {
 		return fmt.Errorf("parsing duration: %v", err)
 	}
 	return nil
+}
+
+func structToMap(item interface{}) (map[string]interface{}, error) {
+	result := map[string]interface{}{}
+
+	if item != nil {
+		jsonString, err := json.Marshal(item)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal(jsonString, &result); err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
 }
