@@ -1,6 +1,6 @@
-# CLI Installation
+# Installation
 
-There are several approaches to install Guardian CLI
+There are several approaches to install Guardian.
 
 1. [Using a pre-compiled binary](#binary-cross-platform)
 2. [Installing with package manager](#macOS)
@@ -105,14 +105,6 @@ Initialise client configurations
 ./guardian config init
 ```
 
-### Verifying the installation​
-
-To verify if Guardian is properly installed, run `guardian --help` on your system. You should see help output. If you are executing it from the command line, make sure it is on your PATH or you may get an error about Guardian not being found.
-
-```
-$ guardian --help
-```
-
 ### Use the Docker image
 
 We provide ready to use Docker container images. To pull the latest image:
@@ -127,13 +119,15 @@ To pull a specific version:
 docker pull odpf/guardian:v0.3.2
 ```
 
-If you like to have a shell alias that runs the latest version of pscale from docker whenever you type `pscale`:
+### Verifying the installation​
+
+To verify if Guardian is properly installed, run `guardian --help` on your system. You should see help output. If you are executing it from the command line, make sure it is on your PATH or you may get an error about Guardian not being found.
 
 ```
-mkdir -p $HOME/.config/odpf
-alias guardian="docker run -e HOME=/tmp -v $HOME/.config/odpf:/tmp/.config/odpf --user $(id -u):$(id -g) --rm -it -p 3306:3306/tcp odpf/guardian:latest"
+$ guardian --help
 ```
 
-### CLI Reference
+### What's next
 
-See the [CLI Reference](/docs/reference/cli) for a complete list of commands and options.
+- See the [CLI Reference](/docs/reference/cli) for a complete list of commands and options.
+- See the [deployment guide](./guides/deployment.md) on how to setup Guardian server.

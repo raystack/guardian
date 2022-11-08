@@ -1,4 +1,4 @@
-# Configuration
+# Setup server
 
 Guardian binary contains both the CLI client and the server itself. Each has it's own configuration in order to run. Server configuration contains information such as database credentials, log severity, etc. while CLI client configuration only has configuration about which server to connect.
 
