@@ -127,10 +127,6 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Logger:          deps.Logger,
 		AuditLogger:     auditLogger,
 	})
-	approvalService := approval.NewService(approval.ServiceDeps{
-		Repository:    approvalRepository,
-		PolicyService: policyService,
-	})
 	grantService := grant.NewService(grant.ServiceDeps{
 		Repository:      grantRepository,
 		ProviderService: providerService,
@@ -138,6 +134,15 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Notifier:        deps.Notifier,
 		Logger:          deps.Logger,
 		Validator:       deps.Validator,
+		AuditLogger:     auditLogger,
+	})
+	approvalService := approval.NewService(approval.ServiceDeps{
+		Repository:      approvalRepository,
+		PolicyService:   policyService,
+		GrantService:    grantService,
+		ProviderService: providerService,
+		Notifier:        deps.Notifier,
+		Logger:          deps.Logger,
 		AuditLogger:     auditLogger,
 	})
 	appealService := appeal.NewService(appeal.ServiceDeps{
@@ -153,6 +158,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Logger:          deps.Logger,
 		AuditLogger:     auditLogger,
 	})
+	approvalService.SetAppealService(appealService)
 
 	return &Services{
 		resourceService,
