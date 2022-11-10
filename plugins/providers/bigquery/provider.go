@@ -217,6 +217,24 @@ func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*
 	return provider.GetRoles(pc, resourceType)
 }
 
+func (p *Provider) GetPermissions(pc *domain.ProviderConfig, resourceType, role string) ([]interface{}, error) {
+	for _, rc := range pc.Resources {
+		if rc.Type != resourceType {
+			continue
+		}
+		for _, r := range rc.Roles {
+			if r.ID == role {
+				if r.Permissions == nil {
+					return make([]interface{}, 0), nil
+				}
+				return resolvePermissions(r.Permissions), nil
+			}
+		}
+		return nil, ErrInvalidRole
+	}
+	return nil, ErrInvalidResourceType
+}
+
 func (p *Provider) GetAccountTypes() []string {
 	return []string{
 		AccountTypeUser,

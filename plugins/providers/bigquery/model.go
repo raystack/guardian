@@ -82,3 +82,21 @@ func (ae datasetAccessEntry) getEntityType() string {
 		return ""
 	}
 }
+
+func resolvePermissions(_permissions []interface{}) []interface{} {
+	var permissions []interface{}
+	for _, p := range _permissions {
+		role := p.(string)
+		switch role {
+		case "roles/bigquery.dataViewer":
+			permissions = append(permissions, bq.ReaderRole)
+		case "roles/bigquery.dataOwner":
+			permissions = append(permissions, bq.OwnerRole)
+		case "roles/bigquery.dataEditor":
+			permissions = append(permissions, bq.WriterRole)
+		default:
+			permissions = append(permissions, bq.AccessRole(role))
+		}
+	}
+	return permissions
+}
