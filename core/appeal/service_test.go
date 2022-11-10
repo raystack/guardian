@@ -826,7 +826,6 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 		s.mockIAMManager.On("GetClient", mock.Anything, mock.Anything).Return(s.mockIAMClient, nil)
 		s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
-		s.mockApprovalService.On("AdvanceApproval", mock.Anything, mock.Anything).Return(nil)
 		s.mockRepository.EXPECT().
 			BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), expectedAppealsInsertionParam).
 			Return(nil).
@@ -953,12 +952,15 @@ func (s *ServiceTestSuite) TestCreate() {
 			s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 			s.mockIAMManager.On("GetClient", mock.Anything, mock.Anything).Return(s.mockIAMClient, nil)
 			s.mockIAMClient.On("GetUser", input.AccountID).Return(map[string]interface{}{}, nil)
-			s.mockApprovalService.On("AdvanceApproval", mock.Anything, mock.Anything).Return(nil)
 			s.mockRepository.EXPECT().
 				BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
 				Return(nil).Once()
 			s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 			s.mockAuditLogger.On("Log", mock.Anything, appeal.AuditKeyBulkInsert, mock.Anything).Return(nil).Once()
+			s.mockGrantService.On("List", mock.Anything, mock.Anything).Return([]domain.Grant{}, nil).Once()
+			s.mockGrantService.On("Prepare", mock.Anything, mock.Anything).Return(&domain.Grant{}, nil).Once()
+			s.mockPolicyService.On("GetOne", mock.Anything, mock.Anything, mock.Anything).Return(overriddingPolicy, nil).Once()
+			s.mockProviderService.On("GrantAccess", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 			err := s.service.Create(context.Background(), []*domain.Appeal{input}, appeal.CreateWithAdditionalAppeal())
 
@@ -1165,13 +1167,6 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 	s.mockIAMManager.On("GetClient", mock.Anything).Return(s.mockIAMClient, nil)
 	s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
-	s.mockApprovalService.On("AdvanceApproval", mock.Anything, appeals[0]).
-		Return(nil).
-		Run(func(args mock.Arguments) {
-			ap := args.Get(1).(*domain.Appeal)
-			ap.Status = domain.AppealStatusApproved
-			ap.Approvals[0].Status = domain.ApprovalStatusApproved
-		})
 
 	s.mockGrantService.EXPECT().
 		List(mock.AnythingOfType("*context.emptyCtx"), domain.ListGrantsFilter{

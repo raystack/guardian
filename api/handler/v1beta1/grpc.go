@@ -85,7 +85,6 @@ type appealService interface {
 type approvalService interface {
 	ListApprovals(context.Context, *domain.ListApprovalsFilter) ([]*domain.Approval, error)
 	BulkInsert(context.Context, []*domain.Approval) error
-	AdvanceApproval(context.Context, *domain.Appeal) error
 	UpdateApproval(ctx context.Context, approvalAction domain.ApprovalAction) (*domain.Appeal, error)
 }
 

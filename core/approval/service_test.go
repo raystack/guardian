@@ -67,255 +67,6 @@ func (s *ServiceTestSuite) TestBulkInsert() {
 	})
 }
 
-func (s *ServiceTestSuite) TestAdvanceApproval() {
-	s.Run("should return error if got error on finding policies", func() {
-		testappeal := domain.Appeal{
-			PolicyID:      "test-id",
-			PolicyVersion: 1,
-		}
-		expectedError := errors.New("policy error")
-		s.mockPolicyService.On("GetOne", mock.Anything, mock.Anything, mock.Anything).Return(nil, expectedError).Once()
-		actualError := s.service.AdvanceApproval(context.Background(), &testappeal)
-		s.EqualError(actualError, expectedError.Error())
-	})
-
-	s.Run("should resolve multiple automatic approval steps", func() {
-		testappeal := domain.Appeal{
-			PolicyID:      "test-id",
-			PolicyVersion: 1,
-			Resource: &domain.Resource{
-				Name: "grafana",
-				Details: map[string]interface{}{
-					"owner": "test-owner",
-				},
-			},
-			Policy: &domain.Policy{
-				ID:      "test-id",
-				Version: 1,
-				Steps: []*domain.Step{
-					{
-						Name:      "step-1",
-						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
-					},
-					{
-						Name:      "step-2",
-						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
-					},
-					{
-						Name:      "step-3",
-						ApproveIf: `$appeal.resource.details.owner == "test-owner"`,
-					},
-				},
-			},
-			Approvals: []*domain.Approval{
-				{
-					Status: "pending",
-					Index:  0,
-				},
-				{
-					Status: "blocked",
-					Index:  1,
-				},
-				{
-					Status: "blocked",
-					Index:  2,
-				},
-			},
-		}
-
-		actualError := s.service.AdvanceApproval(context.Background(), &testappeal)
-		s.Nil(actualError)
-	})
-
-	s.Run("should autofill rejection reason on auto-reject", func() {
-		rejectionReason := "test rejection reason"
-		testAppeal := &domain.Appeal{
-			PolicyID:      "test-id",
-			PolicyVersion: 1,
-			Resource: &domain.Resource{
-				Name: "grafana",
-				Details: map[string]interface{}{
-					"owner": "test-owner",
-				},
-			},
-			Policy: &domain.Policy{
-				ID:      "test-id",
-				Version: 1,
-				Steps: []*domain.Step{
-					{
-						Name:            "step-1",
-						Strategy:        "auto",
-						RejectionReason: rejectionReason,
-						ApproveIf:       `false`, // hard reject for testing purpose
-					},
-				},
-			},
-			Approvals: []*domain.Approval{
-				{
-					Status: domain.ApprovalStatusPending,
-					Index:  0,
-				},
-			},
-		}
-		expectedApprovals := []*domain.Approval{
-			{
-				Status: domain.ApprovalStatusRejected,
-				Index:  0,
-				Reason: rejectionReason,
-			},
-		}
-
-		actualError := s.service.AdvanceApproval(context.Background(), testAppeal)
-
-		s.Nil(actualError)
-		s.Equal(expectedApprovals, testAppeal.Approvals)
-	})
-
-	s.Run("should update approval statuses", func() {
-		resourceFlagStep := &domain.Step{
-			Name: "resourceFlagStep",
-			When: "$appeal.resource.details.flag == true",
-			Approvers: []string{
-				"user@email.com",
-			},
-		}
-		humanApprovalStep := &domain.Step{
-			Name: "humanApprovalStep",
-			Approvers: []string{
-				"human@email.com",
-			},
-		}
-
-		testCases := []struct {
-			name                     string
-			appeal                   *domain.Appeal
-			steps                    []*domain.Step
-			existingApprovalStatuses []string
-			expectedApprovalStatuses []string
-			expectedErrorStr         string
-		}{
-			{
-				name: "initial process, When on the first step",
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Details: map[string]interface{}{
-							"flag": false,
-						},
-					},
-				},
-				steps: []*domain.Step{
-					resourceFlagStep,
-					humanApprovalStep,
-				},
-				existingApprovalStatuses: []string{
-					domain.ApprovalStatusPending,
-					domain.ApprovalStatusBlocked,
-				},
-				expectedApprovalStatuses: []string{
-					domain.ApprovalStatusSkipped,
-					domain.ApprovalStatusPending,
-				},
-			},
-			{
-				name: "When expression fulfilled",
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{
-						Details: map[string]interface{}{
-							"flag": true,
-						},
-					},
-				},
-				steps: []*domain.Step{
-					humanApprovalStep,
-					resourceFlagStep,
-					humanApprovalStep,
-				},
-				existingApprovalStatuses: []string{
-					domain.ApprovalStatusApproved,
-					domain.ApprovalStatusPending,
-					domain.ApprovalStatusBlocked,
-				},
-				expectedApprovalStatuses: []string{
-					domain.ApprovalStatusApproved,
-					domain.ApprovalStatusPending,
-					domain.ApprovalStatusBlocked,
-				},
-			},
-			{
-				name: "should access nested fields properly in expression",
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{},
-				},
-				steps: []*domain.Step{
-					{
-						Strategy:  "manual",
-						When:      `$appeal.details != nil && $appeal.details.foo != nil && $appeal.details.bar != nil && ($appeal.details.foo.foo contains "foo" || $appeal.details.foo.bar contains "bar")`,
-						Approvers: []string{"approver1@email.com"},
-					},
-					{
-						Strategy:  "manual",
-						Approvers: []string{"approver2@email.com"},
-					},
-				},
-				existingApprovalStatuses: []string{
-					domain.ApprovalStatusPending,
-					domain.ApprovalStatusBlocked,
-				},
-				expectedApprovalStatuses: []string{
-					domain.ApprovalStatusSkipped,
-					domain.ApprovalStatusPending,
-				},
-			},
-			{
-				name: "should return error if failed when evaluating expression",
-				appeal: &domain.Appeal{
-					Resource: &domain.Resource{},
-				},
-				steps: []*domain.Step{
-					{
-						Strategy:  "manual",
-						When:      `$appeal.details != nil && $appeal.details.foo != nil && $appeal.details.bar != nil && $appeal.details.foo.foo contains "foo" || $appeal.details.foo.bar contains "bar"`,
-						Approvers: []string{"approver1@email.com"},
-					},
-					{
-						Strategy:  "manual",
-						Approvers: []string{"approver2@email.com"},
-					},
-				},
-				existingApprovalStatuses: []string{
-					domain.ApprovalStatusPending,
-					domain.ApprovalStatusPending,
-				},
-				expectedErrorStr: "evaluating expression ",
-			},
-		}
-
-		for _, tc := range testCases {
-			s.Run(tc.name, func() {
-				appeal := *tc.appeal
-				for i, s := range tc.existingApprovalStatuses {
-					appeal.Approvals = append(appeal.Approvals, &domain.Approval{
-						Status: s,
-						Index:  i,
-					})
-				}
-				appeal.Policy = &domain.Policy{
-					Steps: tc.steps,
-				}
-				actualError := s.service.AdvanceApproval(context.Background(), &appeal)
-				if tc.expectedErrorStr == "" {
-					s.Nil(actualError)
-					for i, a := range appeal.Approvals {
-						s.Equal(a.Status, tc.expectedApprovalStatuses[i])
-					}
-				} else {
-					s.Contains(actualError.Error(), tc.expectedErrorStr)
-				}
-			})
-		}
-	})
-}
-
 func (s *ServiceTestSuite) TestAddApprover() {
 	s.Run("should return nil error on success", func() {
 		expectedApprover := &domain.Approver{
@@ -401,7 +152,6 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 		}
 
 		for _, param := range invalidApprovalActionParameters {
-
 			actualResult, actualError := s.service.UpdateApproval(context.Background(), param)
 
 			s.Nil(actualResult)
@@ -1088,13 +838,6 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 				s.mockAppealService.EXPECT().
 					GetByID(mock.AnythingOfType("*context.emptyCtx"), validApprovalActionParam.AppealID).
 					Return(tc.expectedAppealDetails, nil).Once()
-				// s.mockPolicyService.EXPECT().GetOne(mock.Anything, mock.Anything, mock.Anything).Return(&domain.Policy{}, nil).Once()
-				// s.mockApprovalService.EXPECT().
-				// 	AdvanceApproval(mock.Anything, tc.expectedAppealDetails).Return(nil).
-				// 	Run(func(_a0 context.Context, a *domain.Appeal) {
-				// 		a.Approvals = tc.expectedResult.Approvals
-				// 		a.Status = tc.expectedResult.Status
-				// 	}).Once()
 				s.mockAppealService.EXPECT().GrantAccessToProvider(mock.Anything, mock.Anything).Return(nil).Once()
 				if tc.expectedApprovalAction.Action == "approve" {
 					s.mockGrantService.EXPECT().
@@ -1106,23 +849,25 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 						}).Return([]domain.Grant{}, nil).Once()
 					s.mockGrantService.EXPECT().
 						Prepare(mock.Anything, mock.Anything).Return(tc.expectedGrant, nil).Once()
+					mockPolicy := &domain.Policy{
+						Steps: []*domain.Step{
+							{
+								Name: "step-1",
+							},
+							{
+								Name: "step-2",
+							},
+						},
+					}
 					s.mockPolicyService.EXPECT().
 						GetOne(mock.Anything, tc.expectedAppealDetails.PolicyID, tc.expectedAppealDetails.PolicyVersion).
-						Return(&domain.Policy{
-							Steps: []*domain.Step{
-								{
-									Name: "step-1",
-								},
-								{
-									Name: "step-2",
-								},
-							},
-						}, nil).Once()
+						Return(mockPolicy, nil).Once()
+
+					tc.expectedResult.Policy = mockPolicy
 					s.mockProviderService.EXPECT().GrantAccess(mock.Anything, *tc.expectedGrant).Return(nil).Once()
 				}
-				// FIXME: this is not working
-				// s.mockAppealService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), tc.expectedResult).Return(nil).Once()
-				s.mockAppealService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil).Once()
+
+				s.mockAppealService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), tc.expectedResult).Return(nil).Once()
 				s.mockNotifier.EXPECT().Notify(mock.Anything).Return(nil).Once()
 				s.mockAuditLogger.EXPECT().Log(mock.Anything, mock.Anything, mock.Anything).
 					Return(nil).Once()
@@ -1130,10 +875,8 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 				actualResult, actualError := s.service.UpdateApproval(context.Background(), tc.expectedApprovalAction)
 
 				s.NoError(actualError)
+				tc.expectedResult.Policy = actualResult.Policy
 				s.Equal(tc.expectedResult, actualResult)
-
-				// s.mockPolicyService.AssertExpectations(s.T())
-				// s.mockAppealService.AssertExpectations(s.T())
 			})
 		}
 	})

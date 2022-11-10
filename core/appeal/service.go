@@ -54,7 +54,6 @@ type policyService interface {
 
 //go:generate mockery --name=approvalService --exported --with-expecter
 type approvalService interface {
-	AdvanceApproval(context.Context, *domain.Appeal) error
 	AddApprover(ctx context.Context, approvalID, email string) error
 	DeleteApprover(ctx context.Context, approvalID, email string) error
 }
@@ -257,7 +256,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		appeal.Init(policy)
 
 		appeal.Policy = policy
-		if err := s.approvalService.AdvanceApproval(ctx, appeal); err != nil {
+		if err := appeal.AdvanceApproval(ctx); err != nil {
 			return fmt.Errorf("initializing approval step statuses: %w", err)
 		}
 		appeal.Policy = nil

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -224,6 +225,77 @@ func (a Appeal) ResolveApprovers(expressions []string) ([]string, error) {
 		return nil, err
 	}
 	return distinctApprovers, nil
+}
+
+func (a *Appeal) AdvanceApproval(ctx context.Context) error {
+	stepNameIndex := map[string]int{}
+	for i, s := range a.Policy.Steps {
+		stepNameIndex[s.Name] = i
+	}
+
+	for i, approval := range a.Approvals {
+		if approval.Status == ApprovalStatusRejected {
+			break
+		}
+		if approval.Status == ApprovalStatusPending {
+			stepConfig := a.Policy.Steps[approval.Index]
+
+			appealMap, err := structToMap(a)
+			if err != nil {
+				return fmt.Errorf("parsing appeal struct to map: %w", err)
+			}
+
+			if stepConfig.When != "" {
+				v, err := evaluator.Expression(stepConfig.When).EvaluateWithVars(map[string]interface{}{
+					"appeal": appealMap,
+				})
+				if err != nil {
+					return err
+				}
+
+				isFalsy := reflect.ValueOf(v).IsZero()
+				if isFalsy {
+					approval.Status = ApprovalStatusSkipped
+					if i < len(a.Approvals)-1 {
+						a.Approvals[i+1].Status = ApprovalStatusPending
+					}
+				}
+			}
+
+			if approval.Status != ApprovalStatusSkipped && stepConfig.Strategy == ApprovalStepStrategyAuto {
+				v, err := evaluator.Expression(stepConfig.ApproveIf).EvaluateWithVars(map[string]interface{}{
+					"appeal": appealMap,
+				})
+				if err != nil {
+					return err
+				}
+
+				isFalsy := reflect.ValueOf(v).IsZero()
+				if isFalsy {
+					if stepConfig.AllowFailed {
+						approval.Status = ApprovalStatusSkipped
+						if i+1 <= len(a.Approvals)-1 {
+							a.Approvals[i+1].Status = ApprovalStatusPending
+						}
+					} else {
+						approval.Status = ApprovalStatusRejected
+						approval.Reason = stepConfig.RejectionReason
+						a.Status = AppealStatusRejected
+					}
+				} else {
+					approval.Status = ApprovalStatusApproved
+					if i+1 <= len(a.Approvals)-1 {
+						a.Approvals[i+1].Status = ApprovalStatusPending
+					}
+				}
+			}
+		}
+		if i == len(a.Approvals)-1 && (approval.Status == ApprovalStatusSkipped || approval.Status == ApprovalStatusApproved) {
+			a.Status = AppealStatusApproved
+		}
+	}
+
+	return nil
 }
 
 func structToMap(item interface{}) (map[string]interface{}, error) {

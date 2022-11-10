@@ -22,44 +22,6 @@ func (_m *ApprovalService) EXPECT() *ApprovalService_Expecter {
 	return &ApprovalService_Expecter{mock: &_m.Mock}
 }
 
-// AdvanceApproval provides a mock function with given fields: _a0, _a1
-func (_m *ApprovalService) AdvanceApproval(_a0 context.Context, _a1 *domain.Appeal) error {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.Appeal) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// ApprovalService_AdvanceApproval_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdvanceApproval'
-type ApprovalService_AdvanceApproval_Call struct {
-	*mock.Call
-}
-
-// AdvanceApproval is a helper method to define mock.On call
-//  - _a0 context.Context
-//  - _a1 *domain.Appeal
-func (_e *ApprovalService_Expecter) AdvanceApproval(_a0 interface{}, _a1 interface{}) *ApprovalService_AdvanceApproval_Call {
-	return &ApprovalService_AdvanceApproval_Call{Call: _e.mock.On("AdvanceApproval", _a0, _a1)}
-}
-
-func (_c *ApprovalService_AdvanceApproval_Call) Run(run func(_a0 context.Context, _a1 *domain.Appeal)) *ApprovalService_AdvanceApproval_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.Appeal))
-	})
-	return _c
-}
-
-func (_c *ApprovalService_AdvanceApproval_Call) Return(_a0 error) *ApprovalService_AdvanceApproval_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
 // BulkInsert provides a mock function with given fields: _a0, _a1
 func (_m *ApprovalService) BulkInsert(_a0 context.Context, _a1 []*domain.Approval) error {
 	ret := _m.Called(_a0, _a1)
