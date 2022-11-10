@@ -153,7 +153,7 @@ func (a Appeal) ToGrant() (*Grant, error) {
 	return grant, nil
 }
 
-func (a *Appeal) InitApproval(p Policy) error {
+func (a *Appeal) InitApprovals(p *Policy) error {
 	approvals := []*Approval{}
 	for i, step := range p.Steps { // TODO: move this logic to approvalService
 		var approverEmails []string
@@ -166,7 +166,7 @@ func (a *Appeal) InitApproval(p Policy) error {
 		}
 
 		approval := &Approval{}
-		if err := approval.Init(&p, i, approverEmails); err != nil {
+		if err := approval.Init(p, i, approverEmails); err != nil {
 			return fmt.Errorf(`initializing approval "%s": %w`, step.Name, err)
 		}
 		approvals = append(approvals, approval)
