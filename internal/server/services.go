@@ -22,6 +22,7 @@ import (
 	"github.com/odpf/guardian/plugins/providers/grafana"
 	"github.com/odpf/guardian/plugins/providers/metabase"
 	"github.com/odpf/guardian/plugins/providers/noop"
+	"github.com/odpf/guardian/plugins/providers/shield"
 	"github.com/odpf/guardian/plugins/providers/tableau"
 	"github.com/odpf/salt/audit"
 	audit_repos "github.com/odpf/salt/audit/repositories"
@@ -99,6 +100,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, deps.Crypto),
 		noop.NewProvider(domain.ProviderTypeNoOp, deps.Logger),
 		gcs.NewProvider(domain.ProviderTypeGCS, deps.Crypto),
+		shield.NewProvider(domain.ProviderTypeShield, deps.Logger),
 	}
 
 	iamManager := identities.NewManager(deps.Crypto, deps.Validator)
