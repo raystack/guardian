@@ -3,6 +3,7 @@ package appeal_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -1215,6 +1216,99 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 
 	s.Nil(actualError)
 	s.Equal(expectedResult, appeals)
+}
+
+func (s *ServiceTestSuite) TestGrantAccessToProvider() {
+	s.setup()
+
+	s.Run("should return error when policy is not found", func() {
+		expectedError := errors.New("retrieving policy: not found")
+
+		s.mockPolicyService.On("GetOne", mock.Anything, "policy_1", uint(1)).Return(nil, errors.New("not found")).Once()
+
+		actualError := s.service.GrantAccessToProvider(context.Background(), &domain.Appeal{
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+		})
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("handle appeal requirements", func() {
+		s.Run("matching error", func() {
+			expectedError := errors.New("handling appeal requirements: evaluating requirements[1]: error parsing regexp: missing closing ]: `[InvalidRegex`")
+
+			s.mockPolicyService.
+				On("GetOne", mock.Anything, "policy_1", uint(1)).
+				Return(&domain.Policy{
+					ID:      "policy_1",
+					Version: 1,
+					Requirements: []*domain.Requirement{
+						{
+							On: &domain.RequirementTrigger{
+								ProviderType: "not-matching",
+							},
+						},
+						{
+							On: &domain.RequirementTrigger{
+								ProviderType: "[InvalidRegex",
+							},
+						},
+					},
+				}, nil).Once()
+
+			actualError := s.service.GrantAccessToProvider(context.Background(), &domain.Appeal{
+				PolicyID:      "policy_1",
+				PolicyVersion: 1,
+				Resource: &domain.Resource{
+					ProviderType: "example-provider",
+				},
+			})
+			s.EqualError(actualError, expectedError.Error())
+		})
+	})
+
+	s.Run("should return error when grant access to provider fails", func() {
+		expectedError := errors.New("granting access: error")
+
+		s.mockPolicyService.
+			On("GetOne", mock.Anything, "policy_1", uint(1)).
+			Return(&domain.Policy{
+				ID:      "policy_1",
+				Version: 1,
+			}, nil).Once()
+
+		s.mockProviderService.
+			On("GrantAccess", mock.Anything, mock.Anything).
+			Return(fmt.Errorf("error")).Once()
+
+		actualError := s.service.GrantAccessToProvider(context.Background(), &domain.Appeal{
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+			Grant:         &domain.Grant{},
+		})
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should be able to grant access", func() {
+		s.mockPolicyService.
+			On("GetOne", mock.Anything, "policy_1", uint(1)).
+			Return(&domain.Policy{
+				ID:      "policy_1",
+				Version: 1,
+			}, nil).Once()
+
+		s.mockProviderService.
+			On("GrantAccess", mock.Anything, mock.Anything).
+			Return(nil).Once()
+
+		actualError := s.service.GrantAccessToProvider(context.Background(), &domain.Appeal{
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+			Grant:         &domain.Grant{},
+		})
+		s.Nil(actualError, actualError)
+	})
 }
 
 // func (s *ServiceTestSuite) TestCancel() {
