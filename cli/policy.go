@@ -220,7 +220,13 @@ func createPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			spinner.Stop()
 
-			fmt.Printf("Policy created with id: %v\n", res.GetPolicy().GetId())
+			msg := "Policy created with id: %v"
+
+			if dryRun {
+				msg += " (dry run)"
+			}
+
+			fmt.Printf(msg+"\n", res.GetPolicy().GetId())
 
 			return nil
 		},
