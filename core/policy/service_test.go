@@ -369,8 +369,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.Run("with valid policy should not call repository", func() {
 			s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
 
-			dryRun := true
-			ctx := policy.WithDryRun(context.Background(), dryRun)
+			ctx := policy.WithDryRun(context.Background())
 
 			actualError := s.service.Create(ctx, validPolicy)
 

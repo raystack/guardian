@@ -52,11 +52,13 @@ func (s *GRPCServer) GetPolicy(ctx context.Context, req *guardianv1beta1.GetPoli
 }
 
 func (s *GRPCServer) CreatePolicy(ctx context.Context, req *guardianv1beta1.CreatePolicyRequest) (*guardianv1beta1.CreatePolicyResponse, error) {
-	dryRunCtx := policy.WithDryRun(ctx, req.GetDryRun())
+	if req.GetDryRun() {
+		ctx = policy.WithDryRun(ctx)
+	}
 
 	p := s.adapter.FromPolicyProto(req.GetPolicy())
 
-	if err := s.policyService.Create(dryRunCtx, p); err != nil {
+	if err := s.policyService.Create(ctx, p); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create policy: %v", err)
 	}
 

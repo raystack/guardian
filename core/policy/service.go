@@ -82,8 +82,6 @@ func NewService(deps ServiceDeps) *Service {
 
 // Create record
 func (s *Service) Create(ctx context.Context, p *domain.Policy) error {
-	dryRun := isDryRun(ctx)
-
 	p.Version = 1
 
 	var sensitiveConfig domain.SensitiveConfig
@@ -107,7 +105,7 @@ func (s *Service) Create(ctx context.Context, p *domain.Policy) error {
 		p.IAM.Config = sensitiveConfig
 	}
 
-	if !dryRun {
+	if !isDryRun(ctx) {
 		if err := s.repository.Create(ctx, p); err != nil {
 			return err
 		}
@@ -395,14 +393,13 @@ func validateDuration(d string) error {
 
 type isDryRunKey string
 
-func WithDryRun(ctx context.Context, isDryRun bool) context.Context {
-	return context.WithValue(ctx, isDryRunKey("dry_run"), isDryRun)
+func WithDryRun(ctx context.Context) context.Context {
+	return context.WithValue(ctx, isDryRunKey("dry_run"), true)
 }
 
 func isDryRun(ctx context.Context) bool {
-	dryRun := ctx.Value(isDryRunKey("dry_run"))
-	if dryRun == nil {
-		return false
+	if val := ctx.Value(isDryRunKey("dry_run")); val != nil {
+		return true
 	}
-	return dryRun.(bool)
+	return false
 }

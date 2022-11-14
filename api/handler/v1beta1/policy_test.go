@@ -366,7 +366,7 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 				UpdatedAt: timestamppb.New(timeNow),
 			},
 		}
-		s.policyService.EXPECT().Create(mock.AnythingOfType("*context.valueCtx"), expectedPolicy).
+		s.policyService.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), expectedPolicy).
 			Run(func(_a0 context.Context, _a1 *domain.Policy) {
 				_a1.CreatedAt = timeNow
 				_a1.UpdatedAt = timeNow
@@ -442,7 +442,7 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.policyService.EXPECT().Create(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("*domain.Policy")).Return(expectedError).Once()
+		s.policyService.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Policy")).Return(expectedError).Once()
 
 		req := &guardianv1beta1.CreatePolicyRequest{}
 		res, err := s.grpcServer.CreatePolicy(context.Background(), req)
@@ -460,7 +460,7 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 				Config: make(chan int), // invalid json
 			},
 		}
-		s.policyService.EXPECT().Create(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("*domain.Policy")).Return(nil).
+		s.policyService.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Policy")).Return(nil).
 			Run(func(_a0 context.Context, _a1 *domain.Policy) {
 				*_a1 = *invalidPolicy
 			}).Once()
