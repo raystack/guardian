@@ -16,12 +16,6 @@ type provider struct {
 	logger   log.Logger
 }
 
-//
-//func (p *provider) GrantAccess(config *domain.ProviderConfig, grant domain.Grant) error {
-//	//TODO implement me
-//	panic("implement me")
-//}
-
 func (p *provider) GetAccountTypes() []string {
 	return []string{
 		AccountTypeUser,
@@ -132,6 +126,7 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Shiel
 
 	client, err := NewClient(&ClientConfig{
 		Host: credentials.Host,
+		Auth: credentials.Auth,
 	}, p.logger)
 	if err != nil {
 		return nil, err
@@ -204,9 +199,63 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 	return ErrInvalidResourceType
 }
 
-func (p *provider) RevokeAccess(config *domain.ProviderConfig, grant domain.Grant) error {
-	//TODO implement me
-	panic("implement me")
+func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
+	// TODO: validate provider config and appeal
+
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return err
+	}
+	client, err := p.getClient(pc.URN, creds)
+	if err != nil {
+		return err
+	}
+
+	permissions := getPermissions(a)
+
+	var user *User
+	if user, err = client.GetSelfUser(a.AccountID); err != nil {
+		return nil
+	}
+
+	if a.Resource.Type == ResourceTypeTeam {
+		t := new(Team)
+		if err := t.FromDomain(a.Resource); err != nil {
+			return err
+		}
+		for _, p := range permissions {
+			if err := client.RevokeTeamAccess(t, user.ID, string(p)); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	} else if a.Resource.Type == ResourceTypeProject {
+		pj := new(Project)
+		if err := pj.FromDomain(a.Resource); err != nil {
+			return err
+		}
+		for _, p := range permissions {
+			if err := client.RevokeProjectAccess(pj, user.ID, string(p)); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	} else if a.Resource.Type == ResourceTypeOrganization {
+		o := new(Organization)
+		if err := o.FromDomain(a.Resource); err != nil {
+			return err
+		}
+		for _, p := range permissions {
+			if err := client.RevokeOrganizationAccess(o, user.ID, string(p)); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	return ErrInvalidResourceType
 }
 
 func getPermissions(a domain.Grant) []Permission {

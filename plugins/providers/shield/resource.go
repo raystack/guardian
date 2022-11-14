@@ -55,8 +55,8 @@ func (t *Team) FromDomain(r *domain.Resource) error {
 	resourseDetails := r.Details
 	t.ID = resourseDetails["id"].(string)
 	t.OrgId = resourseDetails["orgId"].(string)
-	t.Metadata = resourseDetails["metadata"].(Metadata)
-	t.Admins = resourseDetails["admins"].([]string)
+	//t.Metadata = resourseDetails["metadata"].(Metadata)
+	//t.Admins = resourseDetails["admins"].([]string)
 	t.Name = r.Name
 
 	return nil

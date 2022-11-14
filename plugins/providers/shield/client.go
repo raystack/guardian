@@ -31,21 +31,28 @@ const (
 
 const authHeader = "X-Auth-Email"
 
+type successAccess struct {
+	message string
+}
+
 type ShieldClient interface {
 	GetTeams() ([]*Team, error)
 	GetProjects() ([]*Project, error)
 	GetOrganizations() ([]*Organization, error)
 	GrantTeamAccess(team *Team, userId string, role string) error
-	//RevokeGroupAccess(groupID int, userId int, role string) error
+	RevokeTeamAccess(team *Team, userId string, role string) error
 	GrantProjectAccess(project *Project, userId string, role string) error
-	//RevokeProjectAccess(projectID int, userId int, role string) error
+	RevokeProjectAccess(project *Project, userId string, role string) error
 	GrantOrganizationAccess(organization *Organization, userId string, role string) error
-	//RevokeOrganizationAccess(organizationId int, userId int, role string) error
+	RevokeOrganizationAccess(organization *Organization, userId string, role string) error
 	GetSelfUser(email string) (*User, error)
 }
 
 type client struct {
-	baseURL    *url.URL
+	baseURL *url.URL
+
+	auth string
+
 	httpClient HTTPClient
 	logger     log.Logger
 }
@@ -56,6 +63,7 @@ type HTTPClient interface {
 
 type ClientConfig struct {
 	Host       string `validate:"required,url" mapstructure:"host"`
+	Auth       string `validate:"required" mapstructure:"auth_email"`
 	HTTPClient HTTPClient
 }
 
@@ -77,6 +85,7 @@ func NewClient(config *ClientConfig, logger log.Logger) (*client, error) {
 
 	c := &client{
 		baseURL:    baseURL,
+		auth:       config.Auth,
 		httpClient: httpClient,
 		logger:     logger,
 	}
@@ -104,7 +113,9 @@ func (c *client) newRequest(method, path string, body interface{}, authEmail str
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	if authEmail != "" {
+	if authEmail == "" {
+		req.Header.Set(authHeader, c.auth)
+	} else {
 		req.Header.Set(authHeader, authEmail)
 	}
 	req.Header.Set("Accept", "application/json")
@@ -225,11 +236,11 @@ func (c *client) GetOrganizations() ([]*Organization, error) {
 }
 
 func (c *client) GrantTeamAccess(resource *Team, userId string, role string) error {
-	body := [1]string{userId}
-	admins := resource.Admins
+	body := make(map[string][]string)
+	body["userIds"] = append(body["userIds"], userId)
 
 	endPoint := path.Join(groupsEndpoint, "/", resource.ID, "/", role)
-	req, err := c.newRequest(http.MethodPost, endPoint, body, admins[0])
+	req, err := c.newRequest(http.MethodPost, endPoint, body, "")
 	if err != nil {
 		return err
 	}
@@ -250,11 +261,11 @@ func (c *client) GrantTeamAccess(resource *Team, userId string, role string) err
 }
 
 func (c *client) GrantProjectAccess(resource *Project, userId string, role string) error {
-	body := [1]string{userId}
-	admins := resource.Admins
+	body := make(map[string][]string)
+	body["userIds"] = append(body["userIds"], userId)
 
 	endPoint := path.Join(projectsEndpoint, "/", resource.ID, "/", role)
-	req, err := c.newRequest(http.MethodPost, endPoint, body, admins[0])
+	req, err := c.newRequest(http.MethodPost, endPoint, body, "")
 	if err != nil {
 		return err
 	}
@@ -274,11 +285,11 @@ func (c *client) GrantProjectAccess(resource *Project, userId string, role strin
 }
 
 func (c *client) GrantOrganizationAccess(resource *Organization, userId string, role string) error {
-	body := [1]string{userId}
-	admins := resource.Admins
+	body := make(map[string][]string)
+	body["userIds"] = append(body["userIds"], userId)
 
 	endPoint := path.Join(organizationEndpoint, "/", resource.ID, "/", role)
-	req, err := c.newRequest(http.MethodPost, endPoint, body, admins[0])
+	req, err := c.newRequest(http.MethodPost, endPoint, body, "")
 
 	if err != nil {
 		return err
@@ -293,8 +304,71 @@ func (c *client) GrantOrganizationAccess(resource *Organization, userId string, 
 	if v, ok := response.(map[string]interface{}); ok && v[usersConst] != nil {
 		err = mapstructure.Decode(v[usersConst], &users)
 	}
-	
+
 	c.logger.Info("Organization access to the user,", "total users", len(users), req.URL)
+	return nil
+}
+
+func (c *client) RevokeTeamAccess(resource *Team, userId string, role string) error {
+	endPoint := path.Join(groupsEndpoint, "/", resource.ID, "/", role, "/", userId)
+	req, err := c.newRequest(http.MethodDelete, endPoint, "", "")
+	if err != nil {
+		return err
+	}
+
+	var success successAccess
+	var response interface{}
+	if _, err := c.do(req, &response); err != nil {
+		return err
+	}
+
+	if v, ok := response.(map[string]interface{}); ok && v != nil {
+		err = mapstructure.Decode(v, &success)
+	}
+
+	c.logger.Info("Remove access of the user from team,", "Users", userId, req.URL)
+	return nil
+}
+
+func (c *client) RevokeProjectAccess(resource *Project, userId string, role string) error {
+	endPoint := path.Join(projectsEndpoint, "/", resource.ID, "/", role, "/", userId)
+	req, err := c.newRequest(http.MethodDelete, endPoint, "", "")
+	if err != nil {
+		return err
+	}
+
+	var success successAccess
+	var response interface{}
+	if _, err := c.do(req, &response); err != nil {
+		return err
+	}
+
+	if v, ok := response.(map[string]interface{}); ok && v != nil {
+		err = mapstructure.Decode(v, &success)
+	}
+
+	c.logger.Info("Remove access of the user from project", "Users", userId, req.URL)
+	return nil
+}
+
+func (c *client) RevokeOrganizationAccess(resource *Organization, userId string, role string) error {
+	endPoint := path.Join(organizationEndpoint, "/", resource.ID, "/", role, "/", userId)
+	req, err := c.newRequest(http.MethodDelete, endPoint, "", "")
+	if err != nil {
+		return err
+	}
+
+	var success successAccess
+	var response interface{}
+	if _, err := c.do(req, &response); err != nil {
+		return err
+	}
+
+	if v, ok := response.(map[string]interface{}); ok && v != nil {
+		err = mapstructure.Decode(v, &success)
+	}
+
+	c.logger.Info("Remove access of the user from organization", "Users", userId, req.URL)
 	return nil
 }
 
