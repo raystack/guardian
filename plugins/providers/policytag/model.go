@@ -8,7 +8,6 @@ const (
 	ResourceTypeTag               = "tag"
 	FineGrainReaderPermission     = "roles/datacatalog.categoryFineGrainedReader"
 	FineGrainReaderPermissionRole = "fineGrainReader"
-	US                            = "us"
 	PageSize                      = 100
 )
 

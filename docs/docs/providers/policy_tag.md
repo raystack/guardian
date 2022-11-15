@@ -25,7 +25,7 @@ Guardian requires **service account key** and the **resource name** of an admini
 ```yaml
 credentials:
   service_account_key: <base64 encoded service account key json>
-  resource_name: projects/gcp-project-id
+  resource_name: projects/gcp-project-id/locations/taxonomy-location
 ```
 
 
@@ -45,7 +45,7 @@ allowed_account_types:
   - serviceAccount
 credentials:
   service_account_key: <base64 encoded service account key json>
-  resource_name: projects/gcp-project-id
+  resource_name: projects/gcp-project-id/locations/us
 appeal:
   allow_active_access_extension_in: "7d"
 resources:

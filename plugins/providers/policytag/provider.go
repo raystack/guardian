@@ -187,13 +187,21 @@ func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, res
 }
 
 func (p *Provider) getPolicyTagClient(credentials Credentials) (PolicyTagClient, error) {
-	projectID := strings.Replace(credentials.ResourceName, "projects/", "", 1)
+	var projectID, taxonomyLocation string
+	parseVariableCounts, err := fmt.Sscanf(strings.ReplaceAll(credentials.ResourceName, "/", " "),
+		"projects %s locations %s", &projectID, &taxonomyLocation)
+	if err != nil || parseVariableCounts != 2 {
+		return nil, ErrInvalidResourceFormatType
+	}
 	if p.Clients[projectID] != nil {
 		return p.Clients[projectID], nil
 	}
 
-	credentials.Decrypt(p.encryptor)
-	client, err := newPolicyTagClient(projectID, []byte(credentials.ServiceAccountKey))
+	err = credentials.Decrypt(p.encryptor)
+	if err != nil {
+		return nil, ErrUnableToDecryptCredentials
+	}
+	client, err := newPolicyTagClient(projectID, taxonomyLocation, []byte(credentials.ServiceAccountKey))
 	if err != nil {
 		return nil, err
 	}

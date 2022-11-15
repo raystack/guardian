@@ -14,25 +14,27 @@ import (
 )
 
 type policyTagClient struct {
-	policyManager *datacatalog.PolicyTagManagerClient
-	projectId     string
+	policyManager    *datacatalog.PolicyTagManagerClient
+	projectId        string
+	taxonomyLocation string
 }
 
-func newPolicyTagClient(projectID string, credentialsJSON []byte) (*policyTagClient, error) {
+func newPolicyTagClient(projectID, location string, credentialsJSON []byte) (*policyTagClient, error) {
 	ctx := context.Background()
 	policyManager, err := datacatalog.NewPolicyTagManagerClient(ctx, option.WithCredentialsJSON(credentialsJSON))
 	if err != nil {
 		return nil, err
 	}
 	return &policyTagClient{
-		policyManager: policyManager,
-		projectId:     projectID,
+		policyManager:    policyManager,
+		projectId:        projectID,
+		taxonomyLocation: location,
 	}, nil
 }
 
 func (p *policyTagClient) GetPolicies(ctx context.Context) ([]*Policy, error) {
 	taxonomies := p.policyManager.ListTaxonomies(ctx, &pb.ListTaxonomiesRequest{
-		Parent: p.toParent(p.projectId, US),
+		Parent: p.toParent(p.projectId, p.taxonomyLocation),
 	})
 	taxonomies.PageInfo().MaxSize = PageSize
 

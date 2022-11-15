@@ -53,7 +53,7 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 	return nil
 }
 
-// Permission is for mapping role into policy tag fin-grained-reader permissions
+// Permission is for mapping role into policy tag fine-grained-reader permissions
 type Permission string
 
 // Config for policy_tag provider
