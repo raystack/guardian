@@ -3,10 +3,11 @@ package shield
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/domain"
-	"strings"
 )
 
 const (
@@ -66,7 +67,7 @@ func (c *Config) parseAndValidate() error {
 }
 
 func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
-	resourceTypeValidation := fmt.Sprintf("oneof=%s %s %s %s", ResourceTypeTeam, ResourceTypeProject, ResourceTypeOrganization)
+	resourceTypeValidation := fmt.Sprintf("oneof=%s %s %s", ResourceTypeTeam, ResourceTypeProject, ResourceTypeOrganization)
 	if err := c.validator.Var(resource.Type, resourceTypeValidation); err != nil {
 		return err
 	}

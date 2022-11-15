@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-playground/validator/v10"
-	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/salt/log"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/salt/log"
 )
 
 const (
@@ -25,15 +26,11 @@ const (
 	organizationsConst = "organizations"
 	usersConst         = "users"
 	userConst          = "user"
-
-	pathSeparator = "/"
 )
 
 const authHeader = "X-Auth-Email"
 
-type successAccess struct {
-	message string
-}
+type successAccess interface{}
 
 type ShieldClient interface {
 	GetTeams() ([]*Team, error)
@@ -253,6 +250,9 @@ func (c *client) GrantTeamAccess(resource *Team, userId string, role string) err
 
 	if v, ok := response.(map[string]interface{}); ok && v[usersConst] != nil {
 		err = mapstructure.Decode(v[usersConst], &users)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.logger.Info("Team access to the user,", "total users", len(users), req.URL)
@@ -278,6 +278,9 @@ func (c *client) GrantProjectAccess(resource *Project, userId string, role strin
 
 	if v, ok := response.(map[string]interface{}); ok && v[usersConst] != nil {
 		err = mapstructure.Decode(v[usersConst], &users)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.logger.Info("Project access to the user,", "total users", len(users), req.URL)
@@ -303,6 +306,9 @@ func (c *client) GrantOrganizationAccess(resource *Organization, userId string, 
 
 	if v, ok := response.(map[string]interface{}); ok && v[usersConst] != nil {
 		err = mapstructure.Decode(v[usersConst], &users)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.logger.Info("Organization access to the user,", "total users", len(users), req.URL)
@@ -324,6 +330,9 @@ func (c *client) RevokeTeamAccess(resource *Team, userId string, role string) er
 
 	if v, ok := response.(map[string]interface{}); ok && v != nil {
 		err = mapstructure.Decode(v, &success)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.logger.Info("Remove access of the user from team,", "Users", userId, req.URL)
@@ -345,6 +354,9 @@ func (c *client) RevokeProjectAccess(resource *Project, userId string, role stri
 
 	if v, ok := response.(map[string]interface{}); ok && v != nil {
 		err = mapstructure.Decode(v, &success)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.logger.Info("Remove access of the user from project", "Users", userId, req.URL)
@@ -366,6 +378,9 @@ func (c *client) RevokeOrganizationAccess(resource *Organization, userId string,
 
 	if v, ok := response.(map[string]interface{}); ok && v != nil {
 		err = mapstructure.Decode(v, &success)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.logger.Info("Remove access of the user from organization", "Users", userId, req.URL)

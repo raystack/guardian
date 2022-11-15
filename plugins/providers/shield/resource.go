@@ -2,6 +2,7 @@ package shield
 
 import (
 	"fmt"
+
 	"github.com/odpf/guardian/domain"
 )
 
@@ -52,12 +53,27 @@ func (t *Team) FromDomain(r *domain.Resource) error {
 		return ErrInvalidResourceType
 	}
 
-	resourseDetails := r.Details
-	t.ID = resourseDetails["id"].(string)
-	t.OrgId = resourseDetails["orgId"].(string)
-	//t.Metadata = resourseDetails["metadata"].(Metadata)
-	//t.Admins = resourseDetails["admins"].([]string)
+	resourceDetails := r.Details
+	t.ID = resourceDetails["id"].(string)
+	t.OrgId = resourceDetails["orgId"].(string)
 	t.Name = r.Name
+
+	if resourceDetails["admins"] == nil {
+		t.Admins = []string{}
+	} else {
+		adminsInterface := resourceDetails["admins"].([]interface{})
+		admins := make([]string, len(adminsInterface))
+		for i, v := range adminsInterface {
+			admins[i] = v.(string)
+		}
+		t.Admins = admins
+	}
+
+	metadataInterface := resourceDetails["metadata"].(interface{})
+	metadata, ok := metadataInterface.(Metadata)
+	if ok {
+		t.Metadata = metadata
+	}
 
 	return nil
 }
@@ -81,11 +97,17 @@ func (p *Project) FromDomain(r *domain.Resource) error {
 		return ErrInvalidResourceType
 	}
 
-	resourseDetails := r.Details
-	p.ID = resourseDetails["id"].(string)
-	p.OrgId = resourseDetails["orgId"].(string)
-	p.Admins = resourseDetails["admins"].([]string)
+	resourceDetails := r.Details
+	p.ID = resourceDetails["id"].(string)
+	p.OrgId = resourceDetails["orgId"].(string)
 	p.Name = r.Name
+
+	adminsInterface := resourceDetails["admins"].([]interface{})
+	admins := make([]string, len(adminsInterface))
+	for i, v := range adminsInterface {
+		admins[i] = v.(string)
+	}
+	p.Admins = admins
 
 	return nil
 }
@@ -108,10 +130,16 @@ func (o *Organization) FromDomain(r *domain.Resource) error {
 		return ErrInvalidResourceType
 	}
 
-	resourseDetails := r.Details
-	o.ID = resourseDetails["id"].(string)
-	o.Admins = resourseDetails["admins"].([]string)
+	resourceDetails := r.Details
+	o.ID = resourceDetails["id"].(string)
 	o.Name = r.Name
+
+	adminsInterface := resourceDetails["admins"].([]interface{})
+	admins := make([]string, len(adminsInterface))
+	for i, v := range adminsInterface {
+		admins[i] = v.(string)
+	}
+	o.Admins = admins
 
 	return nil
 }
