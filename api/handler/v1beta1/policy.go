@@ -73,6 +73,9 @@ func (s *GRPCServer) CreatePolicy(ctx context.Context, req *guardianv1beta1.Crea
 }
 
 func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *guardianv1beta1.UpdatePolicyRequest) (*guardianv1beta1.UpdatePolicyResponse, error) {
+	if req.GetDryRun() {
+		ctx = policy.WithDryRun(ctx)
+	}
 	p := s.adapter.FromPolicyProto(req.GetPolicy())
 
 	p.ID = req.GetId()

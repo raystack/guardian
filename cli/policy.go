@@ -241,6 +241,7 @@ func createPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 func updatePolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
+	var dryRun bool
 	cmd := &cobra.Command{
 		Use:   "edit",
 		Short: "Edit a policy",
@@ -278,6 +279,7 @@ func updatePolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			_, err = client.UpdatePolicy(cmd.Context(), &guardianv1beta1.UpdatePolicyRequest{
 				Id:     policyID,
 				Policy: policyProto,
+				DryRun: dryRun,
 			})
 			if err != nil {
 				return err
@@ -292,6 +294,7 @@ func updatePolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the policy config")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if true the policy will not be updated")
 	cmd.MarkFlagRequired("file")
 
 	return cmd
