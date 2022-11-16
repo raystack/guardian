@@ -104,8 +104,11 @@ func (s *Service) Create(ctx context.Context, p *domain.Policy) error {
 		}
 		p.IAM.Config = sensitiveConfig
 	}
-	if err := s.repository.Create(ctx, p); err != nil {
-		return err
+
+	if !isDryRun(ctx) {
+		if err := s.repository.Create(ctx, p); err != nil {
+			return err
+		}
 	}
 
 	if p.HasIAMConfig() {
@@ -386,4 +389,17 @@ func validateDuration(d string) error {
 		return fmt.Errorf("parsing duration: %w", err)
 	}
 	return nil
+}
+
+type isDryRunKey string
+
+func WithDryRun(ctx context.Context) context.Context {
+	return context.WithValue(ctx, isDryRunKey("dry_run"), true)
+}
+
+func isDryRun(ctx context.Context) bool {
+	if val := ctx.Value(isDryRunKey("dry_run")); val != nil {
+		return true
+	}
+	return false
 }

@@ -364,6 +364,20 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockPolicyRepository.AssertExpectations(s.T())
 		s.mockAuditLogger.AssertExpectations(s.T())
 	})
+
+	s.Run("with dryRun true", func() {
+		s.Run("with valid policy should not call repository", func() {
+			s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
+
+			ctx := policy.WithDryRun(context.Background())
+
+			actualError := s.service.Create(ctx, validPolicy)
+
+			s.Nil(actualError)
+			s.mockPolicyRepository.AssertNotCalled(s.T(), "Create")
+			s.mockAuditLogger.AssertExpectations(s.T())
+		})
+	})
 }
 
 func (s *ServiceTestSuite) TestPolicyRequirements() {
