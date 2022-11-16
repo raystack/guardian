@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/jinzhu/copier"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/utils"
@@ -120,17 +121,19 @@ func (s *Service) Revoke(ctx context.Context, id, actor, reason string, opts ...
 	}
 
 	revokedGrant := &domain.Grant{}
-	*revokedGrant = *grant
-	if err := grant.Revoke(actor, reason); err != nil {
+	if err := copier.Copy(&revokedGrant, &grant); err != nil {
 		return nil, err
 	}
-	if err := s.repo.Update(ctx, grant); err != nil {
+	if err := revokedGrant.Revoke(actor, reason); err != nil {
+		return nil, err
+	}
+	if err := s.repo.Update(ctx, revokedGrant); err != nil {
 		return nil, fmt.Errorf("updating grant record in db: %w", err)
 	}
 
 	options := s.getOptions(opts...)
 
-	if !options.skipRevokeInProvider {
+	if !options.skipRevokeInProvider && !grant.Resource.IsDeleted {
 		if err := s.providerService.RevokeAccess(ctx, *grant); err != nil {
 			if err := s.repo.Update(ctx, grant); err != nil {
 				return nil, fmt.Errorf("failed to rollback grant status: %w", err)
@@ -165,7 +168,7 @@ func (s *Service) Revoke(ctx context.Context, id, actor, reason string, opts ...
 		s.logger.Error("failed to record audit log", "error", err)
 	}
 
-	return grant, nil
+	return revokedGrant, nil
 }
 
 func (s *Service) BulkRevoke(ctx context.Context, filter domain.RevokeGrantsFilter, actor, reason string) ([]*domain.Grant, error) {

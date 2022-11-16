@@ -69,6 +69,7 @@ func (g *Grant) Revoke(actor, reason string) error {
 	}
 
 	g.Status = GrantStatusInactive
+	g.StatusInProvider = GrantStatusInactive
 	g.RevokedBy = actor
 	g.RevokeReason = reason
 	now := time.Now()
