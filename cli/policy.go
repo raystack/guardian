@@ -287,7 +287,12 @@ func updatePolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			spinner.Stop()
 
-			fmt.Println("Successfully updated policy")
+			msg := "Successfully updated policy"
+			if dryRun {
+				msg += " (dry run)"
+			}
+
+			fmt.Println(msg)
 
 			return nil
 		},

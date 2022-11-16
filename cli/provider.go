@@ -191,7 +191,12 @@ func createProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			spinner.Stop()
 
-			fmt.Printf("Provider created with id: %v", res.GetProvider().GetId())
+			msg := "Provider created with id: %v"
+			if dryRun {
+				msg += " (dry run)"
+			}
+
+			fmt.Printf(msg+"\n", res.GetProvider().GetId())
 
 			return nil
 		},
@@ -250,7 +255,12 @@ func editProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			spinner.Stop()
 
-			fmt.Println("Successfully updated provider")
+			msg := "Successfully updated provider"
+			if dryRun {
+				msg += " (dry run)"
+			}
+
+			fmt.Println(msg)
 
 			return nil
 		},
@@ -299,6 +309,7 @@ func initProviderCmd() *cobra.Command {
 
 func applyProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
+	var dryRun bool
 	cmd := &cobra.Command{
 		Use:   "apply",
 		Short: "Apply a provider",
@@ -348,24 +359,37 @@ func applyProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			if providerID == "" {
 				res, err := client.CreateProvider(cmd.Context(), &guardianv1beta1.CreateProviderRequest{
 					Config: configProto,
+					DryRun: dryRun,
 				})
 				if err != nil {
 					return err
 				}
 
 				spinner.Stop()
-				fmt.Printf("Provider created with id: %v", res.GetProvider().GetId())
+
+				msg := "Provider created with id: %v"
+				if dryRun {
+					msg += " (dry run)"
+				}
+
+				fmt.Printf(msg+"\n", res.GetProvider().GetId())
 			} else {
 				_, err = client.UpdateProvider(cmd.Context(), &guardianv1beta1.UpdateProviderRequest{
 					Id:     providerID,
 					Config: configProto,
+					DryRun: dryRun,
 				})
 				if err != nil {
 					return err
 				}
 
 				spinner.Stop()
-				fmt.Println("Successfully updated provider")
+
+				msg := "Successfully updated provider"
+				if dryRun {
+					msg += " (dry run)"
+				}
+				fmt.Println(msg)
 			}
 
 			return nil
@@ -373,6 +397,7 @@ func applyProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if true the provider will not be created or updated")
 	cmd.MarkFlagRequired("file")
 
 	return cmd
