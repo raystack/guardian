@@ -113,12 +113,16 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 		return err
 	}
 
-	if err := s.repository.Create(ctx, p); err != nil {
-		return err
-	}
+	dryRun := isDryRun(ctx)
 
-	if err := s.auditLogger.Log(ctx, AuditKeyCreate, p); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+	if !dryRun {
+		if err := s.repository.Create(ctx, p); err != nil {
+			return err
+		}
+
+		if err := s.auditLogger.Log(ctx, AuditKeyCreate, p); err != nil {
+			s.logger.Error("failed to record audit log", "error", err)
+		}
 	}
 
 	go func() {
@@ -128,13 +132,15 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 		if err != nil {
 			s.logger.Error("failed to fetch resources", "error", err)
 		}
-		if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
-			s.logger.Error("failed to insert resources to db", "error", err)
-		} else {
-			s.logger.Info("resources added",
-				"provider_urn", p.URN,
-				"count", len(resources),
-			)
+		if !dryRun {
+			if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
+				s.logger.Error("failed to insert resources to db", "error", err)
+			} else {
+				s.logger.Info("resources added",
+					"provider_urn", p.URN,
+					"count", len(resources),
+				)
+			}
 		}
 	}()
 
@@ -185,12 +191,14 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 		return err
 	}
 
-	if err := s.repository.Update(ctx, p); err != nil {
-		return err
-	}
+	if !isDryRun(ctx) {
+		if err := s.repository.Update(ctx, p); err != nil {
+			return err
+		}
 
-	if err := s.auditLogger.Log(ctx, AuditKeyUpdate, p); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+		if err := s.auditLogger.Log(ctx, AuditKeyUpdate, p); err != nil {
+			s.logger.Error("failed to record audit log", "error", err)
+		}
 	}
 
 	return nil
@@ -563,4 +571,17 @@ func validateDuration(d string) error {
 		return fmt.Errorf("parsing duration: %v", err)
 	}
 	return nil
+}
+
+type isDryRunKey string
+
+func WithDryRun(ctx context.Context) context.Context {
+	return context.WithValue(ctx, isDryRunKey("dry_run"), true)
+}
+
+func isDryRun(ctx context.Context) bool {
+	if val := ctx.Value(isDryRunKey("dry_run")); val != nil {
+		return true
+	}
+	return false
 }

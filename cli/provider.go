@@ -150,6 +150,7 @@ func viewProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 func createProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
+	var dryRun bool
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Register a new provider",
@@ -182,6 +183,7 @@ func createProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			res, err := client.CreateProvider(cmd.Context(), &guardianv1beta1.CreateProviderRequest{
 				Config: configProto,
+				DryRun: dryRun,
 			})
 			if err != nil {
 				return err
@@ -196,6 +198,7 @@ func createProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if true the provider will not be created")
 	cmd.MarkFlagRequired("file")
 
 	return cmd
@@ -203,6 +206,7 @@ func createProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 func editProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
+	var dryRun bool
 	cmd := &cobra.Command{
 		Use:   "edit",
 		Short: "Edit a provider",
@@ -238,6 +242,7 @@ func editProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			_, err = client.UpdateProvider(cmd.Context(), &guardianv1beta1.UpdateProviderRequest{
 				Id:     id,
 				Config: configProto,
+				DryRun: dryRun,
 			})
 			if err != nil {
 				return err
@@ -252,6 +257,7 @@ func editProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the provider config")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if true the provider will not be updated")
 	cmd.MarkFlagRequired("file")
 
 	return cmd
