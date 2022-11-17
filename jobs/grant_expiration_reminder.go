@@ -34,7 +34,7 @@ func (h *handler) GrantExpirationReminder(ctx context.Context) error {
 		}
 
 		// TODO: group notifications by username
-		var notifications []domain.Notification
+		notifications := make([]domain.Notification, 0)
 		for _, g := range grants {
 			notifications = append(notifications, domain.Notification{
 				User: g.CreatedBy,
