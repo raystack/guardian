@@ -400,8 +400,5 @@ func WithDryRun(ctx context.Context) context.Context {
 }
 
 func isDryRun(ctx context.Context) bool {
-	if val := ctx.Value(isDryRunKey("dry_run")); val != nil {
-		return true
-	}
-	return false
+	return ctx.Value(isDryRunKey("dry_run")) != nil
 }
