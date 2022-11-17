@@ -116,7 +116,6 @@ func (c *client) newRequest(method, path string, body interface{}, authEmail str
 		req.Header.Set(authHeader, authEmail)
 	}
 	req.Header.Set("Accept", "application/json")
-	//req.Header.Set("X-Metabase-Session", c.sessionToken)
 	return req, nil
 }
 
