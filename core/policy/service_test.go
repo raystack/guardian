@@ -367,15 +367,13 @@ func (s *ServiceTestSuite) TestCreate() {
 
 	s.Run("with dryRun true", func() {
 		s.Run("with valid policy should not call repository", func() {
-			s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
-
 			ctx := policy.WithDryRun(context.Background())
 
 			actualError := s.service.Create(ctx, validPolicy)
 
 			s.Nil(actualError)
 			s.mockPolicyRepository.AssertNotCalled(s.T(), "Create")
-			s.mockAuditLogger.AssertExpectations(s.T())
+			s.mockAuditLogger.AssertNotCalled(s.T(), "Log")
 		})
 	})
 }
@@ -703,6 +701,43 @@ func (s *ServiceTestSuite) TestUpdate() {
 		s.mockPolicyRepository.AssertExpectations(s.T())
 		s.mockAuditLogger.AssertExpectations(s.T())
 		s.Equal(expectedNewVersion, p.Version)
+	})
+
+	s.Run("with dryRun true", func() {
+		s.Run("with valid policy should not call repository", func() {
+			p := &domain.Policy{
+				ID:      "id",
+				Version: 5,
+				Steps: []*domain.Step{
+					{
+						Name:     "test",
+						Strategy: "manual",
+						Approvers: []string{
+							"user@email.com",
+						},
+					},
+				},
+			}
+
+			expectedLatestPolicy := &domain.Policy{
+				ID:      p.ID,
+				Version: 5,
+			}
+			expectedNewVersion := uint(6)
+
+			ctx := policy.WithDryRun(context.Background())
+
+			s.mockPolicyRepository.EXPECT().GetOne(ctx, p.ID, uint(0)).Return(expectedLatestPolicy, nil).Once()
+
+			actualError := s.service.Update(ctx, p)
+
+			s.Nil(actualError)
+
+			s.mockPolicyRepository.AssertExpectations(s.T())
+			s.mockPolicyRepository.AssertNotCalled(s.T(), "Create")
+			s.mockAuditLogger.AssertNotCalled(s.T(), "Log")
+			s.Equal(expectedNewVersion, p.Version)
+		})
 	})
 }
 

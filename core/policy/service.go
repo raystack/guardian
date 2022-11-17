@@ -109,16 +109,16 @@ func (s *Service) Create(ctx context.Context, p *domain.Policy) error {
 		if err := s.repository.Create(ctx, p); err != nil {
 			return err
 		}
+
+		if err := s.auditLogger.Log(ctx, AuditKeyPolicyCreate, p); err != nil {
+			s.logger.Error("failed to record audit log", "error", err)
+		}
 	}
 
 	if p.HasIAMConfig() {
 		if err := s.decryptAndDeserializeIAMConfig(p.IAM); err != nil {
 			return err
 		}
-	}
-
-	if err := s.auditLogger.Log(ctx, AuditKeyPolicyCreate, p); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
 	}
 
 	return nil
@@ -182,8 +182,6 @@ func (s *Service) Update(ctx context.Context, p *domain.Policy) error {
 		return err
 	}
 
-	p.Version = latestPolicy.Version + 1
-
 	if p.HasIAMConfig() {
 		if err := sensitiveConfig.Encrypt(); err != nil {
 			return fmt.Errorf("encrypting iam config: %w", err)
@@ -191,12 +189,16 @@ func (s *Service) Update(ctx context.Context, p *domain.Policy) error {
 		p.IAM.Config = sensitiveConfig
 	}
 
-	if err := s.repository.Create(ctx, p); err != nil {
-		return err
-	}
+	p.Version = latestPolicy.Version + 1
 
-	if err := s.auditLogger.Log(ctx, AuditKeyPolicyUpdate, p); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+	if !isDryRun(ctx) {
+		if err := s.repository.Create(ctx, p); err != nil {
+			return err
+		}
+
+		if err := s.auditLogger.Log(ctx, AuditKeyPolicyUpdate, p); err != nil {
+			s.logger.Error("failed to record audit log", "error", err)
+		}
 	}
 
 	if p.HasIAMConfig() {
@@ -398,8 +400,5 @@ func WithDryRun(ctx context.Context) context.Context {
 }
 
 func isDryRun(ctx context.Context) bool {
-	if val := ctx.Value(isDryRunKey("dry_run")); val != nil {
-		return true
-	}
-	return false
+	return ctx.Value(isDryRunKey("dry_run")) != nil
 }
