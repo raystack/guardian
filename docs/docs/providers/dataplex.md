@@ -1,6 +1,6 @@
-# Data Catalog Policy tag
+# Dataplex Policy tag
 
-Policy tags enable you to control who can view sensitive columns in BigQuery tables. In Data Catalog, you can add or remove policy tags to columns directly on the table entry details page.
+Policy tags enable you to control who can view sensitive columns in BigQuery tables. In Dataplex, you can add or remove policy tags to columns directly on the table entry details page.
 
 ### Policy tag Resources
 
@@ -14,8 +14,7 @@ BigQuery allows users, groups, and service accounts allowed to access the Fine-G
 
 If a user/administrator wants to access to columns protected with policy tags need the Fine-Grained Reader role, the user must have `Fine-Grained Reader` permissions for the policy-tag associated with column.
 
-For registering Data Catalog Policy tag as a provider on Guardian, users must have a service account with IAM roles: **`roles/bigquery.dataOwner, roles/datacatalog.categoryAdmin`** at the project level.
-
+For registering Dataplex Policy tag as a provider on Guardian, users must have a service account with IAM roles: **`roles/bigquery.dataOwner, roles/datacatalog.categoryAdmin`** at the project level.
 
 
 ### Authentication
@@ -38,7 +37,7 @@ Access can be given at the policy-tag level as those allowed to be managed throu
 #### YAML Representation
 
 ```yaml
-type: policy_tag
+type: dataplex
 urn: my-policy_tag
 allowed_account_types:
   - user

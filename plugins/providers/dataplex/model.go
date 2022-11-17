@@ -1,4 +1,4 @@
-package policytag
+package dataplex
 
 import (
 	"github.com/odpf/guardian/domain"
@@ -11,7 +11,7 @@ const (
 	PageSize                      = 100
 )
 
-// Policy is a reference to a Data Catalog Policy Tag
+// Policy is a reference to a Dataplex Policy Tag
 type Policy struct {
 	Name        string
 	DisplayName string

@@ -1,4 +1,4 @@
-package policytag
+package dataplex
 
 import (
 	"encoding/base64"
