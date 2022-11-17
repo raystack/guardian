@@ -723,7 +723,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 				ID:      p.ID,
 				Version: 5,
 			}
-			expectedNewVersion := uint(5)
+			expectedNewVersion := uint(6)
 
 			ctx := policy.WithDryRun(context.Background())
 

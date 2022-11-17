@@ -189,8 +189,9 @@ func (s *Service) Update(ctx context.Context, p *domain.Policy) error {
 		p.IAM.Config = sensitiveConfig
 	}
 
+	p.Version = latestPolicy.Version + 1
+
 	if !isDryRun(ctx) {
-		p.Version = latestPolicy.Version + 1
 		if err := s.repository.Create(ctx, p); err != nil {
 			return err
 		}
