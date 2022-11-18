@@ -54,8 +54,12 @@ func (t *Team) FromDomain(r *domain.Resource) error {
 	}
 
 	resourceDetails := r.Details
-	t.ID = resourceDetails["id"].(string)
-	t.OrgId = resourceDetails["orgId"].(string)
+	if id, ok := resourceDetails["id"].(string); ok {
+		t.ID = id
+	}
+	if orgId, ok := resourceDetails["orgId"].(string); ok {
+		t.OrgId = orgId
+	}
 	t.Name = r.Name
 
 	if resourceDetails["admins"] == nil {
@@ -98,8 +102,12 @@ func (p *Project) FromDomain(r *domain.Resource) error {
 	}
 
 	resourceDetails := r.Details
-	p.ID = resourceDetails["id"].(string)
-	p.OrgId = resourceDetails["orgId"].(string)
+	if id, ok := resourceDetails["id"].(string); ok {
+		p.ID = id
+	}
+	if orgId, ok := resourceDetails["orgId"].(string); ok {
+		p.OrgId = orgId
+	}
 	p.Name = r.Name
 
 	if resourceDetails["admins"] == nil {
@@ -135,7 +143,9 @@ func (o *Organization) FromDomain(r *domain.Resource) error {
 	}
 
 	resourceDetails := r.Details
-	o.ID = resourceDetails["id"].(string)
+	if id, ok := resourceDetails["id"].(string); ok {
+		o.ID = id
+	}
 	o.Name = r.Name
 	if resourceDetails["admins"] == nil {
 		o.Admins = []string{}
