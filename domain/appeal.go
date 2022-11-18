@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/pkg/evaluator"
 )
 
@@ -155,17 +154,13 @@ func (a Appeal) ToGrant() (*Grant, error) {
 func (a *Appeal) ApplyPolicy(p *Policy) error {
 	approvals := []*Approval{}
 	for i, step := range p.Steps {
-		var approverEmails []string
-		var err error
-		if step.Strategy == ApprovalStepStrategyManual {
-			approverEmails, err = a.ResolveApprovers(step.Approvers)
-			if err != nil {
-				return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
-			}
+		approvers, err := step.ResolveApprovers(*a)
+		if err != nil {
+			return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
 		}
 
 		approval := &Approval{}
-		if err := approval.Init(p, i, approverEmails); err != nil {
+		if err := approval.Init(p, i, approvers); err != nil {
 			return fmt.Errorf(`initializing approval "%s": %w`, step.Name, err)
 		}
 		approvals = append(approvals, approval)
@@ -176,57 +171,6 @@ func (a *Appeal) ApplyPolicy(p *Policy) error {
 	a.Policy = p
 
 	return nil
-}
-
-func (a Appeal) ResolveApprovers(expressions []string) ([]string, error) {
-	// FIXME: set proper validator
-	validator := validator.New()
-
-	var approvers []string
-
-	// TODO: validate from policyService.Validate(policy)
-	for _, expr := range expressions {
-		if err := validator.Var(expr, "email"); err == nil {
-			approvers = append(approvers, expr)
-		} else {
-			appealMap, err := structToMap(a)
-			if err != nil {
-				return nil, fmt.Errorf("parsing appeal to map: %w", err)
-			}
-			params := map[string]interface{}{
-				"appeal": appealMap,
-			}
-
-			approversValue, err := evaluator.Expression(expr).EvaluateWithVars(params)
-			if err != nil {
-				return nil, fmt.Errorf("evaluating aprrovers expression: %w", err)
-			}
-
-			value := reflect.ValueOf(approversValue)
-			switch value.Type().Kind() {
-			case reflect.String:
-				approvers = append(approvers, value.String())
-			case reflect.Slice:
-				for i := 0; i < value.Len(); i++ {
-					itemValue := reflect.ValueOf(value.Index(i).Interface())
-					switch itemValue.Type().Kind() {
-					case reflect.String:
-						approvers = append(approvers, itemValue.String())
-					default:
-						return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, itemValue.Type().Kind())
-					}
-				}
-			default:
-				return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, value.Type().Kind())
-			}
-		}
-	}
-
-	distinctApprovers := uniqueSlice(approvers)
-	if err := validator.Var(distinctApprovers, "dive,email"); err != nil {
-		return nil, err
-	}
-	return distinctApprovers, nil
 }
 
 func (a *Appeal) AdvanceApproval(policy *Policy) error {
