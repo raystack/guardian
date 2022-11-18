@@ -253,7 +253,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("populating approvals: %w", err)
 		}
 
-		if err := appeal.AdvanceApproval(); err != nil {
+		if err := appeal.AdvanceApproval(policy); err != nil {
 			return fmt.Errorf("initializing approval step statuses: %w", err)
 		}
 		appeal.Policy = nil

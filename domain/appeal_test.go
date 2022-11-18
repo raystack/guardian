@@ -508,7 +508,7 @@ func TestAppeal_AdvanceApproval(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.appeal.AdvanceApproval(); (err != nil) != tt.wantErr {
+			if err := tt.appeal.AdvanceApproval(tt.appeal.Policy); (err != nil) != tt.wantErr {
 				t.Errorf("Appeal.AdvanceApproval() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantApprovals != nil {
@@ -649,7 +649,7 @@ func TestAppeal_AdvanceApproval_UpdateApprovalStatuses(t *testing.T) {
 			appeal.Policy = &domain.Policy{
 				Steps: tc.steps,
 			}
-			actualError := appeal.AdvanceApproval()
+			actualError := appeal.AdvanceApproval(appeal.Policy)
 			if tc.expectedErrorStr == "" {
 				assert.Nil(t, actualError)
 				for i, a := range appeal.Approvals {

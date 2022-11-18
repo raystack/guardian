@@ -229,9 +229,13 @@ func (a Appeal) ResolveApprovers(expressions []string) ([]string, error) {
 	return distinctApprovers, nil
 }
 
-func (a *Appeal) AdvanceApproval() error {
+func (a *Appeal) AdvanceApproval(policy *Policy) error {
+	if policy == nil {
+		return fmt.Errorf("appeal has no policy")
+	}
+
 	stepNameIndex := map[string]int{}
-	for i, s := range a.Policy.Steps {
+	for i, s := range policy.Steps {
 		stepNameIndex[s.Name] = i
 	}
 
@@ -240,7 +244,7 @@ func (a *Appeal) AdvanceApproval() error {
 			break
 		}
 		if approval.Status == ApprovalStatusPending {
-			stepConfig := a.Policy.Steps[approval.Index]
+			stepConfig := policy.Steps[approval.Index]
 
 			appealMap, err := structToMap(a)
 			if err != nil {
