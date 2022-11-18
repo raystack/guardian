@@ -125,8 +125,8 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Shiel
 	}
 
 	client, err := NewClient(&ClientConfig{
-		Host: credentials.Host,
-		Auth: credentials.Auth,
+		Host:      credentials.Host,
+		AuthEmail: credentials.AuthEmail,
 	}, p.logger)
 	if err != nil {
 		return nil, err
@@ -141,8 +141,6 @@ func (p *provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*
 }
 
 func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
-	// TODO: validate provider config and appeal
-
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -152,7 +150,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 		return err
 	}
 
-	permissions := getPermissions(a)
+	permissions := a.GetPermissions()
 
 	var user *User
 	if user, err = client.GetSelfUser(a.AccountID); err != nil {
@@ -165,7 +163,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 			return err
 		}
 		for _, p := range permissions {
-			if err := client.GrantTeamAccess(t, user.ID, string(p)); err != nil {
+			if err := client.GrantTeamAccess(t, user.ID, p); err != nil {
 				return err
 			}
 		}
@@ -177,7 +175,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 			return err
 		}
 		for _, p := range permissions {
-			if err := client.GrantProjectAccess(pj, user.ID, string(p)); err != nil {
+			if err := client.GrantProjectAccess(pj, user.ID, p); err != nil {
 				return err
 			}
 		}
@@ -189,7 +187,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 			return err
 		}
 		for _, p := range permissions {
-			if err := client.GrantOrganizationAccess(o, user.ID, string(p)); err != nil {
+			if err := client.GrantOrganizationAccess(o, user.ID, p); err != nil {
 				return err
 			}
 		}
@@ -200,8 +198,6 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 }
 
 func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
-	// TODO: validate provider config and appeal
-
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -211,7 +207,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 		return err
 	}
 
-	permissions := getPermissions(a)
+	permissions := a.GetPermissions()
 
 	var user *User
 	if user, err = client.GetSelfUser(a.AccountID); err != nil {
@@ -224,7 +220,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 			return err
 		}
 		for _, p := range permissions {
-			if err := client.RevokeTeamAccess(t, user.ID, string(p)); err != nil {
+			if err := client.RevokeTeamAccess(t, user.ID, p); err != nil {
 				return err
 			}
 		}
@@ -236,7 +232,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 			return err
 		}
 		for _, p := range permissions {
-			if err := client.RevokeProjectAccess(pj, user.ID, string(p)); err != nil {
+			if err := client.RevokeProjectAccess(pj, user.ID, p); err != nil {
 				return err
 			}
 		}
@@ -248,7 +244,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 			return err
 		}
 		for _, p := range permissions {
-			if err := client.RevokeOrganizationAccess(o, user.ID, string(p)); err != nil {
+			if err := client.RevokeOrganizationAccess(o, user.ID, p); err != nil {
 				return err
 			}
 		}
@@ -256,12 +252,4 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 	}
 
 	return ErrInvalidResourceType
-}
-
-func getPermissions(a domain.Grant) []Permission {
-	var permissions []Permission
-	for _, p := range a.Permissions {
-		permissions = append(permissions, Permission(p))
-	}
-	return permissions
 }

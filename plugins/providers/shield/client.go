@@ -60,13 +60,12 @@ type HTTPClient interface {
 
 type ClientConfig struct {
 	Host       string `validate:"required,url" mapstructure:"host"`
-	Auth       string `validate:"required" mapstructure:"auth_email"`
+	AuthEmail  string `validate:"required" mapstructure:"auth_email"`
 	HTTPClient HTTPClient
 }
 
 func NewClient(config *ClientConfig, logger log.Logger) (*client, error) {
 	if err := validator.New().Struct(config); err != nil {
-		fmt.Println("I am at New Client Error 1")
 		return nil, err
 	}
 
@@ -82,7 +81,7 @@ func NewClient(config *ClientConfig, logger log.Logger) (*client, error) {
 
 	c := &client{
 		baseURL:    baseURL,
-		auth:       config.Auth,
+		auth:       config.AuthEmail,
 		httpClient: httpClient,
 		logger:     logger,
 	}

@@ -30,7 +30,7 @@ type Team struct {
 	Slug     string   `json:"slug" mapstructure:"slug"`
 	OrgId    string   `json:"orgId" mapstructure:"orgId"`
 	Metadata Metadata `json:"metadata" mapstructure:"metadata"`
-	Admins   []string `json:"admin" mapstructure:"admin"`
+	Admins   []string `json:"admins" mapstructure:"admins"`
 }
 
 type Project struct {
@@ -38,14 +38,14 @@ type Project struct {
 	Name   string   `json:"name" mapstructure:"name"`
 	Slug   string   `json:"slug" mapstructure:"slug"`
 	OrgId  string   `json:"orgId" mapstructure:"orgId"`
-	Admins []string `json:"admin" mapstructure:"admin"`
+	Admins []string `json:"admins" mapstructure:"admins"`
 }
 
 type Organization struct {
 	ID     string   `json:"id" mapstructure:"id"`
 	Name   string   `json:"name" mapstructure:"name"`
 	Slug   string   `json:"slug" mapstructure:"slug"`
-	Admins []string `json:"admin" mapstructure:"admin"`
+	Admins []string `json:"admins" mapstructure:"admins"`
 }
 
 func (t *Team) FromDomain(r *domain.Resource) error {
@@ -102,12 +102,16 @@ func (p *Project) FromDomain(r *domain.Resource) error {
 	p.OrgId = resourceDetails["orgId"].(string)
 	p.Name = r.Name
 
-	adminsInterface := resourceDetails["admins"].([]interface{})
-	admins := make([]string, len(adminsInterface))
-	for i, v := range adminsInterface {
-		admins[i] = v.(string)
+	if resourceDetails["admins"] == nil {
+		p.Admins = []string{}
+	} else {
+		adminsInterface := resourceDetails["admins"].([]interface{})
+		admins := make([]string, len(adminsInterface))
+		for i, v := range adminsInterface {
+			admins[i] = v.(string)
+		}
+		p.Admins = admins
 	}
-	p.Admins = admins
 
 	return nil
 }
@@ -133,14 +137,16 @@ func (o *Organization) FromDomain(r *domain.Resource) error {
 	resourceDetails := r.Details
 	o.ID = resourceDetails["id"].(string)
 	o.Name = r.Name
-
-	adminsInterface := resourceDetails["admins"].([]interface{})
-	admins := make([]string, len(adminsInterface))
-	for i, v := range adminsInterface {
-		admins[i] = v.(string)
+	if resourceDetails["admins"] == nil {
+		o.Admins = []string{}
+	} else {
+		adminsInterface := resourceDetails["admins"].([]interface{})
+		admins := make([]string, len(adminsInterface))
+		for i, v := range adminsInterface {
+			admins[i] = v.(string)
+		}
+		o.Admins = admins
 	}
-	o.Admins = admins
-
 	return nil
 }
 

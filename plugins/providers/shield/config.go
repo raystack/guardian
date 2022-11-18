@@ -18,8 +18,8 @@ const (
 )
 
 type Credentials struct {
-	Host string `json:"host" mapstructure:"host" validate:"required"`
-	Auth string `json:"auth_email" mapstructure:"auth_email" validate:"required"`
+	Host      string `json:"host" mapstructure:"host" validate:"required"`
+	AuthEmail string `json:"auth_email" mapstructure:"auth_email" validate:"required"`
 }
 
 type Permission string
@@ -48,6 +48,12 @@ func (c *Config) parseAndValidate() error {
 
 	validationErrors := []error{}
 
+	if credentials, err := c.validateCredentials(c.ProviderConfig.Credentials); err != nil {
+		validationErrors = append(validationErrors, err)
+	} else {
+		c.ProviderConfig.Credentials = credentials
+	}
+
 	for _, r := range c.ProviderConfig.Resources {
 		if err := c.validateResourceConfig(r); err != nil {
 			validationErrors = append(validationErrors, err)
@@ -64,6 +70,19 @@ func (c *Config) parseAndValidate() error {
 
 	c.valid = true
 	return nil
+}
+
+func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
+	var credentials Credentials
+	if err := mapstructure.Decode(value, &credentials); err != nil {
+		return nil, err
+	}
+
+	if err := c.validator.Struct(credentials); err != nil {
+		return nil, err
+	}
+
+	return &credentials, nil
 }
 
 func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {

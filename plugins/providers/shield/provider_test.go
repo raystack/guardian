@@ -42,8 +42,8 @@ func TestCreateConfig(t *testing.T) {
 			{
 				pc: &domain.ProviderConfig{
 					Credentials: shield.Credentials{
-						Host: "localhost",
-						Auth: "test-email",
+						Host:      "localhost",
+						AuthEmail: "test-email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
@@ -55,8 +55,8 @@ func TestCreateConfig(t *testing.T) {
 			{
 				pc: &domain.ProviderConfig{
 					Credentials: shield.Credentials{
-						Host: "localhost",
-						Auth: "test-email",
+						Host:      "localhost",
+						AuthEmail: "test-email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
@@ -95,8 +95,8 @@ func TestCreateConfig(t *testing.T) {
 			{
 				pc: &domain.ProviderConfig{
 					Credentials: shield.Credentials{
-						Host: "localhost",
-						Auth: "test-email",
+						Host:      "localhost",
+						AuthEmail: "test-email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
@@ -120,8 +120,8 @@ func TestCreateConfig(t *testing.T) {
 			{
 				pc: &domain.ProviderConfig{
 					Credentials: shield.Credentials{
-						Host: "localhost",
-						Auth: "test-email",
+						Host:      "localhost",
+						AuthEmail: "test-email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
@@ -141,8 +141,8 @@ func TestCreateConfig(t *testing.T) {
 			{
 				pc: &domain.ProviderConfig{
 					Credentials: shield.Credentials{
-						Host: "localhost",
-						Auth: "test-email",
+						Host:      "localhost",
+						AuthEmail: "test-email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
@@ -421,8 +421,8 @@ func TestGrantAccess(t *testing.T) {
 
 		pc := &domain.ProviderConfig{
 			Credentials: shield.Credentials{
-				Host: "http://localhost/",
-				Auth: "test-email",
+				Host:      "http://localhost/",
+				AuthEmail: "test-email",
 			},
 			Resources: []*domain.ResourceConfig{
 				{
@@ -474,8 +474,8 @@ func TestGrantAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -542,8 +542,8 @@ func TestGrantAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -609,8 +609,8 @@ func TestGrantAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -672,8 +672,8 @@ func TestGrantAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -734,8 +734,8 @@ func TestGrantAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -796,8 +796,8 @@ func TestGrantAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -886,8 +886,8 @@ func TestRevokeAccess(t *testing.T) {
 
 		pc := &domain.ProviderConfig{
 			Credentials: shield.Credentials{
-				Host: "http://localhost/",
-				Auth: "test_email",
+				Host:      "http://localhost/",
+				AuthEmail: "test_email",
 			},
 			Resources: []*domain.ResourceConfig{
 				{
@@ -937,8 +937,8 @@ func TestRevokeAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -1013,8 +1013,8 @@ func TestRevokeAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -1083,8 +1083,8 @@ func TestRevokeAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -1149,8 +1149,8 @@ func TestRevokeAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -1213,8 +1213,8 @@ func TestRevokeAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
@@ -1277,8 +1277,8 @@ func TestRevokeAccess(t *testing.T) {
 
 			pc := &domain.ProviderConfig{
 				Credentials: shield.Credentials{
-					Host: "localhost",
-					Auth: "test_email",
+					Host:      "localhost",
+					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{

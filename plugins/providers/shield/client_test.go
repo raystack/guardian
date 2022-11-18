@@ -31,8 +31,8 @@ func TestNewClient(t *testing.T) {
 
 	t.Run("should return error if config.Host is not a valid url", func(t *testing.T) {
 		invalidHostConfig := &shield.ClientConfig{
-			Auth: "test-email",
-			Host: "invalid-url",
+			AuthEmail: "test-email",
+			Host:      "invalid-url",
 		}
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
 		actualClient, actualError := shield.NewClient(invalidHostConfig, logger)
@@ -45,7 +45,7 @@ func TestNewClient(t *testing.T) {
 		// TODO: test http request execution
 		mockHttpClient := new(mocks.HTTPClient)
 		config := &shield.ClientConfig{
-			Auth:       "test_email",
+			AuthEmail:  "test_email",
 			Host:       "http://localhost",
 			HTTPClient: mockHttpClient,
 		}
@@ -77,7 +77,7 @@ func (s *ClientTestSuite) setup() {
 	s.host = "http://localhost"
 	s.auth = "shield_admin"
 	client, err := shield.NewClient(&shield.ClientConfig{
-		Auth:       s.auth,
+		AuthEmail:  s.auth,
 		Host:       s.host,
 		HTTPClient: s.mockHttpClient,
 	}, logger)
