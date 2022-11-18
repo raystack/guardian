@@ -13,14 +13,8 @@ import (
 )
 
 const (
-	AuditKeyBulkInsert     = "appeal.bulkInsert"
-	AuditKeyCancel         = "appeal.cancel"
-	AuditKeyApprove        = "appeal.approve"
-	AuditKeyReject         = "appeal.reject"
-	AuditKeyRevoke         = "appeal.revoke"
-	AuditKeyExtend         = "appeal.extend"
-	AuditKeyAddApprover    = "appeal.addApprover"
-	AuditKeyDeleteApprover = "appeal.deleteApprover"
+	AuditKeyApprove = "appeal.approve"
+	AuditKeyReject  = "appeal.reject"
 
 	RevokeReasonForExtension = "Automatically revoked for grant extension"
 )
