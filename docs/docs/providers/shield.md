@@ -69,13 +69,13 @@ resources:
           - admins
 ```
 
-### `MetabaseCredentials`
+### `ShieldCredentials`
 
 | Fields       |                                                                                               |
 |:-------------|:----------------------------------------------------------------------------------------------|
-| `host`       | `string` Required. Metabase instance host Example: `http://localhost:12345`                   |
+| `host`       | `string` Required. Shield instance host Example: `http://localhost:12345`                     |
 | `auth_email` | `email` Required. Email address of an account that has Organization Administration permission |
-### `MetabaseResourceType`
+### `ShieldResourceType`
 
 - `team`
 - `project`
@@ -83,6 +83,6 @@ resources:
 
 ### `ShieldResourcePermission`
 
-| Type               | Details                                                                                                                                                                                                                                                                                                                                                                                                   |
-| :----------------- |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Required. `string` | SHield permission mapping **Possible values:** - <br/>`team`: `users` \(Member of team\), `admins` \(admin of team\)   <br/>`project`:` admins` (Admin of project)<br/> `organization`:`admins` (Admin of Org) <br/> ||
+| Type               | Details                                                                                                                                                                                                              |
+| :----------------- |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Required. `string` | Shield permission mapping **Possible values:** - <br/>`team`: `users` \(Member of team\), `admins` \(admin of team\)   <br/>`project`:` admins` (Admin of project)<br/> `organization`:`admins` (Admin of Org) <br/> ||
