@@ -20,6 +20,27 @@ func (_m *Notifier) EXPECT() *Notifier_Expecter {
 	return &Notifier_Expecter{mock: &_m.Mock}
 }
 
+// GetUserEmail provides a mock function with given fields: userId
+func (_m *Notifier) GetUserEmail(userId string) (string, error) {
+	ret := _m.Called(userId)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(userId)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(userId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Notify provides a mock function with given fields: _a0
 func (_m *Notifier) Notify(_a0 []domain.Notification) []error {
 	ret := _m.Called(_a0)

@@ -9,6 +9,7 @@ import (
 
 type Client interface {
 	Notify([]domain.Notification) []error
+	GetUserEmail(userId string) (string, error)
 }
 
 const (

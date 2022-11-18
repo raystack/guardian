@@ -17,11 +17,16 @@ const (
 	slackHost = "https://slack.com"
 )
 
+type profile struct {
+	Email string `json:"email"`
+}
+
 type user struct {
-	ID       string `json:"id"`
-	TeamID   string `json:"team_id"`
-	Name     string `json:"name"`
-	RealName string `json:"real_name"`
+	ID       string  `json:"id"`
+	TeamID   string  `json:"team_id"`
+	Name     string  `json:"name"`
+	RealName string  `json:"real_name"`
+	Profile  profile `json:"profile"`
 }
 
 type userResponse struct {
@@ -67,6 +72,10 @@ func (n *notifier) Notify(items []domain.Notification) []error {
 	return errs
 }
 
+func (n *notifier) GetUserEmail(userId string) (string, error) {
+	return n.findUserBySlackId(userId)
+}
+
 func (n *notifier) sendMessage(channel, text string) error {
 	url := slackHost + "/api/chat.postMessage"
 	data, err := json.Marshal(map[string]string{
@@ -86,6 +95,27 @@ func (n *notifier) sendMessage(channel, text string) error {
 
 	_, err = n.sendRequest(req)
 	return err
+}
+
+func (n *notifier) findUserBySlackId(userId string) (string, error) {
+	slackURL := slackHost + "/api/users.info?user=" + userId
+
+	req, err := http.NewRequest(http.MethodGet, slackURL, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Add("Authorization", "Bearer "+n.accessToken)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	result, err := n.sendRequest(req)
+	if err != nil {
+		return "", err
+	}
+	if result.User == nil {
+		return "", errors.New("user not found")
+	}
+
+	return result.User.Profile.Email, nil
 }
 
 func (n *notifier) findSlackIDByEmail(email string) (string, error) {

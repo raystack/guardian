@@ -644,6 +644,11 @@ func (s *Service) DeleteApprover(ctx context.Context, appealID, approvalID, emai
 	return appeal, nil
 }
 
+// GetSlackActor Get actor based on slack user id
+func (s *Service) GetSlackActor(ctx context.Context, slackId string) (string, error) {
+	return s.notifier.GetUserEmail(slackId)
+}
+
 func (s *Service) getApproval(ctx context.Context, appealID, approvalID string) (*domain.Appeal, *domain.Approval, error) {
 	if appealID == "" {
 		return nil, nil, ErrAppealIDEmptyParam

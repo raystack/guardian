@@ -94,6 +94,51 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 	}, nil
 }
 
+func (s *GRPCServer) UpdateApprovalViaSlack(ctx context.Context, req *guardianv1beta1.UpdateApprovalViaSlackRequest) (*guardianv1beta1.UpdateApprovalViaSlackResponse, error) {
+	if req.GetUser() == nil || len(req.GetUser().GetId()) == 0 {
+		return nil, status.Error(codes.Unauthenticated, "user not found")
+	}
+	actor, err := s.appealService.GetSlackActor(ctx, req.GetUser().GetId())
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, err.Error())
+	}
+
+	actions := req.GetActions()
+	req.GetUser()
+	if len(actions) > 0 {
+		action := actions[0]
+		id := action.GetValue()
+		if _, err := s.appealService.MakeAction(ctx, domain.ApprovalAction{
+			AppealID:     id,
+			ApprovalName: action.GetBlockId(),
+			Actor:        actor,
+			Action:       action.GetActionId(),
+		}); err != nil {
+			switch err {
+			case appeal.ErrAppealStatusCanceled,
+				appeal.ErrAppealStatusApproved,
+				appeal.ErrAppealStatusRejected,
+				appeal.ErrAppealStatusUnrecognized,
+				appeal.ErrApprovalDependencyIsPending,
+				appeal.ErrApprovalStatusUnrecognized,
+				appeal.ErrApprovalStatusApproved,
+				appeal.ErrApprovalStatusRejected,
+				appeal.ErrApprovalStatusSkipped,
+				appeal.ErrActionInvalidValue:
+				return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %v", err)
+			case appeal.ErrActionForbidden:
+				return nil, status.Error(codes.PermissionDenied, "permission denied")
+			case appeal.ErrApprovalNotFound:
+				return nil, status.Errorf(codes.NotFound, "approval not found: %v", id)
+			default:
+				return nil, status.Errorf(codes.Internal, "failed to update approval: %v", err)
+			}
+		}
+	}
+
+	return &guardianv1beta1.UpdateApprovalViaSlackResponse{}, nil
+}
+
 func (s *GRPCServer) AddApprover(ctx context.Context, req *guardianv1beta1.AddApproverRequest) (*guardianv1beta1.AddApproverResponse, error) {
 	a, err := s.appealService.AddApprover(ctx, req.GetAppealId(), req.GetApprovalId(), req.GetEmail())
 	switch {

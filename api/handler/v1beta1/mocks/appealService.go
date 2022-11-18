@@ -340,6 +340,27 @@ func (_m *AppealService) MakeAction(_a0 context.Context, _a1 domain.ApprovalActi
 	return r0, r1
 }
 
+// GetSlackActor provides a mock function with given fields: ctx, slackId
+func (_m *AppealService) GetSlackActor(ctx context.Context, slackId string) (string, error) {
+	ret := _m.Called(ctx, slackId)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
+		r0 = rf(ctx, slackId)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, slackId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // AppealService_MakeAction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MakeAction'
 type AppealService_MakeAction_Call struct {
 	*mock.Call

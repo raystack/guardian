@@ -80,6 +80,7 @@ type appealService interface {
 	Cancel(context.Context, string) (*domain.Appeal, error)
 	AddApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
 	DeleteApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
+	GetSlackActor(ctx context.Context, slackId string) (string, error)
 }
 
 //go:generate mockery --name=approvalService --exported --with-expecter
