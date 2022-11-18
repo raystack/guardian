@@ -182,7 +182,7 @@ func (s *Service) UpdateApproval(ctx context.Context, approvalAction domain.Appr
 					return nil, err
 				}
 			}
-			if err := appeal.AdvanceApproval(ctx); err != nil {
+			if err := appeal.AdvanceApproval(); err != nil {
 				return nil, err
 			}
 		} else if approvalAction.Action == domain.AppealActionNameReject {

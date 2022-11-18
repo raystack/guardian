@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -230,7 +229,7 @@ func (a Appeal) ResolveApprovers(expressions []string) ([]string, error) {
 	return distinctApprovers, nil
 }
 
-func (a *Appeal) AdvanceApproval(ctx context.Context) error {
+func (a *Appeal) AdvanceApproval() error {
 	stepNameIndex := map[string]int{}
 	for i, s := range a.Policy.Steps {
 		stepNameIndex[s.Name] = i
