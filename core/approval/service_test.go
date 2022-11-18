@@ -864,7 +864,6 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 						Return(mockPolicy, nil).Once()
 
 					tc.expectedResult.Policy = mockPolicy
-					s.mockProviderService.EXPECT().GrantAccess(mock.Anything, *tc.expectedGrant).Return(nil).Once()
 				}
 
 				s.mockAppealService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), tc.expectedResult).Return(nil).Once()

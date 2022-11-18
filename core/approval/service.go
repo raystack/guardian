@@ -50,11 +50,7 @@ type appealService interface {
 
 //go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
-	Find(context.Context) ([]*domain.Provider, error)
-	GrantAccess(context.Context, domain.Grant) error
 	RevokeAccess(context.Context, domain.Grant) error
-	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider, *domain.Policy) error
-	GetPermissions(context.Context, *domain.ProviderConfig, string, string) ([]interface{}, error)
 }
 
 //go:generate mockery --name=auditLogger --exported --with-expecter
