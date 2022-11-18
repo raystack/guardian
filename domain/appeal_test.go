@@ -663,7 +663,7 @@ func TestAppeal_AdvanceApproval_UpdateApprovalStatuses(t *testing.T) {
 	}
 }
 
-func TestAppeal_InitApprovals(t *testing.T) {
+func TestAppeal_ApplyPolicy(t *testing.T) {
 	tests := []struct {
 		name          string
 		appeal        *domain.Appeal
@@ -724,8 +724,8 @@ func TestAppeal_InitApprovals(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.appeal.InitApprovals(tt.policy); (err != nil) != tt.wantErr {
-				t.Errorf("Appeal.InitApprovals() error = %v, wantErr %v", err, tt.wantErr)
+			if err := tt.appeal.ApplyPolicy(tt.policy); (err != nil) != tt.wantErr {
+				t.Errorf("Appeal.ApplyPolicy() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			assert.Equal(t, tt.appeal.Approvals, tt.wantApprovals)
 		})

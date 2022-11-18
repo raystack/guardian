@@ -249,13 +249,10 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("retrieving creator details: %w", err)
 		}
 
-		if err := appeal.InitApprovals(policy); err != nil {
+		if err := appeal.ApplyPolicy(policy); err != nil {
 			return fmt.Errorf("populating approvals: %w", err)
 		}
 
-		appeal.Init(policy)
-
-		appeal.Policy = policy
 		if err := appeal.AdvanceApproval(ctx); err != nil {
 			return fmt.Errorf("initializing approval step statuses: %w", err)
 		}

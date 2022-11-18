@@ -153,9 +153,9 @@ func (a Appeal) ToGrant() (*Grant, error) {
 	return grant, nil
 }
 
-func (a *Appeal) InitApprovals(p *Policy) error {
+func (a *Appeal) ApplyPolicy(p *Policy) error {
 	approvals := []*Approval{}
-	for i, step := range p.Steps { // TODO: move this logic to approvalService
+	for i, step := range p.Steps {
 		var approverEmails []string
 		var err error
 		if step.Strategy == ApprovalStepStrategyManual {
@@ -173,6 +173,9 @@ func (a *Appeal) InitApprovals(p *Policy) error {
 	}
 
 	a.Approvals = approvals
+	a.Init(p)
+	a.Policy = p
+
 	return nil
 }
 
