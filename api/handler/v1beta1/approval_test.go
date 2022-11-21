@@ -433,7 +433,7 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 			Action:       expectedAction,
 			Reason:       expectedReason,
 		}
-		s.approvalService.EXPECT().UpdateApproval(mock.AnythingOfType("*context.valueCtx"), expectedApprovalAction).Return(expectedAppeal, nil).Once()
+		s.appealService.EXPECT().UpdateApproval(mock.AnythingOfType("*context.valueCtx"), expectedApprovalAction).Return(expectedAppeal, nil).Once()
 
 		req := &guardianv1beta1.UpdateApprovalRequest{
 			Id:           expectedID,
@@ -549,7 +549,7 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 				s.setup()
 
 				expectedUser := "user@example.com"
-				s.approvalService.EXPECT().UpdateApproval(mock.AnythingOfType("*context.valueCtx"), mock.Anything).
+				s.appealService.EXPECT().UpdateApproval(mock.AnythingOfType("*context.valueCtx"), mock.Anything).
 					Return(nil, tc.expectedError).Once()
 
 				req := &guardianv1beta1.UpdateApprovalRequest{}
@@ -575,7 +575,7 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 				"foo": make(chan int), // invalid json
 			},
 		}
-		s.approvalService.EXPECT().UpdateApproval(mock.AnythingOfType("*context.valueCtx"), mock.Anything).
+		s.appealService.EXPECT().UpdateApproval(mock.AnythingOfType("*context.valueCtx"), mock.Anything).
 			Return(invalidAppeal, nil).Once()
 
 		req := &guardianv1beta1.UpdateApprovalRequest{}

@@ -79,13 +79,13 @@ type appealService interface {
 	Cancel(context.Context, string) (*domain.Appeal, error)
 	AddApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
 	DeleteApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
+	UpdateApproval(ctx context.Context, approvalAction domain.ApprovalAction) (*domain.Appeal, error)
 }
 
 //go:generate mockery --name=approvalService --exported --with-expecter
 type approvalService interface {
 	ListApprovals(context.Context, *domain.ListApprovalsFilter) ([]*domain.Approval, error)
 	BulkInsert(context.Context, []*domain.Approval) error
-	UpdateApproval(ctx context.Context, approvalAction domain.ApprovalAction) (*domain.Appeal, error)
 }
 
 //go:generate mockery --name=grantService --exported --with-expecter

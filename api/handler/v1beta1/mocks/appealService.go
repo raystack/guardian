@@ -317,6 +317,53 @@ func (_c *AppealService_GetByID_Call) Return(_a0 *domain.Appeal, _a1 error) *App
 	return _c
 }
 
+// UpdateApproval provides a mock function with given fields: ctx, approvalAction
+func (_m *AppealService) UpdateApproval(ctx context.Context, approvalAction domain.ApprovalAction) (*domain.Appeal, error) {
+	ret := _m.Called(ctx, approvalAction)
+
+	var r0 *domain.Appeal
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ApprovalAction) *domain.Appeal); ok {
+		r0 = rf(ctx, approvalAction)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.Appeal)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, domain.ApprovalAction) error); ok {
+		r1 = rf(ctx, approvalAction)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AppealService_UpdateApproval_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateApproval'
+type AppealService_UpdateApproval_Call struct {
+	*mock.Call
+}
+
+// UpdateApproval is a helper method to define mock.On call
+//  - ctx context.Context
+//  - approvalAction domain.ApprovalAction
+func (_e *AppealService_Expecter) UpdateApproval(ctx interface{}, approvalAction interface{}) *AppealService_UpdateApproval_Call {
+	return &AppealService_UpdateApproval_Call{Call: _e.mock.On("UpdateApproval", ctx, approvalAction)}
+}
+
+func (_c *AppealService_UpdateApproval_Call) Run(run func(ctx context.Context, approvalAction domain.ApprovalAction)) *AppealService_UpdateApproval_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(domain.ApprovalAction))
+	})
+	return _c
+}
+
+func (_c *AppealService_UpdateApproval_Call) Return(_a0 *domain.Appeal, _a1 error) *AppealService_UpdateApproval_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
 type mockConstructorTestingTNewAppealService interface {
 	mock.TestingT
 	Cleanup(func())

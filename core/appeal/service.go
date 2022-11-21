@@ -10,6 +10,7 @@ import (
 	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/notifiers"
+	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
 )
 
@@ -366,6 +367,158 @@ func validateAppealOnBehalf(a *domain.Appeal, policy *domain.Policy) error {
 	return nil
 }
 
+// UpdateApproval Approve an approval step
+func (s *Service) UpdateApproval(ctx context.Context, approvalAction domain.ApprovalAction) (*domain.Appeal, error) {
+	if err := utils.ValidateStruct(approvalAction); err != nil {
+		return nil, err
+	}
+
+	appeal, err := s.GetByID(ctx, approvalAction.AppealID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := checkIfAppealStatusStillPending(appeal.Status); err != nil {
+		return nil, err
+	}
+
+	for i, approval := range appeal.Approvals {
+		if approval.Name != approvalAction.ApprovalName {
+			if err := checkPreviousApprovalStatus(approval.Status); err != nil {
+				return nil, err
+			}
+			continue
+		}
+
+		if approval.Status != domain.ApprovalStatusPending {
+			if err := checkApprovalStatus(approval.Status); err != nil {
+				return nil, err
+			}
+		}
+
+		if !utils.ContainsString(approval.Approvers, approvalAction.Actor) {
+			return nil, ErrActionForbidden
+		}
+
+		approval.Actor = &approvalAction.Actor
+		approval.Reason = approvalAction.Reason
+		approval.UpdatedAt = TimeNow()
+
+		if approvalAction.Action == domain.AppealActionNameApprove {
+			approval.Approve()
+			if i+1 <= len(appeal.Approvals)-1 {
+				appeal.Approvals[i+1].Status = domain.ApprovalStatusPending
+			}
+			if appeal.Policy == nil {
+				appeal.Policy, err = s.policyService.GetOne(ctx, appeal.PolicyID, appeal.PolicyVersion)
+				if err != nil {
+					return nil, err
+				}
+			}
+			if err := appeal.AdvanceApproval(appeal.Policy); err != nil {
+				return nil, err
+			}
+		} else if approvalAction.Action == domain.AppealActionNameReject {
+			approval.Reject()
+			appeal.Reject()
+
+			if i < len(appeal.Approvals)-1 {
+				for j := i + 1; j < len(appeal.Approvals); j++ {
+					appeal.Approvals[j].Skip()
+					appeal.Approvals[j].UpdatedAt = TimeNow()
+				}
+			}
+		} else {
+			return nil, ErrActionInvalidValue
+		}
+
+		if appeal.Status == domain.AppealStatusApproved {
+			newGrant, revokedGrant, err := s.prepareGrant(ctx, appeal)
+			if err != nil {
+				return nil, fmt.Errorf("preparing grant: %w", err)
+			}
+			newGrant.Resource = appeal.Resource
+			appeal.Grant = newGrant
+			if revokedGrant != nil {
+				if _, err := s.grantService.Revoke(ctx, revokedGrant.ID, domain.SystemActorName, RevokeReasonForExtension,
+					grant.SkipNotifications(),
+					grant.SkipRevokeAccessInProvider(),
+				); err != nil {
+					return nil, fmt.Errorf("revoking previous grant: %w", err)
+				}
+			} else {
+				if err := s.GrantAccessToProvider(ctx, appeal); err != nil {
+					return nil, fmt.Errorf("granting access: %w", err)
+				}
+			}
+		}
+
+		if err := s.Update(ctx, appeal); err != nil {
+			if err := s.providerService.RevokeAccess(ctx, *appeal.Grant); err != nil {
+				return nil, fmt.Errorf("revoking access: %w", err)
+			}
+			return nil, fmt.Errorf("updating appeal: %w", err)
+		}
+
+		notifications := []domain.Notification{}
+		if appeal.Status == domain.AppealStatusApproved {
+			notifications = append(notifications, domain.Notification{
+				User: appeal.CreatedBy,
+				Message: domain.NotificationMessage{
+					Type: domain.NotificationTypeAppealApproved,
+					Variables: map[string]interface{}{
+						"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+						"role":          appeal.Role,
+						"account_id":    appeal.AccountID,
+						"appeal_id":     appeal.ID,
+						"requestor":     appeal.CreatedBy,
+					},
+				},
+			})
+			notifications = addOnBehalfApprovedNotification(appeal, notifications)
+		} else if appeal.Status == domain.AppealStatusRejected {
+			notifications = append(notifications, domain.Notification{
+				User: appeal.CreatedBy,
+				Message: domain.NotificationMessage{
+					Type: domain.NotificationTypeAppealRejected,
+					Variables: map[string]interface{}{
+						"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
+						"role":          appeal.Role,
+						"account_id":    appeal.AccountID,
+						"appeal_id":     appeal.ID,
+						"requestor":     appeal.CreatedBy,
+					},
+				},
+			})
+		} else {
+			notifications = append(notifications, getApprovalNotifications(appeal)...)
+		}
+		if len(notifications) > 0 {
+			if errs := s.notifier.Notify(notifications); errs != nil {
+				for _, err1 := range errs {
+					s.logger.Error("failed to send notifications", "error", err1.Error())
+				}
+			}
+		}
+
+		var auditKey string
+		if approvalAction.Action == string(domain.ApprovalActionReject) {
+			auditKey = AuditKeyReject
+		} else if approvalAction.Action == string(domain.ApprovalActionApprove) {
+			auditKey = AuditKeyApprove
+		}
+		if auditKey != "" {
+			if err := s.auditLogger.Log(ctx, auditKey, approvalAction); err != nil {
+				s.logger.Error("failed to record audit log", "error", err)
+			}
+		}
+
+		return appeal, nil
+	}
+
+	return nil, ErrApprovalNotFound
+}
+
 func (s *Service) Update(ctx context.Context, appeal *domain.Appeal) error {
 	return s.repo.Update(ctx, appeal)
 }
@@ -663,6 +816,41 @@ func checkIfAppealStatusStillPending(status string) error {
 		err = ErrAppealStatusRejected
 	default:
 		err = ErrAppealStatusUnrecognized
+	}
+	return err
+}
+
+func checkPreviousApprovalStatus(status string) error {
+	var err error
+	switch status {
+	case domain.ApprovalStatusApproved,
+		domain.ApprovalStatusSkipped:
+		err = nil
+	case domain.ApprovalStatusBlocked:
+		err = ErrApprovalDependencyIsBlocked
+	case domain.ApprovalStatusPending:
+		err = ErrApprovalDependencyIsPending
+	case domain.ApprovalStatusRejected:
+		err = ErrAppealStatusRejected
+	default:
+		err = ErrApprovalStatusUnrecognized
+	}
+	return err
+}
+
+func checkApprovalStatus(status string) error {
+	var err error
+	switch status {
+	case domain.ApprovalStatusBlocked:
+		err = ErrAppealStatusBlocked
+	case domain.ApprovalStatusApproved:
+		err = ErrApprovalStatusApproved
+	case domain.ApprovalStatusRejected:
+		err = ErrApprovalStatusRejected
+	case domain.ApprovalStatusSkipped:
+		err = ErrApprovalStatusSkipped
+	default:
+		err = ErrApprovalStatusUnrecognized
 	}
 	return err
 }
