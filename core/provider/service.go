@@ -37,6 +37,11 @@ type Client interface {
 	providers.Client
 }
 
+//go:generate mockery --name=activityManager --exported --with-expecter
+type activityManager interface {
+	GetActivities(context.Context, domain.Provider, domain.ImportActivitiesFilter) ([]*domain.ProviderActivity, error)
+}
+
 //go:generate mockery --name=resourceService --exported --with-expecter
 type resourceService interface {
 	Find(context.Context, domain.ListResourcesFilter) ([]*domain.Resource, error)
@@ -376,6 +381,36 @@ func (s *Service) ListAccess(ctx context.Context, p domain.Provider, resources [
 	}
 
 	return providerAccesses, nil
+}
+
+func (s *Service) ImportActivities(ctx context.Context, filter domain.ImportActivitiesFilter) ([]*domain.ProviderActivity, error) {
+	p, err := s.GetByID(ctx, filter.ProviderID)
+	if err != nil {
+		return nil, err
+	}
+
+	client := s.getClient(p.Type)
+	activityClient, ok := client.(activityManager)
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", ErrImportActivitiesMethodNotSupported, p.Type)
+	}
+
+	resources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
+		IDs: filter.ResourceIDs,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("retrieving specified resources: %w", err)
+	}
+	if err := filter.PopulateResources(domain.Resources(resources).ToMap()); err != nil {
+		return nil, fmt.Errorf("populating resources: %w", err)
+	}
+
+	activities, err := activityClient.GetActivities(ctx, *p, filter)
+	if err != nil {
+		return nil, fmt.Errorf("getting activities: %w", err)
+	}
+
+	return activities, nil
 }
 
 func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*domain.Resource, error) {

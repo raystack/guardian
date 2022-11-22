@@ -39,3 +39,13 @@ type ListResourcesFilter struct {
 	ResourceTypes []string          `mapstructure:"types" validate:"omitempty"`
 	Details       map[string]string `mapstructure:"details"`
 }
+
+type Resources []*Resource
+
+func (r Resources) ToMap() map[string]*Resource {
+	resources := make(map[string]*Resource, len(r))
+	for _, resource := range r {
+		resources[resource.ID] = resource
+	}
+	return resources
+}

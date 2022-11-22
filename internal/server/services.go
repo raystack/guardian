@@ -11,6 +11,7 @@ import (
 	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/core/provider"
+	"github.com/odpf/guardian/core/provideractivity"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
@@ -30,12 +31,13 @@ import (
 )
 
 type Services struct {
-	ResourceService *resource.Service
-	ProviderService *provider.Service
-	PolicyService   *policy.Service
-	ApprovalService *approval.Service
-	AppealService   *appeal.Service
-	GrantService    *grant.Service
+	ResourceService         *resource.Service
+	ProviderActivityService *provideractivity.Service
+	ProviderService         *provider.Service
+	PolicyService           *policy.Service
+	ApprovalService         *approval.Service
+	AppealService           *appeal.Service
+	GrantService            *grant.Service
 }
 
 type ServiceDeps struct {
@@ -84,6 +86,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		}),
 	)
 
+	providerActivityRepository := postgres.NewProviderActivityRepository(store.DB())
 	providerRepository := postgres.NewProviderRepository(store.DB())
 	policyRepository := postgres.NewPolicyRepository(store.DB())
 	resourceRepository := postgres.NewResourceRepository(store.DB())
@@ -112,6 +115,13 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Repository:      providerRepository,
 		ResourceService: resourceService,
 		Clients:         providerClients,
+		Validator:       deps.Validator,
+		Logger:          deps.Logger,
+		AuditLogger:     auditLogger,
+	})
+	providerActivityService := provideractivity.NewService(provideractivity.ServiceDeps{
+		Repository:      providerActivityRepository,
+		ProviderService: providerService,
 		Validator:       deps.Validator,
 		Logger:          deps.Logger,
 		AuditLogger:     auditLogger,
@@ -154,6 +164,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 
 	return &Services{
 		resourceService,
+		providerActivityService,
 		providerService,
 		policyService,
 		approvalService,
