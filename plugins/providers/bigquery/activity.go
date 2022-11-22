@@ -57,10 +57,11 @@ func (a Activity) getAuditLog() (*auditLog, error) {
 	return (*auditLog)(l), nil
 }
 
-func (a Activity) ToActivity(p domain.Provider) (*domain.Activity, error) {
+func (a Activity) ToDomainActivity(p domain.Provider) (*domain.Activity, error) {
 	activity := &domain.Activity{
-		ProviderID: p.ID,
-		Timestamp:  a.Timestamp,
+		ProviderID:         p.ID,
+		Timestamp:          a.Timestamp,
+		ProviderActivityID: a.InsertID,
 	}
 
 	al, err := a.getAuditLog()

@@ -12,16 +12,17 @@ import (
 )
 
 type Activity struct {
-	ID             uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	ProviderID     uuid.UUID
-	ResourceID     uuid.UUID
-	AccountType    string
-	AccountID      string
-	Timestamp      time.Time
-	Authorizations pq.StringArray `gorm:"type:text[]"`
-	Type           string
-	Metadata       datatypes.JSON
-	CreatedAt      time.Time `gorm:"autoCreateTime"`
+	ID                 uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	ProviderID         uuid.UUID
+	ResourceID         uuid.UUID
+	ProviderActivityID string
+	AccountType        string
+	AccountID          string
+	Timestamp          time.Time
+	Authorizations     pq.StringArray `gorm:"type:text[]"`
+	Type               string
+	Metadata           datatypes.JSON
+	CreatedAt          time.Time `gorm:"autoCreateTime"`
 
 	Provider *Provider `gorm:"ForeignKey:ProviderID;References:ID"`
 	Resource *Resource `gorm:"ForeignKey:ResourceID;References:ID"`
@@ -53,6 +54,7 @@ func (m *Activity) FromDomain(a *domain.Activity) error {
 		}
 		m.ResourceID = id
 	}
+	m.ProviderActivityID = a.ProviderActivityID
 	m.AccountType = a.AccountType
 	m.AccountID = a.AccountID
 	m.Timestamp = a.Timestamp
@@ -85,15 +87,16 @@ func (m *Activity) FromDomain(a *domain.Activity) error {
 
 func (m *Activity) ToDomain() (*domain.Activity, error) {
 	a := &domain.Activity{
-		ID:             m.ID.String(),
-		ProviderID:     m.ProviderID.String(),
-		ResourceID:     m.ResourceID.String(),
-		AccountType:    m.AccountType,
-		AccountID:      m.AccountID,
-		Timestamp:      m.Timestamp,
-		Authorizations: m.Authorizations,
-		Type:           m.Type,
-		CreatedAt:      m.CreatedAt,
+		ID:                 m.ID.String(),
+		ProviderID:         m.ProviderID.String(),
+		ResourceID:         m.ResourceID.String(),
+		ProviderActivityID: m.ProviderActivityID,
+		AccountType:        m.AccountType,
+		AccountID:          m.AccountID,
+		Timestamp:          m.Timestamp,
+		Authorizations:     m.Authorizations,
+		Type:               m.Type,
+		CreatedAt:          m.CreatedAt,
 	}
 	if m.Metadata != nil {
 		if err := json.Unmarshal(m.Metadata, &a.Metadata); err != nil {

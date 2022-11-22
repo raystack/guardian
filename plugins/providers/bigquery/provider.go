@@ -286,7 +286,7 @@ func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter
 
 	activities := make([]*domain.Activity, 0, len(entries))
 	for _, e := range entries {
-		pa, err := e.ToActivity(pd)
+		pa, err := e.ToDomainActivity(pd)
 		if err != nil {
 			return nil, fmt.Errorf("converting log entry to provider activity: %w", err)
 		}

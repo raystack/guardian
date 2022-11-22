@@ -1,8 +1,6 @@
 package bigquery_test
 
 import (
-	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -14,7 +12,7 @@ import (
 	"google.golang.org/genproto/googleapis/cloud/audit"
 )
 
-func TestActivity_ToActivity(t *testing.T) {
+func TestActivity_ToProviderActivity(t *testing.T) {
 	now := time.Now()
 	dummyProvider := domain.Provider{
 		ID:   "dummy-provider-id",
@@ -23,6 +21,7 @@ func TestActivity_ToActivity(t *testing.T) {
 	}
 	a := bigquery.Activity{
 		&logging.Entry{
+			InsertID:  "dummy-insert-id",
 			Timestamp: now,
 			Payload: &audit.AuditLog{
 				MethodName: "test-method-name",
@@ -39,27 +38,45 @@ func TestActivity_ToActivity(t *testing.T) {
 		},
 	}
 
+	timestampStr, err := a.Timestamp.MarshalJSON()
+	require.NoError(t, err)
+	timestampStr = timestampStr[1 : len(timestampStr)-1] // trim quotes
 	expectedMetadata := map[string]interface{}{
-		"method_name": "test-method-name",
-		"authentication_info": map[string]interface{}{
-			"principal_email": "test-principal-email",
-		},
-		"authorization_info": []interface{}{
-			map[string]interface{}{
-				"permission": "test-permission",
+		"logging_entry": map[string]interface{}{
+			"payload": map[string]interface{}{
+				"method_name": "test-method-name",
+				"authentication_info": map[string]interface{}{
+					"principal_email": "test-principal-email",
+				},
+				"authorization_info": []interface{}{
+					map[string]interface{}{
+						"permission": "test-permission",
+					},
+				},
+				"resource_name": "projects/xxx/datasets/yyy/tables/zzz",
 			},
+			"insert_id":       a.InsertID,
+			"severity":        float64(0),
+			"resource":        nil,
+			"labels":          nil,
+			"operation":       nil,
+			"trace":           "",
+			"source_location": nil,
+			"timestamp":       string(timestampStr),
+			"span_id":         "",
+			"trace_sampled":   false,
 		},
-		"resource_name": "projects/xxx/datasets/yyy/tables/zzz",
 	}
 
 	expectedActivity := &domain.Activity{
-		ProviderID:     dummyProvider.ID,
-		Timestamp:      a.Timestamp,
-		Type:           "test-method-name",
-		AccountID:      "test-principal-email",
-		AccountType:    "user",
-		Metadata:       expectedMetadata,
-		Authorizations: []string{"test-permission"},
+		ProviderID:         dummyProvider.ID,
+		ProviderActivityID: "dummy-insert-id",
+		Timestamp:          a.Timestamp,
+		Type:               "test-method-name",
+		AccountID:          "test-principal-email",
+		AccountType:        "user",
+		Metadata:           expectedMetadata,
+		Authorizations:     []string{"test-permission"},
 		Resource: &domain.Resource{
 			ProviderType: "bigquery",
 			ProviderURN:  "dummy-provider-urn",
@@ -68,48 +85,8 @@ func TestActivity_ToActivity(t *testing.T) {
 		},
 	}
 
-	actualActivity, err := a.ToActivity(dummyProvider)
+	actualActivity, err := a.ToDomainActivity(dummyProvider)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedActivity, actualActivity)
-}
-
-func TestList(t *testing.T) {
-	c, err := bigquery.NewCloudLoggingClient(context.Background(), "pilotdata-integration", nil)
-	require.NoError(t, err)
-	defer c.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-
-	anHourAgo := time.Now().Add(-1 * time.Hour)
-
-	f := domain.ImportActivitiesFilter{
-		ResourceIDs: []string{"1", "2"},
-	}
-	err = f.PopulateResources(map[string]*domain.Resource{
-		"1": {
-			Type: "table",
-			URN:  "pilotdata-integration:playground.name_event",
-		},
-		"2": {
-			Type: "dataset",
-			URN:  "pilotdata-integration:playground",
-		},
-	})
-	require.NoError(t, err)
-	es, err := c.ListLogEntries(ctx, bigquery.ImportActivitiesFilter{
-		ImportActivitiesFilter: domain.ImportActivitiesFilter{
-			ResourceIDs:  []string{"1", "2"},
-			TimestampGte: &anHourAgo,
-		},
-		Limit: 5,
-	})
-	require.NoError(t, err)
-
-	for _, e := range es {
-		fmt.Printf("e: %+v\n", e)
-		fmt.Printf("e.Resource: %+v\n", e.Resource)
-	}
-	t.Fatal("done")
 }
