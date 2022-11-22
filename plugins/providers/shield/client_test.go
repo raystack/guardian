@@ -544,3 +544,59 @@ func (s *ClientTestSuite) TestRevokeOrganizationAccess() {
 		s.Nil(actualError)
 	})
 }
+
+func (s *ClientTestSuite) TestGetSelfUser() {
+	s.Run("Should return error user on empty email", func() {
+		s.setup()
+		testUserEmail := ""
+
+		testGetSelfRequest, err := s.getTestRequest(http.MethodGet, "/admin/v1beta1/users/self", nil, testUserEmail)
+		s.Require().NoError(err)
+
+		responseJson := `{
+			"code": 2,
+			"message": "email id is empty",
+			"details": []
+		}`
+
+		responseUser := http.Response{StatusCode: 500, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
+		s.mockHttpClient.On("Do", testGetSelfRequest).Return(&responseUser, nil).Once()
+
+		_, actualError := s.client.GetSelfUser(testUserEmail)
+		s.NotNil(actualError)
+	})
+	s.Run("Should return shield user on success", func() {
+		s.setup()
+		testUserEmail := "test_user@email.com"
+
+		testGetSelfRequest, err := s.getTestRequest(http.MethodGet, "/admin/v1beta1/users/self", nil, testUserEmail)
+		s.Require().NoError(err)
+
+		responseJson := `{
+			 "user": {
+				"id": "test-user-id",
+				"name": "test-user",
+				"slug": "",
+				"email": "test_user@email.com",
+				"metadata": {
+					"slack": "test"
+				},
+				"createdAt": "2022-05-05T05:32:42.384021Z",
+				"updatedAt": "2022-06-01T10:08:02.688055Z"
+			}
+		}`
+
+		responseUser := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
+		s.mockHttpClient.On("Do", testGetSelfRequest).Return(&responseUser, nil).Once()
+
+		expectedUser := &shield.User{
+			ID:    "test-user-id",
+			Name:  "test-user",
+			Email: "test_user@email.com",
+		}
+
+		user, actualError := s.client.GetSelfUser(testUserEmail)
+		s.EqualValues(expectedUser, user)
+		s.Nil(actualError)
+	})
+}
