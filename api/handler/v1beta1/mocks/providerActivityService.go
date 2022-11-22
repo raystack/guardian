@@ -23,15 +23,15 @@ func (_m *ProviderActivityService) EXPECT() *ProviderActivityService_Expecter {
 }
 
 // Find provides a mock function with given fields: _a0, _a1
-func (_m *ProviderActivityService) Find(_a0 context.Context, _a1 domain.ListProviderActivitiesFilter) ([]*domain.ProviderActivity, error) {
+func (_m *ProviderActivityService) Find(_a0 context.Context, _a1 domain.ListProviderActivitiesFilter) ([]*domain.Activity, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 []*domain.ProviderActivity
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ListProviderActivitiesFilter) []*domain.ProviderActivity); ok {
+	var r0 []*domain.Activity
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ListProviderActivitiesFilter) []*domain.Activity); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*domain.ProviderActivity)
+			r0 = ret.Get(0).([]*domain.Activity)
 		}
 	}
 
@@ -64,21 +64,21 @@ func (_c *ProviderActivityService_Find_Call) Run(run func(_a0 context.Context, _
 	return _c
 }
 
-func (_c *ProviderActivityService_Find_Call) Return(_a0 []*domain.ProviderActivity, _a1 error) *ProviderActivityService_Find_Call {
+func (_c *ProviderActivityService_Find_Call) Return(_a0 []*domain.Activity, _a1 error) *ProviderActivityService_Find_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
 // GetOne provides a mock function with given fields: _a0, _a1
-func (_m *ProviderActivityService) GetOne(_a0 context.Context, _a1 string) (*domain.ProviderActivity, error) {
+func (_m *ProviderActivityService) GetOne(_a0 context.Context, _a1 string) (*domain.Activity, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *domain.ProviderActivity
-	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.ProviderActivity); ok {
+	var r0 *domain.Activity
+	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.Activity); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.ProviderActivity)
+			r0 = ret.Get(0).(*domain.Activity)
 		}
 	}
 
@@ -111,21 +111,21 @@ func (_c *ProviderActivityService_GetOne_Call) Run(run func(_a0 context.Context,
 	return _c
 }
 
-func (_c *ProviderActivityService_GetOne_Call) Return(_a0 *domain.ProviderActivity, _a1 error) *ProviderActivityService_GetOne_Call {
+func (_c *ProviderActivityService_GetOne_Call) Return(_a0 *domain.Activity, _a1 error) *ProviderActivityService_GetOne_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
 // Import provides a mock function with given fields: _a0, _a1
-func (_m *ProviderActivityService) Import(_a0 context.Context, _a1 domain.ImportActivitiesFilter) ([]*domain.ProviderActivity, error) {
+func (_m *ProviderActivityService) Import(_a0 context.Context, _a1 domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 []*domain.ProviderActivity
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ImportActivitiesFilter) []*domain.ProviderActivity); ok {
+	var r0 []*domain.Activity
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ImportActivitiesFilter) []*domain.Activity); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*domain.ProviderActivity)
+			r0 = ret.Get(0).([]*domain.Activity)
 		}
 	}
 
@@ -158,7 +158,7 @@ func (_c *ProviderActivityService_Import_Call) Run(run func(_a0 context.Context,
 	return _c
 }
 
-func (_c *ProviderActivityService_Import_Call) Return(_a0 []*domain.ProviderActivity, _a1 error) *ProviderActivityService_Import_Call {
+func (_c *ProviderActivityService_Import_Call) Return(_a0 []*domain.Activity, _a1 error) *ProviderActivityService_Import_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }

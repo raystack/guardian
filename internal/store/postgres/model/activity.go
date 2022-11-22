@@ -11,7 +11,7 @@ import (
 	"gorm.io/datatypes"
 )
 
-type ProviderActivity struct {
+type Activity struct {
 	ID             uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
 	ProviderID     uuid.UUID
 	ResourceID     uuid.UUID
@@ -27,55 +27,55 @@ type ProviderActivity struct {
 	Resource *Resource `gorm:"ForeignKey:ResourceID;References:ID"`
 }
 
-func (ProviderActivity) TableName() string {
-	return "provider_activities"
+func (Activity) TableName() string {
+	return "activities"
 }
 
-func (m *ProviderActivity) FromDomain(pa *domain.ProviderActivity) error {
-	if pa.ID != "" {
-		id, err := uuid.Parse(pa.ID)
+func (m *Activity) FromDomain(a *domain.Activity) error {
+	if a.ID != "" {
+		id, err := uuid.Parse(a.ID)
 		if err != nil {
 			return fmt.Errorf("failed to parse id: %w", err)
 		}
 		m.ID = id
 	}
-	if pa.ProviderID != "" {
-		id, err := uuid.Parse(pa.ProviderID)
+	if a.ProviderID != "" {
+		id, err := uuid.Parse(a.ProviderID)
 		if err != nil {
 			return fmt.Errorf("failed to parse provider id: %w", err)
 		}
 		m.ProviderID = id
 	}
-	if pa.ResourceID != "" {
-		id, err := uuid.Parse(pa.ResourceID)
+	if a.ResourceID != "" {
+		id, err := uuid.Parse(a.ResourceID)
 		if err != nil {
 			return fmt.Errorf("failed to parse resource id: %w", err)
 		}
 		m.ResourceID = id
 	}
-	m.AccountType = pa.AccountType
-	m.AccountID = pa.AccountID
-	m.Timestamp = pa.Timestamp
-	m.Authorizations = pa.Authorizations
-	m.Type = pa.Type
+	m.AccountType = a.AccountType
+	m.AccountID = a.AccountID
+	m.Timestamp = a.Timestamp
+	m.Authorizations = a.Authorizations
+	m.Type = a.Type
 
-	if pa.Metadata != nil {
-		metadata, err := json.Marshal(pa.Metadata)
+	if a.Metadata != nil {
+		metadata, err := json.Marshal(a.Metadata)
 		if err != nil {
 			return fmt.Errorf("failed to marshal provider activity metadata: %w", err)
 		}
 		m.Metadata = metadata
 	}
-	m.CreatedAt = pa.CreatedAt
-	if pa.Provider != nil {
+	m.CreatedAt = a.CreatedAt
+	if a.Provider != nil {
 		m.Provider = &Provider{}
-		if err := m.Provider.FromDomain(pa.Provider); err != nil {
+		if err := m.Provider.FromDomain(a.Provider); err != nil {
 			return fmt.Errorf("failed to convert provider: %w", err)
 		}
 	}
-	if pa.Resource != nil {
+	if a.Resource != nil {
 		m.Resource = &Resource{}
-		if err := m.Resource.FromDomain(pa.Resource); err != nil {
+		if err := m.Resource.FromDomain(a.Resource); err != nil {
 			return fmt.Errorf("failed to convert resource: %w", err)
 		}
 	}
@@ -83,8 +83,8 @@ func (m *ProviderActivity) FromDomain(pa *domain.ProviderActivity) error {
 	return nil
 }
 
-func (m *ProviderActivity) ToDomain() (*domain.ProviderActivity, error) {
-	pa := &domain.ProviderActivity{
+func (m *Activity) ToDomain() (*domain.Activity, error) {
+	a := &domain.Activity{
 		ID:             m.ID.String(),
 		ProviderID:     m.ProviderID.String(),
 		ResourceID:     m.ResourceID.String(),
@@ -96,7 +96,7 @@ func (m *ProviderActivity) ToDomain() (*domain.ProviderActivity, error) {
 		CreatedAt:      m.CreatedAt,
 	}
 	if m.Metadata != nil {
-		if err := json.Unmarshal(m.Metadata, &pa.Metadata); err != nil {
+		if err := json.Unmarshal(m.Metadata, &a.Metadata); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal provider activity metadata: %w", err)
 		}
 	}
@@ -105,14 +105,14 @@ func (m *ProviderActivity) ToDomain() (*domain.ProviderActivity, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert provider: %w", err)
 		}
-		pa.Provider = p
+		a.Provider = p
 	}
 	if m.Resource != nil {
 		r, err := m.Resource.ToDomain()
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert resource: %w", err)
 		}
-		pa.Resource = r
+		a.Resource = r
 	}
-	return pa, nil
+	return a, nil
 }

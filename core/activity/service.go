@@ -1,4 +1,4 @@
-package provideractivity
+package activity
 
 import (
 	"context"
@@ -11,14 +11,14 @@ import (
 
 //go:generate mockery --name=repository --exported --with-expecter
 type repository interface {
-	GetOne(context.Context, string) (*domain.ProviderActivity, error)
-	BulkInsert(context.Context, []*domain.ProviderActivity) error
-	Find(context.Context, domain.ListProviderActivitiesFilter) ([]*domain.ProviderActivity, error)
+	GetOne(context.Context, string) (*domain.Activity, error)
+	BulkInsert(context.Context, []*domain.Activity) error
+	Find(context.Context, domain.ListProviderActivitiesFilter) ([]*domain.Activity, error)
 }
 
 //go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
-	ImportActivities(context.Context, domain.ImportActivitiesFilter) ([]*domain.ProviderActivity, error)
+	ImportActivities(context.Context, domain.ImportActivitiesFilter) ([]*domain.Activity, error)
 }
 
 //go:generate mockery --name=auditLogger --exported --with-expecter
@@ -52,19 +52,19 @@ func NewService(deps ServiceDeps) *Service {
 	}
 }
 
-func (s *Service) BulkInsert(ctx context.Context, activities []*domain.ProviderActivity) error {
+func (s *Service) BulkInsert(ctx context.Context, activities []*domain.Activity) error {
 	return s.repo.BulkInsert(ctx, activities)
 }
 
-func (s *Service) GetOne(ctx context.Context, id string) (*domain.ProviderActivity, error) {
+func (s *Service) GetOne(ctx context.Context, id string) (*domain.Activity, error) {
 	return s.repo.GetOne(ctx, id)
 }
 
-func (s *Service) Find(ctx context.Context, filter domain.ListProviderActivitiesFilter) ([]*domain.ProviderActivity, error) {
+func (s *Service) Find(ctx context.Context, filter domain.ListProviderActivitiesFilter) ([]*domain.Activity, error) {
 	return s.repo.Find(ctx, filter)
 }
 
-func (s *Service) Import(ctx context.Context, filter domain.ImportActivitiesFilter) ([]*domain.ProviderActivity, error) {
+func (s *Service) Import(ctx context.Context, filter domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
 	activities, err := s.providerService.ImportActivities(ctx, filter)
 	if err != nil {
 		return nil, err

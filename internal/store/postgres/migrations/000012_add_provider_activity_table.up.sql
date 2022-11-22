@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS "provider_activities" (
+CREATE TABLE IF NOT EXISTS "activities" (
   "id" uuid DEFAULT uuid_generate_v4(),
   "provider_id" uuid,
   "resource_id" uuid,

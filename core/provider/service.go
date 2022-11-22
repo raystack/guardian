@@ -42,7 +42,7 @@ type Client interface {
 
 //go:generate mockery --name=activityManager --exported --with-expecter
 type activityManager interface {
-	GetActivities(context.Context, domain.Provider, domain.ImportActivitiesFilter) ([]*domain.ProviderActivity, error)
+	GetActivities(context.Context, domain.Provider, domain.ImportActivitiesFilter) ([]*domain.Activity, error)
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter
@@ -446,7 +446,7 @@ func (s *Service) ListAccess(ctx context.Context, p domain.Provider, resources [
 	return providerAccesses, nil
 }
 
-func (s *Service) ImportActivities(ctx context.Context, filter domain.ImportActivitiesFilter) ([]*domain.ProviderActivity, error) {
+func (s *Service) ImportActivities(ctx context.Context, filter domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
 	p, err := s.GetByID(ctx, filter.ProviderID)
 	if err != nil {
 		return nil, err

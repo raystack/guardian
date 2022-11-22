@@ -23,15 +23,15 @@ func (_m *ProviderService) EXPECT() *ProviderService_Expecter {
 }
 
 // ImportActivities provides a mock function with given fields: _a0, _a1
-func (_m *ProviderService) ImportActivities(_a0 context.Context, _a1 domain.ImportActivitiesFilter) ([]*domain.ProviderActivity, error) {
+func (_m *ProviderService) ImportActivities(_a0 context.Context, _a1 domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 []*domain.ProviderActivity
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ImportActivitiesFilter) []*domain.ProviderActivity); ok {
+	var r0 []*domain.Activity
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ImportActivitiesFilter) []*domain.Activity); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*domain.ProviderActivity)
+			r0 = ret.Get(0).([]*domain.Activity)
 		}
 	}
 
@@ -64,7 +64,7 @@ func (_c *ProviderService_ImportActivities_Call) Run(run func(_a0 context.Contex
 	return _c
 }
 
-func (_c *ProviderService_ImportActivities_Call) Return(_a0 []*domain.ProviderActivity, _a1 error) *ProviderService_ImportActivities_Call {
+func (_c *ProviderService_ImportActivities_Call) Return(_a0 []*domain.Activity, _a1 error) *ProviderService_ImportActivities_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }

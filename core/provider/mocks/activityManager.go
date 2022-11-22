@@ -23,15 +23,15 @@ func (_m *ActivityManager) EXPECT() *ActivityManager_Expecter {
 }
 
 // GetActivities provides a mock function with given fields: _a0, _a1, _a2
-func (_m *ActivityManager) GetActivities(_a0 context.Context, _a1 domain.Provider, _a2 domain.ImportActivitiesFilter) ([]*domain.ProviderActivity, error) {
+func (_m *ActivityManager) GetActivities(_a0 context.Context, _a1 domain.Provider, _a2 domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
 	ret := _m.Called(_a0, _a1, _a2)
 
-	var r0 []*domain.ProviderActivity
-	if rf, ok := ret.Get(0).(func(context.Context, domain.Provider, domain.ImportActivitiesFilter) []*domain.ProviderActivity); ok {
+	var r0 []*domain.Activity
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Provider, domain.ImportActivitiesFilter) []*domain.Activity); ok {
 		r0 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*domain.ProviderActivity)
+			r0 = ret.Get(0).([]*domain.Activity)
 		}
 	}
 
@@ -65,7 +65,7 @@ func (_c *ActivityManager_GetActivities_Call) Run(run func(_a0 context.Context, 
 	return _c
 }
 
-func (_c *ActivityManager_GetActivities_Call) Return(_a0 []*domain.ProviderActivity, _a1 error) *ActivityManager_GetActivities_Call {
+func (_c *ActivityManager_GetActivities_Call) Return(_a0 []*domain.Activity, _a1 error) *ActivityManager_GetActivities_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }

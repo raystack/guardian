@@ -11,14 +11,14 @@ import (
 type GrpcHandlersSuite struct {
 	suite.Suite
 
-	resourceService         *mocks.ResourceService
-	providerActivityService *mocks.ProviderActivityService
-	providerService         *mocks.ProviderService
-	policyService           *mocks.PolicyService
-	appealService           *mocks.AppealService
-	approvalService         *mocks.ApprovalService
-	grantService            *mocks.GrantService
-	grpcServer              *v1beta1.GRPCServer
+	resourceService *mocks.ResourceService
+	activityService *mocks.ActivityService
+	providerService *mocks.ProviderService
+	policyService   *mocks.PolicyService
+	appealService   *mocks.AppealService
+	approvalService *mocks.ApprovalService
+	grantService    *mocks.GrantService
+	grpcServer      *v1beta1.GRPCServer
 
 	authenticatedUserHeaderKey string
 }
@@ -29,7 +29,7 @@ func TestGrpcHandler(t *testing.T) {
 
 func (s *GrpcHandlersSuite) setup() {
 	s.resourceService = new(mocks.ResourceService)
-	s.providerActivityService = new(mocks.ProviderActivityService)
+	s.activityService = new(mocks.ActivityService)
 	s.providerService = new(mocks.ProviderService)
 	s.policyService = new(mocks.PolicyService)
 	s.appealService = new(mocks.AppealService)
@@ -38,7 +38,7 @@ func (s *GrpcHandlersSuite) setup() {
 	s.authenticatedUserHeaderKey = "test-header-key"
 	s.grpcServer = v1beta1.NewGRPCServer(
 		s.resourceService,
-		s.providerActivityService,
+		s.activityService,
 		s.providerService,
 		s.policyService,
 		s.appealService,

@@ -23,11 +23,11 @@ func (_m *ProviderActivityService) EXPECT() *ProviderActivityService_Expecter {
 }
 
 // BulkInsert provides a mock function with given fields: _a0, _a1
-func (_m *ProviderActivityService) BulkInsert(_a0 context.Context, _a1 []*domain.ProviderActivity) error {
+func (_m *ProviderActivityService) BulkInsert(_a0 context.Context, _a1 []*domain.Activity) error {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []*domain.ProviderActivity) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []*domain.Activity) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -48,9 +48,9 @@ func (_e *ProviderActivityService_Expecter) BulkInsert(_a0 interface{}, _a1 inte
 	return &ProviderActivityService_BulkInsert_Call{Call: _e.mock.On("BulkInsert", _a0, _a1)}
 }
 
-func (_c *ProviderActivityService_BulkInsert_Call) Run(run func(_a0 context.Context, _a1 []*domain.ProviderActivity)) *ProviderActivityService_BulkInsert_Call {
+func (_c *ProviderActivityService_BulkInsert_Call) Run(run func(_a0 context.Context, _a1 []*domain.Activity)) *ProviderActivityService_BulkInsert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]*domain.ProviderActivity))
+		run(args[0].(context.Context), args[1].([]*domain.Activity))
 	})
 	return _c
 }

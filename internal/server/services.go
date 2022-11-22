@@ -6,12 +6,12 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core"
+	"github.com/odpf/guardian/core/activity"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/core/approval"
 	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/core/policy"
 	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/core/provideractivity"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
@@ -31,13 +31,13 @@ import (
 )
 
 type Services struct {
-	ResourceService         *resource.Service
-	ProviderActivityService *provideractivity.Service
-	ProviderService         *provider.Service
-	PolicyService           *policy.Service
-	ApprovalService         *approval.Service
-	AppealService           *appeal.Service
-	GrantService            *grant.Service
+	ResourceService *resource.Service
+	ActivityService *activity.Service
+	ProviderService *provider.Service
+	PolicyService   *policy.Service
+	ApprovalService *approval.Service
+	AppealService   *appeal.Service
+	GrantService    *grant.Service
 }
 
 type ServiceDeps struct {
@@ -86,7 +86,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		}),
 	)
 
-	providerActivityRepository := postgres.NewProviderActivityRepository(store.DB())
+	activityRepository := postgres.NewActivityRepository(store.DB())
 	providerRepository := postgres.NewProviderRepository(store.DB())
 	policyRepository := postgres.NewPolicyRepository(store.DB())
 	resourceRepository := postgres.NewResourceRepository(store.DB())
@@ -119,8 +119,8 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Logger:          deps.Logger,
 		AuditLogger:     auditLogger,
 	})
-	providerActivityService := provideractivity.NewService(provideractivity.ServiceDeps{
-		Repository:      providerActivityRepository,
+	activityService := activity.NewService(activity.ServiceDeps{
+		Repository:      activityRepository,
 		ProviderService: providerService,
 		Validator:       deps.Validator,
 		Logger:          deps.Logger,
@@ -164,7 +164,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 
 	return &Services{
 		resourceService,
-		providerActivityService,
+		activityService,
 		providerService,
 		policyService,
 		approvalService,

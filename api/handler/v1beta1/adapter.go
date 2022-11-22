@@ -795,7 +795,7 @@ func (a *adapter) ToGrantProto(grant *domain.Grant) (*guardianv1beta1.Grant, err
 	return grantProto, nil
 }
 
-func (a *adapter) ToProviderActivity(activity *domain.ProviderActivity) (*guardianv1beta1.ProviderActivity, error) {
+func (a *adapter) ToActivityProto(activity *domain.Activity) (*guardianv1beta1.ProviderActivity, error) {
 	if activity == nil {
 		return nil, nil
 	}

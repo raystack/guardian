@@ -57,8 +57,8 @@ func (a Activity) getAuditLog() (*auditLog, error) {
 	return (*auditLog)(l), nil
 }
 
-func (a Activity) ToProviderActivity(p domain.Provider) (*domain.ProviderActivity, error) {
-	pa := &domain.ProviderActivity{
+func (a Activity) ToActivity(p domain.Provider) (*domain.Activity, error) {
+	activity := &domain.Activity{
 		ProviderID: p.ID,
 		Timestamp:  a.Timestamp,
 	}
@@ -71,10 +71,10 @@ func (a Activity) ToProviderActivity(p domain.Provider) (*domain.ProviderActivit
 		return nil, ErrEmptyActivityPayload
 	}
 
-	pa.Type = al.MethodName
+	activity.Type = al.MethodName
 	if al.AuthenticationInfo != nil {
-		pa.AccountType = al.GetAccountType()
-		pa.AccountID = al.AuthenticationInfo.PrincipalEmail
+		activity.AccountType = al.GetAccountType()
+		activity.AccountID = al.AuthenticationInfo.PrincipalEmail
 	}
 
 	loggingEntryMetadata := map[string]interface{}{}
@@ -97,18 +97,18 @@ func (a Activity) ToProviderActivity(p domain.Provider) (*domain.ProviderActivit
 		return nil, fmt.Errorf("unmarshalling payload to metadata: %w", err)
 	}
 
-	if pa.Metadata == nil {
-		pa.Metadata = map[string]interface{}{}
+	if activity.Metadata == nil {
+		activity.Metadata = map[string]interface{}{}
 	}
-	pa.Metadata["logging_entry"] = loggingEntryMetadata
+	activity.Metadata["logging_entry"] = loggingEntryMetadata
 
 	for _, ai := range al.AuthorizationInfo {
-		pa.Authorizations = append(pa.Authorizations, ai.Permission)
+		activity.Authorizations = append(activity.Authorizations, ai.Permission)
 	}
 
-	pa.Resource = al.GetResource(p)
+	activity.Resource = al.GetResource(p)
 
-	return pa, nil
+	return activity, nil
 }
 
 type cloudLoggingClient struct {

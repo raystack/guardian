@@ -5,22 +5,22 @@ import (
 	"errors"
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/core/provideractivity"
+	"github.com/odpf/guardian/core/activity"
 	"github.com/odpf/guardian/domain"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func (s *GRPCServer) GetActivity(ctx context.Context, req *guardianv1beta1.GetActivityRequest) (*guardianv1beta1.GetActivityResponse, error) {
-	activity, err := s.providerActivityService.GetOne(ctx, req.GetId())
+	a, err := s.activityService.GetOne(ctx, req.GetId())
 	if err != nil {
-		if errors.Is(err, provideractivity.ErrNotFound) {
+		if errors.Is(err, activity.ErrNotFound) {
 			return nil, status.Errorf(codes.NotFound, "activity not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get activity: %v", err)
 	}
 
-	activityProto, err := s.adapter.ToProviderActivity(activity)
+	activityProto, err := s.adapter.ToActivityProto(a)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to parse proto: %v", err)
 	}
@@ -46,14 +46,14 @@ func (s *GRPCServer) ListActivities(ctx context.Context, req *guardianv1beta1.Li
 		filter.TimestampLte = &t
 	}
 
-	activities, err := s.providerActivityService.Find(ctx, filter)
+	activities, err := s.activityService.Find(ctx, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list activities: %v", err)
 	}
 
 	activityProtos := []*guardianv1beta1.ProviderActivity{}
 	for _, a := range activities {
-		activityProto, err := s.adapter.ToProviderActivity(a)
+		activityProto, err := s.adapter.ToActivityProto(a)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to parse proto: %v", err)
 		}
@@ -80,14 +80,14 @@ func (s *GRPCServer) ImportActivities(ctx context.Context, req *guardianv1beta1.
 		filter.TimestampLte = &t
 	}
 
-	activities, err := s.providerActivityService.Import(ctx, filter)
+	activities, err := s.activityService.Import(ctx, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to import activities: %v", err)
 	}
 
 	activityProtos := []*guardianv1beta1.ProviderActivity{}
 	for _, a := range activities {
-		activity, err := s.adapter.ToProviderActivity(a)
+		activity, err := s.adapter.ToActivityProto(a)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to parse proto: %v", err)
 		}

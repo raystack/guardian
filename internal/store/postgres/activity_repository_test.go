@@ -8,18 +8,18 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
-	"github.com/odpf/guardian/core/provideractivity"
+	"github.com/odpf/guardian/core/activity"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/salt/log"
 	"github.com/stretchr/testify/suite"
 )
 
-type ProviderActivityRepositoryTestSuite struct {
+type ActivityRepositoryTestSuite struct {
 	suite.Suite
 
 	store              *postgres.Store
-	repository         *postgres.ProviderActivityRepository
+	repository         *postgres.ActivityRepository
 	providerRepository *postgres.ProviderRepository
 	resourceRepository *postgres.ResourceRepository
 
@@ -27,18 +27,18 @@ type ProviderActivityRepositoryTestSuite struct {
 	dummyResource *domain.Resource
 }
 
-func TestProviderActivity(t *testing.T) {
-	suite.Run(t, new(ProviderActivityRepositoryTestSuite))
+func TestActivityRepository(t *testing.T) {
+	suite.Run(t, new(ActivityRepositoryTestSuite))
 }
 
-func (s *ProviderActivityRepositoryTestSuite) SetupSuite() {
+func (s *ActivityRepositoryTestSuite) SetupSuite() {
 	logger := log.NewLogrus(log.LogrusWithLevel("debug"))
 	store, pool, resource, err := newTestStore(logger)
 	if err != nil {
 		s.T().Fatal(err)
 	}
 	s.store = store
-	s.repository = postgres.NewProviderActivityRepository(store.DB())
+	s.repository = postgres.NewActivityRepository(store.DB())
 	s.providerRepository = postgres.NewProviderRepository(store.DB())
 	s.resourceRepository = postgres.NewResourceRepository(store.DB())
 
@@ -67,8 +67,8 @@ func (s *ProviderActivityRepositoryTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *ProviderActivityRepositoryTestSuite) TestFind() {
-	activity := &domain.ProviderActivity{
+func (s *ActivityRepositoryTestSuite) TestFind() {
+	activity := &domain.Activity{
 		ProviderID:     s.dummyProvider.ID,
 		ResourceID:     s.dummyResource.ID,
 		AccountID:      "user@example.com",
@@ -77,7 +77,7 @@ func (s *ProviderActivityRepositoryTestSuite) TestFind() {
 		Authorizations: []string{"test-authorization"},
 		Metadata:       map[string]interface{}{"foo": "bar"},
 	}
-	activity2 := &domain.ProviderActivity{
+	activity2 := &domain.Activity{
 		ProviderID:     s.dummyProvider.ID,
 		ResourceID:     s.dummyResource.ID,
 		AccountID:      "user2@example.com",
@@ -86,7 +86,7 @@ func (s *ProviderActivityRepositoryTestSuite) TestFind() {
 		Authorizations: []string{"test-authorization"},
 		Metadata:       map[string]interface{}{"foo": "bar"},
 	}
-	err := s.repository.BulkInsert(context.Background(), []*domain.ProviderActivity{activity, activity2})
+	err := s.repository.BulkInsert(context.Background(), []*domain.Activity{activity, activity2})
 	s.Require().NoError(err)
 
 	oneHourAgo := time.Now().Add(-time.Hour)
@@ -94,35 +94,35 @@ func (s *ProviderActivityRepositoryTestSuite) TestFind() {
 	testCases := []struct {
 		name               string
 		filter             domain.ListProviderActivitiesFilter
-		expectedActivities []*domain.ProviderActivity
+		expectedActivities []*domain.Activity
 	}{
 		{
 			"filter by provider ids",
 			domain.ListProviderActivitiesFilter{
 				ProviderIDs: []string{s.dummyProvider.ID},
 			},
-			[]*domain.ProviderActivity{activity, activity2},
+			[]*domain.Activity{activity, activity2},
 		},
 		{
 			"filter by resoruce ids",
 			domain.ListProviderActivitiesFilter{
 				ResourceIDs: []string{s.dummyResource.ID},
 			},
-			[]*domain.ProviderActivity{activity, activity2},
+			[]*domain.Activity{activity, activity2},
 		},
 		{
 			"filter by account ids",
 			domain.ListProviderActivitiesFilter{
 				AccountIDs: []string{"user@example.com"},
 			},
-			[]*domain.ProviderActivity{activity},
+			[]*domain.Activity{activity},
 		},
 		{
 			"filter by types",
 			domain.ListProviderActivitiesFilter{
 				Types: []string{"test-type"},
 			},
-			[]*domain.ProviderActivity{activity, activity2},
+			[]*domain.Activity{activity, activity2},
 		},
 		{
 			"filter by timestamp",
@@ -130,7 +130,7 @@ func (s *ProviderActivityRepositoryTestSuite) TestFind() {
 				TimestampGte: &oneHourAgo,
 				TimestampLte: &now,
 			},
-			[]*domain.ProviderActivity{activity, activity2},
+			[]*domain.Activity{activity, activity2},
 		},
 		{
 			"filter by timestamp 2",
@@ -153,8 +153,8 @@ func (s *ProviderActivityRepositoryTestSuite) TestFind() {
 	}
 }
 
-func (s *ProviderActivityRepositoryTestSuite) TestGetOne() {
-	activity := &domain.ProviderActivity{
+func (s *ActivityRepositoryTestSuite) TestGetOne() {
+	a := &domain.Activity{
 		ProviderID:     s.dummyProvider.ID,
 		ResourceID:     s.dummyResource.ID,
 		AccountID:      "user@example.com",
@@ -163,16 +163,16 @@ func (s *ProviderActivityRepositoryTestSuite) TestGetOne() {
 		Authorizations: []string{"test-authorization"},
 		Metadata:       map[string]interface{}{"foo": "bar"},
 	}
-	err := s.repository.BulkInsert(context.Background(), []*domain.ProviderActivity{activity})
+	err := s.repository.BulkInsert(context.Background(), []*domain.Activity{a})
 	s.Require().NoError(err)
 
 	s.Run("should return activity details", func() {
-		expectedAcitivity := &domain.ProviderActivity{}
-		*expectedAcitivity = *activity
+		expectedAcitivity := &domain.Activity{}
+		*expectedAcitivity = *a
 		expectedAcitivity.Provider = s.dummyProvider
 		expectedAcitivity.Resource = s.dummyResource
 
-		actualActivity, err := s.repository.GetOne(context.Background(), activity.ID)
+		actualActivity, err := s.repository.GetOne(context.Background(), a.ID)
 
 		s.NoError(err)
 		if diff := cmp.Diff(expectedAcitivity, actualActivity, cmpopts.EquateApproxTime(time.Millisecond)); diff != "" {
@@ -183,23 +183,23 @@ func (s *ProviderActivityRepositoryTestSuite) TestGetOne() {
 	s.Run("should return error if activity not found", func() {
 		_, err := s.repository.GetOne(context.Background(), uuid.NewString())
 
-		s.ErrorIs(err, provideractivity.ErrNotFound)
+		s.ErrorIs(err, activity.ErrNotFound)
 	})
 }
 
-func (s *ProviderActivityRepositoryTestSuite) TestBulkInsert() {
-	s.Run("should return error if an error occured when converting domain.ProviderActivity", func() {
-		invalidActivity := &domain.ProviderActivity{
+func (s *ActivityRepositoryTestSuite) TestBulkInsert() {
+	s.Run("should return error if an error occured when converting domain.Activity", func() {
+		invalidActivity := &domain.Activity{
 			ProviderID: "invalid-uuid",
 			ResourceID: "invalid-uuid",
 		}
 
-		err := s.repository.BulkInsert(context.Background(), []*domain.ProviderActivity{invalidActivity})
+		err := s.repository.BulkInsert(context.Background(), []*domain.Activity{invalidActivity})
 
 		s.Error(err)
 	})
 
-	activity := &domain.ProviderActivity{
+	activity := &domain.Activity{
 		ProviderID:     s.dummyProvider.ID,
 		ResourceID:     s.dummyResource.ID,
 		AccountID:      "user@example.com",
@@ -208,7 +208,7 @@ func (s *ProviderActivityRepositoryTestSuite) TestBulkInsert() {
 		Authorizations: []string{"test-authorization"},
 		Metadata:       map[string]interface{}{"foo": "bar"},
 	}
-	activity2 := &domain.ProviderActivity{
+	activity2 := &domain.Activity{
 		ProviderID:     s.dummyProvider.ID,
 		ResourceID:     s.dummyResource.ID,
 		AccountID:      "user2@ecample.com",
@@ -219,7 +219,7 @@ func (s *ProviderActivityRepositoryTestSuite) TestBulkInsert() {
 	}
 
 	s.Run("should insert activities and update the IDs", func() {
-		err := s.repository.BulkInsert(context.Background(), []*domain.ProviderActivity{activity, activity2})
+		err := s.repository.BulkInsert(context.Background(), []*domain.Activity{activity, activity2})
 
 		s.NoError(err)
 		s.NotEmpty(activity.ID)
@@ -227,11 +227,11 @@ func (s *ProviderActivityRepositoryTestSuite) TestBulkInsert() {
 	})
 
 	s.Run("should return error if provider relation not found", func() {
-		activity := &domain.ProviderActivity{
+		activity := &domain.Activity{
 			ProviderID: uuid.NewString(),
 		}
 
-		err := s.repository.BulkInsert(context.Background(), []*domain.ProviderActivity{activity})
+		err := s.repository.BulkInsert(context.Background(), []*domain.Activity{activity})
 
 		s.Error(err)
 	})

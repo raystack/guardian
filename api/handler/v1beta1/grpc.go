@@ -35,7 +35,7 @@ type ProtoAdapter interface {
 	ToGrantProto(*domain.Grant) (*guardianv1beta1.Grant, error)
 	FromGrantProto(*guardianv1beta1.Grant) *domain.Grant
 
-	ToProviderActivity(*domain.ProviderActivity) (*guardianv1beta1.ProviderActivity, error)
+	ToActivityProto(*domain.Activity) (*guardianv1beta1.ProviderActivity, error)
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter
@@ -49,11 +49,11 @@ type resourceService interface {
 	BatchDelete(context.Context, []string) error
 }
 
-//go:generate mockery --name=providerActivityService --exported --with-expecter
-type providerActivityService interface {
-	GetOne(context.Context, string) (*domain.ProviderActivity, error)
-	Find(context.Context, domain.ListProviderActivitiesFilter) ([]*domain.ProviderActivity, error)
-	Import(context.Context, domain.ImportActivitiesFilter) ([]*domain.ProviderActivity, error)
+//go:generate mockery --name=activityService --exported --with-expecter
+type activityService interface {
+	GetOne(context.Context, string) (*domain.Activity, error)
+	Find(context.Context, domain.ListProviderActivitiesFilter) ([]*domain.Activity, error)
+	Import(context.Context, domain.ImportActivitiesFilter) ([]*domain.Activity, error)
 }
 
 //go:generate mockery --name=providerService --exported --with-expecter
@@ -108,14 +108,14 @@ type grantService interface {
 }
 
 type GRPCServer struct {
-	resourceService         resourceService
-	providerActivityService providerActivityService
-	providerService         providerService
-	policyService           policyService
-	appealService           appealService
-	approvalService         approvalService
-	grantService            grantService
-	adapter                 ProtoAdapter
+	resourceService resourceService
+	activityService activityService
+	providerService providerService
+	policyService   policyService
+	appealService   appealService
+	approvalService approvalService
+	grantService    grantService
+	adapter         ProtoAdapter
 
 	authenticatedUserHeaderKey string
 
@@ -124,7 +124,7 @@ type GRPCServer struct {
 
 func NewGRPCServer(
 	resourceService resourceService,
-	providerActivityService providerActivityService,
+	activityService activityService,
 	providerService providerService,
 	policyService policyService,
 	appealService appealService,
@@ -135,7 +135,7 @@ func NewGRPCServer(
 ) *GRPCServer {
 	return &GRPCServer{
 		resourceService:            resourceService,
-		providerActivityService:    providerActivityService,
+		activityService:            activityService,
 		providerService:            providerService,
 		policyService:              policyService,
 		appealService:              appealService,

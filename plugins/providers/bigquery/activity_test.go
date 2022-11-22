@@ -14,7 +14,7 @@ import (
 	"google.golang.org/genproto/googleapis/cloud/audit"
 )
 
-func TestActivity_ToProviderActivity(t *testing.T) {
+func TestActivity_ToActivity(t *testing.T) {
 	now := time.Now()
 	dummyProvider := domain.Provider{
 		ID:   "dummy-provider-id",
@@ -52,7 +52,7 @@ func TestActivity_ToProviderActivity(t *testing.T) {
 		"resource_name": "projects/xxx/datasets/yyy/tables/zzz",
 	}
 
-	expectedProviderActivity := &domain.ProviderActivity{
+	expectedActivity := &domain.Activity{
 		ProviderID:     dummyProvider.ID,
 		Timestamp:      a.Timestamp,
 		Type:           "test-method-name",
@@ -68,10 +68,10 @@ func TestActivity_ToProviderActivity(t *testing.T) {
 		},
 	}
 
-	actualProviderActivity, err := a.ToProviderActivity(dummyProvider)
+	actualActivity, err := a.ToActivity(dummyProvider)
 
 	assert.NoError(t, err)
-	assert.Equal(t, expectedProviderActivity, actualProviderActivity)
+	assert.Equal(t, expectedActivity, actualActivity)
 }
 
 func TestList(t *testing.T) {

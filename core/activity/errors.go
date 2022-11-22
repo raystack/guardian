@@ -1,4 +1,4 @@
-package provideractivity
+package activity
 
 import "errors"
 

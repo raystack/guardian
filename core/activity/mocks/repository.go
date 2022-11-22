@@ -23,11 +23,11 @@ func (_m *Repository) EXPECT() *Repository_Expecter {
 }
 
 // BulkInsert provides a mock function with given fields: _a0, _a1
-func (_m *Repository) BulkInsert(_a0 context.Context, _a1 []*domain.ProviderActivity) error {
+func (_m *Repository) BulkInsert(_a0 context.Context, _a1 []*domain.Activity) error {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []*domain.ProviderActivity) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []*domain.Activity) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -43,14 +43,14 @@ type Repository_BulkInsert_Call struct {
 
 // BulkInsert is a helper method to define mock.On call
 //  - _a0 context.Context
-//  - _a1 []*domain.ProviderActivity
+//  - _a1 []*domain.Activity
 func (_e *Repository_Expecter) BulkInsert(_a0 interface{}, _a1 interface{}) *Repository_BulkInsert_Call {
 	return &Repository_BulkInsert_Call{Call: _e.mock.On("BulkInsert", _a0, _a1)}
 }
 
-func (_c *Repository_BulkInsert_Call) Run(run func(_a0 context.Context, _a1 []*domain.ProviderActivity)) *Repository_BulkInsert_Call {
+func (_c *Repository_BulkInsert_Call) Run(run func(_a0 context.Context, _a1 []*domain.Activity)) *Repository_BulkInsert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]*domain.ProviderActivity))
+		run(args[0].(context.Context), args[1].([]*domain.Activity))
 	})
 	return _c
 }
@@ -61,15 +61,15 @@ func (_c *Repository_BulkInsert_Call) Return(_a0 error) *Repository_BulkInsert_C
 }
 
 // Find provides a mock function with given fields: _a0, _a1
-func (_m *Repository) Find(_a0 context.Context, _a1 domain.ListProviderActivitiesFilter) ([]*domain.ProviderActivity, error) {
+func (_m *Repository) Find(_a0 context.Context, _a1 domain.ListProviderActivitiesFilter) ([]*domain.Activity, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 []*domain.ProviderActivity
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ListProviderActivitiesFilter) []*domain.ProviderActivity); ok {
+	var r0 []*domain.Activity
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ListProviderActivitiesFilter) []*domain.Activity); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*domain.ProviderActivity)
+			r0 = ret.Get(0).([]*domain.Activity)
 		}
 	}
 
@@ -102,21 +102,21 @@ func (_c *Repository_Find_Call) Run(run func(_a0 context.Context, _a1 domain.Lis
 	return _c
 }
 
-func (_c *Repository_Find_Call) Return(_a0 []*domain.ProviderActivity, _a1 error) *Repository_Find_Call {
+func (_c *Repository_Find_Call) Return(_a0 []*domain.Activity, _a1 error) *Repository_Find_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
 // GetOne provides a mock function with given fields: _a0, _a1
-func (_m *Repository) GetOne(_a0 context.Context, _a1 string) (*domain.ProviderActivity, error) {
+func (_m *Repository) GetOne(_a0 context.Context, _a1 string) (*domain.Activity, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *domain.ProviderActivity
-	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.ProviderActivity); ok {
+	var r0 *domain.Activity
+	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.Activity); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.ProviderActivity)
+			r0 = ret.Get(0).(*domain.Activity)
 		}
 	}
 
@@ -149,7 +149,7 @@ func (_c *Repository_GetOne_Call) Run(run func(_a0 context.Context, _a1 string))
 	return _c
 }
 
-func (_c *Repository_GetOne_Call) Return(_a0 *domain.ProviderActivity, _a1 error) *Repository_GetOne_Call {
+func (_c *Repository_GetOne_Call) Return(_a0 *domain.Activity, _a1 error) *Repository_GetOne_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }

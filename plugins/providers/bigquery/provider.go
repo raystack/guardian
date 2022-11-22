@@ -263,7 +263,7 @@ func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, res
 	return bqClient.ListAccess(ctx, resources)
 }
 
-func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter domain.ImportActivitiesFilter) ([]*domain.ProviderActivity, error) {
+func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
 	creds, err := ParseCredentials(pd.Config.Credentials, p.encryptor)
 	if err != nil {
 		return nil, fmt.Errorf("parsing credentials: %w", err)
@@ -284,9 +284,9 @@ func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter
 		return nil, fmt.Errorf("listing log entries: %w", err)
 	}
 
-	activities := make([]*domain.ProviderActivity, 0, len(entries))
+	activities := make([]*domain.Activity, 0, len(entries))
 	for _, e := range entries {
-		pa, err := e.ToProviderActivity(pd)
+		pa, err := e.ToActivity(pd)
 		if err != nil {
 			return nil, fmt.Errorf("converting log entry to provider activity: %w", err)
 		}

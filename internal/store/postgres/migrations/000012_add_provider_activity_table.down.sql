@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS "provider_activities";
+DROP TABLE IF EXISTS "activities";

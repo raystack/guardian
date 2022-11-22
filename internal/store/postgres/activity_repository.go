@@ -5,22 +5,22 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/odpf/guardian/core/provideractivity"
+	"github.com/odpf/guardian/core/activity"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres/model"
 	"gorm.io/gorm"
 )
 
-type ProviderActivityRepository struct {
+type ActivityRepository struct {
 	db *gorm.DB
 }
 
-func NewProviderActivityRepository(db *gorm.DB) *ProviderActivityRepository {
-	return &ProviderActivityRepository{db}
+func NewActivityRepository(db *gorm.DB) *ActivityRepository {
+	return &ActivityRepository{db}
 }
 
-func (r *ProviderActivityRepository) Find(ctx context.Context, filter domain.ListProviderActivitiesFilter) ([]*domain.ProviderActivity, error) {
-	var activities []*model.ProviderActivity
+func (r *ActivityRepository) Find(ctx context.Context, filter domain.ListProviderActivitiesFilter) ([]*domain.Activity, error) {
+	var activities []*model.Activity
 	db := r.db.WithContext(ctx)
 	if filter.ProviderIDs != nil {
 		db = db.Where(`"provider_id" IN ?`, filter.ProviderIDs)
@@ -44,7 +44,7 @@ func (r *ProviderActivityRepository) Find(ctx context.Context, filter domain.Lis
 		return nil, err
 	}
 
-	var results []*domain.ProviderActivity
+	var results []*domain.Activity
 	for _, activity := range activities {
 		pa, err := activity.ToDomain()
 		if err != nil {
@@ -55,27 +55,27 @@ func (r *ProviderActivityRepository) Find(ctx context.Context, filter domain.Lis
 	return results, nil
 }
 
-func (r *ProviderActivityRepository) GetOne(ctx context.Context, id string) (*domain.ProviderActivity, error) {
-	var activity model.ProviderActivity
+func (r *ActivityRepository) GetOne(ctx context.Context, id string) (*domain.Activity, error) {
+	var m model.Activity
 	if err := r.db.
 		WithContext(ctx).
 		Joins("Provider").
 		Joins("Resource").
 		Where(`"provider_activities"."id" = ?`, id).
-		First(&activity).Error; err != nil {
+		First(&m).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, provideractivity.ErrNotFound
+			return nil, activity.ErrNotFound
 		}
 		return nil, err
 	}
-	return activity.ToDomain()
+	return m.ToDomain()
 }
 
-func (r *ProviderActivityRepository) BulkInsert(ctx context.Context, activities []*domain.ProviderActivity) error {
-	models := make([]*model.ProviderActivity, len(activities))
-	for i, pa := range activities {
-		models[i] = &model.ProviderActivity{}
-		if err := models[i].FromDomain(pa); err != nil {
+func (r *ActivityRepository) BulkInsert(ctx context.Context, activities []*domain.Activity) error {
+	models := make([]*model.Activity, len(activities))
+	for i, a := range activities {
+		models[i] = &model.Activity{}
+		if err := models[i].FromDomain(a); err != nil {
 			return fmt.Errorf("failed to convert domain to model: %w", err)
 		}
 	}
@@ -85,11 +85,11 @@ func (r *ProviderActivityRepository) BulkInsert(ctx context.Context, activities 
 	}
 
 	for i, m := range models {
-		newProviderActivity, err := m.ToDomain()
+		newActivity, err := m.ToDomain()
 		if err != nil {
 			return fmt.Errorf("failed to convert model %q to domain: %w", m.ID, err)
 		}
-		*activities[i] = *newProviderActivity
+		*activities[i] = *newActivity
 	}
 
 	return nil
