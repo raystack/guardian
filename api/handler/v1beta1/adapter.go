@@ -742,6 +742,56 @@ func (a *adapter) ToGrantProto(grant *domain.Grant) (*guardianv1beta1.Grant, err
 	return grantProto, nil
 }
 
+func (a *adapter) ToProviderActivity(activity *domain.ProviderActivity) (*guardianv1beta1.ProviderActivity, error) {
+	if activity == nil {
+		return nil, nil
+	}
+
+	activityProto := &guardianv1beta1.ProviderActivity{
+		Id:             activity.ID,
+		ProviderId:     activity.ProviderID,
+		ResourceId:     activity.ResourceID,
+		AccountType:    activity.AccountType,
+		AccountId:      activity.AccountID,
+		Authorizations: activity.Authorizations,
+		Type:           activity.Type,
+	}
+
+	if !activity.Timestamp.IsZero() {
+		activityProto.Timestamp = timestamppb.New(activity.Timestamp)
+	}
+
+	if activity.Metadata != nil {
+		metadataStruct, err := structpb.NewStruct(activity.Metadata)
+		if err != nil {
+			return nil, fmt.Errorf("parsing metadata: %w", err)
+		}
+		activityProto.Metadata = metadataStruct
+	}
+
+	if !activity.CreatedAt.IsZero() {
+		activityProto.CreatedAt = timestamppb.New(activity.CreatedAt)
+	}
+
+	if activity.Provider != nil {
+		providerProto, err := a.ToProviderProto(activity.Provider)
+		if err != nil {
+			return nil, fmt.Errorf("parsing provider: %w", err)
+		}
+		activityProto.Provider = providerProto
+	}
+
+	if activity.Resource != nil {
+		resourceProto, err := a.ToResourceProto(activity.Resource)
+		if err != nil {
+			return nil, fmt.Errorf("parsing resource: %w", err)
+		}
+		activityProto.Resource = resourceProto
+	}
+
+	return activityProto, nil
+}
+
 func (a *adapter) fromConditionProto(c *guardianv1beta1.Condition) *domain.Condition {
 	if c == nil {
 		return nil
