@@ -106,7 +106,7 @@ type Step struct {
 	ApproveIf string `json:"approve_if,omitempty" yaml:"approve_if,omitempty" validate:"required_if=Strategy auto"`
 }
 
-func (s Step) ResolveApprovers(a Appeal) ([]string, error) {
+func (s Step) ResolveApprovers(a *Appeal) ([]string, error) {
 	if s.Strategy != ApprovalStepStrategyManual {
 		return nil, nil
 	}
@@ -156,6 +156,28 @@ func (s Step) ResolveApprovers(a Appeal) ([]string, error) {
 	}
 
 	return distinctApprovers, nil
+}
+
+func (s Step) ToApproval(a *Appeal, p *Policy, index int) (*Approval, error) {
+	approvers, err := s.ResolveApprovers(a)
+	if err != nil {
+		return nil, fmt.Errorf("resolving approvers `%s`: %w", s.Approvers, err)
+	}
+
+	approval := &Approval{
+		Index:         index,
+		Name:          s.Name,
+		PolicyID:      p.ID,
+		PolicyVersion: p.Version,
+		Approvers:     approvers,
+		Status:        ApprovalStatusPending,
+	}
+
+	if index > 0 {
+		approval.Status = ApprovalStatusBlocked
+	}
+
+	return approval, nil
 }
 
 type RequirementTrigger struct {

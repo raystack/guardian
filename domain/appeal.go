@@ -154,14 +154,9 @@ func (a Appeal) ToGrant() (*Grant, error) {
 func (a *Appeal) ApplyPolicy(p *Policy) error {
 	approvals := []*Approval{}
 	for i, step := range p.Steps {
-		approvers, err := step.ResolveApprovers(*a)
+		approval, err := step.ToApproval(a, p, i)
 		if err != nil {
-			return fmt.Errorf("resolving approvers `%s`: %w", step.Approvers, err)
-		}
-
-		approval := &Approval{}
-		if err := approval.Init(p, i, approvers); err != nil {
-			return fmt.Errorf(`initializing approval "%s": %w`, step.Name, err)
+			return err
 		}
 		approvals = append(approvals, approval)
 	}

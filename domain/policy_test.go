@@ -11,14 +11,14 @@ import (
 func TestStep_ResolveApprovers(t *testing.T) {
 	tests := []struct {
 		name    string
-		appeal  domain.Appeal
+		appeal  *domain.Appeal
 		step    domain.Step
 		want    []string
 		wantErr bool
 	}{
 		{
 			name: "should resolve approvers",
-			appeal: domain.Appeal{
+			appeal: &domain.Appeal{
 				Creator: map[string]interface{}{
 					"userManager": "foo@bar.com",
 				},
@@ -52,7 +52,7 @@ func TestStep_ResolveApprovers(t *testing.T) {
 		},
 		{
 			name: "should return error if failed when evaluating expression",
-			appeal: domain.Appeal{
+			appeal: &domain.Appeal{
 				Creator: map[string]interface{}{
 					"userManager": "foo@bar.com",
 				},
@@ -74,7 +74,7 @@ func TestStep_ResolveApprovers(t *testing.T) {
 		},
 		{
 			name: "should return error if value is not email",
-			appeal: domain.Appeal{
+			appeal: &domain.Appeal{
 				Creator: map[string]interface{}{
 					"userManager": "foo@bar.com",
 				},
@@ -96,7 +96,7 @@ func TestStep_ResolveApprovers(t *testing.T) {
 		},
 		{
 			name: "should return error if type is not supported",
-			appeal: domain.Appeal{
+			appeal: &domain.Appeal{
 				Creator: map[string]interface{}{
 					"userManager": "foo@bar.com",
 				},
@@ -118,7 +118,7 @@ func TestStep_ResolveApprovers(t *testing.T) {
 		},
 		{
 			name: "should return error if slice item type is not supported",
-			appeal: domain.Appeal{
+			appeal: &domain.Appeal{
 				Creator: map[string]interface{}{
 					"userManager": "foo@bar.com",
 				},
@@ -145,7 +145,7 @@ func TestStep_ResolveApprovers(t *testing.T) {
 		},
 		{
 			name: "should return error if appeal is unable to convert to map",
-			appeal: domain.Appeal{
+			appeal: &domain.Appeal{
 				Creator: map[string]interface{}{
 					"userManager": "foo@bar.com",
 				},
