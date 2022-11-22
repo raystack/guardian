@@ -5,13 +5,6 @@ module.exports = {
     'roadmap',
     {
       type: "category",
-      label: "Concepts",
-      items: [
-        "concepts/overview",
-      ],
-    },
-    {
-      type: "category",
       label: "Tour",
       items: [
         "tour/introduction",
@@ -22,6 +15,21 @@ module.exports = {
         "tour/create-appeal",
         "tour/approve-reject-appeal",
         "tour/complex-use-case",
+      ],
+    },
+    {
+      type: "category",
+      label: "Concepts",
+      items: [
+        "concepts/overview",
+        "concepts/architecture",
+      ],
+    },
+    {
+      type: "category",
+      label: "Guides",
+      items: [
+        "guides/deployment",
       ],
     },
     {
@@ -49,7 +57,15 @@ module.exports = {
         "reference/resource",
         "reference/jobs",
         "reference/glossary",
+        "reference/configuration",
       ],
+    },
+    {
+      type: "category",
+      label: "Extend",
+      items: [
+        "contribute/provider",
+      ]
     },
     {
       type: "category",
@@ -57,7 +73,6 @@ module.exports = {
       items: [
         "contribute/architecture",
         "contribute/contribution",
-        "contribute/development",
       ],
     },
   ],

@@ -318,6 +318,7 @@ func (s *AppealRepositoryTestSuite) TestBulkUpsert() {
 			Status:        domain.AppealStatusApproved,
 			Permissions:   []string{"permission_test"},
 			CreatedBy:     "user@example.com",
+			Description:   "The answer is 42",
 		},
 		{
 			ResourceID:    s.dummyResource.ID,

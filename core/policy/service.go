@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"
@@ -29,7 +30,7 @@ type repository interface {
 //go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
 	GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error)
-	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
+	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider, *domain.Policy) error
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter
@@ -103,18 +104,21 @@ func (s *Service) Create(ctx context.Context, p *domain.Policy) error {
 		}
 		p.IAM.Config = sensitiveConfig
 	}
-	if err := s.repository.Create(ctx, p); err != nil {
-		return err
+
+	if !isDryRun(ctx) {
+		if err := s.repository.Create(ctx, p); err != nil {
+			return err
+		}
+
+		if err := s.auditLogger.Log(ctx, AuditKeyPolicyCreate, p); err != nil {
+			s.logger.Error("failed to record audit log", "error", err)
+		}
 	}
 
 	if p.HasIAMConfig() {
 		if err := s.decryptAndDeserializeIAMConfig(p.IAM); err != nil {
 			return err
 		}
-	}
-
-	if err := s.auditLogger.Log(ctx, AuditKeyPolicyCreate, p); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
 	}
 
 	return nil
@@ -178,8 +182,6 @@ func (s *Service) Update(ctx context.Context, p *domain.Policy) error {
 		return err
 	}
 
-	p.Version = latestPolicy.Version + 1
-
 	if p.HasIAMConfig() {
 		if err := sensitiveConfig.Encrypt(); err != nil {
 			return fmt.Errorf("encrypting iam config: %w", err)
@@ -187,12 +189,16 @@ func (s *Service) Update(ctx context.Context, p *domain.Policy) error {
 		p.IAM.Config = sensitiveConfig
 	}
 
-	if err := s.repository.Create(ctx, p); err != nil {
-		return err
-	}
+	p.Version = latestPolicy.Version + 1
 
-	if err := s.auditLogger.Log(ctx, AuditKeyPolicyUpdate, p); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+	if !isDryRun(ctx) {
+		if err := s.repository.Create(ctx, p); err != nil {
+			return err
+		}
+
+		if err := s.auditLogger.Log(ctx, AuditKeyPolicyUpdate, p); err != nil {
+			s.logger.Error("failed to record audit log", "error", err)
+		}
 	}
 
 	if p.HasIAMConfig() {
@@ -230,6 +236,10 @@ func (s *Service) validatePolicy(ctx context.Context, p *domain.Policy, excluded
 	}
 
 	if err := s.validateSteps(p.Steps); err != nil {
+		return err
+	}
+
+	if err := s.validateAppealConfig(p.AppealConfig); err != nil {
 		return err
 	}
 
@@ -276,7 +286,7 @@ func (s *Service) validateRequirements(ctx context.Context, requirements []*doma
 				Options:    aa.Options,
 			}
 			appeal.SetDefaults()
-			if err := s.providerService.ValidateAppeal(ctx, appeal, provider); err != nil {
+			if err := s.providerService.ValidateAppeal(ctx, appeal, provider, appeal.Policy); err != nil {
 				return fmt.Errorf("requirement[%v].appeals[%v]: %w", i, j, err)
 			}
 		}
@@ -365,4 +375,30 @@ func structToMap(item interface{}) (map[string]interface{}, error) {
 	}
 
 	return result, nil
+}
+
+func (s *Service) validateAppealConfig(cfg *domain.PolicyAppealConfig) error {
+	if cfg != nil && cfg.AllowActiveAccessExtensionIn != "" {
+		if err := validateDuration(cfg.AllowActiveAccessExtensionIn); err != nil {
+			return fmt.Errorf("invalid appeal extension policy: %w", err)
+		}
+	}
+	return nil
+}
+
+func validateDuration(d string) error {
+	if _, err := time.ParseDuration(d); err != nil {
+		return fmt.Errorf("parsing duration: %w", err)
+	}
+	return nil
+}
+
+type isDryRunKey string
+
+func WithDryRun(ctx context.Context) context.Context {
+	return context.WithValue(ctx, isDryRunKey("dry_run"), true)
+}
+
+func isDryRun(ctx context.Context) bool {
+	return ctx.Value(isDryRunKey("dry_run")) != nil
 }

@@ -66,7 +66,7 @@ type providerService interface {
 	Update(context.Context, *domain.Provider) error
 	FetchResources(context.Context) error
 	GetRoles(ctx context.Context, id, resourceType string) ([]*domain.Role, error)
-	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider) error
+	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider, *domain.Policy) error
 	GrantAccess(context.Context, domain.Grant) error
 	RevokeAccess(context.Context, domain.Grant) error
 	Delete(context.Context, string) error

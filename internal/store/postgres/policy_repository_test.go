@@ -59,6 +59,26 @@ func (s *PolicyRepositoryTestSuite) TestCreate() {
 			IAM: &domain.IAMConfig{
 				Config: make(chan int),
 			},
+			AppealConfig: &domain.PolicyAppealConfig{
+				AllowPermanentAccess:         false,
+				AllowActiveAccessExtensionIn: "24h",
+				Questions: []domain.Question{
+					{
+						Key:         "team",
+						Question:    "What team are you in?",
+						Required:    true,
+						Description: "Please provide the name of the team you are in",
+					},
+					{
+						Key:      "purpose",
+						Question: "What is the purpose of this access?",
+						Required: false,
+						Description: "Explain why you need this access. " +
+							"This will be used to evaluate your appeal. " +
+							"For example, you may need access to a specific project or resource.",
+					},
+				},
+			},
 		}
 		actualError := s.repository.Create(context.Background(), p)
 
@@ -83,9 +103,28 @@ func (s *PolicyRepositoryTestSuite) TestFind() {
 		ctx := context.Background()
 		expectedPolicies := []*domain.Policy{
 			{
-				Version:      1,
-				Description:  "test_policy",
-				AppealConfig: nil,
+				Version:     1,
+				Description: "test_policy",
+				AppealConfig: &domain.PolicyAppealConfig{
+					AllowPermanentAccess:         false,
+					AllowActiveAccessExtensionIn: "24h",
+					Questions: []domain.Question{
+						{
+							Key:         "team",
+							Question:    "What team are you in?",
+							Required:    true,
+							Description: "Please provide the name of the team you are in",
+						},
+						{
+							Key:      "purpose",
+							Question: "What is the purpose of this access?",
+							Required: false,
+							Description: "Explain why you need this access. " +
+								"This will be used to evaluate your appeal. " +
+								"For example, you may need access to a specific project or resource.",
+						},
+					},
+				},
 			},
 		}
 

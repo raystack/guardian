@@ -176,6 +176,7 @@ func getPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 func createPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
+	var dryRun bool
 
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -211,6 +212,7 @@ func createPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			res, err := client.CreatePolicy(cmd.Context(), &guardianv1beta1.CreatePolicyRequest{
 				Policy: policyProto,
+				DryRun: dryRun,
 			})
 			if err != nil {
 				return err
@@ -218,13 +220,20 @@ func createPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			spinner.Stop()
 
-			fmt.Printf("Policy created with id: %v\n", res.GetPolicy().GetId())
+			msg := "Policy created with id: %v"
+
+			if dryRun {
+				msg += " (dry run)"
+			}
+
+			fmt.Printf(msg+"\n", res.GetPolicy().GetId())
 
 			return nil
 		},
 	}
 
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the policy config")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if true the policy will not be created")
 	cmd.MarkFlagRequired("file")
 
 	return cmd
@@ -232,6 +241,7 @@ func createPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 func updatePolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 	var filePath string
+	var dryRun bool
 	cmd := &cobra.Command{
 		Use:   "edit",
 		Short: "Edit a policy",
@@ -269,6 +279,7 @@ func updatePolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			_, err = client.UpdatePolicy(cmd.Context(), &guardianv1beta1.UpdatePolicyRequest{
 				Id:     policyID,
 				Policy: policyProto,
+				DryRun: dryRun,
 			})
 			if err != nil {
 				return err
@@ -276,13 +287,19 @@ func updatePolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			spinner.Stop()
 
-			fmt.Println("Successfully updated policy")
+			msg := "Successfully updated policy"
+			if dryRun {
+				msg += " (dry run)"
+			}
+
+			fmt.Println(msg)
 
 			return nil
 		},
 	}
 
 	cmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the policy config")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if true the policy will not be updated")
 	cmd.MarkFlagRequired("file")
 
 	return cmd

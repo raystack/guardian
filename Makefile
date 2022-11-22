@@ -37,7 +37,7 @@ coverage: test
 	@go tool cover -html=coverage.out
 
 build:
-	@echo " > Building guardian version ${VERSION}..."
+	@echo "Building guardian version ${VERSION}..."
 	go build -ldflags "-X ${NAME}/core.Version=${VERSION} -X ${NAME}/core.BuildCommit=${COMMIT}" -o dist/guardian .
 	@echo "Build complete"
 
@@ -59,10 +59,10 @@ config:
 	@cp internal/server/config.yaml config.yaml
 
 proto:
-	@echo " > generating protobuf from odpf/proton"
-	@echo " > [info] make sure correct version of dependencies are installed using 'make install'"
+	@echo "Generating protobuf from odpf/proton"
+	@echo " [info] make sure correct version of dependencies are installed using 'make install'"
 	@buf generate https://github.com/odpf/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --template buf.gen.yaml --path odpf/guardian
-	@echo " > protobuf compilation finished"
+	@echo "Protobuf compilation finished"
 
 setup:
 	@echo "Installing dependencies..."

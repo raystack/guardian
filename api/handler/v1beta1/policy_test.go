@@ -290,6 +290,16 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 					{Name: "1 Day", Value: "24h"},
 					{Name: "3 Days", Value: "72h"},
 				},
+				AllowPermanentAccess:         true,
+				AllowActiveAccessExtensionIn: "24h",
+				Questions: []domain.Question{
+					{
+						Key:         "team",
+						Question:    "What team are you in?",
+						Required:    true,
+						Description: "Please provide the name of the team you are in",
+					},
+				},
 			},
 		}
 		expectedVersion := uint(1)
@@ -340,6 +350,16 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 					DurationOptions: []*guardianv1beta1.PolicyAppealConfig_DurationOptions{
 						{Name: "1 Day", Value: "24h"},
 						{Name: "3 Days", Value: "72h"},
+					},
+					AllowPermanentAccess:         true,
+					AllowActiveAccessExtensionIn: "24h",
+					Questions: []*guardianv1beta1.PolicyAppealConfig_Question{
+						{
+							Key:         "team",
+							Question:    "What team are you in?",
+							Required:    true,
+							Description: "Please provide the name of the team you are in",
+						},
 					},
 				},
 				CreatedAt: timestamppb.New(timeNow),
@@ -397,6 +417,16 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 					DurationOptions: []*guardianv1beta1.PolicyAppealConfig_DurationOptions{
 						{Name: "1 Day", Value: "24h"},
 						{Name: "3 Days", Value: "72h"},
+					},
+					AllowPermanentAccess:         true,
+					AllowActiveAccessExtensionIn: "24h",
+					Questions: []*guardianv1beta1.PolicyAppealConfig_Question{
+						{
+							Key:         "team",
+							Question:    "What team are you in?",
+							Required:    true,
+							Description: "Please provide the name of the team you are in",
+						},
 					},
 				},
 			},

@@ -72,7 +72,7 @@ func (s *ServiceTestSuite) TestCreate() {
 			{
 				name: "id contains tab(s)",
 				policy: &domain.Policy{
-					ID: "a	a",
+					ID:      "a	a",
 					Version: 1,
 					Steps:   validSteps,
 				},
@@ -223,6 +223,44 @@ func (s *ServiceTestSuite) TestCreate() {
 					},
 				},
 			},
+			{
+				name: "step: invalid AllowActiveAccessExtensionIn",
+				policy: &domain.Policy{
+					ID:      "test-id",
+					Version: 1,
+					Steps: []*domain.Step{
+						{
+							Name:     "step-1",
+							Strategy: "manual",
+							Approvers: []string{
+								"approver@email.com",
+							},
+						},
+					},
+					AppealConfig: &domain.PolicyAppealConfig{
+						AllowActiveAccessExtensionIn: "invalid-duration",
+					},
+					Requirements: []*domain.Requirement{
+						{
+							On: &domain.RequirementTrigger{
+								ProviderType: "test-provider-type",
+							},
+							Appeals: []*domain.AdditionalAppeal{
+								{
+									Resource: &domain.ResourceIdentifier{
+										ID: "test-resource-id",
+									},
+									Role: "test-role",
+									Policy: &domain.PolicyConfig{
+										ID:      "test-policy",
+										Version: 1,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		}
 
 		for _, tc := range testCases {
@@ -273,6 +311,20 @@ func (s *ServiceTestSuite) TestCreate() {
 				},
 			},
 		},
+		AppealConfig: &domain.PolicyAppealConfig{
+			DurationOptions: []domain.AppealDurationOption{
+				{
+					Name:  "1 day",
+					Value: "24h",
+				},
+				{
+					Name:  "2 days",
+					Value: "48h",
+				},
+			},
+			AllowPermanentAccess:         false,
+			AllowActiveAccessExtensionIn: "24h",
+		},
 	}
 
 	s.Run("should return error if got error from the policy repository", func() {
@@ -311,6 +363,18 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.Nil(actualError)
 		s.mockPolicyRepository.AssertExpectations(s.T())
 		s.mockAuditLogger.AssertExpectations(s.T())
+	})
+
+	s.Run("with dryRun true", func() {
+		s.Run("with valid policy should not call repository", func() {
+			ctx := policy.WithDryRun(context.Background())
+
+			actualError := s.service.Create(ctx, validPolicy)
+
+			s.Nil(actualError)
+			s.mockPolicyRepository.AssertNotCalled(s.T(), "Create")
+			s.mockAuditLogger.AssertNotCalled(s.T(), "Log")
+		})
 	})
 }
 
@@ -421,7 +485,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 									Options:    aa.Options,
 								}
 								s.mockProviderService.
-									EXPECT().ValidateAppeal(mock.Anything, expectedAppeal, tc.expectedProvider).
+									EXPECT().ValidateAppeal(mock.Anything, expectedAppeal, tc.expectedProvider, mock.Anything).
 									Return(tc.expectedProviderServiceValidateAppealError).
 									Once()
 							}
@@ -537,7 +601,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 						}
 						expectedAppeal.SetDefaults()
 						s.mockProviderService.
-							EXPECT().ValidateAppeal(mock.Anything, expectedAppeal, expectedProvider).
+							EXPECT().ValidateAppeal(mock.Anything, expectedAppeal, expectedProvider, mock.Anything).
 							Return(nil).
 							Once()
 					}
@@ -637,6 +701,43 @@ func (s *ServiceTestSuite) TestUpdate() {
 		s.mockPolicyRepository.AssertExpectations(s.T())
 		s.mockAuditLogger.AssertExpectations(s.T())
 		s.Equal(expectedNewVersion, p.Version)
+	})
+
+	s.Run("with dryRun true", func() {
+		s.Run("with valid policy should not call repository", func() {
+			p := &domain.Policy{
+				ID:      "id",
+				Version: 5,
+				Steps: []*domain.Step{
+					{
+						Name:     "test",
+						Strategy: "manual",
+						Approvers: []string{
+							"user@email.com",
+						},
+					},
+				},
+			}
+
+			expectedLatestPolicy := &domain.Policy{
+				ID:      p.ID,
+				Version: 5,
+			}
+			expectedNewVersion := uint(6)
+
+			ctx := policy.WithDryRun(context.Background())
+
+			s.mockPolicyRepository.EXPECT().GetOne(ctx, p.ID, uint(0)).Return(expectedLatestPolicy, nil).Once()
+
+			actualError := s.service.Update(ctx, p)
+
+			s.Nil(actualError)
+
+			s.mockPolicyRepository.AssertExpectations(s.T())
+			s.mockPolicyRepository.AssertNotCalled(s.T(), "Create")
+			s.mockAuditLogger.AssertNotCalled(s.T(), "Log")
+			s.Equal(expectedNewVersion, p.Version)
+		})
 	})
 }
 

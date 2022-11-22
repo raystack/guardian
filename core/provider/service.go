@@ -18,6 +18,9 @@ const (
 	AuditKeyCreate = "provider.create"
 	AuditKeyUpdate = "provider.update"
 	AuditKeyDelete = "provider.delete"
+
+	ReservedDetailsKeyProviderParameters = "__provider_parameters"
+	ReservedDetailsKeyPolicyQuestions    = "__policy_questions"
 )
 
 //go:generate mockery --name=repository --exported --with-expecter
@@ -115,12 +118,16 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 		return err
 	}
 
-	if err := s.repository.Create(ctx, p); err != nil {
-		return err
-	}
+	dryRun := isDryRun(ctx)
 
-	if err := s.auditLogger.Log(ctx, AuditKeyCreate, p); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+	if !dryRun {
+		if err := s.repository.Create(ctx, p); err != nil {
+			return err
+		}
+
+		if err := s.auditLogger.Log(ctx, AuditKeyCreate, p); err != nil {
+			s.logger.Error("failed to record audit log", "error", err)
+		}
 	}
 
 	go func() {
@@ -130,13 +137,15 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 		if err != nil {
 			s.logger.Error("failed to fetch resources", "error", err)
 		}
-		if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
-			s.logger.Error("failed to insert resources to db", "error", err)
-		} else {
-			s.logger.Info("resources added",
-				"provider_urn", p.URN,
-				"count", len(resources),
-			)
+		if !dryRun {
+			if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
+				s.logger.Error("failed to insert resources to db", "error", err)
+			} else {
+				s.logger.Info("resources added",
+					"provider_urn", p.URN,
+					"count", len(resources),
+				)
+			}
 		}
 	}()
 
@@ -187,12 +196,14 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 		return err
 	}
 
-	if err := s.repository.Update(ctx, p); err != nil {
-		return err
-	}
+	if !isDryRun(ctx) {
+		if err := s.repository.Update(ctx, p); err != nil {
+			return err
+		}
 
-	if err := s.auditLogger.Log(ctx, AuditKeyUpdate, p); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+		if err := s.auditLogger.Log(ctx, AuditKeyUpdate, p); err != nil {
+			s.logger.Error("failed to record audit log", "error", err)
+		}
 	}
 
 	return nil
@@ -244,7 +255,7 @@ func (s *Service) GetPermissions(_ context.Context, pc *domain.ProviderConfig, r
 	return c.GetPermissions(pc, resourceType, role)
 }
 
-func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domain.Provider) error {
+func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domain.Provider, policy *domain.Policy) error {
 	if err := s.validateAppealParam(a); err != nil {
 		return err
 	}
@@ -277,7 +288,17 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 		return ErrInvalidRole
 	}
 
-	if p.Config.Appeal != nil && !p.Config.Appeal.AllowPermanentAccess {
+	// Default to use provider config if policy config is not set
+	AllowPermanentAccess := false
+	if p.Config.Appeal != nil {
+		AllowPermanentAccess = p.Config.Appeal.AllowPermanentAccess
+	}
+
+	if policy != nil && policy.AppealConfig != nil {
+		AllowPermanentAccess = policy.AppealConfig.AllowPermanentAccess
+	}
+
+	if !AllowPermanentAccess {
 		if a.Options == nil {
 			return ErrOptionsDurationNotFound
 		}
@@ -291,7 +312,49 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 		}
 	}
 
+	if err = s.validateQuestionsAndParameters(a, p, policy); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (*Service) validateQuestionsAndParameters(a *domain.Appeal, p *domain.Provider, policy *domain.Policy) error {
+	parameterKeys := getFilledKeys(a, ReservedDetailsKeyProviderParameters)
+	questionKeys := getFilledKeys(a, ReservedDetailsKeyPolicyQuestions)
+
+	if p != nil && p.Config.Parameters != nil {
+		for _, param := range p.Config.Parameters {
+			if param.Required && !utils.ContainsString(parameterKeys, param.Key) {
+				return fmt.Errorf(`parameter "%s" is required`, param.Key)
+			}
+		}
+	}
+
+	if policy != nil && policy.AppealConfig != nil && len(policy.AppealConfig.Questions) > 0 {
+		for _, question := range policy.AppealConfig.Questions {
+			if question.Required && !utils.ContainsString(questionKeys, question.Key) {
+				return fmt.Errorf(`question "%s" is required`, question.Key)
+			}
+		}
+	}
+
+	return nil
+}
+
+func getFilledKeys(a *domain.Appeal, key string) (filledKeys []string) {
+	if a == nil {
+		return
+	}
+
+	if parameters, ok := a.Details[key].(map[string]interface{}); ok {
+		for k, v := range parameters {
+			if val, ok := v.(string); ok && val != "" {
+				filledKeys = append(filledKeys, k)
+			}
+		}
+	}
+	return
 }
 
 func (s *Service) GrantAccess(ctx context.Context, a domain.Grant) error {
@@ -542,4 +605,14 @@ func flattenResources(resources []*domain.Resource) []*domain.Resource {
 		flattenedResources = append(flattenedResources, r.GetFlattened()...)
 	}
 	return flattenedResources
+}
+
+type isDryRunKey string
+
+func WithDryRun(ctx context.Context) context.Context {
+	return context.WithValue(ctx, isDryRunKey("dry_run"), true)
+}
+
+func isDryRun(ctx context.Context) bool {
+	return ctx.Value(isDryRunKey("dry_run")) != nil
 }
