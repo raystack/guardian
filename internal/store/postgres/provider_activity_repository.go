@@ -71,9 +71,9 @@ func (r *ProviderActivityRepository) GetOne(ctx context.Context, id string) (*do
 	return activity.ToDomain()
 }
 
-func (r *ProviderActivityRepository) BulkInsert(ctx context.Context, pas []*domain.ProviderActivity) error {
-	models := make([]*model.ProviderActivity, len(pas))
-	for i, pa := range pas {
+func (r *ProviderActivityRepository) BulkInsert(ctx context.Context, activities []*domain.ProviderActivity) error {
+	models := make([]*model.ProviderActivity, len(activities))
+	for i, pa := range activities {
 		models[i] = &model.ProviderActivity{}
 		if err := models[i].FromDomain(pa); err != nil {
 			return fmt.Errorf("failed to convert domain to model: %w", err)
@@ -89,7 +89,7 @@ func (r *ProviderActivityRepository) BulkInsert(ctx context.Context, pas []*doma
 		if err != nil {
 			return fmt.Errorf("failed to convert model %q to domain: %w", m.ID, err)
 		}
-		*pas[i] = *newProviderActivity
+		*activities[i] = *newProviderActivity
 	}
 
 	return nil

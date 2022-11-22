@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type ProviderActivity struct {
 	ID             string                 `json:"id" yaml:"id"`
@@ -25,4 +28,47 @@ type ListProviderActivitiesFilter struct {
 	Types        []string
 	TimestampGte *time.Time
 	TimestampLte *time.Time
+}
+
+type ImportActivitiesFilter struct {
+	ProviderID   string
+	ResourceIDs  []string
+	AccountIDs   []string
+	TimestampGte *time.Time
+	TimestampLte *time.Time
+
+	resources map[string]*Resource
+}
+
+func (f *ImportActivitiesFilter) PopulateResources(resources map[string]*Resource) error {
+	if f.ResourceIDs == nil {
+		return nil
+	}
+	if resources == nil {
+		return errors.New("resources cannot be nil")
+	}
+
+	f.resources = make(map[string]*Resource, len(f.ResourceIDs))
+	for _, resourceID := range f.ResourceIDs {
+		resource, ok := resources[resourceID]
+		if !ok {
+			return errors.New("resource not found")
+		}
+		f.resources[resourceID] = resource
+	}
+
+	return nil
+}
+
+func (f *ImportActivitiesFilter) GetResources() []*Resource {
+	if f.resources == nil {
+		return nil
+	}
+
+	resources := make([]*Resource, 0, len(f.resources))
+	for _, resource := range f.resources {
+		resources = append(resources, resource)
+	}
+
+	return resources
 }
