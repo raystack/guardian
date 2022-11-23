@@ -12,7 +12,7 @@ import (
 //go:generate mockery --name=repository --exported --with-expecter
 type repository interface {
 	GetOne(context.Context, string) (*domain.Activity, error)
-	BulkInsert(context.Context, []*domain.Activity) error
+	BulkUpsert(context.Context, []*domain.Activity) error
 	Find(context.Context, domain.ListProviderActivitiesFilter) ([]*domain.Activity, error)
 }
 
@@ -45,15 +45,12 @@ type Service struct {
 
 func NewService(deps ServiceDeps) *Service {
 	return &Service{
-		repo:        deps.Repository,
-		validator:   deps.Validator,
-		logger:      deps.Logger,
-		auditLogger: deps.AuditLogger,
+		repo:            deps.Repository,
+		providerService: deps.ProviderService,
+		validator:       deps.Validator,
+		logger:          deps.Logger,
+		auditLogger:     deps.AuditLogger,
 	}
-}
-
-func (s *Service) BulkInsert(ctx context.Context, activities []*domain.Activity) error {
-	return s.repo.BulkInsert(ctx, activities)
 }
 
 func (s *Service) GetOne(ctx context.Context, id string) (*domain.Activity, error) {
@@ -70,7 +67,7 @@ func (s *Service) Import(ctx context.Context, filter domain.ImportActivitiesFilt
 		return nil, err
 	}
 
-	if err := s.repo.BulkInsert(ctx, activities); err != nil {
+	if err := s.repo.BulkUpsert(ctx, activities); err != nil {
 		return nil, fmt.Errorf("inserting activities to db: %w", err)
 	}
 

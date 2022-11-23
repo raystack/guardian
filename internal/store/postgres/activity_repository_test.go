@@ -86,7 +86,7 @@ func (s *ActivityRepositoryTestSuite) TestFind() {
 		Authorizations: []string{"test-authorization"},
 		Metadata:       map[string]interface{}{"foo": "bar"},
 	}
-	err := s.repository.BulkInsert(context.Background(), []*domain.Activity{activity, activity2})
+	err := s.repository.BulkUpsert(context.Background(), []*domain.Activity{activity, activity2})
 	s.Require().NoError(err)
 
 	oneHourAgo := time.Now().Add(-time.Hour)
@@ -163,7 +163,7 @@ func (s *ActivityRepositoryTestSuite) TestGetOne() {
 		Authorizations: []string{"test-authorization"},
 		Metadata:       map[string]interface{}{"foo": "bar"},
 	}
-	err := s.repository.BulkInsert(context.Background(), []*domain.Activity{a})
+	err := s.repository.BulkUpsert(context.Background(), []*domain.Activity{a})
 	s.Require().NoError(err)
 
 	s.Run("should return activity details", func() {
@@ -187,39 +187,54 @@ func (s *ActivityRepositoryTestSuite) TestGetOne() {
 	})
 }
 
-func (s *ActivityRepositoryTestSuite) TestBulkInsert() {
+func (s *ActivityRepositoryTestSuite) TestBulkUpsert() {
 	s.Run("should return error if an error occured when converting domain.Activity", func() {
 		invalidActivity := &domain.Activity{
 			ProviderID: "invalid-uuid",
 			ResourceID: "invalid-uuid",
 		}
 
-		err := s.repository.BulkInsert(context.Background(), []*domain.Activity{invalidActivity})
+		err := s.repository.BulkUpsert(context.Background(), []*domain.Activity{invalidActivity})
 
 		s.Error(err)
 	})
 
+	preExistingActivity := &domain.Activity{
+		ProviderID:         s.dummyProvider.ID,
+		ResourceID:         s.dummyResource.ID,
+		ProviderActivityID: "test-provider-activity-id",
+		AccountID:          "user@example.com",
+		Timestamp:          time.Now(),
+		Type:               "test-type",
+		Authorizations:     []string{"test-authorization"},
+		Metadata:           map[string]interface{}{"foo": "bar"},
+	}
+	err := s.repository.BulkUpsert(context.Background(), []*domain.Activity{preExistingActivity})
+	s.Require().NoError(err)
+
 	activity := &domain.Activity{
-		ProviderID:     s.dummyProvider.ID,
-		ResourceID:     s.dummyResource.ID,
-		AccountID:      "user@example.com",
-		Timestamp:      time.Now(),
-		Type:           "test-type",
-		Authorizations: []string{"test-authorization"},
-		Metadata:       map[string]interface{}{"foo": "bar"},
+		ProviderID:         s.dummyProvider.ID,
+		ResourceID:         s.dummyResource.ID,
+		ProviderActivityID: "test-provider-activity-id",
+		AccountID:          "user@example.com",
+		Timestamp:          time.Now(),
+		Type:               "test-type",
+		Authorizations:     []string{"test-authorization"},
+		Metadata:           map[string]interface{}{"foo": "bar"},
 	}
 	activity2 := &domain.Activity{
-		ProviderID:     s.dummyProvider.ID,
-		ResourceID:     s.dummyResource.ID,
-		AccountID:      "user2@ecample.com",
-		Timestamp:      time.Now(),
-		Type:           "test-type",
-		Authorizations: []string{"test-authorization"},
-		Metadata:       map[string]interface{}{"foo": "bar"},
+		ProviderID:         s.dummyProvider.ID,
+		ResourceID:         s.dummyResource.ID,
+		ProviderActivityID: "test-provider-activity-id-2",
+		AccountID:          "user2@ecample.com",
+		Timestamp:          time.Now(),
+		Type:               "test-type",
+		Authorizations:     []string{"test-authorization"},
+		Metadata:           map[string]interface{}{"foo": "bar"},
 	}
 
 	s.Run("should insert activities and update the IDs", func() {
-		err := s.repository.BulkInsert(context.Background(), []*domain.Activity{activity, activity2})
+		err := s.repository.BulkUpsert(context.Background(), []*domain.Activity{activity, activity2})
 
 		s.NoError(err)
 		s.NotEmpty(activity.ID)
@@ -231,7 +246,7 @@ func (s *ActivityRepositoryTestSuite) TestBulkInsert() {
 			ProviderID: uuid.NewString(),
 		}
 
-		err := s.repository.BulkInsert(context.Background(), []*domain.Activity{activity})
+		err := s.repository.BulkUpsert(context.Background(), []*domain.Activity{activity})
 
 		s.Error(err)
 	})

@@ -9,6 +9,7 @@ import (
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres/model"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ActivityRepository struct {
@@ -71,7 +72,7 @@ func (r *ActivityRepository) GetOne(ctx context.Context, id string) (*domain.Act
 	return m.ToDomain()
 }
 
-func (r *ActivityRepository) BulkInsert(ctx context.Context, activities []*domain.Activity) error {
+func (r *ActivityRepository) BulkUpsert(ctx context.Context, activities []*domain.Activity) error {
 	models := make([]*model.Activity, len(activities))
 	for i, a := range activities {
 		models[i] = &model.Activity{}
@@ -80,17 +81,29 @@ func (r *ActivityRepository) BulkInsert(ctx context.Context, activities []*domai
 		}
 	}
 
-	if err := r.db.WithContext(ctx).Create(models).Error; err != nil {
-		return fmt.Errorf("failed to insert provider activities: %w", err)
+	if len(models) == 0 {
+		return nil
 	}
 
-	for i, m := range models {
-		newActivity, err := m.ToDomain()
-		if err != nil {
-			return fmt.Errorf("failed to convert model %q to domain: %w", m.ID, err)
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Clauses(clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "provider_id"},
+				{Name: "provider_activity_id"},
+			},
+			UpdateAll: true,
+		}).Create(models).Error; err != nil {
+			return fmt.Errorf("failed to upsert provider activities: %w", err)
 		}
-		*activities[i] = *newActivity
-	}
 
-	return nil
+		for i, m := range models {
+			newActivity, err := m.ToDomain()
+			if err != nil {
+				return fmt.Errorf("failed to convert model %q to domain: %w", m.ID, err)
+			}
+			*activities[i] = *newActivity
+		}
+
+		return nil
+	})
 }
