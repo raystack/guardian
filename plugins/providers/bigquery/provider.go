@@ -43,10 +43,6 @@ type BigQueryClient interface {
 	ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error)
 }
 
-type cloudLoggingClientI interface {
-	ListLogEntries(context.Context, domain.ImportActivitiesFilter) ([]*Activity, error)
-}
-
 //go:generate mockery --name=encryptor --exported --with-expecter
 type encryptor interface {
 	domain.Crypto
@@ -56,10 +52,9 @@ type encryptor interface {
 type Provider struct {
 	provider.PermissionManager
 
-	typeName            string
-	Clients             map[string]BigQueryClient
-	cloudLoggingClients map[string]cloudLoggingClientI
-	encryptor           encryptor
+	typeName  string
+	Clients   map[string]BigQueryClient
+	encryptor encryptor
 }
 
 // NewProvider returns bigquery provider
@@ -269,13 +264,13 @@ func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter
 		return nil, fmt.Errorf("parsing credentials: %w", err)
 	}
 
-	client, err := NewCloudLoggingClient(ctx, creds.ProjectID(), []byte(creds.ServiceAccountKey))
+	logClient, err := NewCloudLoggingClient(ctx, creds.ProjectID(), []byte(creds.ServiceAccountKey))
 	if err != nil {
 		return nil, fmt.Errorf("initializing cloud logging client: %w", err)
 	}
-	defer client.Close()
+	defer logClient.Close()
 
-	entries, err := client.ListLogEntries(ctx, ImportActivitiesFilter{
+	entries, err := logClient.ListLogEntries(ctx, ImportActivitiesFilter{
 		ImportActivitiesFilter: filter,
 		Types:                  BigQueryAuditMetadataMethods,
 		Authorizations:         []string{},
@@ -286,12 +281,12 @@ func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter
 
 	activities := make([]*domain.Activity, 0, len(entries))
 	for _, e := range entries {
-		pa, err := e.ToDomainActivity(pd)
+		a, err := e.ToDomainActivity(pd)
 		if err != nil {
 			return nil, fmt.Errorf("converting log entry to provider activity: %w", err)
 		}
 
-		activities = append(activities, pa)
+		activities = append(activities, a)
 	}
 
 	return activities, nil

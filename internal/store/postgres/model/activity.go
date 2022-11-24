@@ -85,37 +85,48 @@ func (m *Activity) FromDomain(a *domain.Activity) error {
 	return nil
 }
 
-func (m *Activity) ToDomain() (*domain.Activity, error) {
-	a := &domain.Activity{
-		ID:                 m.ID.String(),
-		ProviderID:         m.ProviderID.String(),
-		ResourceID:         m.ResourceID.String(),
-		ProviderActivityID: m.ProviderActivityID,
-		AccountType:        m.AccountType,
-		AccountID:          m.AccountID,
-		Timestamp:          m.Timestamp,
-		Authorizations:     m.Authorizations,
-		Type:               m.Type,
-		CreatedAt:          m.CreatedAt,
+func (m *Activity) ToDomain(a *domain.Activity) error {
+	if a == nil {
+		return fmt.Errorf("activity target can't be nil")
 	}
+
+	a.ID = m.ID.String()
+	a.ProviderID = m.ProviderID.String()
+	a.ResourceID = m.ResourceID.String()
+	a.ProviderActivityID = m.ProviderActivityID
+	a.AccountType = m.AccountType
+	a.AccountID = m.AccountID
+	a.Timestamp = m.Timestamp
+	a.Authorizations = m.Authorizations
+	a.Type = m.Type
+	a.CreatedAt = m.CreatedAt
+
 	if m.Metadata != nil {
 		if err := json.Unmarshal(m.Metadata, &a.Metadata); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal provider activity metadata: %w", err)
+			return fmt.Errorf("failed to unmarshal provider activity metadata: %w", err)
 		}
 	}
 	if m.Provider != nil {
 		p, err := m.Provider.ToDomain()
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert provider: %w", err)
+			return fmt.Errorf("failed to convert provider: %w", err)
 		}
-		a.Provider = p
+		if a.Provider == nil {
+			a.Provider = p
+		} else {
+			*a.Provider = *p
+		}
 	}
 	if m.Resource != nil {
 		r, err := m.Resource.ToDomain()
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert resource: %w", err)
+			return fmt.Errorf("failed to convert resource: %w", err)
 		}
-		a.Resource = r
+		if a.Resource == nil {
+			a.Resource = r
+		} else {
+			*a.Resource = *r
+		}
 	}
-	return a, nil
+	return nil
 }

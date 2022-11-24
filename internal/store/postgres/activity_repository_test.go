@@ -56,35 +56,47 @@ func (s *ActivityRepositoryTestSuite) SetupSuite() {
 	})
 
 	s.dummyProvider = &domain.Provider{
-		ID: uuid.NewString(),
+		ID:   uuid.NewString(),
+		Type: "test-provider",
+		URN:  "test-provider-urn",
 	}
 	err = s.providerRepository.Create(context.Background(), s.dummyProvider)
 	s.Require().NoError(err)
 	s.dummyResource = &domain.Resource{
-		ID: uuid.NewString(),
+		ID:           uuid.NewString(),
+		ProviderType: s.dummyProvider.Type,
+		ProviderURN:  s.dummyProvider.URN,
 	}
 	err = s.resourceRepository.BulkUpsert(context.Background(), []*domain.Resource{s.dummyResource})
 	s.Require().NoError(err)
 }
 
+func (s *ActivityRepositoryTestSuite) AfterTest(_, _ string) {
+	if err := s.store.DB().Exec("DELETE FROM activities").Error; err != nil {
+		s.T().Fatal(err)
+	}
+}
+
 func (s *ActivityRepositoryTestSuite) TestFind() {
 	activity := &domain.Activity{
-		ProviderID:     s.dummyProvider.ID,
-		ResourceID:     s.dummyResource.ID,
-		AccountID:      "user@example.com",
-		Timestamp:      time.Now(),
-		Type:           "test-type",
-		Authorizations: []string{"test-authorization"},
-		Metadata:       map[string]interface{}{"foo": "bar"},
+		ProviderID:         s.dummyProvider.ID,
+		ResourceID:         s.dummyResource.ID,
+		ProviderActivityID: "test-provider-activity-id-1",
+		AccountID:          "user@example.com",
+		Timestamp:          time.Now(),
+		Type:               "test-type",
+		Authorizations:     []string{"test-authorization"},
+		Metadata:           map[string]interface{}{"foo": "bar"},
 	}
 	activity2 := &domain.Activity{
-		ProviderID:     s.dummyProvider.ID,
-		ResourceID:     s.dummyResource.ID,
-		AccountID:      "user2@example.com",
-		Timestamp:      time.Now(),
-		Type:           "test-type",
-		Authorizations: []string{"test-authorization"},
-		Metadata:       map[string]interface{}{"foo": "bar"},
+		ProviderID:         s.dummyProvider.ID,
+		ResourceID:         s.dummyResource.ID,
+		ProviderActivityID: "test-provider-activity-id-2",
+		AccountID:          "user2@example.com",
+		Timestamp:          time.Now(),
+		Type:               "test-type",
+		Authorizations:     []string{"test-authorization"},
+		Metadata:           map[string]interface{}{"foo": "bar"},
 	}
 	err := s.repository.BulkUpsert(context.Background(), []*domain.Activity{activity, activity2})
 	s.Require().NoError(err)
@@ -199,9 +211,15 @@ func (s *ActivityRepositoryTestSuite) TestBulkUpsert() {
 		s.Error(err)
 	})
 
+	dummyResource := &domain.Resource{
+		ProviderType: s.dummyProvider.Type,
+		ProviderURN:  s.dummyProvider.URN,
+		Type:         "test-resource",
+		URN:          "test-urn",
+	}
 	preExistingActivity := &domain.Activity{
 		ProviderID:         s.dummyProvider.ID,
-		ResourceID:         s.dummyResource.ID,
+		Resource:           dummyResource,
 		ProviderActivityID: "test-provider-activity-id",
 		AccountID:          "user@example.com",
 		Timestamp:          time.Now(),
@@ -214,7 +232,7 @@ func (s *ActivityRepositoryTestSuite) TestBulkUpsert() {
 
 	activity := &domain.Activity{
 		ProviderID:         s.dummyProvider.ID,
-		ResourceID:         s.dummyResource.ID,
+		Resource:           dummyResource,
 		ProviderActivityID: "test-provider-activity-id",
 		AccountID:          "user@example.com",
 		Timestamp:          time.Now(),
@@ -224,7 +242,7 @@ func (s *ActivityRepositoryTestSuite) TestBulkUpsert() {
 	}
 	activity2 := &domain.Activity{
 		ProviderID:         s.dummyProvider.ID,
-		ResourceID:         s.dummyResource.ID,
+		Resource:           dummyResource,
 		ProviderActivityID: "test-provider-activity-id-2",
 		AccountID:          "user2@ecample.com",
 		Timestamp:          time.Now(),
@@ -238,7 +256,9 @@ func (s *ActivityRepositoryTestSuite) TestBulkUpsert() {
 
 		s.NoError(err)
 		s.NotEmpty(activity.ID)
+		s.Equal(dummyResource.ID, activity.ResourceID)
 		s.NotEmpty(activity2.ID)
+		s.Equal(dummyResource.ID, activity2.ResourceID)
 	})
 
 	s.Run("should return error if provider relation not found", func() {

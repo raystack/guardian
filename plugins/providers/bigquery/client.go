@@ -327,6 +327,17 @@ func (c *bigQueryClient) ListAccess(ctx context.Context, resources []*domain.Res
 	return access, nil
 }
 
+type bqJob bq.Job
+
+func (c *bigQueryClient) GetJobDetails(ctx context.Context, jobID string) (*bqJob, error) {
+	j, err := c.client.JobFromID(ctx, jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	return (*bqJob)(j), nil
+}
+
 func (c *bigQueryClient) getGrantableRolesForTables() ([]string, error) {
 	var resourceName string
 	ctx := context.Background()

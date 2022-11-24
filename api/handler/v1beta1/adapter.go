@@ -801,13 +801,14 @@ func (a *adapter) ToActivityProto(activity *domain.Activity) (*guardianv1beta1.P
 	}
 
 	activityProto := &guardianv1beta1.ProviderActivity{
-		Id:             activity.ID,
-		ProviderId:     activity.ProviderID,
-		ResourceId:     activity.ResourceID,
-		AccountType:    activity.AccountType,
-		AccountId:      activity.AccountID,
-		Authorizations: activity.Authorizations,
-		Type:           activity.Type,
+		Id:                 activity.ID,
+		ProviderId:         activity.ProviderID,
+		ResourceId:         activity.ResourceID,
+		ProviderActivityId: activity.ProviderActivityID,
+		AccountType:        activity.AccountType,
+		AccountId:          activity.AccountID,
+		Authorizations:     activity.Authorizations,
+		Type:               activity.Type,
 	}
 
 	if !activity.Timestamp.IsZero() {

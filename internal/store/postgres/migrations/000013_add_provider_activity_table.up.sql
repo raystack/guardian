@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS "activities" (
   "metadata" jsonb,
   "created_at" timestamptz,
   PRIMARY KEY ("id"),
-  CONSTRAINT "fk_provider_activities_provider" FOREIGN KEY ("provider_id") REFERENCES "providers"("id"),
-  CONSTRAINT "fk_provider_activities_resource" FOREIGN KEY ("resource_id") REFERENCES "resources"("id")
+  CONSTRAINT "fk_activities_provider" FOREIGN KEY ("provider_id") REFERENCES "providers"("id"),
+  CONSTRAINT "fk_activities_resource" FOREIGN KEY ("resource_id") REFERENCES "resources"("id")
 );
 
 CREATE INDEX IF NOT EXISTS "idx_activities_provider_id" ON "activities" ("provider_id");
