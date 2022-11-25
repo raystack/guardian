@@ -149,6 +149,7 @@ func (p *Provider) GetAccountTypes() []string {
 	return []string{
 		AccountTypeUser,
 		AccountTypeServiceAccount,
+		AccountTypeGroup,
 	}
 }
 
