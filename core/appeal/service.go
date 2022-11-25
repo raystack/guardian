@@ -295,6 +295,8 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
 							"role":          appeal.Role,
 							"account_id":    appeal.AccountID,
+							"appeal_id":     appeal.ID,
+							"requestor":     appeal.CreatedBy,
 						},
 					},
 				})
@@ -467,6 +469,8 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
 							"role":          appeal.Role,
 							"account_id":    appeal.AccountID,
+							"appeal_id":     appeal.ID,
+							"requestor":     appeal.CreatedBy,
 						},
 					},
 				})
@@ -480,6 +484,8 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
 							"role":          appeal.Role,
 							"account_id":    appeal.AccountID,
+							"appeal_id":     appeal.ID,
+							"requestor":     appeal.CreatedBy,
 						},
 					},
 				})

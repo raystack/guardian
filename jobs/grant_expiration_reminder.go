@@ -45,6 +45,7 @@ func (h *handler) GrantExpirationReminder(ctx context.Context) error {
 						"role":            g.Role,
 						"expiration_date": g.ExpirationDate,
 						"account_id":      g.AccountID,
+						"requestor":       g.Owner,
 					},
 				},
 			})
