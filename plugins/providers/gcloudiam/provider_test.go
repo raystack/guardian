@@ -774,7 +774,7 @@ func TestGetPermissions(t *testing.T) {
 
 func TestGetAccountTypes(t *testing.T) {
 	t.Run("should return the supported account types: user, serviceAccount", func(t *testing.T) {
-		expectedAccountTypes := []string{"user", "serviceAccount"}
+		expectedAccountTypes := []string{"user", "serviceAccount", "group"}
 		crypto := new(mocks.Crypto)
 		p := gcloudiam.NewProvider("", crypto)
 
