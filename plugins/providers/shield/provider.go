@@ -158,7 +158,8 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 		return nil
 	}
 
-	if a.Resource.Type == ResourceTypeTeam {
+	switch a.Resource.Type {
+	case ResourceTypeTeam:
 		t := new(Team)
 		if err := t.FromDomain(a.Resource); err != nil {
 			return err
@@ -168,9 +169,8 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 				return err
 			}
 		}
-
 		return nil
-	} else if a.Resource.Type == ResourceTypeProject {
+	case ResourceTypeProject:
 		pj := new(Project)
 		if err := pj.FromDomain(a.Resource); err != nil {
 			return err
@@ -180,9 +180,8 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 				return err
 			}
 		}
-
 		return nil
-	} else if a.Resource.Type == ResourceTypeOrganization {
+	case ResourceTypeOrganization:
 		o := new(Organization)
 		if err := o.FromDomain(a.Resource); err != nil {
 			return err
@@ -215,7 +214,8 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 		return nil
 	}
 
-	if a.Resource.Type == ResourceTypeTeam {
+	switch a.Resource.Type {
+	case ResourceTypeTeam:
 		t := new(Team)
 		if err := t.FromDomain(a.Resource); err != nil {
 			return err
@@ -227,7 +227,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 		}
 
 		return nil
-	} else if a.Resource.Type == ResourceTypeProject {
+	case ResourceTypeProject:
 		pj := new(Project)
 		if err := pj.FromDomain(a.Resource); err != nil {
 			return err
@@ -239,7 +239,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 		}
 
 		return nil
-	} else if a.Resource.Type == ResourceTypeOrganization {
+	case ResourceTypeOrganization:
 		o := new(Organization)
 		if err := o.FromDomain(a.Resource); err != nil {
 			return err
