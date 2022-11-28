@@ -31,8 +31,9 @@ func TestNewClient(t *testing.T) {
 
 	t.Run("should return error if config.Host is not a valid url", func(t *testing.T) {
 		invalidHostConfig := &shield.ClientConfig{
-			AuthEmail: "test-email",
-			Host:      "invalid-url",
+			AuthHeader: "X-Auth-Email",
+			AuthEmail:  "test-email",
+			Host:       "invalid-url",
 		}
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
 		actualClient, actualError := shield.NewClient(invalidHostConfig, logger)
@@ -45,6 +46,7 @@ func TestNewClient(t *testing.T) {
 		// TODO: test http request execution
 		mockHttpClient := new(mocks.HTTPClient)
 		config := &shield.ClientConfig{
+			AuthHeader: "X-Auth-Email",
 			AuthEmail:  "test_email",
 			Host:       "http://localhost",
 			HTTPClient: mockHttpClient,
@@ -62,6 +64,7 @@ type ClientTestSuite struct {
 
 	mockHttpClient *mocks.HTTPClient
 	client         shield.ShieldClient
+	authHeader     string
 	auth           string
 	host           string
 }
@@ -76,7 +79,9 @@ func (s *ClientTestSuite) setup() {
 
 	s.host = "http://localhost"
 	s.auth = "shield_admin"
+	s.authHeader = "X-Auth-Email"
 	client, err := shield.NewClient(&shield.ClientConfig{
+		AuthHeader: s.authHeader,
 		AuthEmail:  s.auth,
 		Host:       s.host,
 		HTTPClient: s.mockHttpClient,
@@ -103,9 +108,9 @@ func (s *ClientTestSuite) getTestRequest(method, path string, body interface{}, 
 		req.Header.Set("Content-Type", "application/json")
 	}
 	if authEmail == "" {
-		req.Header.Set("X-Auth-Email", s.auth)
+		req.Header.Set(s.authHeader, s.auth)
 	} else {
-		req.Header.Set("X-Auth-Email", authEmail)
+		req.Header.Set(s.authHeader, authEmail)
 	}
 	req.Header.Set("Accept", "application/json")
 	return req, nil

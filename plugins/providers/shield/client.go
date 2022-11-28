@@ -28,8 +28,6 @@ const (
 	userConst          = "user"
 )
 
-const authHeader = "X-Auth-Email"
-
 type successAccess interface{}
 
 type ShieldClient interface {
@@ -48,7 +46,8 @@ type ShieldClient interface {
 type client struct {
 	baseURL *url.URL
 
-	auth string
+	authHeader string
+	authEmail  string
 
 	httpClient HTTPClient
 	logger     log.Logger
@@ -60,6 +59,7 @@ type HTTPClient interface {
 
 type ClientConfig struct {
 	Host       string `validate:"required,url" mapstructure:"host"`
+	AuthHeader string `validate:"required" mapstructure:"auth_header"`
 	AuthEmail  string `validate:"required" mapstructure:"auth_email"`
 	HTTPClient HTTPClient
 }
@@ -81,7 +81,8 @@ func NewClient(config *ClientConfig, logger log.Logger) (*client, error) {
 
 	c := &client{
 		baseURL:    baseURL,
-		auth:       config.AuthEmail,
+		authHeader: config.AuthHeader,
+		authEmail:  config.AuthEmail,
 		httpClient: httpClient,
 		logger:     logger,
 	}
@@ -110,9 +111,9 @@ func (c *client) newRequest(method, path string, body interface{}, authEmail str
 		req.Header.Set("Content-Type", "application/json")
 	}
 	if authEmail == "" {
-		req.Header.Set(authHeader, c.auth)
+		req.Header.Set(c.authHeader, c.authEmail)
 	} else {
-		req.Header.Set(authHeader, authEmail)
+		req.Header.Set(c.authHeader, authEmail)
 	}
 	req.Header.Set("Accept", "application/json")
 	return req, nil

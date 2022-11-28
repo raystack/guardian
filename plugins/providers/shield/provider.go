@@ -125,8 +125,9 @@ func (p *provider) getClient(providerURN string, credentials Credentials) (Shiel
 	}
 
 	client, err := NewClient(&ClientConfig{
-		Host:      credentials.Host,
-		AuthEmail: credentials.AuthEmail,
+		Host:       credentials.Host,
+		AuthHeader: credentials.AuthHeader,
+		AuthEmail:  credentials.AuthEmail,
 	}, p.logger)
 	if err != nil {
 		return nil, err

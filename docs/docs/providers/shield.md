@@ -6,6 +6,9 @@ Shield is a cloud native role-based authorization aware server and reverse-proxy
 2. Project
 3. Organization
 
+
+## Compatible version of shield : 
+<= v0.4.1
 ## Authentication
 
 Guardian requires authentication email of an administrator user having access to all Organizations in Shield.

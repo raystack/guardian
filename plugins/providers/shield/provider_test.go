@@ -95,8 +95,9 @@ func TestCreateConfig(t *testing.T) {
 			{
 				pc: &domain.ProviderConfig{
 					Credentials: shield.Credentials{
-						Host:      "localhost",
-						AuthEmail: "test-email",
+						Host:       "localhost",
+						AuthEmail:  "test-email",
+						AuthHeader: "X-Auth-Email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
@@ -120,8 +121,9 @@ func TestCreateConfig(t *testing.T) {
 			{
 				pc: &domain.ProviderConfig{
 					Credentials: shield.Credentials{
-						Host:      "localhost",
-						AuthEmail: "test-email",
+						Host:       "localhost",
+						AuthEmail:  "test-email",
+						AuthHeader: "X-Auth-Email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
@@ -141,8 +143,9 @@ func TestCreateConfig(t *testing.T) {
 			{
 				pc: &domain.ProviderConfig{
 					Credentials: shield.Credentials{
-						Host:      "localhost",
-						AuthEmail: "test-email",
+						Host:       "localhost",
+						AuthEmail:  "test-email",
+						AuthHeader: "X-Auth-Email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
