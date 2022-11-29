@@ -294,6 +294,9 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 						Variables: map[string]interface{}{
 							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
 							"role":          appeal.Role,
+							"account_id":    appeal.AccountID,
+							"appeal_id":     appeal.ID,
+							"requestor":     appeal.CreatedBy,
 						},
 					},
 				})
@@ -465,6 +468,9 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 						Variables: map[string]interface{}{
 							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
 							"role":          appeal.Role,
+							"account_id":    appeal.AccountID,
+							"appeal_id":     appeal.ID,
+							"requestor":     appeal.CreatedBy,
 						},
 					},
 				})
@@ -477,6 +483,9 @@ func (s *Service) MakeAction(ctx context.Context, approvalAction domain.Approval
 						Variables: map[string]interface{}{
 							"resource_name": fmt.Sprintf("%s (%s: %s)", appeal.Resource.Name, appeal.Resource.ProviderType, appeal.Resource.URN),
 							"role":          appeal.Role,
+							"account_id":    appeal.AccountID,
+							"appeal_id":     appeal.ID,
+							"requestor":     appeal.CreatedBy,
 						},
 					},
 				})
@@ -582,6 +591,7 @@ func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email s
 					"role":          appeal.Role,
 					"requestor":     appeal.CreatedBy,
 					"appeal_id":     appeal.ID,
+					"account_id":    appeal.AccountID,
 				},
 			},
 		},
@@ -826,6 +836,7 @@ func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 						"role":          appeal.Role,
 						"requestor":     appeal.CreatedBy,
 						"appeal_id":     appeal.ID,
+						"account_id":    appeal.AccountID,
 					},
 				},
 			})

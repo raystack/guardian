@@ -149,6 +149,7 @@ func (s *Service) Revoke(ctx context.Context, id, actor, reason string, opts ...
 					"role":          grant.Role,
 					"account_type":  grant.AccountType,
 					"account_id":    grant.AccountID,
+					"requestor":     grant.Owner,
 				},
 			},
 		}}); errs != nil {

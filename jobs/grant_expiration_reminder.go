@@ -44,6 +44,8 @@ func (h *handler) GrantExpirationReminder(ctx context.Context) error {
 						"resource_name":   fmt.Sprintf("%s (%s: %s)", g.Resource.Name, g.Resource.ProviderType, g.Resource.URN),
 						"role":            g.Role,
 						"expiration_date": g.ExpirationDate,
+						"account_id":      g.AccountID,
+						"requestor":       g.Owner,
 					},
 				},
 			})
