@@ -19,7 +19,7 @@ notifier:
     provider: "slack"
     access_token: "<slack-access-token>"
     messages:
-        expiration_reminder: "Your access to {{.resource_name}} with role {{.role}} will expire at {{.expiration_date}}. Extend the access if it's still needed"
+        expiration_reminder: "Your access {{.account_id}} to {{.resource_name}} with role {{.role}} will expire at {{.expiration_date}}. Extend the access if it's still needed"
         appeal_approved: "Your appeal to {{.resource_name}} with role {{.role}} has been approved"
         appeal_rejected: "Your appeal to {{.resource_name}} with role {{.role}} has been rejected"
         access_revoked: "Your access to {{.resource_name}}} with role {{.role}} has been revoked"
