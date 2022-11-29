@@ -275,7 +275,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 						return fmt.Errorf("revoking previous grant: %w", err)
 					}
 				} else {
-					if err := s.GrantAccessToProvider(ctx, appeal); err != nil {
+					if err := s.GrantAccessToProvider(ctx, appeal, opts...); err != nil {
 						return fmt.Errorf("granting access: %w", err)
 					}
 				}
@@ -899,7 +899,7 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 	return nil
 }
 
-func (s *Service) GrantAccessToProvider(ctx context.Context, a *domain.Appeal) error {
+func (s *Service) GrantAccessToProvider(ctx context.Context, a *domain.Appeal, opts ...CreateAppealOption) error {
 	policy := a.Policy
 	if policy == nil {
 		p, err := s.policyService.GetOne(ctx, a.PolicyID, a.PolicyVersion)
@@ -910,6 +910,9 @@ func (s *Service) GrantAccessToProvider(ctx context.Context, a *domain.Appeal) e
 	}
 
 	createAppealOpts := &createAppealOptions{}
+	for _, opt := range opts {
+		opt(createAppealOpts)
+	}
 
 	isAdditionalAppealCreation := createAppealOpts.IsAdditionalAppeal
 	if !isAdditionalAppealCreation {
