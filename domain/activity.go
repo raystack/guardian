@@ -14,6 +14,7 @@ type Activity struct {
 	AccountID          string                 `json:"account_id" yaml:"account_id"`
 	Timestamp          time.Time              `json:"timestamp" yaml:"timestamp"`
 	Authorizations     []string               `json:"authorizations" yaml:"authorizations"`
+	RelatedPermissions []string               `json:"related_permissions" yaml:"related_permissions"`
 	Type               string                 `json:"type" yaml:"type"`
 	Metadata           map[string]interface{} `json:"metadata" yaml:"metadata"`
 	CreatedAt          time.Time              `json:"created_at" yaml:"created_at"`

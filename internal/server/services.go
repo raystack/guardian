@@ -95,7 +95,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 	grantRepository := postgres.NewGrantRepository(store.DB())
 
 	providerClients := []provider.Client{
-		bigquery.NewProvider(domain.ProviderTypeBigQuery, deps.Crypto),
+		bigquery.NewProvider(domain.ProviderTypeBigQuery, deps.Crypto, deps.Logger),
 		metabase.NewProvider(domain.ProviderTypeMetabase, deps.Crypto, deps.Logger),
 		grafana.NewProvider(domain.ProviderTypeGrafana, deps.Crypto),
 		tableau.NewProvider(domain.ProviderTypeTableau, deps.Crypto),

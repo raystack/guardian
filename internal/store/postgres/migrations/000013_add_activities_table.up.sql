@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS "activities" (
   "account_id" text,
   "timestamp" timestamptz,
   "authorizations" text [],
+  "related_permissions" text [],
   "type" text,
   "metadata" jsonb,
   "created_at" timestamptz,
@@ -16,6 +17,9 @@ CREATE TABLE IF NOT EXISTS "activities" (
 );
 
 CREATE INDEX IF NOT EXISTS "idx_activities_provider_id" ON "activities" ("provider_id");
+
 CREATE INDEX IF NOT EXISTS "idx_activities_account_id" ON "activities" ("account_id");
+
 CREATE INDEX IF NOT EXISTS "idx_activities_timestamp" ON "activities" ("timestamp");
+
 CREATE UNIQUE INDEX IF NOT EXISTS "provider_activity_index" ON "activities" ("provider_activity_id", "provider_id");

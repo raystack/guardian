@@ -5,11 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	bq "cloud.google.com/go/bigquery"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/pkg/cache"
+	"github.com/odpf/salt/log"
 )
 
 var (
@@ -41,6 +45,7 @@ type BigQueryClient interface {
 	RevokeTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
 	ResolveDatasetRole(role string) (bq.AccessRole, error)
 	ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error)
+	GetRolePermissions(context.Context, string) ([]string, error)
 }
 
 //go:generate mockery --name=encryptor --exported --with-expecter
@@ -55,14 +60,25 @@ type Provider struct {
 	typeName  string
 	Clients   map[string]BigQueryClient
 	encryptor encryptor
+	logger    log.Logger
+
+	rolesCache *cache.InMemoryCache
 }
 
 // NewProvider returns bigquery provider
-func NewProvider(typeName string, c encryptor) *Provider {
+func NewProvider(typeName string, c encryptor, logger log.Logger) *Provider {
+	rolesCache, err := cache.NewInMemoryCache(5 * time.Minute)
+	if err != nil {
+		panic(err)
+	}
+
 	return &Provider{
 		typeName:  typeName,
 		Clients:   map[string]BigQueryClient{},
 		encryptor: c,
+		logger:    logger,
+
+		rolesCache: rolesCache,
 	}
 }
 
@@ -280,11 +296,27 @@ func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter
 	}
 
 	activities := make([]*domain.Activity, 0, len(entries))
+	if len(entries) == 0 {
+		return activities, nil
+	}
+
+	gcloudRolesMap, err := p.getGcloudRoles(ctx, pd)
+	if err != nil {
+		return nil, fmt.Errorf("getting gcloud permissions roles: %w", err)
+	}
+
 	for _, e := range entries {
 		a, err := e.ToDomainActivity(pd)
 		if err != nil {
 			return nil, fmt.Errorf("converting log entry to provider activity: %w", err)
 		}
+
+		for _, gcloudPermission := range a.Authorizations {
+			if gcloudRoles, exists := gcloudRolesMap[a.Resource.Type][gcloudPermission]; exists {
+				a.RelatedPermissions = append(a.RelatedPermissions, gcloudRoles...)
+			}
+		}
+		a.RelatedPermissions = uniqueSlice(a.RelatedPermissions)
 
 		activities = append(activities, a)
 	}
@@ -306,6 +338,98 @@ func (p *Provider) getBigQueryClient(credentials Credentials) (BigQueryClient, e
 
 	p.Clients[projectID] = client
 	return client, nil
+}
+
+// getGcloudRoles returns map[resourceType][gcloudPermission]gcloudRoles
+func (p *Provider) getGcloudRoles(ctx context.Context, pd domain.Provider) (map[string]map[string][]string, error) {
+	result := map[string]map[string][]string{}
+
+	gcloudRolesMap := map[string][]string{}
+	for _, rc := range pd.Config.Resources {
+		for _, r := range rc.Roles {
+			for _, p := range r.Permissions {
+				gcloudRole := p.(string)
+				gcloudRolesMap[rc.Type] = append(gcloudRolesMap[rc.Type], gcloudRole)
+			}
+		}
+	}
+
+	var wg sync.WaitGroup
+	chDone := make(chan bool)
+	chErr := make(chan error)
+	for resourceType, gcloudRoles := range gcloudRolesMap {
+		for _, r := range gcloudRoles {
+			wg.Add(1)
+			go func(rt, gcloudRole string) {
+				gcloudPermissions, err := p.getGcloudPermissions(ctx, pd, gcloudRole)
+				if err != nil {
+					chErr <- fmt.Errorf("getting gcloud permissions roles: %w", err)
+					return
+				}
+
+				for _, p := range gcloudPermissions {
+					if _, ok := result[rt]; !ok {
+						result[rt] = map[string][]string{}
+					}
+					if _, ok := result[rt][p]; !ok {
+						result[rt][p] = []string{}
+					}
+					result[rt][p] = append(result[rt][p], gcloudRole)
+				}
+
+				wg.Done()
+			}(resourceType, r)
+		}
+	}
+
+	go func() {
+		wg.Wait()
+		close(chDone)
+	}()
+	select {
+	case <-chDone:
+		return result, nil
+	case err := <-chErr:
+		close(chErr)
+		return nil, err
+	}
+}
+
+// getGcloudPermissions returns list of gcloud permissions for given gcloud role
+func (p *Provider) getGcloudPermissions(ctx context.Context, pd domain.Provider, gcloudRole string) ([]string, error) {
+	roleID := gcloudRole
+	switch gcloudRole {
+	case DatasetRoleOwner:
+		roleID = "roles/bigquery.admin"
+	case DatasetRoleWriter:
+		roleID = "roles/bigquery.dataEditor"
+	case DatasetRoleReader:
+		roleID = "roles/bigquery.dataViewer"
+	}
+
+	if permissions, exists := p.rolesCache.Get(roleID); exists {
+		p.logger.Debug("getting permissions from cache", "role", roleID)
+		return permissions.([]string), nil
+	}
+
+	p.logger.Debug("getting permissions from gcloud", "role", roleID)
+	creds, err := ParseCredentials(pd.Config.Credentials, p.encryptor)
+	if err != nil {
+		return nil, fmt.Errorf("parsing credentials: %w", err)
+	}
+
+	client, err := p.getBigQueryClient(*creds)
+	if err != nil {
+		return nil, err
+	}
+
+	permissions, err := client.GetRolePermissions(ctx, roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	p.rolesCache.Set(roleID, permissions, cache.WithTTL(1*time.Hour))
+	return permissions, nil
 }
 
 func validateProviderConfigAndAppealParams(pc *domain.ProviderConfig, a domain.Grant) error {
@@ -330,4 +454,17 @@ func getPermissions(a domain.Grant) []Permission {
 		permissions = append(permissions, Permission(p))
 	}
 	return permissions
+}
+
+func uniqueSlice(arr []string) []string {
+	keys := map[string]bool{}
+	result := []string{}
+
+	for _, v := range arr {
+		if _, exist := keys[v]; !exist {
+			result = append(result, v)
+			keys[v] = true
+		}
+	}
+	return result
 }

@@ -808,6 +808,7 @@ func (a *adapter) ToActivityProto(activity *domain.Activity) (*guardianv1beta1.P
 		AccountType:        activity.AccountType,
 		AccountId:          activity.AccountID,
 		Authorizations:     activity.Authorizations,
+		RelatedPermissions: activity.RelatedPermissions,
 		Type:               activity.Type,
 	}
 

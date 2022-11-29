@@ -20,6 +20,7 @@ type Activity struct {
 	AccountID          string
 	Timestamp          time.Time
 	Authorizations     pq.StringArray `gorm:"type:text[]"`
+	RelatedPermissions pq.StringArray `gorm:"type:text[]"`
 	Type               string
 	Metadata           datatypes.JSON
 	CreatedAt          time.Time `gorm:"autoCreateTime"`
@@ -59,6 +60,7 @@ func (m *Activity) FromDomain(a *domain.Activity) error {
 	m.AccountID = a.AccountID
 	m.Timestamp = a.Timestamp
 	m.Authorizations = a.Authorizations
+	m.RelatedPermissions = a.RelatedPermissions
 	m.Type = a.Type
 
 	if a.Metadata != nil {
@@ -98,6 +100,7 @@ func (m *Activity) ToDomain(a *domain.Activity) error {
 	a.AccountID = m.AccountID
 	a.Timestamp = m.Timestamp
 	a.Authorizations = m.Authorizations
+	a.RelatedPermissions = m.RelatedPermissions
 	a.Type = m.Type
 	a.CreatedAt = m.CreatedAt
 

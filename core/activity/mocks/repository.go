@@ -22,8 +22,8 @@ func (_m *Repository) EXPECT() *Repository_Expecter {
 	return &Repository_Expecter{mock: &_m.Mock}
 }
 
-// BulkInsert provides a mock function with given fields: _a0, _a1
-func (_m *Repository) BulkInsert(_a0 context.Context, _a1 []*domain.Activity) error {
+// BulkUpsert provides a mock function with given fields: _a0, _a1
+func (_m *Repository) BulkUpsert(_a0 context.Context, _a1 []*domain.Activity) error {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 error
@@ -36,26 +36,26 @@ func (_m *Repository) BulkInsert(_a0 context.Context, _a1 []*domain.Activity) er
 	return r0
 }
 
-// Repository_BulkInsert_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkInsert'
-type Repository_BulkInsert_Call struct {
+// Repository_BulkUpsert_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkUpsert'
+type Repository_BulkUpsert_Call struct {
 	*mock.Call
 }
 
-// BulkInsert is a helper method to define mock.On call
+// BulkUpsert is a helper method to define mock.On call
 //  - _a0 context.Context
 //  - _a1 []*domain.Activity
-func (_e *Repository_Expecter) BulkInsert(_a0 interface{}, _a1 interface{}) *Repository_BulkInsert_Call {
-	return &Repository_BulkInsert_Call{Call: _e.mock.On("BulkInsert", _a0, _a1)}
+func (_e *Repository_Expecter) BulkUpsert(_a0 interface{}, _a1 interface{}) *Repository_BulkUpsert_Call {
+	return &Repository_BulkUpsert_Call{Call: _e.mock.On("BulkUpsert", _a0, _a1)}
 }
 
-func (_c *Repository_BulkInsert_Call) Run(run func(_a0 context.Context, _a1 []*domain.Activity)) *Repository_BulkInsert_Call {
+func (_c *Repository_BulkUpsert_Call) Run(run func(_a0 context.Context, _a1 []*domain.Activity)) *Repository_BulkUpsert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].([]*domain.Activity))
 	})
 	return _c
 }
 
-func (_c *Repository_BulkInsert_Call) Return(_a0 error) *Repository_BulkInsert_Call {
+func (_c *Repository_BulkUpsert_Call) Return(_a0 error) *Repository_BulkUpsert_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
