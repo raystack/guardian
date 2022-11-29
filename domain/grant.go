@@ -76,6 +76,14 @@ func (g *Grant) Revoke(actor, reason string) error {
 	return nil
 }
 
+func (g *Grant) GetPermissions() []string {
+	var permissions []string
+	for _, p := range g.Permissions {
+		permissions = append(permissions, p)
+	}
+	return permissions
+}
+
 type ListGrantsFilter struct {
 	Statuses                  []string
 	AccountIDs                []string
