@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"errors"
 	"time"
 )
 
@@ -29,24 +28,6 @@ type Approval struct {
 
 	CreatedAt time.Time `json:"created_at,omitempty" yaml:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
-}
-
-func (a *Approval) Init(policy *Policy, index int, approvers []string) error {
-	if index > len(policy.Steps)-1 {
-		return errors.New("approval step index out of range")
-	}
-	approvalStep := policy.Steps[index]
-
-	a.Status = ApprovalStatusPending
-	if index > 0 {
-		a.Status = ApprovalStatusBlocked
-	}
-	a.Index = index
-	a.Name = approvalStep.Name
-	a.PolicyID = policy.ID
-	a.PolicyVersion = policy.Version
-	a.Approvers = approvers
-	return nil
 }
 
 func (a *Approval) Approve() {

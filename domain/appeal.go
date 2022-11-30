@@ -1,8 +1,13 @@
 package domain
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"reflect"
 	"time"
+
+	"github.com/odpf/guardian/pkg/evaluator"
 )
 
 const (
@@ -17,6 +22,10 @@ const (
 	SystemActorName = "system"
 
 	DefaultAppealAccountType = "user"
+)
+
+var (
+	ErrApproverInvalidType = errors.New("invalid approver type, expected an email string or array of email string")
 )
 
 // AppealOptions
@@ -140,6 +149,128 @@ func (a Appeal) ToGrant() (*Grant, error) {
 	}
 
 	return grant, nil
+}
+
+func (a *Appeal) ApplyPolicy(p *Policy) error {
+	approvals := []*Approval{}
+	for i, step := range p.Steps {
+		approval, err := step.ToApproval(a, p, i)
+		if err != nil {
+			return err
+		}
+		approvals = append(approvals, approval)
+	}
+
+	a.Approvals = approvals
+	a.Init(p)
+	a.Policy = p
+
+	return nil
+}
+
+func (a *Appeal) AdvanceApproval(policy *Policy) error {
+	if policy == nil {
+		return fmt.Errorf("appeal has no policy")
+	}
+
+	stepNameIndex := map[string]int{}
+	for i, s := range policy.Steps {
+		stepNameIndex[s.Name] = i
+	}
+
+	for i, approval := range a.Approvals {
+		if approval.Status == ApprovalStatusRejected {
+			break
+		}
+		if approval.Status == ApprovalStatusPending {
+			stepConfig := policy.Steps[approval.Index]
+
+			appealMap, err := structToMap(a)
+			if err != nil {
+				return fmt.Errorf("parsing appeal struct to map: %w", err)
+			}
+
+			if stepConfig.When != "" {
+				v, err := evaluator.Expression(stepConfig.When).EvaluateWithVars(map[string]interface{}{
+					"appeal": appealMap,
+				})
+				if err != nil {
+					return err
+				}
+
+				isFalsy := reflect.ValueOf(v).IsZero()
+				if isFalsy {
+					approval.Status = ApprovalStatusSkipped
+					if i < len(a.Approvals)-1 {
+						a.Approvals[i+1].Status = ApprovalStatusPending
+					}
+				}
+			}
+
+			if approval.Status != ApprovalStatusSkipped && stepConfig.Strategy == ApprovalStepStrategyAuto {
+				v, err := evaluator.Expression(stepConfig.ApproveIf).EvaluateWithVars(map[string]interface{}{
+					"appeal": appealMap,
+				})
+				if err != nil {
+					return err
+				}
+
+				isFalsy := reflect.ValueOf(v).IsZero()
+				if isFalsy {
+					if stepConfig.AllowFailed {
+						approval.Status = ApprovalStatusSkipped
+						if i+1 <= len(a.Approvals)-1 {
+							a.Approvals[i+1].Status = ApprovalStatusPending
+						}
+					} else {
+						approval.Status = ApprovalStatusRejected
+						approval.Reason = stepConfig.RejectionReason
+						a.Status = AppealStatusRejected
+					}
+				} else {
+					approval.Status = ApprovalStatusApproved
+					if i+1 <= len(a.Approvals)-1 {
+						a.Approvals[i+1].Status = ApprovalStatusPending
+					}
+				}
+			}
+		}
+		if i == len(a.Approvals)-1 && (approval.Status == ApprovalStatusSkipped || approval.Status == ApprovalStatusApproved) {
+			a.Status = AppealStatusApproved
+		}
+	}
+
+	return nil
+}
+
+func structToMap(item interface{}) (map[string]interface{}, error) {
+	result := map[string]interface{}{}
+
+	if item != nil {
+		jsonString, err := json.Marshal(item)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal(jsonString, &result); err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
+}
+
+func uniqueSlice(arr []string) []string {
+	keys := map[string]bool{}
+	result := []string{}
+
+	for _, v := range arr {
+		if _, exist := keys[v]; !exist {
+			result = append(result, v)
+			keys[v] = true
+		}
+	}
+	return result
 }
 
 type ApprovalActionType string
