@@ -21,7 +21,9 @@ var (
 	ErrEmptyActivityPayload       = errors.New("couldn't get payload from log entry")
 )
 
-type auditLog audit.AuditLog
+type auditLog struct {
+	*audit.AuditLog
+}
 
 func (a auditLog) GetAccountType() string {
 	if a.AuthenticationInfo.ServiceAccountKeyName != "" {
@@ -54,7 +56,7 @@ func (a Activity) getAuditLog() (*auditLog, error) {
 	if !ok {
 		return nil, fmt.Errorf("%w: %T", ErrInvalidActivityPayloadType, a.Payload)
 	}
-	return (*auditLog)(l), nil
+	return &auditLog{l}, nil
 }
 
 func (a Activity) ToDomainActivity(p domain.Provider) (*domain.Activity, error) {
