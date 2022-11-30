@@ -449,7 +449,7 @@ func (s *Service) ListAccess(ctx context.Context, p domain.Provider, resources [
 func (s *Service) ImportActivities(ctx context.Context, filter domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
 	p, err := s.GetByID(ctx, filter.ProviderID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting provider details: %w", err)
 	}
 
 	client := s.getClient(p.Type)
