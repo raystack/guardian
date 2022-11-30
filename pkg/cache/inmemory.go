@@ -18,17 +18,20 @@ func WithTTL(ttl time.Duration) Option {
 	}
 }
 
+type cachedValue struct {
+	value interface{}
+	ttl   *time.Time
+}
+
 type InMemoryCache struct {
-	data    map[string]interface{}
-	dataTTL map[string]time.Time
+	data map[string]cachedValue
 
 	mu sync.RWMutex
 }
 
 func NewInMemoryCache(cleanupInterval time.Duration) (*InMemoryCache, error) {
 	c := &InMemoryCache{
-		data:    make(map[string]interface{}),
-		dataTTL: make(map[string]time.Time),
+		data: make(map[string]cachedValue),
 	}
 
 	if cleanupInterval == 0 {
@@ -45,7 +48,10 @@ func (c *InMemoryCache) Get(key string) (interface{}, bool) {
 	defer c.mu.RUnlock()
 
 	v, ok := c.data[key]
-	return v, ok
+	if !ok {
+		return nil, false
+	}
+	return v.value, true
 }
 
 func (c *InMemoryCache) Set(key string, value interface{}, opts ...Option) {
@@ -57,10 +63,12 @@ func (c *InMemoryCache) Set(key string, value interface{}, opts ...Option) {
 		opt(o)
 	}
 
-	c.data[key] = value
+	cv := cachedValue{value: value}
 	if o.ttl > 0 {
-		c.dataTTL[key] = time.Now().Add(o.ttl)
+		t := time.Now().Add(o.ttl)
+		cv.ttl = &t
 	}
+	c.data[key] = cv
 }
 
 func (c *InMemoryCache) Delete(key string) {
@@ -68,14 +76,16 @@ func (c *InMemoryCache) Delete(key string) {
 	defer c.mu.Unlock()
 
 	delete(c.data, key)
-	delete(c.dataTTL, key)
 }
 
 func (c *InMemoryCache) deleteExpired() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	now := time.Now()
-	for key, expiration := range c.dataTTL {
-		if now.After(expiration) {
-			c.Delete(key)
+	for k, v := range c.data {
+		if now.After(*v.ttl) {
+			delete(c.data, k)
 		}
 	}
 }
