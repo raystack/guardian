@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/pkg/cache"
+	"github.com/odpf/guardian/pkg/slices"
 	"github.com/odpf/salt/log"
 )
 
@@ -316,7 +317,7 @@ func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter
 				a.RelatedPermissions = append(a.RelatedPermissions, gcloudRoles...)
 			}
 		}
-		a.RelatedPermissions = uniqueSlice(a.RelatedPermissions)
+		a.RelatedPermissions = slices.UniqueStringSlice(a.RelatedPermissions)
 
 		activities = append(activities, a)
 	}
@@ -454,17 +455,4 @@ func getPermissions(a domain.Grant) []Permission {
 		permissions = append(permissions, Permission(p))
 	}
 	return permissions
-}
-
-func uniqueSlice(arr []string) []string {
-	keys := map[string]bool{}
-	result := []string{}
-
-	for _, v := range arr {
-		if _, exist := keys[v]; !exist {
-			result = append(result, v)
-			keys[v] = true
-		}
-	}
-	return result
 }

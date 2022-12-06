@@ -12,6 +12,7 @@ import (
 	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/pkg/evaluator"
+	"github.com/odpf/guardian/pkg/slices"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
@@ -805,7 +806,7 @@ func (s *Service) resolveApprovers(expressions []string, appeal *domain.Appeal) 
 		}
 	}
 
-	distinctApprovers := uniqueSlice(approvers)
+	distinctApprovers := slices.UniqueStringSlice(approvers)
 	if err := s.validator.Var(distinctApprovers, "dive,email"); err != nil {
 		return nil, err
 	}
@@ -1170,17 +1171,4 @@ func (s *Service) prepareGrant(ctx context.Context, appeal *domain.Appeal) (newG
 	}
 
 	return grant, deactivatedGrant, nil
-}
-
-func uniqueSlice(arr []string) []string {
-	keys := map[string]bool{}
-	result := []string{}
-
-	for _, v := range arr {
-		if _, exist := keys[v]; !exist {
-			result = append(result, v)
-			keys[v] = true
-		}
-	}
-	return result
 }
