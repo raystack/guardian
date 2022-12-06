@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/odpf/guardian/domain"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
@@ -14,12 +15,6 @@ const (
 	ResourceNameOrganizationPrefix = "organizations/"
 	ResourceNameProjectPrefix      = "projects/"
 )
-
-type GcloudIamClient interface {
-	GetRoles() ([]*Role, error)
-	GrantAccess(accountType, accountID, role string) error
-	RevokeAccess(accountType, accountID, role string) error
-}
 
 type iamClient struct {
 	resourceName                string
@@ -49,7 +44,7 @@ func newIamClient(credentialsJSON []byte, resourceName string) (*iamClient, erro
 func (c *iamClient) GetRoles() ([]*Role, error) {
 	var roles []*Role
 
-	ctx := context.Background()
+	ctx := context.TODO()
 	req := c.iamService.Roles.List()
 	if err := req.Pages(ctx, func(page *iam.ListRolesResponse) error {
 		for _, role := range page.Roles {
@@ -88,7 +83,8 @@ func (c *iamClient) GetRoles() ([]*Role, error) {
 }
 
 func (c *iamClient) GrantAccess(accountType, accountID, role string) error {
-	policy, err := c.getIamPolicy()
+	ctx := context.TODO()
+	policy, err := c.getIamPolicy(ctx)
 	if err != nil {
 		return err
 	}
@@ -111,12 +107,13 @@ func (c *iamClient) GrantAccess(accountType, accountID, role string) error {
 		})
 	}
 
-	_, err = c.setIamPolicy(policy)
+	_, err = c.setIamPolicy(ctx, policy)
 	return err
 }
 
 func (c *iamClient) RevokeAccess(accountType, accountID, role string) error {
-	policy, err := c.getIamPolicy()
+	ctx := context.TODO()
+	policy, err := c.getIamPolicy(ctx)
 	if err != nil {
 		return err
 	}
@@ -137,26 +134,50 @@ func (c *iamClient) RevokeAccess(accountType, accountID, role string) error {
 		}
 	}
 
-	c.setIamPolicy(policy)
+	c.setIamPolicy(ctx, policy)
 	return err
 }
 
-func (c *iamClient) getIamPolicy() (*cloudresourcemanager.Policy, error) {
+func (c *iamClient) ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error) {
+	policy, err := c.getIamPolicy(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting IAM policy: %w", err)
+	}
+
+	access := make(domain.MapResourceAccess)
+	for _, resource := range resources {
+		for _, binding := range policy.Bindings {
+			for _, member := range binding.Members {
+				account := strings.Split(member, ":")
+				ae := domain.AccessEntry{
+					AccountType: account[0],
+					AccountID:   account[1],
+					Permission:  binding.Role,
+				}
+				access[resource.URN] = append(access[resource.URN], ae)
+			}
+		}
+	}
+
+	return access, nil
+}
+
+func (c *iamClient) getIamPolicy(ctx context.Context) (*cloudresourcemanager.Policy, error) {
 	if strings.HasPrefix(c.resourceName, ResourceNameProjectPrefix) {
 		projectID := strings.Replace(c.resourceName, ResourceNameProjectPrefix, "", 1)
 		return c.cloudResourceManagerService.Projects.
 			GetIamPolicy(projectID, &cloudresourcemanager.GetIamPolicyRequest{}).
-			Do()
+			Context(ctx).Do()
 	} else if strings.HasPrefix(c.resourceName, ResourceNameOrganizationPrefix) {
 		orgID := strings.Replace(c.resourceName, ResourceNameOrganizationPrefix, "", 1)
 		return c.cloudResourceManagerService.Organizations.
 			GetIamPolicy(orgID, &cloudresourcemanager.GetIamPolicyRequest{}).
-			Do()
+			Context(ctx).Do()
 	}
 	return nil, ErrInvalidResourceName
 }
 
-func (c *iamClient) setIamPolicy(policy *cloudresourcemanager.Policy) (*cloudresourcemanager.Policy, error) {
+func (c *iamClient) setIamPolicy(ctx context.Context, policy *cloudresourcemanager.Policy) (*cloudresourcemanager.Policy, error) {
 	setIamPolicyRequest := &cloudresourcemanager.SetIamPolicyRequest{
 		Policy: policy,
 	}
@@ -164,12 +185,12 @@ func (c *iamClient) setIamPolicy(policy *cloudresourcemanager.Policy) (*cloudres
 		projectID := strings.Replace(c.resourceName, ResourceNameProjectPrefix, "", 1)
 		return c.cloudResourceManagerService.Projects.
 			SetIamPolicy(projectID, setIamPolicyRequest).
-			Do()
+			Context(ctx).Do()
 	} else if strings.HasPrefix(c.resourceName, ResourceNameOrganizationPrefix) {
 		orgID := strings.Replace(c.resourceName, ResourceNameOrganizationPrefix, "", 1)
 		return c.cloudResourceManagerService.Organizations.
 			SetIamPolicy(orgID, setIamPolicyRequest).
-			Do()
+			Context(ctx).Do()
 	}
 	return nil, ErrInvalidResourceName
 }

@@ -327,7 +327,7 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 	}
 	// map[resourceURN]map[accounttype:accountId]map[permissionsKey]grant
 	activeGrantsMap := map[string]map[string]map[string]*domain.Grant{}
-	for _, g := range activeGrants {
+	for i, g := range activeGrants {
 		if activeGrantsMap[g.Resource.URN] == nil {
 			activeGrantsMap[g.Resource.URN] = map[string]map[string]*domain.Grant{}
 		}
@@ -337,7 +337,7 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 			activeGrantsMap[g.Resource.URN][accountSignature] = map[string]*domain.Grant{}
 		}
 
-		activeGrantsMap[g.Resource.URN][accountSignature][g.PermissionsKey()] = &g
+		activeGrantsMap[g.Resource.URN][accountSignature][g.PermissionsKey()] = &activeGrants[i]
 	}
 
 	var newAndUpdatedGrants []*domain.Grant
