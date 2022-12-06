@@ -22,4 +22,6 @@ CREATE INDEX IF NOT EXISTS "idx_activities_account_id" ON "activities" ("account
 
 CREATE INDEX IF NOT EXISTS "idx_activities_timestamp" ON "activities" ("timestamp");
 
+CREATE INDEX IF NOT EXISTS "idx_activities_type" ON "activities" ("type");
+
 CREATE UNIQUE INDEX IF NOT EXISTS "provider_activity_index" ON "activities" ("provider_activity_id", "provider_id");
