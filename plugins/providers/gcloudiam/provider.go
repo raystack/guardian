@@ -8,7 +8,21 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
+	"golang.org/x/net/context"
 )
+
+//go:generate mockery --name=GcloudIamClient --exported --with-expecter
+type GcloudIamClient interface {
+	GetRoles() ([]*Role, error)
+	GrantAccess(accountType, accountID, role string) error
+	RevokeAccess(accountType, accountID, role string) error
+	ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error)
+}
+
+//go:generate mockery --name=encryptor --exported --with-expecter
+type encryptor interface {
+	domain.Crypto
+}
 
 type Provider struct {
 	provider.PermissionManager
@@ -16,10 +30,10 @@ type Provider struct {
 
 	typeName string
 	Clients  map[string]GcloudIamClient
-	crypto   domain.Crypto
+	crypto   encryptor
 }
 
-func NewProvider(typeName string, crypto domain.Crypto) *Provider {
+func NewProvider(typeName string, crypto encryptor) *Provider {
 	return &Provider{
 		typeName: typeName,
 		Clients:  map[string]GcloudIamClient{},
@@ -151,6 +165,20 @@ func (p *Provider) GetAccountTypes() []string {
 		AccountTypeServiceAccount,
 		AccountTypeGroup,
 	}
+}
+
+func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, resources []*domain.Resource) (domain.MapResourceAccess, error) {
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return nil, fmt.Errorf("parsing credentials: %w", err)
+	}
+
+	client, err := p.getIamClient(&pc)
+	if err != nil {
+		return nil, fmt.Errorf("initializing iam client: %w", err)
+	}
+
+	return client.ListAccess(ctx, resources)
 }
 
 func (p *Provider) getIamClient(pc *domain.ProviderConfig) (GcloudIamClient, error) {
