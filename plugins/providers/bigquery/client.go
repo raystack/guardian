@@ -331,13 +331,14 @@ func (c *bigQueryClient) GetRolePermissions(ctx context.Context, role string) ([
 	var iamRole *iam.Role
 	var err error
 
-	if strings.HasPrefix(role, "roles/") {
+	switch {
+	case strings.HasPrefix(role, "roles/"):
 		iamRole, err = c.iamService.Roles.Get(role).Context(ctx).Do()
-	} else if strings.HasPrefix(role, "projects/") {
+	case strings.HasPrefix(role, "projects/"):
 		iamRole, err = c.iamService.Projects.Roles.Get(role).Context(ctx).Do()
-	} else if strings.HasPrefix(role, "organizations/") {
+	case strings.HasPrefix(role, "organizations/"):
 		iamRole, err = c.iamService.Organizations.Roles.Get(role).Context(ctx).Do()
-	} else {
+	default:
 		return nil, fmt.Errorf("invalid role signature: %q", role)
 	}
 	if err != nil {
