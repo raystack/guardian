@@ -12,9 +12,9 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/pkg/cache"
 	"github.com/odpf/guardian/pkg/slices"
 	"github.com/odpf/salt/log"
+	"github.com/patrickmn/go-cache"
 )
 
 var (
@@ -63,23 +63,18 @@ type Provider struct {
 	encryptor encryptor
 	logger    log.Logger
 
-	rolesCache *cache.InMemoryCache
+	rolesCache *cache.Cache
 }
 
 // NewProvider returns bigquery provider
 func NewProvider(typeName string, c encryptor, logger log.Logger) *Provider {
-	rolesCache, err := cache.NewInMemoryCache(5 * time.Minute)
-	if err != nil {
-		panic(err)
-	}
-
 	return &Provider{
 		typeName:  typeName,
 		Clients:   map[string]BigQueryClient{},
 		encryptor: c,
 		logger:    logger,
 
-		rolesCache: rolesCache,
+		rolesCache: cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
@@ -421,7 +416,7 @@ func (p *Provider) getGcloudPermissions(ctx context.Context, pd domain.Provider,
 		return nil, err
 	}
 
-	p.rolesCache.Set(roleID, permissions, cache.WithTTL(1*time.Hour))
+	p.rolesCache.Set(roleID, permissions, 1*time.Hour)
 	return permissions, nil
 }
 
