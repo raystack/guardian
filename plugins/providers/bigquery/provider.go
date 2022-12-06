@@ -398,15 +398,7 @@ func (p *Provider) getGcloudRoles(ctx context.Context, pd domain.Provider) (map[
 
 // getGcloudPermissions returns list of gcloud permissions for given gcloud role
 func (p *Provider) getGcloudPermissions(ctx context.Context, pd domain.Provider, gcloudRole string) ([]string, error) {
-	roleID := gcloudRole
-	switch gcloudRole {
-	case DatasetRoleOwner:
-		roleID = "roles/bigquery.admin"
-	case DatasetRoleWriter:
-		roleID = "roles/bigquery.dataEditor"
-	case DatasetRoleReader:
-		roleID = "roles/bigquery.dataViewer"
-	}
+	roleID := translateDatasetRoleToBigQueryRole(gcloudRole)
 
 	if permissions, exists := p.rolesCache.Get(roleID); exists {
 		p.logger.Debug("getting permissions from cache", "role", roleID)
@@ -455,4 +447,17 @@ func getPermissions(a domain.Grant) []Permission {
 		permissions = append(permissions, Permission(p))
 	}
 	return permissions
+}
+
+func translateDatasetRoleToBigQueryRole(role string) string {
+	switch role {
+	case DatasetRoleOwner:
+		return "roles/bigquery.admin"
+	case DatasetRoleWriter:
+		return "roles/bigquery.dataEditor"
+	case DatasetRoleReader:
+		return "roles/bigquery.dataViewer"
+	default:
+		return role
+	}
 }
