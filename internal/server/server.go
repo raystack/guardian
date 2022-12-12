@@ -183,7 +183,9 @@ func Migrate(c *Config) error {
 		return err
 	}
 
-	auditRepository := audit_repos.NewPostgresRepository(store.DB())
+	sqldb, _ := store.DB().DB()
+
+	auditRepository := audit_repos.NewPostgresRepository(sqldb)
 	if err := auditRepository.Init(context.Background()); err != nil {
 		return fmt.Errorf("initializing audit repository: %w", err)
 	}
