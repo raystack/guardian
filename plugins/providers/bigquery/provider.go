@@ -49,6 +49,12 @@ type BigQueryClient interface {
 	GetRolePermissions(context.Context, string) ([]string, error)
 }
 
+//go:generate mockery --name=cloudLoggingClientI --exported --with-expecter
+type cloudLoggingClientI interface {
+	Close() error
+	ListLogEntries(context.Context, ImportActivitiesFilter) ([]*Activity, error)
+}
+
 //go:generate mockery --name=encryptor --exported --with-expecter
 type encryptor interface {
 	domain.Crypto
@@ -58,22 +64,26 @@ type encryptor interface {
 type Provider struct {
 	provider.PermissionManager
 
-	typeName  string
-	Clients   map[string]BigQueryClient
-	encryptor encryptor
-	logger    log.Logger
+	typeName   string
+	Clients    map[string]BigQueryClient
+	LogClients map[string]cloudLoggingClientI
+	encryptor  encryptor
+	logger     log.Logger
 
+	mu         sync.Mutex
 	rolesCache *cache.Cache
 }
 
 // NewProvider returns bigquery provider
 func NewProvider(typeName string, c encryptor, logger log.Logger) *Provider {
 	return &Provider{
-		typeName:  typeName,
-		Clients:   map[string]BigQueryClient{},
-		encryptor: c,
-		logger:    logger,
+		typeName:   typeName,
+		Clients:    map[string]BigQueryClient{},
+		LogClients: map[string]cloudLoggingClientI{},
+		encryptor:  c,
+		logger:     logger,
 
+		mu:         sync.Mutex{},
 		rolesCache: cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
@@ -262,6 +272,7 @@ func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, res
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return nil, fmt.Errorf("parsing credentials: %w", err)
 	}
+
 	bqClient, err := p.getBigQueryClient(creds)
 	if err != nil {
 		return nil, fmt.Errorf("initializing bigquery client: %w", err)
@@ -271,21 +282,14 @@ func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, res
 }
 
 func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
-	creds, err := ParseCredentials(pd.Config.Credentials, p.encryptor)
-	if err != nil {
-		return nil, fmt.Errorf("parsing credentials: %w", err)
-	}
-
-	logClient, err := NewCloudLoggingClient(ctx, creds.ProjectID(), []byte(creds.ServiceAccountKey))
+	logClient, err := p.getCloudLoggingClient(ctx, *pd.Config)
 	if err != nil {
 		return nil, fmt.Errorf("initializing cloud logging client: %w", err)
 	}
-	defer logClient.Close()
 
 	entries, err := logClient.ListLogEntries(ctx, ImportActivitiesFilter{
 		ImportActivitiesFilter: filter,
 		Types:                  BigQueryAuditMetadataMethods,
-		Authorizations:         []string{},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("listing log entries: %w", err)
@@ -336,6 +340,26 @@ func (p *Provider) getBigQueryClient(credentials Credentials) (BigQueryClient, e
 	return client, nil
 }
 
+func (p *Provider) getCloudLoggingClient(ctx context.Context, pd domain.ProviderConfig) (cloudLoggingClientI, error) {
+	decryptedCreds, err := ParseCredentials(pd.Credentials, p.encryptor)
+	if err != nil {
+		return nil, fmt.Errorf("parsing credentials: %w", err)
+	}
+
+	projectID := strings.Replace(decryptedCreds.ResourceName, "projects/", "", 1)
+	if p.LogClients[projectID] != nil {
+		return p.LogClients[projectID], nil
+	}
+
+	client, err := NewCloudLoggingClient(ctx, projectID, []byte(decryptedCreds.ServiceAccountKey))
+	if err != nil {
+		return nil, err
+	}
+
+	p.LogClients[projectID] = client
+	return client, nil
+}
+
 // getGcloudRoles returns map[resourceType][gcloudPermission]gcloudRoles
 func (p *Provider) getGcloudRoles(ctx context.Context, pd domain.Provider) (map[string]map[string][]string, error) {
 	result := map[string]map[string][]string{}
@@ -363,6 +387,7 @@ func (p *Provider) getGcloudRoles(ctx context.Context, pd domain.Provider) (map[
 					return
 				}
 
+				p.mu.Lock()
 				for _, p := range gcloudPermissions {
 					if _, ok := result[rt]; !ok {
 						result[rt] = map[string][]string{}
@@ -372,6 +397,7 @@ func (p *Provider) getGcloudRoles(ctx context.Context, pd domain.Provider) (map[
 					}
 					result[rt][p] = append(result[rt][p], gcloudRole)
 				}
+				p.mu.Unlock()
 
 				wg.Done()
 			}(resourceType, r)
@@ -394,7 +420,6 @@ func (p *Provider) getGcloudRoles(ctx context.Context, pd domain.Provider) (map[
 // getGcloudPermissions returns list of gcloud permissions for given gcloud role
 func (p *Provider) getGcloudPermissions(ctx context.Context, pd domain.Provider, gcloudRole string) ([]string, error) {
 	roleID := translateDatasetRoleToBigQueryRole(gcloudRole)
-
 	if permissions, exists := p.rolesCache.Get(roleID); exists {
 		p.logger.Debug("getting permissions from cache", "role", roleID)
 		return permissions.([]string), nil

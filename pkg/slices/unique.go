@@ -1,6 +1,10 @@
 package slices
 
 func UniqueStringSlice(slice []string) []string {
+	if slice == nil {
+		return nil
+	}
+
 	keys := make(map[string]bool)
 	list := []string{}
 	for _, entry := range slice {

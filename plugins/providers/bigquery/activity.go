@@ -35,8 +35,10 @@ func (a auditLog) GetAccountType() string {
 func (a auditLog) GetResource(p domain.Provider) *domain.Resource {
 	rn := BigQueryResourceName(a.ResourceName)
 	resourceType := ResourceTypeDataset
+	name := rn.DatasetID()
 	if tableID := rn.TableID(); tableID != "" {
 		resourceType = ResourceTypeTable
+		name = tableID
 	}
 
 	return &domain.Resource{
@@ -44,6 +46,7 @@ func (a auditLog) GetResource(p domain.Provider) *domain.Resource {
 		ProviderURN:  p.URN,
 		Type:         resourceType,
 		URN:          rn.BigQueryResourceID(),
+		Name:         name,
 	}
 }
 

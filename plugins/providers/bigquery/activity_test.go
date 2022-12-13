@@ -82,6 +82,7 @@ func TestActivity_ToProviderActivity(t *testing.T) {
 			ProviderURN:  "dummy-provider-urn",
 			Type:         bigquery.ResourceTypeTable,
 			URN:          "xxx:yyy.zzz",
+			Name:         "zzz",
 		},
 	}
 

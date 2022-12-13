@@ -14,6 +14,11 @@ func TestUniqueStringSlice(t *testing.T) {
 		expected []string
 	}{
 		{
+			name:     "nil",
+			input:    nil,
+			expected: nil,
+		},
+		{
 			name:     "empty",
 			input:    []string{},
 			expected: []string{},
