@@ -306,30 +306,26 @@ func (c *bigQueryClient) ListAccess(ctx context.Context, resources []*domain.Res
 	return access, nil
 }
 
-func (c *bigQueryClient) getGrantableRolesForDataset() ([]bq.AccessRole, error) {
+func (c *bigQueryClient) getGrantableRolesForDataset(ctx context.Context) ([]bq.AccessRole, error) {
 	var roles = []bq.AccessRole{bq.OwnerRole, bq.WriterRole, bq.ReaderRole}
 	var resourceName string
-	ctx := context.Background()
 	datasetIterator := c.client.Datasets(ctx)
-	for {
-		dataset, err := datasetIterator.Next()
-		if err == iterator.Done || err != nil {
-			break
-		}
-
-		resourceName = fmt.Sprintf("//bigquery.googleapis.com/projects/%v/datasets/%v", dataset.ProjectID, dataset.DatasetID)
-		request := &iam.QueryGrantableRolesRequest{
-			FullResourceName: resourceName,
-		}
-		response, err := c.iamService.Roles.QueryGrantableRoles(request).Do()
-		if err != nil {
-			return roles, err
-		}
-
-		for _, role := range response.Roles {
-			roles = append(roles, bq.AccessRole(role.Name))
-		}
+	dataset, err := datasetIterator.Next()
+	if err != nil {
 		return roles, nil
+	}
+
+	resourceName = fmt.Sprintf("//bigquery.googleapis.com/projects/%v/datasets/%v", dataset.ProjectID, dataset.DatasetID)
+	request := &iam.QueryGrantableRolesRequest{
+		FullResourceName: resourceName,
+	}
+	response, err := c.iamService.Roles.QueryGrantableRoles(request).Do()
+	if err != nil {
+		return roles, err
+	}
+
+	for _, role := range response.Roles {
+		roles = append(roles, bq.AccessRole(role.Name))
 	}
 	return roles, nil
 }

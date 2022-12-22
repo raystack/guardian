@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"golang.org/x/net/context"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -169,7 +170,7 @@ func (c *Config) validatePermission(value interface{}, resourceType string, clie
 	}
 
 	if resourceType == ResourceTypeDataset {
-		roles, err := client.getGrantableRolesForDataset()
+		roles, err := client.getGrantableRolesForDataset(context.TODO())
 		if err != nil {
 			return nil, ErrCannotFetchDatabasePermission
 		}
