@@ -21,6 +21,8 @@ const (
 	ProviderTypeNoOp = "noop"
 	//  ProviderTypeGCS is the type name for Google Cloud Storage provider
 	ProviderTypeGCS = "gcs"
+	//  ProviderTypeShield is the type name for Shield auth layer provider
+	ProviderTypeShield = "shield"
 )
 
 // Role is the configuration to define a role and mapping the permissions in the provider

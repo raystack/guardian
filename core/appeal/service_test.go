@@ -3,6 +3,7 @@ package appeal_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -826,7 +827,6 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 		s.mockIAMManager.On("GetClient", mock.Anything, mock.Anything).Return(s.mockIAMClient, nil)
 		s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
-		s.mockApprovalService.On("AdvanceApproval", mock.Anything, mock.Anything).Return(nil)
 		s.mockRepository.EXPECT().
 			BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), expectedAppealsInsertionParam).
 			Return(nil).
@@ -953,12 +953,15 @@ func (s *ServiceTestSuite) TestCreate() {
 			s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 			s.mockIAMManager.On("GetClient", mock.Anything, mock.Anything).Return(s.mockIAMClient, nil)
 			s.mockIAMClient.On("GetUser", input.AccountID).Return(map[string]interface{}{}, nil)
-			s.mockApprovalService.On("AdvanceApproval", mock.Anything, mock.Anything).Return(nil)
 			s.mockRepository.EXPECT().
 				BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
 				Return(nil).Once()
 			s.mockNotifier.On("Notify", mock.Anything).Return(nil).Once()
 			s.mockAuditLogger.On("Log", mock.Anything, appeal.AuditKeyBulkInsert, mock.Anything).Return(nil).Once()
+			s.mockGrantService.On("List", mock.Anything, mock.Anything).Return([]domain.Grant{}, nil).Once()
+			s.mockGrantService.On("Prepare", mock.Anything, mock.Anything).Return(&domain.Grant{}, nil).Once()
+			s.mockPolicyService.On("GetOne", mock.Anything, mock.Anything, mock.Anything).Return(overriddingPolicy, nil).Once()
+			s.mockProviderService.On("GrantAccess", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 			err := s.service.Create(context.Background(), []*domain.Appeal{input}, appeal.CreateWithAdditionalAppeal())
 
@@ -1165,13 +1168,6 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 	s.mockIAMManager.On("GetClient", mock.Anything).Return(s.mockIAMClient, nil)
 	s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
-	s.mockApprovalService.On("AdvanceApproval", mock.Anything, appeals[0]).
-		Return(nil).
-		Run(func(args mock.Arguments) {
-			ap := args.Get(1).(*domain.Appeal)
-			ap.Status = domain.AppealStatusApproved
-			ap.Approvals[0].Status = domain.ApprovalStatusApproved
-		})
 
 	s.mockGrantService.EXPECT().
 		List(mock.AnythingOfType("*context.emptyCtx"), domain.ListGrantsFilter{
@@ -1222,7 +1218,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	s.Equal(expectedResult, appeals)
 }
 
-func (s *ServiceTestSuite) TestMakeAction() {
+func (s *ServiceTestSuite) TestUpdateApproval() {
 	timeNow := time.Now()
 	appeal.TimeNow = func() time.Time {
 		return timeNow
@@ -1258,9 +1254,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		}
 
 		for _, param := range invalidApprovalActionParameters {
-			s.setup()
-
-			actualResult, actualError := s.service.MakeAction(context.Background(), param)
+			actualResult, actualError := s.service.UpdateApproval(context.Background(), param)
 
 			s.Nil(actualResult)
 			s.Error(actualError)
@@ -1275,12 +1269,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 	}
 
 	s.Run("should return error if got any from repository while getting appeal details", func() {
-		s.setup()
-
 		expectedError := errors.New("repository error")
 		s.mockRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.MakeAction(context.Background(), validApprovalActionParam)
+		actualResult, actualError := s.service.UpdateApproval(context.Background(), validApprovalActionParam)
 
 		s.mockRepository.AssertExpectations(s.T())
 		s.Nil(actualResult)
@@ -1288,12 +1280,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 	})
 
 	s.Run("should return error if appeal not found", func() {
-		s.setup()
-
 		expectedError := appeal.ErrAppealNotFound
 		s.mockRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.MakeAction(context.Background(), validApprovalActionParam)
+		actualResult, actualError := s.service.UpdateApproval(context.Background(), validApprovalActionParam)
 
 		s.mockRepository.AssertExpectations(s.T())
 		s.Nil(actualResult)
@@ -1461,8 +1451,6 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		}
 
 		for _, tc := range testCases {
-			s.setup()
-
 			expectedAppeal := &domain.Appeal{
 				ID:        validApprovalActionParam.AppealID,
 				Status:    tc.appealStatus,
@@ -1472,7 +1460,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				GetByID(mock.AnythingOfType("*context.emptyCtx"), validApprovalActionParam.AppealID).
 				Return(expectedAppeal, nil).Once()
 
-			actualResult, actualError := s.service.MakeAction(context.Background(), validApprovalActionParam)
+			actualResult, actualError := s.service.UpdateApproval(context.Background(), validApprovalActionParam)
 
 			s.Nil(actualResult)
 			s.EqualError(actualError, tc.expectedError.Error())
@@ -1503,26 +1491,22 @@ func (s *ServiceTestSuite) TestMakeAction() {
 	}
 
 	s.Run("should return error if got any from approvalService.AdvanceApproval", func() {
-		s.setup()
-
 		s.mockRepository.EXPECT().
 			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
 			Return(expectedAppeal, nil).Once()
 		expectedError := errors.New("unexpected error")
-		s.mockApprovalService.EXPECT().AdvanceApproval(mock.Anything, mock.Anything).
-			Return(expectedError).Once()
 
-		actualResult, actualError := s.service.MakeAction(context.Background(), validApprovalActionParam)
+		s.mockPolicyService.EXPECT().GetOne(mock.Anything, mock.Anything, mock.Anything).Return(nil, expectedError).Once()
+
+		actualResult, actualError := s.service.UpdateApproval(context.Background(), validApprovalActionParam)
 
 		s.mockRepository.AssertExpectations(s.T())
-		s.mockApprovalService.AssertExpectations(s.T())
+		s.mockPolicyService.AssertExpectations(s.T())
 		s.ErrorIs(actualError, expectedError)
 		s.Nil(actualResult)
 	})
 
 	s.Run("should terminate existing active grant if present", func() {
-		s.setup()
-
 		action := domain.ApprovalAction{
 			AppealID:     "1",
 			ApprovalName: "test-approval-step",
@@ -1562,12 +1546,8 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		s.mockRepository.EXPECT().
 			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
 			Return(appealDetails, nil).Once()
-		s.mockApprovalService.EXPECT().
-			AdvanceApproval(mock.Anything, mock.Anything).Return(nil).
-			Run(func(_a0 context.Context, a *domain.Appeal) {
-				a.Approvals[0].Status = domain.ApprovalStatusApproved
-				a.Status = domain.AppealStatusApproved
-			}).Once()
+
+		s.mockPolicyService.EXPECT().GetOne(mock.Anything, mock.Anything, mock.Anything).Return(&domain.Policy{}, nil).Once()
 		s.mockGrantService.EXPECT().
 			List(mock.Anything, mock.Anything).Return(existingGrants, nil).Once()
 		expectedNewGrant := &domain.Grant{
@@ -1586,10 +1566,10 @@ func (s *ServiceTestSuite) TestMakeAction() {
 		s.mockAuditLogger.EXPECT().Log(mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Once()
 
-		_, actualError := s.service.MakeAction(context.Background(), action)
+		_, actualError := s.service.UpdateApproval(context.Background(), action)
 
 		s.mockRepository.AssertExpectations(s.T())
-		s.mockApprovalService.AssertExpectations(s.T())
+		s.mockPolicyService.AssertExpectations(s.T())
 		s.mockGrantService.AssertExpectations(s.T())
 		s.mockNotifier.AssertExpectations(s.T())
 		s.mockAuditLogger.AssertExpectations(s.T())
@@ -1962,12 +1942,7 @@ func (s *ServiceTestSuite) TestMakeAction() {
 				s.mockRepository.EXPECT().
 					GetByID(mock.AnythingOfType("*context.emptyCtx"), validApprovalActionParam.AppealID).
 					Return(tc.expectedAppealDetails, nil).Once()
-				s.mockApprovalService.EXPECT().
-					AdvanceApproval(mock.Anything, tc.expectedAppealDetails).Return(nil).
-					Run(func(_a0 context.Context, a *domain.Appeal) {
-						a.Approvals = tc.expectedResult.Approvals
-						a.Status = tc.expectedResult.Status
-					}).Once()
+
 				if tc.expectedApprovalAction.Action == "approve" {
 					s.mockGrantService.EXPECT().
 						List(mock.Anything, domain.ListGrantsFilter{
@@ -1978,22 +1953,129 @@ func (s *ServiceTestSuite) TestMakeAction() {
 						}).Return([]domain.Grant{}, nil).Once()
 					s.mockGrantService.EXPECT().
 						Prepare(mock.Anything, mock.Anything).Return(tc.expectedGrant, nil).Once()
+					mockPolicy := &domain.Policy{
+						Steps: []*domain.Step{
+							{
+								Name: "step-1",
+							},
+							{
+								Name: "step-2",
+							},
+						},
+					}
 					s.mockPolicyService.EXPECT().
 						GetOne(mock.Anything, tc.expectedAppealDetails.PolicyID, tc.expectedAppealDetails.PolicyVersion).
-						Return(&domain.Policy{}, nil).Once()
+						Return(mockPolicy, nil).Once()
 					s.mockProviderService.EXPECT().GrantAccess(mock.Anything, *tc.expectedGrant).Return(nil).Once()
+
+					tc.expectedResult.Policy = mockPolicy
 				}
+
 				s.mockRepository.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), tc.expectedResult).Return(nil).Once()
 				s.mockNotifier.EXPECT().Notify(mock.Anything).Return(nil).Once()
 				s.mockAuditLogger.EXPECT().Log(mock.Anything, mock.Anything, mock.Anything).
 					Return(nil).Once()
 
-				actualResult, actualError := s.service.MakeAction(context.Background(), tc.expectedApprovalAction)
+				actualResult, actualError := s.service.UpdateApproval(context.Background(), tc.expectedApprovalAction)
 
 				s.NoError(actualError)
+				tc.expectedResult.Policy = actualResult.Policy
 				s.Equal(tc.expectedResult, actualResult)
 			})
 		}
+	})
+}
+
+func (s *ServiceTestSuite) TestGrantAccessToProvider() {
+	s.setup()
+
+	s.Run("should return error when policy is not found", func() {
+		expectedError := errors.New("retrieving policy: not found")
+
+		s.mockPolicyService.On("GetOne", mock.Anything, "policy_1", uint(1)).Return(nil, errors.New("not found")).Once()
+
+		actualError := s.service.GrantAccessToProvider(context.Background(), &domain.Appeal{
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+		})
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("handle appeal requirements", func() {
+		s.Run("matching error", func() {
+			expectedError := errors.New("handling appeal requirements: evaluating requirements[1]: error parsing regexp: missing closing ]: `[InvalidRegex`")
+
+			s.mockPolicyService.
+				On("GetOne", mock.Anything, "policy_1", uint(1)).
+				Return(&domain.Policy{
+					ID:      "policy_1",
+					Version: 1,
+					Requirements: []*domain.Requirement{
+						{
+							On: &domain.RequirementTrigger{
+								ProviderType: "not-matching",
+							},
+						},
+						{
+							On: &domain.RequirementTrigger{
+								ProviderType: "[InvalidRegex",
+							},
+						},
+					},
+				}, nil).Once()
+
+			actualError := s.service.GrantAccessToProvider(context.Background(), &domain.Appeal{
+				PolicyID:      "policy_1",
+				PolicyVersion: 1,
+				Resource: &domain.Resource{
+					ProviderType: "example-provider",
+				},
+			})
+			s.EqualError(actualError, expectedError.Error())
+		})
+	})
+
+	s.Run("should return error when grant access to provider fails", func() {
+		expectedError := errors.New("granting access: error")
+
+		s.mockPolicyService.
+			On("GetOne", mock.Anything, "policy_1", uint(1)).
+			Return(&domain.Policy{
+				ID:      "policy_1",
+				Version: 1,
+			}, nil).Once()
+
+		s.mockProviderService.
+			On("GrantAccess", mock.Anything, mock.Anything).
+			Return(fmt.Errorf("error")).Once()
+
+		actualError := s.service.GrantAccessToProvider(context.Background(), &domain.Appeal{
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+			Grant:         &domain.Grant{},
+		})
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should be able to grant access", func() {
+		s.mockPolicyService.
+			On("GetOne", mock.Anything, "policy_1", uint(1)).
+			Return(&domain.Policy{
+				ID:      "policy_1",
+				Version: 1,
+			}, nil).Once()
+
+		s.mockProviderService.
+			On("GrantAccess", mock.Anything, mock.Anything).
+			Return(nil).Once()
+
+		actualError := s.service.GrantAccessToProvider(context.Background(), &domain.Appeal{
+			PolicyID:      "policy_1",
+			PolicyVersion: 1,
+			Grant:         &domain.Grant{},
+		})
+		s.Nil(actualError, actualError)
 	})
 }
 
