@@ -82,3 +82,42 @@ func (ae datasetAccessEntry) getEntityType() string {
 		return ""
 	}
 }
+
+// BigQueryResourceName is a string representation of bigquery resource's Relative Resource Name.
+// Example: "projects/project-id/datasets/dataset_name/tables/table_name"
+type BigQueryResourceName string
+
+func (r BigQueryResourceName) ProjectID() string {
+	items := strings.Split(string(r), "/")
+	if len(items) >= 2 {
+		return items[1]
+	}
+	return ""
+}
+
+func (r BigQueryResourceName) DatasetID() string {
+	items := strings.Split(string(r), "/")
+	if len(items) >= 4 {
+		return items[3]
+	}
+	return ""
+}
+
+func (r BigQueryResourceName) TableID() string {
+	items := strings.Split(string(r), "/")
+	if len(items) >= 6 {
+		return items[5]
+	}
+	return ""
+}
+
+// BigQueryResourceID returns bigquery resource identifier in format of:
+// For dataset type: "project-id:dataset_name"
+// For table type: "project-id:dataset_name.table_name"
+func (r BigQueryResourceName) BigQueryResourceID() string {
+	urn := fmt.Sprintf("%s:%s", r.ProjectID(), r.DatasetID())
+	if tableID := r.TableID(); tableID != "" {
+		urn = fmt.Sprintf("%s.%s", urn, tableID)
+	}
+	return urn
+}

@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core"
+	"github.com/odpf/guardian/core/activity"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/core/approval"
 	"github.com/odpf/guardian/core/grant"
@@ -32,6 +33,7 @@ import (
 
 type Services struct {
 	ResourceService *resource.Service
+	ActivityService *activity.Service
 	ProviderService *provider.Service
 	PolicyService   *policy.Service
 	ApprovalService *approval.Service
@@ -85,6 +87,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		}),
 	)
 
+	activityRepository := postgres.NewActivityRepository(store.DB())
 	providerRepository := postgres.NewProviderRepository(store.DB())
 	policyRepository := postgres.NewPolicyRepository(store.DB())
 	resourceRepository := postgres.NewResourceRepository(store.DB())
@@ -93,7 +96,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 	grantRepository := postgres.NewGrantRepository(store.DB())
 
 	providerClients := []provider.Client{
-		bigquery.NewProvider(domain.ProviderTypeBigQuery, deps.Crypto),
+		bigquery.NewProvider(domain.ProviderTypeBigQuery, deps.Crypto, deps.Logger),
 		metabase.NewProvider(domain.ProviderTypeMetabase, deps.Crypto, deps.Logger),
 		grafana.NewProvider(domain.ProviderTypeGrafana, deps.Crypto),
 		tableau.NewProvider(domain.ProviderTypeTableau, deps.Crypto),
@@ -114,6 +117,13 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Repository:      providerRepository,
 		ResourceService: resourceService,
 		Clients:         providerClients,
+		Validator:       deps.Validator,
+		Logger:          deps.Logger,
+		AuditLogger:     auditLogger,
+	})
+	activityService := activity.NewService(activity.ServiceDeps{
+		Repository:      activityRepository,
+		ProviderService: providerService,
 		Validator:       deps.Validator,
 		Logger:          deps.Logger,
 		AuditLogger:     auditLogger,
@@ -156,6 +166,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 
 	return &Services{
 		resourceService,
+		activityService,
 		providerService,
 		policyService,
 		approvalService,

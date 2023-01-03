@@ -350,19 +350,75 @@ func (s *ServiceTestSuite) TestFetchResources() {
 
 	s.Run("should upsert all resources on success", func() {
 		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(providers, nil).Once()
-		expectedResources := []*domain.Resource{}
-		for _, p := range providers {
-			resources := []*domain.Resource{
-				{
-					ProviderType: p.Type,
-					ProviderURN:  p.URN,
-				},
-			}
-			s.mockProvider.On("GetResources", p.Config).Return(resources, nil).Once()
-			expectedResources = append(expectedResources, resources...)
+		p := providers[0]
+		parentID := "1"
+		existingResources := []*domain.Resource{
+			{
+				ID:           parentID,
+				ProviderType: p.Type,
+				ProviderURN:  p.URN,
+				Type:         "type-test",
+				URN:          "urn-test",
+			},
+			{
+				ID:           "2",
+				ProviderType: p.Type,
+				ProviderURN:  p.URN,
+				Type:         "type2-test",
+				URN:          "urn2-test",
+			},
+			{
+				ID:           "3",
+				ProviderType: p.Type,
+				ProviderURN:  p.URN,
+				Type:         "type2-test",
+				URN:          "urn3-test",
+			},
 		}
-		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil).Once()
-		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
+		newResources := []*domain.Resource{
+			{
+				ProviderType: p.Type,
+				ProviderURN:  p.URN,
+				Type:         "type-test",
+				URN:          "urn-test",
+				Children: []*domain.Resource{
+					{
+						ProviderType: p.Type,
+						ProviderURN:  p.URN,
+						Type:         "type2-test",
+						URN:          "urn2-test",
+					},
+				},
+			},
+		}
+		expectedUpsertResources := []*domain.Resource{
+			{
+				ProviderType: p.Type,
+				ProviderURN:  p.URN,
+				Type:         "type-test",
+				URN:          "urn-test",
+				Children: []*domain.Resource{
+					{
+						ProviderType: p.Type,
+						ProviderURN:  p.URN,
+						Type:         "type2-test",
+						URN:          "urn2-test",
+					},
+				},
+			},
+			{
+				ID:           "3",
+				ProviderType: p.Type,
+				ProviderURN:  p.URN,
+				Type:         "type2-test",
+				URN:          "urn3-test",
+				IsDeleted:    true,
+			},
+		}
+
+		s.mockProvider.On("GetResources", p.Config).Return(newResources, nil).Once()
+		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedUpsertResources).Return(nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(existingResources, nil).Once()
 		actualError := s.service.FetchResources(context.Background())
 
 		s.Nil(actualError)

@@ -1,16 +1,24 @@
 package bigquery_test
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
 
+	"cloud.google.com/go/logging"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
 	"github.com/odpf/guardian/plugins/providers/bigquery/mocks"
+	"github.com/odpf/salt/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+	"google.golang.org/genproto/googleapis/api/monitoredres"
+	"google.golang.org/genproto/googleapis/cloud/audit"
 )
 
 func TestGetType(t *testing.T) {
@@ -28,7 +36,8 @@ func TestCreateConfig(t *testing.T) {
 	t.Run("should return error if error in credentials are invalid/mandatory fields are missing", func(t *testing.T) {
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -75,7 +84,8 @@ func TestCreateConfig(t *testing.T) {
 	t.Run("should return error if error in parse and validate configurations", func(t *testing.T) {
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -159,7 +169,8 @@ func TestCreateConfig(t *testing.T) {
 		providerURN := "test-URN"
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -192,7 +203,8 @@ func TestCreateConfig(t *testing.T) {
 		providerURN := "test-URN"
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -220,7 +232,8 @@ func TestCreateConfig(t *testing.T) {
 		providerURN := "test-URN"
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"test-resource-name": client,
 		}
@@ -255,7 +268,8 @@ func TestCreateConfig(t *testing.T) {
 func TestGetResources(t *testing.T) {
 	t.Run("should error when credentials are invalid", func(t *testing.T) {
 		encryptor := new(mocks.Encryptor)
-		p := bigquery.NewProvider("", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("", encryptor, l)
 		pc := &domain.ProviderConfig{
 			Type:        domain.ProviderTypeBigQuery,
 			URN:         "test-project-id",
@@ -271,7 +285,8 @@ func TestGetResources(t *testing.T) {
 	t.Run("should return dataset resource object", func(t *testing.T) {
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -328,13 +343,15 @@ func TestGetResources(t *testing.T) {
 				Type:         "dataset",
 				Name:         "d_id",
 				URN:          "p_id:d_id",
-			},
-			{
-				ProviderType: domain.ProviderTypeBigQuery,
-				ProviderURN:  "test-project-id",
-				Name:         "t_id",
-				URN:          "p_id:d_id.t_id",
-				Type:         "table",
+				Children: []*domain.Resource{
+					{
+						ProviderType: domain.ProviderTypeBigQuery,
+						ProviderURN:  "test-project-id",
+						Name:         "t_id",
+						URN:          "p_id:d_id.t_id",
+						Type:         "table",
+					},
+				},
 			},
 		}
 		actualResources, actualError := p.GetResources(pc)
@@ -448,7 +465,8 @@ func TestGrantAccess(t *testing.T) {
 		expectedAccountID := "test@email.com"
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("bigquery", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -499,7 +517,8 @@ func TestGrantAccess(t *testing.T) {
 		expectedAccountID := "test@email.com"
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("bigquery", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -552,7 +571,8 @@ func TestGrantAccess(t *testing.T) {
 		expectedAccountID := "test@email.com"
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("bigquery", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -704,7 +724,8 @@ func TestRevokeAccess(t *testing.T) {
 		expectedAccountID := "test@email.com"
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("bigquery", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -755,7 +776,8 @@ func TestRevokeAccess(t *testing.T) {
 		expectedAccountID := "test@email.com"
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("bigquery", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -807,7 +829,8 @@ func TestRevokeAccess(t *testing.T) {
 		expectedAccountID := "test@email.com"
 		encryptor := new(mocks.Encryptor)
 		client := new(mocks.BigQueryClient)
-		p := bigquery.NewProvider("bigquery", encryptor)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("bigquery", encryptor, l)
 		p.Clients = map[string]bigquery.BigQueryClient{
 			"resource-name": client,
 		}
@@ -934,7 +957,235 @@ func TestGetRoles(t *testing.T) {
 	})
 }
 
+type BigQueryProviderTestSuite struct {
+	suite.Suite
+
+	mockBigQueryClient     *mocks.BigQueryClient
+	mockCloudLoggingClient *mocks.CloudLoggingClientI
+	mockEncryptor          *mocks.Encryptor
+	dummyProjectID         string
+	provider               *bigquery.Provider
+
+	validProvider *domain.Provider
+}
+
+func TestBigQueryProvider(t *testing.T) {
+	suite.Run(t, new(BigQueryProviderTestSuite))
+}
+
+func (s *BigQueryProviderTestSuite) SetupTest() {
+	s.mockBigQueryClient = new(mocks.BigQueryClient)
+	s.mockCloudLoggingClient = new(mocks.CloudLoggingClientI)
+	s.mockEncryptor = new(mocks.Encryptor)
+	s.provider = bigquery.NewProvider("bigquery", s.mockEncryptor, log.NewNoop())
+	s.dummyProjectID = "test-project-id"
+	s.provider.Clients[s.dummyProjectID] = s.mockBigQueryClient
+	s.provider.LogClients[s.dummyProjectID] = s.mockCloudLoggingClient
+
+	s.validProvider = &domain.Provider{
+		Type: "bigquery",
+		URN:  s.dummyProjectID,
+		Config: &domain.ProviderConfig{
+			Type:                "bigquery",
+			URN:                 s.dummyProjectID,
+			AllowedAccountTypes: []string{"user", "serviceAccount"},
+			Credentials: map[string]interface{}{
+				"resource_name":       fmt.Sprintf("projects/%s", s.dummyProjectID),
+				"service_account_key": "dummy-credentials",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "dataset",
+					Policy: &domain.PolicyConfig{
+						ID:      "test-policy-1",
+						Version: 1,
+					},
+					Roles: []*domain.Role{
+						{
+							ID:          "test-role",
+							Name:        "test_role_name",
+							Permissions: []interface{}{bigquery.DatasetRoleReader},
+						},
+						{
+							ID:          "test-role-2",
+							Name:        "test_role_name_2",
+							Permissions: []interface{}{bigquery.DatasetRoleWriter},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	s.mockEncryptor.EXPECT().Decrypt("dummy-credentials").Return("dummy-credentials", nil)
+}
+
+func (s *BigQueryProviderTestSuite) TestListAccess() {
+	s.Run("return error if initializing client fails", func() {
+		s.mockEncryptor.EXPECT().Decrypt("invalid-key").Return("", errors.New("invalid-key"))
+
+		ctx := context.Background()
+		_, err := s.provider.ListAccess(ctx, domain.ProviderConfig{
+			Type: "bigquery",
+			URN:  "new-urn",
+			Credentials: map[string]interface{}{
+				"service_account_key": "invalid-key",
+			},
+		}, []*domain.Resource{})
+
+		s.EqualError(err, "initializing bigquery client: bigquery: constructing client: invalid character 'i' looking for beginning of value")
+	})
+
+	s.Run("return nil error on success", func() {
+		expectedResourcesAccess := domain.MapResourceAccess{}
+		expectedResources := []*domain.Resource{}
+		s.mockBigQueryClient.EXPECT().
+			ListAccess(mock.AnythingOfType("*context.emptyCtx"), expectedResources).
+			Return(expectedResourcesAccess, nil).Once()
+
+		ctx := context.Background()
+		actualResourcesAccess, actualError := s.provider.ListAccess(ctx, *s.validProvider.Config, expectedResources)
+
+		s.mockBigQueryClient.AssertExpectations(s.T())
+		s.NoError(actualError)
+		s.Equal(expectedResourcesAccess, actualResourcesAccess)
+	})
+}
+
+func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
+	s.Run("should map bigquery logging entries to guardian activities", func() {
+		now := time.Now()
+
+		expectedBigQueryActivities := []*bigquery.Activity{
+			{
+				&logging.Entry{
+					Timestamp: now,
+					InsertID:  "test-activity-id",
+					Payload: &audit.AuditLog{
+						ResourceName: "projects/test-project-id/datasets/test-dataset-id",
+						ServiceName:  "bigquery.googleapis.com",
+						AuthenticationInfo: &audit.AuthenticationInfo{
+							PrincipalEmail: "user@example.com",
+						},
+						AuthorizationInfo: []*audit.AuthorizationInfo{
+							{
+								Permission: "bigquery.datasets.get",
+							},
+						},
+					},
+					Resource: &monitoredres.MonitoredResource{
+						Type: "bigquery_dataset",
+						Labels: map[string]string{
+							"dataset_id": "test-dataset-id",
+							"project_id": "test-project-id",
+						},
+					},
+				},
+			},
+		}
+		s.mockCloudLoggingClient.EXPECT().
+			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), bigquery.ImportActivitiesFilter{
+				Types: bigquery.BigQueryAuditMetadataMethods,
+			}).Return(expectedBigQueryActivities, nil).Once()
+		s.mockBigQueryClient.EXPECT().
+			GetRolePermissions(mock.AnythingOfType("*context.emptyCtx"), "roles/bigquery.dataViewer").Return([]string{"bigquery.datasets.get"}, nil).Once()
+		s.mockBigQueryClient.EXPECT().
+			GetRolePermissions(mock.AnythingOfType("*context.emptyCtx"), "roles/bigquery.dataEditor").Return([]string{"bigquery.datasets.get"}, nil).Once()
+
+		expectedActivities := []*domain.Activity{
+			{
+				ProviderID:         s.validProvider.ID,
+				ProviderActivityID: "test-activity-id",
+				AccountType:        "user",
+				AccountID:          "user@example.com",
+				Timestamp:          now,
+				Authorizations:     []string{"bigquery.datasets.get"},
+				Resource: &domain.Resource{
+					ProviderType: s.validProvider.Type,
+					ProviderURN:  s.validProvider.URN,
+					Type:         "dataset",
+					URN:          "test-project-id:test-dataset-id",
+					Name:         "test-dataset-id",
+				},
+				RelatedPermissions: []string{bigquery.DatasetRoleReader, bigquery.DatasetRoleWriter},
+				Metadata: map[string]interface{}{
+					"logging_entry": map[string]interface{}{
+						"insert_id": "test-activity-id",
+						"labels":    nil,
+						"operation": nil,
+						"payload": map[string]interface{}{
+							"authentication_info": map[string]interface{}{
+								"principal_email": "user@example.com",
+							},
+							"authorization_info": []interface{}{
+								map[string]interface{}{
+									"permission": "bigquery.datasets.get",
+								},
+							},
+							"resource_name": "projects/test-project-id/datasets/test-dataset-id",
+							"service_name":  "bigquery.googleapis.com",
+						},
+						"resource": map[string]interface{}{
+							"labels": map[string]interface{}{
+								"dataset_id": "test-dataset-id",
+								"project_id": "test-project-id",
+							},
+							"type": "bigquery_dataset",
+						},
+						"severity":        float64(0),
+						"source_location": nil,
+						"span_id":         "",
+						"timestamp":       now.Format(time.RFC3339Nano),
+						"trace":           "",
+						"trace_sampled":   false,
+					},
+				},
+			},
+		}
+
+		actualActivities, err := s.provider.GetActivities(context.Background(), *s.validProvider, domain.ImportActivitiesFilter{})
+
+		s.mockCloudLoggingClient.AssertExpectations(s.T())
+		s.mockBigQueryClient.AssertExpectations(s.T())
+		s.NoError(err)
+		s.Equal(expectedActivities, actualActivities)
+	})
+
+	s.Run("should return error if there is an error on initializing logging client", func() {
+		expectedError := errors.New("error")
+
+		s.mockEncryptor.EXPECT().
+			Decrypt("invalid-key").Return("", expectedError).Once()
+
+		invalidProvider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				Type: "bigquery",
+				URN:  "new-urn",
+				Credentials: map[string]interface{}{
+					"service_account_key": "invalid-key",
+				},
+			},
+		}
+		_, err := s.provider.GetActivities(context.Background(), *invalidProvider, domain.ImportActivitiesFilter{})
+
+		s.mockEncryptor.AssertExpectations(s.T())
+		s.ErrorIs(err, expectedError)
+	})
+
+	s.Run("should return error if there is an error on listing log entries", func() {
+		expectedError := errors.New("error")
+		s.mockCloudLoggingClient.EXPECT().
+			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("bigquery.ImportActivitiesFilter")).Return(nil, expectedError).Once()
+
+		_, err := s.provider.GetActivities(context.Background(), *s.validProvider, domain.ImportActivitiesFilter{})
+
+		s.mockCloudLoggingClient.AssertExpectations(s.T())
+		s.ErrorIs(err, expectedError)
+	})
+}
+
 func initProvider() *bigquery.Provider {
 	crypto := new(mocks.Encryptor)
-	return bigquery.NewProvider("bigquery", crypto)
+	l := log.NewNoop()
+	return bigquery.NewProvider("bigquery", crypto, l)
 }
