@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core"
+	"github.com/odpf/guardian/core/activity"
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/core/approval"
 	"github.com/odpf/guardian/core/grant"
@@ -22,6 +23,7 @@ import (
 	"github.com/odpf/guardian/plugins/providers/grafana"
 	"github.com/odpf/guardian/plugins/providers/metabase"
 	"github.com/odpf/guardian/plugins/providers/noop"
+	"github.com/odpf/guardian/plugins/providers/shield"
 	"github.com/odpf/guardian/plugins/providers/tableau"
 	"github.com/odpf/salt/audit"
 	audit_repos "github.com/odpf/salt/audit/repositories"
@@ -31,6 +33,7 @@ import (
 
 type Services struct {
 	ResourceService *resource.Service
+	ActivityService *activity.Service
 	ProviderService *provider.Service
 	PolicyService   *policy.Service
 	ApprovalService *approval.Service
@@ -84,6 +87,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		}),
 	)
 
+	activityRepository := postgres.NewActivityRepository(store.DB())
 	providerRepository := postgres.NewProviderRepository(store.DB())
 	policyRepository := postgres.NewPolicyRepository(store.DB())
 	resourceRepository := postgres.NewResourceRepository(store.DB())
@@ -92,13 +96,14 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 	grantRepository := postgres.NewGrantRepository(store.DB())
 
 	providerClients := []provider.Client{
-		bigquery.NewProvider(domain.ProviderTypeBigQuery, deps.Crypto),
+		bigquery.NewProvider(domain.ProviderTypeBigQuery, deps.Crypto, deps.Logger),
 		metabase.NewProvider(domain.ProviderTypeMetabase, deps.Crypto, deps.Logger),
 		grafana.NewProvider(domain.ProviderTypeGrafana, deps.Crypto),
 		tableau.NewProvider(domain.ProviderTypeTableau, deps.Crypto),
 		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, deps.Crypto),
 		noop.NewProvider(domain.ProviderTypeNoOp, deps.Logger),
 		gcs.NewProvider(domain.ProviderTypeGCS, deps.Crypto),
+		shield.NewProvider(domain.ProviderTypeShield, deps.Logger),
 	}
 
 	iamManager := identities.NewManager(deps.Crypto, deps.Validator)
@@ -116,6 +121,13 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Logger:          deps.Logger,
 		AuditLogger:     auditLogger,
 	})
+	activityService := activity.NewService(activity.ServiceDeps{
+		Repository:      activityRepository,
+		ProviderService: providerService,
+		Validator:       deps.Validator,
+		Logger:          deps.Logger,
+		AuditLogger:     auditLogger,
+	})
 	policyService := policy.NewService(policy.ServiceDeps{
 		Repository:      policyRepository,
 		ResourceService: resourceService,
@@ -125,10 +137,6 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Logger:          deps.Logger,
 		AuditLogger:     auditLogger,
 	})
-	approvalService := approval.NewService(approval.ServiceDeps{
-		Repository:    approvalRepository,
-		PolicyService: policyService,
-	})
 	grantService := grant.NewService(grant.ServiceDeps{
 		Repository:      grantRepository,
 		ProviderService: providerService,
@@ -137,6 +145,10 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Logger:          deps.Logger,
 		Validator:       deps.Validator,
 		AuditLogger:     auditLogger,
+	})
+	approvalService := approval.NewService(approval.ServiceDeps{
+		Repository:    approvalRepository,
+		PolicyService: policyService,
 	})
 	appealService := appeal.NewService(appeal.ServiceDeps{
 		Repository:      appealRepository,
@@ -154,6 +166,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 
 	return &Services{
 		resourceService,
+		activityService,
 		providerService,
 		policyService,
 		approvalService,

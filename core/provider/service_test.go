@@ -138,6 +138,29 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockProviderRepository.AssertExpectations(s.T())
 		s.mockAuditLogger.AssertExpectations(s.T())
 	})
+
+	s.Run("with dryRun true", func() {
+		s.Run("should not perform any changes", func() {
+			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
+			s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
+
+			expectedResources := []*domain.Resource{}
+			s.mockResourceService.On("Find", mock.Anything, domain.ListResourcesFilter{
+				ProviderType: p.Type,
+				ProviderURN:  p.URN,
+			}).Return([]*domain.Resource{}, nil).Once()
+			s.mockProvider.On("GetResources", p.Config).Return(expectedResources, nil).Once()
+
+			ctx := provider.WithDryRun(context.Background())
+
+			actualError := s.service.Create(ctx, p)
+
+			s.Nil(actualError)
+			s.mockProviderRepository.AssertNotCalled(s.T(), "Create")
+			s.mockAuditLogger.AssertNotCalled(s.T(), "Log")
+			s.mockResourceService.AssertNotCalled(s.T(), "BulkUpsert")
+		})
+	})
 }
 
 func (s *ServiceTestSuite) TestFind() {
@@ -258,6 +281,38 @@ func (s *ServiceTestSuite) TestUpdate() {
 
 			s.Nil(actualError)
 		}
+	})
+
+	s.Run("with dryRun true", func() {
+		s.Run("should not perform any changes", func() {
+			p := &domain.Provider{
+				ID:   "1",
+				Type: mockProviderType,
+				Config: &domain.ProviderConfig{
+					Appeal: &domain.AppealConfig{
+						AllowPermanentAccess:         true,
+						AllowActiveAccessExtensionIn: "1h",
+					},
+					AllowedAccountTypes: []string{"user"},
+					Labels: map[string]string{
+						"foo": "bar",
+					},
+					Type: mockProviderType,
+					URN:  "urn",
+				},
+			}
+
+			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
+			s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
+
+			ctx := provider.WithDryRun(context.Background())
+
+			actualError := s.service.Update(ctx, p)
+
+			s.Nil(actualError)
+			s.mockProviderRepository.AssertNotCalled(s.T(), "Update")
+			s.mockAuditLogger.AssertNotCalled(s.T(), "Log")
+		})
 	})
 }
 

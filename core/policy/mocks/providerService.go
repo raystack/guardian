@@ -93,14 +93,14 @@ type ProviderService_ValidateAppeal_Call struct {
 //  - _a0 context.Context
 //  - _a1 *domain.Appeal
 //  - _a2 *domain.Provider
-//  - _a2 *domain.Policy
+//  - _a3 *domain.Policy
 func (_e *ProviderService_Expecter) ValidateAppeal(_a0 interface{}, _a1 interface{}, _a2 interface{}, _a3 interface{}) *ProviderService_ValidateAppeal_Call {
 	return &ProviderService_ValidateAppeal_Call{Call: _e.mock.On("ValidateAppeal", _a0, _a1, _a2, _a3)}
 }
 
-func (_c *ProviderService_ValidateAppeal_Call) Run(run func(_a0 context.Context, _a1 *domain.Appeal, _a2 *domain.Provider)) *ProviderService_ValidateAppeal_Call {
+func (_c *ProviderService_ValidateAppeal_Call) Run(run func(_a0 context.Context, _a1 *domain.Appeal, _a2 *domain.Provider, _a3 *domain.Policy)) *ProviderService_ValidateAppeal_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.Appeal), args[2].(*domain.Provider))
+		run(args[0].(context.Context), args[1].(*domain.Appeal), args[2].(*domain.Provider), args[3].(*domain.Policy))
 	})
 	return _c
 }

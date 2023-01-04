@@ -327,6 +327,27 @@ func (c *bigQueryClient) ListAccess(ctx context.Context, resources []*domain.Res
 	return access, nil
 }
 
+func (c *bigQueryClient) GetRolePermissions(ctx context.Context, role string) ([]string, error) {
+	var iamRole *iam.Role
+	var err error
+
+	switch {
+	case strings.HasPrefix(role, "roles/"):
+		iamRole, err = c.iamService.Roles.Get(role).Context(ctx).Do()
+	case strings.HasPrefix(role, "projects/"):
+		iamRole, err = c.iamService.Projects.Roles.Get(role).Context(ctx).Do()
+	case strings.HasPrefix(role, "organizations/"):
+		iamRole, err = c.iamService.Organizations.Roles.Get(role).Context(ctx).Do()
+	default:
+		return nil, fmt.Errorf("invalid role signature: %q", role)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("getting role permissions of %q, %w", role, err)
+	}
+
+	return iamRole.IncludedPermissions, nil
+}
+
 func (c *bigQueryClient) getGrantableRolesForTables() ([]string, error) {
 	var resourceName string
 	ctx := context.Background()

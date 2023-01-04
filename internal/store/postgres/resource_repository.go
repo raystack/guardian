@@ -9,7 +9,6 @@ import (
 	"github.com/odpf/guardian/internal/store/postgres/model"
 	"github.com/odpf/guardian/utils"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // ResourceRepository talks to the store/database to read/insert data
@@ -115,16 +114,8 @@ func (r *ResourceRepository) BulkUpsert(ctx context.Context, resources []*domain
 
 	if len(models) > 0 {
 		return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-			upsertClause := clause.OnConflict{
-				Columns: []clause.Column{
-					{Name: "provider_type"},
-					{Name: "provider_urn"},
-					{Name: "type"},
-					{Name: "urn"},
-				},
-				DoUpdates: clause.AssignmentColumns([]string{"name", "details", "updated_at", "is_deleted"}),
-			}
-			if err := r.db.Clauses(upsertClause).Create(models).Error; err != nil {
+			// upsert clause is moved to model.Resource.BeforeCreate() (gorm's hook) to apply the same for associations (model.Resource.Children)
+			if err := r.db.Create(models).Error; err != nil {
 				return err
 			}
 

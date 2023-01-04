@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/url"
+	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -39,6 +40,9 @@ func NewStore(c *store.Config) (*Store, error) {
 	gormDB, err := gorm.Open(pg.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Panic(err)
+	}
+	if strings.ToLower(c.LogLevel) == "debug" {
+		gormDB = gormDB.Debug()
 	}
 
 	return &Store{gormDB, c}, nil

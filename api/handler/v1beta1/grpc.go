@@ -34,6 +34,8 @@ type ProtoAdapter interface {
 
 	ToGrantProto(*domain.Grant) (*guardianv1beta1.Grant, error)
 	FromGrantProto(*guardianv1beta1.Grant) *domain.Grant
+
+	ToActivityProto(*domain.Activity) (*guardianv1beta1.ProviderActivity, error)
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter
@@ -45,6 +47,13 @@ type resourceService interface {
 	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
 	Delete(context.Context, string) error
 	BatchDelete(context.Context, []string) error
+}
+
+//go:generate mockery --name=activityService --exported --with-expecter
+type activityService interface {
+	GetOne(context.Context, string) (*domain.Activity, error)
+	Find(context.Context, domain.ListProviderActivitiesFilter) ([]*domain.Activity, error)
+	Import(context.Context, domain.ImportActivitiesFilter) ([]*domain.Activity, error)
 }
 
 //go:generate mockery --name=providerService --exported --with-expecter
@@ -76,17 +85,16 @@ type appealService interface {
 	GetByID(context.Context, string) (*domain.Appeal, error)
 	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
 	Create(context.Context, []*domain.Appeal, ...appeal.CreateAppealOption) error
-	MakeAction(context.Context, domain.ApprovalAction) (*domain.Appeal, error)
 	Cancel(context.Context, string) (*domain.Appeal, error)
 	AddApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
 	DeleteApprover(ctx context.Context, appealID, approvalID, email string) (*domain.Appeal, error)
+	UpdateApproval(ctx context.Context, approvalAction domain.ApprovalAction) (*domain.Appeal, error)
 }
 
 //go:generate mockery --name=approvalService --exported --with-expecter
 type approvalService interface {
 	ListApprovals(context.Context, *domain.ListApprovalsFilter) ([]*domain.Approval, error)
 	BulkInsert(context.Context, []*domain.Approval) error
-	AdvanceApproval(context.Context, *domain.Appeal) error
 }
 
 //go:generate mockery --name=grantService --exported --with-expecter
@@ -100,6 +108,7 @@ type grantService interface {
 
 type GRPCServer struct {
 	resourceService resourceService
+	activityService activityService
 	providerService providerService
 	policyService   policyService
 	appealService   appealService
@@ -114,6 +123,7 @@ type GRPCServer struct {
 
 func NewGRPCServer(
 	resourceService resourceService,
+	activityService activityService,
 	providerService providerService,
 	policyService policyService,
 	appealService appealService,
@@ -124,6 +134,7 @@ func NewGRPCServer(
 ) *GRPCServer {
 	return &GRPCServer{
 		resourceService:            resourceService,
+		activityService:            activityService,
 		providerService:            providerService,
 		policyService:              policyService,
 		appealService:              appealService,

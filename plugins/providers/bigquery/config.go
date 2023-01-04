@@ -57,6 +57,23 @@ func (c *Credentials) Decrypt(decryptor domain.Decryptor) error {
 	return nil
 }
 
+func (c Credentials) ProjectID() string {
+	return strings.Replace(c.ResourceName, "projects/", "", 1)
+}
+
+func ParseCredentials(v interface{}, decryptor domain.Decryptor) (*Credentials, error) {
+	var credentials Credentials
+	if err := mapstructure.Decode(v, &credentials); err != nil {
+		return nil, err
+	}
+
+	if err := credentials.Decrypt(decryptor); err != nil {
+		return nil, fmt.Errorf("decrypting credentials: %w", err)
+	}
+
+	return &credentials, nil
+}
+
 // Permission is for mapping role into bigquery permissions
 type Permission string
 

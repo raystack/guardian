@@ -1,7 +1,7 @@
 package domain
 
 type NotificationMessages struct {
-	ExpirationReminder   string `mapstructure:"expiration_reminder" default:"Your access to {{.resource_name}} with role {{.role}} will expire at {{.expiration_date}}. Extend the access if it's still needed"`
+	ExpirationReminder   string `mapstructure:"expiration_reminder" default:"Your access {{.account_id}} to {{.resource_name}} with role {{.role}} will expire at {{.expiration_date}}. Extend the access if it's still needed"`
 	AppealApproved       string `mapstructure:"appeal_approved" default:"Your appeal to {{.resource_name}} with role {{.role}} has been approved"`
 	AppealRejected       string `mapstructure:"appeal_rejected" default:"Your appeal to {{.resource_name}} with role {{.role}} has been rejected"`
 	AccessRevoked        string `mapstructure:"access_revoked" default:"Your access to {{.resource_name}}} with role {{.role}} has been revoked"`

@@ -496,6 +496,17 @@ func (a *adapter) FromResourceProto(r *guardianv1beta1.Resource) *domain.Resourc
 		IsDeleted:    r.GetIsDeleted(),
 	}
 
+	if r.GetParentId() != "" {
+		id := r.GetParentId()
+		resource.ParentID = &id
+	}
+
+	if r.GetChildren() != nil {
+		for _, c := range r.GetChildren() {
+			resource.Children = append(resource.Children, a.FromResourceProto(c))
+		}
+	}
+
 	if r.GetDetails() != nil {
 		resource.Details = r.GetDetails().AsMap()
 	}
@@ -520,6 +531,20 @@ func (a *adapter) ToResourceProto(r *domain.Resource) (*guardianv1beta1.Resource
 		Name:         r.Name,
 		Labels:       r.Labels,
 		IsDeleted:    r.IsDeleted,
+	}
+
+	if r.ParentID != nil {
+		resourceProto.ParentId = *r.ParentID
+	}
+
+	if r.Children != nil {
+		for _, c := range r.Children {
+			childProto, err := a.ToResourceProto(c)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert child resource to proto %q: %w", c.ID, err)
+			}
+			resourceProto.Children = append(resourceProto.Children, childProto)
+		}
 	}
 
 	if r.Details != nil {
@@ -769,6 +794,58 @@ func (a *adapter) ToGrantProto(grant *domain.Grant) (*guardianv1beta1.Grant, err
 	}
 
 	return grantProto, nil
+}
+
+func (a *adapter) ToActivityProto(activity *domain.Activity) (*guardianv1beta1.ProviderActivity, error) {
+	if activity == nil {
+		return nil, nil
+	}
+
+	activityProto := &guardianv1beta1.ProviderActivity{
+		Id:                 activity.ID,
+		ProviderId:         activity.ProviderID,
+		ResourceId:         activity.ResourceID,
+		ProviderActivityId: activity.ProviderActivityID,
+		AccountType:        activity.AccountType,
+		AccountId:          activity.AccountID,
+		Authorizations:     activity.Authorizations,
+		RelatedPermissions: activity.RelatedPermissions,
+		Type:               activity.Type,
+	}
+
+	if !activity.Timestamp.IsZero() {
+		activityProto.Timestamp = timestamppb.New(activity.Timestamp)
+	}
+
+	if activity.Metadata != nil {
+		metadataStruct, err := structpb.NewStruct(activity.Metadata)
+		if err != nil {
+			return nil, fmt.Errorf("parsing metadata: %w", err)
+		}
+		activityProto.Metadata = metadataStruct
+	}
+
+	if !activity.CreatedAt.IsZero() {
+		activityProto.CreatedAt = timestamppb.New(activity.CreatedAt)
+	}
+
+	if activity.Provider != nil {
+		providerProto, err := a.ToProviderProto(activity.Provider)
+		if err != nil {
+			return nil, fmt.Errorf("parsing provider: %w", err)
+		}
+		activityProto.Provider = providerProto
+	}
+
+	if activity.Resource != nil {
+		resourceProto, err := a.ToResourceProto(activity.Resource)
+		if err != nil {
+			return nil, fmt.Errorf("parsing resource: %w", err)
+		}
+		activityProto.Resource = resourceProto
+	}
+
+	return activityProto, nil
 }
 
 func (a *adapter) fromConditionProto(c *guardianv1beta1.Condition) *domain.Condition {

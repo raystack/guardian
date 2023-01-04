@@ -216,7 +216,7 @@ type ProviderService_ValidateAppeal_Call struct {
 //  - _a0 context.Context
 //  - _a1 *domain.Appeal
 //  - _a2 *domain.Provider
-//  - _a3 *domain.Provider
+//  - _a3 *domain.Policy
 func (_e *ProviderService_Expecter) ValidateAppeal(_a0 interface{}, _a1 interface{}, _a2 interface{}, _a3 interface{}) *ProviderService_ValidateAppeal_Call {
 	return &ProviderService_ValidateAppeal_Call{Call: _e.mock.On("ValidateAppeal", _a0, _a1, _a2, _a3)}
 }

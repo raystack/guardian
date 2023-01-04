@@ -113,6 +113,7 @@ func RunServer(config *Config) error {
 	protoAdapter := handlerv1beta1.NewAdapter()
 	guardianv1beta1.RegisterGuardianServiceServer(grpcServer, handlerv1beta1.NewGRPCServer(
 		services.ResourceService,
+		services.ActivityService,
 		services.ProviderService,
 		services.PolicyService,
 		services.AppealService,

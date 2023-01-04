@@ -70,6 +70,10 @@ func (s *GRPCServer) GetProviderTypes(ctx context.Context, req *guardianv1beta1.
 }
 
 func (s *GRPCServer) CreateProvider(ctx context.Context, req *guardianv1beta1.CreateProviderRequest) (*guardianv1beta1.CreateProviderResponse, error) {
+	if req.GetDryRun() {
+		ctx = provider.WithDryRun(ctx)
+	}
+
 	providerConfig := s.adapter.FromProviderConfigProto(req.GetConfig())
 	p := &domain.Provider{
 		Type:   providerConfig.Type,
@@ -92,6 +96,10 @@ func (s *GRPCServer) CreateProvider(ctx context.Context, req *guardianv1beta1.Cr
 }
 
 func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.UpdateProviderRequest) (*guardianv1beta1.UpdateProviderResponse, error) {
+	if req.GetDryRun() {
+		ctx = provider.WithDryRun(ctx)
+	}
+
 	id := req.GetId()
 	providerConfig := s.adapter.FromProviderConfigProto(req.GetConfig())
 	p := &domain.Provider{
