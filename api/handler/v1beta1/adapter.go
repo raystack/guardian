@@ -76,6 +76,7 @@ func (a *adapter) FromProviderConfigProto(pc *guardianv1beta1.ProviderConfig) *d
 
 			resources = append(resources, &domain.ResourceConfig{
 				Type:   r.GetType(),
+				Filter: r.GetFilter(),
 				Policy: a.fromPolicyConfigProto(r.GetPolicy()),
 				Roles:  roles,
 			})

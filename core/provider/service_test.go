@@ -350,75 +350,94 @@ func (s *ServiceTestSuite) TestFetchResources() {
 
 	s.Run("should upsert all resources on success", func() {
 		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(providers, nil).Once()
-		p := providers[0]
-		parentID := "1"
-		existingResources := []*domain.Resource{
-			{
-				ID:           parentID,
-				ProviderType: p.Type,
-				ProviderURN:  p.URN,
-				Type:         "type-test",
-				URN:          "urn-test",
-			},
-			{
-				ID:           "2",
-				ProviderType: p.Type,
-				ProviderURN:  p.URN,
-				Type:         "type2-test",
-				URN:          "urn2-test",
-			},
-			{
-				ID:           "3",
-				ProviderType: p.Type,
-				ProviderURN:  p.URN,
-				Type:         "type2-test",
-				URN:          "urn3-test",
-			},
-		}
-		newResources := []*domain.Resource{
-			{
-				ProviderType: p.Type,
-				ProviderURN:  p.URN,
-				Type:         "type-test",
-				URN:          "urn-test",
-				Children: []*domain.Resource{
-					{
-						ProviderType: p.Type,
-						ProviderURN:  p.URN,
-						Type:         "type2-test",
-						URN:          "urn2-test",
-					},
+		expectedResources := []*domain.Resource{}
+		for _, p := range providers {
+			resources := []*domain.Resource{
+				{
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
 				},
-			},
+			}
+			s.mockProvider.On("GetResources", p.Config).Return(resources, nil).Once()
+			expectedResources = append(expectedResources, resources...)
 		}
-		expectedUpsertResources := []*domain.Resource{
-			{
-				ProviderType: p.Type,
-				ProviderURN:  p.URN,
-				Type:         "type-test",
-				URN:          "urn-test",
-				Children: []*domain.Resource{
-					{
-						ProviderType: p.Type,
-						ProviderURN:  p.URN,
-						Type:         "type2-test",
-						URN:          "urn2-test",
-					},
-				},
-			},
-			{
-				ID:           "3",
-				ProviderType: p.Type,
-				ProviderURN:  p.URN,
-				Type:         "type2-test",
-				URN:          "urn3-test",
-				IsDeleted:    true,
-			},
-		}
+		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
+		actualError := s.service.FetchResources(context.Background())
 
-		s.mockProvider.On("GetResources", p.Config).Return(newResources, nil).Once()
-		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedUpsertResources).Return(nil).Once()
-		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(existingResources, nil).Once()
+		s.Nil(actualError)
+	})
+
+	s.Run("should upsert filter resources on success", func() {
+		providersWithResourceFilter := []*domain.Provider{
+			{
+				ID:   "1",
+				Type: mockProviderType,
+				URN:  mockProvider,
+				Config: &domain.ProviderConfig{Resources: []*domain.ResourceConfig{
+					{Type: "dataset", Filter: "$urn == 'resource2'"},
+				}},
+			},
+		}
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(providersWithResourceFilter, nil).Once()
+		expectedResources := []*domain.Resource{}
+		for _, p := range providersWithResourceFilter {
+			resources := []*domain.Resource{
+				{
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+					Type:         "dataset",
+					URN:          "resource1",
+				}, {
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+					Type:         "dataset",
+					URN:          "resource2",
+				},
+			}
+			s.mockProvider.On("GetResources", p.Config).Return(resources, nil).Once()
+			expectedResources = append(expectedResources, resources[1])
+		}
+		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil)
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
+		actualError := s.service.FetchResources(context.Background())
+
+		s.Nil(actualError)
+	})
+
+	s.Run("should upsert filter resources ends with `transaction` on success", func() {
+		providersWithResourceFilter := []*domain.Provider{
+			{
+				ID:   "1",
+				Type: mockProviderType,
+				URN:  mockProvider,
+				Config: &domain.ProviderConfig{Resources: []*domain.ResourceConfig{
+					{Type: "dataset", Filter: "$urn endsWith 'transaction' && $details.category == 'transaction'"},
+				}},
+			},
+		}
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(providersWithResourceFilter, nil).Once()
+		expectedResources := []*domain.Resource{}
+		for _, p := range providersWithResourceFilter {
+			resources := []*domain.Resource{
+				{
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+					Type:         "dataset",
+					URN:          "resource1",
+				}, {
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+					Type:         "dataset",
+					URN:          "order_transaction",
+					Details:      map[string]interface{}{"category": "transaction"},
+				},
+			}
+			s.mockProvider.On("GetResources", p.Config).Return(resources, nil).Once()
+			expectedResources = append(expectedResources, resources[1])
+		}
+		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil)
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
 		actualError := s.service.FetchResources(context.Background())
 
 		s.Nil(actualError)

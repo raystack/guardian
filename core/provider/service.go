@@ -3,6 +3,8 @@ package provider
 import (
 	"context"
 	"fmt"
+	"github.com/odpf/guardian/pkg/evaluator"
+	"reflect"
 	"strings"
 	"time"
 
@@ -490,12 +492,34 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 		return nil, err
 	}
 
+	resourceTypeFilterMap := make(map[string]string)
+	for _, rc := range p.Config.Resources {
+		if len(rc.Filter) > 0 {
+			resourceTypeFilterMap[rc.Type] = rc.Filter
+		}
+	}
+
 	newProviderResources, err := c.GetResources(p.Config)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching resources for %v: %w", p.ID, err)
 	}
-	flattenedProviderResources := flattenResources(newProviderResources)
 
+	filteredResources := make([]*domain.Resource, 0)
+	for _, r := range newProviderResources {
+		if filterExpression, ok := resourceTypeFilterMap[r.Type]; ok {
+			v, err := evaluator.Expression(filterExpression).EvaluateWithStruct(r)
+			if err != nil {
+				return nil, err
+			}
+			if !reflect.ValueOf(v).IsZero() {
+				filteredResources = append(filteredResources, r)
+			}
+		} else {
+			filteredResources = append(filteredResources, r)
+		}
+	}
+
+	flattenedProviderResources := flattenResources(filteredResources)
 	existingProviderResources := map[string]bool{}
 	for _, r := range flattenedProviderResources {
 		for _, er := range existingGuardianResources {
@@ -528,7 +552,7 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 		}
 	}
 
-	newProviderResources = append(newProviderResources, updatedResources...)
+	newProviderResources = append(filteredResources, updatedResources...)
 	return newProviderResources, nil
 }
 

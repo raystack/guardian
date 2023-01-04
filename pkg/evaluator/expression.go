@@ -1,6 +1,7 @@
 package evaluator
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -21,6 +22,23 @@ type ExprParam map[string]interface{}
 
 func (m ExprParam) Split(s, sep string) []string {
 	return strings.Split(s, sep)
+}
+
+func (e Expression) EvaluateWithStruct(item interface{}) (interface{}, error) {
+	result := map[string]interface{}{}
+
+	if item != nil {
+		jsonString, err := json.Marshal(item)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal(jsonString, &result); err != nil {
+			return nil, err
+		}
+	}
+
+	return e.EvaluateWithVars(result)
 }
 
 func (e Expression) EvaluateWithVars(params map[string]interface{}) (interface{}, error) {

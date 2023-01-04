@@ -42,6 +42,7 @@ type PolicyConfig struct {
 // ResourceConfig is the configuration for a resource type within a provider
 type ResourceConfig struct {
 	Type   string        `json:"type" yaml:"type" validate:"required"`
+	Filter string        `json:"filter" yaml:"filter"`
 	Policy *PolicyConfig `json:"policy" yaml:"policy"`
 	Roles  []*Role       `json:"roles" yaml:"roles" validate:"required"`
 }
