@@ -427,7 +427,7 @@ func reduceGrantsByProviderRole(rc *domain.ResourceConfig, grants []*domain.Gran
 	sort.Strings(allGrantPermissions)
 
 	for roleID, permissionsByRole := range rolePermissionsMap {
-		if containing, headIndex := utils.ContainsOrdered(allGrantPermissions, permissionsByRole); containing {
+		if containing, headIndex := utils.SubsliceExists(allGrantPermissions, permissionsByRole); containing {
 			sampleGrant := permissionGrantsMap[allGrantPermissions[0]]
 			sampleGrant.Role = roleID
 			sampleGrant.Permissions = permissionsByRole
