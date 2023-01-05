@@ -56,7 +56,10 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		return nil, err
 	}
 
-	sqldb, _ := store.DB().DB()
+	sqldb, err := store.DB().DB()
+	if err != nil {
+		return nil, err
+	}
 
 	auditRepository := audit_repos.NewPostgresRepository(sqldb)
 	auditLogger := audit.New(
