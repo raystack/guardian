@@ -62,6 +62,8 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 	}
 
 	auditRepository := audit_repos.NewPostgresRepository(sqldb)
+	auditRepository.Init(context.TODO())
+
 	auditLogger := audit.New(
 		audit.WithRepository(auditRepository),
 		audit.WithMetadataExtractor(func(ctx context.Context) map[string]interface{} {
