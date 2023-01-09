@@ -28,6 +28,7 @@ import (
 	"github.com/odpf/salt/log"
 	"github.com/odpf/salt/mux"
 	"github.com/sirupsen/logrus"
+	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -204,7 +205,13 @@ func Migrate(c *Config) error {
 }
 
 func getStore(c *Config) (*postgres.Store, error) {
-	return postgres.NewStore(&c.DB)
+	store, err := postgres.NewStore(&c.DB)
+	if c.Telemetry.Enabled {
+		if err := store.DB().Use(otelgorm.NewPlugin()); err != nil {
+			return store, err
+		}
+	}
+	return store, err
 }
 
 func makeHeaderMatcher(c *Config) func(key string) (string, bool) {
