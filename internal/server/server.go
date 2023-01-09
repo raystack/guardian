@@ -27,6 +27,7 @@ import (
 	"github.com/odpf/salt/log"
 	"github.com/odpf/salt/mux"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -98,6 +99,7 @@ func RunServer(config *Config) error {
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_logrus.StreamServerInterceptor(logrusEntry),
+			otelgrpc.StreamServerInterceptor(),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_recovery.UnaryServerInterceptor(
@@ -108,6 +110,7 @@ func RunServer(config *Config) error {
 			),
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
 			withAuthenticatedUserEmail(config.AuthenticatedUserHeaderKey),
+			otelgrpc.UnaryServerInterceptor(),
 		)),
 	)
 	protoAdapter := handlerv1beta1.NewAdapter()
