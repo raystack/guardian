@@ -34,3 +34,12 @@ JOBS:
   EXPIRING_ACCESS_NOTIFICATION:
     ENABLED: true
     INTERVAL: "0 9 * * *"
+TELEMETRY:
+    ENABLED: true
+    SERVICE_NAME: "guardian"
+    # Example for new relic
+    EXPORTER: otlp
+    OTLP:
+      HEADERS: 
+        api-key: <YOUR-LICENSE-KEY>
+      ENDPOINT: "otlp.nr-data.net:4317"

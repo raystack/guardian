@@ -3,10 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/odpf/guardian/pkg/evaluator"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/odpf/guardian/pkg/evaluator"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/domain"

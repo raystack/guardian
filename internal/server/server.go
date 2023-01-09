@@ -22,6 +22,7 @@ import (
 	"github.com/odpf/guardian/jobs"
 	"github.com/odpf/guardian/pkg/crypto"
 	"github.com/odpf/guardian/pkg/scheduler"
+	"github.com/odpf/guardian/pkg/tracing"
 	"github.com/odpf/guardian/plugins/notifiers"
 	audit_repos "github.com/odpf/salt/audit/repositories"
 	"github.com/odpf/salt/log"
@@ -50,6 +51,12 @@ func RunServer(config *Config) error {
 	if err != nil {
 		return err
 	}
+
+	shutdown, err := tracing.InitTracer(config.Telemetry)
+	if err != nil {
+		return err
+	}
+	defer shutdown()
 
 	services, err := InitServices(ServiceDeps{
 		Config:    config,

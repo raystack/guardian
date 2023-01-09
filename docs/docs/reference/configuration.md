@@ -46,6 +46,15 @@ jobs:
     expiring_grant_notification:
         enabled: true
         interval: "0 9 * * *"
+telemetry:
+    enabled: true
+    service_name: "guardian"
+    # Example for new relic
+    exporter: otlp
+    otlp:
+      headers: 
+        api-key: <YOUR-LICENSE-KEY>
+      endpoint: "otlp.nr-data.net:4317"
 ```
 
 

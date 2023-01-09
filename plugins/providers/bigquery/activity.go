@@ -168,13 +168,13 @@ type ImportActivitiesFilter struct {
 type bqFilter ImportActivitiesFilter
 
 func (f bqFilter) String() string {
-	criterias := []string{
+	criteria := []string{
 		`protoPayload.serviceName="bigquery.googleapis.com"`,
 		`resource.type="bigquery_dataset"`, // exclude logs for bigquery jobs ("bigquery_project")
 	}
 
 	if len(f.AccountIDs) > 0 {
-		criterias = append(criterias,
+		criteria = append(criteria,
 			fmt.Sprintf(`protoPayload.authenticationInfo.principalEmail=("%s")`, strings.Join(f.AccountIDs, `" OR "`)),
 		)
 	}
@@ -185,23 +185,23 @@ func (f bqFilter) String() string {
 		for _, r := range resources {
 			resourceNames = append(resourceNames, (*bqResource)(r).fullURN())
 		}
-		criterias = append(criterias, fmt.Sprintf(`protoPayload.resourceName:("%s")`, strings.Join(resourceNames, `" OR "`)))
+		criteria = append(criteria, fmt.Sprintf(`protoPayload.resourceName:("%s")`, strings.Join(resourceNames, `" OR "`)))
 		// uses ":" (has/contains) operator instead of "=" (equals) operator for resource name so that the result will also
 		// include activities on tables under the specified dataset (e.g. "projects/xxx/datasets/yyy" will also include
 		// activities on "projects/xxx/datasets/yyy/tables/zzz")
 	}
 	if len(f.Types) > 0 {
-		criterias = append(criterias, fmt.Sprintf(`protoPayload.methodName=("%s")`, strings.Join(f.Types, `" OR "`)))
+		criteria = append(criteria, fmt.Sprintf(`protoPayload.methodName=("%s")`, strings.Join(f.Types, `" OR "`)))
 	}
 	// TODO: authorizations
 	if f.TimestampGte != nil {
-		criterias = append(criterias, fmt.Sprintf(`timestamp>="%s"`, f.TimestampGte.Format(time.RFC3339)))
+		criteria = append(criteria, fmt.Sprintf(`timestamp>="%s"`, f.TimestampGte.Format(time.RFC3339)))
 	}
 	if f.TimestampLte != nil {
-		criterias = append(criterias, fmt.Sprintf(`timestamp<="%s"`, f.TimestampLte.Format(time.RFC3339)))
+		criteria = append(criteria, fmt.Sprintf(`timestamp<="%s"`, f.TimestampLte.Format(time.RFC3339)))
 	}
 
-	return strings.Join(criterias, " AND ")
+	return strings.Join(criteria, " AND ")
 }
 
 func (c *cloudLoggingClient) ListLogEntries(ctx context.Context, filter ImportActivitiesFilter) ([]*Activity, error) {
