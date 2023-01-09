@@ -14,6 +14,7 @@ import (
 const (
 	AccountTypeUser           = "user"
 	AccountTypeServiceAccount = "serviceAccount"
+	AccountTypeGroup          = "group"
 )
 
 type Credentials struct {

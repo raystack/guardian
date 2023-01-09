@@ -52,13 +52,17 @@ func (s *GRPCServer) GetPolicy(ctx context.Context, req *guardianv1beta1.GetPoli
 }
 
 func (s *GRPCServer) CreatePolicy(ctx context.Context, req *guardianv1beta1.CreatePolicyRequest) (*guardianv1beta1.CreatePolicyResponse, error) {
-	policy := s.adapter.FromPolicyProto(req.GetPolicy())
+	if req.GetDryRun() {
+		ctx = policy.WithDryRun(ctx)
+	}
 
-	if err := s.policyService.Create(ctx, policy); err != nil {
+	p := s.adapter.FromPolicyProto(req.GetPolicy())
+
+	if err := s.policyService.Create(ctx, p); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create policy: %v", err)
 	}
 
-	policyProto, err := s.adapter.ToPolicyProto(policy)
+	policyProto, err := s.adapter.ToPolicyProto(p)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to parse policy: %v", err)
 	}
@@ -69,6 +73,9 @@ func (s *GRPCServer) CreatePolicy(ctx context.Context, req *guardianv1beta1.Crea
 }
 
 func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *guardianv1beta1.UpdatePolicyRequest) (*guardianv1beta1.UpdatePolicyResponse, error) {
+	if req.GetDryRun() {
+		ctx = policy.WithDryRun(ctx)
+	}
 	p := s.adapter.FromPolicyProto(req.GetPolicy())
 
 	p.ID = req.GetId()

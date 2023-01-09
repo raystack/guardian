@@ -71,7 +71,6 @@ func (p *policyTagClient) GrantPolicyAccess(ctx context.Context, tag *Policy, us
 	if err != nil {
 		return err
 	}
-
 	usersWithGivenRole := make([]string, 0)
 	for _, bind := range policy.Bindings {
 		if role == bind.Role {
@@ -83,6 +82,9 @@ func (p *policyTagClient) GrantPolicyAccess(ctx context.Context, tag *Policy, us
 			}
 		}
 	}
+	if len(usersWithGivenRole) == 0 {
+		usersWithGivenRole = append(usersWithGivenRole, user)
+	}
 
 	_, err = p.policyManager.SetIamPolicy(ctx, &iampb.SetIamPolicyRequest{
 		Resource: tag.Name,
@@ -91,6 +93,7 @@ func (p *policyTagClient) GrantPolicyAccess(ctx context.Context, tag *Policy, us
 			Members: usersWithGivenRole,
 		}}},
 	})
+
 	return err
 }
 

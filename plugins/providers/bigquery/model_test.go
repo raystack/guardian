@@ -145,3 +145,35 @@ func TestTable(t *testing.T) {
 		})
 	})
 }
+
+func TestBigQueryResourceName(t *testing.T) {
+	testCases := []struct {
+		bqrn               bigquery.BigQueryResourceName
+		expectedProjectID  string
+		expectedDatasetID  string
+		expectedTableID    string
+		expectedResourceID string
+	}{
+		{
+			bqrn:               "projects/p_id/datasets/d_id/tables/t_id",
+			expectedProjectID:  "p_id",
+			expectedDatasetID:  "d_id",
+			expectedTableID:    "t_id",
+			expectedResourceID: "p_id:d_id.t_id",
+		},
+		{
+			bqrn:               "projects/p_id/datasets/d_id",
+			expectedProjectID:  "p_id",
+			expectedDatasetID:  "d_id",
+			expectedTableID:    "",
+			expectedResourceID: "p_id:d_id",
+		},
+	}
+
+	for _, tc := range testCases {
+		assert.Equal(t, tc.expectedProjectID, tc.bqrn.ProjectID())
+		assert.Equal(t, tc.expectedDatasetID, tc.bqrn.DatasetID())
+		assert.Equal(t, tc.expectedTableID, tc.bqrn.TableID())
+		assert.Equal(t, tc.expectedResourceID, tc.bqrn.BigQueryResourceID())
+	}
+}

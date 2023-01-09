@@ -138,6 +138,29 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockProviderRepository.AssertExpectations(s.T())
 		s.mockAuditLogger.AssertExpectations(s.T())
 	})
+
+	s.Run("with dryRun true", func() {
+		s.Run("should not perform any changes", func() {
+			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
+			s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
+
+			expectedResources := []*domain.Resource{}
+			s.mockResourceService.On("Find", mock.Anything, domain.ListResourcesFilter{
+				ProviderType: p.Type,
+				ProviderURN:  p.URN,
+			}).Return([]*domain.Resource{}, nil).Once()
+			s.mockProvider.On("GetResources", p.Config).Return(expectedResources, nil).Once()
+
+			ctx := provider.WithDryRun(context.Background())
+
+			actualError := s.service.Create(ctx, p)
+
+			s.Nil(actualError)
+			s.mockProviderRepository.AssertNotCalled(s.T(), "Create")
+			s.mockAuditLogger.AssertNotCalled(s.T(), "Log")
+			s.mockResourceService.AssertNotCalled(s.T(), "BulkUpsert")
+		})
+	})
 }
 
 func (s *ServiceTestSuite) TestFind() {
@@ -259,6 +282,38 @@ func (s *ServiceTestSuite) TestUpdate() {
 			s.Nil(actualError)
 		}
 	})
+
+	s.Run("with dryRun true", func() {
+		s.Run("should not perform any changes", func() {
+			p := &domain.Provider{
+				ID:   "1",
+				Type: mockProviderType,
+				Config: &domain.ProviderConfig{
+					Appeal: &domain.AppealConfig{
+						AllowPermanentAccess:         true,
+						AllowActiveAccessExtensionIn: "1h",
+					},
+					AllowedAccountTypes: []string{"user"},
+					Labels: map[string]string{
+						"foo": "bar",
+					},
+					Type: mockProviderType,
+					URN:  "urn",
+				},
+			}
+
+			s.mockProvider.On("GetAccountTypes").Return([]string{"user"}).Once()
+			s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
+
+			ctx := provider.WithDryRun(context.Background())
+
+			actualError := s.service.Update(ctx, p)
+
+			s.Nil(actualError)
+			s.mockProviderRepository.AssertNotCalled(s.T(), "Update")
+			s.mockAuditLogger.AssertNotCalled(s.T(), "Log")
+		})
+	})
 }
 
 func (s *ServiceTestSuite) TestFetchResources() {
@@ -307,6 +362,81 @@ func (s *ServiceTestSuite) TestFetchResources() {
 			expectedResources = append(expectedResources, resources...)
 		}
 		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil).Once()
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
+		actualError := s.service.FetchResources(context.Background())
+
+		s.Nil(actualError)
+	})
+
+	s.Run("should upsert filter resources on success", func() {
+		providersWithResourceFilter := []*domain.Provider{
+			{
+				ID:   "1",
+				Type: mockProviderType,
+				URN:  mockProvider,
+				Config: &domain.ProviderConfig{Resources: []*domain.ResourceConfig{
+					{Type: "dataset", Filter: "$urn == 'resource2'"},
+				}},
+			},
+		}
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(providersWithResourceFilter, nil).Once()
+		expectedResources := []*domain.Resource{}
+		for _, p := range providersWithResourceFilter {
+			resources := []*domain.Resource{
+				{
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+					Type:         "dataset",
+					URN:          "resource1",
+				}, {
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+					Type:         "dataset",
+					URN:          "resource2",
+				},
+			}
+			s.mockProvider.On("GetResources", p.Config).Return(resources, nil).Once()
+			expectedResources = append(expectedResources, resources[1])
+		}
+		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil)
+		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
+		actualError := s.service.FetchResources(context.Background())
+
+		s.Nil(actualError)
+	})
+
+	s.Run("should upsert filter resources ends with `transaction` on success", func() {
+		providersWithResourceFilter := []*domain.Provider{
+			{
+				ID:   "1",
+				Type: mockProviderType,
+				URN:  mockProvider,
+				Config: &domain.ProviderConfig{Resources: []*domain.ResourceConfig{
+					{Type: "dataset", Filter: "$urn endsWith 'transaction' && $details.category == 'transaction'"},
+				}},
+			},
+		}
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(providersWithResourceFilter, nil).Once()
+		expectedResources := []*domain.Resource{}
+		for _, p := range providersWithResourceFilter {
+			resources := []*domain.Resource{
+				{
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+					Type:         "dataset",
+					URN:          "resource1",
+				}, {
+					ProviderType: p.Type,
+					ProviderURN:  p.URN,
+					Type:         "dataset",
+					URN:          "order_transaction",
+					Details:      map[string]interface{}{"category": "transaction"},
+				},
+			}
+			s.mockProvider.On("GetResources", p.Config).Return(resources, nil).Once()
+			expectedResources = append(expectedResources, resources[1])
+		}
+		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil)
 		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
 		actualError := s.service.FetchResources(context.Background())
 
@@ -818,7 +948,7 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	s.Run("should return nil when all valids", func() {
+	s.Run("should return error when required provider parameter not present", func() {
 		role1 := &domain.Role{ID: "role-1"}
 		appeal := &domain.Appeal{
 			AccountType: "test",
@@ -831,6 +961,49 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 			},
 		}
 
+		expectedError := fmt.Errorf(`parameter "%s" is required`, "username")
+
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				AllowedAccountTypes: []string{"test"},
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess: false,
+				},
+				Parameters: []*domain.ProviderParameter{
+					{
+						Key:         "username",
+						Label:       "Username",
+						Required:    true,
+						Description: "Please enter your username",
+					},
+				},
+			},
+			Type: mockProviderType,
+		}
+		policy := &domain.Policy{}
+
+		s.mockProvider.On("GetRoles", mock.Anything, mock.Anything).Return([]*domain.Role{role1}, nil).Once()
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return error when required policy question not present", func() {
+		role1 := &domain.Role{ID: "role-1"}
+		appeal := &domain.Appeal{
+			AccountType: "test",
+			Resource: &domain.Resource{
+				ProviderType: mockProviderType,
+			},
+			Role: role1.ID,
+			Options: &domain.AppealOptions{
+				Duration: "24h",
+			},
+		}
+
+		expectedError := fmt.Errorf(`question "%s" is required`, "team")
+
 		provider := &domain.Provider{
 			Config: &domain.ProviderConfig{
 				AllowedAccountTypes: []string{"test"},
@@ -840,7 +1013,76 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 			},
 			Type: mockProviderType,
 		}
-		policy := &domain.Policy{}
+		policy := &domain.Policy{
+			AppealConfig: &domain.PolicyAppealConfig{
+				Questions: []domain.Question{
+					{
+						Key:         "team",
+						Question:    "What team are you in?",
+						Required:    true,
+						Description: "Please provide the name of the team you are in",
+					},
+				},
+			},
+		}
+
+		s.mockProvider.On("GetRoles", mock.Anything, mock.Anything).Return([]*domain.Role{role1}, nil).Once()
+
+		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
+
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return nil when all valids", func() {
+		role1 := &domain.Role{ID: "role-1"}
+		appeal := &domain.Appeal{
+			AccountType: "test",
+			Resource: &domain.Resource{
+				ProviderType: mockProviderType,
+			},
+			Role: role1.ID,
+			Options: &domain.AppealOptions{
+				Duration: "24h",
+			},
+			Details: map[string]interface{}{
+				provider.ReservedDetailsKeyProviderParameters: map[string]interface{}{
+					"username": "john.doe",
+				},
+				provider.ReservedDetailsKeyPolicyQuestions: map[string]interface{}{
+					"team": "green",
+				},
+			},
+		}
+
+		provider := &domain.Provider{
+			Config: &domain.ProviderConfig{
+				AllowedAccountTypes: []string{"test"},
+				Appeal: &domain.AppealConfig{
+					AllowPermanentAccess: false,
+				},
+				Parameters: []*domain.ProviderParameter{
+					{
+						Key:         "username",
+						Label:       "Username",
+						Required:    true,
+						Description: "Please enter your username",
+					},
+				},
+			},
+			Type: mockProviderType,
+		}
+		policy := &domain.Policy{
+			AppealConfig: &domain.PolicyAppealConfig{
+				Questions: []domain.Question{
+					{
+						Key:         "team",
+						Question:    "What team are you in?",
+						Required:    true,
+						Description: "Please provide the name of the team you are in",
+					},
+				},
+			},
+		}
 
 		s.mockProvider.On("GetRoles", mock.Anything, mock.Anything).Return([]*domain.Role{role1}, nil).Once()
 

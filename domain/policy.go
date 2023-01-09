@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-lookup"
+	"github.com/odpf/guardian/pkg/evaluator"
 )
 
 const (
@@ -17,6 +20,7 @@ const (
 
 var (
 	ErrInvalidConditionField = errors.New("unable to parse condition's field")
+	validate                 = validator.New()
 )
 
 type ApprovalStepStrategy string
@@ -100,6 +104,80 @@ type Step struct {
 	// Accessible parameters:
 	// $appeal = Appeal object
 	ApproveIf string `json:"approve_if,omitempty" yaml:"approve_if,omitempty" validate:"required_if=Strategy auto"`
+}
+
+func (s Step) ResolveApprovers(a *Appeal) ([]string, error) {
+	if s.Strategy != ApprovalStepStrategyManual {
+		return nil, nil
+	}
+
+	var approvers []string
+
+	for _, expr := range s.Approvers {
+		if err := validate.Var(expr, "email"); err == nil {
+			approvers = append(approvers, expr)
+		} else {
+			appealMap, err := structToMap(a)
+			if err != nil {
+				return nil, fmt.Errorf("parsing appeal to map: %w", err)
+			}
+			params := map[string]interface{}{
+				"appeal": appealMap,
+			}
+
+			approversValue, err := evaluator.Expression(expr).EvaluateWithVars(params)
+			if err != nil {
+				return nil, fmt.Errorf("evaluating aprrovers expression: %w", err)
+			}
+
+			value := reflect.ValueOf(approversValue)
+			switch value.Type().Kind() {
+			case reflect.String:
+				approvers = append(approvers, value.String())
+			case reflect.Slice:
+				for i := 0; i < value.Len(); i++ {
+					itemValue := reflect.ValueOf(value.Index(i).Interface())
+					switch itemValue.Type().Kind() {
+					case reflect.String:
+						approvers = append(approvers, itemValue.String())
+					default:
+						return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, itemValue.Type().Kind())
+					}
+				}
+			default:
+				return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, value.Type().Kind())
+			}
+		}
+	}
+
+	distinctApprovers := uniqueSlice(approvers)
+	if err := validate.Var(distinctApprovers, "dive,email"); err != nil {
+		return nil, err
+	}
+
+	return distinctApprovers, nil
+}
+
+func (s Step) ToApproval(a *Appeal, p *Policy, index int) (*Approval, error) {
+	approvers, err := s.ResolveApprovers(a)
+	if err != nil {
+		return nil, fmt.Errorf("resolving approvers `%s`: %w", s.Approvers, err)
+	}
+
+	approval := &Approval{
+		Index:         index,
+		Name:          s.Name,
+		PolicyID:      p.ID,
+		PolicyVersion: p.Version,
+		Approvers:     approvers,
+		Status:        ApprovalStatusPending,
+	}
+
+	if index > 0 {
+		approval.Status = ApprovalStatusBlocked
+	}
+
+	return approval, nil
 }
 
 type RequirementTrigger struct {
@@ -199,6 +277,14 @@ type PolicyAppealConfig struct {
 	AllowOnBehalf                bool                   `json:"allow_on_behalf" yaml:"allow_on_behalf"`
 	AllowPermanentAccess         bool                   `json:"allow_permanent_access" yaml:"allow_permanent_access"`
 	AllowActiveAccessExtensionIn string                 `json:"allow_active_access_extension_in" yaml:"allow_active_access_extension_in"`
+	Questions                    []Question             `json:"questions" yaml:"questions"`
+}
+
+type Question struct {
+	Key         string `json:"key" yaml:"key"`
+	Question    string `json:"question" yaml:"question"`
+	Required    bool   `json:"required" yaml:"required"`
+	Description string `json:"description" yaml:"description"`
 }
 
 type AppealDurationOption struct {

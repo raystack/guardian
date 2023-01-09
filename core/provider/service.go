@@ -3,6 +3,8 @@ package provider
 import (
 	"context"
 	"fmt"
+	"github.com/odpf/guardian/pkg/evaluator"
+	"reflect"
 	"strings"
 	"time"
 
@@ -18,6 +20,9 @@ const (
 	AuditKeyCreate = "provider.create"
 	AuditKeyUpdate = "provider.update"
 	AuditKeyDelete = "provider.delete"
+
+	ReservedDetailsKeyProviderParameters = "__provider_parameters"
+	ReservedDetailsKeyPolicyQuestions    = "__policy_questions"
 )
 
 //go:generate mockery --name=repository --exported --with-expecter
@@ -35,6 +40,11 @@ type repository interface {
 type Client interface {
 	providers.PermissionManager
 	providers.Client
+}
+
+//go:generate mockery --name=activityManager --exported --with-expecter
+type activityManager interface {
+	GetActivities(context.Context, domain.Provider, domain.ImportActivitiesFilter) ([]*domain.Activity, error)
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter
@@ -110,12 +120,16 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 		return err
 	}
 
-	if err := s.repository.Create(ctx, p); err != nil {
-		return err
-	}
+	dryRun := isDryRun(ctx)
 
-	if err := s.auditLogger.Log(ctx, AuditKeyCreate, p); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+	if !dryRun {
+		if err := s.repository.Create(ctx, p); err != nil {
+			return err
+		}
+
+		if err := s.auditLogger.Log(ctx, AuditKeyCreate, p); err != nil {
+			s.logger.Error("failed to record audit log", "error", err)
+		}
 	}
 
 	go func() {
@@ -125,13 +139,15 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 		if err != nil {
 			s.logger.Error("failed to fetch resources", "error", err)
 		}
-		if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
-			s.logger.Error("failed to insert resources to db", "error", err)
-		} else {
-			s.logger.Info("resources added",
-				"provider_urn", p.URN,
-				"count", len(resources),
-			)
+		if !dryRun {
+			if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
+				s.logger.Error("failed to insert resources to db", "error", err)
+			} else {
+				s.logger.Info("resources added",
+					"provider_urn", p.URN,
+					"count", len(resources),
+				)
+			}
 		}
 	}()
 
@@ -182,12 +198,14 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 		return err
 	}
 
-	if err := s.repository.Update(ctx, p); err != nil {
-		return err
-	}
+	if !isDryRun(ctx) {
+		if err := s.repository.Update(ctx, p); err != nil {
+			return err
+		}
 
-	if err := s.auditLogger.Log(ctx, AuditKeyUpdate, p); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+		if err := s.auditLogger.Log(ctx, AuditKeyUpdate, p); err != nil {
+			s.logger.Error("failed to record audit log", "error", err)
+		}
 	}
 
 	return nil
@@ -203,17 +221,15 @@ func (s *Service) FetchResources(ctx context.Context) error {
 	failedProviders := make([]string, 0)
 	for _, p := range providers {
 		s.logger.Info("fetching resources", "provider_urn", p.URN)
-		resources := []*domain.Resource{}
-		res, err := s.getResources(ctx, p)
+		resources, err := s.getResources(ctx, p)
 		if err != nil {
 			s.logger.Error("failed to send notifications", "error", err)
 			continue
 		}
 		s.logger.Info("resources added",
 			"provider_urn", p.URN,
-			"count", len(resources),
+			"count", len(flattenResources(resources)),
 		)
-		resources = append(resources, res...)
 		if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
 			failedProviders = append(failedProviders, p.URN)
 			s.logger.Error("failed to add resources", "provider_urn", p.URN)
@@ -298,7 +314,49 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 		}
 	}
 
+	if err = s.validateQuestionsAndParameters(a, p, policy); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (*Service) validateQuestionsAndParameters(a *domain.Appeal, p *domain.Provider, policy *domain.Policy) error {
+	parameterKeys := getFilledKeys(a, ReservedDetailsKeyProviderParameters)
+	questionKeys := getFilledKeys(a, ReservedDetailsKeyPolicyQuestions)
+
+	if p != nil && p.Config.Parameters != nil {
+		for _, param := range p.Config.Parameters {
+			if param.Required && !utils.ContainsString(parameterKeys, param.Key) {
+				return fmt.Errorf(`parameter "%s" is required`, param.Key)
+			}
+		}
+	}
+
+	if policy != nil && policy.AppealConfig != nil && len(policy.AppealConfig.Questions) > 0 {
+		for _, question := range policy.AppealConfig.Questions {
+			if question.Required && !utils.ContainsString(questionKeys, question.Key) {
+				return fmt.Errorf(`question "%s" is required`, question.Key)
+			}
+		}
+	}
+
+	return nil
+}
+
+func getFilledKeys(a *domain.Appeal, key string) (filledKeys []string) {
+	if a == nil {
+		return
+	}
+
+	if parameters, ok := a.Details[key].(map[string]interface{}); ok {
+		for k, v := range parameters {
+			if val, ok := v.(string); ok && val != "" {
+				filledKeys = append(filledKeys, k)
+			}
+		}
+	}
+	return
 }
 
 func (s *Service) GrantAccess(ctx context.Context, a domain.Grant) error {
@@ -390,14 +448,43 @@ func (s *Service) ListAccess(ctx context.Context, p domain.Provider, resources [
 	return providerAccesses, nil
 }
 
+func (s *Service) ImportActivities(ctx context.Context, filter domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
+	p, err := s.GetByID(ctx, filter.ProviderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting provider details: %w", err)
+	}
+
+	client := s.getClient(p.Type)
+	activityClient, ok := client.(activityManager)
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", ErrImportActivitiesMethodNotSupported, p.Type)
+	}
+
+	resources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
+		IDs: filter.ResourceIDs,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("retrieving specified resources: %w", err)
+	}
+	if err := filter.PopulateResources(domain.Resources(resources).ToMap()); err != nil {
+		return nil, fmt.Errorf("populating resources: %w", err)
+	}
+
+	activities, err := activityClient.GetActivities(ctx, *p, filter)
+	if err != nil {
+		return nil, fmt.Errorf("getting activities: %w", err)
+	}
+
+	return activities, nil
+}
+
 func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*domain.Resource, error) {
-	resources := []*domain.Resource{}
 	c := s.getClient(p.Type)
 	if c == nil {
 		return nil, fmt.Errorf("%w: %v", ErrInvalidProviderType, p.Type)
 	}
 
-	existingResources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
+	existingGuardianResources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
 		ProviderType: p.Type,
 		ProviderURN:  p.URN,
 	})
@@ -405,14 +492,37 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 		return nil, err
 	}
 
-	res, err := c.GetResources(p.Config)
+	resourceTypeFilterMap := make(map[string]string)
+	for _, rc := range p.Config.Resources {
+		if len(rc.Filter) > 0 {
+			resourceTypeFilterMap[rc.Type] = rc.Filter
+		}
+	}
+
+	newProviderResources, err := c.GetResources(p.Config)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching resources for %v: %w", p.ID, err)
 	}
 
-	for _, er := range existingResources {
-		isFound := false
-		for _, r := range res {
+	filteredResources := make([]*domain.Resource, 0)
+	for _, r := range newProviderResources {
+		if filterExpression, ok := resourceTypeFilterMap[r.Type]; ok {
+			v, err := evaluator.Expression(filterExpression).EvaluateWithStruct(r)
+			if err != nil {
+				return nil, err
+			}
+			if !reflect.ValueOf(v).IsZero() {
+				filteredResources = append(filteredResources, r)
+			}
+		} else {
+			filteredResources = append(filteredResources, r)
+		}
+	}
+
+	flattenedProviderResources := flattenResources(filteredResources)
+	existingProviderResources := map[string]bool{}
+	for _, r := range flattenedProviderResources {
+		for _, er := range existingGuardianResources {
 			if er.URN == r.URN {
 				existingMetadata := er.Details
 				if existingMetadata != nil {
@@ -427,30 +537,23 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 					}
 				}
 
-				resources = append(resources, r)
-				isFound = true
+				existingProviderResources[er.ID] = true
 				break
 			}
-		}
-		if !isFound {
-			er.IsDeleted = true
-			resources = append(resources, er)
-		}
-	}
-	for _, r := range res {
-		isAdded := false
-		for _, rr := range resources {
-			if r.URN == rr.URN {
-				isAdded = true
-				break
-			}
-		}
-		if !isAdded {
-			resources = append(resources, r)
 		}
 	}
 
-	return resources, nil
+	// mark IsDeleted of guardian resources that no longer exist in provider
+	updatedResources := []*domain.Resource{}
+	for _, r := range existingGuardianResources {
+		if _, ok := existingProviderResources[r.ID]; !ok {
+			r.IsDeleted = true
+			updatedResources = append(updatedResources, r)
+		}
+	}
+
+	newProviderResources = append(filteredResources, updatedResources...)
+	return newProviderResources, nil
 }
 
 func (s *Service) validateAppealParam(a *domain.Appeal) error {
@@ -518,4 +621,22 @@ func validateDuration(d string) error {
 		return fmt.Errorf("parsing duration: %v", err)
 	}
 	return nil
+}
+
+func flattenResources(resources []*domain.Resource) []*domain.Resource {
+	flattenedResources := []*domain.Resource{}
+	for _, r := range resources {
+		flattenedResources = append(flattenedResources, r.GetFlattened()...)
+	}
+	return flattenedResources
+}
+
+type isDryRunKey string
+
+func WithDryRun(ctx context.Context) context.Context {
+	return context.WithValue(ctx, isDryRunKey("dry_run"), true)
+}
+
+func isDryRun(ctx context.Context) bool {
+	return ctx.Value(isDryRunKey("dry_run")) != nil
 }

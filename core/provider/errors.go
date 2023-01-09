@@ -18,5 +18,6 @@ var (
 	ErrDurationIsRequired      = errors.New("having permanent access to this resource is not allowed, access duration is required")
 	ErrOptionsDurationNotFound = errors.New("duration option not found")
 
-	ErrUnimplementedMethod = errors.New("method is not yet implemented")
+	ErrUnimplementedMethod                = errors.New("method is not yet implemented")
+	ErrImportActivitiesMethodNotSupported = errors.New("import activities is not supported for this provider type")
 )

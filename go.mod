@@ -7,6 +7,7 @@ require (
 	cloud.google.com/go/datacatalog v1.6.0
 	cloud.google.com/go/iam v0.3.0
 	cloud.google.com/go/storage v1.23.0
+	cloud.google.com/go/logging v1.5.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/antonmedv/expr v1.9.0
@@ -23,6 +24,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/odpf/salt v0.2.4
 	github.com/ory/dockertest/v3 v3.9.1
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sergi/go-diff v1.0.0
 	github.com/sirupsen/logrus v1.8.1
@@ -125,6 +127,7 @@ require (
 	go.uber.org/zap v1.19.0 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect

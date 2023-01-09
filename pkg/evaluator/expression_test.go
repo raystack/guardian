@@ -7,12 +7,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type ParamStruct struct {
+	Bar string
+}
+
 func TestEvaluate(t *testing.T) {
 	testCases := []struct {
 		expression     string
 		params         map[string]interface{}
 		expectedResult interface{}
 		expectedError  error
+		aStruct        interface{}
 	}{
 		{
 			expression:     "1 > 2",
@@ -75,6 +80,12 @@ func TestEvaluate(t *testing.T) {
 				},
 			},
 			expectedResult: "baz",
+		}, {
+			expression: "$Bar",
+			aStruct: ParamStruct{
+				Bar: "baz",
+			},
+			expectedResult: "baz",
 		},
 	}
 
@@ -82,7 +93,13 @@ func TestEvaluate(t *testing.T) {
 		t.Run(tc.expression, func(t *testing.T) {
 			e := evaluator.Expression(tc.expression)
 
-			actualResult, actualError := e.EvaluateWithVars(tc.params)
+			var actualResult interface{}
+			var actualError error
+			if tc.aStruct != nil {
+				actualResult, actualError = e.EvaluateWithStruct(tc.aStruct)
+			} else {
+				actualResult, actualError = e.EvaluateWithVars(tc.params)
+			}
 
 			assert.Equal(t, tc.expectedResult, actualResult)
 			assert.ErrorIs(t, actualError, tc.expectedError)

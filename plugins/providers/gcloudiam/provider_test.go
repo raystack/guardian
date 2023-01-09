@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/providers/gcloudiam"
+	"github.com/odpf/guardian/plugins/providers/gcloudiam/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,7 +15,7 @@ import (
 func TestCreateConfig(t *testing.T) {
 	t.Run("should return error if error in credentials are invalid/mandatory fields are missing", func(t *testing.T) {
 		providerURN := "test-URN"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
@@ -88,7 +88,7 @@ func TestCreateConfig(t *testing.T) {
 
 	t.Run("should return error if there parse and valid config is invalid", func(t *testing.T) {
 		providerURN := "test-URN"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
@@ -142,7 +142,7 @@ func TestCreateConfig(t *testing.T) {
 
 	t.Run("should return error if error in encrypting the credentials", func(t *testing.T) {
 		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
@@ -190,7 +190,7 @@ func TestCreateConfig(t *testing.T) {
 
 	t.Run("should return nil error and create the config on success", func(t *testing.T) {
 		providerURN := "test-URN"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
@@ -240,7 +240,7 @@ func TestCreateConfig(t *testing.T) {
 func TestGetType(t *testing.T) {
 	t.Run("should return provider type name", func(t *testing.T) {
 		expectedTypeName := domain.ProviderTypeMetabase
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		p := gcloudiam.NewProvider(expectedTypeName, crypto)
 
 		actualTypeName := p.GetType()
@@ -251,7 +251,7 @@ func TestGetType(t *testing.T) {
 
 func TestGetResources(t *testing.T) {
 	t.Run("should error when credentials are invalid", func(t *testing.T) {
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		p := gcloudiam.NewProvider("", crypto)
 		pc := &domain.ProviderConfig{
 			Type:        domain.ProviderTypeGCloudIAM,
@@ -267,7 +267,7 @@ func TestGetResources(t *testing.T) {
 
 	t.Run("should check for valid roles in provider config and return project resource object", func(t *testing.T) {
 		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
@@ -334,7 +334,7 @@ func TestGetResources(t *testing.T) {
 
 	t.Run("should return organization resource object", func(t *testing.T) {
 		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
@@ -389,7 +389,7 @@ func TestGetResources(t *testing.T) {
 
 func TestGrantAccess(t *testing.T) {
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		p := gcloudiam.NewProvider("", crypto)
 
 		pc := &domain.ProviderConfig{
@@ -413,7 +413,7 @@ func TestGrantAccess(t *testing.T) {
 
 	t.Run("should return error if resource type is unknown", func(t *testing.T) {
 		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		p := gcloudiam.NewProvider("", crypto)
 		crypto.On("Decrypt", "c2VydmljZS1hY2NvdW50LWtleS1qc29u").Return(`{"type":"service_account"}`, nil) // tests the newIamClient when p.Clients is not initialised in the provider config
 		expectedError := errors.New("invalid resource type")
@@ -445,7 +445,7 @@ func TestGrantAccess(t *testing.T) {
 	t.Run("should return error if there is an error in granting the access", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		expectedError := errors.New("client error")
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
@@ -490,7 +490,7 @@ func TestGrantAccess(t *testing.T) {
 
 	t.Run("should return nil error if granting access is successful", func(t *testing.T) {
 		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		expectedRole := "role-1"
 		expectedAccountType := "user"
@@ -544,7 +544,7 @@ func TestGrantAccess(t *testing.T) {
 func TestRevokeAccess(t *testing.T) {
 	t.Run("should return error if resource type is unknown", func(t *testing.T) {
 		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
@@ -575,7 +575,7 @@ func TestRevokeAccess(t *testing.T) {
 	t.Run("should return error if there is an error in revoking the access", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		expectedError := errors.New("client error")
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
@@ -620,7 +620,7 @@ func TestRevokeAccess(t *testing.T) {
 
 	t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
 		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		expectedRole := "role-1"
 		expectedPermission := "roles/bigquery.admin"
@@ -674,7 +674,7 @@ func TestGetRoles(t *testing.T) {
 	t.Run("should return error if resource type is not project or organisation", func(t *testing.T) {
 		expectedError := gcloudiam.ErrInvalidResourceType
 		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		p := gcloudiam.NewProvider("", crypto)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
@@ -697,7 +697,7 @@ func TestGetRoles(t *testing.T) {
 
 	t.Run("should get the expected roles and no error", func(t *testing.T) {
 		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		expectedRoles := []*domain.Role{
 			{
@@ -739,7 +739,7 @@ func TestGetRoles(t *testing.T) {
 func TestGetPermissions(t *testing.T) {
 	t.Run("should get the expected permissions and no error", func(t *testing.T) {
 		providerURN := "test-provider-urn"
-		crypto := new(mocks.Crypto)
+		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
 		expectedPermissions := []interface{}{"roles/bigquery.admin"}
 
@@ -774,8 +774,8 @@ func TestGetPermissions(t *testing.T) {
 
 func TestGetAccountTypes(t *testing.T) {
 	t.Run("should return the supported account types: user, serviceAccount", func(t *testing.T) {
-		expectedAccountTypes := []string{"user", "serviceAccount"}
-		crypto := new(mocks.Crypto)
+		expectedAccountTypes := []string{"user", "serviceAccount", "group"}
+		crypto := new(mocks.Encryptor)
 		p := gcloudiam.NewProvider("", crypto)
 
 		actualAccountTypes := p.GetAccountTypes()

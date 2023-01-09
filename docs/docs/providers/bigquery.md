@@ -71,6 +71,7 @@ resources:
         permissions:
           - WRITER
   - type: table
+    filter: $name endsWith transaction 
     policy:
       id: my_policy
       version: 1

@@ -76,11 +76,25 @@ func (a *adapter) FromProviderConfigProto(pc *guardianv1beta1.ProviderConfig) *d
 
 			resources = append(resources, &domain.ResourceConfig{
 				Type:   r.GetType(),
+				Filter: r.GetFilter(),
 				Policy: a.fromPolicyConfigProto(r.GetPolicy()),
 				Roles:  roles,
 			})
 		}
 		providerConfig.Resources = resources
+	}
+
+	if pc.GetParameters() != nil {
+		parameters := []*domain.ProviderParameter{}
+		for _, p := range pc.GetParameters() {
+			parameters = append(parameters, &domain.ProviderParameter{
+				Key:         p.GetKey(),
+				Label:       p.GetLabel(),
+				Required:    p.GetRequired(),
+				Description: p.GetDescription(),
+			})
+		}
+		providerConfig.Parameters = parameters
 	}
 
 	if pc.GetAllowedAccountTypes() != nil {
@@ -156,6 +170,19 @@ func (a *adapter) ToProviderConfigProto(pc *domain.ProviderConfig) (*guardianv1b
 			})
 		}
 		providerConfigProto.Resources = resources
+	}
+
+	if pc.Parameters != nil {
+		parameters := []*guardianv1beta1.ProviderConfig_ProviderParameter{}
+		for _, p := range pc.Parameters {
+			parameters = append(parameters, &guardianv1beta1.ProviderConfig_ProviderParameter{
+				Key:         p.Key,
+				Label:       p.Label,
+				Required:    p.Required,
+				Description: p.Description,
+			})
+		}
+		providerConfigProto.Parameters = parameters
 	}
 
 	if pc.AllowedAccountTypes != nil {
@@ -282,6 +309,7 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
 
 	if p.GetAppeal() != nil {
 		var durationOptions []domain.AppealDurationOption
+		var questions []domain.Question
 		for _, d := range p.GetAppeal().GetDurationOptions() {
 			option := domain.AppealDurationOption{
 				Name:  d.GetName(),
@@ -289,9 +317,22 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
 			}
 			durationOptions = append(durationOptions, option)
 		}
+		for _, q := range p.GetAppeal().GetQuestions() {
+			question := domain.Question{
+				Key:         q.GetKey(),
+				Question:    q.GetQuestion(),
+				Required:    q.GetRequired(),
+				Description: q.GetDescription(),
+			}
+			questions = append(questions, question)
+		}
+
 		policy.AppealConfig = &domain.PolicyAppealConfig{
-			DurationOptions: durationOptions,
-			AllowOnBehalf:   p.GetAppeal().GetAllowOnBehalf(),
+			DurationOptions:              durationOptions,
+			AllowOnBehalf:                p.GetAppeal().GetAllowOnBehalf(),
+			Questions:                    questions,
+			AllowPermanentAccess:         p.GetAppeal().GetAllowPermanentAccess(),
+			AllowActiveAccessExtensionIn: p.GetAppeal().GetAllowActiveAccessExtensionIn(),
 		}
 	}
 
@@ -429,6 +470,17 @@ func (a *adapter) ToPolicyAppealConfigProto(p *domain.Policy) *guardianv1beta1.P
 	}
 	policyAppealConfigProto.DurationOptions = durationOptions
 	policyAppealConfigProto.AllowOnBehalf = p.AppealConfig.AllowOnBehalf
+	policyAppealConfigProto.AllowPermanentAccess = p.AppealConfig.AllowPermanentAccess
+	policyAppealConfigProto.AllowActiveAccessExtensionIn = p.AppealConfig.AllowActiveAccessExtensionIn
+
+	for _, q := range p.AppealConfig.Questions {
+		policyAppealConfigProto.Questions = append(policyAppealConfigProto.Questions, &guardianv1beta1.PolicyAppealConfig_Question{
+			Key:         q.Key,
+			Question:    q.Question,
+			Required:    q.Required,
+			Description: q.Description,
+		})
+	}
 	return policyAppealConfigProto
 }
 
@@ -442,6 +494,17 @@ func (a *adapter) FromResourceProto(r *guardianv1beta1.Resource) *domain.Resourc
 		Name:         r.GetName(),
 		Labels:       r.GetLabels(),
 		IsDeleted:    r.GetIsDeleted(),
+	}
+
+	if r.GetParentId() != "" {
+		id := r.GetParentId()
+		resource.ParentID = &id
+	}
+
+	if r.GetChildren() != nil {
+		for _, c := range r.GetChildren() {
+			resource.Children = append(resource.Children, a.FromResourceProto(c))
+		}
 	}
 
 	if r.GetDetails() != nil {
@@ -468,6 +531,20 @@ func (a *adapter) ToResourceProto(r *domain.Resource) (*guardianv1beta1.Resource
 		Name:         r.Name,
 		Labels:       r.Labels,
 		IsDeleted:    r.IsDeleted,
+	}
+
+	if r.ParentID != nil {
+		resourceProto.ParentId = *r.ParentID
+	}
+
+	if r.Children != nil {
+		for _, c := range r.Children {
+			childProto, err := a.ToResourceProto(c)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert child resource to proto %q: %w", c.ID, err)
+			}
+			resourceProto.Children = append(resourceProto.Children, childProto)
+		}
 	}
 
 	if r.Details != nil {
@@ -502,6 +579,7 @@ func (a *adapter) ToAppealProto(appeal *domain.Appeal) (*guardianv1beta1.Appeal,
 		Permissions:   appeal.Permissions,
 		Options:       a.toAppealOptionsProto(appeal.Options),
 		Labels:        appeal.Labels,
+		Description:   appeal.Description,
 	}
 
 	if appeal.Resource != nil {
@@ -567,6 +645,7 @@ func (a *adapter) FromCreateAppealProto(ca *guardianv1beta1.CreateAppealRequest,
 			CreatedBy:   authenticatedUser,
 			ResourceID:  r.GetId(),
 			Role:        r.GetRole(),
+			Description: ca.GetDescription(),
 		}
 
 		if r.GetOptions() != nil {
@@ -715,6 +794,58 @@ func (a *adapter) ToGrantProto(grant *domain.Grant) (*guardianv1beta1.Grant, err
 	}
 
 	return grantProto, nil
+}
+
+func (a *adapter) ToActivityProto(activity *domain.Activity) (*guardianv1beta1.ProviderActivity, error) {
+	if activity == nil {
+		return nil, nil
+	}
+
+	activityProto := &guardianv1beta1.ProviderActivity{
+		Id:                 activity.ID,
+		ProviderId:         activity.ProviderID,
+		ResourceId:         activity.ResourceID,
+		ProviderActivityId: activity.ProviderActivityID,
+		AccountType:        activity.AccountType,
+		AccountId:          activity.AccountID,
+		Authorizations:     activity.Authorizations,
+		RelatedPermissions: activity.RelatedPermissions,
+		Type:               activity.Type,
+	}
+
+	if !activity.Timestamp.IsZero() {
+		activityProto.Timestamp = timestamppb.New(activity.Timestamp)
+	}
+
+	if activity.Metadata != nil {
+		metadataStruct, err := structpb.NewStruct(activity.Metadata)
+		if err != nil {
+			return nil, fmt.Errorf("parsing metadata: %w", err)
+		}
+		activityProto.Metadata = metadataStruct
+	}
+
+	if !activity.CreatedAt.IsZero() {
+		activityProto.CreatedAt = timestamppb.New(activity.CreatedAt)
+	}
+
+	if activity.Provider != nil {
+		providerProto, err := a.ToProviderProto(activity.Provider)
+		if err != nil {
+			return nil, fmt.Errorf("parsing provider: %w", err)
+		}
+		activityProto.Provider = providerProto
+	}
+
+	if activity.Resource != nil {
+		resourceProto, err := a.ToResourceProto(activity.Resource)
+		if err != nil {
+			return nil, fmt.Errorf("parsing resource: %w", err)
+		}
+		activityProto.Resource = resourceProto
+	}
+
+	return activityProto, nil
 }
 
 func (a *adapter) fromConditionProto(c *guardianv1beta1.Condition) *domain.Condition {

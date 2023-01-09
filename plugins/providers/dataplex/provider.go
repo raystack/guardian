@@ -104,7 +104,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 		policy.FromDomain(a.Resource)
 
 		for _, p := range permissions {
-			if err := client.GrantPolicyAccess(ctx, policy, fmt.Sprintf("%s:%s", AccountTypeUser, a.AccountID), string(p)); err != nil {
+			if err := client.GrantPolicyAccess(ctx, policy, fmt.Sprintf("%s:%s", a.AccountType, a.AccountID), string(p)); err != nil {
 				if errors.Is(err, ErrPermissionAlreadyExists) {
 					return nil
 				}
@@ -137,7 +137,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 		policy := new(Policy)
 		policy.FromDomain(a.Resource)
 		for _, p := range permissions {
-			if err := client.RevokePolicyAccess(ctx, policy, fmt.Sprintf("%s:%s", AccountTypeUser, a.AccountID), string(p)); err != nil {
+			if err := client.RevokePolicyAccess(ctx, policy, fmt.Sprintf("%s:%s", a.AccountType, a.AccountID), string(p)); err != nil {
 				if errors.Is(err, ErrPermissionNotFound) {
 					return nil
 				}
