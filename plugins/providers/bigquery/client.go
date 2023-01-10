@@ -8,6 +8,7 @@ import (
 
 	bq "cloud.google.com/go/bigquery"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/pkg/tracing"
 	bqApi "google.golang.org/api/bigquery/v2"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/iterator"
@@ -23,7 +24,11 @@ type bigQueryClient struct {
 
 func newBigQueryClient(projectID string, credentialsJSON []byte) (*bigQueryClient, error) {
 	ctx := context.Background()
-	client, err := bq.NewClient(ctx, projectID, option.WithCredentialsJSON(credentialsJSON))
+	clientOpts := []option.ClientOption{
+		option.WithCredentialsJSON(credentialsJSON),
+		option.WithHTTPClient(tracing.NewHttpClient("BigQueryHttpClient")),
+	}
+	client, err := bq.NewClient(ctx, projectID, clientOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -43,25 +48,6 @@ func newBigQueryClient(projectID string, credentialsJSON []byte) (*bigQueryClien
 		client:     client,
 		iamService: iamService,
 		apiClient:  apiClient,
-	}, nil
-}
-
-func NewDefaultBigQueryClient(projectID string) (*bigQueryClient, error) {
-	ctx := context.Background()
-	client, err := bq.NewClient(ctx, projectID)
-	if err != nil {
-		return nil, err
-	}
-
-	apiClient, err := bqApi.NewService(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &bigQueryClient{
-		projectID: projectID,
-		client:    client,
-		apiClient: apiClient,
 	}, nil
 }
 

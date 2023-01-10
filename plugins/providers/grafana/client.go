@@ -10,6 +10,7 @@ import (
 	"net/url"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/odpf/guardian/pkg/tracing"
 )
 
 type GrafanaClient interface {
@@ -61,7 +62,7 @@ func NewClient(config *ClientConfig) (*client, error) {
 
 	httpClient := config.HTTPClient
 	if httpClient == nil {
-		httpClient = &http.Client{}
+		httpClient = tracing.NewHttpClient("GrafanaHttpClient")
 	}
 
 	baseURL, err := url.Parse(config.Host)

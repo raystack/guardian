@@ -4,18 +4,17 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"net/http"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
-	"google.golang.org/grpc/credentials"
-
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
-
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
+	"google.golang.org/grpc/credentials"
 )
 
 type Config struct {
@@ -82,4 +81,15 @@ func getExporter(cfg Config) (sdktrace.SpanExporter, error) {
 		return stdouttrace.New(stdouttrace.WithPrettyPrint())
 	}
 	return nil, nil
+}
+
+func NewHttpClient(name string) *http.Client {
+	opts := []otelhttp.Option{
+		otelhttp.WithSpanNameFormatter(func(operation string, r *http.Request) string {
+			return fmt.Sprintf("%s %s", name, operation)
+		}),
+	}
+	return &http.Client{
+		Transport: otelhttp.NewTransport(http.DefaultTransport, opts...),
+	}
 }
