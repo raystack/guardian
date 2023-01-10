@@ -12,6 +12,7 @@ import (
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -857,6 +858,8 @@ func checkApprovalStatus(status string) error {
 
 func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal, p *domain.Policy) error {
 	if p.Requirements != nil && len(p.Requirements) > 0 {
+		g, ctx := errgroup.WithContext(ctx)
+
 		for reqIndex, r := range p.Requirements {
 			isAppealMatchesRequirement, err := r.On.IsMatch(a)
 			if err != nil {
@@ -867,34 +870,42 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 			}
 
 			for _, aa := range r.Appeals {
-				// TODO: populate resource data from policyService
-				resource, err := s.resourceService.Get(ctx, aa.Resource)
-				if err != nil {
-					return fmt.Errorf("retrieving resource: %v", err)
-				}
-
-				additionalAppeal := &domain.Appeal{
-					AccountID:   a.AccountID,
-					AccountType: a.AccountType,
-					CreatedBy:   a.CreatedBy,
-					Role:        aa.Role,
-					ResourceID:  resource.ID,
-				}
-				if aa.Options != nil {
-					additionalAppeal.Options = aa.Options
-				}
-				if aa.Policy != nil {
-					additionalAppeal.PolicyID = aa.Policy.ID
-					additionalAppeal.PolicyVersion = uint(aa.Policy.Version)
-				}
-				if err := s.Create(ctx, []*domain.Appeal{additionalAppeal}, CreateWithAdditionalAppeal()); err != nil {
-					if errors.Is(err, ErrAppealDuplicate) {
-						continue
+				aa := aa // https://golang.org/doc/faq#closures_and_goroutines
+				g.Go(func() error {
+					// TODO: populate resource data from policyService
+					resource, err := s.resourceService.Get(ctx, aa.Resource)
+					if err != nil {
+						return fmt.Errorf("retrieving resource: %v", err)
 					}
-					return fmt.Errorf("creating additional appeals: %w", err)
-				}
+
+					additionalAppeal := &domain.Appeal{
+						AccountID:   a.AccountID,
+						AccountType: a.AccountType,
+						CreatedBy:   a.CreatedBy,
+						Role:        aa.Role,
+						ResourceID:  resource.ID,
+					}
+					if aa.Options != nil {
+						additionalAppeal.Options = aa.Options
+					}
+					if aa.Policy != nil {
+						additionalAppeal.PolicyID = aa.Policy.ID
+						additionalAppeal.PolicyVersion = uint(aa.Policy.Version)
+					}
+					if err := s.Create(ctx, []*domain.Appeal{additionalAppeal}, CreateWithAdditionalAppeal()); err != nil {
+						if errors.Is(err, ErrAppealDuplicate) {
+							return nil
+						}
+						return fmt.Errorf("creating additional appeals: %w", err)
+					}
+					return nil
+				})
 			}
 		}
+		if err := g.Wait(); err == nil {
+			return err
+		}
+
 	}
 	return nil
 }
