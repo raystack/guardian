@@ -57,7 +57,7 @@ scoop update guardian
 
 Guardian requires the following dependencies:
 
-- Golang (version 1.17 or above)
+- Golang (version 1.18 or above)
 - Git
 
 #### Build
