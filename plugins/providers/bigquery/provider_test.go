@@ -1107,7 +1107,7 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 					URN:          "test-project-id:test-dataset-id",
 					Name:         "test-dataset-id",
 				},
-				RelatedPermissions: []string{bigquery.DatasetRoleReader, bigquery.DatasetRoleWriter},
+				RelatedPermissions: []string{bigquery.DatasetRoleWriter, bigquery.DatasetRoleReader},
 				Metadata: map[string]interface{}{
 					"logging_entry": map[string]interface{}{
 						"insert_id": "test-activity-id",
