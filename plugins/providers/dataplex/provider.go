@@ -180,7 +180,7 @@ func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, res
 	}
 	client, err := p.getPolicyTagClient(creds)
 	if err != nil {
-		return nil, fmt.Errorf("initializing bigquery client: %w", err)
+		return nil, fmt.Errorf("initializing dataplex client: %w", err)
 	}
 
 	return client.ListAccess(ctx, resources)
