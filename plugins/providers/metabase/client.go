@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/odpf/guardian/pkg/tracing"
 	"github.com/odpf/salt/log"
 
 	"github.com/mitchellh/mapstructure"
@@ -141,7 +142,7 @@ func NewClient(config *ClientConfig, logger log.Logger) (*client, error) {
 
 	httpClient := config.HTTPClient
 	if httpClient == nil {
-		httpClient = &http.Client{}
+		httpClient = tracing.NewHttpClient("MetabaseHttpClient")
 	}
 
 	c := &client{

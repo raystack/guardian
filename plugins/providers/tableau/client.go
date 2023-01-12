@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-defaults"
+	"github.com/odpf/guardian/pkg/tracing"
 )
 
 type TableauClient interface {
@@ -602,7 +603,7 @@ func NewClient(config *ClientConfig) (*client, error) {
 
 	httpClient := config.HTTPClient
 	if httpClient == nil {
-		httpClient = &http.Client{}
+		httpClient = tracing.NewHttpClient("TableauHttpClient")
 	}
 
 	c := &client{

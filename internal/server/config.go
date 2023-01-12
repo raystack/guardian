@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/odpf/guardian/internal/store"
+	"github.com/odpf/guardian/pkg/tracing"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/salt/config"
 )
@@ -41,6 +42,7 @@ type Config struct {
 	AuthenticatedUserHeaderKey string           `mapstructure:"authenticated_user_header_key"`
 	AuditLogTraceIDHeaderKey   string           `mapstructure:"audit_log_trace_id_header_key" default:"X-Trace-Id"`
 	Jobs                       Jobs             `mapstructure:"jobs"`
+	Telemetry                  tracing.Config   `mapstructure:"telemetry"`
 }
 
 func LoadConfig(configFile string) (Config, error) {

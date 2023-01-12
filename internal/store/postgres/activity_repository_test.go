@@ -200,7 +200,7 @@ func (s *ActivityRepositoryTestSuite) TestGetOne() {
 }
 
 func (s *ActivityRepositoryTestSuite) TestBulkUpsert() {
-	s.Run("should return error if an error occured when converting domain.Activity", func() {
+	s.Run("should return error if an error occurred when converting domain.Activity", func() {
 		invalidActivity := &domain.Activity{
 			ProviderID: "invalid-uuid",
 			ResourceID: "invalid-uuid",

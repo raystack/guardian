@@ -3,12 +3,14 @@ package cli
 import (
 	"github.com/MakeNowJust/heredoc"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
+	"github.com/odpf/guardian/pkg/tracing"
 	"github.com/odpf/salt/cmdx"
 	"github.com/spf13/cobra"
 )
 
 func New(cfg *Config) *cobra.Command {
 	cliConfig = cfg
+	var shutdown func()
 	var cmd = &cobra.Command{
 		Use:   "guardian <command> <subcommand> [flags]",
 		Short: "Universal data access control",
@@ -25,6 +27,20 @@ func New(cfg *Config) *cobra.Command {
 			"help:feedback": heredoc.Doc(`
 				Open an issue here https://github.com/odpf/guardian/issues
 			`),
+		},
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// initialize tracing
+			var err error
+			shutdown, err = tracing.InitTracer(cfg.Telemetry)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			// shutdown tracing
+			shutdown()
 		},
 	}
 
