@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/guardian/pkg/tracing"
 	"github.com/odpf/salt/log"
 )
 
@@ -76,7 +77,7 @@ func NewClient(config *ClientConfig, logger log.Logger) (*client, error) {
 
 	httpClient := config.HTTPClient
 	if httpClient == nil {
-		httpClient = &http.Client{}
+		httpClient = tracing.NewHttpClient("ShieldHttpClient")
 	}
 
 	c := &client{

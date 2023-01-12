@@ -119,7 +119,7 @@ Guardian provides a fully-featured GRPC and HTTP API to interact with Guardian s
   <summary>Dependencies:</summary>
 
     - Git
-    - Go 1.17 or above
+    - Go 1.18 or above
     - PostgreSQL 13.2 or above
 
 </details>

@@ -22,11 +22,14 @@ import (
 	"github.com/odpf/guardian/jobs"
 	"github.com/odpf/guardian/pkg/crypto"
 	"github.com/odpf/guardian/pkg/scheduler"
+	"github.com/odpf/guardian/pkg/tracing"
 	"github.com/odpf/guardian/plugins/notifiers"
 	audit_repos "github.com/odpf/salt/audit/repositories"
 	"github.com/odpf/salt/log"
 	"github.com/odpf/salt/mux"
 	"github.com/sirupsen/logrus"
+	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -49,6 +52,12 @@ func RunServer(config *Config) error {
 	if err != nil {
 		return err
 	}
+
+	shutdown, err := tracing.InitTracer(config.Telemetry)
+	if err != nil {
+		return err
+	}
+	defer shutdown()
 
 	services, err := InitServices(ServiceDeps{
 		Config:    config,
@@ -98,6 +107,7 @@ func RunServer(config *Config) error {
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_logrus.StreamServerInterceptor(logrusEntry),
+			otelgrpc.StreamServerInterceptor(),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_recovery.UnaryServerInterceptor(
@@ -108,6 +118,7 @@ func RunServer(config *Config) error {
 			),
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
 			withAuthenticatedUserEmail(config.AuthenticatedUserHeaderKey),
+			otelgrpc.UnaryServerInterceptor(),
 		)),
 	)
 	protoAdapter := handlerv1beta1.NewAdapter()
@@ -194,7 +205,13 @@ func Migrate(c *Config) error {
 }
 
 func getStore(c *Config) (*postgres.Store, error) {
-	return postgres.NewStore(&c.DB)
+	store, err := postgres.NewStore(&c.DB)
+	if c.Telemetry.Enabled {
+		if err := store.DB().Use(otelgorm.NewPlugin()); err != nil {
+			return store, err
+		}
+	}
+	return store, err
 }
 
 func makeHeaderMatcher(c *Config) func(key string) (string, bool) {

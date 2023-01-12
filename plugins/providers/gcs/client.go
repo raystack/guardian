@@ -6,6 +6,7 @@ import (
 
 	"cloud.google.com/go/iam"
 	"cloud.google.com/go/storage"
+	"github.com/odpf/guardian/pkg/tracing"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
@@ -23,7 +24,11 @@ type gcsClient struct {
 }
 
 func newGCSClient(projectID string, credentialsJSON []byte) (*gcsClient, error) {
-	client, err := storage.NewClient(context.TODO(), option.WithCredentialsJSON(credentialsJSON))
+	opts := []option.ClientOption{
+		option.WithCredentialsJSON(credentialsJSON),
+		option.WithHTTPClient(tracing.NewHttpClient("GcsHttpClient")),
+	}
+	client, err := storage.NewClient(context.TODO(), opts...)
 	if err != nil {
 		return nil, err
 	}
