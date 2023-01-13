@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/pkg/tracing"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
@@ -25,11 +24,7 @@ type iamClient struct {
 
 func newIamClient(credentialsJSON []byte, resourceName string) (*iamClient, error) {
 	ctx := context.Background()
-	opts := []option.ClientOption{
-		option.WithCredentialsJSON(credentialsJSON),
-		option.WithHTTPClient(tracing.NewHttpClient("GCloudIAMHttpClient")),
-	}
-	cloudResourceManagerService, err := cloudresourcemanager.NewService(ctx, opts...)
+	cloudResourceManagerService, err := cloudresourcemanager.NewService(ctx, option.WithCredentialsJSON(credentialsJSON))
 	if err != nil {
 		return nil, err
 	}
