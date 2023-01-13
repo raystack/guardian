@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 
+	"github.com/odpf/guardian/plugins/providers/dataplex"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/odpf/guardian/core"
@@ -110,6 +112,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, deps.Crypto),
 		noop.NewProvider(domain.ProviderTypeNoOp, deps.Logger),
 		gcs.NewProvider(domain.ProviderTypeGCS, deps.Crypto),
+		dataplex.NewProvider(domain.ProviderTypePolicyTag, deps.Crypto),
 		shield.NewProvider(domain.ProviderTypeShield, deps.Logger),
 	}
 

@@ -21,6 +21,8 @@ const (
 	ProviderTypeNoOp = "noop"
 	//  ProviderTypeGCS is the type name for Google Cloud Storage provider
 	ProviderTypeGCS = "gcs"
+	// ProviderTypePolicyTag is the type name for Dataplex
+	ProviderTypePolicyTag = "dataplex"
 	//  ProviderTypeShield is the type name for Shield auth layer provider
 	ProviderTypeShield = "shield"
 )
