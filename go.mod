@@ -3,7 +3,7 @@ module github.com/odpf/guardian
 go 1.18
 
 require (
-	cloud.google.com/go/bigquery v1.8.0
+	cloud.google.com/go/bigquery v1.13.0
 	cloud.google.com/go/datacatalog v1.6.0
 	cloud.google.com/go/iam v0.3.0
 	cloud.google.com/go/logging v1.5.0
