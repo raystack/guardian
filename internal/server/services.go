@@ -89,7 +89,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 			return md
 		}),
 		audit.WithActorExtractor(func(ctx context.Context) (string, error) {
-			if actor, ok := ctx.Value(authenticatedUserEmailContextKey{}).(string); ok {
+			if actor, ok := ctx.Value(AuthenticatedUserEmailContextKey{}).(string); ok {
 				return actor, nil
 			}
 			return "", nil

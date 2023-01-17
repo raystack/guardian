@@ -18,6 +18,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
+	"github.com/odpf/guardian/internal/server/interceptor"
 	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/guardian/jobs"
 	"github.com/odpf/guardian/pkg/crypto"
@@ -30,6 +31,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"google.golang.org/api/idtoken"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -104,6 +106,12 @@ func RunServer(config *Config) error {
 
 	// init grpc server
 	logrusEntry := logrus.NewEntry(logrus.New()) // TODO: get logrus instance from `logger` var
+
+	authInterceptor, err := getAuthInterceptor(config)
+	if err != nil {
+		return err
+	}
+
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_logrus.StreamServerInterceptor(logrusEntry),
@@ -117,7 +125,7 @@ func RunServer(config *Config) error {
 				}),
 			),
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
-			withAuthenticatedUserEmail(config.AuthenticatedUserHeaderKey),
+			authInterceptor,
 			otelgrpc.UnaryServerInterceptor(),
 		)),
 	)
@@ -265,4 +273,28 @@ func fetchDefaultJobScheduleMapping() map[JobType]string {
 		RevokeExpiredGrants:       "*/20 * * * *",
 		ExpiringGrantNotification: "0 9 * * *",
 	}
+}
+
+func getAuthInterceptor(config *Config) (grpc.UnaryServerInterceptor, error) {
+	// default fallback to user email on header
+	authInterceptor := withAuthenticatedUserEmail(config.AuthenticatedUserHeaderKey)
+
+	if config.IdTokenValidation.Enabled {
+		idtokenValidator, err := idtoken.NewValidator(context.Background())
+		if err != nil {
+			return nil, err
+		}
+
+		params := &interceptor.IdTokenValidatorParams{
+			Audience:          config.IdTokenValidation.Audience,
+			ValidEmailDomains: config.IdTokenValidation.EligibleEmailDomains,
+			HeaderKey:         config.AuthenticatedUserHeaderKey,
+			ContextKey:        AuthenticatedUserEmailContextKey{},
+		}
+
+		bearerTokenValidator := interceptor.NewIdTokenValidator(idtokenValidator, params)
+		authInterceptor = bearerTokenValidator.WithBearerTokenValidator()
+	}
+
+	return authInterceptor, nil
 }
