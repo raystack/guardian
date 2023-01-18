@@ -43,3 +43,7 @@ TELEMETRY:
       HEADERS: 
         api-key: <YOUR-LICENSE-KEY>
       ENDPOINT: "otlp.nr-data.net:4317"
+IDTOKEN_VALIDATION:
+  ENABLED: false
+  AUDIENCE: "some-kind-of-audience.com"
+  ELIGIBLE_EMAIL_DOMAINS: "emaildomain1.com,emaildomain2.com"
