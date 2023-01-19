@@ -101,6 +101,7 @@ func (s *Service) GetByID(ctx context.Context, id string) (*domain.Grant, error)
 }
 
 func (s *Service) Prepare(ctx context.Context, appeal domain.Appeal) (*domain.Grant, error) {
+	// validation
 	if err := s.validator.Struct(grantCreation{
 		AppealStatus: appeal.Status,
 		AccountID:    appeal.AccountID,
@@ -110,6 +111,7 @@ func (s *Service) Prepare(ctx context.Context, appeal domain.Appeal) (*domain.Gr
 		return nil, fmt.Errorf("validating appeal: %w", err)
 	}
 
+	// converting aapeal into a new grant
 	return appeal.ToGrant()
 }
 
@@ -285,17 +287,17 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 		return nil, fmt.Errorf("getting provider details: %w", err)
 	}
 
-	listResourcesFilter := domain.ListResourcesFilter{
+	f := domain.ListResourcesFilter{
 		ProviderType: p.Type,
 		ProviderURN:  p.URN,
 	}
 	if criteria.ResourceIDs != nil {
-		listResourcesFilter.IDs = criteria.ResourceIDs
+		f.IDs = criteria.ResourceIDs
 	} else {
-		listResourcesFilter.ResourceTypes = criteria.ResourceTypes
-		listResourcesFilter.ResourceURNs = criteria.ResourceURNs
+		f.ResourceTypes = criteria.ResourceTypes
+		f.ResourceURNs = criteria.ResourceURNs
 	}
-	resources, err := s.resourceService.Find(ctx, listResourcesFilter)
+	resources, err := s.resourceService.Find(ctx, f)
 	if err != nil {
 		return nil, fmt.Errorf("getting resources: %w", err)
 	}
@@ -305,9 +307,9 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 		return nil, fmt.Errorf("fetching access from provider: %w", err)
 	}
 
-	resourceConfigMap := make(map[string]*domain.ResourceConfig)
+	resourceConfigs := make(map[string]*domain.ResourceConfig)
 	for _, rc := range p.Config.Resources {
-		resourceConfigMap[rc.Type] = rc
+		resourceConfigs[rc.Type] = rc
 	}
 
 	resourcesMap := make(map[string]*domain.Resource)
@@ -348,28 +350,30 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 		}
 
 		importedGrants := []*domain.Grant{}
-		accountAccessMap := groupAccessEntriesByAccount(accessEntries)
-		for accountSignature, accessEntries := range accountAccessMap {
-			var accountGrants []*domain.Grant
+		for accountSignature, accessEntries := range groupAccessEntriesByAccount(accessEntries) {
+			// convert access entries to grants
+			var grants []*domain.Grant
 			for _, ae := range accessEntries {
 				g := ae.ToGrant(*resource)
-				accountGrants = append(accountGrants, &g)
+				grants = append(grants, &g)
 			}
 
-			rc := resourceConfigMap[resource.Type]
-			importedGrants = append(importedGrants, reduceGrantsByProviderRole(rc, accountGrants)...)
+			// group grants for the same account (accountGrants) by provider role
+			rc := resourceConfigs[resource.Type]
+			grants = reduceGrantsByProviderRole(rc, grants)
+			for _, g := range grants {
+				key := g.PermissionsKey()
+				if existingGrant, ok := activeGrantsMap[rURN][accountSignature][key]; ok {
+					// update existing grants
+					g.ID = existingGrant.ID
+					g.Source = existingGrant.Source
 
-			for _, importedGrant := range importedGrants {
-				if grantsByAccountSignature, ok := activeGrantsMap[rURN]; ok {
-					if grantsByPermissionsKey, ok := grantsByAccountSignature[accountSignature]; ok {
-						existingGrant := grantsByPermissionsKey[importedGrant.PermissionsKey()]
-						importedGrant.ID = existingGrant.ID
-						importedGrant.Source = existingGrant.Source
-
-						delete(grantsByPermissionsKey, importedGrant.PermissionsKey()) // remove updated grant from active grants map
-					}
+					// remove updated grant from active grants map
+					delete(activeGrantsMap[rURN][accountSignature], key)
 				}
 			}
+
+			importedGrants = append(importedGrants, grants...)
 		}
 
 		if len(importedGrants) > 0 {
@@ -380,7 +384,7 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 		}
 	}
 
-	// mark all remaining active grants as inactive
+	// mark remaining active grants as inactive
 	var deactivatedGrants []*domain.Grant
 	for _, v := range activeGrantsMap {
 		for _, v2 := range v {
@@ -417,34 +421,34 @@ func reduceGrantsByProviderRole(rc *domain.ResourceConfig, grants []*domain.Gran
 	rolePermissionsMap := rc.GetRolePermissionsMap()
 	// TODO: sort rolePermissionsMap based on permissions length descending
 
-	permissionGrantsMap := map[string]*domain.Grant{}
+	grantsGroupedByPermission := map[string]*domain.Grant{}
 	var allGrantPermissions []string
 	for _, g := range grants {
 		// TODO: validate if permissions is empty
 		allGrantPermissions = append(allGrantPermissions, g.Permissions[0])
-		permissionGrantsMap[g.Permissions[0]] = g
+		grantsGroupedByPermission[g.Permissions[0]] = g
 	}
 	sort.Strings(allGrantPermissions)
 
 	for roleID, permissionsByRole := range rolePermissionsMap {
 		if containing, headIndex := utils.SubsliceExists(allGrantPermissions, permissionsByRole); containing {
-			sampleGrant := permissionGrantsMap[allGrantPermissions[0]]
+			sampleGrant := grantsGroupedByPermission[allGrantPermissions[0]]
 			sampleGrant.Role = roleID
 			sampleGrant.Permissions = permissionsByRole
 			reducedGrants = append(reducedGrants, sampleGrant)
 
 			for _, p := range allGrantPermissions {
 				// delete combined grants
-				delete(permissionGrantsMap, p)
+				delete(grantsGroupedByPermission, p)
 			}
 
 			allGrantPermissions = append(allGrantPermissions[:headIndex], allGrantPermissions[headIndex+1:]...)
 		}
 	}
 
-	if len(permissionGrantsMap) > 0 {
+	if len(grantsGroupedByPermission) > 0 {
 		// add remaining grants with non-registered provider role
-		for _, g := range permissionGrantsMap {
+		for _, g := range grantsGroupedByPermission {
 			g.Role = g.Permissions[0]
 			reducedGrants = append(reducedGrants, g)
 		}
