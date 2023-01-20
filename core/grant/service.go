@@ -367,9 +367,8 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 			for _, g := range grants {
 				key := g.PermissionsKey()
 				if existingGrant, ok := activeGrantsMap[rURN][accountSignature][key]; ok {
-					// update existing grants
+					// replace imported grant values with existing grant
 					*g = *existingGrant
-					g.StatusInProvider = existingGrant.StatusInProvider
 
 					// remove updated grant from active grants map
 					delete(activeGrantsMap[rURN][accountSignature], key)

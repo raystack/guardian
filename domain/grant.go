@@ -118,17 +118,21 @@ type AccessEntry struct {
 }
 
 func (ae AccessEntry) ToGrant(resource Resource) Grant {
-	return Grant{
+	g := Grant{
 		ResourceID:       resource.ID,
 		Status:           GrantStatusActive,
 		StatusInProvider: GrantStatusActive,
 		AccountID:        ae.AccountID,
 		AccountType:      ae.AccountType,
-		CreatedBy:        SystemActorName,
+		Owner:            SystemActorName,
 		Permissions:      []string{ae.Permission},
 		Source:           GrantSourceImport,
 		IsPermanent:      true,
 	}
+	if ae.AccountType == "user" {
+		g.Owner = ae.AccountID
+	}
+	return g
 }
 
 // MapResourceAccess is list of UserAccess grouped by resource urn
