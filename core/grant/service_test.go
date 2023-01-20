@@ -20,8 +20,10 @@ import (
 
 type ServiceTestSuite struct {
 	suite.Suite
-	mockRepository *mocks.Repository
-	service        *grant.Service
+	mockRepository      *mocks.Repository
+	mockProviderService *mocks.ProviderService
+	mockResourceService *mocks.ResourceService
+	service             *grant.Service
 }
 
 func TestService(t *testing.T) {
@@ -30,10 +32,14 @@ func TestService(t *testing.T) {
 
 func (s *ServiceTestSuite) setup() {
 	s.mockRepository = new(mocks.Repository)
+	s.mockProviderService = new(mocks.ProviderService)
+	s.mockResourceService = new(mocks.ResourceService)
 	s.service = grant.NewService(grant.ServiceDeps{
-		Repository: s.mockRepository,
-		Logger:     log.NewNoop(),
-		Validator:  validator.New(),
+		Repository:      s.mockRepository,
+		Logger:          log.NewNoop(),
+		Validator:       validator.New(),
+		ProviderService: s.mockProviderService,
+		ResourceService: s.mockResourceService,
 	})
 }
 
@@ -267,6 +273,214 @@ func (s *ServiceTestSuite) TestPrepare() {
 				if diff := cmp.Diff(tc.expectedGrant, actualGrant, cmpopts.EquateApproxTime(time.Second)); diff != "" {
 					s.T().Errorf("result not match, diff: %v", diff)
 				}
+			})
+		}
+	})
+}
+
+func (s *ServiceTestSuite) TestImportFromProvider() {
+	s.Run("should insert or update grants accordingly", func() {
+		dummyProvider := &domain.Provider{
+			ID:   "test-provider-id",
+			Type: "test-provider-type",
+			URN:  "test-provider-urn",
+			Config: &domain.ProviderConfig{
+				Type: "test-provider-type",
+				URN:  "test-provider-urn",
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: "test-resource-type",
+						Roles: []*domain.Role{
+							{
+								ID: "test-role-id",
+								Permissions: []interface{}{
+									"test-permission",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		dummyResources := []*domain.Resource{
+			{
+				ID:           "test-resource-id",
+				URN:          "test-resource-urn",
+				Type:         "test-resource-type",
+				ProviderType: "test-provider-type",
+				ProviderURN:  "test-provider-urn",
+			},
+		}
+
+		testCases := []struct {
+			name                        string
+			provider                    domain.Provider
+			importedGrants              domain.MapResourceAccess
+			existingGrants              []domain.Grant
+			expectedDeactivatedGrants   []*domain.Grant
+			expectedNewAndUpdatedGrants []*domain.Grant
+		}{
+			{
+				name:                        "should return empty grants if no grants are imported",
+				provider:                    *dummyProvider,
+				importedGrants:              nil,
+				expectedNewAndUpdatedGrants: nil,
+			},
+			{
+				name:     "should insert imported grants",
+				provider: *dummyProvider,
+				importedGrants: domain.MapResourceAccess{
+					"test-resource-urn": []domain.AccessEntry{
+						{
+							AccountID:   "test-account-id",
+							AccountType: "user",
+							Permission:  "test-permission",
+						},
+						{
+							AccountID:   "test-account-id-2",
+							AccountType: "serviceAccount",
+							Permission:  "test-permission",
+						},
+					},
+				},
+				existingGrants:            []domain.Grant{},
+				expectedDeactivatedGrants: nil,
+				expectedNewAndUpdatedGrants: []*domain.Grant{
+					{
+						ResourceID:       "test-resource-id",
+						AccountID:        "test-account-id",
+						AccountType:      "user",
+						Role:             "test-role-id",
+						Permissions:      []string{"test-permission"},
+						IsPermanent:      true,
+						Status:           domain.GrantStatusActive,
+						StatusInProvider: domain.GrantStatusActive,
+						Source:           domain.GrantSourceImport,
+						Owner:            "test-account-id",
+					},
+					{
+						ResourceID:       "test-resource-id",
+						AccountID:        "test-account-id-2",
+						AccountType:      "serviceAccount",
+						Role:             "test-role-id",
+						Permissions:      []string{"test-permission"},
+						IsPermanent:      true,
+						Status:           domain.GrantStatusActive,
+						StatusInProvider: domain.GrantStatusActive,
+						Source:           domain.GrantSourceImport,
+						Owner:            domain.SystemActorName,
+					},
+				},
+			},
+			{
+				name:     "should deactivate status_in_provider of grants that are not in the imported grants",
+				provider: *dummyProvider,
+				importedGrants: domain.MapResourceAccess{
+					"test-resource-urn": []domain.AccessEntry{
+						{
+							AccountID:   "test-account-id",
+							AccountType: "user",
+							Permission:  "test-permission",
+						},
+					},
+				},
+				existingGrants: []domain.Grant{
+					{
+						ID:               "test-grant-id",
+						Status:           domain.GrantStatusActive,
+						StatusInProvider: domain.GrantStatusActive,
+						ResourceID:       "test-resource-id",
+						AccountID:        "test-account-id",
+						AccountType:      "user",
+						Role:             "test-role-id",
+						Permissions:      []string{"test-permission"},
+						Resource:         dummyResources[0],
+						Owner:            "test-account-id",
+					},
+					{
+						ID:               "test-grant-id-2",
+						Status:           domain.GrantStatusActive,
+						StatusInProvider: domain.GrantStatusActive,
+						ResourceID:       "test-resource-id",
+						AccountID:        "test-account-id-2",
+						AccountType:      "user",
+						Role:             "test-role-id",
+						Permissions:      []string{"test-permission"},
+						Resource:         dummyResources[0],
+						Owner:            "test-account-id-2",
+					},
+				},
+				expectedDeactivatedGrants: []*domain.Grant{
+					{
+						ID:               "test-grant-id-2",
+						Status:           domain.GrantStatusActive,
+						StatusInProvider: domain.GrantStatusInactive,
+						ResourceID:       "test-resource-id",
+						AccountID:        "test-account-id-2",
+						AccountType:      "user",
+						Role:             "test-role-id",
+						Permissions:      []string{"test-permission"},
+						Resource:         dummyResources[0],
+						Owner:            "test-account-id-2",
+					},
+				},
+				expectedNewAndUpdatedGrants: []*domain.Grant{
+					{
+						ID:               "test-grant-id",
+						Status:           domain.GrantStatusActive,
+						StatusInProvider: domain.GrantStatusActive,
+						ResourceID:       "test-resource-id",
+						AccountID:        "test-account-id",
+						AccountType:      "user",
+						Role:             "test-role-id",
+						Permissions:      []string{"test-permission"},
+						Resource:         dummyResources[0],
+						Owner:            "test-account-id",
+					},
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				s.setup()
+
+				s.mockProviderService.EXPECT().
+					GetByID(mock.AnythingOfType("*context.emptyCtx"), "test-provider-id").
+					Return(dummyProvider, nil).Once()
+				expectedListResourcesFilter := domain.ListResourcesFilter{
+					ProviderType: "test-provider-type",
+					ProviderURN:  "test-provider-urn",
+				}
+				s.mockResourceService.EXPECT().
+					Find(mock.AnythingOfType("*context.emptyCtx"), expectedListResourcesFilter).
+					Return(dummyResources, nil).Once()
+				s.mockProviderService.EXPECT().
+					ListAccess(mock.AnythingOfType("*context.emptyCtx"), *dummyProvider, dummyResources).
+					Return(tc.importedGrants, nil).Once()
+				expectedListGrantsFilter := domain.ListGrantsFilter{
+					ProviderTypes: []string{"test-provider-type"},
+					ProviderURNs:  []string{"test-provider-urn"},
+					Statuses:      []string{string(domain.GrantStatusActive)},
+				}
+				s.mockRepository.EXPECT().
+					List(mock.AnythingOfType("*context.emptyCtx"), expectedListGrantsFilter).
+					Return(tc.existingGrants, nil).Once()
+
+				s.mockRepository.EXPECT().
+					BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("[]*domain.Grant")).
+					Return(nil).Once()
+
+				s.mockRepository.EXPECT().
+					BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), tc.expectedDeactivatedGrants).
+					Return(nil).Once()
+
+				newGrants, err := s.service.ImportFromProvider(context.Background(), grant.ImportFromProviderCriteria{
+					ProviderID: "test-provider-id",
+				})
+
+				s.NoError(err)
+				s.Equal(tc.expectedNewAndUpdatedGrants, newGrants)
 			})
 		}
 	})

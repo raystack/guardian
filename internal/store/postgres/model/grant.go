@@ -83,7 +83,10 @@ func (m *Grant) FromDomain(g domain.Grant) error {
 	m.Source = string(g.Source)
 	m.RevokedBy = g.RevokedBy
 	m.RevokeReason = g.RevokeReason
-	m.Owner = g.CreatedBy
+	m.Owner = g.Owner
+	if m.Owner == "" {
+		m.Owner = g.CreatedBy
+	}
 	m.CreatedAt = g.CreatedAt
 	m.UpdatedAt = g.UpdatedAt
 	return nil

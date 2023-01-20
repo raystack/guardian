@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestContainsOrdered(t *testing.T) {
+func TestSubsliceExists(t *testing.T) {
 	testCases := []struct {
 		slice             []string
-		lookingFor        []string
+		subslice          []string
 		expectedResult    bool
 		expectedHeadIndex int
 	}{
@@ -30,7 +30,22 @@ func TestContainsOrdered(t *testing.T) {
 			true, 1,
 		},
 		{
-			// return true for empty `lookingFor` elements
+			[]string{"a", "b", "c"},
+			[]string{"b"},
+			true, 1,
+		},
+		{
+			[]string{"a", "b", "c", "b"},
+			[]string{"c"},
+			true, 2,
+		},
+		{
+			[]string{"a", "b", "c", "d"},
+			[]string{"b", "c", "d"},
+			true, 1,
+		},
+		{
+			// return true for empty `subslice` elements
 			[]string{"a", "b", "c", "d"},
 			[]string{},
 			true, 0,
@@ -48,12 +63,12 @@ func TestContainsOrdered(t *testing.T) {
 		{
 			[]string{"a", "b", "c", "d"},
 			[]string{"c", "c", "d"},
-			false, 2,
+			false, 0,
 		},
 		{
 			[]string{"a", "b", "c", "d"},
 			[]string{"b", "d"},
-			false, 1,
+			false, 0,
 		},
 		{
 			[]string{"a", "b", "c", "d"},
@@ -73,7 +88,7 @@ func TestContainsOrdered(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		result, headIndex := utils.ContainsOrdered(tc.slice, tc.lookingFor)
+		result, headIndex := utils.SubsliceExists(tc.slice, tc.subslice)
 		assert.Equal(t, tc.expectedResult, result)
 		assert.Equal(t, tc.expectedHeadIndex, headIndex)
 	}
