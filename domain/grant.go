@@ -37,7 +37,7 @@ type Grant struct {
 	RevokedBy        string      `json:"revoked_by,omitempty" yaml:"revoked_by,omitempty"`
 	RevokedAt        *time.Time  `json:"revoked_at,omitempty" yaml:"revoked_at,omitempty"`
 	RevokeReason     string      `json:"revoke_reason,omitempty" yaml:"revoke_reason,omitempty"`
-	CreatedBy        string      `json:"created_by" yaml:"created_by"`
+	CreatedBy        string      `json:"created_by" yaml:"created_by"` // Deprecated: use Owner instead
 	Owner            string      `json:"owner" yaml:"owner"`
 	CreatedAt        time.Time   `json:"created_at" yaml:"created_at"`
 	UpdatedAt        time.Time   `json:"updated_at" yaml:"updated_at"`
