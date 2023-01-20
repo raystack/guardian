@@ -287,17 +287,26 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 		return nil, fmt.Errorf("getting provider details: %w", err)
 	}
 
-	f := domain.ListResourcesFilter{
+	listResourcesFilter := domain.ListResourcesFilter{
 		ProviderType: p.Type,
 		ProviderURN:  p.URN,
 	}
-	if criteria.ResourceIDs != nil {
-		f.IDs = criteria.ResourceIDs
-	} else {
-		f.ResourceTypes = criteria.ResourceTypes
-		f.ResourceURNs = criteria.ResourceURNs
+	listGrantsFilter := domain.ListGrantsFilter{
+		Statuses:      []string{string(domain.GrantStatusActive)},
+		ProviderTypes: []string{p.Type},
+		ProviderURNs:  []string{p.URN},
 	}
-	resources, err := s.resourceService.Find(ctx, f)
+	if criteria.ResourceIDs != nil {
+		listResourcesFilter.IDs = criteria.ResourceIDs
+		listGrantsFilter.ResourceIDs = criteria.ResourceIDs
+	} else {
+		listResourcesFilter.ResourceTypes = criteria.ResourceTypes
+		listResourcesFilter.ResourceURNs = criteria.ResourceURNs
+
+		listGrantsFilter.ResourceTypes = criteria.ResourceTypes
+		listGrantsFilter.ResourceURNs = criteria.ResourceURNs
+	}
+	resources, err := s.resourceService.Find(ctx, listResourcesFilter)
 	if err != nil {
 		return nil, fmt.Errorf("getting resources: %w", err)
 	}
@@ -317,13 +326,7 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 		resourcesMap[r.URN] = r
 	}
 
-	activeGrants, err := s.repo.List(ctx, domain.ListGrantsFilter{
-		ProviderTypes: []string{p.Type},
-		ProviderURNs:  []string{p.URN},
-		ResourceTypes: criteria.ResourceTypes,
-		ResourceURNs:  criteria.ResourceURNs,
-		Statuses:      []string{string(domain.GrantStatusActive)},
-	})
+	activeGrants, err := s.repo.List(ctx, listGrantsFilter)
 	if err != nil {
 		return nil, fmt.Errorf("getting active grants: %w", err)
 	}
@@ -365,8 +368,8 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 				key := g.PermissionsKey()
 				if existingGrant, ok := activeGrantsMap[rURN][accountSignature][key]; ok {
 					// update existing grants
-					g.ID = existingGrant.ID
-					g.Source = existingGrant.Source
+					*g = *existingGrant
+					g.StatusInProvider = existingGrant.StatusInProvider
 
 					// remove updated grant from active grants map
 					delete(activeGrantsMap[rURN][accountSignature], key)
