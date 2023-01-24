@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/odpf/guardian/pkg/auth"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -21,6 +20,7 @@ import (
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/guardian/jobs"
+	"github.com/odpf/guardian/pkg/auth"
 	"github.com/odpf/guardian/pkg/crypto"
 	"github.com/odpf/guardian/pkg/scheduler"
 	"github.com/odpf/guardian/pkg/tracing"
