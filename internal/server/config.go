@@ -33,23 +33,31 @@ type Jobs struct {
 	ExpiringAccessNotification JobConfig `mapstructure:"expiring_access_notification"`
 }
 
-type IdTokenValidation struct {
-	Enabled              bool   `mapstructure:"enabled" default:"false"`
+type DefaultAuth struct {
+	HeaderKey string `mapstructure:"header_key" default:"X-Auth-Email"`
+}
+
+type OidcAuth struct {
 	Audience             string `mapstructure:"audience"`
 	EligibleEmailDomains string `mapstructure:"eligible_email_domains"`
 }
 
+type Auth struct {
+	Provider string      `mapstructure:"provider" default:"default"`
+	Default  DefaultAuth `mapstructure:"default"`
+	Oidc     OidcAuth    `mapstructure:"oidc"`
+}
+
 type Config struct {
-	Port                       int               `mapstructure:"port" default:"8080"`
-	EncryptionSecretKeyKey     string            `mapstructure:"encryption_secret_key"`
-	Notifier                   notifiers.Config  `mapstructure:"notifier"`
-	LogLevel                   string            `mapstructure:"log_level" default:"info"`
-	DB                         store.Config      `mapstructure:"db"`
-	AuthenticatedUserHeaderKey string            `mapstructure:"authenticated_user_header_key"`
-	AuditLogTraceIDHeaderKey   string            `mapstructure:"audit_log_trace_id_header_key" default:"X-Trace-Id"`
-	Jobs                       Jobs              `mapstructure:"jobs"`
-	Telemetry                  tracing.Config    `mapstructure:"telemetry"`
-	IdTokenValidation          IdTokenValidation `mapstructure:"idtoken_validation"`
+	Port                     int              `mapstructure:"port" default:"8080"`
+	EncryptionSecretKeyKey   string           `mapstructure:"encryption_secret_key"`
+	Notifier                 notifiers.Config `mapstructure:"notifier"`
+	LogLevel                 string           `mapstructure:"log_level" default:"info"`
+	DB                       store.Config     `mapstructure:"db"`
+	AuditLogTraceIDHeaderKey string           `mapstructure:"audit_log_trace_id_header_key" default:"X-Trace-Id"`
+	Jobs                     Jobs             `mapstructure:"jobs"`
+	Telemetry                tracing.Config   `mapstructure:"telemetry"`
+	Auth                     Auth             `mapstructure:"auth"`
 }
 
 func LoadConfig(configFile string) (Config, error) {

@@ -139,7 +139,7 @@ func RunServer(config *Config) error {
 		services.ApprovalService,
 		services.GrantService,
 		protoAdapter,
-		config.AuthenticatedUserHeaderKey,
+		config.Auth.Default.HeaderKey,
 	))
 
 	// init http proxy
@@ -226,7 +226,7 @@ func makeHeaderMatcher(c *Config) func(key string) (string, bool) {
 	return func(key string) (string, bool) {
 		switch strings.ToLower(key) {
 		case
-			strings.ToLower(c.AuthenticatedUserHeaderKey),
+			strings.ToLower(c.Auth.Default.HeaderKey),
 			strings.ToLower(c.AuditLogTraceIDHeaderKey):
 			return key, true
 		default:
@@ -277,18 +277,18 @@ func fetchDefaultJobScheduleMapping() map[JobType]string {
 
 func getAuthInterceptor(config *Config) (grpc.UnaryServerInterceptor, error) {
 	// default fallback to user email on header
-	authInterceptor := withAuthenticatedUserEmail(config.AuthenticatedUserHeaderKey)
+	authInterceptor := withAuthenticatedUserEmail(config.Auth.Default.HeaderKey)
 
-	if config.IdTokenValidation.Enabled {
+	if config.Auth.Provider == "oidc" {
 		idtokenValidator, err := idtoken.NewValidator(context.Background())
 		if err != nil {
 			return nil, err
 		}
 
 		params := &interceptor.IdTokenValidatorParams{
-			Audience:          config.IdTokenValidation.Audience,
-			ValidEmailDomains: config.IdTokenValidation.EligibleEmailDomains,
-			HeaderKey:         config.AuthenticatedUserHeaderKey,
+			Audience:          config.Auth.Oidc.Audience,
+			ValidEmailDomains: config.Auth.Oidc.EligibleEmailDomains,
+			HeaderKey:         config.Auth.Default.HeaderKey,
 			ContextKey:        AuthenticatedUserEmailContextKey{},
 		}
 
