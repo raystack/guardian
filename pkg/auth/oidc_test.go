@@ -3,11 +3,11 @@ package auth_test
 import (
 	"context"
 	"errors"
-	"github.com/odpf/guardian/pkg/auth"
 	"testing"
 
 	"github.com/odpf/guardian/internal/server"
 	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/guardian/pkg/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
