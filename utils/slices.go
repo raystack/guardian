@@ -1,29 +1,31 @@
 package utils
 
-func ContainsOrdered(ss []string, lookingFor []string) (bool, int) {
-	var headFound bool
-	var headFoundIndex int
-
-	if len(lookingFor) <= 0 {
-		return true, headFoundIndex
+func SubsliceExists(slice, subslice []string) (bool, int) {
+	// check for empty subslice slice
+	if len(subslice) == 0 {
+		return true, 0
 	}
-	head := lookingFor[0]
 
-	for i := 0; i < len(ss); i++ {
-		if !headFound && ss[i] != head {
-			// skip head mismatch
-			continue
-		} else if !headFound {
-			// mark position in ss when found matching head
-			headFound = true
-			headFoundIndex = i
-			continue
-		} else if ss[i] != lookingFor[i-headFoundIndex] {
-			// return false on first mismatch after head
-			return false, headFoundIndex
-		} else if len(lookingFor)-1 == i-headFoundIndex {
-			return true, headFoundIndex
+	// check if subslice slice is longer than slice
+	if len(subslice) > len(slice) {
+		return false, 0
+	}
+
+	// looking for a subslice
+	for i := 0; i < len(slice); i++ {
+		if slice[i] == subslice[0] {
+			found := true
+			for j := 1; j < len(subslice); j++ {
+				if slice[i+j] != subslice[j] {
+					found = false
+					break
+				}
+			}
+			if found {
+				return true, i
+			}
 		}
 	}
-	return false, headFoundIndex
+
+	return false, 0
 }
