@@ -1,4 +1,4 @@
-package interceptor
+package auth
 
 import (
 	"context"
@@ -19,7 +19,7 @@ type Validator interface {
 	Validate(ctx context.Context, token string, audience string) (*idtoken.Payload, error)
 }
 
-type IdTokenValidator struct {
+type OidcValidator struct {
 	validator         Validator
 	audience          string
 	validEmailDomains []string
@@ -27,14 +27,14 @@ type IdTokenValidator struct {
 	contextKey        interface{}
 }
 
-type IdTokenValidatorParams struct {
+type OidcValidatorParams struct {
 	Audience          string
 	ValidEmailDomains string
 	HeaderKey         string
 	ContextKey        interface{}
 }
 
-func NewIdTokenValidator(validator Validator, config *IdTokenValidatorParams) *IdTokenValidator {
+func NewOidcValidator(validator Validator, config *OidcValidatorParams) *OidcValidator {
 	audience := config.Audience
 	headerKey := config.HeaderKey
 
@@ -43,7 +43,7 @@ func NewIdTokenValidator(validator Validator, config *IdTokenValidatorParams) *I
 		validEmailDomains = strings.Split(config.ValidEmailDomains, ",")
 	}
 
-	return &IdTokenValidator{
+	return &OidcValidator{
 		validator:         validator,
 		audience:          audience,
 		validEmailDomains: validEmailDomains,
@@ -52,7 +52,7 @@ func NewIdTokenValidator(validator Validator, config *IdTokenValidatorParams) *I
 	}
 }
 
-func (v *IdTokenValidator) WithBearerTokenValidator() grpc.UnaryServerInterceptor {
+func (v *OidcValidator) WithOidcValidator() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
@@ -88,7 +88,7 @@ func (v *IdTokenValidator) WithBearerTokenValidator() grpc.UnaryServerIntercepto
 	}
 }
 
-func (v *IdTokenValidator) validateEmailDomain(email string) error {
+func (v *OidcValidator) validateEmailDomain(email string) error {
 	// no valid email domains listed means that no email domain will be checked
 	if len(v.validEmailDomains) == 0 {
 		return nil

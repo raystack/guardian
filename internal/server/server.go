@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/odpf/guardian/pkg/auth"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -18,7 +19,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/internal/server/interceptor"
 	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/guardian/jobs"
 	"github.com/odpf/guardian/pkg/crypto"
@@ -285,15 +285,15 @@ func getAuthInterceptor(config *Config) (grpc.UnaryServerInterceptor, error) {
 			return nil, err
 		}
 
-		params := &interceptor.IdTokenValidatorParams{
+		params := &auth.OidcValidatorParams{
 			Audience:          config.Auth.Oidc.Audience,
 			ValidEmailDomains: config.Auth.Oidc.EligibleEmailDomains,
 			HeaderKey:         config.Auth.Default.HeaderKey,
 			ContextKey:        AuthenticatedUserEmailContextKey{},
 		}
 
-		bearerTokenValidator := interceptor.NewIdTokenValidator(idtokenValidator, params)
-		authInterceptor = bearerTokenValidator.WithBearerTokenValidator()
+		bearerTokenValidator := auth.NewOidcValidator(idtokenValidator, params)
+		authInterceptor = bearerTokenValidator.WithOidcValidator()
 	}
 
 	return authInterceptor, nil

@@ -1,10 +1,12 @@
-package interceptor_test
+package auth_test
 
 import (
 	"context"
 	"errors"
+	"github.com/odpf/guardian/pkg/auth"
+	"testing"
+
 	"github.com/odpf/guardian/internal/server"
-	"github.com/odpf/guardian/internal/server/interceptor"
 	"github.com/odpf/guardian/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -12,7 +14,6 @@ import (
 	"google.golang.org/api/idtoken"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"testing"
 )
 
 var authContextValues = map[string]string{
@@ -30,52 +31,52 @@ func (s *InterceptorTestSuite) TestIdTokenValidator_WithBearerTokenValidator() {
 
 	testCases := []struct {
 		name        string
-		params      *interceptor.IdTokenValidatorParams
+		params      *auth.OidcValidatorParams
 		ctx         context.Context
-		mockFunc    func(validator *mocks.IdTokenValidator)
+		mockFunc    func(validator *mocks.OidcValidator)
 		expectedErr error
 	}{
 		{
 			name:        "MD context value does not exist",
-			params:      &interceptor.IdTokenValidatorParams{},
+			params:      &auth.OidcValidatorParams{},
 			ctx:         context.Background(),
-			mockFunc:    func(validator *mocks.IdTokenValidator) {},
-			expectedErr: interceptor.InvalidAuthError,
+			mockFunc:    func(validator *mocks.OidcValidator) {},
+			expectedErr: auth.InvalidAuthError,
 		},
 		{
 			name:        "empty authorization header",
-			params:      &interceptor.IdTokenValidatorParams{},
+			params:      &auth.OidcValidatorParams{},
 			ctx:         metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{})),
-			mockFunc:    func(validator *mocks.IdTokenValidator) {},
-			expectedErr: interceptor.InvalidAuthError,
+			mockFunc:    func(validator *mocks.OidcValidator) {},
+			expectedErr: auth.InvalidAuthError,
 		},
 		{
 			name:        "empty bearer token on authorization header",
-			params:      &interceptor.IdTokenValidatorParams{},
+			params:      &auth.OidcValidatorParams{},
 			ctx:         metadata.NewIncomingContext(context.Background(), metadata.New(emptyAuthContextValues)),
-			mockFunc:    func(validator *mocks.IdTokenValidator) {},
-			expectedErr: interceptor.InvalidAuthError,
+			mockFunc:    func(validator *mocks.OidcValidator) {},
+			expectedErr: auth.InvalidAuthError,
 		},
 		{
 			name: "error while validating token",
-			params: &interceptor.IdTokenValidatorParams{
+			params: &auth.OidcValidatorParams{
 				Audience: "google.com",
 			},
 			ctx: metadata.NewIncomingContext(context.Background(), metadata.New(authContextValues)),
-			mockFunc: func(validator *mocks.IdTokenValidator) {
+			mockFunc: func(validator *mocks.OidcValidator) {
 				validator.On("Validate", mock.Anything, mock.Anything, "google.com").
 					Return(nil, errors.New("something happened"))
 			},
-			expectedErr: interceptor.InvalidAuthError,
+			expectedErr: auth.InvalidAuthError,
 		},
 		{
 			name: "email domain does not match with eligible domains",
-			params: &interceptor.IdTokenValidatorParams{
+			params: &auth.OidcValidatorParams{
 				Audience:          "google.com",
 				ValidEmailDomains: "example.com,something.org",
 			},
 			ctx: metadata.NewIncomingContext(context.Background(), metadata.New(authContextValues)),
-			mockFunc: func(validator *mocks.IdTokenValidator) {
+			mockFunc: func(validator *mocks.OidcValidator) {
 
 				payload := &idtoken.Payload{
 					Claims: map[string]interface{}{
@@ -85,17 +86,17 @@ func (s *InterceptorTestSuite) TestIdTokenValidator_WithBearerTokenValidator() {
 				validator.On("Validate", mock.Anything, mock.Anything, "google.com").
 					Return(payload, nil)
 			},
-			expectedErr: interceptor.InvalidAuthError,
+			expectedErr: auth.InvalidAuthError,
 		},
 		{
 			name: "successful request with matching eligible email domains",
-			params: &interceptor.IdTokenValidatorParams{
+			params: &auth.OidcValidatorParams{
 				Audience:          "google.com",
 				ValidEmailDomains: "example.com,something.org",
 				ContextKey:        server.AuthenticatedUserEmailContextKey{},
 			},
 			ctx: metadata.NewIncomingContext(context.Background(), metadata.New(authContextValues)),
-			mockFunc: func(validator *mocks.IdTokenValidator) {
+			mockFunc: func(validator *mocks.OidcValidator) {
 				payload := &idtoken.Payload{
 					Claims: map[string]interface{}{
 						"email": "something@example.com",
@@ -108,12 +109,12 @@ func (s *InterceptorTestSuite) TestIdTokenValidator_WithBearerTokenValidator() {
 		},
 		{
 			name: "successful request with no eligible email domains configurations whatsoever",
-			params: &interceptor.IdTokenValidatorParams{
+			params: &auth.OidcValidatorParams{
 				Audience:   "google.com",
 				ContextKey: server.AuthenticatedUserEmailContextKey{},
 			},
 			ctx: metadata.NewIncomingContext(context.Background(), metadata.New(authContextValues)),
-			mockFunc: func(validator *mocks.IdTokenValidator) {
+			mockFunc: func(validator *mocks.OidcValidator) {
 				payload := &idtoken.Payload{
 					Claims: map[string]interface{}{
 						"email": "something@example.com",
@@ -130,9 +131,9 @@ func (s *InterceptorTestSuite) TestIdTokenValidator_WithBearerTokenValidator() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			validator := new(mocks.IdTokenValidator)
-			authValidator := interceptor.NewIdTokenValidator(validator, tc.params)
-			interceptFunc := authValidator.WithBearerTokenValidator()
+			validator := new(mocks.OidcValidator)
+			authValidator := auth.NewOidcValidator(validator, tc.params)
+			interceptFunc := authValidator.WithOidcValidator()
 
 			tc.mockFunc(validator)
 			result, err := interceptFunc(tc.ctx, req, &grpc.UnaryServerInfo{}, s.unaryDummyHandler)
@@ -152,6 +153,6 @@ func (suite *InterceptorTestSuite) unaryDummyHandler(ctx context.Context, _ inte
 	return nil, nil
 }
 
-func TestIdTokenValidatorInterceptor(t *testing.T) {
+func TestOidcValidatorInterceptor(t *testing.T) {
 	suite.Run(t, new(InterceptorTestSuite))
 }
