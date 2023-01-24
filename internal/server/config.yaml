@@ -43,7 +43,10 @@ TELEMETRY:
       HEADERS: 
         api-key: <YOUR-LICENSE-KEY>
       ENDPOINT: "otlp.nr-data.net:4317"
-IDTOKEN_VALIDATION:
-  ENABLED: false
-  AUDIENCE: "some-kind-of-audience.com"
-  ELIGIBLE_EMAIL_DOMAINS: "emaildomain1.com,emaildomain2.com"
+AUTH:
+  PROVIDER: default   # can be "default" or "oidc"
+  DEFAULT:
+    HEADER_KEY: X-User-Email   # AUTHENTICATED_USER_HEADER_KEY takes priority for backward-compatibility
+  OIDC:
+    AUDIENCE: "some-kind-of-audience.com"
+    ELIGIBLE_EMAIL_DOMAINS: "emaildomain1.com,emaildomain2.com"
