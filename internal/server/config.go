@@ -49,15 +49,16 @@ type Auth struct {
 }
 
 type Config struct {
-	Port                     int              `mapstructure:"port" default:"8080"`
-	EncryptionSecretKeyKey   string           `mapstructure:"encryption_secret_key"`
-	Notifier                 notifiers.Config `mapstructure:"notifier"`
-	LogLevel                 string           `mapstructure:"log_level" default:"info"`
-	DB                       store.Config     `mapstructure:"db"`
-	AuditLogTraceIDHeaderKey string           `mapstructure:"audit_log_trace_id_header_key" default:"X-Trace-Id"`
-	Jobs                     Jobs             `mapstructure:"jobs"`
-	Telemetry                tracing.Config   `mapstructure:"telemetry"`
-	Auth                     Auth             `mapstructure:"auth"`
+	Port                       int              `mapstructure:"port" default:"8080"`
+	EncryptionSecretKeyKey     string           `mapstructure:"encryption_secret_key"`
+	Notifier                   notifiers.Config `mapstructure:"notifier"`
+	LogLevel                   string           `mapstructure:"log_level" default:"info"`
+	DB                         store.Config     `mapstructure:"db"`
+	AuthenticatedUserHeaderKey string           `mapstructure:"authenticated_user_header_key" default:"X-Auth-Email"` // keep for backward-compatibility
+	AuditLogTraceIDHeaderKey   string           `mapstructure:"audit_log_trace_id_header_key" default:"X-Trace-Id"`
+	Jobs                       Jobs             `mapstructure:"jobs"`
+	Telemetry                  tracing.Config   `mapstructure:"telemetry"`
+	Auth                       Auth             `mapstructure:"auth"`
 }
 
 func LoadConfig(configFile string) (Config, error) {
@@ -71,5 +72,11 @@ func LoadConfig(configFile string) (Config, error) {
 		}
 		return Config{}, err
 	}
+
+	// keep for backward-compatibility
+	if cfg.AuthenticatedUserHeaderKey != "X-Auth-Email" {
+		cfg.Auth.Default.HeaderKey = cfg.AuthenticatedUserHeaderKey
+	}
+
 	return cfg, nil
 }
