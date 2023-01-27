@@ -19,7 +19,7 @@ type Validator interface {
 	Validate(ctx context.Context, token string, audience string) (*idtoken.Payload, error)
 }
 
-type OidcValidator struct {
+type OIDCValidator struct {
 	validator         Validator
 	audience          string
 	validEmailDomains []string
@@ -27,14 +27,14 @@ type OidcValidator struct {
 	contextKey        interface{}
 }
 
-type OidcValidatorParams struct {
+type OIDCValidatorParams struct {
 	Audience          string
 	ValidEmailDomains string
 	HeaderKey         string
 	ContextKey        interface{}
 }
 
-func NewOidcValidator(validator Validator, config *OidcValidatorParams) *OidcValidator {
+func NewOIDCValidator(validator Validator, config *OIDCValidatorParams) *OIDCValidator {
 	audience := config.Audience
 	headerKey := config.HeaderKey
 
@@ -43,7 +43,7 @@ func NewOidcValidator(validator Validator, config *OidcValidatorParams) *OidcVal
 		validEmailDomains = strings.Split(config.ValidEmailDomains, ",")
 	}
 
-	return &OidcValidator{
+	return &OIDCValidator{
 		validator:         validator,
 		audience:          audience,
 		validEmailDomains: validEmailDomains,
@@ -52,7 +52,7 @@ func NewOidcValidator(validator Validator, config *OidcValidatorParams) *OidcVal
 	}
 }
 
-func (v *OidcValidator) WithOidcValidator() grpc.UnaryServerInterceptor {
+func (v *OIDCValidator) WithOIDCValidator() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
@@ -88,7 +88,7 @@ func (v *OidcValidator) WithOidcValidator() grpc.UnaryServerInterceptor {
 	}
 }
 
-func (v *OidcValidator) validateEmailDomain(email string) error {
+func (v *OIDCValidator) validateEmailDomain(email string) error {
 	// no valid email domains listed means that no email domain will be checked
 	if len(v.validEmailDomains) == 0 {
 		return nil

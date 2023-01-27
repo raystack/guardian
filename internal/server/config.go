@@ -37,7 +37,7 @@ type DefaultAuth struct {
 	HeaderKey string `mapstructure:"header_key" default:"X-Auth-Email"`
 }
 
-type OidcAuth struct {
+type OIDCAuth struct {
 	Audience             string `mapstructure:"audience"`
 	EligibleEmailDomains string `mapstructure:"eligible_email_domains"`
 }
@@ -45,7 +45,7 @@ type OidcAuth struct {
 type Auth struct {
 	Provider string      `mapstructure:"provider" default:"default"`
 	Default  DefaultAuth `mapstructure:"default"`
-	Oidc     OidcAuth    `mapstructure:"oidc"`
+	OIDC     OIDCAuth    `mapstructure:"oidc"`
 }
 
 type Config struct {
