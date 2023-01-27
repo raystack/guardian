@@ -54,7 +54,7 @@ type Config struct {
 	Notifier                   notifiers.Config `mapstructure:"notifier"`
 	LogLevel                   string           `mapstructure:"log_level" default:"info"`
 	DB                         store.Config     `mapstructure:"db"`
-	AuthenticatedUserHeaderKey string           `mapstructure:"authenticated_user_header_key" default:"X-Auth-Email"` // keep for backward-compatibility
+	AuthenticatedUserHeaderKey string           `mapstructure:"authenticated_user_header_key"`
 	AuditLogTraceIDHeaderKey   string           `mapstructure:"audit_log_trace_id_header_key" default:"X-Trace-Id"`
 	Jobs                       Jobs             `mapstructure:"jobs"`
 	Telemetry                  tracing.Config   `mapstructure:"telemetry"`
@@ -74,7 +74,7 @@ func LoadConfig(configFile string) (Config, error) {
 	}
 
 	// keep for backward-compatibility
-	if cfg.AuthenticatedUserHeaderKey != "X-Auth-Email" {
+	if cfg.AuthenticatedUserHeaderKey != "" {
 		cfg.Auth.Default.HeaderKey = cfg.AuthenticatedUserHeaderKey
 	}
 
