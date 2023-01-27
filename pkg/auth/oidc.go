@@ -34,7 +34,7 @@ type OIDCValidatorParams struct {
 	ContextKey        interface{}
 }
 
-func NewOIDCValidator(validator Validator, config *OIDCValidatorParams) *OIDCValidator {
+func NewOIDCValidator(validator Validator, config OIDCValidatorParams) *OIDCValidator {
 	audience := config.Audience
 	headerKey := config.HeaderKey
 
