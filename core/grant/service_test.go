@@ -236,12 +236,80 @@ func (s *ServiceTestSuite) TestRevoke() {
 }
 
 func (s *ServiceTestSuite) TestBulkRevoke() {
-	ids := []string{"id1", "id2"}
 	actor := "test-actor@example.com"
 	reason := "test reason"
+	filter := domain.RevokeGrantsFilter{
+		AccountIDs: []string{"test-account-id"},
+	}
+	expectedGrants := []domain.Grant{
+		{
+			ID:          "id1",
+			AccountID:   "test-account-id",
+			AccountType: "user",
+			Resource: &domain.Resource{
+				ID: "test-resource-id",
+			},
+		},
+		{
+			ID:          "id2",
+			AccountID:   "test-account-id",
+			AccountType: "user",
+			Resource: &domain.Resource{
+				ID: "test-resource-id",
+			},
+		},
+	}
+
 	s.Run("should return revoked grants on success", func() {
 		s.setup()
 
+		expectedListGrantsFilter := domain.ListGrantsFilter{
+			Statuses:      []string{string(domain.GrantStatusActive)},
+			AccountIDs:    filter.AccountIDs,
+			ProviderTypes: filter.ProviderTypes,
+			ProviderURNs:  filter.ProviderURNs,
+			ResourceTypes: filter.ResourceTypes,
+			ResourceURNs:  filter.ResourceURNs,
+		}
+
+		s.mockRepository.EXPECT().
+			List(mock.AnythingOfType("*context.emptyCtx"), expectedListGrantsFilter).
+			Return(expectedGrants, nil).Once()
+		for _, g := range expectedGrants {
+			grant := g
+			s.mockProviderService.EXPECT().
+				RevokeAccess(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.Grant")).
+				Run(func(_a0 context.Context, _a1 domain.Grant) {
+					s.Equal(grant.ID, _a1.ID)
+					s.Equal(grant.AccountID, _a1.AccountID)
+					s.Equal(grant.AccountType, _a1.AccountType)
+					s.Equal(grant.Resource.ID, _a1.Resource.ID)
+				}).
+				Return(nil).Once()
+
+			s.mockRepository.EXPECT().
+				Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Grant")).
+				Run(func(_a0 context.Context, _a1 *domain.Grant) {
+					s.Equal(grant.ID, _a1.ID)
+					s.Equal(actor, _a1.RevokedBy)
+					s.Equal(reason, _a1.RevokeReason)
+					s.NotNil(_a1.RevokedAt)
+				}).
+				Return(nil).Once()
+		}
+
+		revokedGrants, actualError := s.service.BulkRevoke(context.Background(), filter, actor, reason)
+
+		s.NoError(actualError)
+		for i, g := range revokedGrants {
+			revokedGrant := g
+			expectedGrant := expectedGrants[i]
+			s.Equal(expectedGrant.ID, revokedGrant.ID)
+			s.Equal(actor, revokedGrant.RevokedBy)
+			s.Equal(reason, revokedGrant.RevokeReason)
+			s.NotNil(revokedGrant.RevokedAt)
+			s.Less(*revokedGrant.RevokedAt, time.Now())
+		}
 	})
 }
 
