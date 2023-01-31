@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/odpf/guardian/internal/server"
-	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/pkg/auth"
+	"github.com/odpf/guardian/pkg/auth/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
