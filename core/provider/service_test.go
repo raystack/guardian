@@ -1092,6 +1092,47 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 	})
 }
 
+func (s *ServiceTestSuite) TestListAccess() {
+	p := &domain.Provider{
+		Type: mockProviderType,
+		Config: &domain.ProviderConfig{
+			AllowedAccountTypes: []string{"user"},
+		},
+	}
+	resources := []*domain.Resource{}
+	returnedAccess := domain.MapResourceAccess{
+		"resource-1": []domain.AccessEntry{
+			{
+				AccountID:   "user@example.com",
+				AccountType: "user",
+				Permission:  "read",
+			},
+			{
+				AccountID:   "user@example-sa.com",
+				AccountType: "serviceAccount",
+				Permission:  "read",
+			},
+		},
+	}
+	expectedAccess := domain.MapResourceAccess{
+		"resource-1": []domain.AccessEntry{
+			{
+				AccountID:   "user@example.com",
+				AccountType: "user",
+				Permission:  "read",
+			},
+		},
+	}
+	s.mockProvider.EXPECT().
+		ListAccess(mock.AnythingOfType("*context.emptyCtx"), *p.Config, resources).
+		Return(returnedAccess, nil).Once()
+
+	actualAccess, err := s.service.ListAccess(context.Background(), *p, resources)
+
+	s.NoError(err)
+	s.Equal(expectedAccess, actualAccess)
+}
+
 func TestService(t *testing.T) {
 	suite.Run(t, new(ServiceTestSuite))
 }

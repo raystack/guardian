@@ -3,6 +3,7 @@ package grant_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -23,6 +24,8 @@ type ServiceTestSuite struct {
 	mockRepository      *mocks.Repository
 	mockProviderService *mocks.ProviderService
 	mockResourceService *mocks.ResourceService
+	mockAuditLogger     *mocks.AuditLogger
+	mockNotifier        *mocks.Notifier
 	service             *grant.Service
 }
 
@@ -34,12 +37,16 @@ func (s *ServiceTestSuite) setup() {
 	s.mockRepository = new(mocks.Repository)
 	s.mockProviderService = new(mocks.ProviderService)
 	s.mockResourceService = new(mocks.ResourceService)
+	s.mockAuditLogger = new(mocks.AuditLogger)
+	s.mockNotifier = new(mocks.Notifier)
 	s.service = grant.NewService(grant.ServiceDeps{
 		Repository:      s.mockRepository,
 		Logger:          log.NewNoop(),
 		Validator:       validator.New(),
 		ProviderService: s.mockProviderService,
 		ResourceService: s.mockResourceService,
+		Notifier:        s.mockNotifier,
+		AuditLogger:     s.mockAuditLogger,
 	})
 }
 
@@ -119,6 +126,190 @@ func (s *ServiceTestSuite) TestGetByID() {
 		s.ErrorIs(err, expectedError)
 		s.Nil(grant)
 		s.mockRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *ServiceTestSuite) TestRevoke() {
+	id := uuid.New().String()
+	actor := "user@example.com"
+	reason := "test reason"
+	expectedGrantDetails := &domain.Grant{
+		ID:          id,
+		AccountID:   "test-account-id",
+		AccountType: "user",
+		Resource: &domain.Resource{
+			ID: "test-resource-id",
+		},
+	}
+
+	s.Run("should revoke grant on success", func() {
+		s.setup()
+
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), id).
+			Return(expectedGrantDetails, nil).Once()
+		s.mockRepository.EXPECT().
+			Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Grant")).
+			Run(func(_a0 context.Context, _a1 *domain.Grant) {
+				s.Equal(id, _a1.ID)
+				s.Equal(actor, _a1.RevokedBy)
+				s.Equal(reason, _a1.RevokeReason)
+				s.NotNil(_a1.RevokedAt)
+			}).
+			Return(nil).Once()
+		s.mockProviderService.EXPECT().
+			RevokeAccess(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.Grant")).
+			Run(func(_a0 context.Context, _a1 domain.Grant) {
+				s.Equal(id, _a1.ID)
+				s.Equal(expectedGrantDetails.AccountID, _a1.AccountID)
+				s.Equal(expectedGrantDetails.AccountType, _a1.AccountType)
+				s.Equal(expectedGrantDetails.Resource.ID, _a1.Resource.ID)
+			}).
+			Return(nil).Once()
+
+		s.mockNotifier.EXPECT().
+			Notify([]domain.Notification{{
+				User: expectedGrantDetails.CreatedBy,
+				Message: domain.NotificationMessage{
+					Type: domain.NotificationTypeAccessRevoked,
+					Variables: map[string]interface{}{
+						"resource_name": fmt.Sprintf("%s (%s: %s)", expectedGrantDetails.Resource.Name, expectedGrantDetails.Resource.ProviderType, expectedGrantDetails.Resource.URN),
+						"role":          expectedGrantDetails.Role,
+						"account_type":  expectedGrantDetails.AccountType,
+						"account_id":    expectedGrantDetails.AccountID,
+						"requestor":     expectedGrantDetails.Owner,
+					},
+				},
+			}}).
+			Return(nil).Once()
+		s.mockAuditLogger.EXPECT().
+			Log(mock.AnythingOfType("*context.emptyCtx"), grant.AuditKeyRevoke, map[string]interface{}{
+				"grant_id": id,
+				"reason":   reason,
+			}).
+			Return(nil).Once()
+
+		expectedGrant, err := s.service.Revoke(context.Background(), id, actor, reason)
+
+		s.NoError(err)
+		s.Equal(id, expectedGrant.ID)
+		s.Equal(actor, expectedGrant.RevokedBy)
+		s.Equal(reason, expectedGrant.RevokeReason)
+		s.NotNil(expectedGrant.RevokedAt)
+		s.Less(*expectedGrant.RevokedAt, time.Now())
+		s.mockRepository.AssertExpectations(s.T())
+	})
+
+	s.Run("should skip revoke in provider and notifications as configured", func() {
+		s.setup()
+
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), id).
+			Return(expectedGrantDetails, nil).Once()
+		s.mockRepository.EXPECT().
+			Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Grant")).
+			Run(func(_a0 context.Context, _a1 *domain.Grant) {
+				s.Equal(id, _a1.ID)
+				s.Equal(actor, _a1.RevokedBy)
+				s.Equal(reason, _a1.RevokeReason)
+				s.NotNil(_a1.RevokedAt)
+			}).
+			Return(nil).Once()
+
+		s.mockAuditLogger.EXPECT().
+			Log(mock.AnythingOfType("*context.emptyCtx"), grant.AuditKeyRevoke, map[string]interface{}{
+				"grant_id": id,
+				"reason":   reason,
+			}).
+			Return(nil).Once()
+
+		expectedGrant, err := s.service.Revoke(context.Background(), id, actor, reason, grant.SkipRevokeAccessInProvider(), grant.SkipNotifications())
+
+		s.NoError(err)
+		s.Equal(id, expectedGrant.ID)
+		s.Equal(actor, expectedGrant.RevokedBy)
+		s.Equal(reason, expectedGrant.RevokeReason)
+		s.NotNil(expectedGrant.RevokedAt)
+		s.Less(*expectedGrant.RevokedAt, time.Now())
+		s.mockRepository.AssertExpectations(s.T())
+	})
+}
+
+func (s *ServiceTestSuite) TestBulkRevoke() {
+	actor := "test-actor@example.com"
+	reason := "test reason"
+	filter := domain.RevokeGrantsFilter{
+		AccountIDs: []string{"test-account-id"},
+	}
+	expectedGrants := []domain.Grant{
+		{
+			ID:          "id1",
+			AccountID:   "test-account-id",
+			AccountType: "user",
+			Resource: &domain.Resource{
+				ID: "test-resource-id",
+			},
+		},
+		{
+			ID:          "id2",
+			AccountID:   "test-account-id",
+			AccountType: "user",
+			Resource: &domain.Resource{
+				ID: "test-resource-id",
+			},
+		},
+	}
+
+	s.Run("should return revoked grants on success", func() {
+		s.setup()
+
+		expectedListGrantsFilter := domain.ListGrantsFilter{
+			Statuses:      []string{string(domain.GrantStatusActive)},
+			AccountIDs:    filter.AccountIDs,
+			ProviderTypes: filter.ProviderTypes,
+			ProviderURNs:  filter.ProviderURNs,
+			ResourceTypes: filter.ResourceTypes,
+			ResourceURNs:  filter.ResourceURNs,
+		}
+
+		s.mockRepository.EXPECT().
+			List(mock.AnythingOfType("*context.emptyCtx"), expectedListGrantsFilter).
+			Return(expectedGrants, nil).Once()
+		for _, g := range expectedGrants {
+			grant := g
+			s.mockProviderService.EXPECT().
+				RevokeAccess(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.Grant")).
+				Run(func(_a0 context.Context, _a1 domain.Grant) {
+					s.Equal(grant.ID, _a1.ID)
+					s.Equal(grant.AccountID, _a1.AccountID)
+					s.Equal(grant.AccountType, _a1.AccountType)
+					s.Equal(grant.Resource.ID, _a1.Resource.ID)
+				}).
+				Return(nil).Once()
+
+			s.mockRepository.EXPECT().
+				Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Grant")).
+				Run(func(_a0 context.Context, _a1 *domain.Grant) {
+					s.Equal(grant.ID, _a1.ID)
+					s.Equal(actor, _a1.RevokedBy)
+					s.Equal(reason, _a1.RevokeReason)
+					s.NotNil(_a1.RevokedAt)
+				}).
+				Return(nil).Once()
+		}
+
+		revokedGrants, actualError := s.service.BulkRevoke(context.Background(), filter, actor, reason)
+
+		s.NoError(actualError)
+		for i, g := range revokedGrants {
+			revokedGrant := g
+			expectedGrant := expectedGrants[i]
+			s.Equal(expectedGrant.ID, revokedGrant.ID)
+			s.Equal(actor, revokedGrant.RevokedBy)
+			s.Equal(reason, revokedGrant.RevokeReason)
+			s.NotNil(revokedGrant.RevokedAt)
+			s.Less(*revokedGrant.RevokedAt, time.Now())
+		}
 	})
 }
 
@@ -339,7 +530,7 @@ func (s *ServiceTestSuite) TestImportFromProvider() {
 						{
 							AccountID:   "test-account-id-2",
 							AccountType: "serviceAccount",
-							Permission:  "test-permission",
+							Permission:  "test-permission-2",
 						},
 					},
 				},
@@ -362,8 +553,8 @@ func (s *ServiceTestSuite) TestImportFromProvider() {
 						ResourceID:       "test-resource-id",
 						AccountID:        "test-account-id-2",
 						AccountType:      "serviceAccount",
-						Role:             "test-role-id",
-						Permissions:      []string{"test-permission"},
+						Role:             "test-permission-2",
+						Permissions:      []string{"test-permission-2"},
 						IsPermanent:      true,
 						Status:           domain.GrantStatusActive,
 						StatusInProvider: domain.GrantStatusActive,
