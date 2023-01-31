@@ -24,6 +24,7 @@ type ServiceTestSuite struct {
 	mockResourceService  *policymocks.ResourceService
 	mockProviderService  *policymocks.ProviderService
 	mockAuditLogger      *policymocks.AuditLogger
+	mockCrypto           *mocks.Crypto
 	service              *policy.Service
 }
 
@@ -33,9 +34,9 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.mockProviderService = new(policymocks.ProviderService)
 	s.mockAuditLogger = new(policymocks.AuditLogger)
 
-	mockCrypto := new(mocks.Crypto)
+	s.mockCrypto = new(mocks.Crypto)
 	v := validator.New()
-	iamManager := identities.NewManager(mockCrypto, v)
+	iamManager := identities.NewManager(s.mockCrypto, v)
 
 	s.service = policy.NewService(policy.ServiceDeps{
 		Repository:      s.mockPolicyRepository,
@@ -325,11 +326,24 @@ func (s *ServiceTestSuite) TestCreate() {
 			AllowPermanentAccess:         false,
 			AllowActiveAccessExtensionIn: "24h",
 		},
+		IAM: &domain.IAMConfig{
+			Provider: "http",
+			Config: map[string]interface{}{
+				"url": "http://test-localhost:8080",
+				"auth": map[string]interface{}{
+					"type":     "basic",
+					"username": "test-user",
+					"password": "test-password",
+				},
+			},
+		},
 	}
 
 	s.Run("should return error if got error from the policy repository", func() {
 		expectedError := errors.New("error from repository")
 		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(expectedError).Once()
+		s.mockCrypto.EXPECT().Encrypt("test-password").Return("test-password", nil).Once()
+		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
 
 		actualError := s.service.Create(context.Background(), validPolicy)
 
@@ -344,6 +358,8 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		expectedVersion := uint(1)
 		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), p).Return(nil).Once()
+		s.mockCrypto.EXPECT().Encrypt("test-password").Return("test-password", nil).Once()
+		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
 		s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
 
 		actualError := s.service.Create(context.Background(), p)
@@ -357,6 +373,8 @@ func (s *ServiceTestSuite) TestCreate() {
 	s.Run("should pass the model from the param", func() {
 		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), validPolicy).Return(nil).Once()
 		s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
+		s.mockCrypto.EXPECT().Encrypt("test-password").Return("test-password", nil).Once()
+		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
 
 		actualError := s.service.Create(context.Background(), validPolicy)
 
@@ -628,8 +646,23 @@ func (s *ServiceTestSuite) TestFind() {
 	})
 
 	s.Run("should return list of records on success", func() {
-		expectedResult := []*domain.Policy{}
+		expectedResult := []*domain.Policy{
+			{
+				IAM: &domain.IAMConfig{
+					Provider: "http",
+					Config: map[string]interface{}{
+						"url": "http://test-localhost:8080",
+						"auth": map[string]interface{}{
+							"type":     "basic",
+							"username": "test-user",
+							"password": "test-password",
+						},
+					},
+				},
+			},
+		}
 		s.mockPolicyRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(expectedResult, nil).Once()
+		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
 
 		actualResult, actualError := s.service.Find(context.Background())
 
@@ -651,8 +684,21 @@ func (s *ServiceTestSuite) TestGetOne() {
 	})
 
 	s.Run("should return list of records on success", func() {
-		expectedResult := &domain.Policy{}
+		expectedResult := &domain.Policy{
+			IAM: &domain.IAMConfig{
+				Provider: "http",
+				Config: map[string]interface{}{
+					"url": "http://test-localhost:8080",
+					"auth": map[string]interface{}{
+						"type":     "basic",
+						"username": "test-user",
+						"password": "test-password",
+					},
+				},
+			},
+		}
 		s.mockPolicyRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything, mock.Anything).Return(expectedResult, nil).Once()
+		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
 
 		actualResult, actualError := s.service.GetOne(context.Background(), "", 0)
 
@@ -685,6 +731,17 @@ func (s *ServiceTestSuite) TestUpdate() {
 					},
 				},
 			},
+			IAM: &domain.IAMConfig{
+				Provider: "http",
+				Config: map[string]interface{}{
+					"url": "http://test-localhost:8080",
+					"auth": map[string]interface{}{
+						"type":     "basic",
+						"username": "test-user",
+						"password": "test-password",
+					},
+				},
+			},
 		}
 
 		expectedLatestPolicy := &domain.Policy{
@@ -694,6 +751,8 @@ func (s *ServiceTestSuite) TestUpdate() {
 		expectedNewVersion := uint(6)
 		s.mockPolicyRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), p.ID, uint(0)).Return(expectedLatestPolicy, nil).Once()
 		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), p).Return(nil)
+		s.mockCrypto.EXPECT().Encrypt("test-password").Return("test-password", nil).Once()
+		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
 		s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyUpdate, mock.Anything).Return(nil).Once()
 
 		s.service.Update(context.Background(), p)
