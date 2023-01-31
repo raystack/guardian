@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/odpf/guardian/internal/store"
+	"github.com/odpf/guardian/pkg/auth"
 	"github.com/odpf/guardian/pkg/tracing"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/salt/config"
@@ -37,15 +38,10 @@ type DefaultAuth struct {
 	HeaderKey string `mapstructure:"header_key" default:"X-Auth-Email"`
 }
 
-type OIDCAuth struct {
-	Audience             string `mapstructure:"audience"`
-	EligibleEmailDomains string `mapstructure:"eligible_email_domains"`
-}
-
 type Auth struct {
-	Provider string      `mapstructure:"provider" default:"default"`
-	Default  DefaultAuth `mapstructure:"default"`
-	OIDC     OIDCAuth    `mapstructure:"oidc"`
+	Provider string        `mapstructure:"provider" default:"default"`
+	Default  DefaultAuth   `mapstructure:"default"`
+	OIDC     auth.OIDCAuth `mapstructure:"oidc"`
 }
 
 type Config struct {

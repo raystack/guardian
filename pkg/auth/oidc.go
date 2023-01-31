@@ -19,6 +19,11 @@ type Validator interface {
 	Validate(ctx context.Context, token string, audience string) (*idtoken.Payload, error)
 }
 
+type OIDCAuth struct {
+	Audience             string `mapstructure:"audience"`
+	EligibleEmailDomains string `mapstructure:"eligible_email_domains"`
+}
+
 type OIDCValidator struct {
 	validator         Validator
 	audience          string
