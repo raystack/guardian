@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -1148,7 +1149,7 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 		s.mockCloudLoggingClient.AssertExpectations(s.T())
 		s.mockBigQueryClient.AssertExpectations(s.T())
 		s.NoError(err)
-		s.Equal(expectedActivities, actualActivities)
+		s.True(reflect.DeepEqual(expectedActivities, actualActivities))
 	})
 
 	s.Run("should return error if there is an error on initializing logging client", func() {
