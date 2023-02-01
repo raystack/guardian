@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/logging"
+	"github.com/google/go-cmp/cmp"
 	"github.com/odpf/guardian/core/provider"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
@@ -1148,7 +1149,7 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 		s.mockCloudLoggingClient.AssertExpectations(s.T())
 		s.mockBigQueryClient.AssertExpectations(s.T())
 		s.NoError(err)
-		s.Equal(expectedActivities, actualActivities)
+		s.Empty(cmp.Diff(expectedActivities, actualActivities))
 	})
 
 	s.Run("should return error if there is an error on initializing logging client", func() {
