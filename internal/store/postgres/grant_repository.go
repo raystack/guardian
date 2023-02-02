@@ -180,6 +180,12 @@ func (r *GrantRepository) BulkUpsert(ctx context.Context, grants []*domain.Grant
 	}
 
 	return r.db.Transaction(func(tx *gorm.DB) error {
+		// upsert resources separately to avoid resource upsertion duplicate issue
+		if err := upsertResources(tx, models); err != nil {
+			return fmt.Errorf("upserting resources: %w", err)
+		}
+		tx = tx.Omit("Resource")
+
 		if err := tx.
 			Clauses(clause.OnConflict{UpdateAll: true}).
 			Create(models).
@@ -197,4 +203,37 @@ func (r *GrantRepository) BulkUpsert(ctx context.Context, grants []*domain.Grant
 
 		return nil
 	})
+}
+
+func upsertResources(tx *gorm.DB, models []*model.Grant) error {
+	uniqueResourcesMap := map[string]*model.Resource{}
+
+	for _, m := range models {
+		if r := m.Resource; r != nil {
+			key := getResourceUniqueURN(*r)
+			if _, exists := uniqueResourcesMap[key]; !exists {
+				uniqueResourcesMap[key] = r
+			} else {
+				m.Resource = uniqueResourcesMap[key]
+			}
+		}
+	}
+
+	var resources []*model.Resource
+	for _, r := range uniqueResourcesMap {
+		resources = append(resources, r)
+	}
+	if len(resources) > 0 {
+		if err := tx.Create(resources).Error; err != nil {
+			return fmt.Errorf("failed to upsert resources: %w", err)
+		}
+	}
+	for _, g := range models {
+		// set resource id after upsertion
+		if g.Resource != nil {
+			g.ResourceID = g.Resource.ID.String()
+		}
+	}
+
+	return nil
 }
