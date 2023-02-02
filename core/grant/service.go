@@ -364,11 +364,11 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 			// group grants for the same account (accountGrants) by provider role
 			rc := resourceConfigs[resource.Type]
 			grants = reduceGrantsByProviderRole(rc, grants)
-			for _, g := range grants {
+			for i, g := range grants {
 				key := g.PermissionsKey()
 				if existingGrant, ok := activeGrantsMap[rURN][accountSignature][key]; ok {
 					// replace imported grant values with existing grant
-					*g = *existingGrant
+					*grants[i] = *existingGrant
 
 					// remove updated grant from active grants map
 					delete(activeGrantsMap[rURN][accountSignature], key)
@@ -434,7 +434,7 @@ func reduceGrantsByProviderRole(rc *domain.ResourceConfig, grants []*domain.Gran
 
 	for roleID, permissionsByRole := range rolePermissionsMap {
 		if containing, headIndex := utils.SubsliceExists(allGrantPermissions, permissionsByRole); containing {
-			sampleGrant := grantsGroupedByPermission[allGrantPermissions[0]]
+			sampleGrant := grantsGroupedByPermission[allGrantPermissions[headIndex]]
 			sampleGrant.Role = roleID
 			sampleGrant.Permissions = permissionsByRole
 			reducedGrants = append(reducedGrants, sampleGrant)
