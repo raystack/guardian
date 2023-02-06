@@ -451,7 +451,6 @@ func reduceGrantsByProviderRole(rc *domain.ResourceConfig, grants []*domain.Gran
 	if len(grantsGroupedByPermission) > 0 {
 		// add remaining grants with non-registered provider role
 		for _, g := range grantsGroupedByPermission {
-			g.Role = g.Permissions[0]
 			reducedGrants = append(reducedGrants, g)
 		}
 	}
