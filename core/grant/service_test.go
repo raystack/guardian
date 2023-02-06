@@ -630,6 +630,112 @@ func (s *ServiceTestSuite) TestImportFromProvider() {
 					},
 				},
 			},
+			{
+				name: "imported access contain multiple permissions configured in one role id",
+				provider: domain.Provider{
+					ID:   "test-provider-id",
+					Type: "test-provider-type",
+					URN:  "test-provider-urn",
+					Config: &domain.ProviderConfig{
+						Type: "test-provider-type",
+						URN:  "test-provider-urn",
+						Resources: []*domain.ResourceConfig{
+							{
+								Type: "test-resource-type",
+								Roles: []*domain.Role{
+									{
+										ID: "test-role-id",
+										Permissions: []interface{}{
+											"test-permission", "test-permission-2",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				importedGrants: domain.MapResourceAccess{
+					"test-resource-urn": []domain.AccessEntry{
+						{
+							AccountID:   "test-account-id", // existing
+							AccountType: "user",
+							Permission:  "test-permission",
+						},
+						{
+							AccountID:   "test-account-id", // existing
+							AccountType: "user",
+							Permission:  "test-permission-2",
+						},
+						{
+							AccountID:   "test-account-id", // new
+							AccountType: "user",
+							Permission:  "test-permission-3",
+						},
+						{
+							AccountID:   "test-account-id-2", // new
+							AccountType: "user",
+							Permission:  "test-permission",
+						},
+						{
+							AccountID:   "test-account-id-2", // new
+							AccountType: "user",
+							Permission:  "test-permission-2",
+						},
+					},
+				},
+				existingGrants: []domain.Grant{
+					{
+						ID:               "test-grant-id",
+						Status:           domain.GrantStatusActive,
+						StatusInProvider: domain.GrantStatusActive,
+						ResourceID:       "test-resource-id",
+						AccountID:        "test-account-id",
+						AccountType:      "user",
+						Role:             "test-role-id",
+						Permissions:      []string{"test-permission", "test-permission-2"},
+						Resource:         dummyResources[0],
+						Owner:            "test-account-id",
+					},
+				},
+				expectedNewAndUpdatedGrants: []*domain.Grant{
+					{ // existing
+						ID:               "test-grant-id",
+						Status:           domain.GrantStatusActive,
+						StatusInProvider: domain.GrantStatusActive,
+						ResourceID:       "test-resource-id",
+						AccountID:        "test-account-id",
+						AccountType:      "user",
+						Role:             "test-role-id",
+						Permissions:      []string{"test-permission", "test-permission-2"},
+						Resource:         dummyResources[0],
+						Owner:            "test-account-id",
+					},
+					{ // new
+						Status:           domain.GrantStatusActive,
+						StatusInProvider: domain.GrantStatusActive,
+						ResourceID:       "test-resource-id",
+						AccountID:        "test-account-id",
+						AccountType:      "user",
+						Role:             "test-permission-3",
+						Permissions:      []string{"test-permission-3"},
+						Owner:            "test-account-id",
+						Source:           "import",
+						IsPermanent:      true,
+					},
+					{ // new
+						Status:           domain.GrantStatusActive,
+						StatusInProvider: domain.GrantStatusActive,
+						ResourceID:       "test-resource-id",
+						AccountID:        "test-account-id-2",
+						AccountType:      "user",
+						Role:             "test-role-id",
+						Permissions:      []string{"test-permission", "test-permission-2"},
+						Owner:            "test-account-id-2",
+						Source:           "import",
+						IsPermanent:      true,
+					},
+				},
+			},
 		}
 
 		for _, tc := range testCases {
@@ -638,7 +744,7 @@ func (s *ServiceTestSuite) TestImportFromProvider() {
 
 				s.mockProviderService.EXPECT().
 					GetByID(mock.AnythingOfType("*context.emptyCtx"), "test-provider-id").
-					Return(dummyProvider, nil).Once()
+					Return(&tc.provider, nil).Once()
 				expectedListResourcesFilter := domain.ListResourcesFilter{
 					ProviderType: "test-provider-type",
 					ProviderURN:  "test-provider-urn",
@@ -647,7 +753,7 @@ func (s *ServiceTestSuite) TestImportFromProvider() {
 					Find(mock.AnythingOfType("*context.emptyCtx"), expectedListResourcesFilter).
 					Return(dummyResources, nil).Once()
 				s.mockProviderService.EXPECT().
-					ListAccess(mock.AnythingOfType("*context.emptyCtx"), *dummyProvider, dummyResources).
+					ListAccess(mock.AnythingOfType("*context.emptyCtx"), tc.provider, dummyResources).
 					Return(tc.importedGrants, nil).Once()
 				expectedListGrantsFilter := domain.ListGrantsFilter{
 					ProviderTypes: []string{"test-provider-type"},
@@ -671,7 +777,12 @@ func (s *ServiceTestSuite) TestImportFromProvider() {
 				})
 
 				s.NoError(err)
-				s.Equal(tc.expectedNewAndUpdatedGrants, newGrants)
+				s.Empty(cmp.Diff(tc.expectedNewAndUpdatedGrants, newGrants, cmpopts.SortSlices(func(a, b *domain.Grant) bool {
+					if a.AccountID != b.AccountID {
+						return a.AccountID < b.AccountID
+					}
+					return a.Role < b.Role
+				})))
 			})
 		}
 	})

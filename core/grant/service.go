@@ -432,14 +432,14 @@ func reduceGrantsByProviderRole(rc *domain.ResourceConfig, grants []*domain.Gran
 	}
 	sort.Strings(allGrantPermissions)
 
-	for roleID, permissionsByRole := range rolePermissionsMap {
-		if containing, headIndex := utils.SubsliceExists(allGrantPermissions, permissionsByRole); containing {
-			sampleGrant := grantsGroupedByPermission[allGrantPermissions[headIndex]]
+	for roleID, rolePermissions := range rolePermissionsMap {
+		if containing, headIndex := utils.SubsliceExists(allGrantPermissions, rolePermissions); containing {
+			sampleGrant := grantsGroupedByPermission[rolePermissions[0]]
 			sampleGrant.Role = roleID
-			sampleGrant.Permissions = permissionsByRole
+			sampleGrant.Permissions = rolePermissions
 			reducedGrants = append(reducedGrants, sampleGrant)
 
-			for _, p := range allGrantPermissions {
+			for _, p := range rolePermissions {
 				// delete combined grants
 				delete(grantsGroupedByPermission, p)
 			}
