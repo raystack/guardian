@@ -559,7 +559,6 @@ func (s *ServiceTestSuite) TestImportFromProvider() {
 						Status:           domain.GrantStatusActive,
 						StatusInProvider: domain.GrantStatusActive,
 						Source:           domain.GrantSourceImport,
-						Owner:            domain.SystemActorName,
 					},
 				},
 			},
