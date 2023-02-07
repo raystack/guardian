@@ -363,7 +363,7 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 
 			// group grants for the same account (accountGrants) by provider role
 			rc := resourceConfigs[resource.Type]
-			grants = reduceGrantsByProviderRole(rc, grants)
+			grants = reduceGrantsByProviderRole(*rc, grants)
 			for i, g := range grants {
 				key := g.PermissionsKey()
 				if existingGrant, ok := activeGrantsMap[rURN][accountSignature][key]; ok {
@@ -419,10 +419,7 @@ func groupAccessEntriesByAccount(accessEntries []domain.AccessEntry) map[string]
 }
 
 // reduceGrantsByProviderRole reduces grants based on configured roles in the provider's resource config and returns reduced grants containing the Role according to the resource config
-func reduceGrantsByProviderRole(rc *domain.ResourceConfig, grants []*domain.Grant) (reducedGrants []*domain.Grant) {
-	rolePermissionsMap := rc.GetRolePermissionsMap()
-	// TODO: sort rolePermissionsMap based on permissions length descending
-
+func reduceGrantsByProviderRole(rc domain.ResourceConfig, grants []*domain.Grant) (reducedGrants []*domain.Grant) {
 	grantsGroupedByPermission := map[string]*domain.Grant{}
 	var allGrantPermissions []string
 	for _, g := range grants {
@@ -432,10 +429,15 @@ func reduceGrantsByProviderRole(rc *domain.ResourceConfig, grants []*domain.Gran
 	}
 	sort.Strings(allGrantPermissions)
 
-	for roleID, rolePermissions := range rolePermissionsMap {
+	// prioritize roles with more permissions
+	sort.Slice(rc.Roles, func(i, j int) bool {
+		return len(rc.Roles[i].Permissions) > len(rc.Roles[j].Permissions)
+	})
+	for _, role := range rc.Roles {
+		rolePermissions := role.GetOrderedPermissions()
 		if containing, headIndex := utils.SubsliceExists(allGrantPermissions, rolePermissions); containing {
 			sampleGrant := grantsGroupedByPermission[rolePermissions[0]]
-			sampleGrant.Role = roleID
+			sampleGrant.Role = role.ID
 			sampleGrant.Permissions = rolePermissions
 			reducedGrants = append(reducedGrants, sampleGrant)
 
@@ -443,7 +445,6 @@ func reduceGrantsByProviderRole(rc *domain.ResourceConfig, grants []*domain.Gran
 				// delete combined grants
 				delete(grantsGroupedByPermission, p)
 			}
-
 			allGrantPermissions = append(allGrantPermissions[:headIndex], allGrantPermissions[headIndex+1:]...)
 		}
 	}
