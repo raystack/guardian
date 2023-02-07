@@ -35,6 +35,16 @@ type Role struct {
 	Permissions []interface{} `json:"permissions" yaml:"permissions" validate:"required"`
 }
 
+// GetOrderedPermissions returns the permissions as a string slice
+func (r Role) GetOrderedPermissions() []string {
+	permissions := []string{}
+	for _, p := range r.Permissions {
+		permissions = append(permissions, fmt.Sprintf("%s", p))
+	}
+	sort.Strings(permissions)
+	return permissions
+}
+
 // PolicyConfig is the configuration that defines which policy is being used in the provider
 type PolicyConfig struct {
 	ID      string `json:"id" yaml:"id" validate:"required"`
@@ -47,20 +57,6 @@ type ResourceConfig struct {
 	Filter string        `json:"filter" yaml:"filter"`
 	Policy *PolicyConfig `json:"policy" yaml:"policy"`
 	Roles  []*Role       `json:"roles" yaml:"roles" validate:"required"`
-}
-
-// GetRolePermissionsMap returns map[Role.ID][]PermissionStr
-func (rc ResourceConfig) GetRolePermissionsMap() map[string][]string {
-	rolePermissions := map[string][]string{}
-	for _, r := range rc.Roles {
-		var permissionsStr []string
-		for _, v := range r.Permissions {
-			permissionsStr = append(permissionsStr, fmt.Sprintf("%s", v))
-		}
-		sort.Strings(permissionsStr)
-		rolePermissions[r.ID] = permissionsStr
-	}
-	return rolePermissions
 }
 
 // AppealConfig is the policy configuration of the appeal
