@@ -14,6 +14,7 @@ import (
 )
 
 var InvalidAuthError = status.Errorf(codes.Unauthenticated, "invalid authentication credentials")
+var OIDCHeaderKey = "X-OIDC-Email"
 
 type Validator interface {
 	Validate(ctx context.Context, token string, audience string) (*idtoken.Payload, error)
@@ -30,18 +31,15 @@ type OIDCValidator struct {
 	validator         Validator
 	audience          string
 	validEmailDomains []string
-	headerKey         string
 }
 
 type OIDCValidatorParams struct {
 	Audience          string
 	ValidEmailDomains string
-	HeaderKey         string
 }
 
 func NewOIDCValidator(validator Validator, config OIDCValidatorParams) *OIDCValidator {
 	audience := config.Audience
-	headerKey := config.HeaderKey
 
 	var validEmailDomains []string
 	if strings.TrimSpace(config.ValidEmailDomains) != "" {
@@ -52,7 +50,6 @@ func NewOIDCValidator(validator Validator, config OIDCValidatorParams) *OIDCVali
 		validator:         validator,
 		audience:          audience,
 		validEmailDomains: validEmailDomains,
-		headerKey:         headerKey,
 	}
 }
 
@@ -85,7 +82,7 @@ func (v *OIDCValidator) WithOIDCValidator() grpc.UnaryServerInterceptor {
 
 		ctx = context.WithValue(ctx, OIDCEmailContextKey{}, email)
 		ctxlogrus.AddFields(ctx, logrus.Fields{
-			v.headerKey: email,
+			OIDCHeaderKey: email,
 		})
 
 		return handler(ctx, req)

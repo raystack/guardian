@@ -288,7 +288,6 @@ func getAuthInterceptor(config *Config) (grpc.UnaryServerInterceptor, error) {
 		params := auth.OIDCValidatorParams{
 			Audience:          config.Auth.OIDC.Audience,
 			ValidEmailDomains: config.Auth.OIDC.EligibleEmailDomains,
-			HeaderKey:         config.Auth.Default.HeaderKey,
 		}
 
 		bearerTokenValidator := auth.NewOIDCValidator(idtokenValidator, params)
