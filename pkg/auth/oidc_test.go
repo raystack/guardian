@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/odpf/guardian/internal/server"
 	"github.com/odpf/guardian/pkg/auth"
 	"github.com/odpf/guardian/pkg/auth/mocks"
 	"github.com/stretchr/testify/assert"
@@ -93,7 +92,6 @@ func (s *InterceptorTestSuite) TestIdTokenValidator_WithBearerTokenValidator() {
 			params: auth.OIDCValidatorParams{
 				Audience:          "google.com",
 				ValidEmailDomains: "example.com,something.org",
-				ContextKey:        server.AuthenticatedUserEmailContextKey{},
 			},
 			ctx: metadata.NewIncomingContext(context.Background(), metadata.New(authContextValues)),
 			mockFunc: func(validator *mocks.OIDCValidator) {
@@ -110,8 +108,7 @@ func (s *InterceptorTestSuite) TestIdTokenValidator_WithBearerTokenValidator() {
 		{
 			name: "successful request with no eligible email domains configurations whatsoever",
 			params: auth.OIDCValidatorParams{
-				Audience:   "google.com",
-				ContextKey: server.AuthenticatedUserEmailContextKey{},
+				Audience: "google.com",
 			},
 			ctx: metadata.NewIncomingContext(context.Background(), metadata.New(authContextValues)),
 			mockFunc: func(validator *mocks.OIDCValidator) {
@@ -146,7 +143,7 @@ func (s *InterceptorTestSuite) TestIdTokenValidator_WithBearerTokenValidator() {
 
 func (suite *InterceptorTestSuite) unaryDummyHandler(ctx context.Context, _ interface{}) (interface{}, error) {
 	expectedCtx := metadata.NewIncomingContext(context.Background(), metadata.New(authContextValues))
-	expectedCtx = context.WithValue(expectedCtx, server.AuthenticatedUserEmailContextKey{}, "something@example.com")
+	expectedCtx = context.WithValue(expectedCtx, auth.OIDCEmailContextKey{}, "something@example.com")
 
 	assert.Equal(suite.T(), expectedCtx, ctx, "final method handler doesn't have matching context")
 

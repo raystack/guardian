@@ -19,6 +19,8 @@ type Validator interface {
 	Validate(ctx context.Context, token string, audience string) (*idtoken.Payload, error)
 }
 
+type OIDCEmailContextKey struct{}
+
 type OIDCAuth struct {
 	Audience             string `mapstructure:"audience"`
 	EligibleEmailDomains string `mapstructure:"eligible_email_domains"`
@@ -29,14 +31,12 @@ type OIDCValidator struct {
 	audience          string
 	validEmailDomains []string
 	headerKey         string
-	contextKey        interface{}
 }
 
 type OIDCValidatorParams struct {
 	Audience          string
 	ValidEmailDomains string
 	HeaderKey         string
-	ContextKey        interface{}
 }
 
 func NewOIDCValidator(validator Validator, config OIDCValidatorParams) *OIDCValidator {
@@ -53,7 +53,6 @@ func NewOIDCValidator(validator Validator, config OIDCValidatorParams) *OIDCVali
 		audience:          audience,
 		validEmailDomains: validEmailDomains,
 		headerKey:         headerKey,
-		contextKey:        config.ContextKey,
 	}
 }
 
@@ -84,7 +83,7 @@ func (v *OIDCValidator) WithOIDCValidator() grpc.UnaryServerInterceptor {
 			return nil, err
 		}
 
-		ctx = context.WithValue(ctx, v.contextKey, email)
+		ctx = context.WithValue(ctx, OIDCEmailContextKey{}, email)
 		ctxlogrus.AddFields(ctx, logrus.Fields{
 			v.headerKey: email,
 		})
