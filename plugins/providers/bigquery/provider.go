@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -317,6 +318,7 @@ func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter
 			}
 		}
 		a.RelatedPermissions = slices.UniqueStringSlice(a.RelatedPermissions)
+		sort.Strings(a.RelatedPermissions)
 
 		activities = append(activities, a)
 	}

@@ -48,6 +48,7 @@ func (r *Resource) BeforeCreate(tx *gorm.DB) error {
 		},
 		DoUpdates: clause.AssignmentColumns([]string{"name", "details", "updated_at", "is_deleted", "parent_id"}),
 	})
+
 	return nil
 }
 

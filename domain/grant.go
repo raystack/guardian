@@ -124,7 +124,7 @@ func (ae AccessEntry) ToGrant(resource Resource) Grant {
 		StatusInProvider: GrantStatusActive,
 		AccountID:        ae.AccountID,
 		AccountType:      ae.AccountType,
-		Owner:            SystemActorName,
+		Role:             ae.Permission,
 		Permissions:      []string{ae.Permission},
 		Source:           GrantSourceImport,
 		IsPermanent:      true,
