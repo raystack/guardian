@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/pkg/evaluator"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
@@ -1017,7 +1019,18 @@ func (s *Service) addCreatorDetails(a *domain.Appeal, p *domain.Policy) error {
 			if p.IAM.Schema != nil {
 				creator = map[string]interface{}{}
 				for schemaKey, targetKey := range p.IAM.Schema {
-					creator[schemaKey] = userDetailsMap[targetKey]
+					if strings.Contains(targetKey, "$response") {
+						params := map[string]interface{}{
+							"response": userDetailsMap,
+						}
+						v, err := evaluator.Expression(targetKey).EvaluateWithVars(params)
+						if err != nil {
+							return fmt.Errorf("evaluating expression: %w", err)
+						}
+						creator[schemaKey] = v
+					} else {
+						creator[schemaKey] = userDetailsMap[targetKey]
+					}
 				}
 			} else {
 				creator = userDetailsMap
