@@ -550,6 +550,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 		for _, tc := range testCases {
 			s.Run(tc.name, func() {
+				s.setup()
 				s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return(tc.resources, nil).Once()
 				s.mockProviderService.On("Find", mock.Anything).Return(tc.providers, nil).Once()
 				s.mockPolicyService.On("Find", mock.Anything).Return(tc.policies, nil).Once()
@@ -558,7 +559,7 @@ func (s *ServiceTestSuite) TestCreate() {
 					Return(tc.existingAppeals, nil).Once()
 				s.mockGrantService.EXPECT().
 					List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
-					Return(tc.activeGrants, nil).Once()
+					Return(tc.activeGrants, nil)
 				if tc.callMockValidateAppeal {
 					s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedAppealValidationError).Once()
 				}
@@ -1159,7 +1160,10 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 		Return(expectedExistingAppeals, nil).Once()
 	s.mockGrantService.EXPECT().
 		List(mock.AnythingOfType("*context.emptyCtx"), domain.ListGrantsFilter{
-			Statuses: []string{string(domain.GrantStatusActive)},
+			Statuses:    []string{string(domain.GrantStatusActive)},
+			AccountIDs:  []string{appeals[0].AccountID},
+			ResourceIDs: []string{appeals[0].ResourceID},
+			Roles:       []string{appeals[0].Role},
 		}).
 		Return(expectedExistingGrants, nil).Once()
 	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
