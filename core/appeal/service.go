@@ -332,6 +332,7 @@ func (s *Service) findActiveGrant(ctx context.Context, a *domain.Appeal) (*domai
 		AccountIDs:  []string{a.AccountID},
 		ResourceIDs: []string{a.ResourceID},
 		Roles:       []string{a.Role},
+		OrderBy:     []string{"updated_at:desc"},
 	})
 
 	if err != nil {
@@ -342,7 +343,7 @@ func (s *Service) findActiveGrant(ctx context.Context, a *domain.Appeal) (*domai
 		return nil, ErrGrantNotFound
 	}
 
-	return &grants[len(grants)-1], nil
+	return &grants[0], nil
 }
 
 func addOnBehalfApprovedNotification(appeal *domain.Appeal, notifications []domain.Notification) []domain.Notification {
