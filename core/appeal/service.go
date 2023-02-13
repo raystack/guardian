@@ -940,7 +940,7 @@ func (s *Service) GrantAccessToProvider(ctx context.Context, a *domain.Appeal, o
 	return nil
 }
 
-func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider, policy *domain.Policy, grant *domain.Grant) error {
+func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider, policy *domain.Policy, activeGrant *domain.Grant) error {
 	AllowActiveAccessExtensionIn := ""
 
 	// Default to use provider config if policy config is not set
@@ -964,7 +964,7 @@ func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider
 		return fmt.Errorf("%w: %v: %v", ErrAppealInvalidExtensionDuration, AllowActiveAccessExtensionIn, err)
 	}
 
-	if !grant.IsEligibleForExtension(extensionDurationRule) {
+	if !activeGrant.IsEligibleForExtension(extensionDurationRule) {
 		return ErrGrantNotEligibleForExtension
 	}
 	return nil
