@@ -222,7 +222,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		}
 
 		activeGrant, err := s.findActiveGrant(ctx, appeal)
-		if err != nil {
+		if err != nil && err != ErrGrantNotFound {
 			return err
 		}
 
@@ -339,7 +339,7 @@ func (s *Service) findActiveGrant(ctx context.Context, a *domain.Appeal) (*domai
 	}
 
 	if len(grants) == 0 {
-		return nil, nil
+		return nil, ErrGrantNotFound
 	}
 
 	return &grants[len(grants)-1], nil

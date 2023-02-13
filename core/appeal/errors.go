@@ -48,4 +48,5 @@ var (
 	ErrApproverInvalidType      = errors.New("invalid approver type, expected an email string or array of email string")
 	ErrApproverEmail            = errors.New("approver is not a valid email")
 	ErrApproverNotFound         = errors.New("approver not found")
+	ErrGrantNotFound            = errors.New("grant not found")
 )
