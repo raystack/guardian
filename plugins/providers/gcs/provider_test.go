@@ -1,6 +1,7 @@
 package gcs_test
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -826,6 +827,53 @@ func TestGetAccountType(t *testing.T) {
 
 		assert.Equal(t, expectedAccountTypes, actualAccountypes)
 	})
+}
+
+func TestListAccess(t *testing.T) {
+	crypto := new(mocks.Crypto)
+	client := new(mocks.GCSClient)
+	p := gcs.NewProvider("gcs", crypto)
+	providerURN := "test-resource-name"
+	p.Clients = map[string]gcs.GCSClient{
+		providerURN: client,
+	}
+
+	pc := &domain.ProviderConfig{
+		Type: domain.ProviderTypeGCS,
+		URN:  providerURN,
+		Credentials: gcs.Credentials{
+			ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service_account-key-json")),
+			ResourceName:      "projects/test-resource-name",
+		},
+		Resources: []*domain.ResourceConfig{
+			{
+				Type: gcs.ResourceTypeBucket,
+				Roles: []*domain.Role{
+					{
+						ID:          "Storage Legacy Bucket Writer",
+						Name:        "Storage Legacy Bucket Writer",
+						Description: "Read access to buckets with object listing/creation/deletion",
+						Permissions: []interface{}{"roles/storage.legacyBucketWriter"},
+					},
+				},
+			},
+		},
+	}
+
+	crypto.EXPECT().
+		Decrypt("c2VydmljZV9hY2NvdW50LWtleS1qc29u").Return("service_account-key-json", nil).Once()
+	dummyResources := []*domain.Resource{}
+	expectedResourcesAccess := domain.MapResourceAccess{}
+	client.EXPECT().
+		ListAccess(mock.AnythingOfType("*context.emptyCtx"), dummyResources).
+		Return(expectedResourcesAccess, nil).Once()
+
+	actualResourcesAccess, err := p.ListAccess(context.Background(), *pc, dummyResources)
+
+	assert.Nil(t, err)
+	assert.Equal(t, expectedResourcesAccess, actualResourcesAccess)
+	crypto.AssertExpectations(t)
+	client.AssertExpectations(t)
 }
 
 func initProvider() *gcs.Provider {

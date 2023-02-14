@@ -13,10 +13,19 @@ import (
 	"github.com/odpf/guardian/utils"
 )
 
+//go:generate mockery --name=GCSClient --exported --with-expecter
+type GCSClient interface {
+	GetBuckets(ctx context.Context, projectID string) ([]*Bucket, error)
+	GrantBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error
+	RevokeBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error
+	ListAccess(context.Context, []*domain.Resource) (domain.MapResourceAccess, error)
+}
+
 //go:generate mockery --name=Crypto --exported --with-expecter
 type Crypto interface {
 	domain.Crypto
 }
+
 type Provider struct {
 	provider.UnimplementedClient
 	provider.PermissionManager
@@ -224,4 +233,22 @@ func (p *Provider) getGCSClient(creds Credentials) (GCSClient, error) {
 
 	p.Clients[projectID] = client
 	return client, nil
+}
+
+func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, resources []*domain.Resource) (domain.MapResourceAccess, error) {
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return nil, err
+	}
+
+	if err := creds.Decrypt(p.crypto); err != nil {
+		return nil, err
+	}
+
+	client, err := p.getGCSClient(creds)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ListAccess(ctx, resources)
 }
