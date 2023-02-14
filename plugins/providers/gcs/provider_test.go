@@ -251,7 +251,7 @@ func TestGetResources(t *testing.T) {
 				Name: "test-bucket-name",
 			},
 		}
-		client.On("GetBuckets", mock.Anything, mock.Anything).Return(expectedBuckets, nil).Once()
+		client.On("GetBuckets", mock.Anything).Return(expectedBuckets, nil).Once()
 		expectedResources := []*domain.Resource{
 			{
 				ProviderType: pc.Type,

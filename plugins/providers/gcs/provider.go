@@ -15,7 +15,7 @@ import (
 
 //go:generate mockery --name=GCSClient --exported --with-expecter
 type GCSClient interface {
-	GetBuckets(ctx context.Context, projectID string) ([]*Bucket, error)
+	GetBuckets(context.Context) ([]*Bucket, error)
 	GrantBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error
 	RevokeBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error
 	ListAccess(context.Context, []*domain.Resource) (domain.MapResourceAccess, error)
@@ -84,8 +84,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	}
 
 	var resources []*domain.Resource
-	projectID := strings.Replace(creds.ResourceName, "projects/", "", 1)
-	buckets, err := client.GetBuckets(context.TODO(), projectID)
+	buckets, err := client.GetBuckets(context.TODO())
 	if err != nil {
 		return nil, err
 	}

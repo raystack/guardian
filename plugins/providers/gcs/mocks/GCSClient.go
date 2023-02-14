@@ -26,25 +26,25 @@ func (_m *GCSClient) EXPECT() *GCSClient_Expecter {
 	return &GCSClient_Expecter{mock: &_m.Mock}
 }
 
-// GetBuckets provides a mock function with given fields: ctx, projectID
-func (_m *GCSClient) GetBuckets(ctx context.Context, projectID string) ([]*gcs.Bucket, error) {
-	ret := _m.Called(ctx, projectID)
+// GetBuckets provides a mock function with given fields: _a0
+func (_m *GCSClient) GetBuckets(_a0 context.Context) ([]*gcs.Bucket, error) {
+	ret := _m.Called(_a0)
 
 	var r0 []*gcs.Bucket
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]*gcs.Bucket, error)); ok {
-		return rf(ctx, projectID)
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*gcs.Bucket, error)); ok {
+		return rf(_a0)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []*gcs.Bucket); ok {
-		r0 = rf(ctx, projectID)
+	if rf, ok := ret.Get(0).(func(context.Context) []*gcs.Bucket); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*gcs.Bucket)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, projectID)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -58,15 +58,14 @@ type GCSClient_GetBuckets_Call struct {
 }
 
 // GetBuckets is a helper method to define mock.On call
-//   - ctx context.Context
-//   - projectID string
-func (_e *GCSClient_Expecter) GetBuckets(ctx interface{}, projectID interface{}) *GCSClient_GetBuckets_Call {
-	return &GCSClient_GetBuckets_Call{Call: _e.mock.On("GetBuckets", ctx, projectID)}
+//   - _a0 context.Context
+func (_e *GCSClient_Expecter) GetBuckets(_a0 interface{}) *GCSClient_GetBuckets_Call {
+	return &GCSClient_GetBuckets_Call{Call: _e.mock.On("GetBuckets", _a0)}
 }
 
-func (_c *GCSClient_GetBuckets_Call) Run(run func(ctx context.Context, projectID string)) *GCSClient_GetBuckets_Call {
+func (_c *GCSClient_GetBuckets_Call) Run(run func(_a0 context.Context)) *GCSClient_GetBuckets_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context))
 	})
 	return _c
 }
@@ -76,7 +75,7 @@ func (_c *GCSClient_GetBuckets_Call) Return(_a0 []*gcs.Bucket, _a1 error) *GCSCl
 	return _c
 }
 
-func (_c *GCSClient_GetBuckets_Call) RunAndReturn(run func(context.Context, string) ([]*gcs.Bucket, error)) *GCSClient_GetBuckets_Call {
+func (_c *GCSClient_GetBuckets_Call) RunAndReturn(run func(context.Context) ([]*gcs.Bucket, error)) *GCSClient_GetBuckets_Call {
 	_c.Call.Return(run)
 	return _c
 }

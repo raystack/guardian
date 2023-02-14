@@ -30,10 +30,10 @@ func newGCSClient(projectID string, credentialsJSON []byte) (*gcsClient, error) 
 	}, nil
 }
 
-// GetBuckets returns all buckets within a given project
-func (c *gcsClient) GetBuckets(ctx context.Context, projectID string) ([]*Bucket, error) {
+// GetBuckets returns all buckets in the project
+func (c *gcsClient) GetBuckets(ctx context.Context) ([]*Bucket, error) {
 	var result []*Bucket
-	it := c.client.Buckets(ctx, projectID)
+	it := c.client.Buckets(ctx, c.projectID)
 	for {
 		battrs, err := it.Next()
 		if err == iterator.Done {
