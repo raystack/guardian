@@ -196,10 +196,6 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 	if err != nil {
 		return fmt.Errorf("listing pending appeals: %w", err)
 	}
-	activeGrants, err := s.getActiveGrantsMap(ctx)
-	if err != nil {
-		return fmt.Errorf("listing active grants: %w", err)
-	}
 
 	notifications := []domain.Notification{}
 
@@ -227,8 +223,15 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			}
 		}
 
-		if err := s.checkExtensionEligibility(appeal, provider, policy, activeGrants); err != nil {
-			return fmt.Errorf("checking grant extension eligibility: %w", err)
+		activeGrant, err := s.findActiveGrant(ctx, appeal)
+		if err != nil && err != ErrGrantNotFound {
+			return err
+		}
+
+		if activeGrant != nil {
+			if err := s.checkExtensionEligibility(appeal, provider, policy, activeGrant); err != nil {
+				return fmt.Errorf("checking grant extension eligibility: %w", err)
+			}
 		}
 
 		if err := s.providerService.ValidateAppeal(ctx, appeal, provider, policy); err != nil {
@@ -323,6 +326,26 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 	}
 
 	return nil
+}
+
+func (s *Service) findActiveGrant(ctx context.Context, a *domain.Appeal) (*domain.Grant, error) {
+	grants, err := s.grantService.List(ctx, domain.ListGrantsFilter{
+		Statuses:    []string{string(domain.GrantStatusActive)},
+		AccountIDs:  []string{a.AccountID},
+		ResourceIDs: []string{a.ResourceID},
+		Roles:       []string{a.Role},
+		OrderBy:     []string{"updated_at:desc"},
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("listing active grants: %w", err)
+	}
+
+	if len(grants) == 0 {
+		return nil, ErrGrantNotFound
+	}
+
+	return &grants[0], nil
 }
 
 func addOnBehalfApprovedNotification(appeal *domain.Appeal, notifications []domain.Notification) []domain.Notification {
@@ -705,28 +728,6 @@ func (s *Service) getPendingAppealsMap(ctx context.Context) (map[string]map[stri
 	return appealsMap, nil
 }
 
-func (s *Service) getActiveGrantsMap(ctx context.Context) (map[string]map[string]map[string]*domain.Grant, error) {
-	grants, err := s.grantService.List(ctx, domain.ListGrantsFilter{
-		Statuses: []string{string(domain.GrantStatusActive)},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	grantsMap := map[string]map[string]map[string]*domain.Grant{}
-	for i, a := range grants {
-		if grantsMap[a.AccountID] == nil {
-			grantsMap[a.AccountID] = map[string]map[string]*domain.Grant{}
-		}
-		if grantsMap[a.AccountID][a.ResourceID] == nil {
-			grantsMap[a.AccountID][a.ResourceID] = map[string]*domain.Grant{}
-		}
-		grantsMap[a.AccountID][a.ResourceID][a.Role] = &grants[i]
-	}
-
-	return grantsMap, nil
-}
-
 func (s *Service) getResourcesMap(ctx context.Context, ids []string) (map[string]*domain.Resource, error) {
 	filters := domain.ListResourcesFilter{IDs: ids}
 	resources, err := s.resourceService.Find(ctx, filters)
@@ -941,12 +942,7 @@ func (s *Service) GrantAccessToProvider(ctx context.Context, a *domain.Appeal, o
 	return nil
 }
 
-func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider, policy *domain.Policy, activeGrants map[string]map[string]map[string]*domain.Grant) error {
-	grant, exists := activeGrants[a.AccountID][a.ResourceID][a.Role]
-	if !exists || grant == nil {
-		return nil
-	}
-
+func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider, policy *domain.Policy, activeGrant *domain.Grant) error {
 	AllowActiveAccessExtensionIn := ""
 
 	// Default to use provider config if policy config is not set
@@ -970,7 +966,7 @@ func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider
 		return fmt.Errorf("%w: %v: %v", ErrAppealInvalidExtensionDuration, AllowActiveAccessExtensionIn, err)
 	}
 
-	if !grant.IsEligibleForExtension(extensionDurationRule) {
+	if !activeGrant.IsEligibleForExtension(extensionDurationRule) {
 		return ErrGrantNotEligibleForExtension
 	}
 	return nil
