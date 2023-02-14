@@ -1164,6 +1164,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			AccountIDs:  []string{appeals[0].AccountID},
 			ResourceIDs: []string{appeals[0].ResourceID},
 			Roles:       []string{appeals[0].Role},
+			OrderBy:     []string{"updated_at:desc"},
 		}).
 		Return(expectedExistingGrants, nil).Once()
 	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
