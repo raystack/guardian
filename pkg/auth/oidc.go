@@ -30,17 +30,12 @@ type OIDCValidator struct {
 	validEmailDomains []string
 }
 
-type OIDCValidatorParams struct {
-	Audience          string
-	ValidEmailDomains string
-}
-
-func NewOIDCValidator(validator Validator, config OIDCValidatorParams) *OIDCValidator {
+func NewOIDCValidator(validator Validator, config OIDCAuth) *OIDCValidator {
 	audience := config.Audience
 
 	var validEmailDomains []string
-	if strings.TrimSpace(config.ValidEmailDomains) != "" {
-		validEmailDomains = strings.Split(config.ValidEmailDomains, ",")
+	if strings.TrimSpace(config.EligibleEmailDomains) != "" {
+		validEmailDomains = strings.Split(config.EligibleEmailDomains, ",")
 	}
 
 	return &OIDCValidator{
