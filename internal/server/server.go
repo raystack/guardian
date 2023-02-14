@@ -126,6 +126,7 @@ func RunServer(config *Config) error {
 			),
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
 			authInterceptor,
+			withLogrusContext(),
 			otelgrpc.UnaryServerInterceptor(),
 		)),
 	)

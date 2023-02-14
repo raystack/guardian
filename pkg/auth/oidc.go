@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/api/idtoken"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -14,7 +12,6 @@ import (
 )
 
 var InvalidAuthError = status.Errorf(codes.Unauthenticated, "invalid authentication credentials")
-var OIDCHeaderKey = "X-OIDC-Email"
 
 type Validator interface {
 	Validate(ctx context.Context, token string, audience string) (*idtoken.Payload, error)
@@ -81,9 +78,6 @@ func (v *OIDCValidator) WithOIDCValidator() grpc.UnaryServerInterceptor {
 		}
 
 		ctx = context.WithValue(ctx, OIDCEmailContextKey{}, email)
-		ctxlogrus.AddFields(ctx, logrus.Fields{
-			OIDCHeaderKey: email,
-		})
 
 		return handler(ctx, req)
 	}
