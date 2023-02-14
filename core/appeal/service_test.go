@@ -687,12 +687,21 @@ func (s *ServiceTestSuite) TestCreate() {
 					Config: map[string]interface{}{
 						"url": "http://localhost",
 					},
+					Schema: map[string]string{
+						"managers": `managers`,
+						"name":     "name",
+						"role":     `$response.roles[0].name`,
+						"roles":    `map($response.roles, {#.name})`,
+					},
 				},
 				AppealConfig: &domain.PolicyAppealConfig{AllowOnBehalf: true},
 			},
 		}
 		expectedCreatorUser := map[string]interface{}{
 			"managers": []interface{}{"user.approver@email.com"},
+			"name":     "test-name",
+			"role":     "test-role-1",
+			"roles":    []interface{}{"test-role-1", "test-role-2"},
 		}
 		expectedAppealsInsertionParam := []*domain.Appeal{}
 		for i, r := range resourceIDs {
@@ -826,7 +835,15 @@ func (s *ServiceTestSuite) TestCreate() {
 			Return([]interface{}{"test-permission-1"}, nil)
 		s.mockIAMManager.On("ParseConfig", mock.Anything, mock.Anything).Return(nil, nil)
 		s.mockIAMManager.On("GetClient", mock.Anything, mock.Anything).Return(s.mockIAMClient, nil)
-		s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorUser, nil)
+		expectedCreatorResponse := map[string]interface{}{
+			"managers": []interface{}{"user.approver@email.com"},
+			"name":     "test-name",
+			"roles": []map[string]interface{}{
+				{"name": "test-role-1"},
+				{"name": "test-role-2"},
+			},
+		}
+		s.mockIAMClient.On("GetUser", accountID).Return(expectedCreatorResponse, nil)
 		s.mockRepository.EXPECT().
 			BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), expectedAppealsInsertionParam).
 			Return(nil).

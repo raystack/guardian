@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/odpf/guardian/core/grant"
 	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/pkg/evaluator"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/utils"
 	"github.com/odpf/salt/log"
@@ -997,36 +999,51 @@ func getPolicy(a *domain.Appeal, p *domain.Provider, policiesMap map[string]map[
 }
 
 func (s *Service) addCreatorDetails(a *domain.Appeal, p *domain.Policy) error {
-	if p.IAM != nil {
-		iamConfig, err := s.iam.ParseConfig(p.IAM)
-		if err != nil {
-			return fmt.Errorf("parsing iam config: %w", err)
-		}
-		iamClient, err := s.iam.GetClient(iamConfig)
-		if err != nil {
-			return fmt.Errorf("getting iam client: %w", err)
-		}
-
-		userDetails, err := iamClient.GetUser(a.CreatedBy)
-		if err != nil {
-			return fmt.Errorf("fetching creator's user iam: %w", err)
-		}
-
-		var creator map[string]interface{}
-		if userDetailsMap, ok := userDetails.(map[string]interface{}); ok {
-			if p.IAM.Schema != nil {
-				creator = map[string]interface{}{}
-				for schemaKey, targetKey := range p.IAM.Schema {
-					creator[schemaKey] = userDetailsMap[targetKey]
-				}
-			} else {
-				creator = userDetailsMap
-			}
-		}
-
-		a.Creator = creator
+	if p.IAM == nil {
+		return nil
 	}
 
+	iamConfig, err := s.iam.ParseConfig(p.IAM)
+	if err != nil {
+		return fmt.Errorf("parsing iam config: %w", err)
+	}
+	iamClient, err := s.iam.GetClient(iamConfig)
+	if err != nil {
+		return fmt.Errorf("getting iam client: %w", err)
+	}
+
+	userDetails, err := iamClient.GetUser(a.CreatedBy)
+	if err != nil {
+		return fmt.Errorf("fetching creator's user iam: %w", err)
+	}
+
+	userDetailsMap, ok := userDetails.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	if p.IAM.Schema == nil {
+		a.Creator = userDetailsMap
+		return nil
+	}
+
+	creator := map[string]interface{}{}
+	for schemaKey, targetKey := range p.IAM.Schema {
+		if strings.Contains(targetKey, "$response") {
+			params := map[string]interface{}{
+				"response": userDetailsMap,
+			}
+			v, err := evaluator.Expression(targetKey).EvaluateWithVars(params)
+			if err != nil {
+				return fmt.Errorf("evaluating expression: %w", err)
+			}
+			creator[schemaKey] = v
+		} else {
+			creator[schemaKey] = userDetailsMap[targetKey]
+		}
+	}
+
+	a.Creator = creator
 	return nil
 }
 
