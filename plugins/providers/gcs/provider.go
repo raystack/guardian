@@ -64,16 +64,7 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 }
 
 func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
-	var creds Credentials
-	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
-		return nil, err
-	}
-
-	if err := creds.Decrypt(p.crypto); err != nil {
-		return nil, err
-	}
-
-	client, err := p.getGCSClient(creds)
+	client, err := p.getGCSClient(*pc)
 	if err != nil {
 		return nil, err
 	}
@@ -111,16 +102,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 
 	permissions := getPermissions(a)
 
-	var creds Credentials
-	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
-		return fmt.Errorf("error in decoding credentials%w", err)
-	}
-
-	if err := creds.Decrypt(p.crypto); err != nil {
-		return fmt.Errorf("error in decrypting credentials%w", err)
-	}
-
-	client, err := p.getGCSClient(creds)
+	client, err := p.getGCSClient(*pc)
 	if err != nil {
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
@@ -152,16 +134,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 
 	permissions := getPermissions(a)
 
-	var creds Credentials
-	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
-		return fmt.Errorf("error in decoding credentials%w", err)
-	}
-
-	if err := creds.Decrypt(p.crypto); err != nil {
-		return fmt.Errorf("error in decrypting credentials%w", err)
-	}
-
-	client, err := p.getGCSClient(creds)
+	client, err := p.getGCSClient(*pc)
 	if err != nil {
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
@@ -219,7 +192,25 @@ func getPermissions(a domain.Grant) []Permission {
 	return permissions
 }
 
-func (p *Provider) getGCSClient(creds Credentials) (GCSClient, error) {
+func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, resources []*domain.Resource) (domain.MapResourceAccess, error) {
+	client, err := p.getGCSClient(pc)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ListAccess(ctx, resources)
+}
+
+func (p *Provider) getGCSClient(pc domain.ProviderConfig) (GCSClient, error) {
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return nil, fmt.Errorf("decoding credentials: %w", err)
+	}
+
+	if err := creds.Decrypt(p.crypto); err != nil {
+		return nil, fmt.Errorf("decrypting credentials: %w", err)
+	}
+
 	projectID := strings.Replace(creds.ResourceName, "projects/", "", 1)
 	if p.Clients[projectID] != nil {
 		return p.Clients[projectID], nil
@@ -232,22 +223,4 @@ func (p *Provider) getGCSClient(creds Credentials) (GCSClient, error) {
 
 	p.Clients[projectID] = client
 	return client, nil
-}
-
-func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, resources []*domain.Resource) (domain.MapResourceAccess, error) {
-	var creds Credentials
-	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
-		return nil, err
-	}
-
-	if err := creds.Decrypt(p.crypto); err != nil {
-		return nil, err
-	}
-
-	client, err := p.getGCSClient(creds)
-	if err != nil {
-		return nil, err
-	}
-
-	return client.ListAccess(ctx, resources)
 }
