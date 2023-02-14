@@ -160,7 +160,11 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 				actualResult, actualError := s.repository.Find(context.Background(), tc.filters)
 
 				s.NoError(actualError)
-				if diff := cmp.Diff(tc.expectedResult, actualResult, cmpopts.EquateApproxTime(time.Microsecond)); diff != "" {
+				options := []cmp.Option{
+					cmpopts.EquateApproxTime(time.Microsecond),
+					cmpopts.SortSlices(func(a, b *domain.Resource) bool { return a.ID < b.ID }),
+				}
+				if diff := cmp.Diff(tc.expectedResult, actualResult, options...); diff != "" {
 					s.T().Errorf("result not match, diff: %v", diff)
 				}
 			})
