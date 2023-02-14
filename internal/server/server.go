@@ -130,6 +130,12 @@ func RunServer(config *Config) error {
 			otelgrpc.UnaryServerInterceptor(),
 		)),
 	)
+
+	authUserContextKey := map[string]interface{}{
+		"default": authenticatedUserEmailContextKey{},
+		"oidc":    auth.OIDCEmailContextKey{},
+	}
+
 	protoAdapter := handlerv1beta1.NewAdapter()
 	guardianv1beta1.RegisterGuardianServiceServer(grpcServer, handlerv1beta1.NewGRPCServer(
 		services.ResourceService,
@@ -140,7 +146,7 @@ func RunServer(config *Config) error {
 		services.ApprovalService,
 		services.GrantService,
 		protoAdapter,
-		config.Auth.Default.HeaderKey,
+		authUserContextKey[config.Auth.Provider],
 	))
 
 	// init http proxy

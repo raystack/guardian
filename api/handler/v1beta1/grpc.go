@@ -2,14 +2,15 @@ package v1beta1
 
 import (
 	"context"
-	"errors"
+	"strings"
 
 	"github.com/odpf/guardian/core/appeal"
 	"github.com/odpf/guardian/core/grant"
 
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/domain"
-	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ProtoAdapter interface {
@@ -116,7 +117,7 @@ type GRPCServer struct {
 	grantService    grantService
 	adapter         ProtoAdapter
 
-	authenticatedUserHeaderKey string
+	authenticatedUserContextKey interface{}
 
 	guardianv1beta1.UnimplementedGuardianServiceServer
 }
@@ -130,32 +131,30 @@ func NewGRPCServer(
 	approvalService approvalService,
 	grantService grantService,
 	adapter ProtoAdapter,
-	authenticatedUserHeaderKey string,
+	authenticatedUserContextKey interface{},
 ) *GRPCServer {
 	return &GRPCServer{
-		resourceService:            resourceService,
-		activityService:            activityService,
-		providerService:            providerService,
-		policyService:              policyService,
-		appealService:              appealService,
-		approvalService:            approvalService,
-		grantService:               grantService,
-		adapter:                    adapter,
-		authenticatedUserHeaderKey: authenticatedUserHeaderKey,
+		resourceService:             resourceService,
+		activityService:             activityService,
+		providerService:             providerService,
+		policyService:               policyService,
+		appealService:               appealService,
+		approvalService:             approvalService,
+		grantService:                grantService,
+		adapter:                     adapter,
+		authenticatedUserContextKey: authenticatedUserContextKey,
 	}
 }
 
 func (s *GRPCServer) getUser(ctx context.Context) (string, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
+	authenticatedEmail, ok := ctx.Value(s.authenticatedUserContextKey).(string)
 	if !ok {
-		return "", errors.New("unable to retrieve metadata from context")
+		return "", status.Error(codes.Unauthenticated, "unable to get authenticated user from context")
 	}
 
-	users := md.Get(s.authenticatedUserHeaderKey)
-	if len(users) == 0 {
-		return "", errors.New("user email not found")
+	if strings.TrimSpace(authenticatedEmail) == "" {
+		return "", status.Error(codes.Unauthenticated, "unable to get authenticated user from context")
 	}
 
-	currentUser := users[0]
-	return currentUser, nil
+	return authenticatedEmail, nil
 }

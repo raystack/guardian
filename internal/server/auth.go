@@ -11,7 +11,7 @@ import (
 
 type authenticatedUserEmailContextKey struct{}
 
-var logrusActorKey string = "actor"
+var logrusActorKey = "actor"
 
 func withAuthenticatedUserEmail(headerKey string) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
