@@ -116,11 +116,7 @@ func (s *GrpcHandlersSuite) TestListUserApprovals() {
 			Statuses:  []string{"active", "pending"},
 			OrderBy:   []string{"test-order"},
 		}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: expectedUser,
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, expectedUser)
 		res, err := s.grpcServer.ListUserApprovals(ctx, req)
 
 		s.NoError(err)
@@ -150,11 +146,7 @@ func (s *GrpcHandlersSuite) TestListUserApprovals() {
 			Return(nil, expectedError).Once()
 
 		req := &guardianv1beta1.ListUserApprovalsRequest{}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: "test-user",
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "test-user")
 		res, err := s.grpcServer.ListUserApprovals(ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
@@ -178,11 +170,7 @@ func (s *GrpcHandlersSuite) TestListUserApprovals() {
 			Return(invalidApprovals, nil).Once()
 
 		req := &guardianv1beta1.ListUserApprovalsRequest{}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: "test-user",
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "test-user")
 		res, err := s.grpcServer.ListUserApprovals(ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
@@ -443,11 +431,7 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 				Reason: expectedReason,
 			},
 		}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: expectedUser,
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, expectedUser)
 		res, err := s.grpcServer.UpdateApproval(ctx, req)
 
 		s.NoError(err)
@@ -553,11 +537,7 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 					Return(nil, tc.expectedError).Once()
 
 				req := &guardianv1beta1.UpdateApprovalRequest{}
-				ctx := context.Background()
-				md := metadata.New(map[string]string{
-					s.authenticatedUserHeaderKey: expectedUser,
-				})
-				ctx = metadata.NewIncomingContext(ctx, md)
+				ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, expectedUser)
 				res, err := s.grpcServer.UpdateApproval(ctx, req)
 
 				s.Equal(tc.expectedStatusCode, status.Code(err))
@@ -579,11 +559,7 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 			Return(invalidAppeal, nil).Once()
 
 		req := &guardianv1beta1.UpdateApprovalRequest{}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: "user@example.com",
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "user@example.com")
 		res, err := s.grpcServer.UpdateApproval(ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))

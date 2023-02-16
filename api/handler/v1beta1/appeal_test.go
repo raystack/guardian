@@ -128,11 +128,7 @@ func (s *GrpcHandlersSuite) TestListUserAppeals() {
 			ResourceUrns:  []string{"test-resource-urn"},
 			OrderBy:       []string{"test-order"},
 		}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: expectedUser,
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, expectedUser)
 		res, err := s.grpcServer.ListUserAppeals(ctx, req)
 
 		s.NoError(err)
@@ -162,11 +158,7 @@ func (s *GrpcHandlersSuite) TestListUserAppeals() {
 			Return(nil, expectedError).Once()
 
 		req := &guardianv1beta1.ListUserAppealsRequest{}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: "test-user",
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "test-user")
 		res, err := s.grpcServer.ListUserAppeals(ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
@@ -188,11 +180,7 @@ func (s *GrpcHandlersSuite) TestListUserAppeals() {
 			Return(invalidAppeals, nil).Once()
 
 		req := &guardianv1beta1.ListUserAppealsRequest{}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: "test-user",
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "test-user")
 		res, err := s.grpcServer.ListUserAppeals(ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
@@ -484,11 +472,7 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 			},
 			Description: "The answer is 42",
 		}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: expectedUser,
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, expectedUser)
 		res, err := s.grpcServer.CreateAppeal(ctx, req)
 
 		s.NoError(err)
@@ -520,11 +504,7 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 		s.appealService.EXPECT().Create(mock.AnythingOfType("*context.valueCtx"), mock.Anything).Return(appeal.ErrAppealDuplicate).Once()
 
 		req := &guardianv1beta1.CreateAppealRequest{}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: "user@example.com",
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "user@example.com")
 		res, err := s.grpcServer.CreateAppeal(ctx, req)
 
 		s.Equal(codes.AlreadyExists, status.Code(err))
@@ -539,11 +519,7 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 		s.appealService.EXPECT().Create(mock.AnythingOfType("*context.valueCtx"), mock.Anything).Return(expectedError).Once()
 
 		req := &guardianv1beta1.CreateAppealRequest{}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: "user@example.com",
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "user@example.com")
 		res, err := s.grpcServer.CreateAppeal(ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
@@ -567,11 +543,7 @@ func (s *GrpcHandlersSuite) TestCreateAppeal() {
 			Return(nil).Once()
 
 		req := &guardianv1beta1.CreateAppealRequest{Resources: make([]*guardianv1beta1.CreateAppealRequest_Resource, 1)}
-		ctx := context.Background()
-		md := metadata.New(map[string]string{
-			s.authenticatedUserHeaderKey: "user@example.com",
-		})
-		ctx = metadata.NewIncomingContext(ctx, md)
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "user@example.com")
 		res, err := s.grpcServer.CreateAppeal(ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
