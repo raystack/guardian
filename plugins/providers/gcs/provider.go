@@ -13,10 +13,19 @@ import (
 	"github.com/odpf/guardian/utils"
 )
 
+//go:generate mockery --name=GCSClient --exported --with-expecter
+type GCSClient interface {
+	GetBuckets(context.Context) ([]*Bucket, error)
+	GrantBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error
+	RevokeBucketAccess(ctx context.Context, b Bucket, identity string, roleName iam.RoleName) error
+	ListAccess(context.Context, []*domain.Resource) (domain.MapResourceAccess, error)
+}
+
 //go:generate mockery --name=Crypto --exported --with-expecter
 type Crypto interface {
 	domain.Crypto
 }
+
 type Provider struct {
 	provider.UnimplementedClient
 	provider.PermissionManager
@@ -55,16 +64,7 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 }
 
 func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
-	var creds Credentials
-	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
-		return nil, err
-	}
-
-	if err := creds.Decrypt(p.crypto); err != nil {
-		return nil, err
-	}
-
-	client, err := p.getGCSClient(creds)
+	client, err := p.getGCSClient(*pc)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +75,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	}
 
 	var resources []*domain.Resource
-	projectID := strings.Replace(creds.ResourceName, "projects/", "", 1)
-	buckets, err := client.GetBuckets(context.TODO(), projectID)
+	buckets, err := client.GetBuckets(context.TODO())
 	if err != nil {
 		return nil, err
 	}
@@ -103,16 +102,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 
 	permissions := getPermissions(a)
 
-	var creds Credentials
-	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
-		return fmt.Errorf("error in decoding credentials%w", err)
-	}
-
-	if err := creds.Decrypt(p.crypto); err != nil {
-		return fmt.Errorf("error in decrypting credentials%w", err)
-	}
-
-	client, err := p.getGCSClient(creds)
+	client, err := p.getGCSClient(*pc)
 	if err != nil {
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
@@ -144,16 +134,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 
 	permissions := getPermissions(a)
 
-	var creds Credentials
-	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
-		return fmt.Errorf("error in decoding credentials%w", err)
-	}
-
-	if err := creds.Decrypt(p.crypto); err != nil {
-		return fmt.Errorf("error in decrypting credentials%w", err)
-	}
-
-	client, err := p.getGCSClient(creds)
+	client, err := p.getGCSClient(*pc)
 	if err != nil {
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
@@ -211,7 +192,25 @@ func getPermissions(a domain.Grant) []Permission {
 	return permissions
 }
 
-func (p *Provider) getGCSClient(creds Credentials) (GCSClient, error) {
+func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, resources []*domain.Resource) (domain.MapResourceAccess, error) {
+	client, err := p.getGCSClient(pc)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ListAccess(ctx, resources)
+}
+
+func (p *Provider) getGCSClient(pc domain.ProviderConfig) (GCSClient, error) {
+	var creds Credentials
+	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+		return nil, fmt.Errorf("decoding credentials: %w", err)
+	}
+
+	if err := creds.Decrypt(p.crypto); err != nil {
+		return nil, fmt.Errorf("decrypting credentials: %w", err)
+	}
+
 	projectID := strings.Replace(creds.ResourceName, "projects/", "", 1)
 	if p.Clients[projectID] != nil {
 		return p.Clients[projectID], nil
