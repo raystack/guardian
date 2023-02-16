@@ -13,6 +13,10 @@ import (
 	"google.golang.org/api/option"
 )
 
+var (
+	excludedAccountTypesOnImport = []string{"allUsers", "allAuthenticatedUsers", "projectOwner", "projectEditor", "projectViewer"}
+)
+
 type gcsClient struct {
 	client    *storage.Client
 	projectID string
@@ -95,18 +99,13 @@ func (c *gcsClient) ListAccess(ctx context.Context, resources []*domain.Resource
 
 		for _, role := range policy.Roles() {
 			for _, member := range policy.Members(role) {
-				var accountType, accountID string
-				m := strings.Split(member, ":")
-				if len(m) == 0 || len(m) > 2 {
-					return nil, fmt.Errorf("invalid bucket access member signature %q", member)
-				} else if len(m) == 2 {
-					accountID = m[1]
+				accountType, accountID, err := parseMember(member)
+				if err != nil {
+					return nil, err
 				}
-				accountType = m[0]
 
 				// exclude unsupported account types
-				excludedAccountTypes := []string{"allUsers", "allAuthenticatedUsers", "projectOwner", "projectEditor", "projectViewer"}
-				if utils.ContainsString(excludedAccountTypes, accountType) {
+				if utils.ContainsString(excludedAccountTypesOnImport, accountType) {
 					continue
 				}
 
@@ -124,4 +123,18 @@ func (c *gcsClient) ListAccess(ctx context.Context, resources []*domain.Resource
 	}
 
 	return result, nil
+}
+
+func parseMember(member string) (accountType, accountID string, err error) {
+	m := strings.Split(member, ":")
+	if len(m) == 0 || len(m) > 2 {
+		return "", "", fmt.Errorf("invalid bucket access member signature %q", member)
+	}
+
+	if len(m) == 2 {
+		accountID = m[1]
+	}
+	accountType = m[0]
+
+	return accountType, accountID, nil
 }

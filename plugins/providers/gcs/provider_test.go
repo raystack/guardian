@@ -838,11 +838,13 @@ func TestListAccess(t *testing.T) {
 		providerURN: client,
 	}
 
-	pc := &domain.ProviderConfig{
+	saKey := "service_account-key-json"
+	encryptedSAKey := "encrypted-service_account-key-json"
+	dummyProviderConfig := &domain.ProviderConfig{
 		Type: domain.ProviderTypeGCS,
 		URN:  providerURN,
 		Credentials: gcs.Credentials{
-			ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service_account-key-json")),
+			ServiceAccountKey: encryptedSAKey,
 			ResourceName:      "projects/test-resource-name",
 		},
 		Resources: []*domain.ResourceConfig{
@@ -860,15 +862,14 @@ func TestListAccess(t *testing.T) {
 		},
 	}
 
-	crypto.EXPECT().
-		Decrypt("c2VydmljZV9hY2NvdW50LWtleS1qc29u").Return("service_account-key-json", nil).Once()
+	crypto.EXPECT().Decrypt(encryptedSAKey).Return(saKey, nil).Once()
 	dummyResources := []*domain.Resource{}
 	expectedResourcesAccess := domain.MapResourceAccess{}
 	client.EXPECT().
 		ListAccess(mock.AnythingOfType("*context.emptyCtx"), dummyResources).
 		Return(expectedResourcesAccess, nil).Once()
 
-	actualResourcesAccess, err := p.ListAccess(context.Background(), *pc, dummyResources)
+	actualResourcesAccess, err := p.ListAccess(context.Background(), *dummyProviderConfig, dummyResources)
 
 	assert.Nil(t, err)
 	assert.Equal(t, expectedResourcesAccess, actualResourcesAccess)
