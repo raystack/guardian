@@ -13,10 +13,6 @@ import (
 	"google.golang.org/api/option"
 )
 
-var (
-	excludedAccountTypesOnImport = []string{"allUsers", "allAuthenticatedUsers", "projectOwner", "projectEditor", "projectViewer"}
-)
-
 type gcsClient struct {
 	client    *storage.Client
 	projectID string
@@ -105,7 +101,7 @@ func (c *gcsClient) ListAccess(ctx context.Context, resources []*domain.Resource
 				}
 
 				// exclude unsupported account types
-				if utils.ContainsString(excludedAccountTypesOnImport, accountType) {
+				if !utils.ContainsString(AllowedAccountTypes, accountType) {
 					continue
 				}
 
