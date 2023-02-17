@@ -13,10 +13,6 @@ import (
 	"google.golang.org/api/option"
 )
 
-var (
-	excludedAccountTypesOnImport = []string{"allUsers", "allAuthenticatedUsers", "projectOwner", "projectEditor", "projectViewer"}
-)
-
 type gcsClient struct {
 	client    *storage.Client
 	projectID string
@@ -99,13 +95,16 @@ func (c *gcsClient) ListAccess(ctx context.Context, resources []*domain.Resource
 
 		for _, role := range policy.Roles() {
 			for _, member := range policy.Members(role) {
+				if strings.HasPrefix(member, "deleted:") {
+					continue
+				}
 				accountType, accountID, err := parseMember(member)
 				if err != nil {
 					return nil, err
 				}
 
 				// exclude unsupported account types
-				if utils.ContainsString(excludedAccountTypesOnImport, accountType) {
+				if !utils.ContainsString(AllowedAccountTypes, accountType) {
 					continue
 				}
 

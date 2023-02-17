@@ -28,6 +28,15 @@ const (
 	AccountTypeDomain         = "domain"
 )
 
+var (
+	AllowedAccountTypes = []string{
+		AccountTypeUser,
+		AccountTypeServiceAccount,
+		AccountTypeGroup,
+		AccountTypeDomain,
+	}
+)
+
 type Config struct {
 	ProviderConfig *domain.ProviderConfig
 
