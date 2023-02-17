@@ -95,6 +95,9 @@ func (c *gcsClient) ListAccess(ctx context.Context, resources []*domain.Resource
 
 		for _, role := range policy.Roles() {
 			for _, member := range policy.Members(role) {
+				if strings.HasPrefix(member, "deleted:") {
+					continue
+				}
 				accountType, accountID, err := parseMember(member)
 				if err != nil {
 					return nil, err
