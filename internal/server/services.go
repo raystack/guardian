@@ -17,6 +17,7 @@ import (
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/internal/store/postgres"
+	"github.com/odpf/guardian/pkg/auth"
 	"github.com/odpf/guardian/plugins/identities"
 	"github.com/odpf/guardian/plugins/notifiers"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
@@ -66,6 +67,8 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 	auditRepository := audit_repos.NewPostgresRepository(sqldb)
 	auditRepository.Init(context.TODO())
 
+	actorExtractor := getActorExtractor(deps.Config)
+
 	auditLogger := audit.New(
 		audit.WithRepository(auditRepository),
 		audit.WithMetadataExtractor(func(ctx context.Context) map[string]interface{} {
@@ -88,12 +91,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 
 			return md
 		}),
-		audit.WithActorExtractor(func(ctx context.Context) (string, error) {
-			if actor, ok := ctx.Value(authenticatedUserEmailContextKey{}).(string); ok {
-				return actor, nil
-			}
-			return "", nil
-		}),
+		actorExtractor,
 	)
 
 	activityRepository := postgres.NewActivityRepository(store.DB())
@@ -183,4 +181,20 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		appealService,
 		grantService,
 	}, nil
+}
+
+func getActorExtractor(config *Config) audit.AuditOption {
+	var contextKey interface{}
+
+	contextKey = authenticatedUserEmailContextKey{}
+	if config.Auth.Provider == "oidc" {
+		contextKey = auth.OIDCEmailContextKey{}
+	}
+
+	return audit.WithActorExtractor(func(ctx context.Context) (string, error) {
+		if actor, ok := ctx.Value(contextKey).(string); ok {
+			return actor, nil
+		}
+		return "", nil
+	})
 }

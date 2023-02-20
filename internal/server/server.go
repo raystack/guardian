@@ -20,6 +20,7 @@ import (
 	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
 	"github.com/odpf/guardian/internal/store/postgres"
 	"github.com/odpf/guardian/jobs"
+	"github.com/odpf/guardian/pkg/auth"
 	"github.com/odpf/guardian/pkg/crypto"
 	"github.com/odpf/guardian/pkg/scheduler"
 	"github.com/odpf/guardian/pkg/tracing"
@@ -30,6 +31,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"google.golang.org/api/idtoken"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 )
@@ -104,6 +106,12 @@ func RunServer(config *Config) error {
 
 	// init grpc server
 	logrusEntry := logrus.NewEntry(logrus.New()) // TODO: get logrus instance from `logger` var
+
+	authInterceptor, err := getAuthInterceptor(config)
+	if err != nil {
+		return err
+	}
+
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_logrus.StreamServerInterceptor(logrusEntry),
@@ -117,10 +125,17 @@ func RunServer(config *Config) error {
 				}),
 			),
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
-			withAuthenticatedUserEmail(config.AuthenticatedUserHeaderKey),
+			authInterceptor,
+			withLogrusContext(),
 			otelgrpc.UnaryServerInterceptor(),
 		)),
 	)
+
+	authUserContextKey := map[string]interface{}{
+		"default": authenticatedUserEmailContextKey{},
+		"oidc":    auth.OIDCEmailContextKey{},
+	}
+
 	protoAdapter := handlerv1beta1.NewAdapter()
 	guardianv1beta1.RegisterGuardianServiceServer(grpcServer, handlerv1beta1.NewGRPCServer(
 		services.ResourceService,
@@ -131,7 +146,7 @@ func RunServer(config *Config) error {
 		services.ApprovalService,
 		services.GrantService,
 		protoAdapter,
-		config.AuthenticatedUserHeaderKey,
+		authUserContextKey[config.Auth.Provider],
 	))
 
 	// init http proxy
@@ -218,7 +233,7 @@ func makeHeaderMatcher(c *Config) func(key string) (string, bool) {
 	return func(key string) (string, bool) {
 		switch strings.ToLower(key) {
 		case
-			strings.ToLower(c.AuthenticatedUserHeaderKey),
+			strings.ToLower(c.Auth.Default.HeaderKey),
 			strings.ToLower(c.AuditLogTraceIDHeaderKey):
 			return key, true
 		default:
@@ -265,4 +280,21 @@ func fetchDefaultJobScheduleMapping() map[JobType]string {
 		RevokeExpiredGrants:       "*/20 * * * *",
 		ExpiringGrantNotification: "0 9 * * *",
 	}
+}
+
+func getAuthInterceptor(config *Config) (grpc.UnaryServerInterceptor, error) {
+	// default fallback to user email on header
+	authInterceptor := withAuthenticatedUserEmail(config.Auth.Default.HeaderKey)
+
+	if config.Auth.Provider == "oidc" {
+		idtokenValidator, err := idtoken.NewValidator(context.Background())
+		if err != nil {
+			return nil, err
+		}
+
+		bearerTokenValidator := auth.NewOIDCValidator(idtokenValidator, config.Auth.OIDC)
+		authInterceptor = bearerTokenValidator.WithOIDCValidator()
+	}
+
+	return authInterceptor, nil
 }

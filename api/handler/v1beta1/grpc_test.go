@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+type authEmailTestContextKey struct{}
+
 type GrpcHandlersSuite struct {
 	suite.Suite
 
@@ -19,8 +21,6 @@ type GrpcHandlersSuite struct {
 	approvalService *mocks.ApprovalService
 	grantService    *mocks.GrantService
 	grpcServer      *v1beta1.GRPCServer
-
-	authenticatedUserHeaderKey string
 }
 
 func TestGrpcHandler(t *testing.T) {
@@ -35,7 +35,6 @@ func (s *GrpcHandlersSuite) setup() {
 	s.appealService = new(mocks.AppealService)
 	s.approvalService = new(mocks.ApprovalService)
 	s.grantService = new(mocks.GrantService)
-	s.authenticatedUserHeaderKey = "test-header-key"
 	s.grpcServer = v1beta1.NewGRPCServer(
 		s.resourceService,
 		s.activityService,
@@ -45,6 +44,6 @@ func (s *GrpcHandlersSuite) setup() {
 		s.approvalService,
 		s.grantService,
 		v1beta1.NewAdapter(),
-		s.authenticatedUserHeaderKey,
+		authEmailTestContextKey{},
 	)
 }
