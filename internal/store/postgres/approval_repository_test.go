@@ -26,6 +26,10 @@ type ApprovalRepositoryTestSuite struct {
 }
 
 func TestApprovalRepository(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	suite.Run(t, new(ApprovalRepositoryTestSuite))
 }
 

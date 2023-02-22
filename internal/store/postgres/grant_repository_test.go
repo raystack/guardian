@@ -30,6 +30,10 @@ type GrantRepositoryTestSuite struct {
 }
 
 func TestGrantRepository(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	suite.Run(t, new(GrantRepositoryTestSuite))
 }
 

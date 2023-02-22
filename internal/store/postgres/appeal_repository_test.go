@@ -389,5 +389,9 @@ func (s *AppealRepositoryTestSuite) TestUpdate() {
 }
 
 func TestAppealRepository(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	suite.Run(t, new(AppealRepositoryTestSuite))
 }
