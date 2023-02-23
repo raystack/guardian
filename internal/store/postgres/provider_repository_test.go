@@ -377,5 +377,9 @@ func (s *ProviderRepositoryTestSuite) TestDelete() {
 }
 
 func TestProviderRepository(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	suite.Run(t, new(ProviderRepositoryTestSuite))
 }

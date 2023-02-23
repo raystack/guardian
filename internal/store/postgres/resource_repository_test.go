@@ -420,5 +420,9 @@ func (s *ResourceRepositoryTestSuite) getTestResources() []*domain.Resource {
 }
 
 func TestResourceRepository(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	suite.Run(t, new(ResourceRepositoryTestSuite))
 }

@@ -204,5 +204,9 @@ func (s *PolicyRepositoryTestSuite) TestGetOne() {
 }
 
 func TestPolicyRepository(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	suite.Run(t, new(PolicyRepositoryTestSuite))
 }
