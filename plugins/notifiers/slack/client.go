@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -67,16 +68,16 @@ func (n *notifier) Notify(items []domain.Notification) []error {
 	return errs
 }
 
-func (n *notifier) sendMessage(channel, block string) error {
+func (n *notifier) sendMessage(channel, messageBlock string) error {
 	url := slackHost + "/api/chat.postMessage"
-	var blockList []interface{}
+	var messageblockList []interface{}
 
-	if err := json.Unmarshal([]byte(block), &blockList); err != nil {
+	if err := json.Unmarshal([]byte(messageBlock), &messageblockList); err != nil {
 		return err
 	}
 	data, err := json.Marshal(map[string]interface{}{
 		"channel": channel,
-		"blocks":  blockList,
+		"blocks":  messageblockList,
 	})
 	if err != nil {
 		return err
@@ -142,20 +143,18 @@ func (n *notifier) sendRequest(req *http.Request) (*userResponse, error) {
 }
 
 func parseMessage(message domain.NotificationMessage, templates domain.NotificationMessages) (string, error) {
-	var block string
-	switch message.Type {
-	case domain.NotificationTypeAccessRevoked:
-		block = templates.AccessRevoked
-	case domain.NotificationTypeAppealApproved:
-		block = templates.AppealApproved
-	case domain.NotificationTypeAppealRejected:
-		block = templates.AppealRejected
-	case domain.NotificationTypeApproverNotification:
-		block = templates.ApproverNotification
-	case domain.NotificationTypeExpirationReminder:
-		block = templates.ExpirationReminder
-	case domain.NotificationTypeOnBehalfAppealApproved:
-		block = templates.OthersAppealApproved
+	messageTypeTemplateMap := map[string]string{
+		domain.NotificationTypeAccessRevoked:          templates.AccessRevoked,
+		domain.NotificationTypeAppealApproved:         templates.AppealApproved,
+		domain.NotificationTypeAppealRejected:         templates.AppealRejected,
+		domain.NotificationTypeApproverNotification:   templates.ApproverNotification,
+		domain.NotificationTypeExpirationReminder:     templates.ExpirationReminder,
+		domain.NotificationTypeOnBehalfAppealApproved: templates.OthersAppealApproved,
+	}
+
+	block, ok := messageTypeTemplateMap[message.Type]
+	if !ok {
+		return "", fmt.Errorf("template not found for message type %s", message.Type)
 	}
 
 	t, err := template.New("notification_messages").Parse(block)

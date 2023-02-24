@@ -802,6 +802,7 @@ func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 						"created_at":    appeal.CreatedAt,
 						"approval_step": approval.Name,
 						"actor":         approver,
+						"details":       appeal.Details,
 					},
 				},
 			})
