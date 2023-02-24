@@ -797,6 +797,11 @@ func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 						"requestor":     appeal.CreatedBy,
 						"appeal_id":     appeal.ID,
 						"account_id":    appeal.AccountID,
+						"provider_type": appeal.Resource.ProviderType,
+						"resource_type": appeal.Resource.Type,
+						"created_at":    appeal.CreatedAt,
+						"approval_step": approval.Name,
+						"actor":         approver,
 					},
 				},
 			})

@@ -67,11 +67,16 @@ func (n *notifier) Notify(items []domain.Notification) []error {
 	return errs
 }
 
-func (n *notifier) sendMessage(channel, text string) error {
+func (n *notifier) sendMessage(channel, block string) error {
 	url := slackHost + "/api/chat.postMessage"
-	data, err := json.Marshal(map[string]string{
+	var blockList []interface{}
+
+	if err := json.Unmarshal([]byte(block), &blockList); err != nil {
+		return err
+	}
+	data, err := json.Marshal(map[string]interface{}{
 		"channel": channel,
-		"text":    text,
+		"blocks":  blockList,
 	})
 	if err != nil {
 		return err
@@ -137,23 +142,23 @@ func (n *notifier) sendRequest(req *http.Request) (*userResponse, error) {
 }
 
 func parseMessage(message domain.NotificationMessage, templates domain.NotificationMessages) (string, error) {
-	var text string
+	var block string
 	switch message.Type {
 	case domain.NotificationTypeAccessRevoked:
-		text = templates.AccessRevoked
+		block = templates.AccessRevoked
 	case domain.NotificationTypeAppealApproved:
-		text = templates.AppealApproved
+		block = templates.AppealApproved
 	case domain.NotificationTypeAppealRejected:
-		text = templates.AppealRejected
+		block = templates.AppealRejected
 	case domain.NotificationTypeApproverNotification:
-		text = templates.ApproverNotification
+		block = templates.ApproverNotification
 	case domain.NotificationTypeExpirationReminder:
-		text = templates.ExpirationReminder
+		block = templates.ExpirationReminder
 	case domain.NotificationTypeOnBehalfAppealApproved:
-		text = templates.OthersAppealApproved
+		block = templates.OthersAppealApproved
 	}
 
-	t, err := template.New("notification_messages").Parse(text)
+	t, err := template.New("notification_messages").Parse(block)
 	if err != nil {
 		return "", err
 	}
