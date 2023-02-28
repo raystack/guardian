@@ -158,12 +158,12 @@ func parseMessage(message domain.NotificationMessage, templates domain.Notificat
 		domain.NotificationTypeOnBehalfAppealApproved: templates.OthersAppealApproved,
 	}
 
-	block, ok := messageTypeTemplateMap[message.Type]
+	messageBlock, ok := messageTypeTemplateMap[message.Type]
 	if !ok {
 		return "", fmt.Errorf("template not found for message type %s", message.Type)
 	}
 
-	t, err := template.New("notification_messages").Parse(block)
+	t, err := template.New("notification_messages").Parse(messageBlock)
 	if err != nil {
 		return "", err
 	}
