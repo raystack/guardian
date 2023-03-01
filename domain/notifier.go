@@ -2,11 +2,11 @@ package domain
 
 type NotificationMessages struct {
 	ExpirationReminder   string `mapstructure:"expiration_reminder"`
-	AppealApproved       string `mapstructure:"appeal_approved" default:""`
-	AppealRejected       string `mapstructure:"appeal_rejected" default:""`
-	AccessRevoked        string `mapstructure:"access_revoked" default:""`
-	ApproverNotification string `mapstructure:"approver_notification" default:""`
-	OthersAppealApproved string `mapstructure:"others_appeal_approved" default:""`
+	AppealApproved       string `mapstructure:"appeal_approved"`
+	AppealRejected       string `mapstructure:"appeal_rejected"`
+	AccessRevoked        string `mapstructure:"access_revoked"`
+	ApproverNotification string `mapstructure:"approver_notification"`
+	OthersAppealApproved string `mapstructure:"others_appeal_approved"`
 }
 
 const (

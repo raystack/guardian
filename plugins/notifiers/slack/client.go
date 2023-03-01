@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/odpf/guardian/utils"
 	"html/template"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -151,11 +150,9 @@ func (n *notifier) sendRequest(req *http.Request) (*userResponse, error) {
 }
 
 func getDefaultTemplate(messageType string) (string, error) {
-	pwd, _ := os.Getwd()
-	fullFilePath := fmt.Sprintf("%s/plugins/notifiers/slack/templates/%s.json", pwd, messageType)
-	content, err := ioutil.ReadFile(fullFilePath)
+	content, err := os.ReadFile(fmt.Sprintf("plugins/notifiers/slack/templates/%s.json", messageType))
 	if err != nil {
-		return "", fmt.Errorf("error finding default template for message type %s", messageType)
+		return "", fmt.Errorf("error finding default template for message type %s - %s", messageType, err)
 	}
 	return string(content), nil
 }
