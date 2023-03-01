@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/odpf/guardian/utils"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -38,6 +39,7 @@ type notifier struct {
 
 	slackIDCache map[string]string
 	Messages     domain.NotificationMessages
+	httpClient   utils.HTTPClient
 }
 
 type Config struct {
@@ -46,7 +48,12 @@ type Config struct {
 }
 
 func New(config *Config) *notifier {
-	return &notifier{config.AccessToken, map[string]string{}, config.Messages}
+	return &notifier{
+		accessToken:  config.AccessToken,
+		slackIDCache: map[string]string{},
+		Messages:     config.Messages,
+		httpClient:   &http.Client{Timeout: 10 * time.Second},
+	}
 }
 
 func (n *notifier) Notify(items []domain.Notification) []error {
@@ -125,8 +132,7 @@ func (n *notifier) findSlackIDByEmail(email string) (string, error) {
 }
 
 func (n *notifier) sendRequest(req *http.Request) (*userResponse, error) {
-	Client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := Client.Do(req)
+	resp, err := n.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
