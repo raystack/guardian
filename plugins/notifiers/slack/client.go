@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -73,7 +75,7 @@ func (n *notifier) sendMessage(channel, messageBlock string) error {
 	var messageblockList []interface{}
 
 	if err := json.Unmarshal([]byte(messageBlock), &messageblockList); err != nil {
-		return err
+		return fmt.Errorf("error in parsing message block %s", err)
 	}
 	data, err := json.Marshal(map[string]interface{}{
 		"channel": channel,
@@ -142,6 +144,16 @@ func (n *notifier) sendRequest(req *http.Request) (*userResponse, error) {
 	return &result, nil
 }
 
+func getDefaultTemplate(messageType string) (string, error) {
+	pwd, _ := os.Getwd()
+	fullFilePath := fmt.Sprintf("%s/plugins/notifiers/slack/templates/%s.json", pwd, messageType)
+	content, err := ioutil.ReadFile(fullFilePath)
+	if err != nil {
+		return "", fmt.Errorf("error finding default template for message type %s", messageType)
+	}
+	return string(content), nil
+}
+
 func parseMessage(message domain.NotificationMessage, templates domain.NotificationMessages) (string, error) {
 	messageTypeTemplateMap := map[string]string{
 		domain.NotificationTypeAccessRevoked:          templates.AccessRevoked,
@@ -152,12 +164,20 @@ func parseMessage(message domain.NotificationMessage, templates domain.Notificat
 		domain.NotificationTypeOnBehalfAppealApproved: templates.OthersAppealApproved,
 	}
 
-	block, ok := messageTypeTemplateMap[message.Type]
+	messageBlock, ok := messageTypeTemplateMap[message.Type]
 	if !ok {
 		return "", fmt.Errorf("template not found for message type %s", message.Type)
 	}
 
-	t, err := template.New("notification_messages").Parse(block)
+	if messageBlock == "" {
+		defaultMsgBlock, err := getDefaultTemplate(message.Type)
+		if err != nil {
+			return "", err
+		}
+		messageBlock = defaultMsgBlock
+	}
+
+	t, err := template.New("notification_messages").Parse(messageBlock)
 	if err != nil {
 		return "", err
 	}

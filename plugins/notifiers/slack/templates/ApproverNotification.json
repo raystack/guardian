@@ -1,0 +1,8 @@
+[
+  {
+    "type":"section",
+    "text":{
+      "type":"mrkdwn",
+      "text":"You have an appeal created by {{.requestor}} requesting access to {{.resource_name}} with role {{.role}}.\n Appeal ID: {{.appeal_id}}"}
+  }
+]
