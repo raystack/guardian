@@ -102,6 +102,7 @@ type approvalService interface {
 type grantService interface {
 	List(context.Context, domain.ListGrantsFilter) ([]domain.Grant, error)
 	GetByID(context.Context, string) (*domain.Grant, error)
+	Update(context.Context, *domain.Grant) error
 	Revoke(ctx context.Context, id, actor, reason string, opts ...grant.Option) (*domain.Grant, error)
 	BulkRevoke(ctx context.Context, filter domain.RevokeGrantsFilter, actor, reason string) ([]*domain.Grant, error)
 	ImportFromProvider(ctx context.Context, criteria grant.ImportFromProviderCriteria) ([]*domain.Grant, error)

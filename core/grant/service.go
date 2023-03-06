@@ -15,6 +15,7 @@ import (
 
 const (
 	AuditKeyRevoke = "grant.revoke"
+	AuditKeyUpdate = "grant.update"
 )
 
 //go:generate mockery --name=repository --exported --with-expecter
@@ -98,6 +99,41 @@ func (s *Service) GetByID(ctx context.Context, id string) (*domain.Grant, error)
 		return nil, ErrEmptyIDParam
 	}
 	return s.repo.GetByID(ctx, id)
+}
+
+func (s *Service) Update(ctx context.Context, payload *domain.Grant) error {
+	grantDetails, err := s.GetByID(ctx, payload.ID)
+	if err != nil {
+		return fmt.Errorf("getting grant details: %w", err)
+	}
+
+	if payload.Owner == "" {
+		return ErrEmptyOwner
+	}
+	updatedGrant := &domain.Grant{
+		ID: payload.ID,
+
+		// Only allow updating several fields
+		Owner: payload.Owner,
+	}
+	if err := s.repo.Update(ctx, updatedGrant); err != nil {
+		return err
+	}
+	grantDetails.Owner = updatedGrant.Owner
+	grantDetails.UpdatedAt = updatedGrant.UpdatedAt
+	*payload = *grantDetails
+
+	if err := s.auditLogger.Log(ctx, AuditKeyUpdate, map[string]interface{}{
+		"grant_id":      grantDetails.ID,
+		"payload":       updatedGrant,
+		"updated_grant": payload,
+	}); err != nil {
+		s.logger.Error("failed to record audit log", "error", err)
+	}
+
+	// TODO: send notification
+
+	return nil
 }
 
 func (s *Service) Prepare(ctx context.Context, appeal domain.Appeal) (*domain.Grant, error) {

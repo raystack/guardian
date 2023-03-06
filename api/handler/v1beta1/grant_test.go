@@ -252,6 +252,79 @@ func (s *GrpcHandlersSuite) TestGetGrant() {
 	})
 }
 
+func (s *GrpcHandlersSuite) TestUpdateGrant() {
+	s.Run("should return grant details on succes", func() {
+		s.setup()
+
+		expectedGrant := &domain.Grant{
+			ID:    "test-id",
+			Owner: "test-owner",
+		}
+		now := time.Now()
+		s.grantService.EXPECT().
+			Update(mock.AnythingOfType("*context.emptyCtx"), expectedGrant).
+			Run(func(_a0 context.Context, g *domain.Grant) {
+				g.UpdatedAt = now
+			}).
+			Return(nil).Once()
+
+		req := &guardianv1beta1.UpdateGrantRequest{
+			Id:    "test-id",
+			Owner: "test-owner",
+		}
+		res, err := s.grpcServer.UpdateGrant(context.Background(), req)
+
+		s.NoError(err)
+		s.Equal(expectedGrant.ID, res.Grant.Id)
+		s.Equal(expectedGrant.Owner, res.Grant.Owner)
+		s.Equal(timestamppb.New(now), res.Grant.UpdatedAt)
+	})
+
+	s.Run("should return error if grant service returns an error", func() {
+		testCases := []struct {
+			name          string
+			expectedError error
+			expectedCode  codes.Code
+		}{
+			{
+				"should return not found error if record not found",
+				grant.ErrGrantNotFound,
+				codes.NotFound,
+			},
+			{
+				"should return invalid argument error if owner is empty",
+				grant.ErrEmptyOwner,
+				codes.InvalidArgument,
+			},
+			{
+				"should return internal error if there's an unexpected error",
+				errors.New("unexpected error"),
+				codes.Internal,
+			},
+		}
+
+		for _, tc := range testCases {
+			s.Run(tc.name, func() {
+				s.setup()
+
+				s.grantService.EXPECT().
+					Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Grant")).
+					Return(tc.expectedError).Once()
+
+				req := &guardianv1beta1.UpdateGrantRequest{
+					Id:    "test-id",
+					Owner: "test-owner",
+				}
+				res, err := s.grpcServer.UpdateGrant(context.Background(), req)
+
+				s.Equal(tc.expectedCode, status.Code(err))
+				s.Nil(res)
+				s.grantService.AssertExpectations(s.T())
+			})
+		}
+	})
+}
+
 func (s *GrpcHandlersSuite) TestImportFromProvider() {
 	s.Run("should return grants on success", func() {
 		s.setup()
