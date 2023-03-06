@@ -3,7 +3,7 @@
     "type":"section",
     "text":{
       "type":"mrkdwn",
-      "text":"Your access to {{.resource_name}}} with role {{.role}} has been revoked"
+      "text":"Your access to *{{.resource_name}}}* with role *{{.role}}* has been revoked"
     }
   }
 ]

@@ -2,16 +2,17 @@ package slack
 
 import (
 	"bytes"
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/odpf/guardian/utils"
 	"html/template"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
+
+	"github.com/odpf/guardian/utils"
 
 	"github.com/odpf/guardian/domain"
 )
@@ -36,9 +37,10 @@ type userResponse struct {
 type notifier struct {
 	accessToken string
 
-	slackIDCache map[string]string
-	Messages     domain.NotificationMessages
-	httpClient   utils.HTTPClient
+	slackIDCache        map[string]string
+	Messages            domain.NotificationMessages
+	httpClient          utils.HTTPClient
+	defaultMessageFiles embed.FS
 }
 
 type Config struct {
@@ -46,12 +48,16 @@ type Config struct {
 	Messages    domain.NotificationMessages
 }
 
+//go:embed templates/*
+var defaultTemplates embed.FS
+
 func New(config *Config) *notifier {
 	return &notifier{
-		accessToken:  config.AccessToken,
-		slackIDCache: map[string]string{},
-		Messages:     config.Messages,
-		httpClient:   &http.Client{Timeout: 10 * time.Second},
+		accessToken:         config.AccessToken,
+		slackIDCache:        map[string]string{},
+		Messages:            config.Messages,
+		httpClient:          &http.Client{Timeout: 10 * time.Second},
+		defaultMessageFiles: defaultTemplates,
 	}
 }
 
@@ -63,7 +69,7 @@ func (n *notifier) Notify(items []domain.Notification) []error {
 			errs = append(errs, err)
 		}
 
-		msg, err := parseMessage(item.Message, n.Messages)
+		msg, err := parseMessage(item.Message, n.Messages, n.defaultMessageFiles)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -149,15 +155,15 @@ func (n *notifier) sendRequest(req *http.Request) (*userResponse, error) {
 	return &result, nil
 }
 
-func getDefaultTemplate(messageType string) (string, error) {
-	content, err := os.ReadFile(fmt.Sprintf("plugins/notifiers/slack/templates/%s.json", messageType))
+func getDefaultTemplate(messageType string, defaultTemplateFiles embed.FS) (string, error) {
+	content, err := defaultTemplateFiles.ReadFile(fmt.Sprintf("templates/%s.json", messageType))
 	if err != nil {
 		return "", fmt.Errorf("error finding default template for message type %s - %s", messageType, err)
 	}
 	return string(content), nil
 }
 
-func parseMessage(message domain.NotificationMessage, templates domain.NotificationMessages) (string, error) {
+func parseMessage(message domain.NotificationMessage, templates domain.NotificationMessages, defaultTemplateFiles embed.FS) (string, error) {
 	messageTypeTemplateMap := map[string]string{
 		domain.NotificationTypeAccessRevoked:          templates.AccessRevoked,
 		domain.NotificationTypeAppealApproved:         templates.AppealApproved,
@@ -173,7 +179,7 @@ func parseMessage(message domain.NotificationMessage, templates domain.Notificat
 	}
 
 	if messageBlock == "" {
-		defaultMsgBlock, err := getDefaultTemplate(message.Type)
+		defaultMsgBlock, err := getDefaultTemplate(message.Type, defaultTemplateFiles)
 		if err != nil {
 			return "", err
 		}

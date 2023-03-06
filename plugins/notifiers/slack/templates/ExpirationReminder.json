@@ -3,7 +3,7 @@
     "type":"section",
     "text": {
       "type":"mrkdwn",
-      "text":"Your access {{.account_id}} to {{.resource_name}} with role {{.role}} will expire at {{.expiration_date}}. Extend the access if it's still needed"
+      "text":"Your access *{{.account_id}}* to *{{.resource_name}}* with role *{{.role}}* will expire at *{{.expiration_date}}*. Extend the access if it's still needed"
     }
   }
 ]

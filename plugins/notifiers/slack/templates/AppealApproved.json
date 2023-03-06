@@ -3,7 +3,7 @@
     "type":"section",
     "text":{
       "type":"mrkdwn",
-      "text":"Your appeal to {{.resource_name}} with role {{.role}} has been approved"
+      "text":"Your appeal to *{{.resource_name}}* with role *{{.role}}* has been approved"
     }
   }
 ]

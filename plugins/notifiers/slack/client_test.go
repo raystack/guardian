@@ -3,13 +3,14 @@ package slack
 import (
 	"bytes"
 	"errors"
+	"io/ioutil"
+	"net/http"
+	"testing"
+
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"io/ioutil"
-	"net/http"
-	"testing"
 )
 
 type ClientTestSuite struct {
@@ -29,10 +30,11 @@ func (s *ClientTestSuite) setup() {
 	}
 	s.slackIDCache = map[string]string{}
 	s.notifier = notifier{
-		accessToken:  s.accessToken,
-		slackIDCache: s.slackIDCache,
-		Messages:     s.messages,
-		httpClient:   s.mockHttpClient,
+		accessToken:         s.accessToken,
+		slackIDCache:        s.slackIDCache,
+		Messages:            s.messages,
+		httpClient:          s.mockHttpClient,
+		defaultMessageFiles: defaultTemplates,
 	}
 }
 
@@ -41,7 +43,6 @@ func TestClient(t *testing.T) {
 }
 
 func (s *ClientTestSuite) TestNotify() {
-
 	s.Run("should return error if slack id not found", func() {
 		s.setup()
 
@@ -63,5 +64,14 @@ func (s *ClientTestSuite) TestNotify() {
 		})
 
 		s.Equal(expectedErrs, actualErrs)
+	})
+
+	s.Run("should get default message template from file if not found in config", func() {
+		s.setup()
+		expectedContent, err := ioutil.ReadFile("templates/AppealApproved.json")
+		content, err := getDefaultTemplate("AppealApproved", s.notifier.defaultMessageFiles)
+
+		s.Equal(string(expectedContent), content)
+		s.Equal(err, nil)
 	})
 }
