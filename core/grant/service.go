@@ -119,6 +119,7 @@ func (s *Service) Update(ctx context.Context, payload *domain.Grant) error {
 	if err := s.repo.Update(ctx, updatedGrant); err != nil {
 		return err
 	}
+	previousOwner := grantDetails.Owner
 	grantDetails.Owner = updatedGrant.Owner
 	grantDetails.UpdatedAt = updatedGrant.UpdatedAt
 	*payload = *grantDetails
@@ -131,7 +132,31 @@ func (s *Service) Update(ctx context.Context, payload *domain.Grant) error {
 		s.logger.Error("failed to record audit log", "error", err)
 	}
 
-	// TODO: send notification
+	if previousOwner != updatedGrant.Owner {
+		message := domain.NotificationMessage{
+			Type: domain.NotificationTypeGrantOwnerChanged,
+			Variables: map[string]interface{}{
+				"grant_id":       grantDetails.ID,
+				"previous_owner": previousOwner,
+				"new_owner":      updatedGrant.Owner,
+			},
+		}
+		notifications := []domain.Notification{{
+			User:    updatedGrant.Owner,
+			Message: message,
+		}}
+		if previousOwner != "" {
+			notifications = append(notifications, domain.Notification{
+				User:    previousOwner,
+				Message: message,
+			})
+		}
+		if errs := s.notifier.Notify(notifications); errs != nil {
+			for _, err1 := range errs {
+				s.logger.Error("failed to send notifications", "error", err1.Error())
+			}
+		}
+	}
 
 	return nil
 }

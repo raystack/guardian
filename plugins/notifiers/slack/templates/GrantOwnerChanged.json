@@ -1,0 +1,9 @@
+[
+  {
+    "type":"section",
+    "text": {
+      "type":"mrkdwn",
+      "text":"Owner of grant `{{.grant_id}}` has been changed from `{{.previous_owner}}` to `{{.new_owner}}`"
+    }
+  }
+]

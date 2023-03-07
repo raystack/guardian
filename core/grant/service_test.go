@@ -172,6 +172,23 @@ func (s *ServiceTestSuite) TestUpdate() {
 		}).Once()
 		s.mockAuditLogger.EXPECT().
 			Log(mock.AnythingOfType("*context.emptyCtx"), grant.AuditKeyUpdate, mock.AnythingOfType("map[string]interface {}")).Return(nil).Once()
+		notificationMessage := domain.NotificationMessage{
+			Type: domain.NotificationTypeGrantOwnerChanged,
+			Variables: map[string]interface{}{
+				"grant_id":       id,
+				"previous_owner": existingGrant.Owner,
+				"new_owner":      expectedUpdatedGrant.Owner,
+			},
+		}
+		expectedNotifications := []domain.Notification{{
+			User:    updatePayload.Owner,
+			Message: notificationMessage,
+		}, {
+			User:    existingGrant.Owner,
+			Message: notificationMessage,
+		}}
+		s.mockNotifier.EXPECT().
+			Notify(expectedNotifications).Return(nil).Once()
 
 		actualError := s.service.Update(context.Background(), updatePayload)
 		s.NoError(actualError)
