@@ -1,16 +1,17 @@
-package slack
+package slack_test
 
 import (
 	"bytes"
+	"embed"
 	"errors"
+	"github.com/odpf/guardian/domain"
+	"github.com/odpf/guardian/mocks"
+	"github.com/odpf/guardian/plugins/notifiers/slack"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 	"io/ioutil"
 	"net/http"
 	"testing"
-
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
 )
 
 type ClientTestSuite struct {
@@ -19,7 +20,7 @@ type ClientTestSuite struct {
 	accessToken    string
 	messages       domain.NotificationMessages
 	slackIDCache   map[string]string
-	notifier       notifier
+	notifier       *slack.Notifier
 }
 
 func (s *ClientTestSuite) setup() {
@@ -29,17 +30,13 @@ func (s *ClientTestSuite) setup() {
 		AppealRejected: "[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"Your appeal to {{.resource_name}} with role {{.role}} has been rejected\"}}]",
 	}
 	s.slackIDCache = map[string]string{}
-	s.notifier = notifier{
-		accessToken:         s.accessToken,
-		slackIDCache:        s.slackIDCache,
-		Messages:            s.messages,
-		httpClient:          s.mockHttpClient,
-		defaultMessageFiles: defaultTemplates,
-	}
-}
 
-func TestClient(t *testing.T) {
-	suite.Run(t, new(ClientTestSuite))
+	conf := &slack.Config{
+		AccessToken: s.accessToken,
+		Messages:    s.messages,
+	}
+
+	s.notifier = slack.NewNotifier(conf, s.slackIDCache, s.mockHttpClient)
 }
 
 func (s *ClientTestSuite) TestNotify() {
@@ -51,27 +48,55 @@ func (s *ClientTestSuite) TestNotify() {
 		s.mockHttpClient.On("Do", mock.Anything).Return(resp, nil)
 		expectedErrs := []error{errors.New("users_not_found"), errors.New("EOF")}
 
-		actualErrs := s.notifier.Notify([]domain.Notification{
+		notifications := []domain.Notification{
 			{
 				User: "test-user@abc.com",
 				Message: domain.NotificationMessage{
 					Type: domain.NotificationTypeAppealRejected,
 					Variables: map[string]interface{}{
-						"ResourceName": "test-resource",
+						"resource_name": "test-resource",
+						"role":          "test-role",
 					},
 				},
 			},
-		})
+		}
+		actualErrs := s.notifier.Notify(notifications)
 
 		s.Equal(expectedErrs, actualErrs)
 	})
 
-	s.Run("should get default message template from file if not found in config", func() {
-		s.setup()
-		expectedContent, err := ioutil.ReadFile("templates/AppealApproved.json")
-		content, err := getDefaultTemplate("AppealApproved", s.notifier.defaultMessageFiles)
+}
 
-		s.Equal(string(expectedContent), content)
-		s.Equal(err, nil)
+func (s *ClientTestSuite) TestParseMessage() {
+	s.setup()
+	s.Run("should be able to parse message", func() {
+		notificationMsg := domain.NotificationMessage{
+			Type: domain.NotificationTypeAppealRejected,
+			Variables: map[string]interface{}{
+				"resource_name": "test-resource",
+				"role":          "test-role",
+			},
+		}
+		expectedMsg := `[{"type":"section","text":{"type":"mrkdwn","text":"Your appeal to test-resource with role test-role has been rejected"}}]`
+		message, err := slack.ParseMessage(notificationMsg, s.messages, embed.FS{})
+
+		s.Nil(err)
+		s.Equal(expectedMsg, message)
 	})
+
+	s.Run("should return error if message template not found", func() {
+		notificationMsg := domain.NotificationMessage{
+			Type: "AppealSuspended", // not found in messages
+			Variables: map[string]interface{}{
+				"resource_name": "test-resource",
+				"role":          "test-role",
+			},
+		}
+		_, err := slack.ParseMessage(notificationMsg, s.messages, embed.FS{})
+		s.Errorf(err, "template not found for message type AppealSuspended")
+	})
+}
+
+func TestClient(t *testing.T) {
+	suite.Run(t, new(ClientTestSuite))
 }

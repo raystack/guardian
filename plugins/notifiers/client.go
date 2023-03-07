@@ -2,6 +2,8 @@ package notifiers
 
 import (
 	"errors"
+	"net/http"
+	"time"
 
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/notifiers/slack"
@@ -27,10 +29,13 @@ type Config struct {
 
 func NewClient(config *Config) (Client, error) {
 	if config.Provider == ProviderTypeSlack {
-		return slack.New(&slack.Config{
+		slackConfig := &slack.Config{
 			AccessToken: config.AccessToken,
 			Messages:    config.Messages,
-		}), nil
+		}
+		httpClient := &http.Client{Timeout: 10 * time.Second}
+		slackIDCache := map[string]string{}
+		return slack.NewNotifier(slackConfig, slackIDCache, httpClient), nil
 	}
 
 	return nil, errors.New("invalid notifier provider type")
