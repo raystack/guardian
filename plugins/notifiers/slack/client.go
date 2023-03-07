@@ -6,13 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/odpf/guardian/utils"
 	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
-
-	"github.com/odpf/guardian/utils"
 
 	"github.com/odpf/guardian/domain"
 )
@@ -34,7 +32,7 @@ type userResponse struct {
 	Error string `json:"error"`
 }
 
-type notifier struct {
+type Notifier struct {
 	accessToken string
 
 	slackIDCache        map[string]string
@@ -51,17 +49,17 @@ type Config struct {
 //go:embed templates/*
 var defaultTemplates embed.FS
 
-func New(config *Config) *notifier {
-	return &notifier{
+func NewNotifier(config *Config, httpClient utils.HTTPClient) *Notifier {
+	return &Notifier{
 		accessToken:         config.AccessToken,
 		slackIDCache:        map[string]string{},
 		Messages:            config.Messages,
-		httpClient:          &http.Client{Timeout: 10 * time.Second},
+		httpClient:          httpClient,
 		defaultMessageFiles: defaultTemplates,
 	}
 }
 
-func (n *notifier) Notify(items []domain.Notification) []error {
+func (n *Notifier) Notify(items []domain.Notification) []error {
 	errs := make([]error, 0)
 	for _, item := range items {
 		slackID, err := n.findSlackIDByEmail(item.User)
@@ -69,7 +67,7 @@ func (n *notifier) Notify(items []domain.Notification) []error {
 			errs = append(errs, err)
 		}
 
-		msg, err := parseMessage(item.Message, n.Messages, n.defaultMessageFiles)
+		msg, err := ParseMessage(item.Message, n.Messages, n.defaultMessageFiles)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -82,7 +80,7 @@ func (n *notifier) Notify(items []domain.Notification) []error {
 	return errs
 }
 
-func (n *notifier) sendMessage(channel, messageBlock string) error {
+func (n *Notifier) sendMessage(channel, messageBlock string) error {
 	url := slackHost + "/api/chat.postMessage"
 	var messageblockList []interface{}
 
@@ -108,7 +106,7 @@ func (n *notifier) sendMessage(channel, messageBlock string) error {
 	return err
 }
 
-func (n *notifier) findSlackIDByEmail(email string) (string, error) {
+func (n *Notifier) findSlackIDByEmail(email string) (string, error) {
 	if n.slackIDCache[email] != "" {
 		return n.slackIDCache[email], nil
 	}
@@ -136,7 +134,7 @@ func (n *notifier) findSlackIDByEmail(email string) (string, error) {
 	return result.User.ID, nil
 }
 
-func (n *notifier) sendRequest(req *http.Request) (*userResponse, error) {
+func (n *Notifier) sendRequest(req *http.Request) (*userResponse, error) {
 	resp, err := n.httpClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -163,7 +161,7 @@ func getDefaultTemplate(messageType string, defaultTemplateFiles embed.FS) (stri
 	return string(content), nil
 }
 
-func parseMessage(message domain.NotificationMessage, templates domain.NotificationMessages, defaultTemplateFiles embed.FS) (string, error) {
+func ParseMessage(message domain.NotificationMessage, templates domain.NotificationMessages, defaultTemplateFiles embed.FS) (string, error) {
 	messageTypeTemplateMap := map[string]string{
 		domain.NotificationTypeAccessRevoked:          templates.AccessRevoked,
 		domain.NotificationTypeAppealApproved:         templates.AppealApproved,
