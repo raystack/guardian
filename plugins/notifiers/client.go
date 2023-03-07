@@ -34,8 +34,7 @@ func NewClient(config *Config) (Client, error) {
 			Messages:    config.Messages,
 		}
 		httpClient := &http.Client{Timeout: 10 * time.Second}
-		slackIDCache := map[string]string{}
-		return slack.NewNotifier(slackConfig, slackIDCache, httpClient), nil
+		return slack.NewNotifier(slackConfig, httpClient), nil
 	}
 
 	return nil, errors.New("invalid notifier provider type")

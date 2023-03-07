@@ -19,7 +19,6 @@ type ClientTestSuite struct {
 	mockHttpClient *mocks.HTTPClient
 	accessToken    string
 	messages       domain.NotificationMessages
-	slackIDCache   map[string]string
 	notifier       *slack.Notifier
 }
 
@@ -29,14 +28,13 @@ func (s *ClientTestSuite) setup() {
 	s.messages = domain.NotificationMessages{
 		AppealRejected: "[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"Your appeal to {{.resource_name}} with role {{.role}} has been rejected\"}}]",
 	}
-	s.slackIDCache = map[string]string{}
 
 	conf := &slack.Config{
 		AccessToken: s.accessToken,
 		Messages:    s.messages,
 	}
 
-	s.notifier = slack.NewNotifier(conf, s.slackIDCache, s.mockHttpClient)
+	s.notifier = slack.NewNotifier(conf, s.mockHttpClient)
 }
 
 func (s *ClientTestSuite) TestNotify() {

@@ -49,10 +49,10 @@ type Config struct {
 //go:embed templates/*
 var defaultTemplates embed.FS
 
-func NewNotifier(config *Config, slackIDCache map[string]string, httpClient utils.HTTPClient) *Notifier {
+func NewNotifier(config *Config, httpClient utils.HTTPClient) *Notifier {
 	return &Notifier{
 		accessToken:         config.AccessToken,
-		slackIDCache:        slackIDCache,
+		slackIDCache:        map[string]string{},
 		Messages:            config.Messages,
 		httpClient:          httpClient,
 		defaultMessageFiles: defaultTemplates,
