@@ -7,6 +7,7 @@ type NotificationMessages struct {
 	AccessRevoked        string `mapstructure:"access_revoked"`
 	ApproverNotification string `mapstructure:"approver_notification"`
 	OthersAppealApproved string `mapstructure:"others_appeal_approved"`
+	GrantOwnerChanged    string `mapstructure:"grant_owner_changed"`
 }
 
 const (
@@ -16,6 +17,7 @@ const (
 	NotificationTypeAppealRejected         = "AppealRejected"
 	NotificationTypeAccessRevoked          = "AccessRevoked"
 	NotificationTypeApproverNotification   = "ApproverNotification"
+	NotificationTypeGrantOwnerChanged      = "GrantOwnerChanged"
 )
 
 type NotificationMessage struct {

@@ -129,6 +129,98 @@ func (s *ServiceTestSuite) TestGetByID() {
 	})
 }
 
+func (s *ServiceTestSuite) TestUpdate() {
+	s.Run("should only update allowed fields", func() {
+		s.setup()
+
+		yesterday := time.Now().Add(-24 * time.Hour)
+		id := uuid.New().String()
+		existingGrant := &domain.Grant{
+			ID:          id,
+			AccountID:   "test-account-id",
+			AccountType: "user",
+			Owner:       "owner@example.com",
+			Role:        "test-role",
+			CreatedAt:   yesterday,
+			UpdatedAt:   yesterday,
+		}
+
+		updatePayload := &domain.Grant{
+			ID:          id,
+			Owner:       "new-owner@example.com",
+			IsPermanent: true,  // should be ignored
+			Role:        "xyz", // should be ignored
+		}
+
+		expectedUpdateParam := &domain.Grant{
+			ID:    id,
+			Owner: "new-owner@example.com",
+		}
+
+		expectedUpdatedGrant := &domain.Grant{}
+		*expectedUpdatedGrant = *existingGrant
+		expectedUpdatedGrant.Owner = updatePayload.Owner
+		expectedUpdatedGrant.UpdatedAt = time.Now()
+
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), id).
+			Return(existingGrant, nil).Once()
+		s.mockRepository.EXPECT().
+			Update(mock.AnythingOfType("*context.emptyCtx"), expectedUpdateParam).
+			Return(nil).Run(func(_a0 context.Context, g *domain.Grant) {
+			g.UpdatedAt = time.Now()
+		}).Once()
+		s.mockAuditLogger.EXPECT().
+			Log(mock.AnythingOfType("*context.emptyCtx"), grant.AuditKeyUpdate, mock.AnythingOfType("map[string]interface {}")).Return(nil).Once()
+		notificationMessage := domain.NotificationMessage{
+			Type: domain.NotificationTypeGrantOwnerChanged,
+			Variables: map[string]interface{}{
+				"grant_id":       id,
+				"previous_owner": existingGrant.Owner,
+				"new_owner":      expectedUpdatedGrant.Owner,
+			},
+		}
+		expectedNotifications := []domain.Notification{{
+			User:    updatePayload.Owner,
+			Message: notificationMessage,
+		}, {
+			User:    existingGrant.Owner,
+			Message: notificationMessage,
+		}}
+		s.mockNotifier.EXPECT().
+			Notify(expectedNotifications).Return(nil).Once()
+
+		actualError := s.service.Update(context.Background(), updatePayload)
+		s.NoError(actualError)
+		s.Empty(cmp.Diff(expectedUpdatedGrant, updatePayload, cmpopts.EquateApproxTime(time.Second)))
+	})
+
+	s.Run("should return error if owner is updated to empty", func() {
+		s.setup()
+
+		id := uuid.New().String()
+		existingGrant := &domain.Grant{
+			ID:          id,
+			AccountID:   "test-account-id",
+			AccountType: "user",
+			Owner:       "user@example.com",
+			Role:        "test-role",
+		}
+
+		updatePayload := &domain.Grant{
+			ID:    id,
+			Owner: "",
+		}
+
+		s.mockRepository.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), id).
+			Return(existingGrant, nil).Once()
+
+		actualError := s.service.Update(context.Background(), updatePayload)
+		s.ErrorIs(actualError, grant.ErrEmptyOwner)
+	})
+}
+
 func (s *ServiceTestSuite) TestRevoke() {
 	id := uuid.New().String()
 	actor := "user@example.com"
