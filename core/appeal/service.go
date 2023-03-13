@@ -804,6 +804,7 @@ func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 						"approval_step": approval.Name,
 						"actor":         approver,
 						"details":       appeal.Details,
+						"duration":      appeal.Options.Duration,
 					},
 				},
 			})
