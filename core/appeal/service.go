@@ -28,6 +28,7 @@ const (
 	AuditKeyDeleteApprover = "appeal.deleteApprover"
 
 	RevokeReasonForExtension = "Automatically revoked for grant extension"
+	PermanentDuration        = "Permanent"
 )
 
 var TimeNow = time.Now
@@ -785,6 +786,12 @@ func (s *Service) getPoliciesMap(ctx context.Context) (map[string]map[uint]*doma
 func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 	notifications := []domain.Notification{}
 	approval := appeal.GetNextPendingApproval()
+
+	duration := PermanentDuration
+	if !appeal.IsDurationEmpty() {
+		duration = appeal.Options.Duration
+	}
+
 	if approval != nil {
 		for _, approver := range approval.Approvers {
 			notifications = append(notifications, domain.Notification{
@@ -804,7 +811,7 @@ func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 						"approval_step": approval.Name,
 						"actor":         approver,
 						"details":       appeal.Details,
-						"duration":      appeal.Options.Duration,
+						"duration":      duration,
 					},
 				},
 			})
