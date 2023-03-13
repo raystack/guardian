@@ -83,11 +83,7 @@ func (a *Appeal) Cancel() {
 func (a *Appeal) Approve() error {
 	a.Status = AppealStatusApproved
 
-	if a.Options == nil || a.Options.Duration == "" {
-		return nil
-	}
-
-	duration, err := time.ParseDuration(a.Options.Duration)
+	duration, err := a.GetDuration()
 	if err != nil {
 		return err
 	}
@@ -100,6 +96,23 @@ func (a *Appeal) Approve() error {
 	expirationDate := time.Now().Add(duration)
 	a.Options.ExpirationDate = &expirationDate
 	return nil
+}
+
+func (a *Appeal) GetDuration() (time.Duration, error) {
+	if a.IsDurationEmpty() {
+		return 0 * time.Second, nil
+	}
+
+	duration, err := time.ParseDuration(a.Options.Duration)
+	if err != nil {
+		return 0 * time.Second, err
+	}
+
+	return duration, nil
+}
+
+func (a *Appeal) IsDurationEmpty() bool {
+	return a.Options == nil || a.Options.Duration == "" || a.Options.Duration == "0h"
 }
 
 func (a *Appeal) Reject() {
