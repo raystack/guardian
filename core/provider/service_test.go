@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/core/provider"
-	providermocks "github.com/odpf/guardian/core/provider/mocks"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/salt/log"
+	"github.com/goto/guardian/core/provider"
+	providermocks "github.com/goto/guardian/core/provider/mocks"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/salt/log"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

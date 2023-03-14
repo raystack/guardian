@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/odpf/guardian/core/resource"
-	"github.com/odpf/guardian/core/resource/mocks"
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/core/resource"
+	"github.com/goto/guardian/core/resource/mocks"
+	"github.com/goto/guardian/domain"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

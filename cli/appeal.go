@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/salt/printer"
-	"github.com/odpf/salt/term"
+	guardianv1beta1 "github.com/goto/guardian/api/proto/gotocompany/guardian/v1beta1"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/salt/printer"
+	"github.com/goto/salt/term"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
 )

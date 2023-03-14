@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	bq "cloud.google.com/go/bigquery"
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 )
 
 const (

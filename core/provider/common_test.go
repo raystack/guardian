@@ -3,8 +3,8 @@ package provider_test
 import (
 	"testing"
 
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/core/provider"
+	"github.com/goto/guardian/domain"
 	"github.com/stretchr/testify/assert"
 )
 

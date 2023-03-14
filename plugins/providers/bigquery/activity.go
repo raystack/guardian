@@ -10,7 +10,7 @@ import (
 
 	"cloud.google.com/go/logging"
 	"cloud.google.com/go/logging/logadmin"
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/genproto/googleapis/cloud/audit"

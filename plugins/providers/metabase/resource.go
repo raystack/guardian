@@ -7,7 +7,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 )
 
 const (

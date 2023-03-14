@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/logging"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/providers/bigquery"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/plugins/providers/bigquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/genproto/googleapis/cloud/audit"

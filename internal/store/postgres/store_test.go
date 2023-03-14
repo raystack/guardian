@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/odpf/guardian/internal/store"
-	"github.com/odpf/guardian/internal/store/postgres"
-	"github.com/odpf/salt/log"
+	"github.com/goto/guardian/internal/store"
+	"github.com/goto/guardian/internal/store/postgres"
+	"github.com/goto/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 )

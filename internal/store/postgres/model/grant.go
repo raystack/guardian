@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/goto/guardian/domain"
 	"github.com/lib/pq"
-	"github.com/odpf/guardian/domain"
 	"gorm.io/gorm"
 )
 

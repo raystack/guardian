@@ -7,14 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/odpf/guardian/pkg/evaluator"
+	"github.com/goto/guardian/pkg/evaluator"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/providers"
-	"github.com/odpf/guardian/utils"
-	"github.com/odpf/salt/audit"
-	"github.com/odpf/salt/log"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/plugins/providers"
+	"github.com/goto/guardian/utils"
+	"github.com/goto/salt/audit"
+	"github.com/goto/salt/log"
 )
 
 const (

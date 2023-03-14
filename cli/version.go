@@ -3,9 +3,9 @@ package cli
 import (
 	"fmt"
 
-	"github.com/odpf/guardian/core"
-	"github.com/odpf/salt/term"
-	"github.com/odpf/salt/version"
+	"github.com/goto/guardian/core"
+	"github.com/goto/salt/term"
+	"github.com/goto/salt/version"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +22,7 @@ func VersionCmd() *cobra.Command {
 			}
 
 			fmt.Printf("guardian version %s (%s)\n\n", core.Version, core.BuildDate)
-			fmt.Println(term.Yellow(version.UpdateNotice(core.Version, "odpf/guardian")))
+			fmt.Println(term.Yellow(version.UpdateNotice(core.Version, "goto/guardian")))
 			return nil
 		},
 	}

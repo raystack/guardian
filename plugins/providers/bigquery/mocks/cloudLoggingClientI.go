@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	bigquery "github.com/odpf/guardian/plugins/providers/bigquery"
+	bigquery "github.com/goto/guardian/plugins/providers/bigquery"
 
 	mock "github.com/stretchr/testify/mock"
 )

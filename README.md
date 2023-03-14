@@ -1,10 +1,10 @@
 # Guardian
 
-![test workflow](https://github.com/odpf/guardian/actions/workflows/test.yaml/badge.svg)
-![release workflow](https://github.com/odpf/guardian/actions/workflows/release.yaml/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/odpf/guardian/badge.svg?branch=main)](https://coveralls.io/github/odpf/guardian?branch=main)
+![test workflow](https://github.com/goto/guardian/actions/workflows/test.yaml/badge.svg)
+![release workflow](https://github.com/goto/guardian/actions/workflows/release.yaml/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/goto/guardian/badge.svg?branch=main)](https://coveralls.io/github/goto/guardian?branch=main)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?logo=apache)](LICENSE)
-[![Version](https://img.shields.io/github/v/release/odpf/guardian?logo=semantic-release)](Version)
+[![Version](https://img.shields.io/github/v/release/goto/guardian?logo=semantic-release)](Version)
 
 Guardian is a on-demand access management tool. It manages resources from various data providers along with the users’ access. Users required to raise an appeal in order to gain access to a particular resource. The appeal will go through several approvals before it is getting approved and granted the access to the user.
 
@@ -22,27 +22,27 @@ Guardian is a on-demand access management tool. It manages resources from variou
 
 Explore the following resoruces to get started with Guardian:
 
-- [Guides](https://odpf.github.io/guardian/docs/tour/introduction) provides guidance on usage.
-- [Concepts](https://odpf.github.io/guardian/docs/concepts/overview) describes all important Guardian concepts including system architecture.
-- [Reference](https://odpf.github.io/guardian/docs/reference/api) contains details about configurations and other aspects of Guardian.
-- [Contribute](https://odpf.github.io/guardian/docs/contribute/contribution) contains resources for anyone who wants to contribute to Guardian.
+- [Guides](https://goto.github.io/guardian/docs/tour/introduction) provides guidance on usage.
+- [Concepts](https://goto.github.io/guardian/docs/concepts/overview) describes all important Guardian concepts including system architecture.
+- [Reference](https://goto.github.io/guardian/docs/reference/api) contains details about configurations and other aspects of Guardian.
+- [Contribute](https://goto.github.io/guardian/docs/contribute/contribution) contains resources for anyone who wants to contribute to Guardian.
 
 ## Installation
 
-Install Guardian on macOS, Windows, Linux, OpenBSD, FreeBSD, and on any machine. <br/>Refer this for [installations](https://odpf.github.io/guardian/docs/installation) and [configurations](https://odpf.github.io/guardian/docs/tour/configuration)
+Install Guardian on macOS, Windows, Linux, OpenBSD, FreeBSD, and on any machine. <br/>Refer this for [installations](https://goto.github.io/guardian/docs/installation) and [configurations](https://goto.github.io/guardian/docs/tour/configuration)
 
 #### Binary (Cross-platform)
 
-Download the appropriate version for your platform from [releases](https://github.com/odpf/guardian/releases) page. Once downloaded, the binary can be run from anywhere.
+Download the appropriate version for your platform from [releases](https://github.com/goto/guardian/releases) page. Once downloaded, the binary can be run from anywhere.
 You don’t need to install it into a global location. This works well for shared hosts and other systems where you don’t have a privileged account.
 Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
 
 #### macOS
 
-`guardian` is available via a Homebrew Tap, and as downloadable binary from the [releases](https://github.com/odpf/guardian/releases/latest) page:
+`guardian` is available via a Homebrew Tap, and as downloadable binary from the [releases](https://github.com/goto/guardian/releases/latest) page:
 
 ```sh
-brew install odpf/tap/guardian
+brew install goto/tap/guardian
 ```
 
 To upgrade to the latest version:
@@ -59,14 +59,14 @@ guardian version
 
 #### Linux
 
-`guardian` is available as downloadable binaries from the [releases](https://github.com/odpf/guardian/releases/latest) page. Download the `.deb` or `.rpm` from the releases page and install with `sudo dpkg -i` and `sudo rpm -i` respectively.
+`guardian` is available as downloadable binaries from the [releases](https://github.com/goto/guardian/releases/latest) page. Download the `.deb` or `.rpm` from the releases page and install with `sudo dpkg -i` and `sudo rpm -i` respectively.
 
 #### Windows
 
-`guardian` is available via [scoop](https://scoop.sh/), and as a downloadable binary from the [releases](https://github.com/odpf/guardian/releases/latest) page:
+`guardian` is available via [scoop](https://scoop.sh/), and as a downloadable binary from the [releases](https://github.com/goto/guardian/releases/latest) page:
 
 ```
-scoop bucket add guardian https://github.com/odpf/scoop-bucket.git
+scoop bucket add guardian https://github.com/goto/scoop-bucket.git
 ```
 
 To upgrade to the latest version:
@@ -80,13 +80,13 @@ scoop update guardian
 We provide ready to use Docker container images. To pull the latest image:
 
 ```
-docker pull odpf/guardian:latest
+docker pull gotocompany/guardian:latest
 ```
 
 To pull a specific version:
 
 ```
-docker pull odpf/guardian:v0.3.2
+docker pull gotocompany/guardian:v0.3.2
 ```
 
 ## Usage
@@ -111,7 +111,7 @@ guardian reference
 
 #### API
 
-Guardian provides a fully-featured GRPC and HTTP API to interact with Guardian server. Both APIs adheres to a set of standards that are rigidly followed. Please refer to [proton](https://github.com/odpf/proton/tree/main/odpf/guardian/v1beta1) for GRPC API definitions.
+Guardian provides a fully-featured GRPC and HTTP API to interact with Guardian server. Both APIs adheres to a set of standards that are rigidly followed. Please refer to [proton](https://github.com/goto/proton/tree/main/gotocompany/guardian/v1beta1) for GRPC API definitions.
 
 ## Running locally
 
@@ -127,7 +127,7 @@ Guardian provides a fully-featured GRPC and HTTP API to interact with Guardian s
 Clone the repo
 
 ```
-git clone git@github.com:odpf/guardian.git
+git clone git@github.com:goto/guardian.git
 ```
 
 Install all the golang dependencies
@@ -185,14 +185,14 @@ make coverage
 Development of Guardian happens in the open on GitHub, and we are grateful to the community for contributing bugfixes and
 improvements. Read below to learn how you can take part in improving Guardian.
 
-Read our [contributing guide](https://odpf.github.io/guardian/docs/contribute/contribution) to learn about our development process, how to propose
+Read our [contributing guide](https://goto.github.io/guardian/docs/contribute/contribution) to learn about our development process, how to propose
 bugfixes and improvements, and how to build and test your changes to Guardian.
 
 To help you get your feet wet and get you familiar with our contribution process, we have a list of
-[good first issues](https://github.com/odpf/guardian/labels/good%20first%20issue) that contain bugs which have a relatively
+[good first issues](https://github.com/goto/guardian/labels/good%20first%20issue) that contain bugs which have a relatively
 limited scope. This is a great place to get started.
 
-This project exists thanks to all the [contributors](https://github.com/odpf/guardian/graphs/contributors).
+This project exists thanks to all the [contributors](https://github.com/goto/guardian/graphs/contributors).
 
 ## License
 

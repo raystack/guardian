@@ -3,8 +3,8 @@ package tableau_test
 import (
 	"testing"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/providers/tableau"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/plugins/providers/tableau"
 	"github.com/stretchr/testify/assert"
 )
 

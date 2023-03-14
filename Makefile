@@ -1,9 +1,9 @@
-NAME="github.com/odpf/guardian"
+NAME="github.com/goto/guardian"
 COMMIT := $(shell git rev-parse --short HEAD)
 TAG := "$(shell git rev-list --tags --max-count=1)"
 VERSION := "$(shell git describe --tags ${TAG})-next"
 BUILD_DIR=dist
-PROTON_COMMIT := "b9b0deda4ba141084b1741805a1682e26e2a2e74"
+PROTON_COMMIT := "561323badd70e4321bf868b667d8da3d90fb208b"
 
 .PHONY: all build clean test tidy vet proto setup format generate
 
@@ -59,9 +59,9 @@ config:
 	@cp internal/server/config.yaml config.yaml
 
 proto:
-	@echo "Generating protobuf from odpf/proton"
+	@echo "Generating protobuf from goto/proton"
 	@echo " [info] make sure correct version of dependencies are installed using 'make install'"
-	@buf generate https://github.com/odpf/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --template buf.gen.yaml --path odpf/guardian
+	@buf generate https://github.com/goto/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --template buf.gen.yaml --path gotocompany/guardian
 	@echo "Protobuf compilation finished"
 
 setup:

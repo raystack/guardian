@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/store/postgres"
-	"github.com/odpf/salt/log"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/internal/store/postgres"
+	"github.com/goto/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
 )

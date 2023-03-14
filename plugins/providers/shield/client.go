@@ -11,9 +11,9 @@ import (
 	"path"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/goto/guardian/pkg/tracing"
+	"github.com/goto/salt/log"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/pkg/tracing"
-	"github.com/odpf/salt/log"
 )
 
 const (

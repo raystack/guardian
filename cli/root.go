@@ -2,9 +2,9 @@ package cli
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
-	"github.com/odpf/guardian/pkg/tracing"
-	"github.com/odpf/salt/cmdx"
+	handlerv1beta1 "github.com/goto/guardian/api/handler/v1beta1"
+	"github.com/goto/guardian/pkg/tracing"
+	"github.com/goto/salt/cmdx"
 	"github.com/spf13/cobra"
 )
 
@@ -22,10 +22,10 @@ func New(cfg *Config) *cobra.Command {
 			"group": "core",
 			"help:learn": heredoc.Doc(`
 				Use 'guardian <command> --help' for info about a command.
-				Read the manual at https://odpf.github.io/guardian/
+				Read the manual at https://goto.github.io/guardian/
 			`),
 			"help:feedback": heredoc.Doc(`
-				Open an issue here https://github.com/odpf/guardian/issues
+				Open an issue here https://github.com/goto/guardian/issues
 			`),
 		},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {

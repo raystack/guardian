@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/odpf/guardian/core/approval"
-	approvalmocks "github.com/odpf/guardian/core/approval/mocks"
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/core/approval"
+	approvalmocks "github.com/goto/guardian/core/approval/mocks"
+	"github.com/goto/guardian/domain"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

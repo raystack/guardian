@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )

@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/providers/gcs"
-	"github.com/odpf/guardian/plugins/providers/gcs/mocks"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/plugins/providers/gcs"
+	"github.com/goto/guardian/plugins/providers/gcs/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

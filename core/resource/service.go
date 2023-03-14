@@ -3,9 +3,9 @@ package resource
 import (
 	"context"
 
+	"github.com/goto/guardian/domain"
+	"github.com/goto/salt/log"
 	"github.com/imdario/mergo"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/salt/log"
 )
 
 const (

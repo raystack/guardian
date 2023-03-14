@@ -1,6 +1,6 @@
 package noop
 
-import "github.com/odpf/guardian/domain"
+import "github.com/goto/guardian/domain"
 
 type Config struct {
 	ProviderConfig *domain.ProviderConfig

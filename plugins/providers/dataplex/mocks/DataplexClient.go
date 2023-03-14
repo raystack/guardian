@@ -4,9 +4,9 @@ package mocks
 
 import (
 	context "context"
-	"github.com/odpf/guardian/plugins/providers/dataplex"
+	"github.com/goto/guardian/plugins/providers/dataplex"
 
-	domain "github.com/odpf/guardian/domain"
+	domain "github.com/goto/guardian/domain"
 
 	mock "github.com/stretchr/testify/mock"
 )

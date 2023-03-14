@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 )
 
 func (h *handler) GrantExpirationReminder(ctx context.Context) error {

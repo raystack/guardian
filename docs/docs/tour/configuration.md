@@ -109,7 +109,7 @@ Guardian CLI supports CLI client to communicate with a Guardian server. To initi
 $ guardian config init
 ```
 
-A yaml file will be created in the `~/.config/odpf/guardian.yaml` directory. Open this file to configure the host for Guardian server as in the example below:
+A yaml file will be created in the `~/.config/goto/guardian.yaml` directory. Open this file to configure the host for Guardian server as in the example below:
 
 ```yaml
 host: "localhost:8080"

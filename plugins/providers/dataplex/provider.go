@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/goto/guardian/core/provider"
+	"github.com/goto/guardian/domain"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
 )
 
 type PolicyTagClient interface {

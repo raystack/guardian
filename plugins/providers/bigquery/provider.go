@@ -10,11 +10,11 @@ import (
 	"time"
 
 	bq "cloud.google.com/go/bigquery"
+	"github.com/goto/guardian/core/provider"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/pkg/slices"
+	"github.com/goto/salt/log"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/pkg/slices"
-	"github.com/odpf/salt/log"
 	"github.com/patrickmn/go-cache"
 )
 

@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"embed"
 	"errors"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/plugins/notifiers/slack"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/mocks"
+	"github.com/goto/guardian/plugins/notifiers/slack"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 )
 
 type ClientTestSuite struct {

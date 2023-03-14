@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/goto/guardian/pkg/tracing"
 	"github.com/mcuadros/go-defaults"
-	"github.com/odpf/guardian/pkg/tracing"
 )
 
 type TableauClient interface {

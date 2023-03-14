@@ -1,10 +1,10 @@
 package shield
 
 import (
+	pv "github.com/goto/guardian/core/provider"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/salt/log"
 	"github.com/mitchellh/mapstructure"
-	pv "github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/salt/log"
 )
 
 type provider struct {

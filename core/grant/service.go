@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/guardian/utils"
-	"github.com/odpf/salt/log"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/plugins/notifiers"
+	"github.com/goto/guardian/utils"
+	"github.com/goto/salt/log"
 )
 
 const (

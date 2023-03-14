@@ -6,11 +6,11 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/internal/server"
-	"github.com/odpf/guardian/jobs"
-	"github.com/odpf/guardian/pkg/crypto"
-	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/salt/log"
+	"github.com/goto/guardian/internal/server"
+	"github.com/goto/guardian/jobs"
+	"github.com/goto/guardian/pkg/crypto"
+	"github.com/goto/guardian/plugins/notifiers"
+	"github.com/goto/salt/log"
 	"github.com/spf13/cobra"
 )
 

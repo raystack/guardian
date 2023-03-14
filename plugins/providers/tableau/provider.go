@@ -1,9 +1,9 @@
 package tableau
 
 import (
+	pv "github.com/goto/guardian/core/provider"
+	"github.com/goto/guardian/domain"
 	"github.com/mitchellh/mapstructure"
-	pv "github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
 )
 
 type provider struct {

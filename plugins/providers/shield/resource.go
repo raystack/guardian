@@ -3,7 +3,7 @@ package shield
 import (
 	"fmt"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 )
 
 const (

@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/core/grant"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/pkg/evaluator"
-	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/guardian/utils"
-	"github.com/odpf/salt/log"
+	"github.com/goto/guardian/core/grant"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/pkg/evaluator"
+	"github.com/goto/guardian/plugins/notifiers"
+	"github.com/goto/guardian/utils"
+	"github.com/goto/salt/log"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -923,7 +923,6 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 		if err := g.Wait(); err == nil {
 			return err
 		}
-
 	}
 	return nil
 }

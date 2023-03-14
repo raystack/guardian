@@ -5,10 +5,10 @@ import (
 	"os"
 
 	"github.com/MakeNowJust/heredoc"
-	handlerv1beta1 "github.com/odpf/guardian/api/handler/v1beta1"
-	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/salt/printer"
-	"github.com/odpf/salt/term"
+	handlerv1beta1 "github.com/goto/guardian/api/handler/v1beta1"
+	guardianv1beta1 "github.com/goto/guardian/api/proto/gotocompany/guardian/v1beta1"
+	"github.com/goto/salt/printer"
+	"github.com/goto/salt/term"
 	"github.com/spf13/cobra"
 )
 

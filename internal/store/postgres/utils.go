@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/odpf/guardian/utils"
+	"github.com/goto/guardian/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

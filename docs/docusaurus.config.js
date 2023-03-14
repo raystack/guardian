@@ -6,12 +6,12 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 (module.exports = {
   title: 'Guardian',
   tagline: 'Universal data access control',
-  url: 'https://odpf.github.io/',
+  url: 'https://goto.github.io/',
   baseUrl: '/guardian/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'ODPF',
+  organizationName: 'GOTO',
   projectName: 'guardian',
 
   presets: [
@@ -20,7 +20,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       ({
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/odpf/guardian/edit/master/docs/',
+          editUrl: 'https://github.com/goto/guardian/edit/master/docs/',
           sidebarCollapsed: true,
           breadcrumbs: false,
         },
@@ -63,7 +63,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
             className: 'header-slack-link',
           },
           {
-            href: 'https://github.com/odpf/guardian',
+            href: 'https://github.com/goto/guardian',
             className: 'navbar-item-github',
             position: 'right',
           },
@@ -79,7 +79,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       },
       announcementBar: {
         id: 'star-repo',
-        content: '⭐️ If you like Guardian, give it a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/odpf/guardian">GitHub</a>! ⭐',
+        content: '⭐️ If you like Guardian, give it a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/goto/guardian">GitHub</a>! ⭐',
         backgroundColor: '#222',
         textColor: '#eee',
         isCloseable: true,

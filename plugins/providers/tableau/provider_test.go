@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/plugins/providers/tableau"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/mocks"
+	"github.com/goto/guardian/plugins/providers/tableau"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

@@ -1,7 +1,7 @@
 package dataplex
 
 import (
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 )
 
 const (

@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/utils"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/utils"
 )
 
 const (

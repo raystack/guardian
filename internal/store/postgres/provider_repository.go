@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/store/postgres/model"
+	"github.com/goto/guardian/core/provider"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/internal/store/postgres/model"
 	"gorm.io/gorm"
 )
 

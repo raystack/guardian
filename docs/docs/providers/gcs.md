@@ -18,7 +18,7 @@ objects.You can use buckets to organize your data and control access to your dat
 unlike directories and folders, you cannot nest buckets. For example, you might create a
 photos bucket for all the image files your app generates and a separate video bucket.
 - **Object**: Objects are the individual pieces of data that you store in Cloud Storage.There is
-no limit on the number of objects that you can create in a bucket. An individual file, such as an image called odpf.png.
+no limit on the number of objects that you can create in a bucket. An individual file, such as an image called goto.png.
 
 ### GCS Users 
 GCS allows Google Account, Service account, Google group, Google Workspace account, Cloud

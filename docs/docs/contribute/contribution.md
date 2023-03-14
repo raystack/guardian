@@ -2,9 +2,9 @@
 
 The following is a set of guidelines for contributing to Guardian. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request. Here are some important resources:
 
-* [Concepts](https://odpf.gitbook.io/guardian/concepts/architecture) section will explain you about Guardian architecture,
-* Our [roadmap](https://github.com/odpf/guardian#readme) is the 10k foot view of where we're going, and
-* Github [issues](https://github.com/odpf/guardian/issues) track the ongoing and reported issues.
+* [Concepts](https://goto.gitbook.io/guardian/concepts/architecture) section will explain you about Guardian architecture,
+* Our [roadmap](https://github.com/goto/guardian#readme) is the 10k foot view of where we're going, and
+* Github [issues](https://github.com/goto/guardian/issues) track the ongoing and reported issues.
 
 ## How can I contribute?
 
@@ -34,5 +34,5 @@ Please follow these practices for you change to get merged fast and smoothly:
 * If you are introducing a completely new feature or making any major changes in an existing one, we recommend to start with an RFC and get consensus on the basic design first.
 * Make sure your local build is running with all the tests and checkstyle passing.
 * If your change is related to user-facing protocols / configurations, you need to make the corresponding change in the documentation as well.
-* Docs live in the code repo under [`docs`](https://github.com/odpf/guardian/tree/main/docs) so that changes to that can be done in the same PR as changes to the code.
+* Docs live in the code repo under [`docs`](https://github.com/goto/guardian/tree/main/docs) so that changes to that can be done in the same PR as changes to the code.
 

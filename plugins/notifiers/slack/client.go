@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/odpf/guardian/utils"
 	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/utils"
+
+	"github.com/goto/guardian/domain"
 )
 
 const (

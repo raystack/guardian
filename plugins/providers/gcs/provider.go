@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"cloud.google.com/go/iam"
+	"github.com/goto/guardian/core/provider"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/utils"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/utils"
 )
 
 //go:generate mockery --name=GCSClient --exported --with-expecter

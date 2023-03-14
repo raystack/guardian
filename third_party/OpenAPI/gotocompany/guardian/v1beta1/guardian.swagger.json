@@ -1,0 +1,3022 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "gotocompany/guardian/v1beta1/guardian.proto",
+    "version": "0.1.0"
+  },
+  "tags": [
+    {
+      "name": "GuardianService"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1beta1/activities": {
+      "get": {
+        "operationId": "GuardianService_ListActivities",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListActivitiesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerIds",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "accountIds",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceIds",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "timestampGte",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "timestampLte",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/activities/import": {
+      "post": {
+        "operationId": "GuardianService_ImportActivities",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ImportActivitiesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1beta1ImportActivitiesRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/activities/{id}": {
+      "get": {
+        "operationId": "GuardianService_GetActivity",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1GetActivityResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/appeals": {
+      "get": {
+        "operationId": "GuardianService_ListAppeals",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListAppealsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "statuses",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "providerTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "providerUrns",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceUrns",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "createdBy",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      },
+      "post": {
+        "operationId": "GuardianService_CreateAppeal",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1CreateAppealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1beta1CreateAppealRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/appeals/{appealId}/approvals/{approvalId}/approvers": {
+      "post": {
+        "operationId": "GuardianService_AddApprover",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1AddApproverResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "appealId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "approvalId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/appeals/{appealId}/approvals/{approvalId}/approvers/{email}": {
+      "delete": {
+        "operationId": "GuardianService_DeleteApprover",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1DeleteApproverResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "appealId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "approvalId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/appeals/{id}": {
+      "get": {
+        "operationId": "GuardianService_GetAppeal",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1GetAppealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/appeals/{id}/approvals/{approvalName}": {
+      "post": {
+        "operationId": "GuardianService_UpdateApproval",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1UpdateApprovalResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "approvalName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "action",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateApprovalRequestAction"
+            }
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/appeals/{id}/cancel": {
+      "put": {
+        "operationId": "GuardianService_CancelAppeal",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1CancelAppealResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/approvals": {
+      "get": {
+        "operationId": "GuardianService_ListApprovals",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListApprovalsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "statuses",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "createdBy",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/grants": {
+      "get": {
+        "operationId": "GuardianService_ListGrants",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListGrantsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "statuses",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "accountIds",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "accountTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceIds",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "providerTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "providerUrns",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceUrns",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "roles",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "createdBy",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/grants/import": {
+      "post": {
+        "operationId": "GuardianService_ImportGrantsFromProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ImportGrantsFromProviderResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1beta1ImportGrantsFromProviderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/grants/revoke": {
+      "put": {
+        "operationId": "GuardianService_RevokeGrants",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1RevokeGrantsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1beta1RevokeGrantsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/grants/{id}": {
+      "get": {
+        "operationId": "GuardianService_GetGrant",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1GetGrantResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      },
+      "patch": {
+        "operationId": "GuardianService_UpdateGrant",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1UpdateGrantResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "owner": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/grants/{id}/revoke": {
+      "put": {
+        "operationId": "GuardianService_RevokeGrant",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1RevokeGrantResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/me/appeals": {
+      "get": {
+        "operationId": "GuardianService_ListUserAppeals",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListUserAppealsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "statuses",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "providerTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "providerUrns",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceUrns",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/me/approvals": {
+      "get": {
+        "operationId": "GuardianService_ListUserApprovals",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListUserApprovalsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "statuses",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/me/grants": {
+      "get": {
+        "operationId": "GuardianService_ListUserGrants",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListUserGrantsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "statuses",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "accountIds",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "accountTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceIds",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "providerTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "providerUrns",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceUrns",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "roles",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/policies": {
+      "get": {
+        "operationId": "GuardianService_ListPolicies",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListPoliciesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GuardianService"
+        ]
+      },
+      "post": {
+        "operationId": "GuardianService_CreatePolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1CreatePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "policy",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1beta1Policy"
+            }
+          },
+          {
+            "name": "dryRun",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/policies/{id}": {
+      "put": {
+        "operationId": "GuardianService_UpdatePolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1UpdatePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "policy",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1beta1Policy"
+            }
+          },
+          {
+            "name": "dryRun",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/policies/{id}/versions/{version}": {
+      "get": {
+        "operationId": "GuardianService_GetPolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1GetPolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/policies/{id}/versions/{version}/preferences": {
+      "get": {
+        "operationId": "GuardianService_GetPolicyPreferences",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1GetPolicyPreferencesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/providers": {
+      "get": {
+        "operationId": "GuardianService_ListProviders",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListProvidersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GuardianService"
+        ]
+      },
+      "post": {
+        "operationId": "GuardianService_CreateProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1CreateProviderResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "config",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1beta1ProviderConfig"
+            }
+          },
+          {
+            "name": "dryRun",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/providers/types": {
+      "get": {
+        "operationId": "GuardianService_GetProviderTypes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1GetProviderTypesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/providers/{config.type}/{config.urn}": {
+      "put": {
+        "operationId": "GuardianService_UpdateProvider2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1UpdateProviderResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "config.type",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "config.urn",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "config",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "labels": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "credentials": {},
+                "appeal": {
+                  "$ref": "#/definitions/ProviderConfigAppealConfig"
+                },
+                "resources": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "$ref": "#/definitions/ProviderConfigResourceConfig"
+                  }
+                },
+                "allowedAccountTypes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "parameters": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "$ref": "#/definitions/ProviderConfigProviderParameter"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "dryRun",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/providers/{id}": {
+      "get": {
+        "operationId": "GuardianService_GetProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1GetProviderResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      },
+      "delete": {
+        "operationId": "GuardianService_DeleteProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1DeleteProviderResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      },
+      "put": {
+        "operationId": "GuardianService_UpdateProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1UpdateProviderResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "config",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1beta1ProviderConfig"
+            }
+          },
+          {
+            "name": "dryRun",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/providers/{id}/resources/{resourceType}/roles": {
+      "get": {
+        "operationId": "GuardianService_ListRoles",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListRolesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "resourceType",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/resources": {
+      "get": {
+        "operationId": "GuardianService_ListResources",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListResourcesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "isDeleted",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "providerType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "providerUrn",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "urn",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "details",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/resources/{id}": {
+      "get": {
+        "operationId": "GuardianService_GetResource",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1GetResourceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      },
+      "delete": {
+        "operationId": "GuardianService_DeleteResource",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1DeleteResourceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      },
+      "put": {
+        "operationId": "GuardianService_UpdateResource",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1UpdateResourceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "resource",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/guardianv1beta1Resource"
+            }
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "AdditionalAppealResourceIdentifier": {
+      "type": "object",
+      "properties": {
+        "providerType": {
+          "type": "string"
+        },
+        "providerUrn": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "ConditionMatchCondition": {
+      "type": "object",
+      "properties": {
+        "eq": {}
+      }
+    },
+    "PolicyAppealConfigDurationOptions": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "PolicyAppealConfigQuestion": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "question": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "PolicyApprovalStep": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "allowFailed": {
+          "type": "boolean"
+        },
+        "when": {
+          "type": "string"
+        },
+        "strategy": {
+          "type": "string"
+        },
+        "approveIf": {
+          "type": "string"
+        },
+        "approvers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rejectionReason": {
+          "type": "string"
+        }
+      }
+    },
+    "PolicyIAM": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "config": {},
+        "schema": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "PolicyRequirement": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "$ref": "#/definitions/RequirementRequirementTrigger"
+        },
+        "appeals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/RequirementAdditionalAppeal"
+          }
+        }
+      }
+    },
+    "ProviderConfigAppealConfig": {
+      "type": "object",
+      "properties": {
+        "allowPermanentAccess": {
+          "type": "boolean"
+        },
+        "allowActiveAccessExtensionIn": {
+          "type": "string"
+        }
+      }
+    },
+    "ProviderConfigProviderParameter": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "ProviderConfigResourceConfig": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "#/definitions/v1beta1PolicyConfig"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Role"
+          }
+        },
+        "filter": {
+          "type": "string"
+        }
+      }
+    },
+    "RequirementAdditionalAppeal": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "$ref": "#/definitions/AdditionalAppealResourceIdentifier"
+        },
+        "role": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/v1beta1AppealOptions"
+        },
+        "policy": {
+          "$ref": "#/definitions/v1beta1PolicyConfig"
+        }
+      }
+    },
+    "RequirementRequirementTrigger": {
+      "type": "object",
+      "properties": {
+        "providerType": {
+          "type": "string"
+        },
+        "providerUrn": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "string"
+        },
+        "resourceUrn": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Condition"
+          }
+        }
+      }
+    },
+    "UpdateApprovalRequestAction": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "guardianv1beta1Resource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "providerType": {
+          "type": "string"
+        },
+        "providerUrn": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "isDeleted": {
+          "type": "boolean"
+        },
+        "parentId": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/guardianv1beta1Resource"
+          }
+        }
+      },
+      "title": "Resource contains information of resource from providers"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "protobufNullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1beta1AddApproverResponse": {
+      "type": "object",
+      "properties": {
+        "appeal": {
+          "$ref": "#/definitions/v1beta1Appeal"
+        }
+      }
+    },
+    "v1beta1Appeal": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "policyId": {
+          "type": "string"
+        },
+        "policyVersion": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "string"
+        },
+        "accountId": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/v1beta1AppealOptions",
+          "title": "optional"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "resource": {
+          "$ref": "#/definitions/guardianv1beta1Resource",
+          "title": "optional"
+        },
+        "approvals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Approval"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "details": {
+          "type": "object"
+        },
+        "accountType": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "creator": {},
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "grant": {
+          "$ref": "#/definitions/v1beta1Grant"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "title": "Appeal is created by user to get access to one or more resources"
+    },
+    "v1beta1AppealOptions": {
+      "type": "object",
+      "properties": {
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time",
+          "title": "optional"
+        },
+        "duration": {
+          "type": "string"
+        }
+      }
+    },
+    "v1beta1Approval": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "appealId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "policyId": {
+          "type": "string"
+        },
+        "policyVersion": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "approvers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "appeal": {
+          "$ref": "#/definitions/v1beta1Appeal"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "title": "Approval is an approval item that generated in an appeal based on the selected policy"
+    },
+    "v1beta1CancelAppealResponse": {
+      "type": "object",
+      "properties": {
+        "appeal": {
+          "$ref": "#/definitions/v1beta1Appeal"
+        }
+      }
+    },
+    "v1beta1Condition": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "match": {
+          "$ref": "#/definitions/ConditionMatchCondition"
+        }
+      }
+    },
+    "v1beta1CreateAppealRequest": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "type": "string"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1CreateAppealRequestResource"
+          }
+        },
+        "accountType": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "v1beta1CreateAppealRequestResource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "options": {
+          "type": "object"
+        },
+        "details": {
+          "type": "object"
+        }
+      }
+    },
+    "v1beta1CreateAppealResponse": {
+      "type": "object",
+      "properties": {
+        "appeals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Appeal"
+          }
+        }
+      }
+    },
+    "v1beta1CreatePolicyResponse": {
+      "type": "object",
+      "properties": {
+        "policy": {
+          "$ref": "#/definitions/v1beta1Policy"
+        }
+      }
+    },
+    "v1beta1CreateProviderResponse": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/v1beta1Provider"
+        }
+      }
+    },
+    "v1beta1DeleteApproverResponse": {
+      "type": "object",
+      "properties": {
+        "appeal": {
+          "$ref": "#/definitions/v1beta1Appeal"
+        }
+      }
+    },
+    "v1beta1DeleteProviderResponse": {
+      "type": "object"
+    },
+    "v1beta1DeleteResourceResponse": {
+      "type": "object"
+    },
+    "v1beta1GetActivityResponse": {
+      "type": "object",
+      "properties": {
+        "activity": {
+          "$ref": "#/definitions/v1beta1ProviderActivity"
+        }
+      }
+    },
+    "v1beta1GetAppealResponse": {
+      "type": "object",
+      "properties": {
+        "appeal": {
+          "$ref": "#/definitions/v1beta1Appeal"
+        }
+      }
+    },
+    "v1beta1GetGrantResponse": {
+      "type": "object",
+      "properties": {
+        "grant": {
+          "$ref": "#/definitions/v1beta1Grant"
+        }
+      }
+    },
+    "v1beta1GetPolicyPreferencesResponse": {
+      "type": "object",
+      "properties": {
+        "appeal": {
+          "$ref": "#/definitions/v1beta1PolicyAppealConfig"
+        }
+      }
+    },
+    "v1beta1GetPolicyResponse": {
+      "type": "object",
+      "properties": {
+        "policy": {
+          "$ref": "#/definitions/v1beta1Policy"
+        }
+      }
+    },
+    "v1beta1GetProviderResponse": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/v1beta1Provider"
+        }
+      }
+    },
+    "v1beta1GetProviderTypesResponse": {
+      "type": "object",
+      "properties": {
+        "providerTypes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1ProviderType"
+          }
+        }
+      }
+    },
+    "v1beta1GetResourceResponse": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "$ref": "#/definitions/guardianv1beta1Resource"
+        }
+      }
+    },
+    "v1beta1Grant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "accountId": {
+          "type": "string"
+        },
+        "accountType": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "appealId": {
+          "type": "string"
+        },
+        "revokedBy": {
+          "type": "string"
+        },
+        "revokedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "revokeReason": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "resource": {
+          "$ref": "#/definitions/guardianv1beta1Resource"
+        },
+        "appeal": {
+          "$ref": "#/definitions/v1beta1Appeal"
+        },
+        "isPermanent": {
+          "type": "boolean"
+        },
+        "source": {
+          "type": "string"
+        },
+        "statusInProvider": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        }
+      }
+    },
+    "v1beta1ImportActivitiesRequest": {
+      "type": "object",
+      "properties": {
+        "providerId": {
+          "type": "string"
+        },
+        "accountIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resourceIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "timestampGte": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timestampLte": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1beta1ImportActivitiesResponse": {
+      "type": "object",
+      "properties": {
+        "activities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1ProviderActivity"
+          }
+        }
+      }
+    },
+    "v1beta1ImportGrantsFromProviderRequest": {
+      "type": "object",
+      "properties": {
+        "providerId": {
+          "type": "string"
+        },
+        "resourceIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resourceTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resourceUrns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1beta1ImportGrantsFromProviderResponse": {
+      "type": "object",
+      "properties": {
+        "grants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Grant"
+          }
+        }
+      }
+    },
+    "v1beta1ListActivitiesResponse": {
+      "type": "object",
+      "properties": {
+        "activities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1ProviderActivity"
+          }
+        }
+      }
+    },
+    "v1beta1ListAppealsResponse": {
+      "type": "object",
+      "properties": {
+        "appeals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Appeal"
+          }
+        }
+      }
+    },
+    "v1beta1ListApprovalsResponse": {
+      "type": "object",
+      "properties": {
+        "approvals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Approval"
+          }
+        }
+      }
+    },
+    "v1beta1ListGrantsResponse": {
+      "type": "object",
+      "properties": {
+        "grants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Grant"
+          }
+        }
+      }
+    },
+    "v1beta1ListPoliciesResponse": {
+      "type": "object",
+      "properties": {
+        "policies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Policy"
+          }
+        }
+      }
+    },
+    "v1beta1ListProvidersResponse": {
+      "type": "object",
+      "properties": {
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Provider"
+          }
+        }
+      }
+    },
+    "v1beta1ListResourcesResponse": {
+      "type": "object",
+      "properties": {
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/guardianv1beta1Resource"
+          }
+        }
+      }
+    },
+    "v1beta1ListRolesResponse": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Role"
+          }
+        }
+      }
+    },
+    "v1beta1ListUserAppealsResponse": {
+      "type": "object",
+      "properties": {
+        "appeals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Appeal"
+          }
+        }
+      }
+    },
+    "v1beta1ListUserApprovalsResponse": {
+      "type": "object",
+      "properties": {
+        "approvals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Approval"
+          }
+        }
+      }
+    },
+    "v1beta1ListUserGrantsResponse": {
+      "type": "object",
+      "properties": {
+        "grants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Grant"
+          }
+        }
+      }
+    },
+    "v1beta1Policy": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PolicyApprovalStep"
+          }
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PolicyRequirement"
+          }
+        },
+        "iam": {
+          "$ref": "#/definitions/PolicyIAM"
+        },
+        "appeal": {
+          "$ref": "#/definitions/v1beta1PolicyAppealConfig"
+        }
+      },
+      "title": "Policy is a configurable steps for appeal's approval"
+    },
+    "v1beta1PolicyAppealConfig": {
+      "type": "object",
+      "properties": {
+        "durationOptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PolicyAppealConfigDurationOptions"
+          }
+        },
+        "allowOnBehalf": {
+          "type": "boolean"
+        },
+        "allowPermanentAccess": {
+          "type": "boolean"
+        },
+        "allowActiveAccessExtensionIn": {
+          "type": "string"
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/PolicyAppealConfigQuestion"
+          }
+        }
+      }
+    },
+    "v1beta1PolicyConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1beta1Provider": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        },
+        "config": {
+          "$ref": "#/definitions/v1beta1ProviderConfig"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "Provider contains information about external data provider such as BigQuery, Metabase, etc., credentials, policy, and allowed roles"
+    },
+    "v1beta1ProviderActivity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "providerId": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "accountId": {
+          "type": "string"
+        },
+        "accountType": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "authorizations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "provider": {
+          "$ref": "#/definitions/v1beta1Provider"
+        },
+        "resource": {
+          "$ref": "#/definitions/guardianv1beta1Resource"
+        },
+        "providerActivityId": {
+          "type": "string"
+        },
+        "relatedPermissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1beta1ProviderConfig": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "credentials": {},
+        "appeal": {
+          "$ref": "#/definitions/ProviderConfigAppealConfig"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ProviderConfigResourceConfig"
+          }
+        },
+        "allowedAccountTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ProviderConfigProviderParameter"
+          }
+        }
+      }
+    },
+    "v1beta1ProviderType": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "resourceTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1beta1RevokeGrantResponse": {
+      "type": "object",
+      "properties": {
+        "grant": {
+          "$ref": "#/definitions/v1beta1Grant"
+        }
+      }
+    },
+    "v1beta1RevokeGrantsRequest": {
+      "type": "object",
+      "properties": {
+        "accountIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "providerTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "providerUrns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resourceTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resourceUrns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "v1beta1RevokeGrantsResponse": {
+      "type": "object",
+      "properties": {
+        "grants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1beta1Grant"
+          }
+        }
+      }
+    },
+    "v1beta1Role": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {}
+        }
+      }
+    },
+    "v1beta1UpdateApprovalResponse": {
+      "type": "object",
+      "properties": {
+        "appeal": {
+          "$ref": "#/definitions/v1beta1Appeal"
+        }
+      }
+    },
+    "v1beta1UpdateGrantResponse": {
+      "type": "object",
+      "properties": {
+        "grant": {
+          "$ref": "#/definitions/v1beta1Grant"
+        }
+      }
+    },
+    "v1beta1UpdatePolicyResponse": {
+      "type": "object",
+      "properties": {
+        "policy": {
+          "$ref": "#/definitions/v1beta1Policy"
+        }
+      }
+    },
+    "v1beta1UpdateProviderResponse": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/v1beta1Provider"
+        }
+      }
+    },
+    "v1beta1UpdateResourceResponse": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "$ref": "#/definitions/guardianv1beta1Resource"
+        }
+      }
+    }
+  }
+}

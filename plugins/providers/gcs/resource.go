@@ -1,6 +1,6 @@
 package gcs
 
-import "github.com/odpf/guardian/domain"
+import "github.com/goto/guardian/domain"
 
 const (
 	ResourceTypeBucket = "bucket"

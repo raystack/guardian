@@ -20,25 +20,6 @@ vendor/
 
 tmp
 
-# git ignore generate files related to gRPC and proto
-/proton/
-/api/proto/odpf/**/*
-
-!/api/proto/odpf/guardian/v1beta1/
-!/api/proto/odpf/guardian/v1beta1/*
-!/api/proto/odpf/guardian/v1beta1/**/*
-
-!/api/proto/odpf/third_party/
-!/api/proto/odpf/third_party/googleapis/
-!/api/proto/odpf/third_party/googleapis/*
-!/api/proto/odpf/third_party/googleapis/**/*
-!/api/proto/odpf/third_party/grpc-gateway/
-!/api/proto/odpf/third_party/grpc-gateway/*
-!/api/proto/odpf/third_party/grpc-gateway/**/*
-
-/third_party/*
-!/third_party/OpenAPI/odpf/guardian/guardian.swagger.json
-
 # guardian
 .guardian.yaml
 guardian

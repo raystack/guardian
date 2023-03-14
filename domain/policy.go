@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/goto/guardian/pkg/evaluator"
 	"github.com/mcuadros/go-lookup"
-	"github.com/odpf/guardian/pkg/evaluator"
 )
 
 const (

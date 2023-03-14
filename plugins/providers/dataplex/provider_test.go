@@ -5,14 +5,15 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/providers/dataplex"
-	"github.com/odpf/guardian/plugins/providers/dataplex/mocks"
+	"testing"
+
+	"github.com/goto/guardian/core/provider"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/plugins/providers/dataplex"
+	"github.com/goto/guardian/plugins/providers/dataplex/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 func TestGetType(t *testing.T) {

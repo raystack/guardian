@@ -3,7 +3,7 @@ package tableau
 import (
 	"time"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 )
 
 const (

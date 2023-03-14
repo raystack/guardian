@@ -10,7 +10,7 @@ import (
 	"net/url"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 )
 
 type ShieldClientConfig struct {

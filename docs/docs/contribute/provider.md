@@ -19,7 +19,7 @@ const (
 ```go title="internal/server/services.go"
 import (
     ...
-	"github.com/odpf/guardian/plugins/providers/noop"
+	"github.com/goto/guardian/plugins/providers/noop"
 )
 
 ...
@@ -116,10 +116,10 @@ func (p *Provider) GetAccountTypes() []string {
 ```
 
 See full implementation here
-- [bigquery](https://github.com/odpf/guardian/tree/main/plugins/providers/bigquery)
-- [gcloudiam](https://github.com/odpf/guardian/tree/main/plugins/providers/gcloudiam)
-- [gcs](https://github.com/odpf/guardian/tree/main/plugins/providers/gcs)
-- [grafana](https://github.com/odpf/guardian/tree/main/plugins/providers/grafana)
-- [metabase](https://github.com/odpf/guardian/tree/main/plugins/providers/metabase)
-- [noop](https://github.com/odpf/guardian/tree/main/plugins/providers/noop)
-- [tableau](https://github.com/odpf/guardian/tree/main/plugins/providers/tableau)
+- [bigquery](https://github.com/goto/guardian/tree/main/plugins/providers/bigquery)
+- [gcloudiam](https://github.com/goto/guardian/tree/main/plugins/providers/gcloudiam)
+- [gcs](https://github.com/goto/guardian/tree/main/plugins/providers/gcs)
+- [grafana](https://github.com/goto/guardian/tree/main/plugins/providers/grafana)
+- [metabase](https://github.com/goto/guardian/tree/main/plugins/providers/metabase)
+- [noop](https://github.com/goto/guardian/tree/main/plugins/providers/noop)
+- [tableau](https://github.com/goto/guardian/tree/main/plugins/providers/tableau)

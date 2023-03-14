@@ -3,9 +3,9 @@ package noop
 import (
 	"errors"
 
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/salt/log"
+	"github.com/goto/guardian/core/provider"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/salt/log"
 )
 
 var (

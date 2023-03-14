@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	shield "github.com/odpf/guardian/plugins/providers/shield"
+	shield "github.com/goto/guardian/plugins/providers/shield"
 	mock "github.com/stretchr/testify/mock"
 )
 

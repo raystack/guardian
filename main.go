@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/odpf/guardian/cli"
+	"github.com/goto/guardian/cli"
 )
 
 const (

@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/goto/guardian/domain"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/domain"
 )
 
 var (

@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 )
 
 func TestStep_ResolveApprovers(t *testing.T) {

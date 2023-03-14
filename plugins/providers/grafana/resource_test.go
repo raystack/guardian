@@ -3,8 +3,8 @@ package grafana_test
 import (
 	"testing"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/providers/grafana"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/plugins/providers/grafana"
 	"github.com/stretchr/testify/assert"
 )
 

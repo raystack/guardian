@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/goto/guardian/domain"
 )
 
 func GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {

@@ -11,10 +11,10 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/odpf/salt/log"
+	"github.com/goto/salt/log"
 
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/plugins/providers/shield"
+	"github.com/goto/guardian/mocks"
+	"github.com/goto/guardian/plugins/providers/shield"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )

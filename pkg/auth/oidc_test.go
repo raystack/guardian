@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/odpf/guardian/pkg/auth"
-	"github.com/odpf/guardian/pkg/auth/mocks"
+	"github.com/goto/guardian/pkg/auth"
+	"github.com/goto/guardian/pkg/auth/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -76,7 +76,6 @@ func (s *InterceptorTestSuite) TestIdTokenValidator_WithBearerTokenValidator() {
 			},
 			ctx: metadata.NewIncomingContext(context.Background(), metadata.New(authContextValues)),
 			mockFunc: func(validator *mocks.OIDCValidator) {
-
 				payload := &idtoken.Payload{
 					Claims: map[string]interface{}{
 						"email": "something@gmail.com",

@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/goto/guardian/domain"
 	"github.com/mcuadros/go-defaults"
-	"github.com/odpf/guardian/domain"
 )
 
 var ErrFailedRequest = errors.New("request failed")

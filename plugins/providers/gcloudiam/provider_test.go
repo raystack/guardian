@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/providers/gcloudiam"
-	"github.com/odpf/guardian/plugins/providers/gcloudiam/mocks"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/plugins/providers/gcloudiam"
+	"github.com/goto/guardian/plugins/providers/gcloudiam/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
