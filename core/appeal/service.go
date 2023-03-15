@@ -28,7 +28,6 @@ const (
 	AuditKeyDeleteApprover = "appeal.deleteApprover"
 
 	RevokeReasonForExtension = "Automatically revoked for grant extension"
-	PermanentDuration        = "Permanent"
 )
 
 var TimeNow = time.Now
@@ -315,7 +314,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 	}
 
 	for _, a := range appeals {
-		notifications = append(notifications, getApprovalNotifications(a)...)
+		notifications = append(notifications, s.getApprovalNotifications(a)...)
 	}
 
 	if len(notifications) > 0 {
@@ -518,7 +517,7 @@ func (s *Service) UpdateApproval(ctx context.Context, approvalAction domain.Appr
 				},
 			})
 		} else {
-			notifications = append(notifications, getApprovalNotifications(appeal)...)
+			notifications = append(notifications, s.getApprovalNotifications(appeal)...)
 		}
 		if len(notifications) > 0 {
 			if errs := s.notifier.Notify(notifications); errs != nil {
@@ -783,13 +782,17 @@ func (s *Service) getPoliciesMap(ctx context.Context) (map[string]map[uint]*doma
 	return policiesMap, nil
 }
 
-func getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
+func (s *Service) getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
 	notifications := []domain.Notification{}
 	approval := appeal.GetNextPendingApproval()
 
-	duration := PermanentDuration
+	duration := domain.PermanentDurationLabel
+	var err error
 	if !appeal.IsDurationEmpty() {
-		duration = appeal.Options.Duration
+		duration, err = utils.GetReadableDuration(appeal.Options.Duration)
+		if err != nil {
+			s.logger.Error("failed to get readable duration", "error", err, "appeal_id", appeal.ID)
+		}
 	}
 
 	if approval != nil {
