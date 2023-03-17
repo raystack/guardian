@@ -51,4 +51,6 @@ type ListApprovalsFilter struct {
 	CreatedBy string   `mapstructure:"created_by" validate:"omitempty,required"`
 	Statuses  []string `mapstructure:"statuses" validate:"omitempty,min=1"`
 	OrderBy   []string `mapstructure:"order_by" validate:"omitempty,min=1"`
+	Size      int      `mapstructure:"size" validate:"omitempty"`
+	Offset    int      `mapstructure:"offset" validate:"omitempty"`
 }

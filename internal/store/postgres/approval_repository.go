@@ -59,6 +59,14 @@ func (r *ApprovalRepository) ListApprovals(ctx context.Context, conditions *doma
 		})
 	}
 
+	if conditions.Size > 0 {
+		db = db.Limit(conditions.Size)
+	}
+
+	if conditions.Offset > 0 {
+		db = db.Offset(conditions.Offset)
+	}
+
 	var models []*model.Approval
 	if err := db.Find(&models).Error; err != nil {
 		return nil, err

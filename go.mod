@@ -11,6 +11,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/antonmedv/expr v1.9.0
+	github.com/envoyproxy/protoc-gen-validate v0.6.7
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/go-cmp v0.5.9

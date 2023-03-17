@@ -11,3 +11,9 @@ plugins:
     opt: paths=source_relative
   - plugin: buf.build/grpc-ecosystem/openapiv2:v2.15.1
     out: third_party/OpenAPI
+  # See https://github.com/bufbuild/protoc-gen-validate/issues/523
+  - remote: buf.build/jirkad/plugins/protoc-gen-validate:v0.6.7
+    out: api/proto
+    opt:
+      - paths=source_relative
+      - lang=go
