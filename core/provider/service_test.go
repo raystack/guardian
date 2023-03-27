@@ -7,8 +7,11 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/goto/guardian/core/provider"
 	providermocks "github.com/goto/guardian/core/provider/mocks"
+	"github.com/goto/guardian/core/resource"
 	"github.com/goto/guardian/domain"
 	"github.com/goto/salt/log"
 	"github.com/stretchr/testify/mock"
@@ -349,20 +352,77 @@ func (s *ServiceTestSuite) TestFetchResources() {
 	})
 
 	s.Run("should upsert all resources on success", func() {
-		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(providers, nil).Once()
-		expectedResources := []*domain.Resource{}
-		for _, p := range providers {
-			resources := []*domain.Resource{
-				{
-					ProviderType: p.Type,
-					ProviderURN:  p.URN,
+		existingResources := []*domain.Resource{
+			{
+				ID:           "1",
+				ProviderType: mockProviderType,
+				ProviderURN:  mockProvider,
+				Type:         "test-resource-type",
+				URN:          "test-resource-urn-1",
+				Details: map[string]interface{}{
+					"owner": "test-owner",
+					resource.ReservedDetailsKeyMetadata: map[string]interface{}{
+						"labels": map[string]string{
+							"foo": "bar",
+							"baz": "qux",
+						},
+						"x": "y",
+					},
 				},
-			}
-			s.mockProvider.On("GetResources", p.Config).Return(resources, nil).Once()
-			expectedResources = append(expectedResources, resources...)
+			},
 		}
-		s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil).Once()
-		s.mockResourceService.On("Find", mock.Anything, mock.Anything).Return([]*domain.Resource{}, nil).Once()
+		newResources := []*domain.Resource{
+			{
+				ProviderType: mockProviderType,
+				ProviderURN:  mockProvider,
+				Type:         "test-resource-type",
+				URN:          "test-resource-urn-1",
+				Details: map[string]interface{}{
+					resource.ReservedDetailsKeyMetadata: map[string]interface{}{
+						"labels": map[string]string{
+							"new-key": "new-value",
+						},
+					},
+				},
+			},
+			{
+				ProviderType: mockProviderType,
+				ProviderURN:  mockProvider,
+				Type:         "test-resource-type",
+				URN:          "test-resource-urn-2",
+			},
+		}
+		expectedResources := []*domain.Resource{
+			{
+				ProviderType: mockProviderType,
+				ProviderURN:  mockProvider,
+				Type:         "test-resource-type",
+				URN:          "test-resource-urn-1",
+				Details: map[string]interface{}{
+					"owner": "test-owner", // owner not changed
+					resource.ReservedDetailsKeyMetadata: map[string]interface{}{ // metadata updated
+						"labels": map[string]string{
+							"new-key": "new-value",
+						},
+					},
+				},
+			},
+			{
+				ProviderType: mockProviderType,
+				ProviderURN:  mockProvider,
+				Type:         "test-resource-type",
+				URN:          "test-resource-urn-2",
+			},
+		}
+
+		expectedProvider := providers[0]
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return([]*domain.Provider{expectedProvider}, nil).Once()
+		s.mockProvider.EXPECT().GetResources(expectedProvider.Config).Return(newResources, nil).Once()
+		s.mockResourceService.EXPECT().BulkUpsert(mock.Anything, mock.AnythingOfType("[]*domain.Resource")).
+			Run(func(_a0 context.Context, resources []*domain.Resource) {
+				s.Empty(cmp.Diff(expectedResources, resources, cmpopts.IgnoreFields(domain.Resource{}, "ID", "CreatedAt", "UpdatedAt")))
+			}).Return(nil).Once()
+		s.mockResourceService.EXPECT().Find(mock.Anything, mock.Anything).Return(existingResources, nil).Once()
 		actualError := s.service.FetchResources(context.Background())
 
 		s.Nil(actualError)

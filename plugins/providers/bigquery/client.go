@@ -21,19 +21,19 @@ type bigQueryClient struct {
 	apiClient  *bqApi.Service
 }
 
-func newBigQueryClient(projectID string, credentialsJSON []byte) (*bigQueryClient, error) {
+func NewBigQueryClient(projectID string, opts ...option.ClientOption) (*bigQueryClient, error) {
 	ctx := context.Background()
-	client, err := bq.NewClient(ctx, projectID, option.WithCredentialsJSON(credentialsJSON))
+	client, err := bq.NewClient(ctx, projectID, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	apiClient, err := bqApi.NewService(ctx, option.WithCredentialsJSON(credentialsJSON))
+	apiClient, err := bqApi.NewService(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	iamService, err := iam.NewService(ctx, option.WithCredentialsJSON(credentialsJSON))
+	iamService, err := iam.NewService(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -49,20 +49,20 @@ func newBigQueryClient(projectID string, credentialsJSON []byte) (*bigQueryClien
 // GetDatasets returns all datasets within a project
 func (c *bigQueryClient) GetDatasets(ctx context.Context) ([]*Dataset, error) {
 	var results []*Dataset
-	it := c.client.Datasets(ctx)
-	for {
-		dataset, err := it.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
 
-		results = append(results, &Dataset{
-			ProjectID: dataset.ProjectID,
-			DatasetID: dataset.DatasetID,
-		})
+	req := c.apiClient.Datasets.List(c.projectID)
+	if err := req.Pages(ctx, func(page *bqApi.DatasetList) error {
+		for _, dataset := range page.Datasets {
+			d := &Dataset{
+				ProjectID: dataset.DatasetReference.ProjectId,
+				DatasetID: dataset.DatasetReference.DatasetId,
+				Labels:    dataset.Labels,
+			}
+			results = append(results, d)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return results, nil
@@ -71,21 +71,21 @@ func (c *bigQueryClient) GetDatasets(ctx context.Context) ([]*Dataset, error) {
 // GetTables returns all tables within a dataset
 func (c *bigQueryClient) GetTables(ctx context.Context, datasetID string) ([]*Table, error) {
 	var results []*Table
-	it := c.client.Dataset(datasetID).Tables(ctx)
-	for {
-		table, err := it.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
 
-		results = append(results, &Table{
-			ProjectID: table.ProjectID,
-			DatasetID: table.DatasetID,
-			TableID:   table.TableID,
-		})
+	req := c.apiClient.Tables.List(c.projectID, datasetID)
+	if err := req.Pages(ctx, func(page *bqApi.TableList) error {
+		for _, table := range page.Tables {
+			t := &Table{
+				ProjectID: table.TableReference.ProjectId,
+				DatasetID: table.TableReference.DatasetId,
+				TableID:   table.TableReference.TableId,
+				Labels:    table.Labels,
+			}
+			results = append(results, t)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return results, nil

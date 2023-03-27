@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	bq "cloud.google.com/go/bigquery"
+	"github.com/goto/guardian/core/resource"
 	"github.com/goto/guardian/domain"
 )
 
@@ -19,6 +20,7 @@ const (
 type Dataset struct {
 	ProjectID string
 	DatasetID string
+	Labels    map[string]string
 }
 
 func (d *Dataset) FromDomain(r *domain.Resource) error {
@@ -32,11 +34,22 @@ func (d *Dataset) FromDomain(r *domain.Resource) error {
 }
 
 func (d *Dataset) ToDomain() *domain.Resource {
-	return &domain.Resource{
+	r := &domain.Resource{
 		Type: ResourceTypeDataset,
 		Name: d.DatasetID,
 		URN:  fmt.Sprintf("%s:%s", d.ProjectID, d.DatasetID),
 	}
+
+	if d.Labels != nil {
+		if r.Details == nil {
+			r.Details = make(map[string]interface{})
+		}
+		r.Details[resource.ReservedDetailsKeyMetadata] = map[string]interface{}{
+			"labels": d.Labels,
+		}
+	}
+
+	return r
 }
 
 // Table is a reference to a BigQuery table
@@ -44,6 +57,7 @@ type Table struct {
 	ProjectID string
 	DatasetID string
 	TableID   string
+	Labels    map[string]string
 }
 
 func (t *Table) FromDomain(r *domain.Resource) error {
@@ -62,11 +76,22 @@ func (t *Table) FromDomain(r *domain.Resource) error {
 }
 
 func (t *Table) ToDomain() *domain.Resource {
-	return &domain.Resource{
+	r := &domain.Resource{
 		Type: ResourceTypeTable,
 		Name: t.TableID,
 		URN:  fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
 	}
+
+	if t.Labels != nil {
+		if r.Details == nil {
+			r.Details = make(map[string]interface{})
+		}
+		r.Details[resource.ReservedDetailsKeyMetadata] = map[string]interface{}{
+			"labels": t.Labels,
+		}
+	}
+
+	return r
 }
 
 type datasetAccessEntry bq.AccessEntry
