@@ -21,22 +21,22 @@ format:
 	@echo "Running go fmt..."
 	@go fmt
 
-lint:
+lint: ## Lint checker
 	@echo "Running lint checks using golangci-lint..."
 	@golangci-lint run
 
-clean: tidy
+clean: tidy ## Clean the build artifacts
 	@echo "Cleaning up build directories..."
 	@rm -rf $coverage.out ${BUILD_DIR}
 
-test:
+test:  ## Run the tests
 	go test ./... -race -coverprofile=coverage.out
 
-coverage: test
+coverage: test ## Print the code coverage
 	@echo "Generating coverage report..."
 	@go tool cover -html=coverage.out
 
-build:
+build: ## Build the guardian binary
 	@echo "Building guardian version ${VERSION}..."
 	go build -ldflags "-X ${NAME}/core.Version=${VERSION} -X ${NAME}/core.BuildCommit=${COMMIT}" -o dist/guardian .
 	@echo "Build complete"
@@ -50,21 +50,21 @@ vet:
 download:
 	@go mod download
 
-generate:
+generate: ## Run all go generate in the code base
 	@echo "Running go generate..."
 	go generate ./...
 
-config:
+config: ## Generate the sample config file
 	@echo "Initializing sample server config..."
 	@cp internal/server/config.yaml config.yaml
 
-proto:
+proto: ## Generate the protobuf files
 	@echo "Generating protobuf from odpf/proton"
 	@echo " [info] make sure correct version of dependencies are installed using 'make install'"
 	@buf generate https://github.com/odpf/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --template buf.gen.yaml --path odpf/guardian
 	@echo "Protobuf compilation finished"
 
-setup:
+setup: ## Install all the dependencies
 	@echo "Installing dependencies..."
 	go mod tidy
 	go get google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
@@ -75,3 +75,6 @@ setup:
 	go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
 	go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.5.0
 	go get github.com/bufbuild/buf/cmd/buf@v0.54.1
+
+help: ## Display this help message
+	@cat $(MAKEFILE_LIST) | grep -e "^[a-zA-Z_\-]*: *.*## *" | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
