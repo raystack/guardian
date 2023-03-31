@@ -19,6 +19,10 @@ type Resource struct {
 	Children     []*Resource            `json:"children,omitempty" yaml:"children,omitempty"`
 }
 
+func (r *Resource) GetType() string {
+	return r.Type
+}
+
 func (r *Resource) GetFlattened() []*Resource {
 	resources := []*Resource{r}
 	for _, child := range r.Children {
