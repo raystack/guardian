@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/core/resource/mocks"
 	"github.com/odpf/guardian/domain"
@@ -115,11 +117,13 @@ func (s *ServiceTestSuite) TestUpdate() {
 
 	s.Run("should only allows details and labels to be edited", func() {
 		testCases := []struct {
+			name                  string
 			resourceUpdatePayload *domain.Resource
 			existingResource      *domain.Resource
 			expectedUpdatedValues *domain.Resource
 		}{
 			{
+				name: "empty labels in existing resource",
 				resourceUpdatePayload: &domain.Resource{
 					ID: "1",
 					Labels: map[string]string{
@@ -137,6 +141,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 				},
 			},
 			{
+				name: "empty details in existing resource",
 				resourceUpdatePayload: &domain.Resource{
 					ID: "2",
 					Details: map[string]interface{}{
@@ -154,6 +159,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 				},
 			},
 			{
+				name: "trying to update resource type",
 				resourceUpdatePayload: &domain.Resource{
 					ID:   "2",
 					Type: "test",
@@ -165,17 +171,54 @@ func (s *ServiceTestSuite) TestUpdate() {
 					ID: "2",
 				},
 			},
+			{
+				name: "should exclude __metadata from update payload",
+				resourceUpdatePayload: &domain.Resource{
+					ID: "2",
+					Details: map[string]interface{}{
+						"owner": "new-owner@example.com",
+						resource.ReservedDetailsKeyMetadata: map[string]string{
+							"new-key": "new-value",
+						},
+					},
+				},
+				existingResource: &domain.Resource{
+					ID: "2",
+					Details: map[string]interface{}{
+						"owner": "user@example.com",
+						"foo":   "bar",
+						resource.ReservedDetailsKeyMetadata: map[string]string{
+							"key": "value",
+						},
+					},
+				},
+				expectedUpdatedValues: &domain.Resource{
+					ID: "2",
+					Details: map[string]interface{}{
+						"owner": "new-owner@example.com",
+						"foo":   "bar",
+						resource.ReservedDetailsKeyMetadata: map[string]string{
+							"key": "value",
+						},
+					},
+				},
+			},
 		}
 
 		for _, tc := range testCases {
-			s.mockRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), tc.resourceUpdatePayload.ID).Return(tc.existingResource, nil).Once()
-			s.mockRepository.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), tc.expectedUpdatedValues).Return(nil).Once()
-			s.mockAuditLogger.EXPECT().Log(mock.Anything, resource.AuditKeyResourceUpdate, mock.Anything).Return(nil)
+			s.Run(tc.name, func() {
+				s.mockRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), tc.resourceUpdatePayload.ID).Return(tc.existingResource, nil).Once()
+				s.mockRepository.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Resource")).
+					Run(func(_a0 context.Context, updateResourcePayload *domain.Resource) {
+						s.Empty(cmp.Diff(tc.expectedUpdatedValues, updateResourcePayload, cmpopts.IgnoreFields(domain.Resource{}, "UpdatedAt", "CreatedAt")))
+					}).Return(nil).Once()
+				s.mockAuditLogger.EXPECT().Log(mock.Anything, resource.AuditKeyResourceUpdate, mock.Anything).Return(nil)
 
-			actualError := s.service.Update(context.Background(), tc.resourceUpdatePayload)
+				actualError := s.service.Update(context.Background(), tc.resourceUpdatePayload)
 
-			s.Nil(actualError)
-			s.mockRepository.AssertExpectations(s.T())
+				s.Nil(actualError)
+				s.mockRepository.AssertExpectations(s.T())
+			})
 		}
 	})
 }

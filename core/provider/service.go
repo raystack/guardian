@@ -525,16 +525,15 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 	for _, r := range flattenedProviderResources {
 		for _, er := range existingGuardianResources {
 			if er.URN == r.URN {
-				existingMetadata := er.Details
-				if existingMetadata != nil {
+				if existingDetails := er.Details; existingDetails != nil {
 					if r.Details != nil {
-						for key, value := range existingMetadata {
+						for key, value := range existingDetails {
 							if _, ok := r.Details[key]; !ok {
 								r.Details[key] = value
 							}
 						}
 					} else {
-						r.Details = existingMetadata
+						r.Details = existingDetails
 					}
 				}
 

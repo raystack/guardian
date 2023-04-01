@@ -16,6 +16,8 @@ import (
 	"github.com/odpf/guardian/pkg/slices"
 	"github.com/odpf/salt/log"
 	"github.com/patrickmn/go-cache"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/api/option"
 )
 
 var (
@@ -120,32 +122,41 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	resourceTypes := pc.GetResourceTypes()
 
 	resources := []*domain.Resource{}
-	ctx := context.Background()
+	eg, ctx := errgroup.WithContext(context.TODO())
+	eg.SetLimit(10)
+
 	datasets, err := client.GetDatasets(ctx)
 	if err != nil {
 		return nil, err
 	}
 	for _, d := range datasets {
-		dataset := d.ToDomain()
-		dataset.ProviderType = pc.Type
-		dataset.ProviderURN = pc.URN
+		d := d
+		eg.Go(func() error {
+			dataset := d.ToDomain()
+			dataset.ProviderType = pc.Type
+			dataset.ProviderURN = pc.URN
 
-		if containsString(resourceTypes, ResourceTypeDataset) {
-			resources = append(resources, dataset)
-		}
+			if containsString(resourceTypes, ResourceTypeDataset) {
+				resources = append(resources, dataset)
+			}
 
-		if containsString(resourceTypes, ResourceTypeTable) {
-			tables, err := client.GetTables(ctx, dataset.Name)
-			if err != nil {
-				return nil, err
+			if containsString(resourceTypes, ResourceTypeTable) {
+				tables, err := client.GetTables(ctx, dataset.Name)
+				if err != nil {
+					return fmt.Errorf("fetching tables for dataset %q: %w", dataset.URN, err)
+				}
+				for _, t := range tables {
+					table := t.ToDomain()
+					table.ProviderType = pc.Type
+					table.ProviderURN = pc.URN
+					dataset.Children = append(dataset.Children, table)
+				}
 			}
-			for _, t := range tables {
-				table := t.ToDomain()
-				table.ProviderType = pc.Type
-				table.ProviderURN = pc.URN
-				dataset.Children = append(dataset.Children, table)
-			}
-		}
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return nil, err
 	}
 
 	return resources, nil
@@ -333,7 +344,7 @@ func (p *Provider) getBigQueryClient(credentials Credentials) (BigQueryClient, e
 	}
 
 	credentials.Decrypt(p.encryptor)
-	client, err := newBigQueryClient(projectID, []byte(credentials.ServiceAccountKey))
+	client, err := NewBigQueryClient(projectID, option.WithCredentialsJSON([]byte(credentials.ServiceAccountKey)))
 	if err != nil {
 		return nil, err
 	}
