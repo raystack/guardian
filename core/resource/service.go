@@ -13,6 +13,8 @@ const (
 	AuditKeyResourceUpdate      = "resource.update"
 	AuditKeyResourceDelete      = "resource.delete"
 	AuditKeyResourceBatchDelete = "resource.batchDelete"
+
+	ReservedDetailsKeyMetadata = "__metadata"
 )
 
 //go:generate mockery --name=repository --exported --with-expecter
@@ -88,6 +90,10 @@ func (s *Service) Update(ctx context.Context, r *domain.Resource) error {
 	if err != nil {
 		return err
 	}
+
+	// Details[ReservedDetailsKeyMetadata] is not allowed to be updated by users
+	// value for this field should only set by the provider on FetchResources
+	delete(r.Details, ReservedDetailsKeyMetadata)
 
 	if err := mergo.Merge(r, existingResource); err != nil {
 		return err
