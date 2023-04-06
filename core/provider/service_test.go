@@ -280,6 +280,14 @@ func (s *ServiceTestSuite) TestUpdate() {
 			s.mockProviderRepository.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), tc.expectedNewProvider).Return(nil)
 			s.mockAuditLogger.On("Log", mock.Anything, provider.AuditKeyUpdate, mock.Anything).Return(nil).Once()
 
+			expectedResources := []*domain.Resource{}
+			s.mockResourceService.On("Find", mock.Anything, domain.ListResourcesFilter{
+				ProviderType: tc.updatePayload.Type,
+				ProviderURN:  tc.updatePayload.URN,
+			}).Return([]*domain.Resource{}, nil).Once()
+			s.mockProvider.On("GetResources", tc.updatePayload.Config).Return(expectedResources, nil).Once()
+			s.mockResourceService.On("BulkUpsert", mock.Anything, expectedResources).Return(nil).Once()
+
 			actualError := s.service.Update(context.Background(), tc.updatePayload)
 
 			s.Nil(actualError)
@@ -309,6 +317,13 @@ func (s *ServiceTestSuite) TestUpdate() {
 			s.mockProvider.On("CreateConfig", mock.Anything).Return(nil).Once()
 
 			ctx := provider.WithDryRun(context.Background())
+
+			expectedResources := []*domain.Resource{}
+			s.mockResourceService.On("Find", mock.Anything, domain.ListResourcesFilter{
+				ProviderType: p.Type,
+				ProviderURN:  p.URN,
+			}).Return([]*domain.Resource{}, nil).Once()
+			s.mockProvider.On("GetResources", p.Config).Return(expectedResources, nil).Once()
 
 			actualError := s.service.Update(ctx, p)
 
