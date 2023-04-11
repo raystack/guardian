@@ -3,7 +3,7 @@ COMMIT := $(shell git rev-parse --short HEAD)
 TAG := "$(shell git rev-list --tags --max-count=1)"
 VERSION := "$(shell git describe --tags ${TAG})-next"
 BUILD_DIR=dist
-PROTON_COMMIT := "b9b0deda4ba141084b1741805a1682e26e2a2e74"
+PROTON_COMMIT := "50162a109e0eeaf1d289a04a8649852c5bbfb51e"
 
 .PHONY: all build clean test tidy vet proto setup format generate
 
@@ -74,7 +74,7 @@ setup: ## Install all the dependencies
 	go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
 	go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
 	go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.5.0
-	go get github.com/bufbuild/buf/cmd/buf@v0.54.1
+	go get github.com/bufbuild/buf/cmd/buf@v1.15.1
 
 help: ## Display this help message
 	@cat $(MAKEFILE_LIST) | grep -e "^[a-zA-Z_\-]*: *.*## *" | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
