@@ -659,6 +659,8 @@ To get the list of all approvals, use the ** `GET` ** Method on **`{{HOST}}/api/
 | statuses   | query      | Enum: **```pending```** , **```rejected```** , **```active```**  , **```terminated```** , **```cancelled```**                                       | No | [string]            | No | [string] |
 | order_by   | query      |             | No | [string] |
 | created_by | query      |             | No | string   |
+| size       | query      |             | No | int |
+| offset     | query      |             | No | int |
 
 ##### Response
 
