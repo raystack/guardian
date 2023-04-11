@@ -124,14 +124,22 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 			Status:        "test-status-1",
 			PolicyID:      "test-policy-id",
 			PolicyVersion: 1,
-
-			Appeal: s.dummyAppeal,
+			Appeal:        s.dummyAppeal,
 		},
 		{
 			Name:          "test-approval-name-2",
 			Index:         1,
 			AppealID:      s.dummyAppeal.ID,
 			Status:        "test-status-2",
+			PolicyID:      "test-policy-id",
+			PolicyVersion: 1,
+			Appeal:        s.dummyAppeal,
+		},
+		{
+			Name:          "test-approval-name-3",
+			Index:         1,
+			AppealID:      s.dummyAppeal.ID,
+			Status:        "test-status-1",
 			PolicyID:      "test-policy-id",
 			PolicyVersion: 1,
 			Appeal:        s.dummyAppeal,
@@ -152,13 +160,19 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 			AppealID:   s.dummyAppeal.ID,
 			Email:      "approver2@email.com",
 		},
+		{
+			ApprovalID: dummyApprovals[2].ID,
+			AppealID:   s.dummyAppeal.ID,
+			Email:      "approver1@email.com",
+		},
 	}
 
 	ctx := context.Background()
-	err = s.repository.AddApprover(ctx, dummyApprover[0])
-	s.Require().NoError(err)
-	err = s.repository.AddApprover(ctx, dummyApprover[1])
-	s.Require().NoError(err)
+
+	for _, ap := range dummyApprover {
+		err = s.repository.AddApprover(ctx, ap)
+		s.Require().NoError(err)
+	}
 
 	s.Run("should return list of approvals on success", func() {
 		approvals, err := s.repository.ListApprovals(context.Background(), &domain.ListApprovalsFilter{
@@ -166,6 +180,7 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 			CreatedBy: dummyApprover[0].Email,
 			Statuses:  []string{"test-status-1"},
 			OrderBy:   []string{"status", "updated_at:desc", "created_at"},
+			Size:      1,
 		})
 
 		s.NoError(err)

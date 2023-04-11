@@ -22,6 +22,8 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1beta1
 		CreatedBy: user,
 		Statuses:  req.GetStatuses(),
 		OrderBy:   req.GetOrderBy(),
+		Size:      int(req.GetSize()),
+		Offset:    int(req.GetOffset()),
 	})
 	if err != nil {
 		return nil, err
@@ -38,6 +40,8 @@ func (s *GRPCServer) ListApprovals(ctx context.Context, req *guardianv1beta1.Lis
 		CreatedBy: req.GetCreatedBy(),
 		Statuses:  req.GetStatuses(),
 		OrderBy:   req.GetOrderBy(),
+		Size:      int(req.GetSize()),
+		Offset:    int(req.GetOffset()),
 	})
 	if err != nil {
 		return nil, err
