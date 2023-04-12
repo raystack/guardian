@@ -3,6 +3,7 @@ package newpoc
 import (
 	"context"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/domain"
 )
 
@@ -21,50 +22,33 @@ import (
 
 // TODO: all of these interfaces should be defined in core/provider/service.go only
 
-// ConfigManager mostly will be used for CRUD of provider config
-type IConfigManager interface {
-	Validate(context.Context, *domain.Provider) error
-	Encrypt(context.Context, *domain.Provider) error
-	Decrypt(context.Context, *domain.Provider) error
+type ProviderConfigurator interface {
+	Validate(*validator.Validate) error
+	Encrypt(domain.Encryptor) error
+	Decrypt(domain.Decryptor) error
 }
 
 // BasicProviderClient depends on a valid provider config
 type BasicProviderClient interface {
-	// GetType() string // Will be part of providerService or anything that initiate the provider client
 	GetAllowedAccountTypes(context.Context) []string
 	ListResources(context.Context) ([]IResource, error)
-	GrantAccess(ctx context.Context, r IResource, accountID string, permissions []string) error
-	RevokeAccess(ctx context.Context, r IResource, accountID string, permissions []string) error
+	GrantAccess(context.Context, domain.Grant) error
+	RevokeAccess(context.Context, domain.Grant) error
 }
 
 type IResource interface {
 	GetType() string
-	// GetURN() string
-	// GetDisplayName() string
-}
-
-type RoleManager interface {
-	// for api: GET /providers/:id/resources/:type/roles
-	ListRoles(context.Context) ([]IRole, error)
-}
-
-type IRole interface {
-	GetID() string
+	GetURN() string
 	GetDisplayName() string
-	GetDescription() string
-	GetPermissions() []string
+	GetMetadata() map[string]interface{}
 }
 
-type PermissionManager interface {
-	ListPermissions(ctx context.Context, resourceType, role string) ([]IPermission, error)
+type AccessImporter interface {
+	ListAccess(context.Context, domain.ProviderConfig) (domain.MapResourceAccess, error)
 }
 
-type IPermission interface {
-	GetID() string
-}
-
-type ActivityExtractor interface {
-	ListActivities(ctx context.Context) ([]IActivity, error)
+type ActivityImporter interface {
+	ListActivities(context.Context) ([]IActivity, error)
 }
 
 type IActivity interface {

@@ -10,6 +10,10 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+const (
+	ProviderType = "gcloud_iam"
+)
+
 var (
 	ErrShouldHaveOneResource  = errors.New("gcloud_iam should have one resource")
 	ErrInvalidCredentials     = errors.New("invalid credentials type")
@@ -25,6 +29,10 @@ type credentials struct {
 }
 
 func (c *credentials) Decode(v interface{}) error {
+	if decodedCreds, ok := v.(*credentials); ok {
+		*c = *decodedCreds
+		return nil
+	}
 	return mapstructure.Decode(v, c)
 }
 
@@ -35,83 +43,118 @@ func (c *credentials) Validate(validator *validator.Validate) error {
 	return nil
 }
 
-// ConfigManager implements IConfigManager interface
-type ConfigManager struct {
-	validator *validator.Validate
-	crypto    domain.Crypto
+type Config struct {
+	pc           *domain.ProviderConfig
+	credentials  *credentials
+	resourceType string
+	resourceID   string
 }
 
-// NewConfigManager returns a new ConfigManager
-func NewConfigManager(validator *validator.Validate, crypto domain.Crypto) *ConfigManager {
-	return &ConfigManager{
-		validator: validator,
-		crypto:    crypto,
+func NewConfig(pc *domain.ProviderConfig) (*Config, error) {
+	if pc.Type != ProviderType {
+		return nil, fmt.Errorf("%w: expected provider type: %q", ErrInvalidProviderType, ProviderType)
 	}
+
+	creds := new(credentials)
+	if err := creds.Decode(pc.Credentials); err != nil {
+		return nil, fmt.Errorf("decoding credentials: %w", err)
+	}
+	pc.Credentials = creds
+
+	resourceType, resourceID, err := getResourceIdentifier(creds.ResourceName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Config{
+		pc:           pc,
+		credentials:  creds,
+		resourceType: resourceType,
+		resourceID:   resourceID,
+	}, nil
 }
 
-func (m ConfigManager) Validate(ctx context.Context, p *domain.Provider) error {
-	if p == nil {
+func (c *Config) GetProviderConfig() *domain.ProviderConfig {
+	return c.pc
+}
+
+func (c *Config) Validate(ctx context.Context, validator *validator.Validate) error {
+	if c.pc == nil {
 		return ErrProviderShouldNotBeNil
 	}
 
 	// validate credentials
-	creds := new(credentials)
-	if err := creds.Decode(p.Config.Credentials); err != nil {
-		return fmt.Errorf("decoding credentials: %w", err)
-	}
-	if err := creds.Validate(m.validator); err != nil {
+	if err := c.credentials.Validate(validator); err != nil {
 		return fmt.Errorf("validating credentials: %w", err)
 	}
 
 	// validate resource config
-	if len(p.Config.Resources) != 1 {
+	if len(c.pc.Resources) != 1 {
 		return ErrShouldHaveOneResource
 	}
-	rc := p.Config.Resources[0]
-	if err := m.validator.Var(rc.Type, resourceTypeValidation); err != nil {
+	rc := c.pc.Resources[0]
+	if err := validator.Var(rc.Type, resourceTypeValidation); err != nil {
 		return fmt.Errorf("validating resource type %q: %w", rc.Type, err)
 	}
 	if len(rc.Roles) == 0 {
 		return ErrRolesShouldNotBeEmpty
 	}
 
+	// validate permissions (gcloud roles)
+	tmpClient, err := NewClient(c) // TODO: client should be overrideable with an existing client instance through option param
+	if err != nil {
+		return fmt.Errorf("initializing client: %w", err)
+	}
+	grantableRoles, err := tmpClient.listGrantableRoles(ctx)
+	if err != nil {
+		return fmt.Errorf("listing grantable roles: %w", err)
+	}
+	grantableRolesMap := make(map[string]bool)
+	for _, r := range grantableRoles {
+		grantableRolesMap[r] = true
+	}
+	for _, role := range rc.Roles {
+		for _, permission := range role.Permissions {
+			permissionString, ok := permission.(string)
+			if !ok {
+				return fmt.Errorf("invalid permission type for %q: %T", permission, permission)
+			}
+			if !grantableRolesMap[permissionString] {
+				return fmt.Errorf("permission %q is not grantable to %q", permissionString, c.credentials.ResourceName)
+			}
+		}
+	}
+
 	return nil
 }
 
-func (m ConfigManager) Encrypt(ctx context.Context, p *domain.Provider) error {
-	credentials := new(credentials)
-	if err := credentials.Decode(p.Config.Credentials); err != nil {
-		return ErrInvalidCredentials
+// Encrypt encrypts the service account key in ProviderConfig.Credentials
+func (c *Config) Encrypt(encryptor domain.Encryptor) error {
+	credentialsString, ok := c.pc.Credentials.(map[string]interface{})["service_account_key"].(string)
+	if !ok {
+		return fmt.Errorf("invalid credentials type: %T", c.pc.Credentials)
 	}
 
-	// TODO: check if creds value is the decrypted one
-
-	encryptedSA, err := m.crypto.Encrypt(credentials.ServiceAccountKey)
+	encryptedSA, err := encryptor.Encrypt(credentialsString)
 	if err != nil {
 		return err
 	}
 
-	credentials.ServiceAccountKey = encryptedSA
-	p.Config.Credentials = credentials
-
+	c.pc.Credentials.(map[string]interface{})["service_account_key"] = encryptedSA
 	return nil
 }
 
-func (m ConfigManager) Decrypt(ctx context.Context, p *domain.Provider) error {
-	credentials := new(credentials)
-	if err := credentials.Decode(p.Config.Credentials); err != nil {
-		return ErrInvalidCredentials
+func (c *Config) Decrypt(decryptor domain.Decryptor) error {
+	credentialsString, ok := c.pc.Credentials.(map[string]interface{})["service_account_key"].(string)
+	if !ok {
+		return fmt.Errorf("invalid credentials type: %T", c.pc.Credentials)
 	}
 
-	// TODO: check if creds value is the encrypted one
-
-	decryptedSA, err := m.crypto.Decrypt(credentials.ServiceAccountKey)
+	decryptedSA, err := decryptor.Decrypt(credentialsString)
 	if err != nil {
 		return err
 	}
 
-	credentials.ServiceAccountKey = decryptedSA
-	p.Config.Credentials = credentials
-
+	c.pc.Credentials.(map[string]interface{})["service_account_key"] = decryptedSA
 	return nil
 }

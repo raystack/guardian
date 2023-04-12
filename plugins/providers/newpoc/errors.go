@@ -12,4 +12,5 @@ var (
 	ErrInvalidRole                   = errors.New("invalid role")
 	ErrInvalidResourceName           = errors.New("invalid resource name: resource name should be projects/{{project-id}} or organizations/{{org-id}}")
 	ErrInvalidProjectRole            = errors.New("provided role is not supported for project in gcloud")
+	ErrInvalidProviderType           = errors.New("invalid provider type")
 )

@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/domain"
-	"github.com/mitchellh/mapstructure"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/iam/v1"
+	"google.golang.org/api/option"
 )
 
 const (
@@ -23,38 +24,39 @@ const (
 
 // Client implements BasicProviderClient
 type Client struct {
-	providerConfig              *domain.ProviderConfig
-	cloudResourceManagerService *cloudresourcemanager.Service
+	config                      *Config
 	iamService                  *iam.Service
+	cloudResourceManagerService *cloudresourcemanager.Service
 }
 
-type ClientDependencies struct {
-	ProviderConfig              *domain.ProviderConfig
-	CloudResourceManagerService *cloudresourcemanager.Service
-	IamService                  *iam.Service
-}
-
-func NewClient(deps *ClientDependencies) (*Client, error) {
-	if deps == nil {
-		return nil, errors.New("dependencies can't be nil")
+func NewClient(cfg *Config, opts ...option.ClientOption) (*Client, error) {
+	if cfg == nil {
+		return nil, errors.New("config is nil")
 	}
 
-	if deps.ProviderConfig == nil {
-		return nil, errors.New("provider config can't be nil")
+	validator := validator.New() // TODO: use option to override validator
+	if err := cfg.Validate(context.TODO(), validator); err != nil {
+		return nil, err
 	}
 
-	if deps.CloudResourceManagerService == nil {
-		return nil, errors.New("cloud resource manager service can't be nil")
+	ctx := context.Background()
+	options := []option.ClientOption{
+		option.WithCredentialsJSON([]byte(cfg.credentials.ServiceAccountKey)),
 	}
-
-	if deps.IamService == nil {
-		return nil, errors.New("iam service can't be nil")
+	options = append(options, opts...)
+	iamService, err := iam.NewService(ctx, options...)
+	if err != nil {
+		return nil, err
+	}
+	cloudResourceManagerService, err := cloudresourcemanager.NewService(ctx, options...)
+	if err != nil {
+		return nil, err
 	}
 
 	c := &Client{
-		providerConfig:              deps.ProviderConfig,
-		cloudResourceManagerService: deps.CloudResourceManagerService,
-		iamService:                  deps.IamService,
+		config:                      cfg,
+		iamService:                  iamService,
+		cloudResourceManagerService: cloudResourceManagerService,
 	}
 
 	return c, nil
@@ -69,149 +71,157 @@ func (c *Client) GetAllowedAccountTypes(ctx context.Context) []string {
 }
 
 func (c *Client) ListResources(ctx context.Context) ([]IResource, error) {
-	var creds credentials
-	if err := mapstructure.Decode(c.providerConfig.Credentials, &creds); err != nil {
+	resourceType, resourceID, err := getResourceIdentifier(c.config.credentials.ResourceName)
+	if err != nil {
 		return nil, err
 	}
 
-	var t string
-	if strings.HasPrefix(creds.ResourceName, "project") {
-		t = ResourceTypeProject
-	} else if strings.HasPrefix(creds.ResourceName, "organization") {
-		t = ResourceTypeOrganization
-	}
-
 	return []IResource{
-		&domain.Resource{
-			ProviderType: c.providerConfig.Type,
-			ProviderURN:  c.providerConfig.URN,
-			Type:         t,
-			URN:          creds.ResourceName,
-			Name:         fmt.Sprintf("%s - GCP IAM", creds.ResourceName),
+		resource{
+			Type: resourceType,
+			ID:   resourceID,
 		},
 	}, nil
 }
 
-func (c *Client) GrantAccess(ctx context.Context, r IResource, accountID string, permissions []string) error {
-	var creds credentials
-	if err := mapstructure.Decode(c.providerConfig.Credentials, &creds); err != nil {
-		return err
-	}
-
-	if r.GetType() == ResourceTypeProject || r.GetType() == ResourceTypeOrganization {
-		for _, permission := range permissions {
-			policy, err := c.getIamPolicy(ctx, creds.ResourceName)
-			if err != nil {
-				return err
-			}
-
-			member := accountID
-			roleExists := false
-			for _, b := range policy.Bindings {
-				if b.Role == permission {
-					roleExists = true
-					if containsString(b.Members, member) {
-						// Permission already exists
-						continue
-					}
-					b.Members = append(b.Members, member)
-				}
-			}
-			if !roleExists {
-				policy.Bindings = append(policy.Bindings, &cloudresourcemanager.Binding{
-					Role:    permission,
-					Members: []string{member},
-				})
-			}
-
-			_, err = c.setIamPolicy(ctx, creds.ResourceName, policy)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return ErrInvalidResourceType
-}
-
-func (c *Client) RevokeAccess(ctx context.Context, r IResource, accountID string, permissions []string) error {
-	var creds credentials
-	if err := mapstructure.Decode(c.providerConfig.Credentials, &creds); err != nil {
-		return err
-	}
-
-	if r.GetType() == ResourceTypeProject || r.GetType() == ResourceTypeOrganization {
-		for _, permission := range permissions {
-			policy, err := c.getIamPolicy(ctx, creds.ResourceName)
-			if err != nil {
-				return err
-			}
-
-			member := accountID
-
-			for _, b := range policy.Bindings {
-				if b.Role == permission {
-					removeIndex := -1
-					for i, m := range b.Members {
-						if m == member {
-							removeIndex = i
-						}
-					}
-					if removeIndex == -1 {
-						// permission doesn't exist
-						continue
-					}
-					b.Members = append(b.Members[:removeIndex], b.Members[removeIndex+1:]...)
-				}
-			}
-
-			c.setIamPolicy(ctx, creds.ResourceName, policy)
+func (c *Client) GrantAccess(ctx context.Context, g domain.Grant) error {
+	for _, permission := range g.Permissions {
+		policy, err := c.getIamPolicy(ctx)
+		if err != nil {
 			return err
 		}
 
-		return nil
-	}
+		member := fmt.Sprintf("%s:%s", g.AccountType, g.AccountID)
+		roleExists := false
+		for _, b := range policy.Bindings {
+			if b.Role == permission {
+				roleExists = true
+				if containsString(b.Members, member) {
+					// Permission already exists
+					continue
+				}
+				b.Members = append(b.Members, member)
+			}
+		}
+		if !roleExists {
+			policy.Bindings = append(policy.Bindings, &cloudresourcemanager.Binding{
+				Role:    permission,
+				Members: []string{member},
+			})
+		}
 
-	return ErrInvalidResourceType
+		if _, err = c.setIamPolicy(ctx, policy); err != nil {
+			return err
+		}
+	}
+	return nil
+
 }
 
-func (c *Client) getIamPolicy(ctx context.Context, resourceName string) (*cloudresourcemanager.Policy, error) {
-	if strings.HasPrefix(resourceName, ResourceNameProjectPrefix) {
-		projectID := strings.Replace(resourceName, ResourceNameProjectPrefix, "", 1)
+func (c *Client) RevokeAccess(ctx context.Context, g domain.Grant) error {
+	if g.Resource.Type != ResourceTypeProject && g.Resource.Type != ResourceTypeOrganization {
+		return ErrInvalidResourceType
+	}
+
+	for _, permission := range g.Permissions {
+		policy, err := c.getIamPolicy(ctx)
+		if err != nil {
+			return err
+		}
+
+		member := fmt.Sprintf("%s:%s", g.AccountType, g.AccountID)
+		for _, b := range policy.Bindings {
+			if b.Role == permission {
+				removeIndex := -1
+				for i, m := range b.Members {
+					if m == member {
+						removeIndex = i
+					}
+				}
+				if removeIndex == -1 {
+					// permission doesn't exist
+					continue
+				}
+				b.Members = append(b.Members[:removeIndex], b.Members[removeIndex+1:]...)
+			}
+		}
+
+		if _, err := c.setIamPolicy(ctx, policy); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Client) ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error) {
+	policy, err := c.getIamPolicy(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting IAM policy: %w", err)
+	}
+
+	access := make(domain.MapResourceAccess)
+	for _, resource := range resources {
+		for _, binding := range policy.Bindings {
+			for _, member := range binding.Members {
+				account := strings.Split(member, ":")
+				ae := domain.AccessEntry{
+					AccountType: account[0],
+					AccountID:   account[1],
+					Permission:  binding.Role,
+				}
+				access[resource.URN] = append(access[resource.URN], ae)
+			}
+		}
+	}
+
+	return access, nil
+}
+
+func (c *Client) getIamPolicy(ctx context.Context) (*cloudresourcemanager.Policy, error) {
+	switch c.config.resourceType {
+	case ResourceTypeProject:
 		return c.cloudResourceManagerService.Projects.
-			GetIamPolicy(projectID, &cloudresourcemanager.GetIamPolicyRequest{}).
+			GetIamPolicy(c.config.resourceID, &cloudresourcemanager.GetIamPolicyRequest{}).
 			Context(ctx).Do()
-	} else if strings.HasPrefix(resourceName, ResourceNameOrganizationPrefix) {
-		orgID := strings.Replace(resourceName, ResourceNameOrganizationPrefix, "", 1)
+	case ResourceTypeOrganization:
 		return c.cloudResourceManagerService.Organizations.
-			GetIamPolicy(orgID, &cloudresourcemanager.GetIamPolicyRequest{}).
+			GetIamPolicy(c.config.resourceID, &cloudresourcemanager.GetIamPolicyRequest{}).
 			Context(ctx).Do()
+	default:
+		return nil, ErrInvalidResourceName
 	}
-	return nil, ErrInvalidResourceName
 }
 
-func (c *Client) setIamPolicy(ctx context.Context, resourceName string, policy *cloudresourcemanager.Policy) (*cloudresourcemanager.Policy, error) {
+func (c *Client) setIamPolicy(ctx context.Context, policy *cloudresourcemanager.Policy) (*cloudresourcemanager.Policy, error) {
 	setIamPolicyRequest := &cloudresourcemanager.SetIamPolicyRequest{
 		Policy: policy,
 	}
-	if strings.HasPrefix(resourceName, ResourceNameProjectPrefix) {
-		projectID := strings.Replace(resourceName, ResourceNameProjectPrefix, "", 1)
+	switch c.config.resourceType {
+	case ResourceTypeProject:
 		return c.cloudResourceManagerService.Projects.
-			SetIamPolicy(projectID, setIamPolicyRequest).
+			SetIamPolicy(c.config.resourceID, setIamPolicyRequest).
 			Context(ctx).Do()
-	} else if strings.HasPrefix(resourceName, ResourceNameOrganizationPrefix) {
-		orgID := strings.Replace(resourceName, ResourceNameOrganizationPrefix, "", 1)
+	case ResourceTypeOrganization:
 		return c.cloudResourceManagerService.Organizations.
-			SetIamPolicy(orgID, setIamPolicyRequest).
+			SetIamPolicy(c.config.resourceID, setIamPolicyRequest).
 			Context(ctx).Do()
+	default:
+		return nil, ErrInvalidResourceName
 	}
-	return nil, ErrInvalidResourceName
 }
 
-func containsString(arr []string, v string) bool {
-	for _, item := range arr {
-		if item == v {
-			return true
-		}
+func (c *Client) listGrantableRoles(ctx context.Context) ([]string, error) {
+	req := &iam.QueryGrantableRolesRequest{
+		FullResourceName: fmt.Sprintf("//cloudresourcemanager.googleapis.com/%s", c.config.credentials.ResourceName),
 	}
-	return false
+	res, err := c.iamService.Roles.QueryGrantableRoles(req).Context(ctx).Do()
+	if err != nil {
+		return nil, err
+	}
+
+	roles := make([]string, len(res.Roles))
+	for i, r := range res.Roles {
+		roles[i] = r.Name
+	}
+	return roles, nil
 }
