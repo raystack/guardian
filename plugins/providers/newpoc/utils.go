@@ -19,5 +19,12 @@ func getResourceIdentifier(urn string) (rType, id string, err error) {
 	if len(resourceName) != 2 {
 		return "", "", fmt.Errorf("invalid resource name: %s", urn)
 	}
-	return resourceName[0], resourceName[1], nil
+	resourceType := resourceName[0]
+	if resourceType == "projects" {
+		resourceType = ResourceTypeProject
+	} else if resourceType == "organizations" {
+		resourceType = ResourceTypeOrganization
+	}
+
+	return resourceType, resourceName[1], nil
 }

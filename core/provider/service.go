@@ -26,6 +26,12 @@ const (
 	ReservedDetailsKeyPolicyQuestions    = "__policy_questions"
 )
 
+var (
+	migratedPluginTypes = map[string]bool{
+		"newpoc": true,
+	}
+)
+
 //go:generate mockery --name=repository --exported --with-expecter
 type repository interface {
 	Create(context.Context, *domain.Provider) error
@@ -35,6 +41,29 @@ type repository interface {
 	GetTypes(context.Context) ([]domain.ProviderType, error)
 	GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error)
 	Delete(ctx context.Context, id string) error
+}
+
+type providerConfig interface {
+	GetProviderConfig() *domain.ProviderConfig
+	Validate(ctx context.Context, validator *validator.Validate) error
+}
+
+type encryptable interface {
+	Encrypt(encryptor domain.Encryptor) error
+}
+
+type decryptable interface {
+	Decrypt(decryptor domain.Decryptor) error
+}
+
+type clientV2 interface {
+	ListResources(context.Context) ([]domain.Resourceable, error)
+	GrantAccess(context.Context, domain.Grant) error
+	RevokeAccess(context.Context, domain.Grant) error
+}
+
+type AccessImporter interface {
+	ListAccess(context.Context, domain.ProviderConfig, []*domain.Resource) (domain.MapResourceAccess, error)
 }
 
 //go:generate mockery --name=Client --exported --with-expecter
@@ -79,13 +108,19 @@ type ServiceDeps struct {
 	Validator   *validator.Validate
 	Logger      log.Logger
 	AuditLogger auditLogger
+	Crypto      domain.Crypto
 }
 
 // NewService returns service struct
 func NewService(deps ServiceDeps) *Service {
+	pluginFactory := &pluginFactory{}
+
 	mapProviderClients := make(map[string]Client)
 	for _, c := range deps.Clients {
 		mapProviderClients[c.GetType()] = c
+	}
+	for providerType, adaptedPlugin := range getNewPlugins(pluginFactory, deps.Validator, deps.Crypto) {
+		mapProviderClients[providerType] = adaptedPlugin
 	}
 
 	return &Service{

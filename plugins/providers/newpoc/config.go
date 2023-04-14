@@ -2,6 +2,7 @@ package newpoc
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -11,7 +12,7 @@ import (
 )
 
 const (
-	ProviderType = "gcloud_iam"
+	ProviderType = "newpoc"
 )
 
 var (
@@ -33,7 +34,17 @@ func (c *credentials) Decode(v interface{}) error {
 		*c = *decodedCreds
 		return nil
 	}
-	return mapstructure.Decode(v, c)
+
+	if err := mapstructure.Decode(v, c); err != nil {
+		return err
+	}
+
+	// attempt to decode service account key in case of it is base64 encoded
+	if decoded, err := base64.StdEncoding.DecodeString(c.ServiceAccountKey); err == nil {
+		c.ServiceAccountKey = string(decoded)
+	}
+
+	return nil
 }
 
 func (c *credentials) Validate(validator *validator.Validate) error {
@@ -59,7 +70,6 @@ func NewConfig(pc *domain.ProviderConfig) (*Config, error) {
 	if err := creds.Decode(pc.Credentials); err != nil {
 		return nil, fmt.Errorf("decoding credentials: %w", err)
 	}
-	pc.Credentials = creds
 
 	resourceType, resourceID, err := getResourceIdentifier(creds.ResourceName)
 	if err != nil {

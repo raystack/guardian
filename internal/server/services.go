@@ -128,6 +128,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Validator:       deps.Validator,
 		Logger:          deps.Logger,
 		AuditLogger:     auditLogger,
+		Crypto:          deps.Crypto,
 	})
 	activityService := activity.NewService(activity.ServiceDeps{
 		Repository:      activityRepository,

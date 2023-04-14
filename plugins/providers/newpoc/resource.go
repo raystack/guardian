@@ -9,7 +9,7 @@ const (
 
 type resource struct {
 	Type string
-	ID   string
+	URN  string
 }
 
 func (r resource) GetType() string {
@@ -17,7 +17,7 @@ func (r resource) GetType() string {
 }
 
 func (r resource) GetURN() string {
-	return fmt.Sprintf("%s/%s", r.Type, r.ID)
+	return r.URN
 }
 
 func (r resource) GetDisplayName() string {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/domain"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/iam/v1"
@@ -34,10 +33,10 @@ func NewClient(cfg *Config, opts ...option.ClientOption) (*Client, error) {
 		return nil, errors.New("config is nil")
 	}
 
-	validator := validator.New() // TODO: use option to override validator
-	if err := cfg.Validate(context.TODO(), validator); err != nil {
-		return nil, err
-	}
+	// validator := validator.New() // TODO: use option to override validator
+	// if err := cfg.Validate(context.TODO(), validator); err != nil {
+	// 	return nil, err
+	// }
 
 	ctx := context.Background()
 	options := []option.ClientOption{
@@ -70,16 +69,11 @@ func (c *Client) GetAllowedAccountTypes(ctx context.Context) []string {
 	}
 }
 
-func (c *Client) ListResources(ctx context.Context) ([]IResource, error) {
-	resourceType, resourceID, err := getResourceIdentifier(c.config.credentials.ResourceName)
-	if err != nil {
-		return nil, err
-	}
-
-	return []IResource{
-		resource{
-			Type: resourceType,
-			ID:   resourceID,
+func (c *Client) ListResources(ctx context.Context) ([]domain.Resourceable, error) {
+	return []domain.Resourceable{
+		&resource{
+			Type: c.config.resourceType,
+			URN:  c.config.credentials.ResourceName,
 		},
 	}, nil
 }
@@ -188,7 +182,7 @@ func (c *Client) getIamPolicy(ctx context.Context) (*cloudresourcemanager.Policy
 			GetIamPolicy(c.config.resourceID, &cloudresourcemanager.GetIamPolicyRequest{}).
 			Context(ctx).Do()
 	default:
-		return nil, ErrInvalidResourceName
+		return nil, fmt.Errorf("%w: %q", ErrInvalidResourceType, c.config.resourceType)
 	}
 }
 
@@ -206,7 +200,7 @@ func (c *Client) setIamPolicy(ctx context.Context, policy *cloudresourcemanager.
 			SetIamPolicy(c.config.resourceID, setIamPolicyRequest).
 			Context(ctx).Do()
 	default:
-		return nil, ErrInvalidResourceName
+		return nil, fmt.Errorf("%w: %q", ErrInvalidResourceType, c.config.resourceType)
 	}
 }
 

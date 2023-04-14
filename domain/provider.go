@@ -1,9 +1,12 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
+
+	"github.com/go-playground/validator/v10"
 )
 
 const (
@@ -104,4 +107,9 @@ type Provider struct {
 type ProviderType struct {
 	Name          string   `json:"name" yaml:"name"`
 	ResourceTypes []string `json:"resource_types" yaml:"resource_types"`
+}
+
+type ProviderConfigurable interface {
+	GetProvider() *Provider
+	Validate(context.Context, *validator.Validate) error
 }

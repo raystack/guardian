@@ -2,6 +2,13 @@ package domain
 
 import "time"
 
+type Resourceable interface {
+	GetType() string
+	GetURN() string
+	GetDisplayName() string
+	GetMetadata() map[string]interface{}
+}
+
 // Resource struct
 type Resource struct {
 	ID           string                 `json:"id" yaml:"id"`
