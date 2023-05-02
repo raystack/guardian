@@ -549,6 +549,16 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "appealStatuses",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1017,6 +1027,16 @@
             "required": false,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "appealStatuses",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
