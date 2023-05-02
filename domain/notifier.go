@@ -28,4 +28,6 @@ type NotificationMessage struct {
 type Notification struct {
 	User    string
 	Message NotificationMessage
+
+	Labels map[string]string
 }

@@ -63,18 +63,19 @@ func NewNotifier(config *Config, httpClient utils.HTTPClient) *Notifier {
 func (n *Notifier) Notify(items []domain.Notification) []error {
 	errs := make([]error, 0)
 	for _, item := range items {
+		labelSlice := utils.MapToSlice(item.Labels)
 		slackID, err := n.findSlackIDByEmail(item.User)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, fmt.Errorf("%v | %w", labelSlice, err))
 		}
 
 		msg, err := ParseMessage(item.Message, n.Messages, n.defaultMessageFiles)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, fmt.Errorf("%v | error parsing message : %w", labelSlice, err))
 		}
 
 		if err := n.sendMessage(slackID, msg); err != nil {
-			errs = append(errs, fmt.Errorf("error sending message to user %s - %s", item.User, err))
+			errs = append(errs, fmt.Errorf("%v | error sending message to user:%s | %w", labelSlice, item.User, err))
 		}
 	}
 
