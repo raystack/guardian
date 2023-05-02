@@ -41,11 +41,12 @@ func (h *handler) GrantExpirationReminder(ctx context.Context) error {
 				Message: domain.NotificationMessage{
 					Type: domain.NotificationTypeExpirationReminder,
 					Variables: map[string]interface{}{
-						"resource_name":   fmt.Sprintf("%s (%s: %s)", g.Resource.Name, g.Resource.ProviderType, g.Resource.URN),
-						"role":            g.Role,
-						"expiration_date": g.ExpirationDate,
-						"account_id":      g.AccountID,
-						"requestor":       g.Owner,
+						"resource_name":             fmt.Sprintf("%s (%s: %s)", g.Resource.Name, g.Resource.ProviderType, g.Resource.URN),
+						"role":                      g.Role,
+						"expiration_date":           g.ExpirationDate,
+						"expiration_date_formatted": g.ExpirationDate.Format("Jan 02, 2006 15:04:05 UTC"),
+						"account_id":                g.AccountID,
+						"requestor":                 g.Owner,
 					},
 				},
 			})
