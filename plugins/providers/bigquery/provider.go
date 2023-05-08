@@ -124,6 +124,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	resources := []*domain.Resource{}
 	eg, ctx := errgroup.WithContext(context.TODO())
 	eg.SetLimit(10)
+	var mu sync.Mutex
 
 	datasets, err := client.GetDatasets(ctx)
 	if err != nil {
@@ -137,6 +138,8 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 			dataset.ProviderURN = pc.URN
 
 			if containsString(resourceTypes, ResourceTypeDataset) {
+				mu.Lock()
+				defer mu.Unlock()
 				resources = append(resources, dataset)
 			}
 
