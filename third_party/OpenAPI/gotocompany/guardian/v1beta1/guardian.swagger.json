@@ -2020,6 +2020,9 @@
             "type": "object",
             "$ref": "#/definitions/v1beta1Condition"
           }
+        },
+        "expression": {
+          "type": "string"
         }
       }
     },
