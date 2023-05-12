@@ -134,7 +134,7 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 	}
 
 	go func() {
-		s.logger.Info("fetching resources", "provider_urn", p.URN)
+		s.logger.Info("provider create fetching resources", "provider_urn", p.URN)
 		ctx := audit.WithActor(context.Background(), domain.SystemActorName)
 		resources, err := s.getResources(ctx, p)
 		if err != nil {
@@ -199,7 +199,9 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 		return err
 	}
 
-	if !isDryRun(ctx) {
+	dryRun := isDryRun(ctx)
+
+	if !dryRun {
 		if err := s.repository.Update(ctx, p); err != nil {
 			return err
 		}
@@ -208,6 +210,23 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 			s.logger.Error("failed to record audit log", "error", err)
 		}
 	}
+
+	go func() {
+		s.logger.Info("provider update fetching resources", "provider_urn", p.URN)
+		ctx := audit.WithActor(context.Background(), domain.SystemActorName)
+		resources, err := s.getResources(ctx, p)
+		if err != nil {
+			s.logger.Error("failed to fetch resources", "error", err)
+		}
+
+		if !dryRun {
+			if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
+				s.logger.Error("failed to insert resources to db", "error", err)
+			} else {
+				s.logger.Info("resources added", "provider_urn", p.URN, "count", len(resources))
+			}
+		}
+	}()
 
 	return nil
 }
