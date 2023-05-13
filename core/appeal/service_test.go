@@ -1240,6 +1240,194 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	s.Equal(expectedResult, appeals)
 }
 
+func (s *ServiceTestSuite) TestCreateAppeal__WithAdditionalAppeals() {
+	s.setup()
+	providerType := "test-provider-type"
+	providerURN := "test-provider-urn"
+	resourceType := "test-resource-type"
+	targetResource := &domain.ResourceIdentifier{
+		ID: "test-resource-id-2",
+	}
+	targetRole := "test-role-1"
+
+	resources := []*domain.Resource{
+		{
+			ID:           "test-resource-id-1",
+			URN:          "test-resource-urn-1",
+			Type:         resourceType,
+			ProviderType: providerType,
+			ProviderURN:  providerURN,
+		},
+		{
+			ID:           "test-resource-id-2",
+			URN:          "test-resource-urn-2",
+			Type:         resourceType,
+			ProviderType: providerType,
+			ProviderURN:  providerURN,
+		},
+	}
+	policies := []*domain.Policy{
+		{
+			ID:      "test-policy-id-1",
+			Version: 1,
+			Steps: []*domain.Step{
+				{
+					Name:      "test-step-1",
+					Strategy:  domain.ApprovalStepStrategyAuto,
+					ApproveIf: `true`,
+				},
+			},
+			Requirements: []*domain.Requirement{
+				{
+					On: &domain.RequirementTrigger{
+						Expression: `$appeal.resource.urn == "test-resource-urn-1"`,
+					},
+					Appeals: []*domain.AdditionalAppeal{
+						{
+							Resource: targetResource,
+							Role:     targetRole,
+						},
+					},
+				},
+			},
+		},
+	}
+	providers := []*domain.Provider{
+		{
+			ID:   "test-provider-id",
+			Type: providerType,
+			URN:  providerURN,
+			Config: &domain.ProviderConfig{
+				Resources: []*domain.ResourceConfig{
+					{
+						Type: resourceType,
+						Policy: &domain.PolicyConfig{
+							ID:      policies[0].ID,
+							Version: int(policies[0].Version),
+						},
+						Roles: []*domain.Role{
+							{
+								ID:          "test-role-1",
+								Permissions: []interface{}{"test-permission-1"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	appealsPayload := []*domain.Appeal{
+		{
+			CreatedBy:  "user@example.com",
+			AccountID:  "user@example.com",
+			ResourceID: "test-resource-id-1",
+			Resource: &domain.Resource{
+				ID:           "test-resource-id-1",
+				URN:          "test-resource-urn-1",
+				Type:         resourceType,
+				ProviderType: providerType,
+				ProviderURN:  providerURN,
+			},
+			Role: "test-role-1",
+		},
+	}
+
+	// 1.a main appeal creation
+	expectedResourceFilters := domain.ListResourcesFilter{IDs: []string{appealsPayload[0].Resource.ID}}
+	s.mockResourceService.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx"), expectedResourceFilters).Return([]*domain.Resource{resources[0]}, nil).Once()
+	s.mockProviderService.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(providers, nil).Once()
+	s.mockPolicyService.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(policies, nil).Once()
+	s.mockGrantService.EXPECT().List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).Return([]domain.Grant{}, nil).Once().Run(func(args mock.Arguments) {
+		filter := args.Get(1).(domain.ListGrantsFilter)
+		s.Equal([]string{appealsPayload[0].AccountID}, filter.AccountIDs)
+		s.Equal([]string{appealsPayload[0].Resource.ID}, filter.ResourceIDs)
+		s.Equal([]string{appealsPayload[0].Role}, filter.Roles)
+	})
+	s.mockRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.ListAppealsFilter")).Return([]*domain.Appeal{}, nil).Once()
+	s.mockProviderService.EXPECT().ValidateAppeal(mock.AnythingOfType("*context.emptyCtx"), appealsPayload[0], providers[0], policies[0]).Return(nil).Once()
+	s.mockProviderService.EXPECT().GetPermissions(mock.AnythingOfType("*context.emptyCtx"), providers[0].Config, appealsPayload[0].Resource.Type, appealsPayload[0].Role).Return([]interface{}{"test-permission-1"}, nil).Once()
+	s.mockGrantService.EXPECT().List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).Return([]domain.Grant{}, nil).Once().Run(func(args mock.Arguments) {
+		filter := args.Get(1).(domain.ListGrantsFilter)
+		s.Equal([]string{appealsPayload[0].AccountID}, filter.AccountIDs)
+		s.Equal([]string{appealsPayload[0].Resource.ID}, filter.ResourceIDs)
+	})
+	expectedGrant := &domain.Grant{ID: "main-grant"}
+	s.mockGrantService.EXPECT().Prepare(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.Appeal")).Return(expectedGrant, nil).Once().Run(func(args mock.Arguments) {
+		appeal := args.Get(1).(domain.Appeal)
+		s.Equal(appealsPayload[0].AccountID, appeal.AccountID)
+		s.Equal(appealsPayload[0].Role, appeal.Role)
+		s.Equal(appealsPayload[0].ResourceID, appeal.ResourceID)
+		s.Equal(len(policies[0].Steps), len(appeal.Approvals))
+	})
+	s.mockPolicyService.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), policies[0].ID, policies[0].Version).Return(policies[0], nil).Once()
+
+	// 2.a additional appeal creation
+	s.mockResourceService.EXPECT().Get(mock.AnythingOfType("*context.cancelCtx"), targetResource).Return(resources[1], nil).Once()
+	expectedResourceFilters = domain.ListResourcesFilter{IDs: []string{resources[1].ID}}
+	s.mockResourceService.EXPECT().Find(mock.AnythingOfType("*context.cancelCtx"), expectedResourceFilters).Return([]*domain.Resource{resources[1]}, nil).Once()
+	s.mockProviderService.EXPECT().Find(mock.AnythingOfType("*context.cancelCtx")).Return(providers, nil).Once()
+	s.mockPolicyService.EXPECT().Find(mock.AnythingOfType("*context.cancelCtx")).Return(policies, nil).Once()
+	s.mockGrantService.EXPECT().List(mock.AnythingOfType("*context.cancelCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).Return([]domain.Grant{}, nil).Once().Run(func(args mock.Arguments) {
+		filter := args.Get(1).(domain.ListGrantsFilter)
+		s.Equal([]string{appealsPayload[0].AccountID}, filter.AccountIDs)
+		s.Equal([]string{targetResource.ID}, filter.ResourceIDs)
+		s.Equal([]string{targetRole}, filter.Roles)
+	})
+	s.mockRepository.EXPECT().Find(mock.AnythingOfType("*context.cancelCtx"), mock.AnythingOfType("*domain.ListAppealsFilter")).Return([]*domain.Appeal{}, nil).Once()
+	s.mockProviderService.EXPECT().ValidateAppeal(mock.AnythingOfType("*context.cancelCtx"), mock.AnythingOfType("*domain.Appeal"), providers[0], policies[0]).Return(nil).Once().Run(func(args mock.Arguments) {
+		appeal := args.Get(1).(*domain.Appeal)
+		s.Equal(appealsPayload[0].AccountID, appeal.AccountID)
+		s.Equal(targetRole, appeal.Role)
+		s.Equal(targetResource.ID, appeal.ResourceID)
+	})
+	s.mockProviderService.EXPECT().GetPermissions(mock.AnythingOfType("*context.cancelCtx"), providers[0].Config, resourceType, targetRole).Return([]interface{}{"test-permission-1"}, nil).Once()
+	s.mockGrantService.EXPECT().List(mock.AnythingOfType("*context.cancelCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).Return([]domain.Grant{}, nil).Once().Run(func(args mock.Arguments) {
+		filter := args.Get(1).(domain.ListGrantsFilter)
+		s.Equal([]string{appealsPayload[0].AccountID}, filter.AccountIDs)
+		s.Equal([]string{targetResource.ID}, filter.ResourceIDs)
+	})
+	expectedAdditionalGrant := &domain.Grant{ID: "additional-grant"}
+	s.mockGrantService.EXPECT().Prepare(mock.AnythingOfType("*context.cancelCtx"), mock.AnythingOfType("domain.Appeal")).Return(expectedAdditionalGrant, nil).Once().Run(func(args mock.Arguments) {
+		appeal := args.Get(1).(domain.Appeal)
+		s.Equal(appealsPayload[0].AccountID, appeal.AccountID)
+		s.Equal(targetRole, appeal.Role)
+		s.Equal(targetResource.ID, appeal.ResourceID)
+		s.Equal(len(policies[0].Steps), len(appeal.Approvals))
+	})
+	s.mockPolicyService.EXPECT().GetOne(mock.AnythingOfType("*context.cancelCtx"), policies[0].ID, policies[0].Version).Return(policies[0], nil).Once()
+
+	// 2.b grant access for the additional appeal
+	s.mockProviderService.EXPECT().GrantAccess(mock.AnythingOfType("*context.cancelCtx"), mock.AnythingOfType("domain.Grant")).Return(nil).Once().Run(func(args mock.Arguments) {
+		grant := args.Get(1).(domain.Grant)
+		s.Equal(expectedAdditionalGrant.ID, grant.ID)
+	})
+	s.mockRepository.EXPECT().BulkUpsert(mock.AnythingOfType("*context.cancelCtx"), mock.AnythingOfType("[]*domain.Appeal")).Return(nil).Once().Run(func(args mock.Arguments) {
+		appeals := args.Get(1).([]*domain.Appeal)
+		appeal := appeals[0]
+		s.Equal(targetResource.ID, appeal.Resource.ID)
+	})
+	s.mockAuditLogger.EXPECT().Log(mock.AnythingOfType("*context.cancelCtx"), appeal.AuditKeyBulkInsert, mock.Anything).Return(nil).Once()
+	s.mockNotifier.EXPECT().Notify(mock.Anything).Return(nil).Once()
+
+	// 1.b grant access for the main appeal
+	s.mockProviderService.EXPECT().GrantAccess(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.Grant")).Return(nil).Once().Run(func(args mock.Arguments) {
+		grant := args.Get(1).(domain.Grant)
+		s.Equal(expectedGrant.ID, grant.ID)
+	})
+	s.mockRepository.EXPECT().BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("[]*domain.Appeal")).Return(nil).Once().Run(func(args mock.Arguments) {
+		appeals := args.Get(1).([]*domain.Appeal)
+		appeal := appeals[0]
+		s.Equal(appealsPayload[0].Resource.ID, appeal.Resource.ID)
+	})
+	s.mockAuditLogger.EXPECT().Log(mock.AnythingOfType("*context.emptyCtx"), appeal.AuditKeyBulkInsert, mock.Anything).Return(nil).Once()
+	s.mockNotifier.EXPECT().Notify(mock.Anything).Return(nil).Once()
+
+	err := s.service.Create(context.Background(), appealsPayload)
+
+	s.NoError(err)
+}
+
 func (s *ServiceTestSuite) TestUpdateApproval() {
 	timeNow := time.Now()
 	appeal.TimeNow = func() time.Time {

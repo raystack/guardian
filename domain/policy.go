@@ -181,12 +181,14 @@ func (s Step) ToApproval(a *Appeal, p *Policy, index int) (*Approval, error) {
 }
 
 type RequirementTrigger struct {
-	ProviderType string       `json:"provider_type" yaml:"provider_type" validate:"required_without_all=ProviderURN ResourceType ResourceURN Role Conditions"`
-	ProviderURN  string       `json:"provider_urn" yaml:"provider_urn" validate:"required_without_all=ProviderType ResourceType ResourceURN Role Conditions"`
-	ResourceType string       `json:"resource_type" yaml:"resource_type" validate:"required_without_all=ProviderType ProviderURN ResourceURN Role Conditions"`
-	ResourceURN  string       `json:"resource_urn" yaml:"resource_urn" validate:"required_without_all=ProviderType ProviderURN ResourceType Role Conditions"`
-	Role         string       `json:"role" yaml:"role" validate:"required_without_all=ProviderType ProviderURN ResourceType ResourceType Conditions"`
-	Conditions   []*Condition `json:"conditions" yaml:"conditions" validate:"required_without_all=ProviderType ProviderURN ResourceType ResourceType Role"`
+	ProviderType string `json:"provider_type" yaml:"provider_type" validate:"required_without_all=ProviderURN ResourceType ResourceURN Role Conditions Expression"`
+	ProviderURN  string `json:"provider_urn" yaml:"provider_urn" validate:"required_without_all=ProviderType ResourceType ResourceURN Role Conditions Expression"`
+	ResourceType string `json:"resource_type" yaml:"resource_type" validate:"required_without_all=ProviderType ProviderURN ResourceURN Role Conditions Expression"`
+	ResourceURN  string `json:"resource_urn" yaml:"resource_urn" validate:"required_without_all=ProviderType ProviderURN ResourceType Role Conditions Expression"`
+	Role         string `json:"role" yaml:"role" validate:"required_without_all=ProviderType ProviderURN ResourceType ResourceType Conditions Expression"`
+	// Deprecated: use Expression instead
+	Conditions []*Condition `json:"conditions" yaml:"conditions" validate:"required_without_all=ProviderType ProviderURN ResourceType ResourceType Role Expression"`
+	Expression string       `json:"expression" yaml:"expression" validate:"required_without_all=ProviderType ProviderURN ResourceType ResourceType Role Conditions"`
 }
 
 func (r *RequirementTrigger) IsMatch(a *Appeal) (bool, error) {
@@ -232,6 +234,22 @@ func (r *RequirementTrigger) IsMatch(a *Appeal) (bool, error) {
 			} else if !match {
 				return match, nil
 			}
+		}
+	}
+	if r.Expression != "" {
+		appealMap, err := structToMap(a)
+		if err != nil {
+			return false, fmt.Errorf("parsing appeal to map: %w", err)
+		}
+		params := map[string]interface{}{"appeal": appealMap}
+		v, err := evaluator.Expression(r.Expression).EvaluateWithVars(params)
+		if err != nil {
+			return false, fmt.Errorf("evaluating expression %q: %w", r.Expression, err)
+		}
+		if match, ok := v.(bool); !ok {
+			return false, fmt.Errorf("expression %q did not evaluate to a boolean, evaluated value: %q", r.Expression, v)
+		} else {
+			return match, nil
 		}
 	}
 

@@ -265,6 +265,7 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
 					ResourceURN:  r.GetOn().GetResourceUrn(),
 					Role:         r.GetOn().GetRole(),
 					Conditions:   conditions,
+					Expression:   r.GetOn().GetExpression(),
 				}
 			}
 
@@ -394,6 +395,7 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 					ResourceUrn:  r.On.ResourceURN,
 					Role:         r.On.Role,
 					Conditions:   conditions,
+					Expression:   r.On.Expression,
 				}
 			}
 
