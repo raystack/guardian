@@ -18,12 +18,13 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1beta1
 	}
 
 	approvals, err := s.listApprovals(ctx, &domain.ListApprovalsFilter{
-		AccountID: req.GetAccountId(),
-		CreatedBy: user,
-		Statuses:  req.GetStatuses(),
-		OrderBy:   req.GetOrderBy(),
-		Size:      int(req.GetSize()),
-		Offset:    int(req.GetOffset()),
+		AccountID:      req.GetAccountId(),
+		CreatedBy:      user,
+		Statuses:       req.GetStatuses(),
+		OrderBy:        req.GetOrderBy(),
+		Size:           int(req.GetSize()),
+		Offset:         int(req.GetOffset()),
+		AppealStatuses: req.GetAppealStatuses(),
 	})
 	if err != nil {
 		return nil, err
@@ -36,12 +37,13 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1beta1
 
 func (s *GRPCServer) ListApprovals(ctx context.Context, req *guardianv1beta1.ListApprovalsRequest) (*guardianv1beta1.ListApprovalsResponse, error) {
 	approvals, err := s.listApprovals(ctx, &domain.ListApprovalsFilter{
-		AccountID: req.GetAccountId(),
-		CreatedBy: req.GetCreatedBy(),
-		Statuses:  req.GetStatuses(),
-		OrderBy:   req.GetOrderBy(),
-		Size:      int(req.GetSize()),
-		Offset:    int(req.GetOffset()),
+		AccountID:      req.GetAccountId(),
+		CreatedBy:      req.GetCreatedBy(),
+		Statuses:       req.GetStatuses(),
+		OrderBy:        req.GetOrderBy(),
+		Size:           int(req.GetSize()),
+		Offset:         int(req.GetOffset()),
+		AppealStatuses: req.GetAppealStatuses(),
 	})
 	if err != nil {
 		return nil, err
