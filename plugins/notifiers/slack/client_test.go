@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"embed"
 	"errors"
+	"io/ioutil"
+	"net/http"
+	"testing"
+
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/mocks"
 	"github.com/odpf/guardian/plugins/notifiers/slack"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"io/ioutil"
-	"net/http"
-	"testing"
 )
 
 type ClientTestSuite struct {
@@ -44,7 +45,10 @@ func (s *ClientTestSuite) TestNotify() {
 		slackAPIResponse := `{"ok":false,"error":"users_not_found"}`
 		resp := &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(slackAPIResponse)))}
 		s.mockHttpClient.On("Do", mock.Anything).Return(resp, nil)
-		expectedErrs := []error{errors.New("users_not_found"), errors.New("EOF")}
+		expectedErrs := []error{
+			errors.New("error finding slack id for email test-user@abc.com - users_not_found"),
+			errors.New("error sending message to user test-user@abc.com - EOF"),
+		}
 
 		notifications := []domain.Notification{
 			{

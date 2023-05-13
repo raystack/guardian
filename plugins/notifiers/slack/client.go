@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/odpf/guardian/utils"
 	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/odpf/guardian/utils"
 
 	"github.com/odpf/guardian/domain"
 )
@@ -73,7 +74,7 @@ func (n *Notifier) Notify(items []domain.Notification) []error {
 		}
 
 		if err := n.sendMessage(slackID, msg); err != nil {
-			errs = append(errs, err)
+			errs = append(errs, fmt.Errorf("error sending message to user %s - %s", item.User, err))
 		}
 	}
 
@@ -124,10 +125,10 @@ func (n *Notifier) findSlackIDByEmail(email string) (string, error) {
 
 	result, err := n.sendRequest(req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error finding slack id for email %s - %s", email, err)
 	}
 	if result.User == nil {
-		return "", errors.New("user not found")
+		return "", errors.New(fmt.Sprintf("user not found: %s", email))
 	}
 
 	n.slackIDCache[email] = result.User.ID

@@ -300,7 +300,9 @@ func (s *Service) BulkRevoke(ctx context.Context, filter domain.RevokeGrantsFilt
 			result = append(result, grant)
 			if len(result) == totalRequests {
 				s.logger.Info("successful grant revocation", "count", len(successRevoke), "ids", successRevoke)
-				s.logger.Info("failed grant revocation", "count", len(failedRevoke), "ids", failedRevoke)
+				if len(failedRevoke) > 0 {
+					s.logger.Info("failed grant revocation", "count", len(failedRevoke), "ids", failedRevoke)
+				}
 				return result, nil
 			}
 		}
