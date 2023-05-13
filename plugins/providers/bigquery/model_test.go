@@ -3,6 +3,7 @@ package bigquery_test
 import (
 	"testing"
 
+	"github.com/odpf/guardian/core/resource"
 	"github.com/odpf/guardian/domain"
 	"github.com/odpf/guardian/plugins/providers/bigquery"
 	"github.com/stretchr/testify/assert"
@@ -26,6 +27,39 @@ func TestDataSet(t *testing.T) {
 						URN:  "p_id:d_id",
 					},
 				},
+				{
+					ds: &bigquery.Dataset{
+						ProjectID: "p_id",
+						DatasetID: "d_id",
+						Labels:    nil,
+					},
+					expectedResource: &domain.Resource{
+						Type: bigquery.ResourceTypeDataset,
+						Name: "d_id",
+						URN:  "p_id:d_id",
+					},
+				},
+				{
+					ds: &bigquery.Dataset{
+						ProjectID: "p_id",
+						DatasetID: "d_id",
+						Labels: map[string]string{
+							"key1": "value1",
+						},
+					},
+					expectedResource: &domain.Resource{
+						Type: bigquery.ResourceTypeDataset,
+						Name: "d_id",
+						URN:  "p_id:d_id",
+						Details: map[string]interface{}{
+							resource.ReservedDetailsKeyMetadata: map[string]interface{}{
+								"labels": map[string]string{
+									"key1": "value1",
+								},
+							},
+						},
+					},
+				},
 			}
 
 			for _, tc := range testCases {
@@ -34,6 +68,7 @@ func TestDataSet(t *testing.T) {
 				assert.Equal(t, tc.expectedResource.Type, actualResource.Type)
 				assert.Equal(t, tc.expectedResource.Name, actualResource.Name)
 				assert.Equal(t, tc.expectedResource.URN, actualResource.URN)
+				assert.Equal(t, tc.expectedResource.Details, actualResource.Details)
 			}
 		})
 	})
@@ -89,6 +124,41 @@ func TestTable(t *testing.T) {
 						URN:  "p_id:d_id.t_id",
 					},
 				},
+				{
+					tb: &bigquery.Table{
+						TableID:   "t_id",
+						ProjectID: "p_id",
+						DatasetID: "d_id",
+						Labels:    nil,
+					},
+					expectedResource: &domain.Resource{
+						Type: bigquery.ResourceTypeTable,
+						Name: "t_id",
+						URN:  "p_id:d_id.t_id",
+					},
+				},
+				{
+					tb: &bigquery.Table{
+						TableID:   "t_id",
+						ProjectID: "p_id",
+						DatasetID: "d_id",
+						Labels: map[string]string{
+							"key1": "value1",
+						},
+					},
+					expectedResource: &domain.Resource{
+						Type: bigquery.ResourceTypeTable,
+						Name: "t_id",
+						URN:  "p_id:d_id.t_id",
+						Details: map[string]interface{}{
+							resource.ReservedDetailsKeyMetadata: map[string]interface{}{
+								"labels": map[string]string{
+									"key1": "value1",
+								},
+							},
+						},
+					},
+				},
 			}
 
 			for _, tc := range testCases {
@@ -97,6 +167,7 @@ func TestTable(t *testing.T) {
 				assert.Equal(t, tc.expectedResource.Type, actualResource.Type)
 				assert.Equal(t, tc.expectedResource.Name, actualResource.Name)
 				assert.Equal(t, tc.expectedResource.URN, actualResource.URN)
+				assert.Equal(t, tc.expectedResource.Details, actualResource.Details)
 			}
 		})
 	})
