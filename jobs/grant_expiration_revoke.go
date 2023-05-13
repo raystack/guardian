@@ -50,14 +50,10 @@ func (h *handler) RevokeExpiredGrants(ctx context.Context) error {
 		return err
 	}
 
-	h.logger.Info("successful grant revocation",
-		"count", len(successRevoke),
-		"ids", successRevoke,
-	)
-	h.logger.Info("failed grant revocation",
-		"count", len(failedRevoke),
-		"ids", failedRevoke,
-	)
+	h.logger.Info("successful grant revocation", "count", len(successRevoke), "ids", successRevoke)
+	if len(failedRevoke) > 0 {
+		h.logger.Info("failed grant revocation", "count", len(failedRevoke), "ids", failedRevoke)
+	}
 
 	return nil
 }
