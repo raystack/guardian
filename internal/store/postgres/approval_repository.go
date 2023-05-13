@@ -50,7 +50,12 @@ func (r *ApprovalRepository) ListApprovals(ctx context.Context, conditions *doma
 	if conditions.AccountID != "" {
 		db = db.Where(`"Appeal"."account_id" = ?`, conditions.AccountID)
 	}
-	db = db.Where(`"Appeal"."status" != ?`, domain.AppealStatusCanceled)
+
+	if len(conditions.AppealStatuses) == 0 {
+		db = db.Where(`"Appeal"."status" != ?`, domain.AppealStatusCanceled)
+	} else {
+		db = db.Where(`"Appeal"."status" IN ?`, conditions.AppealStatuses)
+	}
 
 	if conditions.OrderBy != nil {
 		db = addOrderByClause(db, conditions.OrderBy, addOrderByClauseOptions{
