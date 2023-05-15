@@ -128,6 +128,8 @@ func (s Step) ResolveApprovers(a *Appeal) ([]string, error) {
 			approversValue, err := evaluator.Expression(expr).EvaluateWithVars(params)
 			if err != nil {
 				return nil, fmt.Errorf("evaluating aprrovers expression: %w", err)
+			} else if approversValue == nil {
+				return nil, fmt.Errorf("evaluating aprrovers expression: evaluation result is nil")
 			}
 
 			value := reflect.ValueOf(approversValue)
