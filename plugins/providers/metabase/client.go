@@ -295,7 +295,12 @@ func (c *client) fetchDatabasePermissions(wg *sync.WaitGroup, resourceGroups Res
 						for _, tables := range tables {
 							if tables, ok := tables.(map[string]interface{}); ok {
 								for tableId, tablePermission := range tables {
-									addGroupToResource(resourceGroups, fmt.Sprintf("%s:%s.%s", table, dbId, tableId), groupId, []string{tablePermission.(string)}, err)
+									perm, ok := tablePermission.(string)
+									if !ok {
+										c.logger.Warn("Invalid permission type for metabase group", "dbId", dbId, "tableId", tableId, "groupId", groupId, "permission", tablePermission, "type", reflect.TypeOf(tablePermission))
+										continue
+									}
+									addGroupToResource(resourceGroups, fmt.Sprintf("%s:%s.%s", table, dbId, tableId), groupId, []string{perm}, err)
 								}
 							}
 						}
@@ -326,7 +331,12 @@ func (c *client) fetchCollectionPermissions(wg *sync.WaitGroup, resourceGroups R
 	for groupId, r := range graphs[groups].(map[string]interface{}) {
 		for collectionId, permission := range r.(map[string]interface{}) {
 			if permission != none {
-				addGroupToResource(resourceGroups, fmt.Sprintf("%s:%s", collection, collectionId), groupId, []string{permission.(string)}, err)
+				p, ok := permission.(string)
+				if !ok {
+					c.logger.Warn("Invalid permission type for metabase collection", "collectionId", collectionId, "groupId", groupId, "permission", permission, "type", reflect.TypeOf(permission))
+					continue
+				}
+				addGroupToResource(resourceGroups, fmt.Sprintf("%s:%s", collection, collectionId), groupId, []string{p}, err)
 			}
 		}
 	}
