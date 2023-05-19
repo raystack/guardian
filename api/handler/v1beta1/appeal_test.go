@@ -3,6 +3,7 @@ package v1beta1_test
 import (
 	"context"
 	"errors"
+	"github.com/google/uuid"
 	"time"
 
 	guardianv1beta1 "github.com/goto/guardian/api/proto/gotocompany/guardian/v1beta1"
@@ -557,7 +558,7 @@ func (s *GrpcHandlersSuite) TestGetAppeal() {
 		s.setup()
 		timeNow := time.Now()
 
-		expectedID := "test-appeal-id"
+		expectedID := uuid.New().String()
 		expectedAppeal := &domain.Appeal{
 			ID:         expectedID,
 			ResourceID: "test-resource-id",
@@ -655,7 +656,9 @@ func (s *GrpcHandlersSuite) TestGetAppeal() {
 		s.appealService.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
 			Return(nil, expectedError).Once()
 
-		req := &guardianv1beta1.GetAppealRequest{}
+		req := &guardianv1beta1.GetAppealRequest{
+			Id: uuid.New().String(),
+		}
 		res, err := s.grpcServer.GetAppeal(context.Background(), req)
 
 		s.Equal(codes.Internal, status.Code(err))
@@ -669,7 +672,9 @@ func (s *GrpcHandlersSuite) TestGetAppeal() {
 		s.appealService.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
 			Return(nil, nil).Once()
 
-		req := &guardianv1beta1.GetAppealRequest{}
+		req := &guardianv1beta1.GetAppealRequest{
+			Id: uuid.New().String(),
+		}
 		res, err := s.grpcServer.GetAppeal(context.Background(), req)
 
 		s.Equal(codes.NotFound, status.Code(err))
@@ -688,13 +693,16 @@ func (s *GrpcHandlersSuite) TestGetAppeal() {
 		s.appealService.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
 			Return(invalidAppeal, nil).Once()
 
-		req := &guardianv1beta1.GetAppealRequest{}
+		req := &guardianv1beta1.GetAppealRequest{
+			Id: uuid.New().String(),
+		}
 		res, err := s.grpcServer.GetAppeal(context.Background(), req)
 
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)
 		s.appealService.AssertExpectations(s.T())
 	})
+
 }
 
 func (s *GrpcHandlersSuite) TestCancelAppeal() {
@@ -702,7 +710,7 @@ func (s *GrpcHandlersSuite) TestCancelAppeal() {
 		s.setup()
 		timeNow := time.Now()
 
-		expectedID := "test-appeal-id"
+		expectedID := uuid.New().String()
 		expectedAppeal := &domain.Appeal{
 			ID:         expectedID,
 			ResourceID: "test-resource-id",
@@ -838,7 +846,9 @@ func (s *GrpcHandlersSuite) TestCancelAppeal() {
 				s.appealService.EXPECT().Cancel(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
 					Return(nil, tc.expectedError).Once()
 
-				req := &guardianv1beta1.CancelAppealRequest{}
+				req := &guardianv1beta1.CancelAppealRequest{
+					Id: uuid.New().String(),
+				}
 				res, err := s.grpcServer.CancelAppeal(context.Background(), req)
 
 				s.Equal(tc.expectedStatusCode, status.Code(err))
@@ -859,7 +869,9 @@ func (s *GrpcHandlersSuite) TestCancelAppeal() {
 		s.appealService.EXPECT().Cancel(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
 			Return(invalidAppeal, nil).Once()
 
-		req := &guardianv1beta1.CancelAppealRequest{}
+		req := &guardianv1beta1.CancelAppealRequest{
+			Id: uuid.New().String(),
+		}
 		res, err := s.grpcServer.CancelAppeal(context.Background(), req)
 
 		s.Equal(codes.Internal, status.Code(err))

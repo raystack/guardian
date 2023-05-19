@@ -1,5 +1,7 @@
 package utils
 
+import "github.com/google/uuid"
+
 func IsInteger(val float64) bool {
 	return val == float64(int(val))
 }
@@ -18,4 +20,10 @@ func MapToSlice(m map[string]string) []string {
 		i++
 	}
 	return s
+}
+
+// IsValidUUID returns true if uuid is valid
+func IsValidUUID(u string) bool {
+	_, err := uuid.Parse(u)
+	return err == nil
 }
