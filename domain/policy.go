@@ -298,6 +298,12 @@ type PolicyAppealConfig struct {
 	AllowPermanentAccess         bool                   `json:"allow_permanent_access" yaml:"allow_permanent_access"`
 	AllowActiveAccessExtensionIn string                 `json:"allow_active_access_extension_in" yaml:"allow_active_access_extension_in"`
 	Questions                    []Question             `json:"questions" yaml:"questions"`
+	// AllowCreatorDetailsFailure is a flag that lets the appeal creation to continue when the request to the identity
+	// provider (Policy.IAM) fails. If this is set to true and request to the identity provider fails (4xx or 5xx), the
+	// value of `creator` field in the appeal will be nil.
+	// Note: any expression that tries to access `$appeal.creator.*` is still evaluated as usual, it might need to have
+	// proper nil checking to avoid accessing nil value.
+	AllowCreatorDetailsFailure bool `json:"allow_creator_details_failure" yaml:"allow_creator_details_failure"`
 }
 
 type Question struct {

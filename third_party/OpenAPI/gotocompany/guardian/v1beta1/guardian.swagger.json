@@ -2802,6 +2802,9 @@
             "type": "object",
             "$ref": "#/definitions/PolicyAppealConfigQuestion"
           }
+        },
+        "allowCreatorDetailsFailure": {
+          "type": "boolean"
         }
       }
     },
