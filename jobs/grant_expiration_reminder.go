@@ -8,7 +8,7 @@ import (
 	"github.com/goto/guardian/domain"
 )
 
-func (h *handler) GrantExpirationReminder(ctx context.Context) error {
+func (h *handler) GrantExpirationReminder(ctx context.Context, cfg Config) error {
 	h.logger.Info("running grant expiration reminder job")
 
 	daysBeforeExpired := []int{7, 3, 1}

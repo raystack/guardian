@@ -7,7 +7,7 @@ import (
 	"github.com/goto/salt/audit"
 )
 
-func (h *handler) FetchResources(ctx context.Context) error {
+func (h *handler) FetchResources(ctx context.Context, cfg Config) error {
 	ctx = audit.WithActor(ctx, domain.SystemActorName)
 	h.logger.Info("running fetch resources job")
 	return h.providerService.FetchResources(ctx)

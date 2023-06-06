@@ -34,6 +34,14 @@ JOBS:
   EXPIRING_ACCESS_NOTIFICATION:
     ENABLED: true
     INTERVAL: "0 9 * * *"
+  REVOKE_GRANTS_BY_USER_CRITERIA:
+    CONFIG:
+      IAM:
+        PROVIDER: http
+        CONFIG:
+          URL: http://example.com/users/{user_id}
+      USER_CRITERIA: '$user.is_active == true'
+      REASSIGN_OWNERSHIP_TO: '$user.manager_email'
 TELEMETRY:
     ENABLED: true
     SERVICE_NAME: "guardian"

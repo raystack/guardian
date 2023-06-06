@@ -45,11 +45,13 @@ func runJobCmd() *cobra.Command {
 		`),
 		Args: cobra.ExactValidArgs(1),
 		ValidArgs: []string{
-			"fetch_resources",
-			"grant_expiration_reminder",
-			"grant_expiration_revocation",
-			"appeal_expiration_reminder",
-			"appeal_expiration_revocation",
+			string(jobs.TypeFetchResources),
+			string(jobs.TypeExpiringGrantNotification),
+			string(jobs.TypeRevokeExpiredGrants),
+			string(jobs.TypeRevokeGrantsByUserCriteria),
+
+			string(jobs.TypeRevokeExpiredAccess),
+			string(jobs.TypeExpiringAccessNotification),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configFile, err := cmd.Flags().GetString("config")
@@ -85,22 +87,48 @@ func runJobCmd() *cobra.Command {
 				services.GrantService,
 				services.ProviderService,
 				notifier,
+				crypto,
+				validator,
 			)
 
-			jobsMap := map[string]func(context.Context) error{
-				"fetch_resources":              handler.FetchResources,
-				"grant_expiration_reminder":    handler.GrantExpirationReminder,
-				"grant_expiration_revocation":  handler.RevokeExpiredGrants,
-				"appeal_expiration_reminder":   handler.GrantExpirationReminder,
-				"appeal_expiration_revocation": handler.RevokeExpiredGrants,
+			jobsMap := map[jobs.Type]*struct {
+				handler func(context.Context, jobs.Config) error
+				config  jobs.Config
+			}{
+				jobs.TypeFetchResources: {
+					handler: handler.FetchResources,
+					config:  config.Jobs.FetchResources.Config,
+				},
+				jobs.TypeExpiringGrantNotification: {
+					handler: handler.GrantExpirationReminder,
+					config:  config.Jobs.ExpiringGrantNotification.Config,
+				},
+				jobs.TypeRevokeExpiredGrants: {
+					handler: handler.RevokeExpiredGrants,
+					config:  config.Jobs.RevokeExpiredGrants.Config,
+				},
+				jobs.TypeRevokeGrantsByUserCriteria: {
+					handler: handler.RevokeGrantsByUserCriteria,
+					config:  config.Jobs.RevokeGrantsByUserCriteria.Config,
+				},
+
+				// deprecated job names
+				jobs.TypeExpiringAccessNotification: {
+					handler: handler.GrantExpirationReminder,
+					config:  config.Jobs.ExpiringAccessNotification.Config,
+				},
+				jobs.TypeRevokeExpiredAccess: {
+					handler: handler.RevokeExpiredGrants,
+					config:  config.Jobs.RevokeExpiredAccess.Config,
+				},
 			}
 
-			jobName := args[0]
+			jobName := jobs.Type(args[0])
 			job := jobsMap[jobName]
 			if job == nil {
 				return fmt.Errorf("invalid job name: %s", jobName)
 			}
-			if err := job(context.Background()); err != nil {
+			if err := job.handler(context.Background(), job.config); err != nil {
 				return fmt.Errorf(`failed to run job "%s": %w`, jobName, err)
 			}
 

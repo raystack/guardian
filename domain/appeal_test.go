@@ -335,6 +335,8 @@ func TestAppeal_ToGrant(t *testing.T) {
 			}
 			if tt.wantErr == false && tt.want.IsPermanent == false {
 				tt.want.ExpirationDate = got.ExpirationDate
+				tt.want.RequestedExpirationDate = got.RequestedExpirationDate
+				tt.want.ExpirationDateReason = domain.ExpirationDateReasonFromAppeal
 			}
 			if !assert.Equal(t, got, tt.want) {
 				t.Errorf("Appeal.ToGrant() = %v, want %v", got, tt.want)
