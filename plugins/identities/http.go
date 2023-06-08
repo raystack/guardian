@@ -2,6 +2,7 @@ package identities
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -149,6 +150,11 @@ func NewHTTPClient(config *HTTPClientConfig) (*HTTPClient, error) {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	httpClient.Transport = tr
 
 	if config.Auth.Type == "google_idtoken" {
 		ctx := context.Background()
