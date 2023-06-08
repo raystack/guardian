@@ -40,8 +40,9 @@ func runJobCmd() *cobra.Command {
 		Short: "Fire a specific job",
 		Example: heredoc.Doc(`
 			$ guardian job run fetch_resources
-			$ guardian job run grant_expiration_reminder
-			$ guardian job run grant_expiration_revocation
+			$ guardian job run expiring_grant_notification
+			$ guardian job run revoke_expired_grants
+			$ guardian job run revoke_grants_by_user_criteria
 		`),
 		Args: cobra.ExactValidArgs(1),
 		ValidArgs: []string{

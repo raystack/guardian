@@ -75,15 +75,27 @@ func (s *ClientTestSuite) TestNotify() {
 
 func (s *ClientTestSuite) TestParseMessage() {
 	s.setup()
+	s.messages = domain.NotificationMessages{
+		ApproverNotification: "[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"You have an appeal created by *{{.requestor}}* requesting access to *{{.resource_name}}* with role *{{.role}}*. User's manager: {{.creator.manager_email}} and belongs to {{.creator.org_name}}.\\n Appeal ID: *{{.appeal_id}}*\"}}]",
+	}
 	s.Run("should be able to parse message", func() {
+		var creator interface{}
+		creator = map[string]interface{}{
+			"manager_email": "user-manager@example.com",
+			"org_name":      "test-org",
+		}
+
 		notificationMsg := domain.NotificationMessage{
-			Type: domain.NotificationTypeAppealRejected,
+			Type: domain.NotificationTypeApproverNotification,
 			Variables: map[string]interface{}{
 				"resource_name": "test-resource",
 				"role":          "test-role",
+				"creator":       creator,
+				"appeal_id":     "test-appeal-id",
+				"requestor":     "test-user",
 			},
 		}
-		expectedMsg := `[{"type":"section","text":{"type":"mrkdwn","text":"Your appeal to test-resource with role test-role has been rejected"}}]`
+		expectedMsg := `[{"type":"section","text":{"type":"mrkdwn","text":"You have an appeal created by *test-user* requesting access to *test-resource* with role *test-role*. User's manager: user-manager@example.com and belongs to test-org.\n Appeal ID: *test-appeal-id*"}}]`
 		message, err := slack.ParseMessage(notificationMsg, s.messages, embed.FS{})
 
 		s.Nil(err)
