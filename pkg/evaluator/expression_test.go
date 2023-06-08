@@ -1,10 +1,10 @@
 package evaluator_test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/goto/guardian/pkg/evaluator"
-	"github.com/stretchr/testify/assert"
 )
 
 type ParamStruct struct {
@@ -80,7 +80,35 @@ func TestEvaluate(t *testing.T) {
 				},
 			},
 			expectedResult: "baz",
-		}, {
+		},
+		{
+			expression: "$user.name not in ['alpha', 'beta', 'gamma'] ? $user.name: 'one'",
+			params: map[string]interface{}{
+				"user": map[string]interface{}{
+					"name": "alpha",
+				},
+			},
+			expectedResult: "one",
+		},
+		{
+			expression: "!($user.email_id contains '@abc.com')",
+			params: map[string]interface{}{
+				"user": map[string]interface{}{
+					"email_id": "user@example.com",
+				},
+			},
+			expectedResult: true,
+		},
+		{
+			expression: "len(Split($user.email_id, '@')[0])  > 2",
+			params: map[string]interface{}{
+				"user": map[string]interface{}{
+					"email_id": "abc@example.com",
+				},
+			},
+			expectedResult: true,
+		},
+		{
 			expression: "$Bar",
 			aStruct: ParamStruct{
 				Bar: "baz",
