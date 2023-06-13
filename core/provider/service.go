@@ -243,7 +243,7 @@ func (s *Service) FetchResources(ctx context.Context) error {
 		s.logger.Info("fetching resources", "provider_urn", p.URN)
 		resources, err := s.getResources(ctx, p)
 		if err != nil {
-			s.logger.Error("failed to send notifications", "error", err)
+			s.logger.Error("failed to get resources", "error", err)
 			continue
 		}
 		s.logger.Info("resources added",
