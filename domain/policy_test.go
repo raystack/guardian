@@ -167,6 +167,23 @@ func TestStep_ResolveApprovers(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "should return error if approvers evaluation returns nil",
+			appeal: &domain.Appeal{
+				Resource: &domain.Resource{
+					Details: map[string]interface{}{
+						"foo": "bar",
+					},
+				},
+			},
+			step: domain.Step{
+				Strategy: domain.ApprovalStepStrategyManual,
+				Approvers: []string{
+					"$appeal.resource.details.owner",
+				},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
