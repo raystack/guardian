@@ -159,6 +159,10 @@ func (s *Service) GetByID(ctx context.Context, id string) (*domain.Appeal, error
 		return nil, ErrAppealIDEmptyParam
 	}
 
+	if !utils.IsValidUUID(id) {
+		return nil, InvalidError{AppealID: id}
+	}
+
 	return s.repo.GetByID(ctx, id)
 }
 
@@ -590,6 +594,14 @@ func (s *Service) Update(ctx context.Context, appeal *domain.Appeal) error {
 }
 
 func (s *Service) Cancel(ctx context.Context, id string) (*domain.Appeal, error) {
+	if id == "" {
+		return nil, ErrAppealIDEmptyParam
+	}
+
+	if !utils.IsValidUUID(id) {
+		return nil, InvalidError{AppealID: id}
+	}
+
 	appeal, err := s.GetByID(ctx, id)
 	if err != nil {
 		return nil, err

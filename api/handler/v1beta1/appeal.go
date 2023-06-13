@@ -106,15 +106,18 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *guardianv1beta1.Crea
 
 func (s *GRPCServer) GetAppeal(ctx context.Context, req *guardianv1beta1.GetAppealRequest) (*guardianv1beta1.GetAppealResponse, error) {
 	id := req.GetId()
-	appeal, err := s.appealService.GetByID(ctx, id)
+	a, err := s.appealService.GetByID(ctx, id)
 	if err != nil {
+		if errors.As(err, new(appeal.InvalidError)) || errors.Is(err, appeal.ErrAppealIDEmptyParam) {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
 		return nil, status.Errorf(codes.Internal, "failed to retrieve appeal: %v", err)
 	}
-	if appeal == nil {
+	if a == nil {
 		return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
 	}
 
-	appealProto, err := s.adapter.ToAppealProto(appeal)
+	appealProto, err := s.adapter.ToAppealProto(a)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
 	}
@@ -128,6 +131,9 @@ func (s *GRPCServer) CancelAppeal(ctx context.Context, req *guardianv1beta1.Canc
 	id := req.GetId()
 	a, err := s.appealService.Cancel(ctx, id)
 	if err != nil {
+		if errors.As(err, new(appeal.InvalidError)) || errors.Is(err, appeal.ErrAppealIDEmptyParam) {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
 		switch err {
 		case appeal.ErrAppealNotFound:
 			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)

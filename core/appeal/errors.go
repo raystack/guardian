@@ -1,6 +1,9 @@
 package appeal
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	ErrAppealIDEmptyParam   = errors.New("appeal id is required")
@@ -50,3 +53,11 @@ var (
 	ErrApproverNotFound         = errors.New("approver not found")
 	ErrGrantNotFound            = errors.New("grant not found")
 )
+
+type InvalidError struct {
+	AppealID string
+}
+
+func (ie InvalidError) Error() string {
+	return fmt.Sprintf("invalid appeal id: %s", ie.AppealID)
+}

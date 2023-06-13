@@ -87,14 +87,15 @@ func (s *ServiceTestSuite) TestGetByID() {
 		expectedError := errors.New("repository error")
 		s.mockRepository.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.GetByID(context.Background(), "1")
+		id := uuid.New().String()
+		actualResult, actualError := s.service.GetByID(context.Background(), id)
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
 	})
 
 	s.Run("should return record on success", func() {
-		expectedID := "1"
+		expectedID := uuid.New().String()
 		expectedResult := &domain.Appeal{
 			ID: expectedID,
 		}
@@ -1430,6 +1431,7 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithAdditionalAppeals() {
 
 func (s *ServiceTestSuite) TestUpdateApproval() {
 	timeNow := time.Now()
+	appealID := uuid.New().String()
 	appeal.TimeNow = func() time.Time {
 		return timeNow
 	}
@@ -1441,23 +1443,23 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 				Action:       "name",
 			},
 			{
-				AppealID: "1",
+				AppealID: appealID,
 				Actor:    "user@email.com",
 				Action:   "name",
 			},
 			{
-				AppealID:     "1",
+				AppealID:     appealID,
 				ApprovalName: "approval_1",
 				Actor:        "invalidemail",
 				Action:       "name",
 			},
 			{
-				AppealID:     "1",
+				AppealID:     appealID,
 				ApprovalName: "approval_1",
 				Action:       "name",
 			},
 			{
-				AppealID:     "1",
+				AppealID:     appealID,
 				ApprovalName: "approval_1",
 				Actor:        "user@email.com",
 			},
@@ -1472,7 +1474,7 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 	})
 
 	validApprovalActionParam := domain.ApprovalAction{
-		AppealID:     "1",
+		AppealID:     appealID,
 		ApprovalName: "approval_1",
 		Actor:        "user@email.com",
 		Action:       "approve",
@@ -1718,13 +1720,13 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 
 	s.Run("should terminate existing active grant if present", func() {
 		action := domain.ApprovalAction{
-			AppealID:     "1",
+			AppealID:     appealID,
 			ApprovalName: "test-approval-step",
 			Action:       "approve",
 			Actor:        "approver@example.com",
 		}
 		appealDetails := &domain.Appeal{
-			ID:         "1",
+			ID:         appealID,
 			AccountID:  "user@example.com",
 			ResourceID: "1",
 			Role:       "test-role",
@@ -1887,7 +1889,7 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 			{
 				name: "reject",
 				expectedApprovalAction: domain.ApprovalAction{
-					AppealID:     "1",
+					AppealID:     appealID,
 					ApprovalName: "approval_1",
 					Actor:        "user@email.com",
 					Action:       domain.AppealActionNameReject,
@@ -1962,7 +1964,7 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 			{
 				name: "reject in the middle step",
 				expectedApprovalAction: domain.ApprovalAction{
-					AppealID:     "1",
+					AppealID:     appealID,
 					ApprovalName: "approval_1",
 					Actor:        user,
 					Action:       domain.AppealActionNameReject,
@@ -2289,9 +2291,26 @@ func (s *ServiceTestSuite) TestGrantAccessToProvider() {
 	})
 }
 
-// func (s *ServiceTestSuite) TestCancel() {
-// 	s.Run("should return error from")
-// }
+func (s *ServiceTestSuite) TestCancel() {
+	s.Run("should return error if appeal id is empty", func() {
+		id := ""
+		expectedErr := appeal.ErrAppealIDEmptyParam
+
+		actualResult, actualErr := s.service.Cancel(context.Background(), id)
+		s.Nil(actualResult)
+		s.EqualError(actualErr, expectedErr.Error())
+	})
+
+	s.Run("should return error if appeal id is invalid", func() {
+		id := "abc"
+		expectedErr := appeal.InvalidError{AppealID: id}
+
+		actualResult, actualErr := s.service.Cancel(context.Background(), id)
+		s.Nil(actualResult)
+		s.EqualError(actualErr, expectedErr.Error())
+	})
+
+}
 
 func (s *ServiceTestSuite) TestAddApprover() {
 	s.Run("should return appeal on success", func() {
