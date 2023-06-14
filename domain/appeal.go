@@ -23,6 +23,8 @@ const (
 
 	DefaultAppealAccountType = "user"
 	PermanentDurationLabel   = "Permanent"
+
+	ExpirationDateReasonFromAppeal = "Expiration date is set based on the appeal options"
 )
 
 var (
@@ -157,6 +159,8 @@ func (a Appeal) ToGrant() (*Grant, error) {
 		} else {
 			expDate := time.Now().Add(duration)
 			grant.ExpirationDate = &expDate
+			grant.RequestedExpirationDate = &expDate
+			grant.ExpirationDateReason = ExpirationDateReasonFromAppeal
 		}
 	} else {
 		grant.IsPermanent = true

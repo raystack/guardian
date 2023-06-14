@@ -8,7 +8,7 @@ import (
 	"github.com/raystack/salt/audit"
 )
 
-func (h *handler) RevokeExpiredGrants(ctx context.Context) error {
+func (h *handler) RevokeExpiredGrants(ctx context.Context, cfg Config) error {
 	h.logger.Info("running revoke expired grants job")
 
 	falseBool := false

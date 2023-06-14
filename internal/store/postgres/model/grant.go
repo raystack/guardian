@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -11,25 +12,27 @@ import (
 )
 
 type Grant struct {
-	ID               uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	Status           string
-	StatusInProvider string
-	AccountID        string
-	AccountType      string
-	ResourceID       string
-	Role             string
-	Permissions      pq.StringArray `gorm:"type:text[]"`
-	IsPermanent      bool
-	ExpirationDate   time.Time
-	AppealID         *string
-	Source           string
-	RevokedBy        string
-	RevokedAt        time.Time
-	RevokeReason     string
-	Owner            string
-	CreatedAt        time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt        time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt        gorm.DeletedAt `gorm:"index"`
+	ID                      uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	Status                  string
+	StatusInProvider        string
+	AccountID               string
+	AccountType             string
+	ResourceID              string
+	Role                    string
+	Permissions             pq.StringArray `gorm:"type:text[]"`
+	IsPermanent             bool
+	ExpirationDate          time.Time
+	RequestedExpirationDate sql.NullTime
+	ExpirationDateReason    sql.NullString
+	AppealID                sql.NullString
+	Source                  string
+	RevokedBy               string
+	RevokedAt               time.Time
+	RevokeReason            string
+	Owner                   string
+	CreatedAt               time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt               time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt               gorm.DeletedAt `gorm:"index"`
 
 	Resource *Resource `gorm:"ForeignKey:ResourceID;References:ID"`
 	Appeal   *Appeal   `gorm:"ForeignKey:AppealID;References:ID"`
@@ -53,7 +56,10 @@ func (m *Grant) FromDomain(g domain.Grant) error {
 	}
 
 	if g.AppealID != "" {
-		m.AppealID = &g.AppealID
+		m.AppealID = sql.NullString{
+			String: g.AppealID,
+			Valid:  true,
+		}
 	}
 
 	if g.Appeal != nil {
@@ -66,6 +72,18 @@ func (m *Grant) FromDomain(g domain.Grant) error {
 
 	if g.ExpirationDate != nil {
 		m.ExpirationDate = *g.ExpirationDate
+	}
+	if g.RequestedExpirationDate != nil {
+		m.RequestedExpirationDate = sql.NullTime{
+			Time:  *g.RequestedExpirationDate,
+			Valid: true,
+		}
+	}
+	if g.ExpirationDateReason != "" {
+		m.ExpirationDateReason = sql.NullString{
+			String: g.ExpirationDateReason,
+			Valid:  true,
+		}
 	}
 
 	if g.RevokedAt != nil {
@@ -112,8 +130,8 @@ func (m Grant) ToDomain() (*domain.Grant, error) {
 		UpdatedAt:        m.UpdatedAt,
 	}
 
-	if m.AppealID != nil {
-		grant.AppealID = *m.AppealID
+	if m.AppealID.Valid {
+		grant.AppealID = m.AppealID.String
 	}
 
 	if m.Resource != nil {
@@ -134,6 +152,12 @@ func (m Grant) ToDomain() (*domain.Grant, error) {
 
 	if !m.ExpirationDate.IsZero() {
 		grant.ExpirationDate = &m.ExpirationDate
+	}
+	if m.RequestedExpirationDate.Valid {
+		grant.RequestedExpirationDate = &m.RequestedExpirationDate.Time
+	}
+	if m.ExpirationDateReason.Valid {
+		grant.ExpirationDateReason = m.ExpirationDateReason.String
 	}
 	if !m.RevokedAt.IsZero() {
 		grant.RevokedAt = &m.RevokedAt
