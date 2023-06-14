@@ -905,7 +905,8 @@ func (s *ServiceTestSuite) TestCreate() {
 		s.mockProviderService.On("Find", mock.Anything).Return(providers, nil).Once()
 		s.mockPolicyService.On("Find", mock.Anything).Return(policies, nil).Once()
 		expectedExistingAppealsFilters := &domain.ListAppealsFilter{
-			Statuses: []string{domain.AppealStatusPending},
+			Statuses:   []string{domain.AppealStatusPending},
+			AccountIDs: []string{"test@email.com", "addOnBehalfApprovedNotification-user"},
 		}
 		s.mockRepository.EXPECT().
 			Find(mock.AnythingOfType("*context.emptyCtx"), expectedExistingAppealsFilters).
@@ -1255,7 +1256,8 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 	s.mockProviderService.On("Find", mock.Anything).Return(providers, nil).Once()
 	s.mockPolicyService.On("Find", mock.Anything).Return(policies, nil).Once()
 	expectedExistingAppealsFilters := &domain.ListAppealsFilter{
-		Statuses: []string{domain.AppealStatusPending},
+		Statuses:   []string{domain.AppealStatusPending},
+		AccountIDs: []string{accountID},
 	}
 	s.mockRepository.EXPECT().
 		Find(mock.AnythingOfType("*context.emptyCtx"), expectedExistingAppealsFilters).
@@ -2393,7 +2395,6 @@ func (s *ServiceTestSuite) TestCancel() {
 		s.Nil(actualResult)
 		s.EqualError(actualErr, expectedErr.Error())
 	})
-
 }
 
 func (s *ServiceTestSuite) TestAddApprover() {
