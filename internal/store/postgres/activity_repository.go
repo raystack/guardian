@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/odpf/guardian/core/activity"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/store/postgres/model"
+	"github.com/raystack/guardian/core/activity"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/internal/store/postgres/model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

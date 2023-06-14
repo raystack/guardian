@@ -3,7 +3,7 @@ package approval
 import (
 	"context"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/domain"
 )
 
 //go:generate mockery --name=repository --exported --with-expecter

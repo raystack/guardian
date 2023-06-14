@@ -12,7 +12,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
-	"github.com/odpf/guardian/internal/store"
+	"github.com/raystack/guardian/internal/store"
 	pg "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

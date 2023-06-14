@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/odpf/guardian/core/resource"
-	"github.com/odpf/guardian/core/resource/mocks"
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/core/resource"
+	"github.com/raystack/guardian/core/resource/mocks"
+	"github.com/raystack/guardian/domain"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

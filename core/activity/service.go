@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/salt/log"
 )
 
 //go:generate mockery --name=repository --exported --with-expecter

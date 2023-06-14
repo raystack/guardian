@@ -3,7 +3,7 @@ package slices_test
 import (
 	"testing"
 
-	"github.com/odpf/guardian/pkg/slices"
+	"github.com/raystack/guardian/pkg/slices"
 	"github.com/stretchr/testify/assert"
 )
 

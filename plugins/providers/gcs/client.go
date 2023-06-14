@@ -7,8 +7,8 @@ import (
 
 	"cloud.google.com/go/iam"
 	"cloud.google.com/go/storage"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/utils"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/utils"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"

@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	"github.com/odpf/guardian/utils"
+	"github.com/raystack/guardian/utils"
 	"github.com/stretchr/testify/assert"
 )
 

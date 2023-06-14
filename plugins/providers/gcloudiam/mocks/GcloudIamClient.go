@@ -5,8 +5,8 @@ package mocks
 import (
 	context "context"
 
-	domain "github.com/odpf/guardian/domain"
-	gcloudiam "github.com/odpf/guardian/plugins/providers/gcloudiam"
+	domain "github.com/raystack/guardian/domain"
+	gcloudiam "github.com/raystack/guardian/plugins/providers/gcloudiam"
 
 	mock "github.com/stretchr/testify/mock"
 )

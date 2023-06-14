@@ -22,22 +22,22 @@ tmp
 
 # git ignore generate files related to gRPC and proto
 /proton/
-/api/proto/odpf/**/*
+/api/proto/raystack/**/*
 
-!/api/proto/odpf/guardian/v1beta1/
-!/api/proto/odpf/guardian/v1beta1/*
-!/api/proto/odpf/guardian/v1beta1/**/*
+!/api/proto/raystack/guardian/v1beta1/
+!/api/proto/raystack/guardian/v1beta1/*
+!/api/proto/raystack/guardian/v1beta1/**/*
 
-!/api/proto/odpf/third_party/
-!/api/proto/odpf/third_party/googleapis/
-!/api/proto/odpf/third_party/googleapis/*
-!/api/proto/odpf/third_party/googleapis/**/*
-!/api/proto/odpf/third_party/grpc-gateway/
-!/api/proto/odpf/third_party/grpc-gateway/*
-!/api/proto/odpf/third_party/grpc-gateway/**/*
+!/api/proto/raystack/third_party/
+!/api/proto/raystack/third_party/googleapis/
+!/api/proto/raystack/third_party/googleapis/*
+!/api/proto/raystack/third_party/googleapis/**/*
+!/api/proto/raystack/third_party/grpc-gateway/
+!/api/proto/raystack/third_party/grpc-gateway/*
+!/api/proto/raystack/third_party/grpc-gateway/**/*
 
 /third_party/*
-!/third_party/OpenAPI/odpf/guardian/guardian.swagger.json
+!/third_party/OpenAPI/raystack/guardian/guardian.swagger.json
 
 # guardian
 .guardian.yaml

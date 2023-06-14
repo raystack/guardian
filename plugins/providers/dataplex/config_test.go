@@ -3,12 +3,12 @@ package dataplex_test
 import (
 	"encoding/base64"
 	"errors"
-	"github.com/odpf/guardian/plugins/providers/bigquery"
+	"github.com/raystack/guardian/plugins/providers/bigquery"
 	"testing"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/plugins/providers/dataplex"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/mocks"
+	"github.com/raystack/guardian/plugins/providers/dataplex"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/pkg/evaluator"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/pkg/evaluator"
+	"github.com/raystack/salt/log"
 )
 
 const (

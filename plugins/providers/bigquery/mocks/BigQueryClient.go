@@ -5,9 +5,9 @@ package mocks
 import (
 	context "context"
 
-	bigquery "github.com/odpf/guardian/plugins/providers/bigquery"
+	bigquery "github.com/raystack/guardian/plugins/providers/bigquery"
 
-	domain "github.com/odpf/guardian/domain"
+	domain "github.com/raystack/guardian/domain"
 
 	gobigquery "cloud.google.com/go/bigquery"
 

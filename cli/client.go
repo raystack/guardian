@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
+	guardianv1beta1 "github.com/raystack/guardian/api/proto/raystack/guardian/v1beta1"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 

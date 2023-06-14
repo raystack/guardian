@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/odpf/guardian/internal/store"
-	"github.com/odpf/guardian/pkg/auth"
-	"github.com/odpf/guardian/pkg/tracing"
-	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/salt/config"
+	"github.com/raystack/guardian/internal/store"
+	"github.com/raystack/guardian/pkg/auth"
+	"github.com/raystack/guardian/pkg/tracing"
+	"github.com/raystack/guardian/plugins/notifiers"
+	"github.com/raystack/salt/config"
 )
 
 type JobType string

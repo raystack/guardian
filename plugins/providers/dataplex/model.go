@@ -1,7 +1,7 @@
 package dataplex
 
 import (
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/domain"
 )
 
 const (

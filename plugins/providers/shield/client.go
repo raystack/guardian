@@ -12,8 +12,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/pkg/tracing"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/guardian/pkg/tracing"
+	"github.com/raystack/salt/log"
 )
 
 const (

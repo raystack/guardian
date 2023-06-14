@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/salt/audit"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/salt/audit"
 )
 
 func (h *handler) RevokeExpiredGrants(ctx context.Context) error {

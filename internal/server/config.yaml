@@ -1,4 +1,4 @@
-# ODPF Guardian Configuration
+# Raystack Guardian Configuration
 #
 #
 # !!WARNING!!
@@ -35,18 +35,18 @@ JOBS:
     ENABLED: true
     INTERVAL: "0 9 * * *"
 TELEMETRY:
-    ENABLED: true
-    SERVICE_NAME: "guardian"
-    # Example for new relic
-    EXPORTER: otlp
-    OTLP:
-      HEADERS: 
-        api-key: <YOUR-LICENSE-KEY>
-      ENDPOINT: "otlp.nr-data.net:4317"
+  ENABLED: true
+  SERVICE_NAME: "guardian"
+  # Example for new relic
+  EXPORTER: otlp
+  OTLP:
+    HEADERS:
+      api-key: <YOUR-LICENSE-KEY>
+    ENDPOINT: "otlp.nr-data.net:4317"
 AUTH:
-  PROVIDER: default   # can be "default" or "oidc"
+  PROVIDER: default # can be "default" or "oidc"
   DEFAULT:
-    HEADER_KEY: X-Auth-Email   # AUTHENTICATED_USER_HEADER_KEY takes priority for backward-compatibility
+    HEADER_KEY: X-Auth-Email # AUTHENTICATED_USER_HEADER_KEY takes priority for backward-compatibility
   OIDC:
     AUDIENCE: "some-kind-of-audience.com"
     ELIGIBLE_EMAIL_DOMAINS: "emaildomain1.com,emaildomain2.com"

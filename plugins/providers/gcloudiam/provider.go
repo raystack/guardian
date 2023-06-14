@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/core/provider"
+	"github.com/raystack/guardian/domain"
 	"golang.org/x/net/context"
 )
 

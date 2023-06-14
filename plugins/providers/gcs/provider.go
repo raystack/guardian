@@ -8,9 +8,9 @@ import (
 
 	"cloud.google.com/go/iam"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/utils"
+	"github.com/raystack/guardian/core/provider"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/utils"
 )
 
 //go:generate mockery --name=GCSClient --exported --with-expecter

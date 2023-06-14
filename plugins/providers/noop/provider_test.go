@@ -3,10 +3,10 @@ package noop_test
 import (
 	"testing"
 
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/providers/noop"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/guardian/core/provider"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/plugins/providers/noop"
+	"github.com/raystack/salt/log"
 	"github.com/stretchr/testify/assert"
 )
 

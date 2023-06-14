@@ -11,9 +11,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/odpf/guardian/utils"
+	"github.com/raystack/guardian/utils"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/domain"
 )
 
 const (

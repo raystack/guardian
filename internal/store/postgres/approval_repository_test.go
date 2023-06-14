@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/store/postgres"
-	"github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/internal/store/postgres"
+	"github.com/raystack/salt/log"
 	"github.com/stretchr/testify/suite"
 )
 

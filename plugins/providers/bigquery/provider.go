@@ -11,11 +11,11 @@ import (
 
 	bq "cloud.google.com/go/bigquery"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/pkg/slices"
-	"github.com/odpf/salt/log"
 	"github.com/patrickmn/go-cache"
+	"github.com/raystack/guardian/core/provider"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/pkg/slices"
+	"github.com/raystack/salt/log"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/option"
 )

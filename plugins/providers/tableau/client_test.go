@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/plugins/providers/tableau"
+	"github.com/raystack/guardian/mocks"
+	"github.com/raystack/guardian/plugins/providers/tableau"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"

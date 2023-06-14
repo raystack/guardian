@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/domain"
 	"github.com/stretchr/testify/assert"
 )
 

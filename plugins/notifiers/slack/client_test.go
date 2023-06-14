@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/plugins/notifiers/slack"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/mocks"
+	"github.com/raystack/guardian/plugins/notifiers/slack"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

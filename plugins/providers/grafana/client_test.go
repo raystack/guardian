@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/plugins/providers/grafana"
+	"github.com/raystack/guardian/mocks"
+	"github.com/raystack/guardian/plugins/providers/grafana"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"

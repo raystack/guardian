@@ -3,7 +3,7 @@ package evaluator_test
 import (
 	"testing"
 
-	"github.com/odpf/guardian/pkg/evaluator"
+	"github.com/raystack/guardian/pkg/evaluator"
 	"github.com/stretchr/testify/assert"
 )
 

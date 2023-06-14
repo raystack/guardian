@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	metabase "github.com/odpf/guardian/plugins/providers/metabase"
+	metabase "github.com/raystack/guardian/plugins/providers/metabase"
 	mock "github.com/stretchr/testify/mock"
 )
 

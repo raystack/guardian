@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	grafana "github.com/odpf/guardian/plugins/providers/grafana"
+	grafana "github.com/raystack/guardian/plugins/providers/grafana"
 	mock "github.com/stretchr/testify/mock"
 )
 

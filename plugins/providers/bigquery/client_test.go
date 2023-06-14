@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/odpf/guardian/plugins/providers/bigquery"
+	"github.com/raystack/guardian/plugins/providers/bigquery"
 	"github.com/stretchr/testify/suite"
 	bqApi "google.golang.org/api/bigquery/v2"
 	"google.golang.org/api/option"

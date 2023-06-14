@@ -39,7 +39,7 @@ For more information on using the Guardian CLI, see the [CLI Reference](./refere
 
 #### HTTPS API
 
-You can get hands on appeal creation, approval updatation, access revocation and much more by using the Guardian HTTPS API, which lets you issue HTTPS requests directly to the service. When you use the HTTPS API, you must include the username in the request header, which will be used by [Shield](https://odpf.github.io/shield/) for authorization. For more information, see the [API Reference](/reference/api.md) page.
+You can get hands on appeal creation, approval updatation, access revocation and much more by using the Guardian HTTPS API, which lets you issue HTTPS requests directly to the service. When you use the HTTPS API, you must include the username in the request header, which will be used by [Shield](https://raystack.github.io/shield/) for authorization. For more information, see the [API Reference](/reference/api.md) page.
 
 ## Where to go from here
 
@@ -47,4 +47,4 @@ See the [installation](./installation) page to install the Guardian CLI. Next, w
 
 After completing the tour, check out the remainder of the documentation in the reference and concepts sections for your specific areas of interest. We've aimed to provide as much documentation as we can for the various components of Guardian to give you a full understanding of Guardian's surface area.
 
-Finally, follow the project on [GitHub](https://github.com/odpf/guardian), and contact us if you'd like to get involved.
+Finally, follow the project on [GitHub](https://github.com/raystack/guardian), and contact us if you'd like to get involved.

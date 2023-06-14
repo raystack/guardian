@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/core/policy"
+	guardianv1beta1 "github.com/raystack/guardian/api/proto/raystack/guardian/v1beta1"
+	"github.com/raystack/guardian/core/policy"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

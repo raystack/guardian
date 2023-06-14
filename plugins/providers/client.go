@@ -3,7 +3,7 @@ package providers
 import (
 	"context"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/domain"
 )
 
 type Client interface {
