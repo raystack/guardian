@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	bq "cloud.google.com/go/bigquery"
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/domain"
 	bqApi "google.golang.org/api/bigquery/v2"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/iterator"

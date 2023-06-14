@@ -4,7 +4,7 @@ There are several approaches to setup Guardian Server
 
 1. [Using the CLI](#using-the-cli)
 1. [Using the Docker](#use-the-docker-image)
-2. [Using the Helm Chart](#use-the-helm-chart)
+1. [Using the Helm Chart](#use-the-helm-chart)
 
 ## General pre-requisites
 
@@ -14,6 +14,7 @@ There are several approaches to setup Guardian Server
 ## Using the CLI
 
 ### Pre-requisites for CLI
+
 - [Create guardian config file](/docs/tour/configuration#initialization)
 
 To run the Guardian server use command:
@@ -58,7 +59,7 @@ $ docker run -d \
     -p 8080:8080 \
     --env-file .env \
     --name guardian-server \
-    odpf/guardian:<version> \
+    raystack/guardian:<version> \
     server start
 ```
 
@@ -68,25 +69,25 @@ $ docker run -d \
 port: 8080
 encryption_secret_key: "<secret-key>"
 db:
-    host: "<db-host>"
-    user: "<db-user>"
-    password: "<db-password>"
-    name: "<db-name>"
-    port: "<db-port>"
+  host: "<db-host>"
+  user: "<db-user>"
+  password: "<db-password>"
+  name: "<db-name>"
+  port: "<db-port>"
 authenticated_user_header_key: "X-Auth-Email"
 jobs:
-    fetch_resources:
-        enabled: true
-        interval: "0 */2 * * *"
-    revoke_expired_grants:
-        enabled: true
-        interval: "*/20 * * * *"
-    expiring_grant_notification:
-        enabled: true
-        interval: "0 9 * * *"
+  fetch_resources:
+    enabled: true
+    interval: "0 */2 * * *"
+  revoke_expired_grants:
+    enabled: true
+    interval: "*/20 * * * *"
+  expiring_grant_notification:
+    enabled: true
+    interval: "0 9 * * *"
 notifier:
-    provider: "slack"
-    access_token: "<slack-access-token>"
+  provider: "slack"
+  access_token: "<slack-access-token>"
 ```
 
 Run the following command to start the server
@@ -97,25 +98,27 @@ $ docker run -d \
     -p 8080:8080 \
     -v $(pwd)/config.yaml:/config.yaml \
     --name guardian-server \
-    odpf/guardian:<version> \
+    raystack/guardian:<version> \
     server start -c /config.yaml
 ```
 
 ## Use the Helm chart
 
 ### Pre-requisites for Helm chart
-Guardian can be installed in Kubernetes using the Helm chart from https://github.com/odpf/charts.
+
+Guardian can be installed in Kubernetes using the Helm chart from https://github.com/raystack/charts.
 
 Ensure that the following requirements are met:
+
 - Kubernetes 1.14+
 - Helm version 3.x is [installed](https://helm.sh/docs/intro/install/)
 
-### Add ODPF Helm repository
+### Add Raystack Helm repository
 
-Add ODPF chart repository to Helm:
+Add Raystack chart repository to Helm:
 
 ```
-helm repo add odpf https://odpf.github.io/charts/
+helm repo add raystack https://raystack.github.io/charts/
 ```
 
 You can update the chart repository by running:
@@ -128,18 +131,17 @@ helm repo update
 
 The following table lists the configurable parameters of the Guardian chart and their default values.
 
-See full helm values guide [here](https://github.com/odpf/charts/tree/main/stable/guardian#values).
+See full helm values guide [here](https://github.com/raystack/charts/tree/main/stable/guardian#values).
 
 ```yaml title="values.yaml"
 app:
-
   ## Value to fully override guardian.name template
   nameOverride: ""
   ## Value to fully override guardian.fullname template
   fullnameOverride: ""
 
   image:
-    repository: odpf/guardian
+    repository: raystack/guardian
     pullPolicy: Always
     tag: latest
   container:
@@ -219,7 +221,6 @@ app:
     JOBS_EXPIRING_ACCESS_NOTIFICATION_ENABLED: false
     JOBS_EXPIRING_ACCESS_NOTIFICATION_INTERVAL: "0 9 * * *"
 
-
   secretConfig:
     ENCRYPTION_SECRET_KEY:
     NOTIFIER_ACCESS_TOKEN:
@@ -233,5 +234,5 @@ app:
 And install it with the helm command line along with the values file:
 
 ```sh
-$ helm install my-release -f values.yaml odpf/guardian
+$ helm install my-release -f values.yaml raystack/guardian
 ```

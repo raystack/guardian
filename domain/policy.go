@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-lookup"
-	"github.com/odpf/guardian/pkg/evaluator"
+	"github.com/raystack/guardian/pkg/evaluator"
 )
 
 const (

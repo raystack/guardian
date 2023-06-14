@@ -3,9 +3,9 @@ package bigquery_test
 import (
 	"testing"
 
-	"github.com/odpf/guardian/core/resource"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/providers/bigquery"
+	"github.com/raystack/guardian/core/resource"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/plugins/providers/bigquery"
 	"github.com/stretchr/testify/assert"
 )
 

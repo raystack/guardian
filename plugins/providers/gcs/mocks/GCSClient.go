@@ -5,8 +5,8 @@ package mocks
 import (
 	context "context"
 
-	domain "github.com/odpf/guardian/domain"
-	gcs "github.com/odpf/guardian/plugins/providers/gcs"
+	domain "github.com/raystack/guardian/domain"
+	gcs "github.com/raystack/guardian/plugins/providers/gcs"
 
 	iam "cloud.google.com/go/iam"
 

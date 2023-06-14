@@ -12,7 +12,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-defaults"
-	"github.com/odpf/guardian/pkg/tracing"
+	"github.com/raystack/guardian/pkg/tracing"
 )
 
 type TableauClient interface {

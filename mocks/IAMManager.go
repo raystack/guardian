@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	domain "github.com/odpf/guardian/domain"
+	domain "github.com/raystack/guardian/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 

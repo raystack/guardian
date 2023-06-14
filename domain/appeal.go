@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/odpf/guardian/pkg/evaluator"
+	"github.com/raystack/guardian/pkg/evaluator"
 )
 
 const (

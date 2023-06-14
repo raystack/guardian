@@ -2,9 +2,9 @@ package shield
 
 import (
 	"github.com/mitchellh/mapstructure"
-	pv "github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/salt/log"
+	pv "github.com/raystack/guardian/core/provider"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/salt/log"
 )
 
 type provider struct {

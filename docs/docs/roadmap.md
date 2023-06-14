@@ -1,10 +1,10 @@
 # Roadmap
 
-In the following section, you can learn about what features we're working on, what stage they're in, and when we expect to bring them to you. Have any questions or comments about items on the roadmap? Join the [discussions](https://github.com/orgs/odpf/discussions) on the Guardian Github forum.
+In the following section, you can learn about what features we're working on, what stage they're in, and when we expect to bring them to you. Have any questions or comments about items on the roadmap? Join the [discussions](https://github.com/orgs/raystack/discussions) on the Guardian Github forum.
 
-We’re planning to iterate on the format of the roadmap itself, and we see the potential to engage more in discussions about the future of Firehose features. If you have feedback about this roadmap section itself, such as how the issues are presented, let us know through [discussions](https://github.com/orgs/odpf/discussions).
+We’re planning to iterate on the format of the roadmap itself, and we see the potential to engage more in discussions about the future of Firehose features. If you have feedback about this roadmap section itself, such as how the issues are presented, let us know through [discussions](https://github.com/orgs/raystack/discussions).
 
-Guardian roadmap can be tracked on this [project](https://github.com/orgs/odpf/projects/10/views/4). The roadmap is arranged on a project board to give a sense for how far out each item is on the horizon. Every product or feature is added to a particular project board column according to the quarter in which it is expected to ship next.
+Guardian roadmap can be tracked on this [project](https://github.com/orgs/raystack/projects/10/views/4). The roadmap is arranged on a project board to give a sense for how far out each item is on the horizon. Every product or feature is added to a particular project board column according to the quarter in which it is expected to ship next.
 
 Here, we outline some (but not all!) of the products on our roadmap. We'd love your input and feedback, Contact us to discuss any of the below, or any other products you'd like to see.
 
@@ -19,6 +19,7 @@ Proposed solution is Guardian can integrate with exiting approval flow either by
 Provide a user to have pre-defined access based on their role. For example, if a developer/analyst joins a team then they will have access of certain Metabase Collection, BigQuery dataset etc.
 
 There are two ways to approach this:
+
 - Create a role-resource mapping table, Api to crud operation on this table. Cronjob or a request flow to trigger default appeals based on role and role-resource mapping table.
 - Able to tag resources and create a role-tag table. Cronjob or a request flow to trigger default appeals based on role and role-tag mapping table.
 
@@ -28,6 +29,7 @@ Guardian can manage access across multiple providers. But it is still hard for d
 
 **Goal**:<br/>
 With data access monitoring in Guardian, we aim to provide answers to the following questions.
+
 - How many users have access to sensitive data?
 - How many appeals are pending?
 - How many appeals are about to expire?
@@ -37,6 +39,7 @@ With data access monitoring in Guardian, we aim to provide answers to the follow
 
 **Scope**:<br/>
 Access monitoring can be tracked across different sections
+
 - Appeals: Analytics about appeals and their status.
 - Access Logs: Analytics about what resources are being actually queried and how frequently.
 - Users: Analytics about how many users are active, and have access across resources.
@@ -45,6 +48,7 @@ Access monitoring can be tracked across different sections
 ## Add support for Postgres provider
 
 We need to support access management of Postgres. The proposed solution:
+
 - Provider configuration for Postgres
 - Postgres client
 - Postgres resource & access management (TODO: figure out what resources that need to be granted & revoked)

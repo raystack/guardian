@@ -3,8 +3,8 @@ package v1beta1_test
 import (
 	"testing"
 
-	"github.com/odpf/guardian/api/handler/v1beta1"
-	"github.com/odpf/guardian/api/handler/v1beta1/mocks"
+	"github.com/raystack/guardian/api/handler/v1beta1"
+	"github.com/raystack/guardian/api/handler/v1beta1/mocks"
 	"github.com/stretchr/testify/suite"
 )
 

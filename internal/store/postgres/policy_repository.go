@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/odpf/guardian/core/policy"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/store/postgres/model"
+	"github.com/raystack/guardian/core/policy"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/internal/store/postgres/model"
 	"gorm.io/gorm"
 )
 

@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
-	"github.com/odpf/guardian/core/grant"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/store/postgres/model"
+	"github.com/raystack/guardian/core/grant"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/internal/store/postgres/model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

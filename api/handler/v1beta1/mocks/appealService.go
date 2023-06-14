@@ -5,9 +5,9 @@ package mocks
 import (
 	context "context"
 
-	appeal "github.com/odpf/guardian/core/appeal"
+	appeal "github.com/raystack/guardian/core/appeal"
 
-	domain "github.com/odpf/guardian/domain"
+	domain "github.com/raystack/guardian/domain"
 
 	mock "github.com/stretchr/testify/mock"
 )

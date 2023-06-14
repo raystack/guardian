@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/odpf/guardian/core/resource"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/store/postgres/model"
-	"github.com/odpf/guardian/utils"
+	"github.com/raystack/guardian/core/resource"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/internal/store/postgres/model"
+	"github.com/raystack/guardian/utils"
 	"gorm.io/gorm"
 )
 

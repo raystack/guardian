@@ -8,8 +8,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/utils"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/utils"
 	"google.golang.org/api/option"
 )
 

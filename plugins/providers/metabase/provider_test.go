@@ -4,12 +4,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/odpf/salt/log"
+	"github.com/raystack/salt/log"
 
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/guardian/plugins/providers/metabase"
+	"github.com/raystack/guardian/core/provider"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/mocks"
+	"github.com/raystack/guardian/plugins/providers/metabase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

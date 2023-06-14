@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/notifiers/slack"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/plugins/notifiers/slack"
 )
 
 type Client interface {

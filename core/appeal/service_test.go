@@ -9,12 +9,12 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/odpf/guardian/core/appeal"
-	appealmocks "github.com/odpf/guardian/core/appeal/mocks"
-	"github.com/odpf/guardian/core/provider"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/mocks"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/guardian/core/appeal"
+	appealmocks "github.com/raystack/guardian/core/appeal/mocks"
+	"github.com/raystack/guardian/core/provider"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/mocks"
+	"github.com/raystack/salt/log"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

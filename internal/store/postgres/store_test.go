@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/odpf/guardian/internal/store"
-	"github.com/odpf/guardian/internal/store/postgres"
-	"github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/raystack/guardian/internal/store"
+	"github.com/raystack/guardian/internal/store/postgres"
+	"github.com/raystack/salt/log"
 )
 
 var (

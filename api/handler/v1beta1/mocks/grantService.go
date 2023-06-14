@@ -5,8 +5,8 @@ package mocks
 import (
 	context "context"
 
-	grant "github.com/odpf/guardian/core/grant"
-	domain "github.com/odpf/guardian/domain"
+	grant "github.com/raystack/guardian/core/grant"
+	domain "github.com/raystack/guardian/domain"
 
 	mock "github.com/stretchr/testify/mock"
 )

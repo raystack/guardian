@@ -5,9 +5,9 @@ import (
 	"errors"
 	"strings"
 
-	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/core/resource"
-	"github.com/odpf/guardian/domain"
+	guardianv1beta1 "github.com/raystack/guardian/api/proto/raystack/guardian/v1beta1"
+	"github.com/raystack/guardian/core/resource"
+	"github.com/raystack/guardian/domain"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

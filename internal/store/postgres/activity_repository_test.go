@@ -8,10 +8,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
-	"github.com/odpf/guardian/core/activity"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/internal/store/postgres"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/guardian/core/activity"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/internal/store/postgres"
+	"github.com/raystack/salt/log"
 	"github.com/stretchr/testify/suite"
 )
 

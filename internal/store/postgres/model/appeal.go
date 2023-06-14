@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/domain"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )

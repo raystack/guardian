@@ -1,4 +1,4 @@
-module github.com/odpf/guardian
+module github.com/raystack/guardian
 
 go 1.18
 
@@ -23,7 +23,7 @@ require (
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mcuadros/go-lookup v0.0.0-20200831155250-80f87a4fa5ee
 	github.com/mitchellh/mapstructure v1.4.3
-	github.com/odpf/salt v0.2.5-0.20230127060155-e76a7e0d620d
+	github.com/raystack/salt v0.3.0
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/robfig/cron/v3 v3.0.1

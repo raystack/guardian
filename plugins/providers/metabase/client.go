@@ -13,8 +13,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/odpf/guardian/pkg/tracing"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/guardian/pkg/tracing"
+	"github.com/raystack/salt/log"
 
 	"github.com/mitchellh/mapstructure"
 

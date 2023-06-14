@@ -3,8 +3,8 @@ package metabase_test
 import (
 	"testing"
 
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/providers/metabase"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/plugins/providers/metabase"
 	"github.com/stretchr/testify/assert"
 )
 

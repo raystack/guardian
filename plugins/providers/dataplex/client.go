@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	datacatalog "cloud.google.com/go/datacatalog/apiv1"
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/domain"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	pb "google.golang.org/genproto/googleapis/cloud/datacatalog/v1"

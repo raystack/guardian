@@ -3,9 +3,9 @@ package shield_test
 import (
 	"testing"
 
-	"github.com/odpf/guardian/plugins/providers/shield"
+	"github.com/raystack/guardian/plugins/providers/shield"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/domain"
 	"github.com/stretchr/testify/assert"
 )
 

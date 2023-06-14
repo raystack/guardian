@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/core/grant"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/pkg/evaluator"
-	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/guardian/utils"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/guardian/core/grant"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/pkg/evaluator"
+	"github.com/raystack/guardian/plugins/notifiers"
+	"github.com/raystack/guardian/utils"
+	"github.com/raystack/salt/log"
 	"golang.org/x/sync/errgroup"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/odpf/guardian/domain"
+	"github.com/raystack/guardian/domain"
 )
 
 // GetReadableDuration returns a human-readable duration string in integer days preferably, or the original string if it's either not a valid duration or a days value is not integer.

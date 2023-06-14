@@ -10,7 +10,7 @@ import (
 	"net/url"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/guardian/pkg/tracing"
+	"github.com/raystack/guardian/pkg/tracing"
 )
 
 type GrafanaClient interface {

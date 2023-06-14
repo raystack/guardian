@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	guardianv1beta1 "github.com/odpf/guardian/api/proto/odpf/guardian/v1beta1"
-	"github.com/odpf/guardian/core/appeal"
-	"github.com/odpf/guardian/domain"
+	guardianv1beta1 "github.com/raystack/guardian/api/proto/raystack/guardian/v1beta1"
+	"github.com/raystack/guardian/core/appeal"
+	"github.com/raystack/guardian/domain"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

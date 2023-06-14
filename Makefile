@@ -1,9 +1,9 @@
-NAME="github.com/odpf/guardian"
+NAME="github.com/raystack/guardian"
 COMMIT := $(shell git rev-parse --short HEAD)
 TAG := "$(shell git rev-list --tags --max-count=1)"
 VERSION := "$(shell git describe --tags ${TAG})-next"
 BUILD_DIR=dist
-PROTON_COMMIT := "c2d087496dad99987b9132b948810f689a89516e"
+PROTON_COMMIT := "d382bec8545902c081435a931c346a8543583aaf"
 
 .PHONY: all build clean test tidy vet proto setup format generate
 
@@ -59,9 +59,9 @@ config: ## Generate the sample config file
 	@cp internal/server/config.yaml config.yaml
 
 proto: ## Generate the protobuf files
-	@echo "Generating protobuf from odpf/proton"
+	@echo "Generating protobuf from raystack/proton"
 	@echo " [info] make sure correct version of dependencies are installed using 'make install'"
-	@buf generate https://github.com/odpf/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --template buf.gen.yaml --path odpf/guardian
+	@buf generate https://github.com/raystack/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --template buf.gen.yaml --path raystack/guardian
 	@echo "Protobuf compilation finished"
 
 setup: ## Install all the dependencies

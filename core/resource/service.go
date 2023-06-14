@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/imdario/mergo"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/salt/log"
 )
 
 const (

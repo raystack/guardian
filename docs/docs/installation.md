@@ -9,16 +9,16 @@ There are several approaches to install Guardian.
 
 #### Binary (Cross-platform)
 
-Download the appropriate version for your platform from [releases](https://github.com/odpf/guardian/releases) page. Once downloaded, the binary can be run from anywhere.
+Download the appropriate version for your platform from [releases](https://github.com/raystack/guardian/releases) page. Once downloaded, the binary can be run from anywhere.
 You don’t need to install it into a global location. This works well for shared hosts and other systems where you don’t have a privileged account.
 Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
 
 #### macOS
 
-`guardian` is available via a Homebrew Tap, and as downloadable binary from the [releases](https://github.com/odpf/guardian/releases/latest) page:
+`guardian` is available via a Homebrew Tap, and as downloadable binary from the [releases](https://github.com/raystack/guardian/releases/latest) page:
 
 ```sh
-brew install odpf/tap/guardian
+brew install raystack/tap/guardian
 ```
 
 To upgrade to the latest version:
@@ -35,14 +35,14 @@ guardian version
 
 #### Linux
 
-`guardian` is available as downloadable binaries from the [releases](https://github.com/odpf/guardian/releases/latest) page. Download the `.deb` or `.rpm` from the releases page and install with `sudo dpkg -i` and `sudo rpm -i` respectively.
+`guardian` is available as downloadable binaries from the [releases](https://github.com/raystack/guardian/releases/latest) page. Download the `.deb` or `.rpm` from the releases page and install with `sudo dpkg -i` and `sudo rpm -i` respectively.
 
 #### Windows
 
-`guardian` is available via [scoop](https://scoop.sh/), and as a downloadable binary from the [releases](https://github.com/odpf/guardian/releases/latest) page:
+`guardian` is available via [scoop](https://scoop.sh/), and as a downloadable binary from the [releases](https://github.com/raystack/guardian/releases/latest) page:
 
 ```
-scoop bucket add guardian https://github.com/odpf/scoop-bucket.git
+scoop bucket add guardian https://github.com/raystack/scoop-bucket.git
 ```
 
 To upgrade to the latest version:
@@ -65,8 +65,8 @@ Guardian requires the following dependencies:
 Run either of the following commands to clone and compile Guardian from source
 
 ```sh
-$ git clone git@github.com:odpf/guardian.git  (Using SSH Protocol) Or
-$ git clone https://github.com/odpf/guardian.git (Using HTTPS Protocol)
+$ git clone git@github.com:raystack/guardian.git  (Using SSH Protocol) Or
+$ git clone https://github.com/raystack/guardian.git (Using HTTPS Protocol)
 ```
 
 Install all the golang dependencies
@@ -110,13 +110,13 @@ Initialise client configurations
 We provide ready to use Docker container images. To pull the latest image:
 
 ```
-docker pull odpf/guardian:latest
+docker pull raystack/guardian:latest
 ```
 
 To pull a specific version:
 
 ```
-docker pull odpf/guardian:v0.3.2
+docker pull raystack/guardian:v0.3.2
 ```
 
 ### Verifying the installation​

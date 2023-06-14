@@ -3,10 +3,10 @@ package jobs
 import (
 	"context"
 
-	"github.com/odpf/guardian/core/grant"
-	"github.com/odpf/guardian/domain"
-	"github.com/odpf/guardian/plugins/notifiers"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/guardian/core/grant"
+	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/plugins/notifiers"
+	"github.com/raystack/salt/log"
 )
 
 //go:generate mockery --name=grantService --exported

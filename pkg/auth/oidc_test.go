@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/odpf/guardian/pkg/auth"
-	"github.com/odpf/guardian/pkg/auth/mocks"
+	"github.com/raystack/guardian/pkg/auth"
+	"github.com/raystack/guardian/pkg/auth/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
