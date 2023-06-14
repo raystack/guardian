@@ -32,8 +32,6 @@ tmp
 !/api/proto/raystack/third_party/grpc-gateway/*
 !/api/proto/raystack/third_party/grpc-gateway/**/*
 
-/third_party/*
-!/third_party/OpenAPI/raystack/guardian/guardian.swagger.json
 
 # guardian
 .guardian.yaml
