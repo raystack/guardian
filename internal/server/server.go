@@ -195,9 +195,15 @@ func RunServer(config *Config) error {
 
 	logger.Info(fmt.Sprintf("server running on %s", address))
 
-	return mux.Serve(runtimeCtx, address,
-		mux.WithHTTP(baseMux),
-		mux.WithGRPC(grpcServer),
+	return mux.Serve(
+		runtimeCtx,
+		mux.WithHTTPTarget(address, &http.Server{
+			Handler:        baseMux,
+			ReadTimeout:    120 * time.Second,
+			WriteTimeout:   120 * time.Second,
+			MaxHeaderBytes: 1 << 20,
+		}),
+		mux.WithGRPCTarget(address, grpcServer),
 		mux.WithGracePeriod(defaultGracePeriod),
 	)
 }
