@@ -972,7 +972,6 @@ func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal
 		if err := g.Wait(); err == nil {
 			return err
 		}
-
 	}
 	return nil
 }

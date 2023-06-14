@@ -118,7 +118,6 @@ func (s *ApprovalRepositoryTestSuite) TearDownSuite() {
 }
 
 func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
-
 	appealA := &domain.Appeal{
 		ResourceID:    s.dummyResource.ID,
 		PolicyID:      s.dummyPolicy.ID,
