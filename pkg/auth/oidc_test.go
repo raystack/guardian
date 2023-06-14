@@ -76,7 +76,6 @@ func (s *InterceptorTestSuite) TestIdTokenValidator_WithBearerTokenValidator() {
 			},
 			ctx: metadata.NewIncomingContext(context.Background(), metadata.New(authContextValues)),
 			mockFunc: func(validator *mocks.OIDCValidator) {
-
 				payload := &idtoken.Payload{
 					Claims: map[string]interface{}{
 						"email": "something@gmail.com",

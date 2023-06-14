@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/raystack/guardian/core/provider"
 	"github.com/raystack/guardian/domain"
 	"github.com/raystack/guardian/plugins/providers/dataplex"
@@ -12,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 func TestGetType(t *testing.T) {

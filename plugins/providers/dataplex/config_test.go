@@ -3,8 +3,9 @@ package dataplex_test
 import (
 	"encoding/base64"
 	"errors"
-	"github.com/raystack/guardian/plugins/providers/bigquery"
 	"testing"
+
+	"github.com/raystack/guardian/plugins/providers/bigquery"
 
 	"github.com/raystack/guardian/domain"
 	"github.com/raystack/guardian/mocks"
