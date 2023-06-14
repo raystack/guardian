@@ -663,6 +663,14 @@ func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email s
 		s.logger.Error("failed to record audit log", "error", err)
 	}
 
+	duration := domain.PermanentDurationLabel
+	if !appeal.IsDurationEmpty() {
+		duration, err = utils.GetReadableDuration(appeal.Options.Duration)
+		if err != nil {
+			s.logger.Error("failed to get readable duration", "error", err, "appeal_id", appeal.ID)
+		}
+	}
+
 	if errs := s.notifier.Notify([]domain.Notification{
 		{
 			User: email,
@@ -677,6 +685,15 @@ func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email s
 					"requestor":     appeal.CreatedBy,
 					"appeal_id":     appeal.ID,
 					"account_id":    appeal.AccountID,
+					"account_type":  appeal.AccountType,
+					"provider_type": appeal.Resource.ProviderType,
+					"resource_type": appeal.Resource.Type,
+					"created_at":    appeal.CreatedAt,
+					"approval_step": approval.Name,
+					"actor":         email,
+					"details":       appeal.Details,
+					"duration":      duration,
+					"creator":       appeal.Creator,
 				},
 			},
 		},
@@ -873,6 +890,7 @@ func (s *Service) getApprovalNotifications(appeal *domain.Appeal) []domain.Notif
 						"actor":         approver,
 						"details":       appeal.Details,
 						"duration":      duration,
+						"creator":       appeal.Creator,
 					},
 				},
 			})
