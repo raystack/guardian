@@ -180,8 +180,10 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 	isAdditionalAppealCreation := createAppealOpts.IsAdditionalAppeal
 
 	resourceIDs := []string{}
+	accountIDs := []string{}
 	for _, a := range appeals {
 		resourceIDs = append(resourceIDs, a.ResourceID)
+		accountIDs = append(accountIDs, a.AccountID)
 	}
 	resources, err := s.getResourcesMap(ctx, resourceIDs)
 	if err != nil {
@@ -196,7 +198,10 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		return err
 	}
 
-	pendingAppeals, err := s.getPendingAppealsMap(ctx)
+	pendingAppeals, err := s.getAppealsMap(ctx, &domain.ListAppealsFilter{
+		Statuses:   []string{domain.AppealStatusPending},
+		AccountIDs: accountIDs,
+	})
 	if err != nil {
 		return fmt.Errorf("listing pending appeals: %w", err)
 	}
@@ -777,11 +782,9 @@ func (s *Service) getApproval(ctx context.Context, appealID, approvalID string) 
 	return appeal, approval, nil
 }
 
-// getPendingAppealsMap returns map[account_id]map[resource_id]map[role]*domain.Appeal, error
-func (s *Service) getPendingAppealsMap(ctx context.Context) (map[string]map[string]map[string]*domain.Appeal, error) {
-	appeals, err := s.repo.Find(ctx, &domain.ListAppealsFilter{
-		Statuses: []string{domain.AppealStatusPending},
-	})
+// getAppealsMap returns map[account_id]map[resource_id]map[role]*domain.Appeal, error
+func (s *Service) getAppealsMap(ctx context.Context, filters *domain.ListAppealsFilter) (map[string]map[string]map[string]*domain.Appeal, error) {
+	appeals, err := s.repo.Find(ctx, filters)
 	if err != nil {
 		return nil, err
 	}

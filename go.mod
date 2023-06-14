@@ -10,7 +10,7 @@ require (
 	cloud.google.com/go/storage v1.22.1
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/MakeNowJust/heredoc v1.0.0
-	github.com/antonmedv/expr v1.9.0
+	github.com/antonmedv/expr v1.12.5
 	github.com/envoyproxy/protoc-gen-validate v0.6.7
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
@@ -39,6 +39,7 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.11.2
 	go.opentelemetry.io/otel/sdk v1.14.0
 	golang.org/x/net v0.8.0
+	golang.org/x/oauth2 v0.1.0
 	golang.org/x/sync v0.1.0
 	google.golang.org/api v0.84.0
 	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc
@@ -147,7 +148,6 @@ require (
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
-	golang.org/x/oauth2 v0.1.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
