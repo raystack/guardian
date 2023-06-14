@@ -12,8 +12,8 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Dependency directories (remove the comment below to include it)
-vendor/
+# # Dependency directories (remove the comment below to include it)
+# vendor/
 
 # Config
 /config.yaml
@@ -22,11 +22,7 @@ tmp
 
 # git ignore generate files related to gRPC and proto
 /proton/
-/api/proto/raystack/**/*
 
-!/api/proto/raystack/guardian/v1beta1/
-!/api/proto/raystack/guardian/v1beta1/*
-!/api/proto/raystack/guardian/v1beta1/**/*
 
 !/api/proto/raystack/third_party/
 !/api/proto/raystack/third_party/googleapis/
@@ -41,8 +37,8 @@ tmp
 
 # guardian
 .guardian.yaml
-guardian
 dist/
+./guardian
 
 # editor configurations
 .vscode
