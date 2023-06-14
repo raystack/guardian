@@ -334,6 +334,7 @@ func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
 			Questions:                    questions,
 			AllowPermanentAccess:         p.GetAppeal().GetAllowPermanentAccess(),
 			AllowActiveAccessExtensionIn: p.GetAppeal().GetAllowActiveAccessExtensionIn(),
+			AllowCreatorDetailsFailure:   p.GetAppeal().GetAllowCreatorDetailsFailure(),
 		}
 	}
 
@@ -474,6 +475,7 @@ func (a *adapter) ToPolicyAppealConfigProto(p *domain.Policy) *guardianv1beta1.P
 	policyAppealConfigProto.AllowOnBehalf = p.AppealConfig.AllowOnBehalf
 	policyAppealConfigProto.AllowPermanentAccess = p.AppealConfig.AllowPermanentAccess
 	policyAppealConfigProto.AllowActiveAccessExtensionIn = p.AppealConfig.AllowActiveAccessExtensionIn
+	policyAppealConfigProto.AllowCreatorDetailsFailure = p.AppealConfig.AllowCreatorDetailsFailure
 
 	for _, q := range p.AppealConfig.Questions {
 		policyAppealConfigProto.Questions = append(policyAppealConfigProto.Questions, &guardianv1beta1.PolicyAppealConfig_Question{
