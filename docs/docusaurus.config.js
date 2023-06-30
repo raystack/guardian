@@ -1,13 +1,12 @@
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
-// With JSDoc @type annotations, IDEs can provide config autocompletion
-/** @type {import('@docusaurus/types').DocusaurusConfig} */
+/** @type {import('@docusaurus/types').Config} */
 (module.exports = {
   title: 'Guardian',
   tagline: 'Universal data access control',
-  url: 'https://raystack.github.io/',
-  baseUrl: '/guardian/',
+  url: 'https://guardian.raystack.org/',
+  baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
@@ -16,7 +15,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
   presets: [
     [
-      '@docusaurus/preset-classic',
+      'classic',
       ({
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
@@ -41,6 +40,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
   themeConfig:
     ({
+      image: 'img/banner.png',
       colorMode: {
         defaultMode: 'light',
         respectPrefersColorScheme: true,
