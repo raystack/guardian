@@ -3,7 +3,7 @@ COMMIT := $(shell git rev-parse --short HEAD)
 TAG := "$(shell git rev-list --tags --max-count=1)"
 VERSION := "$(shell git describe --tags ${TAG})-next"
 BUILD_DIR=dist
-PROTON_COMMIT := "3f5cfaa801d3f0f31507f03e9d96e541cceb78c1"
+PROTON_COMMIT := "ccbf219312db35a934361ebad895cb40145ca235"
 
 .PHONY: all build clean test tidy vet proto setup format generate
 
@@ -67,14 +67,14 @@ proto: ## Generate the protobuf files
 setup: ## Install all the dependencies
 	@echo "Installing dependencies..."
 	go mod tidy
-	go get google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
-	go get github.com/golang/protobuf/proto@v1.5.2
-	go get github.com/golang/protobuf/protoc-gen-go@v1.5.2
-	go get google.golang.org/grpc@v1.40.0
-	go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
-	go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
-	go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.5.0
-	go get github.com/bufbuild/buf/cmd/buf@v1.15.1
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
+	go install github.com/golang/protobuf/proto@v1.5.2
+	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2
+	go install google.golang.org/grpc@v1.40.0
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
+	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
+	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.5.0
+	go install github.com/bufbuild/buf/cmd/buf@v1.15.1
 
 help: ## Display this help message
 	@cat $(MAKEFILE_LIST) | grep -e "^[a-zA-Z_\-]*: *.*## *" | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

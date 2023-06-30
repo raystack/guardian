@@ -1467,14 +1467,15 @@
                     "type": "string"
                   }
                 },
-                "credentials": {},
+                "credentials": {
+                  "type": "object"
+                },
                 "appeal": {
                   "$ref": "#/definitions/ProviderConfigAppealConfig"
                 },
                 "resources": {
                   "type": "array",
                   "items": {
-                    "type": "object",
                     "$ref": "#/definitions/ProviderConfigResourceConfig"
                   }
                 },
@@ -1487,7 +1488,6 @@
                 "parameters": {
                   "type": "array",
                   "items": {
-                    "type": "object",
                     "$ref": "#/definitions/ProviderConfigProviderParameter"
                   }
                 }
@@ -1837,7 +1837,9 @@
     "ConditionMatchCondition": {
       "type": "object",
       "properties": {
-        "eq": {}
+        "eq": {
+          "type": "object"
+        }
       }
     },
     "PolicyAppealConfigDurationOptions": {
@@ -1906,7 +1908,9 @@
         "provider": {
           "type": "string"
         },
-        "config": {},
+        "config": {
+          "type": "object"
+        },
         "schema": {
           "type": "object",
           "additionalProperties": {
@@ -1924,7 +1928,6 @@
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/RequirementAdditionalAppeal"
           }
         }
@@ -1970,7 +1973,6 @@
         "roles": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Role"
           }
         },
@@ -2017,7 +2019,6 @@
         "conditions": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Condition"
           }
         },
@@ -2084,7 +2085,6 @@
         "children": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/guardianv1beta1Resource"
           }
         }
@@ -2121,7 +2121,6 @@
         "details": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }
@@ -2161,8 +2160,7 @@
           "type": "string"
         },
         "options": {
-          "$ref": "#/definitions/v1beta1AppealOptions",
-          "title": "optional"
+          "$ref": "#/definitions/v1beta1AppealOptions"
         },
         "labels": {
           "type": "object",
@@ -2171,13 +2169,11 @@
           }
         },
         "resource": {
-          "$ref": "#/definitions/guardianv1beta1Resource",
-          "title": "optional"
+          "$ref": "#/definitions/guardianv1beta1Resource"
         },
         "approvals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
         },
@@ -2198,7 +2194,9 @@
         "createdBy": {
           "type": "string"
         },
-        "creator": {},
+        "creator": {
+          "type": "object"
+        },
         "permissions": {
           "type": "array",
           "items": {
@@ -2219,8 +2217,7 @@
       "properties": {
         "expirationDate": {
           "type": "string",
-          "format": "date-time",
-          "title": "optional"
+          "format": "date-time"
         },
         "duration": {
           "type": "string"
@@ -2303,7 +2300,6 @@
         "resources": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1CreateAppealRequestResource"
           }
         },
@@ -2338,7 +2334,6 @@
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
         }
@@ -2428,7 +2423,6 @@
         "providerTypes": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderType"
           }
         }
@@ -2551,7 +2545,6 @@
         "activities": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderActivity"
           }
         }
@@ -2589,7 +2582,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         }
@@ -2601,7 +2593,6 @@
         "activities": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderActivity"
           }
         }
@@ -2613,7 +2604,6 @@
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
         }
@@ -2625,7 +2615,6 @@
         "approvals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
         }
@@ -2637,7 +2626,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         }
@@ -2649,7 +2637,6 @@
         "policies": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Policy"
           }
         }
@@ -2661,7 +2648,6 @@
         "providers": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Provider"
           }
         }
@@ -2673,7 +2659,6 @@
         "resources": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/guardianv1beta1Resource"
           }
         }
@@ -2685,7 +2670,6 @@
         "roles": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Role"
           }
         }
@@ -2697,7 +2681,6 @@
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
         }
@@ -2709,7 +2692,6 @@
         "approvals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
         }
@@ -2721,7 +2703,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         }
@@ -2743,7 +2724,6 @@
         "steps": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyApprovalStep"
           }
         },
@@ -2764,7 +2744,6 @@
         "requirements": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyRequirement"
           }
         },
@@ -2783,7 +2762,6 @@
         "durationOptions": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyAppealConfigDurationOptions"
           }
         },
@@ -2799,7 +2777,6 @@
         "questions": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyAppealConfigQuestion"
           }
         },
@@ -2916,14 +2893,15 @@
             "type": "string"
           }
         },
-        "credentials": {},
+        "credentials": {
+          "type": "object"
+        },
         "appeal": {
           "$ref": "#/definitions/ProviderConfigAppealConfig"
         },
         "resources": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/ProviderConfigResourceConfig"
           }
         },
@@ -2936,7 +2914,6 @@
         "parameters": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/ProviderConfigProviderParameter"
           }
         }
@@ -3008,7 +2985,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         }
@@ -3028,7 +3004,9 @@
         },
         "permissions": {
           "type": "array",
-          "items": {}
+          "items": {
+            "type": "object"
+          }
         }
       }
     },
