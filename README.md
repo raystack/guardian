@@ -110,9 +110,7 @@ Guardian provides a fully-featured GRPC and HTTP API to interact with Guardian s
 ## Contribute
 
 Development of Guardian happens in the open on GitHub, and we are grateful to the community for contributing bugfixes and
-improvements. Read below to learn how you can take part in improving Guardian.
-
-Read our [contributing guide](https://guardian.vercel.app/docs/contribute/contribution) to learn about our development process, how to propose
+improvements. Read our [contributing guide](https://guardian.vercel.app/docs/contribute/contribution) to learn about our development process, how to propose
 bugfixes and improvements, and how to build and test your changes to Guardian.
 
 To help you get your feet wet and get you familiar with our contribution process, we have a list of

@@ -2,8 +2,9 @@
 
 The following is a set of guidelines for contributing to Guardian. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request. Here are some important resources:
 
-- [Concepts](https://raystack.gitbook.io/guardian/concepts/architecture) section will explain you about Guardian architecture,
-- Our [roadmap](https://github.com/raystack/guardian#readme) is the 10k foot view of where we're going, and
+- [Development](https://guardian.vercel.app/docs/concepts/architecture) section will explain how to setup your development environment,
+- [Concepts](https://guardian.vercel.app/docs/concepts/architecture) section will explain you about Guardian architecture,
+- Our [roadmap](https://guardian.vercel.app/docs/roadmap) is the 10k foot view of where we're going, and
 - Github [issues](https://github.com/raystack/guardian/issues) track the ongoing and reported issues.
 
 ## How can I contribute?
