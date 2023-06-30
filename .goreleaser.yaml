@@ -1,16 +1,27 @@
 project_name: guardian
+
 release:
   prerelease: auto
+
 before:
   hooks:
     - go mod tidy
     - make clean
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^build:"
+
 builds:
   - id: "guardian"
     main: ./main.go
     binary: guardian
-    flags:
-      - -a
+    flags: [-a]
     ldflags:
       - -X github.com/raystack/guardian/core.Version={{.Tag}}
       - -X github.com/raystack/guardian/core.BuildCommit={{.FullCommit}}
@@ -19,37 +30,20 @@ builds:
     goarch: [amd64, 386, arm, arm64]
     env:
       - CGO_ENABLED=0
+
 archives:
-  - replacements:
-      darwin: macos
-      linux: linux
-      windows: windows
-      386: i386
-      amd64: x86_64
+  - id: "archives"
     format_overrides:
       - goos: windows
         format: zip
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
-      - "^build:"
-checksum:
-  name_template: "checksums.txt"
-snapshot:
-  name_template: "{{ .Tag }}-next"
+
 dockers:
-  - goos: linux
-    goarch: amd64
-    ids:
-      - guardian
-    dockerfile: Dockerfile
+  - id: dockerhub
     image_templates:
       - "docker.io/raystack/{{.ProjectName}}:latest"
       - "docker.io/raystack/{{.ProjectName}}:{{ .Version }}"
       - "docker.io/raystack/{{.ProjectName}}:{{ .Tag }}-amd64"
+
 nfpms:
   - maintainer: Raystack
     description: Universal data access tool
@@ -58,15 +52,16 @@ nfpms:
     formats:
       - deb
       - rpm
-    replacements:
-      darwin: macOS
-scoop:
-  bucket:
-    owner: raystack
-    name: scoop-bucket
-  homepage: "https://github.com/raystack/guardian"
-  description: "Universal data access tool"
-  license: Apache 2.0
+      - apk
+
+scoops:
+  - homepage: "https://github.com/raystack/guardian"
+    description: "Universal data access tool"
+    license: Apache 2.0
+    bucket:
+      owner: raystack
+      name: scoop-bucket
+
 brews:
   - name: guardian
     homepage: "https://github.com/raystack/guardian"
