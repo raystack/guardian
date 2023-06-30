@@ -118,7 +118,7 @@ Ensure that the following requirements are met:
 Add Raystack chart repository to Helm:
 
 ```
-helm repo add raystack https://raystack.github.io/charts/
+helm repo add raystack https://guardian.vercel.app/charts/
 ```
 
 You can update the chart repository by running:

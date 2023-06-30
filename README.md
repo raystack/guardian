@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?logo=apache)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/raystack/guardian?logo=semantic-release)](Version)
 
-Guardian is a on-demand access management tool. It manages resources from various data providers along with the users’ access. Users required to raise an appeal in order to gain access to a particular resource. The appeal will go through several approvals before it is getting approved and granted the access to the user.
+Guardian is a tool for extensible and universal data access with automated access workflows and security controls across data stores, analytical systems, and cloud products.
 
 <p align="center"><img src="./docs/static/assets/overview.svg" /></p>
 
@@ -22,14 +22,14 @@ Guardian is a on-demand access management tool. It manages resources from variou
 
 Explore the following resoruces to get started with Guardian:
 
-- [Guides](https://raystack.github.io/guardian/docs/tour/introduction) provides guidance on usage.
-- [Concepts](https://raystack.github.io/guardian/docs/concepts/overview) describes all important Guardian concepts including system architecture.
-- [Reference](https://raystack.github.io/guardian/docs/reference/api) contains details about configurations and other aspects of Guardian.
-- [Contribute](https://raystack.github.io/guardian/docs/contribute/contribution) contains resources for anyone who wants to contribute to Guardian.
+- [Guides](https://guardian.vercel.app/docs/tour/introduction) provides guidance on usage.
+- [Concepts](https://guardian.vercel.app/docs/concepts/overview) describes all important Guardian concepts including system architecture.
+- [Reference](https://guardian.vercel.app/docs/reference/api) contains details about configurations and other aspects of Guardian.
+- [Contribute](https://guardian.vercel.app/docs/contribute/contribution) contains resources for anyone who wants to contribute to Guardian.
 
 ## Installation
 
-Install Guardian on macOS, Windows, Linux, OpenBSD, FreeBSD, and on any machine. <br/>Refer this for [installations](https://raystack.github.io/guardian/docs/installation) and [configurations](https://raystack.github.io/guardian/docs/tour/configuration)
+Install Guardian on macOS, Windows, Linux, OpenBSD, FreeBSD, and on any machine. <br/>Refer this for [installations](https://guardian.vercel.app/docs/installation) and [configurations](https://guardian.vercel.app/docs/tour/configuration)
 
 #### Binary (Cross-platform)
 
@@ -49,12 +49,6 @@ To upgrade to the latest version:
 
 ```
 brew upgrade guardian
-```
-
-Check for installed guardian version
-
-```sh
-guardian version
 ```
 
 #### Linux
@@ -86,7 +80,7 @@ docker pull raystack/guardian:latest
 To pull a specific version:
 
 ```
-docker pull raystack/guardian:v0.3.2
+docker pull raystack/guardian:v0.8.0
 ```
 
 ## Usage
@@ -113,79 +107,12 @@ guardian reference
 
 Guardian provides a fully-featured GRPC and HTTP API to interact with Guardian server. Both APIs adheres to a set of standards that are rigidly followed. Please refer to [proton](https://github.com/raystack/proton/tree/main/raystack/guardian/v1beta1) for GRPC API definitions.
 
-## Running locally
-
-<details>
-  <summary>Dependencies:</summary>
-
-    - Git
-    - Go 1.18 or above
-    - PostgreSQL 13.2 or above
-
-</details>
-
-Clone the repo
-
-```
-git clone git@github.com:raystack/guardian.git
-```
-
-Install all the golang dependencies
-
-```
-make setup
-```
-
-Build guardian binary file
-
-```
-make build
-```
-
-Init server config. Customise with your local configurations.
-
-```
-make config
-```
-
-Run database migrations
-
-```
-./guardian server migrate -c config.yaml
-```
-
-Start guardian server
-
-```
-./guardian server start -c config.yaml
-```
-
-Initialise client configurations
-
-```
-./guardian config init
-```
-
-## Running tests
-
-Running all unit tests
-
-```sh
-make test
-```
-
-Print code coverage
-
-```
-make coverage
-```
-
 ## Contribute
 
 Development of Guardian happens in the open on GitHub, and we are grateful to the community for contributing bugfixes and
 improvements. Read below to learn how you can take part in improving Guardian.
 
-Read our [contributing guide](https://raystack.github.io/guardian/docs/contribute/contribution) to learn about our development process, how to propose
+Read our [contributing guide](https://guardian.vercel.app/docs/contribute/contribution) to learn about our development process, how to propose
 bugfixes and improvements, and how to build and test your changes to Guardian.
 
 To help you get your feet wet and get you familiar with our contribution process, we have a list of

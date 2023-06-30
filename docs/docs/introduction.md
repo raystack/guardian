@@ -39,7 +39,7 @@ For more information on using the Guardian CLI, see the [CLI Reference](./refere
 
 #### HTTPS API
 
-You can get hands on appeal creation, approval updatation, access revocation and much more by using the Guardian HTTPS API, which lets you issue HTTPS requests directly to the service. When you use the HTTPS API, you must include the username in the request header, which will be used by [Shield](https://raystack.github.io/shield/) for authorization. For more information, see the [API Reference](/reference/api.md) page.
+You can get hands on appeal creation, approval updatation, access revocation and much more by using the Guardian HTTPS API, which lets you issue HTTPS requests directly to the service. When you use the HTTPS API, you must include the username in the request header, which will be used by [Shield](https://guardian.vercel.app/shield/) for authorization. For more information, see the [API Reference](/reference/api.md) page.
 
 ## Where to go from here
 

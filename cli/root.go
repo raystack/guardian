@@ -22,7 +22,7 @@ func New(cfg *Config) *cobra.Command {
 			"group": "core",
 			"help:learn": heredoc.Doc(`
 				Use 'guardian <command> --help' for info about a command.
-				Read the manual at https://raystack.github.io/guardian/
+				Read the manual at https://guardian.vercel.app/
 			`),
 			"help:feedback": heredoc.Doc(`
 				Open an issue here https://github.com/raystack/guardian/issues
