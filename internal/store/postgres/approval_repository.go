@@ -29,47 +29,21 @@ func NewApprovalRepository(db *gorm.DB) *ApprovalRepository {
 	return &ApprovalRepository{db}
 }
 
-func (r *ApprovalRepository) ListApprovals(ctx context.Context, conditions *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
-	if err := utils.ValidateStruct(conditions); err != nil {
+func (r *ApprovalRepository) ListApprovals(ctx context.Context, filter *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
+	if err := utils.ValidateStruct(filter); err != nil {
 		return nil, err
 	}
 
 	records := []*domain.Approval{}
 
 	db := r.db.WithContext(ctx)
-	db = db.Preload("Appeal.Resource")
-	db = db.Joins("Appeal")
-	db = db.Joins(`JOIN "approvers" ON "approvals"."id" = "approvers"."approval_id"`)
-
-	if conditions.CreatedBy != "" {
-		db = db.Where(`"approvers"."email" = ?`, conditions.CreatedBy)
-	}
-	if conditions.Statuses != nil {
-		db = db.Where(`"approvals"."status" IN ?`, conditions.Statuses)
-	}
-	if conditions.AccountID != "" {
-		db = db.Where(`"Appeal"."account_id" = ?`, conditions.AccountID)
+	db = applyFilter(db, filter)
+	if filter.Size > 0 {
+		db = db.Limit(filter.Size)
 	}
 
-	if len(conditions.AppealStatuses) == 0 {
-		db = db.Where(`"Appeal"."status" != ?`, domain.AppealStatusCanceled)
-	} else {
-		db = db.Where(`"Appeal"."status" IN ?`, conditions.AppealStatuses)
-	}
-
-	if conditions.OrderBy != nil {
-		db = addOrderByClause(db, conditions.OrderBy, addOrderByClauseOptions{
-			statusColumnName: `"approvals"."status"`,
-			statusesOrder:    AppealStatusDefaultSort,
-		})
-	}
-
-	if conditions.Size > 0 {
-		db = db.Limit(conditions.Size)
-	}
-
-	if conditions.Offset > 0 {
-		db = db.Offset(conditions.Offset)
+	if filter.Offset > 0 {
+		db = db.Offset(filter.Offset)
 	}
 
 	var models []*model.Approval
@@ -87,6 +61,18 @@ func (r *ApprovalRepository) ListApprovals(ctx context.Context, conditions *doma
 	}
 
 	return records, nil
+}
+
+func (r *ApprovalRepository) GetApprovalsTotalCount(ctx context.Context, filter *domain.ListApprovalsFilter) (int64, error) {
+	db := r.db.WithContext(ctx)
+	db = applyFilter(db, filter)
+
+	var count int64
+	if err := db.Model(&model.Approval{}).Count(&count).Error; err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (r *ApprovalRepository) BulkInsert(ctx context.Context, approvals []*domain.Approval) error {
@@ -148,4 +134,50 @@ func (r *ApprovalRepository) DeleteApprover(ctx context.Context, approvalID, ema
 	}
 
 	return nil
+}
+
+func applyFilter(db *gorm.DB, filter *domain.ListApprovalsFilter) *gorm.DB {
+	db = db.Joins("Appeal").
+		Joins("Appeal.Resource").
+		Joins(`JOIN "approvers" ON "approvals"."id" = "approvers"."approval_id"`)
+
+	if filter.Q != "" {
+		// NOTE: avoid adding conditions before this grouped where clause.
+		// Otherwise, it will be wrapped in parentheses and the query will be invalid.
+		db = db.Where(db.
+			Where(`"Appeal"."account_id" LIKE ?`, fmt.Sprintf("%%%s%%", filter.Q)).
+			Or(`"Appeal"."role" LIKE ?`, fmt.Sprintf("%%%s%%", filter.Q)).
+			Or(`"Appeal__Resource"."urn" LIKE ?`, fmt.Sprintf("%%%s%%", filter.Q)),
+		)
+	}
+	if filter.CreatedBy != "" {
+		db = db.Where(`"approvers"."email" = ?`, filter.CreatedBy)
+	}
+	if filter.Statuses != nil {
+		db = db.Where(`"approvals"."status" IN ?`, filter.Statuses)
+	}
+	if filter.AccountID != "" {
+		db = db.Where(`"Appeal"."account_id" = ?`, filter.AccountID)
+	}
+	if filter.AccountTypes != nil {
+		db = db.Where(`"Appeal"."account_type" IN ?`, filter.AccountTypes)
+	}
+	if filter.ResourceTypes != nil {
+		db = db.Where(`"Appeal__Resource"."type" IN ?`, filter.ResourceTypes)
+	}
+
+	if len(filter.AppealStatuses) == 0 {
+		db = db.Where(`"Appeal"."status" != ?`, domain.AppealStatusCanceled)
+	} else {
+		db = db.Where(`"Appeal"."status" IN ?`, filter.AppealStatuses)
+	}
+
+	if filter.OrderBy != nil {
+		db = addOrderByClause(db, filter.OrderBy, addOrderByClauseOptions{
+			statusColumnName: `"approvals"."status"`,
+			statusesOrder:    AppealStatusDefaultSort,
+		})
+	}
+
+	return db
 }

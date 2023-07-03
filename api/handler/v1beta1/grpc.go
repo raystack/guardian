@@ -95,6 +95,7 @@ type appealService interface {
 //go:generate mockery --name=approvalService --exported --with-expecter
 type approvalService interface {
 	ListApprovals(context.Context, *domain.ListApprovalsFilter) ([]*domain.Approval, error)
+	GetApprovalsTotalCount(context.Context, *domain.ListApprovalsFilter) (int64, error)
 	BulkInsert(context.Context, []*domain.Approval) error
 }
 

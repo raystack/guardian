@@ -559,6 +559,32 @@
               "type": "string"
             },
             "collectionFormat": "multi"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "accountTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1030,6 +1056,32 @@
           },
           {
             "name": "appealStatuses",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "accountTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceTypes",
             "in": "query",
             "required": false,
             "type": "array",
@@ -2628,6 +2680,10 @@
             "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -2712,6 +2768,10 @@
             "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

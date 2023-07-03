@@ -35,6 +35,62 @@ func (s *ServiceTestSuite) SetupTest() {
 	})
 }
 
+func (s *ServiceTestSuite) TestListApprovals() {
+	s.Run("should return error if got error from repository", func() {
+		expectedError := errors.New("repository error")
+		s.mockRepository.EXPECT().
+			ListApprovals(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(nil, expectedError).Once()
+
+		actualApprovals, actualError := s.service.ListApprovals(context.Background(), &domain.ListApprovalsFilter{})
+
+		s.Nil(actualApprovals)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return approvals from repository", func() {
+		expectedApprovals := []*domain.Approval{
+			{
+				ID: uuid.New().String(),
+			},
+		}
+		s.mockRepository.EXPECT().
+			ListApprovals(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedApprovals, nil).Once()
+
+		actualApprovals, actualError := s.service.ListApprovals(context.Background(), &domain.ListApprovalsFilter{})
+
+		s.Equal(expectedApprovals, actualApprovals)
+		s.NoError(actualError)
+	})
+}
+
+func (s *ServiceTestSuite) TestGetApprovalsTotalCount() {
+	s.Run("should return error if got error from repository", func() {
+		expectedError := errors.New("repository error")
+		s.mockRepository.EXPECT().
+			GetApprovalsTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(0, expectedError).Once()
+
+		actualCount, actualError := s.service.GetApprovalsTotalCount(context.Background(), &domain.ListApprovalsFilter{})
+
+		s.Zero(actualCount)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return approvals count from repository", func() {
+		expectedCount := int64(1)
+		s.mockRepository.EXPECT().
+			GetApprovalsTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedCount, nil).Once()
+
+		actualCount, actualError := s.service.GetApprovalsTotalCount(context.Background(), &domain.ListApprovalsFilter{})
+
+		s.Equal(expectedCount, actualCount)
+		s.NoError(actualError)
+	})
+}
+
 func (s *ServiceTestSuite) TestBulkInsert() {
 	s.Run("should return error if got error from repository", func() {
 		expectedError := errors.New("repository error")
