@@ -20,12 +20,16 @@ builds:
     env:
       - CGO_ENABLED=0
 archives:
-  - replacements:
-      darwin: macos
-      linux: linux
-      windows: windows
-      386: i386
-      amd64: x86_64
+  - name_template: >-
+      {{- .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else if eq .Arch "linux" }}linux
+      {{- else if eq .Arch "windows" }}windows
+      {{- else if eq .Arch "darwin" }}macos
+      {{- else }}{{ .Arch }}{{ end }}
     format_overrides:
       - goos: windows
         format: zip
@@ -58,8 +62,10 @@ nfpms:
     formats:
       - deb
       - rpm
-    replacements:
-      darwin: macOS
+    file_name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "darwin" }}macos{{- else }}{{ .Arch }}{{ end }}
 scoop:
   bucket:
     owner: goto
