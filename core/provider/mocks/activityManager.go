@@ -23,11 +23,11 @@ func (_m *ActivityManager) EXPECT() *ActivityManager_Expecter {
 }
 
 // GetActivities provides a mock function with given fields: _a0, _a1, _a2
-func (_m *ActivityManager) GetActivities(_a0 context.Context, _a1 domain.Provider, _a2 domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
+func (_m *ActivityManager) GetActivities(_a0 context.Context, _a1 domain.Provider, _a2 domain.ListActivitiesFilter) ([]*domain.Activity, error) {
 	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 []*domain.Activity
-	if rf, ok := ret.Get(0).(func(context.Context, domain.Provider, domain.ImportActivitiesFilter) []*domain.Activity); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Provider, domain.ListActivitiesFilter) []*domain.Activity); ok {
 		r0 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(0) != nil {
@@ -36,7 +36,7 @@ func (_m *ActivityManager) GetActivities(_a0 context.Context, _a1 domain.Provide
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, domain.Provider, domain.ImportActivitiesFilter) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, domain.Provider, domain.ListActivitiesFilter) error); ok {
 		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
@@ -58,9 +58,9 @@ func (_e *ActivityManager_Expecter) GetActivities(_a0 interface{}, _a1 interface
 	return &ActivityManager_GetActivities_Call{Call: _e.mock.On("GetActivities", _a0, _a1, _a2)}
 }
 
-func (_c *ActivityManager_GetActivities_Call) Run(run func(_a0 context.Context, _a1 domain.Provider, _a2 domain.ImportActivitiesFilter)) *ActivityManager_GetActivities_Call {
+func (_c *ActivityManager_GetActivities_Call) Run(run func(_a0 context.Context, _a1 domain.Provider, _a2 domain.ListActivitiesFilter)) *ActivityManager_GetActivities_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.Provider), args[2].(domain.ImportActivitiesFilter))
+		run(args[0].(context.Context), args[1].(domain.Provider), args[2].(domain.ListActivitiesFilter))
 	})
 	return _c
 }

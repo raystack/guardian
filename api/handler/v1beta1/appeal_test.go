@@ -3,8 +3,9 @@ package v1beta1_test
 import (
 	"context"
 	"errors"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 
 	guardianv1beta1 "github.com/goto/guardian/api/proto/gotocompany/guardian/v1beta1"
 	"github.com/goto/guardian/core/appeal"
@@ -702,7 +703,6 @@ func (s *GrpcHandlersSuite) TestGetAppeal() {
 		s.Nil(res)
 		s.appealService.AssertExpectations(s.T())
 	})
-
 }
 
 func (s *GrpcHandlersSuite) TestCancelAppeal() {

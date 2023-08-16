@@ -7,6 +7,8 @@ import (
 	bq "cloud.google.com/go/bigquery"
 	"github.com/goto/guardian/core/resource"
 	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/utils"
+	"github.com/mitchellh/mapstructure"
 )
 
 const (
@@ -145,4 +147,36 @@ func (r BigQueryResourceName) BigQueryResourceID() string {
 		urn = fmt.Sprintf("%s.%s", urn, tableID)
 	}
 	return urn
+}
+
+type cloudLoggingOptions struct {
+	LogBucket string `json:"log_bucket" yaml:"log_bucket" mapstructure:"log_bucket"`
+}
+
+type activityConfig struct {
+	*domain.ActivityConfig
+}
+
+func (c activityConfig) Validate() error {
+	validSources := []string{"default", "cloud_logging"}
+	if !utils.ContainsString(validSources, c.ActivityConfig.Source) {
+		return fmt.Errorf("invalid source: %q, allowed values %v", c.ActivityConfig.Source, validSources)
+	}
+
+	return nil
+}
+
+func (c activityConfig) GetCloudLoggingOptions() (*cloudLoggingOptions, error) {
+	if c.ActivityConfig == nil || (c.ActivityConfig.Source == "cloud_logging" && c.ActivityConfig.Options == nil) {
+		return &cloudLoggingOptions{}, nil
+	}
+	if c.ActivityConfig.Source != "cloud_logging" {
+		return nil, fmt.Errorf("invalid source: %q", c.ActivityConfig.Source)
+	}
+
+	result := &cloudLoggingOptions{}
+	if err := mapstructure.Decode(c.ActivityConfig.Options, result); err != nil {
+		return nil, fmt.Errorf("decoding options: %w", err)
+	}
+	return result, nil
 }

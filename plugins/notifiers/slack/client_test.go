@@ -70,7 +70,6 @@ func (s *ClientTestSuite) TestNotify() {
 
 		s.Equal(expectedErrs, actualErrs)
 	})
-
 }
 
 func (s *ClientTestSuite) TestParseMessage() {

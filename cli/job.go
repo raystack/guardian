@@ -43,6 +43,7 @@ func runJobCmd() *cobra.Command {
 			$ guardian job run expiring_grant_notification
 			$ guardian job run revoke_expired_grants
 			$ guardian job run revoke_grants_by_user_criteria
+			$ guardian job run grant_dormancy_check
 		`),
 		Args: cobra.ExactValidArgs(1),
 		ValidArgs: []string{
@@ -50,6 +51,7 @@ func runJobCmd() *cobra.Command {
 			string(jobs.TypeExpiringGrantNotification),
 			string(jobs.TypeRevokeExpiredGrants),
 			string(jobs.TypeRevokeGrantsByUserCriteria),
+			string(jobs.TypeGrantDormancyCheck),
 
 			string(jobs.TypeRevokeExpiredAccess),
 			string(jobs.TypeExpiringAccessNotification),
@@ -111,6 +113,10 @@ func runJobCmd() *cobra.Command {
 				jobs.TypeRevokeGrantsByUserCriteria: {
 					handler: handler.RevokeGrantsByUserCriteria,
 					config:  config.Jobs.RevokeGrantsByUserCriteria.Config,
+				},
+				jobs.TypeGrantDormancyCheck: {
+					handler: handler.GrantDormancyCheck,
+					config:  config.Jobs.GrantDormancyCheck.Config,
 				},
 
 				// deprecated job names

@@ -1,0 +1,9 @@
+[
+  {
+    "type":"section",
+    "text":{
+      "type":"mrkdwn",
+      "text":"We have advanced the expiration date for the following grants due to inactivity since `{{.start_date}}`:{{ range .dormant_grants }}\n>*ID*: `{{.id}}`\n>*Account ID*: `{{.account_id}}`\n>*Resource*: `{{.resource.urn}}` ({{.resource.provider_type}} {{.resource.type}})\n>*Role*: `{{.role}}`\n>*Expiration Date* (new): `{{.expiration_date}}`\n{{end}}"
+    }
+  }
+]

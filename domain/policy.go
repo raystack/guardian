@@ -11,6 +11,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/pkg/evaluator"
+	"github.com/goto/guardian/pkg/slices"
+	"github.com/goto/guardian/utils"
 	"github.com/mcuadros/go-lookup"
 )
 
@@ -117,7 +119,7 @@ func (s Step) ResolveApprovers(a *Appeal) ([]string, error) {
 		if err := validate.Var(expr, "email"); err == nil {
 			approvers = append(approvers, expr)
 		} else {
-			appealMap, err := structToMap(a)
+			appealMap, err := utils.StructToMap(a)
 			if err != nil {
 				return nil, fmt.Errorf("parsing appeal to map: %w", err)
 			}
@@ -152,7 +154,7 @@ func (s Step) ResolveApprovers(a *Appeal) ([]string, error) {
 		}
 	}
 
-	distinctApprovers := uniqueSlice(approvers)
+	distinctApprovers := slices.UniqueStringSlice(approvers)
 	if err := validate.Var(distinctApprovers, "dive,email"); err != nil {
 		return nil, err
 	}
@@ -239,7 +241,7 @@ func (r *RequirementTrigger) IsMatch(a *Appeal) (bool, error) {
 		}
 	}
 	if r.Expression != "" {
-		appealMap, err := structToMap(a)
+		appealMap, err := utils.StructToMap(a)
 		if err != nil {
 			return false, fmt.Errorf("parsing appeal to map: %w", err)
 		}

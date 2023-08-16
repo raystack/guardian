@@ -18,7 +18,7 @@ type repository interface {
 
 //go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
-	ImportActivities(context.Context, domain.ImportActivitiesFilter) ([]*domain.Activity, error)
+	ImportActivities(context.Context, domain.ListActivitiesFilter) ([]*domain.Activity, error)
 }
 
 //go:generate mockery --name=auditLogger --exported --with-expecter
@@ -61,7 +61,7 @@ func (s *Service) Find(ctx context.Context, filter domain.ListProviderActivities
 	return s.repo.Find(ctx, filter)
 }
 
-func (s *Service) Import(ctx context.Context, filter domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
+func (s *Service) Import(ctx context.Context, filter domain.ListActivitiesFilter) ([]*domain.Activity, error) {
 	activities, err := s.providerService.ImportActivities(ctx, filter)
 	if err != nil {
 		return nil, err

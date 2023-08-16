@@ -13,10 +13,12 @@ import (
 	"github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/pkg/slices"
+	"github.com/goto/guardian/utils"
 	"github.com/goto/salt/log"
 	"github.com/mitchellh/mapstructure"
 	"github.com/patrickmn/go-cache"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/api/logging/v2"
 	"google.golang.org/api/option"
 )
 
@@ -50,12 +52,14 @@ type BigQueryClient interface {
 	ResolveDatasetRole(role string) (bq.AccessRole, error)
 	ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error)
 	GetRolePermissions(context.Context, string) ([]string, error)
+	ListRolePermissions(context.Context, []string) (map[string][]string, error)
+	CheckGrantedPermission(context.Context, []string) ([]string, error)
 }
 
 //go:generate mockery --name=cloudLoggingClientI --exported --with-expecter
 type cloudLoggingClientI interface {
-	Close() error
-	ListLogEntries(context.Context, ImportActivitiesFilter) ([]*Activity, error)
+	ListLogEntries(context.Context, string, int) ([]*Activity, error)
+	GetLogBucket(ctx context.Context, name string) (*logging.LogBucket, error)
 }
 
 //go:generate mockery --name=encryptor --exported --with-expecter
@@ -296,16 +300,48 @@ func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, res
 	return bqClient.ListAccess(ctx, resources)
 }
 
-func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
+func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter domain.ListActivitiesFilter) ([]*domain.Activity, error) {
 	logClient, err := p.getCloudLoggingClient(ctx, *pd.Config)
 	if err != nil {
 		return nil, fmt.Errorf("initializing cloud logging client: %w", err)
 	}
 
-	entries, err := logClient.ListLogEntries(ctx, ImportActivitiesFilter{
-		ImportActivitiesFilter: filter,
-		Types:                  BigQueryAuditMetadataMethods,
-	})
+	var resourceNames []string
+	for _, r := range filter.GetResources() {
+		resourceNames = append(resourceNames, (*bqResource)(r).fullURN())
+	}
+	filters := []string{
+		`protoPayload.serviceName="bigquery.googleapis.com"`,
+		`resource.type="bigquery_dataset"`, // exclude logs for bigquery jobs ("bigquery_project")
+	}
+	if len(filter.AccountIDs) > 0 {
+		filters = append(filters,
+			`protoPayload.authenticationInfo.principalEmail=("`+strings.Join(filter.AccountIDs, `" OR "`)+`")`,
+		)
+	}
+	resources := filter.GetResources()
+	if len(resources) > 0 {
+		filters = append(filters,
+			// uses ":" (has/contains) operator instead of "=" (equals) operator for resource name so that the result will also
+			// include activities on tables under the specified dataset (e.g. "projects/xxx/datasets/yyy" will also include
+			// activities on "projects/xxx/datasets/yyy/tables/zzz")
+			`protoPayload.resourceName:("`+strings.Join(resourceNames, `" OR "`)+`")`,
+		)
+	}
+	filters = append(filters,
+		`protoPayload.methodName=("`+strings.Join(BigQueryAuditMetadataMethods, `" OR "`)+`")`,
+	)
+	if filter.TimestampGte != nil {
+		filters = append(filters,
+			`timestamp>="`+filter.TimestampGte.Format(time.RFC3339)+`"`,
+		)
+	}
+	if filter.TimestampLte != nil {
+		filters = append(filters,
+			`timestamp<="`+filter.TimestampLte.Format(time.RFC3339)+`"`,
+		)
+	}
+	entries, err := logClient.ListLogEntries(ctx, strings.Join(filters, " AND "), 0)
 	if err != nil {
 		return nil, fmt.Errorf("listing log entries: %w", err)
 	}
@@ -338,6 +374,133 @@ func (p *Provider) GetActivities(ctx context.Context, pd domain.Provider, filter
 	}
 
 	return activities, nil
+}
+
+// ListActivities returns list of activities
+func (p *Provider) ListActivities(ctx context.Context, pd domain.Provider, filter domain.ListActivitiesFilter) ([]*domain.Activity, error) {
+	if pd.Type != p.typeName {
+		return nil, ErrProviderTypeMismatch
+	}
+	creds, err := ParseCredentials(pd.Config.Credentials, p.encryptor)
+	if err != nil {
+		return nil, fmt.Errorf("parsing credentials: %w", err)
+	}
+	bqClient, err := p.getBigQueryClient(*creds)
+	if err != nil {
+		return nil, fmt.Errorf("initializing bigquery client: %w", err)
+	}
+	logClient, err := p.getCloudLoggingClient(ctx, *pd.Config)
+	if err != nil {
+		return nil, fmt.Errorf("initializing cloud logging client: %w", err)
+	}
+
+	// check time range against logging retention period
+	activityConfig := activityConfig{pd.Config.Activity}
+	clo, err := activityConfig.GetCloudLoggingOptions()
+	if err != nil {
+		return nil, fmt.Errorf("getting cloud logging options: %w", err)
+	}
+	decryptedCreds, err := ParseCredentials(pd.Config.Credentials, p.encryptor)
+	if err != nil {
+		return nil, fmt.Errorf("parsing credentials: %w", err)
+	}
+	bucketName := clo.LogBucket
+	if bucketName == "" {
+		bucketName = decryptedCreds.ResourceName + "/locations/global/buckets/_Default"
+	}
+	logBucket, err := logClient.GetLogBucket(ctx, bucketName)
+	if err != nil {
+		return nil, fmt.Errorf("getting log bucket: %w", err)
+	}
+	retentionDuration, err := time.ParseDuration(fmt.Sprintf("%dh", 24*logBucket.RetentionDays))
+	if err != nil {
+		return nil, fmt.Errorf("invalid bucket's retention period: %q: %w", logBucket.RetentionDays, err)
+	}
+	if filter.TimestampGte != nil && time.Since(*filter.TimestampGte) > retentionDuration {
+		return nil, fmt.Errorf("%w: log bucket's retention in days: %q", ErrInvalidTimeRange, logBucket.RetentionDays)
+	} else {
+		t := time.Now().Add(-retentionDuration)
+		filter.TimestampGte = &t
+	}
+
+	// check private log viewer access is granted
+	if grantedPermissions, err := bqClient.CheckGrantedPermission(ctx, []string{PrivateLogViewerPermission}); err != nil {
+		return nil, fmt.Errorf("checking granted permission: %w", err)
+	} else if !utils.ContainsString(grantedPermissions, PrivateLogViewerPermission) {
+		return nil, fmt.Errorf("%w: %q permissions is required", ErrPrivateLogViewerAccessNotGranted, PrivateLogViewerPermission)
+	}
+
+	filters := []string{
+		`protoPayload.serviceName="bigquery.googleapis.com"`,
+		`logName:"` + decryptedCreds.ResourceName + `/logs/cloudaudit.googleapis.com%2F"`, // `logName:"projects/{{project_id}}/logs/cloudaudit.googleapis.com%2F"`
+		`protoPayload.authorizationInfo.granted=true`,
+		`protoPayload.authorizationInfo.permission!=null`,
+	}
+	if len(filter.AccountIDs) > 0 {
+		filters = append(filters,
+			`protoPayload.authenticationInfo.principalEmail=("`+strings.Join(filter.AccountIDs, `" OR "`)+`")`,
+		)
+	}
+	if filter.TimestampGte != nil && !filter.TimestampGte.IsZero() {
+		filters = append(filters, `timestamp>="`+filter.TimestampGte.Format(time.RFC3339)+`"`)
+	}
+	if filter.TimestampLte != nil && !filter.TimestampLte.IsZero() {
+		filters = append(filters, `timestamp<="`+filter.TimestampLte.Format(time.RFC3339)+`"`)
+	}
+
+	entries, err := logClient.ListLogEntries(ctx, strings.Join(filters, " AND "), 0)
+	if err != nil {
+		return nil, fmt.Errorf("listing log entries: %w", err)
+	}
+
+	var activities []*domain.Activity
+	for _, e := range entries {
+		a, err := e.ToDomainActivity(pd)
+		if err != nil {
+			return nil, fmt.Errorf("converting log entry to provider activity: %w", err)
+		}
+		activities = append(activities, a)
+	}
+
+	return activities, nil
+}
+
+func (p *Provider) CorrelateGrantActivities(ctx context.Context, pd domain.Provider, grants []*domain.Grant, activities []*domain.Activity) error {
+	creds, err := ParseCredentials(pd.Config.Credentials, p.encryptor)
+	if err != nil {
+		return fmt.Errorf("parsing credentials: %w", err)
+	}
+
+	client, err := p.getBigQueryClient(*creds)
+	if err != nil {
+		return err
+	}
+
+	var allRoles []string
+	for _, g := range grants {
+		allRoles = append(allRoles, g.Permissions...) // grant.Permissions is slice of gcloud roles
+	}
+	uniqueRoles := slices.UniqueStringSlice(allRoles)
+	permissions, err := client.ListRolePermissions(ctx, uniqueRoles)
+	if err != nil {
+		return fmt.Errorf("listing role permissions: %w", err)
+	}
+
+	for _, g := range grants {
+		var combinedPermissions []string
+		for _, role := range g.Permissions {
+			combinedPermissions = append(combinedPermissions, permissions[role]...)
+		}
+		combinedPermissions = slices.UniqueStringSlice(combinedPermissions)
+
+		for _, a := range activities {
+			if isSubset(a.Authorizations, combinedPermissions) {
+				g.Activities = append(g.Activities, a)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (p *Provider) getBigQueryClient(credentials Credentials) (BigQueryClient, error) {
@@ -496,4 +659,18 @@ func translateDatasetRoleToBigQueryRole(role string) string {
 	default:
 		return role
 	}
+}
+
+// isSubset checks if `subset` is a subset of `superset`
+func isSubset(subset, superset []string) bool {
+	checkset := make(map[string]bool)
+	for _, element := range subset {
+		checkset[element] = true
+	}
+	for _, element := range superset {
+		if checkset[element] {
+			delete(checkset, element)
+		}
+	}
+	return len(checkset) == 0
 }

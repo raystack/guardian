@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go/bigquery v1.44.0
 	cloud.google.com/go/datacatalog v1.8.0
 	cloud.google.com/go/iam v0.8.0
-	cloud.google.com/go/logging v1.6.1
 	cloud.google.com/go/storage v1.29.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/MakeNowJust/heredoc v1.0.0
@@ -55,7 +54,6 @@ require (
 	cloud.google.com/go v0.107.0 // indirect
 	cloud.google.com/go/compute v1.14.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/longrunning v0.3.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect

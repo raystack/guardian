@@ -56,6 +56,9 @@ func (r *GrantRepository) List(ctx context.Context, filter domain.ListGrantsFilt
 	if filter.IsPermanent != nil {
 		db = db.Where(`"grants"."is_permanent" = ?`, *filter.IsPermanent)
 	}
+	if !filter.CreatedAtLte.IsZero() {
+		db = db.Where(`"grants"."created_at" <= ?`, filter.CreatedAtLte)
+	}
 	if filter.OrderBy != nil {
 		db = addOrderByClause(db, filter.OrderBy, addOrderByClauseOptions{
 			statusColumnName: `"grants"."status"`,

@@ -75,6 +75,7 @@ type ProviderConfig struct {
 	Appeal              *AppealConfig        `json:"appeal,omitempty" yaml:"appeal,omitempty" validate:"required"`
 	Resources           []*ResourceConfig    `json:"resources" yaml:"resources" validate:"required"`
 	Parameters          []*ProviderParameter `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Activity            *ActivityConfig      `json:"activity,omitempty" yaml:"activity,omitempty"`
 }
 
 type ProviderParameter struct {
@@ -104,4 +105,9 @@ type Provider struct {
 type ProviderType struct {
 	Name          string   `json:"name" yaml:"name"`
 	ResourceTypes []string `json:"resource_types" yaml:"resource_types"`
+}
+
+type ActivityConfig struct {
+	Source  string
+	Options map[string]interface{}
 }

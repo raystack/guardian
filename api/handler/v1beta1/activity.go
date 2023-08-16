@@ -66,7 +66,7 @@ func (s *GRPCServer) ListActivities(ctx context.Context, req *guardianv1beta1.Li
 }
 
 func (s *GRPCServer) ImportActivities(ctx context.Context, req *guardianv1beta1.ImportActivitiesRequest) (*guardianv1beta1.ImportActivitiesResponse, error) {
-	filter := domain.ImportActivitiesFilter{
+	filter := domain.ListActivitiesFilter{
 		ProviderID:  req.GetProviderId(),
 		ResourceIDs: req.GetResourceIds(),
 		AccountIDs:  req.GetAccountIds(),

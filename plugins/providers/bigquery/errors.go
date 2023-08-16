@@ -27,4 +27,7 @@ var (
 	ErrInvalidTablePermission      = errors.New("provided permission is not supported for table resource")
 	ErrEmptyResource               = errors.New("this bigquery project has no resources")
 	ErrCannotVerifyTablePermission = errors.New("cannot verify the table permissions since this bigquery project does not have any tables")
+
+	ErrInvalidTimeRange                 = errors.New("specified time range exceeds the activity log retention period")
+	ErrPrivateLogViewerAccessNotGranted = errors.New("private log viewer access not granted")
 )

@@ -23,11 +23,11 @@ func (_m *ProviderService) EXPECT() *ProviderService_Expecter {
 }
 
 // ImportActivities provides a mock function with given fields: _a0, _a1
-func (_m *ProviderService) ImportActivities(_a0 context.Context, _a1 domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
+func (_m *ProviderService) ImportActivities(_a0 context.Context, _a1 domain.ListActivitiesFilter) ([]*domain.Activity, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 []*domain.Activity
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ImportActivitiesFilter) []*domain.Activity); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ListActivitiesFilter) []*domain.Activity); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -36,7 +36,7 @@ func (_m *ProviderService) ImportActivities(_a0 context.Context, _a1 domain.Impo
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, domain.ImportActivitiesFilter) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, domain.ListActivitiesFilter) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -57,9 +57,9 @@ func (_e *ProviderService_Expecter) ImportActivities(_a0 interface{}, _a1 interf
 	return &ProviderService_ImportActivities_Call{Call: _e.mock.On("ImportActivities", _a0, _a1)}
 }
 
-func (_c *ProviderService_ImportActivities_Call) Run(run func(_a0 context.Context, _a1 domain.ImportActivitiesFilter)) *ProviderService_ImportActivities_Call {
+func (_c *ProviderService_ImportActivities_Call) Run(run func(_a0 context.Context, _a1 domain.ListActivitiesFilter)) *ProviderService_ImportActivities_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.ImportActivitiesFilter))
+		run(args[0].(context.Context), args[1].(domain.ListActivitiesFilter))
 	})
 	return _c
 }

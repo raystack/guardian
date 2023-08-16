@@ -32,17 +32,18 @@ type ListProviderActivitiesFilter struct {
 	TimestampLte *time.Time
 }
 
-type ImportActivitiesFilter struct {
-	ProviderID   string
-	ResourceIDs  []string
-	AccountIDs   []string
-	TimestampGte *time.Time
-	TimestampLte *time.Time
+type ListActivitiesFilter struct {
+	ProviderID          string
+	ResourceIDs         []string
+	ResourceIdentifiers []ResourceIdentifier
+	AccountIDs          []string
+	TimestampGte        *time.Time
+	TimestampLte        *time.Time
 
 	resources map[string]*Resource
 }
 
-func (f *ImportActivitiesFilter) PopulateResources(resources map[string]*Resource) error {
+func (f *ListActivitiesFilter) PopulateResources(resources map[string]*Resource) error {
 	if f.ResourceIDs == nil {
 		return nil
 	}
@@ -62,7 +63,7 @@ func (f *ImportActivitiesFilter) PopulateResources(resources map[string]*Resourc
 	return nil
 }
 
-func (f *ImportActivitiesFilter) GetResources() []*Resource {
+func (f *ListActivitiesFilter) GetResources() []*Resource {
 	if f.resources == nil {
 		return nil
 	}

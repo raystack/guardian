@@ -2395,7 +2395,6 @@ func (s *ServiceTestSuite) TestCancel() {
 		s.Nil(actualResult)
 		s.EqualError(actualErr, expectedErr.Error())
 	})
-
 }
 
 func (s *ServiceTestSuite) TestAddApprover() {

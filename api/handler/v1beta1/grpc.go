@@ -54,7 +54,7 @@ type resourceService interface {
 type activityService interface {
 	GetOne(context.Context, string) (*domain.Activity, error)
 	Find(context.Context, domain.ListProviderActivitiesFilter) ([]*domain.Activity, error)
-	Import(context.Context, domain.ImportActivitiesFilter) ([]*domain.Activity, error)
+	Import(context.Context, domain.ListActivitiesFilter) ([]*domain.Activity, error)
 }
 
 //go:generate mockery --name=providerService --exported --with-expecter

@@ -2,7 +2,6 @@ package policy
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -12,6 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/pkg/evaluator"
+	"github.com/goto/guardian/utils"
 	"github.com/goto/salt/log"
 )
 
@@ -217,7 +217,7 @@ func (s *Service) decryptAndDeserializeIAMConfig(c *domain.IAMConfig) error {
 	if err := iamClientConfig.Decrypt(); err != nil {
 		return fmt.Errorf("decrypting iam config: %w", err)
 	}
-	iamClientConfigMap, err := structToMap(iamClientConfig)
+	iamClientConfigMap, err := utils.StructToMap(iamClientConfig)
 	if err != nil {
 		return fmt.Errorf("deserializing iam config: %w", err)
 	}
@@ -326,7 +326,7 @@ func (s *Service) validateApprover(expr string) error {
 	dummyAppeal := &domain.Appeal{
 		Resource: &domain.Resource{},
 	}
-	dummyAppealMap, err := structToMap(dummyAppeal)
+	dummyAppealMap, err := utils.StructToMap(dummyAppeal)
 	if err != nil {
 		return fmt.Errorf("parsing appeal to map: %w", err)
 	}
@@ -358,23 +358,6 @@ func (s *Service) validateApprover(expr string) error {
 func containsWhitespaces(s string) bool {
 	r, _ := regexp.Compile(`\s`)
 	return r.Match([]byte(s))
-}
-
-func structToMap(item interface{}) (map[string]interface{}, error) {
-	result := map[string]interface{}{}
-
-	if item != nil {
-		jsonString, err := json.Marshal(item)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := json.Unmarshal(jsonString, &result); err != nil {
-			return nil, err
-		}
-	}
-
-	return result, nil
 }
 
 func (s *Service) validateAppealConfig(cfg *domain.PolicyAppealConfig) error {

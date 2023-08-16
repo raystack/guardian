@@ -9,6 +9,7 @@ const (
 	TypeExpiringGrantNotification  Type = "expiring_grant_notification"
 	TypeRevokeExpiredGrants        Type = "revoke_expired_grants"
 	TypeRevokeGrantsByUserCriteria Type = "revoke_grants_by_user_criteria"
+	TypeGrantDormancyCheck         Type = "grant_dormancy_check"
 
 	// Deprecated: use RevokeExpiredGrants instead
 	TypeRevokeExpiredAccess Type = "revoke_expired_access"

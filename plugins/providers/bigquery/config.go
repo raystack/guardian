@@ -138,6 +138,13 @@ func (c *Config) parseAndValidate() error {
 		return err
 	}
 
+	if c.ProviderConfig.Activity != nil {
+		ac := activityConfig{c.ProviderConfig.Activity}
+		if err := ac.Validate(); err != nil {
+			return fmt.Errorf("validating activity config: %w", err)
+		}
+	}
+
 	permissionValidationErrors := []error{}
 
 	for _, resource := range c.ProviderConfig.Resources {

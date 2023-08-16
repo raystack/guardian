@@ -2,8 +2,11 @@ package utils
 
 import (
 	"fmt"
-	"github.com/goto/guardian/domain"
 	"time"
+)
+
+const (
+	PermanentDurationLabel = "Permanent"
 )
 
 // GetReadableDuration returns a human-readable duration string in integer days preferably, or the original string if it's either not a valid duration or a days value is not integer.
@@ -23,5 +26,5 @@ func GetReadableDuration(durationStr string) (string, error) {
 		return durationStr, nil
 	}
 
-	return domain.PermanentDurationLabel, nil
+	return PermanentDurationLabel, nil
 }
