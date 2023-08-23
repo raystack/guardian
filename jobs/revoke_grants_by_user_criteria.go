@@ -18,6 +18,7 @@ type RevokeGrantsByUserCriteriaConfig struct {
 
 func (h *handler) RevokeGrantsByUserCriteria(ctx context.Context, c Config) error {
 	h.logger.Info(fmt.Sprintf("starting %q job", TypeRevokeGrantsByUserCriteria))
+	defer h.logger.Info(fmt.Sprintf("finished %q job", TypeRevokeGrantsByUserCriteria))
 
 	var cfg RevokeGrantsByUserCriteriaConfig
 	if err := c.Decode(&cfg); err != nil {
@@ -34,12 +35,19 @@ func (h *handler) RevokeGrantsByUserCriteria(ctx context.Context, c Config) erro
 		return fmt.Errorf("initializing IAM client: %w", err)
 	}
 
+	h.logger.Info("getting active grants")
 	activeGrants, err := h.grantService.List(ctx, domain.ListGrantsFilter{
 		Statuses: []string{string(domain.GrantStatusActive)},
 	})
 	if err != nil {
 		return fmt.Errorf("listing active grants: %w", err)
 	}
+	if len(activeGrants) == 0 {
+		h.logger.Info("no active grants found")
+		return nil
+	}
+	grantIDs := getGrantIDs(activeGrants)
+	h.logger.Info(fmt.Sprintf("found %d active grants", len(activeGrants)), "grant_ids", grantIDs)
 
 	grantsForUser := map[string][]*domain.Grant{}     // map[account_id][]grant
 	grantsOwnedByUser := map[string][]*domain.Grant{} // map[owner][]grant
@@ -54,52 +62,66 @@ func (h *handler) RevokeGrantsByUserCriteria(ctx context.Context, c Config) erro
 			grantsOwnedByUser[g.Owner] = append(grantsOwnedByUser[g.AccountID], &g)
 		}
 	}
+	h.logger.Info(fmt.Sprintf("found %d unique users", len(uniqueUserEmails)), "emails", uniqueUserEmails)
 
+	counter := 0
 	for email := range uniqueUserEmails {
+		counter++
+		fmt.Println("")
+		h.logger.Info(fmt.Sprintf("processing user %d/%d", counter, len(uniqueUserEmails)), "email", email)
+
+		h.logger.Info("fetching user details", "email", email)
 		userDetails, err := fetchUserDetails(iamClient, email)
 		if err != nil {
-			h.logger.Debug("fetching user details", "email", email, "error", err)
+			h.logger.Error("failed to fetch user details", "email", email, "error", err)
 			continue
 		}
 
+		h.logger.Info("checking criteria against user", "email", email, "criteria", cfg.UserCriteria.String())
 		if criteriaSatisfied, err := evaluateCriteria(cfg.UserCriteria, userDetails); err != nil {
-			h.logger.Error("checking criteria against user", "email", email, "criteria", cfg.UserCriteria.String(), "error", err)
+			h.logger.Error("failed to check criteria", "email", email, "error", err)
 		} else if !criteriaSatisfied {
-			h.logger.Debug("criteria not satisfied", "email", email)
+			h.logger.Info("criteria not satisfied", "email", email)
 			continue
 		}
 
-		// revoking grants with account_id == email
-		if revokedGrants, err := h.revokeUserGrants(ctx, email); err != nil {
-			h.logger.Error("revoking user grants", "account_id", email, "error", err)
-		} else {
-			revokedGrantIDs := []string{}
-			for _, g := range revokedGrants {
-				revokedGrantIDs = append(revokedGrantIDs, g.ID)
-			}
-			h.logger.Info("grant revocation successful", "count", len(revokedGrantIDs), "grant_ids", revokedGrantIDs)
-		}
-
-		// reassigning grants owned by the user to the new owner
+		h.logger.Info("evaluating new owner", "email", email, "expression", cfg.ReassignOwnershipTo.String())
 		newOwner, err := h.evaluateNewOwner(cfg.ReassignOwnershipTo, userDetails)
 		if err != nil {
 			h.logger.Error("evaluating new owner", "email", email, "error", err)
 			continue
 		}
-		successfulGrants, failedGrants := h.reassignGrantsOwnership(ctx, grantsOwnedByUser[email], newOwner)
-		if len(successfulGrants) > 0 {
-			successfulGrantIDs := []string{}
-			for _, g := range successfulGrants {
-				successfulGrantIDs = append(successfulGrantIDs, g.ID)
+		h.logger.Info(fmt.Sprintf("evaluated new owner: %q", newOwner), "email", email)
+
+		if !cfg.DryRun {
+			// revoking grants with account_id == email
+			h.logger.Info("revoking user active grants", "email", email)
+			if revokedGrants, err := h.revokeUserGrants(ctx, email); err != nil {
+				h.logger.Error("failed to reovke grants", "email", email, "error", err)
+			} else {
+				revokedGrantIDs := []string{}
+				for _, g := range revokedGrants {
+					revokedGrantIDs = append(revokedGrantIDs, g.ID)
+				}
+				h.logger.Info("grant revocation successful", "count", len(revokedGrantIDs), "grant_ids", revokedGrantIDs)
 			}
-			h.logger.Info("grant ownership reassignment successful", "count", len(successfulGrantIDs), "grant_ids", successfulGrantIDs)
-		}
-		if len(failedGrants) > 0 {
-			failedGrantIDs := []string{}
-			for _, g := range failedGrants {
-				failedGrantIDs = append(failedGrantIDs, g.ID)
+
+			// reassigning grants owned by the user to the new owner
+			successfulGrants, failedGrants := h.reassignGrantsOwnership(ctx, grantsOwnedByUser[email], newOwner)
+			if len(successfulGrants) > 0 {
+				successfulGrantIDs := []string{}
+				for _, g := range successfulGrants {
+					successfulGrantIDs = append(successfulGrantIDs, g.ID)
+				}
+				h.logger.Info("grant ownership reassignment successful", "count", len(successfulGrantIDs), "grant_ids", successfulGrantIDs)
 			}
-			h.logger.Error("grant ownership reassignment failed", "count", len(failedGrantIDs), "grant_ids", failedGrantIDs)
+			if len(failedGrants) > 0 {
+				failedGrantIDs := []string{}
+				for _, g := range failedGrants {
+					failedGrantIDs = append(failedGrantIDs, g.ID)
+				}
+				h.logger.Error("grant ownership reassignment failed", "count", len(failedGrantIDs), "grant_ids", failedGrantIDs)
+			}
 		}
 	}
 
@@ -180,4 +202,12 @@ func (h *handler) reassignGrantsOwnership(ctx context.Context, ownedGrants []*do
 	}
 
 	return successfulGrants, failedGrants
+}
+
+func getGrantIDs(grants []domain.Grant) []string {
+	var ids []string
+	for _, g := range grants {
+		ids = append(ids, g.ID)
+	}
+	return ids
 }
