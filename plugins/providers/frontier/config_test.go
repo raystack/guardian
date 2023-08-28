@@ -1,9 +1,9 @@
-package shield_test
+package frontier_test
 
 import (
 	"testing"
 
-	"github.com/raystack/guardian/plugins/providers/shield"
+	"github.com/raystack/guardian/plugins/providers/frontier"
 
 	"github.com/raystack/guardian/domain"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +14,7 @@ func TestNewConfig(t *testing.T) {
 		pc := &domain.ProviderConfig{}
 		expectedProviderConfig := pc
 
-		c := shield.NewConfig(pc)
+		c := frontier.NewConfig(pc)
 		actualProviderConfig := c.ProviderConfig
 
 		assert.NotNil(t, c)
@@ -23,7 +23,7 @@ func TestNewConfig(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	validCredentials := shield.Credentials{
+	validCredentials := frontier.Credentials{
 		Host:      "http://localhost:1234",
 		AuthEmail: "guardian_test@test.com",
 	}
@@ -31,7 +31,7 @@ func TestValidate(t *testing.T) {
 
 	validResourceConfig := []*domain.ResourceConfig{
 		{
-			Type: shield.ResourceTypeTeam,
+			Type: frontier.ResourceTypeTeam,
 			Roles: []*domain.Role{
 				{
 					Permissions: []interface{}{"users", "admins"},
@@ -39,7 +39,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			Type: shield.ResourceTypeProject,
+			Type: frontier.ResourceTypeProject,
 			Roles: []*domain.Role{
 				{
 					Permissions: []interface{}{"admins"},
@@ -47,7 +47,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			Type: shield.ResourceTypeOrganization,
+			Type: frontier.ResourceTypeOrganization,
 			Roles: []*domain.Role{
 				{
 					Permissions: []interface{}{"admins"},
@@ -58,7 +58,7 @@ func TestValidate(t *testing.T) {
 
 	inValidResourcePermissionConfig := []*domain.ResourceConfig{
 		{
-			Type: shield.ResourceTypeTeam,
+			Type: frontier.ResourceTypeTeam,
 			Roles: []*domain.Role{
 				{
 					Permissions: []interface{}{"member"},
@@ -66,7 +66,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			Type: shield.ResourceTypeProject,
+			Type: frontier.ResourceTypeProject,
 			Roles: []*domain.Role{
 				{
 					Permissions: []interface{}{"admin"},
@@ -115,7 +115,7 @@ func TestValidate(t *testing.T) {
 					Credentials: tc.credentials,
 					Resources:   tc.resourceConfig,
 				}
-				err := shield.NewConfig(pc).ParseAndValidate()
+				err := frontier.NewConfig(pc).ParseAndValidate()
 				assert.Error(t, err)
 			})
 		}

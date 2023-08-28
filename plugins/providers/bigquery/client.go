@@ -210,7 +210,7 @@ func (c *bigQueryClient) RevokeTableAccess(ctx context.Context, t *Table, accoun
 			RequestedPolicyVersion: 1,
 		},
 	}
-	policy, err := tableService.GetIamPolicy(resourceName, getIamPolicyRequest).Do()
+	policy, err := tableService.GetIamPolicy(resourceName, getIamPolicyRequest).Context(ctx).Do()
 	if err != nil {
 		return err
 	}
@@ -278,7 +278,7 @@ func (c *bigQueryClient) ListAccess(ctx context.Context, resources []*domain.Res
 			getIamPolicyRequest := &bqApi.GetIamPolicyRequest{
 				Options: &bqApi.GetPolicyOptions{RequestedPolicyVersion: 1},
 			}
-			policy, err := c.apiClient.Tables.GetIamPolicy(resourceName, getIamPolicyRequest).Do()
+			policy, err := c.apiClient.Tables.GetIamPolicy(resourceName, getIamPolicyRequest).Context(ctx).Do()
 			if err != nil {
 				return nil, fmt.Errorf("getting table access entries of %q, %w", r.URN, err)
 			}

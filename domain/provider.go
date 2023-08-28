@@ -23,8 +23,8 @@ const (
 	ProviderTypeGCS = "gcs"
 	// ProviderTypePolicyTag is the type name for Dataplex
 	ProviderTypePolicyTag = "dataplex"
-	//  ProviderTypeShield is the type name for Shield auth layer provider
-	ProviderTypeShield = "shield"
+	//  ProviderTypeFrontier is the type name for Frontier auth layer provider
+	ProviderTypeFrontier = "frontier"
 )
 
 // Role is the configuration to define a role and mapping the permissions in the provider

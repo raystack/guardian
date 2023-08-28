@@ -1,4 +1,4 @@
-package shield
+package frontier
 
 import (
 	"bytes"
@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	groupsEndpoint       = "/admin/v1beta1/groups"
-	projectsEndpoint     = "/admin/v1beta1/projects"
-	organizationEndpoint = "/admin/v1beta1/organizations"
-	selfUserEndpoint     = "admin/v1beta1/users/self"
+	groupsEndpoint       = "/v1beta1/groups"
+	projectsEndpoint     = "/v1beta1/projects"
+	organizationEndpoint = "/v1beta1/organizations"
+	selfUserEndpoint     = "/v1beta1/users/self"
 
 	groupsConst        = "groups"
 	projectsConst      = "projects"
@@ -31,7 +31,7 @@ const (
 
 type successAccess interface{}
 
-type ShieldClient interface {
+type Client interface {
 	GetTeams() ([]*Team, error)
 	GetProjects() ([]*Project, error)
 	GetOrganizations() ([]*Organization, error)

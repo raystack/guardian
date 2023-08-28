@@ -150,7 +150,7 @@ func NewHTTPClient(config *HTTPClientConfig) (*HTTPClient, error) {
 		httpClient = http.DefaultClient
 	}
 
-	if config.Auth.Type == "google_idtoken" {
+	if config.Auth != nil && config.Auth.Type == "google_idtoken" {
 		ctx := context.Background()
 		ts, err := idtoken.NewTokenSource(ctx, config.Auth.Audience, idtoken.WithCredentialsJSON([]byte(config.Auth.CredentialsJSON)))
 		if err != nil {

@@ -1,4 +1,4 @@
-package shield
+package frontier
 
 import (
 	"github.com/mitchellh/mapstructure"
@@ -7,12 +7,13 @@ import (
 	"github.com/raystack/salt/log"
 )
 
+// TODO: fix this to use latest frontier APIs
 type provider struct {
 	pv.UnimplementedClient
 	pv.PermissionManager
 
 	typeName string
-	Clients  map[string]ShieldClient
+	Clients  map[string]Client
 	logger   log.Logger
 }
 
@@ -25,7 +26,7 @@ func (p *provider) GetAccountTypes() []string {
 func NewProvider(typeName string, logger log.Logger) *provider {
 	return &provider{
 		typeName: typeName,
-		Clients:  map[string]ShieldClient{},
+		Clients:  map[string]Client{},
 		logger:   logger,
 	}
 }
@@ -119,7 +120,7 @@ func (p *provider) addOrganizations(pc *domain.ProviderConfig, organizations []*
 	return resources
 }
 
-func (p *provider) getClient(providerURN string, credentials Credentials) (ShieldClient, error) {
+func (p *provider) getClient(providerURN string, credentials Credentials) (Client, error) {
 	if p.Clients[providerURN] != nil {
 		return p.Clients[providerURN], nil
 	}

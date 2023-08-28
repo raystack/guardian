@@ -36,10 +36,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-var (
-	ConfigFileName = "config"
-)
-
 const (
 	GRPCMaxClientSendSize = 32 << 20
 	defaultGracePeriod    = 5 * time.Second
@@ -169,9 +165,10 @@ func RunServer(config *Config) error {
 		}),
 	)
 	address := fmt.Sprintf(":%d", config.Port)
+	grpcAddress := fmt.Sprintf(":%d", config.Port+1)
 	grpcConn, err := grpc.DialContext(
 		timeoutGrpcDialCtx,
-		address,
+		grpcAddress,
 		grpc.WithInsecure(),
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallRecvMsgSize(GRPCMaxClientSendSize),
@@ -205,7 +202,7 @@ func RunServer(config *Config) error {
 			WriteTimeout:   120 * time.Second,
 			MaxHeaderBytes: 1 << 20,
 		}),
-		mux.WithGRPCTarget(address, grpcServer),
+		mux.WithGRPCTarget(grpcAddress, grpcServer),
 		mux.WithGracePeriod(defaultGracePeriod),
 	)
 }

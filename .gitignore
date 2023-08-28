@@ -35,6 +35,9 @@ tmp
 
 # guardian
 .guardian.yaml
+.guardian.yml
+guardian.yml
+guardian.yaml
 dist/
 ./guardian
 

@@ -3,6 +3,8 @@ package server
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/raystack/guardian/internal/store"
 	"github.com/raystack/guardian/jobs"
@@ -48,9 +50,29 @@ type Config struct {
 	Auth                       Auth           `mapstructure:"auth"`
 }
 
-func LoadConfig(configFile string) (Config, error) {
+func LoadConfig(serverConfigFileFromFlag string) (Config, error) {
 	var cfg Config
-	loader := config.NewLoader(config.WithFile(configFile))
+	var options []config.LoaderOption
+	options = append(options, config.WithName("config"))
+	options = append(options, config.WithEnvKeyReplacer(".", "_"))
+	options = append(options, config.WithEnvPrefix("GUARDIAN"))
+	if p, err := os.Getwd(); err == nil {
+		options = append(options, config.WithPath(p))
+	}
+	if execPath, err := os.Executable(); err == nil {
+		options = append(options, config.WithPath(filepath.Dir(execPath)))
+	}
+	if currentHomeDir, err := os.UserHomeDir(); err == nil {
+		options = append(options, config.WithPath(currentHomeDir))
+		options = append(options, config.WithPath(filepath.Join(currentHomeDir, ".config")))
+	}
+
+	// override all config sources and prioritize one from file
+	if serverConfigFileFromFlag != "" {
+		options = append(options, config.WithFile(serverConfigFileFromFlag))
+	}
+
+	loader := config.NewLoader(options...)
 
 	if err := loader.Load(&cfg); err != nil {
 		if errors.As(err, &config.ConfigFileNotFoundError{}) {

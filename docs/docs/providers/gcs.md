@@ -66,6 +66,7 @@ urn: sample-URN
 credentials:
   service_account_key: <base64 encoded service account key json>
   resource_name: projects/<gcs-project-id>
+resources:
   - type: bucket
     policy:
       id: my-first-policy
