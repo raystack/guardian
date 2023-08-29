@@ -65,6 +65,12 @@ func (r *AppealRepository) Find(ctx context.Context, filters *domain.ListAppeals
 	}
 
 	db := r.db.WithContext(ctx)
+	if filters.Size > 0 {
+		db = db.Limit(filters.Size)
+	}
+	if filters.Offset > 0 {
+		db = db.Offset(filters.Offset)
+	}
 	if filters.CreatedBy != "" {
 		db = db.Where(`"appeals"."created_by" = ?`, filters.CreatedBy)
 	}

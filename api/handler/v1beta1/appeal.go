@@ -41,6 +41,9 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 	if req.GetOrderBy() != nil {
 		filters.OrderBy = req.GetOrderBy()
 	}
+	filters.Offset = int(req.GetOffset())
+	filters.Size = int(req.GetSize())
+
 	appeals, err := s.listAppeals(ctx, filters)
 	if err != nil {
 		return nil, err
@@ -60,6 +63,8 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListA
 		ProviderURNs:  req.GetProviderUrns(),
 		ResourceTypes: req.GetResourceTypes(),
 		ResourceURNs:  req.GetResourceUrns(),
+		Size:          int(req.GetSize()),
+		Offset:        int(req.GetOffset()),
 		OrderBy:       req.GetOrderBy(),
 	}
 	appeals, err := s.listAppeals(ctx, filters)

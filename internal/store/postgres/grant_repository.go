@@ -30,6 +30,12 @@ func NewGrantRepository(db *gorm.DB) *GrantRepository {
 
 func (r *GrantRepository) List(ctx context.Context, filter domain.ListGrantsFilter) ([]domain.Grant, error) {
 	db := r.db.WithContext(ctx)
+	if filter.Size > 0 {
+		db = db.Limit(filter.Size)
+	}
+	if filter.Offset > 0 {
+		db = db.Offset(filter.Offset)
+	}
 	if filter.AccountIDs != nil {
 		db = db.Where(`"grants"."account_id" IN ?`, filter.AccountIDs)
 	}

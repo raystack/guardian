@@ -104,6 +104,8 @@ type ListGrantsFilter struct {
 	ExpirationDateGreaterThan time.Time
 	IsPermanent               *bool
 	CreatedAtLte              time.Time
+	Size                      int `mapstructure:"size" validate:"omitempty"`
+	Offset                    int `mapstructure:"offset" validate:"omitempty"`
 }
 
 type RevokeGrantsFilter struct {

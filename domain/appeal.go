@@ -290,4 +290,6 @@ type ListAppealsFilter struct {
 	ResourceTypes             []string  `mapstructure:"resource_types" validate:"omitempty,min=1"`
 	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 	OrderBy                   []string  `mapstructure:"order_by" validate:"omitempty,min=1"`
+	Size                      int       `mapstructure:"size" validate:"omitempty"`
+	Offset                    int       `mapstructure:"offset" validate:"omitempty"`
 }
