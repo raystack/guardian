@@ -21,12 +21,12 @@ import (
 	"github.com/raystack/guardian/plugins/identities"
 	"github.com/raystack/guardian/plugins/notifiers"
 	"github.com/raystack/guardian/plugins/providers/bigquery"
+	"github.com/raystack/guardian/plugins/providers/frontier"
 	"github.com/raystack/guardian/plugins/providers/gcloudiam"
 	"github.com/raystack/guardian/plugins/providers/gcs"
 	"github.com/raystack/guardian/plugins/providers/grafana"
 	"github.com/raystack/guardian/plugins/providers/metabase"
 	"github.com/raystack/guardian/plugins/providers/noop"
-	"github.com/raystack/guardian/plugins/providers/shield"
 	"github.com/raystack/guardian/plugins/providers/tableau"
 	"github.com/raystack/salt/audit"
 	audit_repos "github.com/raystack/salt/audit/repositories"
@@ -111,7 +111,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		noop.NewProvider(domain.ProviderTypeNoOp, deps.Logger),
 		gcs.NewProvider(domain.ProviderTypeGCS, deps.Crypto),
 		dataplex.NewProvider(domain.ProviderTypePolicyTag, deps.Crypto),
-		shield.NewProvider(domain.ProviderTypeShield, deps.Logger),
+		frontier.NewProvider(domain.ProviderTypeFrontier, deps.Logger),
 	}
 
 	iamManager := identities.NewManager(deps.Crypto, deps.Validator)

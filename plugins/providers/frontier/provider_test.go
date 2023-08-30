@@ -1,4 +1,4 @@
-package shield_test
+package frontier_test
 
 import (
 	"errors"
@@ -9,16 +9,16 @@ import (
 	"github.com/raystack/guardian/core/provider"
 	"github.com/raystack/guardian/domain"
 	"github.com/raystack/guardian/mocks"
-	"github.com/raystack/guardian/plugins/providers/shield"
+	"github.com/raystack/guardian/plugins/providers/frontier"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestGetType(t *testing.T) {
 	t.Run("should return provider type name", func(t *testing.T) {
-		expectedTypeName := domain.ProviderTypeShield
+		expectedTypeName := domain.ProviderTypeFrontier
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider(expectedTypeName, logger)
+		p := frontier.NewProvider(expectedTypeName, logger)
 
 		actualTypeName := p.GetType()
 
@@ -31,8 +31,8 @@ func TestCreateConfig(t *testing.T) {
 		providerURN := "test-provider-urn"
 		client := new(mocks.ShieldClient)
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("", logger)
-		p.Clients = map[string]shield.ShieldClient{
+		p := frontier.NewProvider("", logger)
+		p.Clients = map[string]frontier.Client{
 			providerURN: client,
 		}
 
@@ -41,7 +41,7 @@ func TestCreateConfig(t *testing.T) {
 		}{
 			{
 				pc: &domain.ProviderConfig{
-					Credentials: shield.Credentials{
+					Credentials: frontier.Credentials{
 						Host:      "localhost",
 						AuthEmail: "test-email",
 					},
@@ -54,13 +54,13 @@ func TestCreateConfig(t *testing.T) {
 			},
 			{
 				pc: &domain.ProviderConfig{
-					Credentials: shield.Credentials{
+					Credentials: frontier.Credentials{
 						Host:      "localhost",
 						AuthEmail: "test-email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
-							Type: shield.ResourceTypeTeam,
+							Type: frontier.ResourceTypeTeam,
 							Roles: []*domain.Role{
 								{
 									ID:          "member",
@@ -83,8 +83,8 @@ func TestCreateConfig(t *testing.T) {
 		providerURN := "test-provider-urn"
 		client := new(mocks.ShieldClient)
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("", logger)
-		p.Clients = map[string]shield.ShieldClient{
+		p := frontier.NewProvider("", logger)
+		p.Clients = map[string]frontier.Client{
 			providerURN: client,
 		}
 
@@ -94,14 +94,14 @@ func TestCreateConfig(t *testing.T) {
 		}{
 			{
 				pc: &domain.ProviderConfig{
-					Credentials: shield.Credentials{
+					Credentials: frontier.Credentials{
 						Host:       "localhost",
 						AuthEmail:  "test-email",
 						AuthHeader: "X-Auth-Email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
-							Type: shield.ResourceTypeTeam,
+							Type: frontier.ResourceTypeTeam,
 							Roles: []*domain.Role{
 								{
 									ID:          "member",
@@ -120,14 +120,14 @@ func TestCreateConfig(t *testing.T) {
 			},
 			{
 				pc: &domain.ProviderConfig{
-					Credentials: shield.Credentials{
+					Credentials: frontier.Credentials{
 						Host:       "localhost",
 						AuthEmail:  "test-email",
 						AuthHeader: "X-Auth-Email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
-							Type: shield.ResourceTypeProject,
+							Type: frontier.ResourceTypeProject,
 							Roles: []*domain.Role{
 								{
 									ID:          "admin",
@@ -142,14 +142,14 @@ func TestCreateConfig(t *testing.T) {
 			},
 			{
 				pc: &domain.ProviderConfig{
-					Credentials: shield.Credentials{
+					Credentials: frontier.Credentials{
 						Host:       "localhost",
 						AuthEmail:  "test-email",
 						AuthHeader: "X-Auth-Email",
 					},
 					Resources: []*domain.ResourceConfig{
 						{
-							Type: shield.ResourceTypeOrganization,
+							Type: frontier.ResourceTypeOrganization,
 							Roles: []*domain.Role{
 								{
 									ID:          "admin",
@@ -174,7 +174,7 @@ func TestCreateConfig(t *testing.T) {
 func TestGetResources(t *testing.T) {
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("", logger)
+		p := frontier.NewProvider("", logger)
 
 		pc := &domain.ProviderConfig{
 			Credentials: "invalid-creds",
@@ -190,8 +190,8 @@ func TestGetResources(t *testing.T) {
 		providerURN := "test-provider-urn"
 		client := new(mocks.ShieldClient)
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("", logger)
-		p.Clients = map[string]shield.ShieldClient{
+		p := frontier.NewProvider("", logger)
+		p.Clients = map[string]frontier.Client{
 			providerURN: client,
 		}
 
@@ -200,7 +200,7 @@ func TestGetResources(t *testing.T) {
 			Credentials: map[string]interface{}{},
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: shield.ResourceTypeTeam,
+					Type: frontier.ResourceTypeTeam,
 				},
 			},
 		}
@@ -217,8 +217,8 @@ func TestGetResources(t *testing.T) {
 		providerURN := "test-provider-urn"
 		client := new(mocks.ShieldClient)
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("", logger)
-		p.Clients = map[string]shield.ShieldClient{
+		p := frontier.NewProvider("", logger)
+		p.Clients = map[string]frontier.Client{
 			providerURN: client,
 		}
 
@@ -227,7 +227,7 @@ func TestGetResources(t *testing.T) {
 			Credentials: map[string]interface{}{},
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: shield.ResourceTypeProject,
+					Type: frontier.ResourceTypeProject,
 				},
 			},
 		}
@@ -244,8 +244,8 @@ func TestGetResources(t *testing.T) {
 		providerURN := "test-provider-urn"
 		client := new(mocks.ShieldClient)
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("", logger)
-		p.Clients = map[string]shield.ShieldClient{
+		p := frontier.NewProvider("", logger)
+		p.Clients = map[string]frontier.Client{
 			providerURN: client,
 		}
 
@@ -254,7 +254,7 @@ func TestGetResources(t *testing.T) {
 			Credentials: map[string]interface{}{},
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: shield.ResourceTypeOrganization,
+					Type: frontier.ResourceTypeOrganization,
 				},
 			},
 		}
@@ -271,8 +271,8 @@ func TestGetResources(t *testing.T) {
 		providerURN := "test-provider-urn"
 		client := new(mocks.ShieldClient)
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("", logger)
-		p.Clients = map[string]shield.ShieldClient{
+		p := frontier.NewProvider("", logger)
+		p.Clients = map[string]frontier.Client{
 			providerURN: client,
 		}
 
@@ -281,22 +281,22 @@ func TestGetResources(t *testing.T) {
 			Credentials: map[string]interface{}{},
 			Resources: []*domain.ResourceConfig{
 				{
-					Type: shield.ResourceTypeTeam,
+					Type: frontier.ResourceTypeTeam,
 				},
 				{
-					Type: shield.ResourceTypeProject,
+					Type: frontier.ResourceTypeProject,
 				},
 				{
-					Type: shield.ResourceTypeOrganization,
+					Type: frontier.ResourceTypeOrganization,
 				},
 			},
 		}
-		expectedTeams := []*shield.Team{
+		expectedTeams := []*frontier.Team{
 			{
 				ID:    "team_id",
 				Name:  "team_1",
 				OrgId: "org_id",
-				Metadata: shield.Metadata{
+				Metadata: frontier.Metadata{
 					Email:   "team_1@gojek.com",
 					Privacy: "public",
 					Slack:   "team_1_slack",
@@ -306,7 +306,7 @@ func TestGetResources(t *testing.T) {
 		}
 		client.On("GetTeams").Return(expectedTeams, nil).Once()
 
-		expectedProjects := []*shield.Project{
+		expectedProjects := []*frontier.Project{
 			{
 				ID:     "project_id",
 				Name:   "project_1",
@@ -316,7 +316,7 @@ func TestGetResources(t *testing.T) {
 		}
 		client.On("GetProjects").Return(expectedProjects, nil).Once()
 
-		expectedOrganizations := []*shield.Organization{
+		expectedOrganizations := []*frontier.Organization{
 			{
 				ID:     "org_id",
 				Name:   "org_1",
@@ -328,7 +328,7 @@ func TestGetResources(t *testing.T) {
 
 		expectedResources := []*domain.Resource{
 			{
-				Type:        shield.ResourceTypeTeam,
+				Type:        frontier.ResourceTypeTeam,
 				URN:         "team:team_id",
 				ProviderURN: providerURN,
 				Name:        "team_1",
@@ -336,14 +336,14 @@ func TestGetResources(t *testing.T) {
 					"id":     "team_id",
 					"orgId":  "org_id",
 					"admins": []string{"testTeamAdmin@gmail.com"},
-					"metadata": shield.Metadata{
+					"metadata": frontier.Metadata{
 						Email:   "team_1@gojek.com",
 						Privacy: "public",
 						Slack:   "team_1_slack",
 					},
 				},
 			}, {
-				Type:        shield.ResourceTypeProject,
+				Type:        frontier.ResourceTypeProject,
 				URN:         "project:project_id",
 				ProviderURN: providerURN,
 				Name:        "project_1",
@@ -354,7 +354,7 @@ func TestGetResources(t *testing.T) {
 				},
 			},
 			{
-				Type:        shield.ResourceTypeOrganization,
+				Type:        frontier.ResourceTypeOrganization,
 				URN:         "organization:org_id",
 				ProviderURN: providerURN,
 				Name:        "org_1",
@@ -375,7 +375,7 @@ func TestGetResources(t *testing.T) {
 func TestGrantAccess(t *testing.T) {
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("", logger)
+		p := frontier.NewProvider("", logger)
 
 		pc := &domain.ProviderConfig{
 			Credentials: "invalid-credentials",
@@ -407,14 +407,14 @@ func TestGrantAccess(t *testing.T) {
 		expectedError := errors.New("invalid resource type")
 		client := new(mocks.ShieldClient)
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("", logger)
+		p := frontier.NewProvider("", logger)
 
-		p.Clients = map[string]shield.ShieldClient{
+		p.Clients = map[string]frontier.Client{
 			providerURN: client,
 		}
 
 		expectedUserEmail := "test@email.com"
-		expectedUser := &shield.User{
+		expectedUser := &frontier.User{
 			ID:    "test_user_id",
 			Name:  "test_user",
 			Email: expectedUserEmail,
@@ -423,7 +423,7 @@ func TestGrantAccess(t *testing.T) {
 		client.On("GetSelfUser", expectedUserEmail).Return(expectedUser, nil).Once()
 
 		pc := &domain.ProviderConfig{
-			Credentials: shield.Credentials{
+			Credentials: frontier.Credentials{
 				Host:      "http://localhost/",
 				AuthEmail: "test-email",
 			},
@@ -460,13 +460,13 @@ func TestGrantAccess(t *testing.T) {
 			expectedError := errors.New("client error")
 			client := new(mocks.ShieldClient)
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
-			p := shield.NewProvider("", logger)
-			p.Clients = map[string]shield.ShieldClient{
+			p := frontier.NewProvider("", logger)
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
@@ -476,13 +476,13 @@ func TestGrantAccess(t *testing.T) {
 			client.On("GrantTeamAccess", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeTeam,
+						Type: frontier.ResourceTypeTeam,
 						Roles: []*domain.Role{
 							{
 								ID:          "test-role",
@@ -495,14 +495,14 @@ func TestGrantAccess(t *testing.T) {
 			}
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeTeam,
+					Type: frontier.ResourceTypeTeam,
 					URN:  "team:team_id",
 					Name: "team_1",
 					Details: map[string]interface{}{
 						"id":     "team_id",
 						"orgId":  "456",
 						"admins": []interface{}{"testAdmin@email.com"},
-						"metadata": shield.Metadata{
+						"metadata": frontier.Metadata{
 							Email:   "team_1@gojek.com",
 							Privacy: "public",
 							Slack:   "team_1_slack",
@@ -523,34 +523,34 @@ func TestGrantAccess(t *testing.T) {
 			providerURN := "test-provider-urn"
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
 			client := new(mocks.ShieldClient)
-			expectedTeam := &shield.Team{
+			expectedTeam := &frontier.Team{
 				Name: "team_1",
 				ID:   "team_id",
 			}
 
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
 			}
 
 			expectedRole := "users"
-			p := shield.NewProvider("", logger)
-			p.Clients = map[string]shield.ShieldClient{
+			p := frontier.NewProvider("", logger)
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 			client.On("GetSelfUser", expectedUserEmail).Return(expectedUser, nil).Once()
 			client.On("GrantTeamAccess", expectedTeam, expectedUser.ID, expectedRole).Return(nil).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeTeam,
+						Type: frontier.ResourceTypeTeam,
 						Roles: []*domain.Role{
 							{
 								ID:          "member",
@@ -563,14 +563,14 @@ func TestGrantAccess(t *testing.T) {
 			}
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeTeam,
+					Type: frontier.ResourceTypeTeam,
 					URN:  "team:team_id",
 					Name: "team_1",
 					Details: map[string]interface{}{
 						"id":     "team_id",
 						"orgId":  "456",
 						"admins": []interface{}{"testAdmin@email.com"},
-						"metadata": shield.Metadata{
+						"metadata": frontier.Metadata{
 							Email:   "team_1@gojek.com",
 							Privacy: "public",
 							Slack:   "team_1_slack",
@@ -595,13 +595,13 @@ func TestGrantAccess(t *testing.T) {
 			expectedError := errors.New("client error")
 			client := new(mocks.ShieldClient)
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
-			p := shield.NewProvider("", logger)
-			p.Clients = map[string]shield.ShieldClient{
+			p := frontier.NewProvider("", logger)
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
@@ -611,13 +611,13 @@ func TestGrantAccess(t *testing.T) {
 			client.On("GrantProjectAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeProject,
+						Type: frontier.ResourceTypeProject,
 						Roles: []*domain.Role{
 							{
 								ID:          "test-role",
@@ -630,7 +630,7 @@ func TestGrantAccess(t *testing.T) {
 			}
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeProject,
+					Type: frontier.ResourceTypeProject,
 					URN:  "project:project_id",
 					Name: "project_1",
 					Details: map[string]interface{}{
@@ -653,20 +653,20 @@ func TestGrantAccess(t *testing.T) {
 			providerURN := "test-provider-urn"
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
 			client := new(mocks.ShieldClient)
-			expectedProject := &shield.Project{
+			expectedProject := &frontier.Project{
 				Name: "project_1",
 				ID:   "project_id",
 			}
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
 			}
 
 			expectedRole := "admins"
-			p := shield.NewProvider("", logger)
-			p.Clients = map[string]shield.ShieldClient{
+			p := frontier.NewProvider("", logger)
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 
@@ -674,13 +674,13 @@ func TestGrantAccess(t *testing.T) {
 			client.On("GrantProjectAccess", expectedProject, expectedUser.ID, expectedRole).Return(nil).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeProject,
+						Type: frontier.ResourceTypeProject,
 						Roles: []*domain.Role{
 							{
 								ID:          "admin",
@@ -693,7 +693,7 @@ func TestGrantAccess(t *testing.T) {
 			}
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeProject,
+					Type: frontier.ResourceTypeProject,
 					URN:  "project:project_id",
 					Name: "project_1",
 					Details: map[string]interface{}{
@@ -720,13 +720,13 @@ func TestGrantAccess(t *testing.T) {
 			expectedError := errors.New("client error")
 			client := new(mocks.ShieldClient)
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
-			p := shield.NewProvider("", logger)
-			p.Clients = map[string]shield.ShieldClient{
+			p := frontier.NewProvider("", logger)
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
@@ -736,13 +736,13 @@ func TestGrantAccess(t *testing.T) {
 			client.On("GrantOrganizationAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeOrganization,
+						Type: frontier.ResourceTypeOrganization,
 						Roles: []*domain.Role{
 							{
 								ID:          "test-role",
@@ -755,7 +755,7 @@ func TestGrantAccess(t *testing.T) {
 			}
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeOrganization,
+					Type: frontier.ResourceTypeOrganization,
 					URN:  "organization:org_id",
 					Name: "org_1",
 					Details: map[string]interface{}{
@@ -777,20 +777,20 @@ func TestGrantAccess(t *testing.T) {
 			providerURN := "test-provider-urn"
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
 			client := new(mocks.ShieldClient)
-			expectedOrganization := &shield.Organization{
+			expectedOrganization := &frontier.Organization{
 				Name: "org_1",
 				ID:   "org_id",
 			}
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
 			}
 
 			expectedRole := "admins"
-			p := shield.NewProvider("", logger)
-			p.Clients = map[string]shield.ShieldClient{
+			p := frontier.NewProvider("", logger)
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 
@@ -798,13 +798,13 @@ func TestGrantAccess(t *testing.T) {
 			client.On("GrantOrganizationAccess", expectedOrganization, expectedUser.ID, expectedRole).Return(nil).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeOrganization,
+						Type: frontier.ResourceTypeOrganization,
 						Roles: []*domain.Role{
 							{
 								ID:          "admin",
@@ -817,7 +817,7 @@ func TestGrantAccess(t *testing.T) {
 			}
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeOrganization,
+					Type: frontier.ResourceTypeOrganization,
 					URN:  "organization:org_id",
 					Name: "org_1",
 					Details: map[string]interface{}{
@@ -841,7 +841,7 @@ func TestGrantAccess(t *testing.T) {
 func TestRevokeAccess(t *testing.T) {
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("", logger)
+		p := frontier.NewProvider("", logger)
 
 		pc := &domain.ProviderConfig{
 			Credentials: "invalid-credentials",
@@ -872,14 +872,14 @@ func TestRevokeAccess(t *testing.T) {
 		providerURN := "test-provider-urn"
 		client := new(mocks.ShieldClient)
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("", logger)
-		p.Clients = map[string]shield.ShieldClient{
+		p := frontier.NewProvider("", logger)
+		p.Clients = map[string]frontier.Client{
 			providerURN: client,
 		}
 
 		expectedError := errors.New("invalid resource type")
 		expectedUserEmail := "test@email.com"
-		expectedUser := &shield.User{
+		expectedUser := &frontier.User{
 			ID:    "test_user_id",
 			Name:  "test_user",
 			Email: expectedUserEmail,
@@ -888,7 +888,7 @@ func TestRevokeAccess(t *testing.T) {
 		client.On("GetSelfUser", expectedUserEmail).Return(expectedUser, nil).Once()
 
 		pc := &domain.ProviderConfig{
-			Credentials: shield.Credentials{
+			Credentials: frontier.Credentials{
 				Host:      "http://localhost/",
 				AuthEmail: "test_email",
 			},
@@ -923,13 +923,13 @@ func TestRevokeAccess(t *testing.T) {
 			expectedError := errors.New("client error")
 			client := new(mocks.ShieldClient)
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
-			p := shield.NewProvider("", logger)
-			p.Clients = map[string]shield.ShieldClient{
+			p := frontier.NewProvider("", logger)
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
@@ -939,13 +939,13 @@ func TestRevokeAccess(t *testing.T) {
 			client.On("RevokeTeamAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeTeam,
+						Type: frontier.ResourceTypeTeam,
 						Roles: []*domain.Role{
 							{
 								ID:          "test-role",
@@ -958,14 +958,14 @@ func TestRevokeAccess(t *testing.T) {
 			}
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeTeam,
+					Type: frontier.ResourceTypeTeam,
 					URN:  "team:team_id",
 					Name: "team_1",
 					Details: map[string]interface{}{
 						"id":     "team_id",
 						"orgId":  "456",
 						"admins": []interface{}{"testAdmin@email.com"},
-						"metadata": shield.Metadata{
+						"metadata": frontier.Metadata{
 							Email:   "team_1@gojek.com",
 							Privacy: "public",
 							Slack:   "team_1_slack",
@@ -986,11 +986,11 @@ func TestRevokeAccess(t *testing.T) {
 			providerURN := "test-provider-urn"
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
 			client := new(mocks.ShieldClient)
-			expectedTeam := &shield.Team{
+			expectedTeam := &frontier.Team{
 				Name:  "team_1",
 				ID:    "team_id",
 				OrgId: "456",
-				Metadata: shield.Metadata{
+				Metadata: frontier.Metadata{
 					Email:   "team_1@gojek.com",
 					Privacy: "public",
 					Slack:   "team_1_slack",
@@ -999,13 +999,13 @@ func TestRevokeAccess(t *testing.T) {
 			}
 
 			expectedRole := "admins"
-			p := shield.NewProvider("", logger)
-			p.Clients = map[string]shield.ShieldClient{
+			p := frontier.NewProvider("", logger)
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
@@ -1015,13 +1015,13 @@ func TestRevokeAccess(t *testing.T) {
 			client.On("RevokeTeamAccess", expectedTeam, expectedUser.ID, expectedRole).Return(nil).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeTeam,
+						Type: frontier.ResourceTypeTeam,
 						Roles: []*domain.Role{
 							{
 								ID:          "admin",
@@ -1034,14 +1034,14 @@ func TestRevokeAccess(t *testing.T) {
 			}
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeTeam,
+					Type: frontier.ResourceTypeTeam,
 					URN:  "team:team_id",
 					Name: "team_1",
 					Details: map[string]interface{}{
 						"id":     "team_id",
 						"orgId":  "456",
 						"admins": []interface{}{"testAdmin@email.com"},
-						"metadata": shield.Metadata{
+						"metadata": frontier.Metadata{
 							Email:   "team_1@gojek.com",
 							Privacy: "public",
 							Slack:   "team_1_slack",
@@ -1068,13 +1068,13 @@ func TestRevokeAccess(t *testing.T) {
 			expectedError := errors.New("client error")
 			client := new(mocks.ShieldClient)
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
-			p := shield.NewProvider("", logger)
-			p.Clients = map[string]shield.ShieldClient{
+			p := frontier.NewProvider("", logger)
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
@@ -1085,13 +1085,13 @@ func TestRevokeAccess(t *testing.T) {
 			client.On("RevokeProjectAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeProject,
+						Type: frontier.ResourceTypeProject,
 						Roles: []*domain.Role{
 							{
 								ID:          "test-role",
@@ -1104,7 +1104,7 @@ func TestRevokeAccess(t *testing.T) {
 			}
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeProject,
+					Type: frontier.ResourceTypeProject,
 					URN:  "project:project_id",
 					Name: "project_1",
 					Details: map[string]interface{}{
@@ -1126,7 +1126,7 @@ func TestRevokeAccess(t *testing.T) {
 		t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			client := new(mocks.ShieldClient)
-			expectedProject := &shield.Project{
+			expectedProject := &frontier.Project{
 				Name:   "project_1",
 				ID:     "project_id",
 				OrgId:  "456",
@@ -1134,14 +1134,14 @@ func TestRevokeAccess(t *testing.T) {
 			}
 			expectedRole := "admins"
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
-			p := shield.NewProvider("", logger)
+			p := frontier.NewProvider("", logger)
 
-			p.Clients = map[string]shield.ShieldClient{
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
@@ -1151,13 +1151,13 @@ func TestRevokeAccess(t *testing.T) {
 			client.On("RevokeProjectAccess", expectedProject, expectedUser.ID, expectedRole).Return(nil).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeProject,
+						Type: frontier.ResourceTypeProject,
 						Roles: []*domain.Role{
 							{
 								ID:          "admin",
@@ -1170,7 +1170,7 @@ func TestRevokeAccess(t *testing.T) {
 			}
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeProject,
+					Type: frontier.ResourceTypeProject,
 					URN:  "project:project_id",
 					Name: "project_1",
 					Details: map[string]interface{}{
@@ -1199,13 +1199,13 @@ func TestRevokeAccess(t *testing.T) {
 			expectedError := errors.New("client error")
 			client := new(mocks.ShieldClient)
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
-			p := shield.NewProvider("", logger)
-			p.Clients = map[string]shield.ShieldClient{
+			p := frontier.NewProvider("", logger)
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
@@ -1215,13 +1215,13 @@ func TestRevokeAccess(t *testing.T) {
 			client.On("RevokeOrganizationAccess", mock.Anything, mock.Anything, mock.Anything).Return(expectedError).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeOrganization,
+						Type: frontier.ResourceTypeOrganization,
 						Roles: []*domain.Role{
 							{
 								ID:          "test-role",
@@ -1235,7 +1235,7 @@ func TestRevokeAccess(t *testing.T) {
 
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeOrganization,
+					Type: frontier.ResourceTypeOrganization,
 					URN:  "organization:org_id",
 					Name: "org_1",
 					Details: map[string]interface{}{
@@ -1256,20 +1256,20 @@ func TestRevokeAccess(t *testing.T) {
 		t.Run("should return nil error if revoking access is successful", func(t *testing.T) {
 			providerURN := "test-provider-urn"
 			client := new(mocks.ShieldClient)
-			expectedOrganization := &shield.Organization{
+			expectedOrganization := &frontier.Organization{
 				Name:   "org_1",
 				ID:     "org_id",
 				Admins: []string{"testAdmin@email.com"},
 			}
 			expectedRole := "admins"
 			logger := log.NewLogrus(log.LogrusWithLevel("info"))
-			p := shield.NewProvider("", logger)
+			p := frontier.NewProvider("", logger)
 
-			p.Clients = map[string]shield.ShieldClient{
+			p.Clients = map[string]frontier.Client{
 				providerURN: client,
 			}
 			expectedUserEmail := "test@email.com"
-			expectedUser := &shield.User{
+			expectedUser := &frontier.User{
 				ID:    "test_user_id",
 				Name:  "test_user",
 				Email: expectedUserEmail,
@@ -1279,13 +1279,13 @@ func TestRevokeAccess(t *testing.T) {
 			client.On("RevokeOrganizationAccess", expectedOrganization, expectedUser.ID, expectedRole).Return(nil).Once()
 
 			pc := &domain.ProviderConfig{
-				Credentials: shield.Credentials{
+				Credentials: frontier.Credentials{
 					Host:      "localhost",
 					AuthEmail: "test_email",
 				},
 				Resources: []*domain.ResourceConfig{
 					{
-						Type: shield.ResourceTypeOrganization,
+						Type: frontier.ResourceTypeOrganization,
 						Roles: []*domain.Role{
 							{
 								ID:          "admin",
@@ -1298,7 +1298,7 @@ func TestRevokeAccess(t *testing.T) {
 			}
 			a := domain.Grant{
 				Resource: &domain.Resource{
-					Type: shield.ResourceTypeOrganization,
+					Type: frontier.ResourceTypeOrganization,
 					URN:  "organization:org_id",
 					Name: "org_1",
 					Details: map[string]interface{}{
@@ -1324,7 +1324,7 @@ func TestRevokeAccess(t *testing.T) {
 func TestGetAccountTypes(t *testing.T) {
 	expectedAccountType := []string{"user"}
 	logger := log.NewLogrus(log.LogrusWithLevel("info"))
-	p := shield.NewProvider("", logger)
+	p := frontier.NewProvider("", logger)
 
 	actualAccountType := p.GetAccountTypes()
 
@@ -1334,7 +1334,7 @@ func TestGetAccountTypes(t *testing.T) {
 func TestGetRoles(t *testing.T) {
 	t.Run("should return error if resource type is invalid", func(t *testing.T) {
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("shield", logger)
+		p := frontier.NewProvider("shield", logger)
 		validConfig := &domain.ProviderConfig{
 			Type:                "shield",
 			URN:                 "test-URN",
@@ -1373,7 +1373,7 @@ func TestGetRoles(t *testing.T) {
 
 	t.Run("should return roles specified in the provider config", func(t *testing.T) {
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		p := shield.NewProvider("shield", logger)
+		p := frontier.NewProvider("shield", logger)
 
 		expectedRoles := []*domain.Role{
 			{

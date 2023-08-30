@@ -1,4 +1,4 @@
-package shield_test
+package frontier_test
 
 import (
 	"bytes"
@@ -14,29 +14,29 @@ import (
 	"github.com/raystack/salt/log"
 
 	"github.com/raystack/guardian/mocks"
-	"github.com/raystack/guardian/plugins/providers/shield"
+	"github.com/raystack/guardian/plugins/providers/frontier"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
 func TestNewClient(t *testing.T) {
 	t.Run("should return error if config is invalid", func(t *testing.T) {
-		invalidConfig := &shield.ClientConfig{}
+		invalidConfig := &frontier.ClientConfig{}
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		actualClient, actualError := shield.NewClient(invalidConfig, logger)
+		actualClient, actualError := frontier.NewClient(invalidConfig, logger)
 
 		assert.Nil(t, actualClient)
 		assert.Error(t, actualError)
 	})
 
 	t.Run("should return error if config.Host is not a valid url", func(t *testing.T) {
-		invalidHostConfig := &shield.ClientConfig{
+		invalidHostConfig := &frontier.ClientConfig{
 			AuthHeader: "X-Auth-Email",
 			AuthEmail:  "test-email",
 			Host:       "invalid-url",
 		}
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
-		actualClient, actualError := shield.NewClient(invalidHostConfig, logger)
+		actualClient, actualError := frontier.NewClient(invalidHostConfig, logger)
 
 		assert.Nil(t, actualClient)
 		assert.Error(t, actualError)
@@ -45,7 +45,7 @@ func TestNewClient(t *testing.T) {
 	t.Run("should return client and nil error on success", func(t *testing.T) {
 		// TODO: test http request execution
 		mockHttpClient := new(mocks.HTTPClient)
-		config := &shield.ClientConfig{
+		config := &frontier.ClientConfig{
 			AuthHeader: "X-Auth-Email",
 			AuthEmail:  "test_email",
 			Host:       "http://localhost",
@@ -53,7 +53,7 @@ func TestNewClient(t *testing.T) {
 		}
 		logger := log.NewLogrus(log.LogrusWithLevel("info"))
 
-		_, actualError := shield.NewClient(config, logger)
+		_, actualError := frontier.NewClient(config, logger)
 		mockHttpClient.AssertExpectations(t)
 		assert.Nil(t, actualError)
 	})
@@ -63,7 +63,7 @@ type ClientTestSuite struct {
 	suite.Suite
 
 	mockHttpClient *mocks.HTTPClient
-	client         shield.ShieldClient
+	client         frontier.Client
 	authHeader     string
 	auth           string
 	host           string
@@ -80,7 +80,7 @@ func (s *ClientTestSuite) setup() {
 	s.host = "http://localhost"
 	s.auth = "shield_admin"
 	s.authHeader = "X-Auth-Email"
-	client, err := shield.NewClient(&shield.ClientConfig{
+	client, err := frontier.NewClient(&frontier.ClientConfig{
 		AuthHeader: s.authHeader,
 		AuthEmail:  s.auth,
 		Host:       s.host,
@@ -120,7 +120,7 @@ func (s *ClientTestSuite) TestGetTeams() {
 	s.Run("should get teams and nil error on success", func() {
 		s.setup()
 
-		testRequest, err := s.getTestRequest(http.MethodGet, "/admin/v1beta1/groups", nil, "")
+		testRequest, err := s.getTestRequest(http.MethodGet, "/v1beta1/groups", nil, "")
 		s.Require().NoError(err)
 
 		teamResponseJSON := `{
@@ -156,13 +156,13 @@ func (s *ClientTestSuite) TestGetTeams() {
 		teamResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(teamResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&teamResponse, nil).Once()
 
-		expectedTeams := []shield.Team{
+		expectedTeams := []frontier.Team{
 			{
 				ID:    "team_id_1",
 				Name:  "team_1",
 				Slug:  "team_1",
 				OrgId: "org_id_1",
-				Metadata: shield.Metadata{
+				Metadata: frontier.Metadata{
 					Email:   "team_1@email.com",
 					Privacy: "public",
 					Slack:   "@team_1",
@@ -174,7 +174,7 @@ func (s *ClientTestSuite) TestGetTeams() {
 				Name:  "team_2",
 				Slug:  "team_2",
 				OrgId: "org_id_1",
-				Metadata: shield.Metadata{
+				Metadata: frontier.Metadata{
 					Email:   "team_2@email.com",
 					Privacy: "public",
 					Slack:   "@team_2",
@@ -183,10 +183,10 @@ func (s *ClientTestSuite) TestGetTeams() {
 			},
 		}
 
-		testAdminsRequest1, err := s.getTestRequest(http.MethodGet, "/admin/v1beta1/groups/team_id_1/admins", nil, "")
+		testAdminsRequest1, err := s.getTestRequest(http.MethodGet, "/v1beta1/groups/team_id_1/admins", nil, "")
 		s.Require().NoError(err)
 
-		testAdminsRequest2, err := s.getTestRequest(http.MethodGet, "/admin/v1beta1/groups/team_id_2/admins", nil, "")
+		testAdminsRequest2, err := s.getTestRequest(http.MethodGet, "/v1beta1/groups/team_id_2/admins", nil, "")
 		s.Require().NoError(err)
 
 		teamAdminResponse := `{
@@ -211,7 +211,7 @@ func (s *ClientTestSuite) TestGetTeams() {
 		s.mockHttpClient.On("Do", testAdminsRequest2).Return(&teamAdminResponse2, nil).Once()
 
 		result, err1 := s.client.GetTeams()
-		var teams []shield.Team
+		var teams []frontier.Team
 		for _, team := range result {
 			teams = append(teams, *team)
 		}
@@ -224,7 +224,7 @@ func (s *ClientTestSuite) TestGetProjects() {
 	s.Run("should get projects and nil error on success", func() {
 		s.setup()
 
-		testRequest, err := s.getTestRequest(http.MethodGet, "/admin/v1beta1/projects", nil, "")
+		testRequest, err := s.getTestRequest(http.MethodGet, "/v1beta1/projects", nil, "")
 		s.Require().NoError(err)
 
 		projectResponseJSON := `{
@@ -247,7 +247,7 @@ func (s *ClientTestSuite) TestGetProjects() {
 		projectResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(projectResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&projectResponse, nil).Once()
 
-		expectedProjects := []shield.Project{
+		expectedProjects := []frontier.Project{
 			{
 				ID:     "project_id_1",
 				Name:   "project_1",
@@ -257,7 +257,7 @@ func (s *ClientTestSuite) TestGetProjects() {
 			},
 		}
 
-		testAdminsRequest, err := s.getTestRequest(http.MethodGet, "/admin/v1beta1/projects/project_id_1/admins", nil, "")
+		testAdminsRequest, err := s.getTestRequest(http.MethodGet, "/v1beta1/projects/project_id_1/admins", nil, "")
 		s.Require().NoError(err)
 
 		projectAdminResponse := `{
@@ -280,7 +280,7 @@ func (s *ClientTestSuite) TestGetProjects() {
 		s.mockHttpClient.On("Do", testAdminsRequest).Return(&projectAdminResponse1, nil).Once()
 
 		result, err1 := s.client.GetProjects()
-		var projects []shield.Project
+		var projects []frontier.Project
 		for _, project := range result {
 			projects = append(projects, *project)
 		}
@@ -293,7 +293,7 @@ func (s *ClientTestSuite) TestGetOrganizations() {
 	s.Run("should get organizations and nil error on success", func() {
 		s.setup()
 
-		testRequest, err := s.getTestRequest(http.MethodGet, "/admin/v1beta1/organizations", nil, "")
+		testRequest, err := s.getTestRequest(http.MethodGet, "/v1beta1/organizations", nil, "")
 		s.Require().NoError(err)
 
 		organizationsResponseJSON := `{
@@ -314,7 +314,7 @@ func (s *ClientTestSuite) TestGetOrganizations() {
 		orgResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(organizationsResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&orgResponse, nil).Once()
 
-		expectedOrganizations := []shield.Organization{
+		expectedOrganizations := []frontier.Organization{
 			{
 				ID:     "org_id_1",
 				Name:   "org_1",
@@ -323,7 +323,7 @@ func (s *ClientTestSuite) TestGetOrganizations() {
 			},
 		}
 
-		testAdminsRequest, err := s.getTestRequest(http.MethodGet, "/admin/v1beta1/organizations/org_id_1/admins", nil, "")
+		testAdminsRequest, err := s.getTestRequest(http.MethodGet, "/v1beta1/organizations/org_id_1/admins", nil, "")
 		s.Require().NoError(err)
 
 		orgAdminResponse := `{
@@ -346,7 +346,7 @@ func (s *ClientTestSuite) TestGetOrganizations() {
 		s.mockHttpClient.On("Do", testAdminsRequest).Return(&orgAdminResponse1, nil).Once()
 
 		result, err1 := s.client.GetOrganizations()
-		var orgs []shield.Organization
+		var orgs []frontier.Organization
 		for _, org := range result {
 			orgs = append(orgs, *org)
 		}
@@ -364,8 +364,8 @@ func (s *ClientTestSuite) TestGrantTeamAccess() {
 		body := make(map[string][]string)
 		body["userIds"] = append(body["userIds"], testUserId)
 
-		var teamObj *shield.Team
-		teamObj = new(shield.Team)
+		var teamObj *frontier.Team
+		teamObj = new(frontier.Team)
 		teamObj.ID = "test_team_id"
 
 		role := "users"
@@ -403,8 +403,8 @@ func (s *ClientTestSuite) TestGrantProjectAccess() {
 		body := make(map[string][]string)
 		body["userIds"] = append(body["userIds"], testUserId)
 
-		var projectObj *shield.Project
-		projectObj = new(shield.Project)
+		var projectObj *frontier.Project
+		projectObj = new(frontier.Project)
 		projectObj.ID = "test_project_id"
 
 		role := "admins"
@@ -441,8 +441,8 @@ func (s *ClientTestSuite) TestGrantOrganizationAccess() {
 		body := make(map[string][]string)
 		body["userIds"] = append(body["userIds"], testUserId)
 
-		var orgObj *shield.Organization
-		orgObj = new(shield.Organization)
+		var orgObj *frontier.Organization
+		orgObj = new(frontier.Organization)
 		orgObj.ID = "test_org_id"
 
 		role := "admins"
@@ -479,8 +479,8 @@ func (s *ClientTestSuite) TestRevokeTeamAccess() {
 		body := make(map[string][]string)
 		body["userIds"] = append(body["userIds"], testUserId)
 
-		var teamObj *shield.Team
-		teamObj = new(shield.Team)
+		var teamObj *frontier.Team
+		teamObj = new(frontier.Team)
 		teamObj.ID = "test_team_id"
 
 		role := "users"
@@ -506,8 +506,8 @@ func (s *ClientTestSuite) TestRevokeProjectAccess() {
 		body := make(map[string][]string)
 		body["userIds"] = append(body["userIds"], testUserId)
 
-		var projectObj *shield.Project
-		projectObj = new(shield.Project)
+		var projectObj *frontier.Project
+		projectObj = new(frontier.Project)
 		projectObj.ID = "test_project_id"
 
 		role := "admins"
@@ -532,8 +532,8 @@ func (s *ClientTestSuite) TestRevokeOrganizationAccess() {
 		body := make(map[string][]string)
 		body["userIds"] = append(body["userIds"], testUserId)
 
-		var orgObj *shield.Organization
-		orgObj = new(shield.Organization)
+		var orgObj *frontier.Organization
+		orgObj = new(frontier.Organization)
 		orgObj.ID = "test_org_id"
 
 		role := "admins"
@@ -555,7 +555,7 @@ func (s *ClientTestSuite) TestGetSelfUser() {
 		s.setup()
 		testUserEmail := ""
 
-		testGetSelfRequest, err := s.getTestRequest(http.MethodGet, "/admin/v1beta1/users/self", nil, testUserEmail)
+		testGetSelfRequest, err := s.getTestRequest(http.MethodGet, "/v1beta1/users/self", nil, testUserEmail)
 		s.Require().NoError(err)
 
 		responseJson := `{
@@ -574,7 +574,7 @@ func (s *ClientTestSuite) TestGetSelfUser() {
 		s.setup()
 		testUserEmail := "test_user@email.com"
 
-		testGetSelfRequest, err := s.getTestRequest(http.MethodGet, "/admin/v1beta1/users/self", nil, testUserEmail)
+		testGetSelfRequest, err := s.getTestRequest(http.MethodGet, "/v1beta1/users/self", nil, testUserEmail)
 		s.Require().NoError(err)
 
 		responseJson := `{
@@ -594,7 +594,7 @@ func (s *ClientTestSuite) TestGetSelfUser() {
 		responseUser := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", testGetSelfRequest).Return(&responseUser, nil).Once()
 
-		expectedUser := &shield.User{
+		expectedUser := &frontier.User{
 			ID:    "test-user-id",
 			Name:  "test-user",
 			Email: "test_user@email.com",

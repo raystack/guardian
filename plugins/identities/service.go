@@ -33,14 +33,6 @@ func (m *manager) ParseConfig(iamConfig *domain.IAMConfig) (domain.SensitiveConf
 		clientConfig.crypto = m.crypto
 		clientConfig.validator = m.validator
 		return &clientConfig, nil
-	case domain.IAMProviderTypeShield:
-		var clientConfig ShieldClientConfig
-		if err := mapstructure.Decode(iamConfig.Config, &clientConfig); err != nil {
-			return nil, fmt.Errorf("%w: %s", ErrInvalidConfig, err)
-		}
-		clientConfig.crypto = m.crypto
-		clientConfig.validator = m.validator
-		return &clientConfig, nil
 	}
 	return nil, ErrUnknownProviderType
 }
@@ -48,9 +40,6 @@ func (m *manager) ParseConfig(iamConfig *domain.IAMConfig) (domain.SensitiveConf
 func (m *manager) GetClient(config domain.SensitiveConfig) (domain.IAMClient, error) {
 	if clientConfig, ok := config.(*HTTPClientConfig); ok {
 		return NewHTTPClient(clientConfig)
-	}
-	if clientConfig, ok := config.(*ShieldClientConfig); ok {
-		return NewShieldClient(clientConfig)
 	}
 
 	return nil, ErrInvalidConfig

@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	shield "github.com/raystack/guardian/plugins/providers/shield"
+	shield "github.com/raystack/guardian/plugins/providers/frontier"
 	mock "github.com/stretchr/testify/mock"
 )
 
