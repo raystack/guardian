@@ -3,20 +3,23 @@ package gcloudiam
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/net/context"
+	"google.golang.org/api/iam/v1"
 )
 
 //go:generate mockery --name=GcloudIamClient --exported --with-expecter
 type GcloudIamClient interface {
-	GetRoles() ([]*Role, error)
+	GetGrantableRoles(ctx context.Context, resourceType string) ([]*iam.Role, error)
 	GrantAccess(accountType, accountID, role string) error
 	RevokeAccess(accountType, accountID, role string) error
 	ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error)
+	ListServiceAccounts(context.Context) ([]*iam.ServiceAccount, error)
+	GrantServiceAccountAccess(ctx context.Context, sa, accountType, accountID, roles string) error
+	RevokeServiceAccountAccess(ctx context.Context, sa, accountType, accountID, role string) error
 }
 
 //go:generate mockery --name=encryptor --exported --with-expecter
@@ -67,30 +70,55 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 }
 
 func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
-	var creds Credentials
-	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
-		return nil, err
+	resources := []*domain.Resource{}
+
+	for _, rc := range pc.Resources {
+		switch rc.Type {
+		case ResourceTypeProject, ResourceTypeOrganization:
+			var creds Credentials
+			if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
+				return nil, err
+			}
+			resources = append(resources, &domain.Resource{
+				ProviderType: pc.Type,
+				ProviderURN:  pc.URN,
+				Type:         rc.Type,
+				URN:          creds.ResourceName,
+				Name:         fmt.Sprintf("%s - GCP IAM", creds.ResourceName),
+			})
+
+		case ResourceTypeServiceAccount:
+			client, err := p.getIamClient(pc)
+			if err != nil {
+				return nil, fmt.Errorf("initializing iam client: %w", err)
+			}
+
+			serviceAccounts, err := client.ListServiceAccounts(context.TODO())
+			if err != nil {
+				return nil, fmt.Errorf("listing service accounts: %w", err)
+			}
+
+			// TODO: filter
+
+			for _, sa := range serviceAccounts {
+				resources = append(resources, &domain.Resource{
+					ProviderType: pc.Type,
+					ProviderURN:  pc.URN,
+					Type:         rc.Type,
+					URN:          sa.Name,
+					Name:         sa.Email,
+				})
+			}
+
+		default:
+			return nil, ErrInvalidResourceType
+		}
 	}
 
-	var t string
-	if strings.HasPrefix(creds.ResourceName, "project") {
-		t = ResourceTypeProject
-	} else if strings.HasPrefix(creds.ResourceName, "organization") {
-		t = ResourceTypeOrganization
-	}
-
-	return []*domain.Resource{
-		{
-			ProviderType: pc.Type,
-			ProviderURN:  pc.URN,
-			Type:         t,
-			URN:          creds.ResourceName,
-			Name:         fmt.Sprintf("%s - GCP IAM", creds.ResourceName),
-		},
-	}, nil
+	return resources, nil
 }
 
-func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
+func (p *Provider) GrantAccess(pc *domain.ProviderConfig, g domain.Grant) error {
 	// TODO: validate provider config and appeal
 
 	var creds Credentials
@@ -103,23 +131,33 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 		return err
 	}
 
-	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
-		for _, p := range a.Permissions {
-			permission := fmt.Sprint(p)
-			if err := client.GrantAccess(a.AccountType, a.AccountID, permission); err != nil {
+	switch g.Resource.Type {
+	case ResourceTypeProject, ResourceTypeOrganization:
+		for _, p := range g.Permissions {
+			if err := client.GrantAccess(g.AccountType, g.AccountID, p); err != nil {
 				if !errors.Is(err, ErrPermissionAlreadyExists) {
 					return err
 				}
 			}
 		}
-
 		return nil
-	}
 
-	return ErrInvalidResourceType
+	case ResourceTypeServiceAccount:
+		for _, p := range g.Permissions {
+			if err := client.GrantServiceAccountAccess(context.TODO(), g.Resource.URN, g.AccountType, g.AccountID, p); err != nil {
+				if !errors.Is(err, ErrPermissionAlreadyExists) {
+					return err
+				}
+			}
+		}
+		return nil
+
+	default:
+		return ErrInvalidResourceType
+	}
 }
 
-func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
+func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, g domain.Grant) error {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -130,27 +168,33 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 		return err
 	}
 
-	if a.Resource.Type == ResourceTypeProject || a.Resource.Type == ResourceTypeOrganization {
-		for _, p := range a.Permissions {
-			permission := fmt.Sprint(p)
-			if err := client.RevokeAccess(a.AccountType, a.AccountID, permission); err != nil {
+	switch g.Resource.Type {
+	case ResourceTypeProject, ResourceTypeOrganization:
+		for _, p := range g.Permissions {
+			if err := client.RevokeAccess(g.AccountType, g.AccountID, p); err != nil {
 				if !errors.Is(err, ErrPermissionNotFound) {
 					return err
 				}
 			}
 		}
-
 		return nil
-	}
 
-	return ErrInvalidResourceType
+	case ResourceTypeServiceAccount:
+		for _, p := range g.Permissions {
+			if err := client.RevokeServiceAccountAccess(context.TODO(), g.Resource.URN, g.AccountType, g.AccountID, p); err != nil {
+				if !errors.Is(err, ErrPermissionNotFound) {
+					return err
+				}
+			}
+		}
+		return nil
+
+	default:
+		return ErrInvalidResourceType
+	}
 }
 
 func (p *Provider) GetRoles(pc *domain.ProviderConfig, resourceType string) ([]*domain.Role, error) {
-	if resourceType != ResourceTypeProject && resourceType != ResourceTypeOrganization {
-		return nil, ErrInvalidResourceType
-	}
-
 	return provider.GetRoles(pc, resourceType)
 }
 

@@ -1,6 +1,7 @@
 package gcloudiam
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/utils"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -102,12 +104,29 @@ func (c *Config) parseAndValidate() error {
 		c.ProviderConfig.Credentials = credentials
 	}
 
-	if len(c.ProviderConfig.Resources) != 1 {
-		return ErrShouldHaveOneResource
+	if c.ProviderConfig.Resources == nil || len(c.ProviderConfig.Resources) == 0 {
+		return errors.New("empty resource config")
 	}
-	r := c.ProviderConfig.Resources[0]
-	if err := c.validateResourceConfig(r); err != nil {
-		validationErrors = append(validationErrors, err)
+	uniqueResourceTypes := make(map[string]bool)
+	for _, rc := range c.ProviderConfig.Resources {
+		if _, ok := uniqueResourceTypes[rc.Type]; ok {
+			validationErrors = append(validationErrors, fmt.Errorf("duplicate resource type: %q", rc.Type))
+		}
+		uniqueResourceTypes[rc.Type] = true
+
+		allowedResourceTypes := []string{}
+		if strings.HasPrefix(credentials.ResourceName, ResourceNameOrganizationPrefix) {
+			allowedResourceTypes = []string{ResourceTypeOrganization}
+		} else if strings.HasPrefix(credentials.ResourceName, ResourceNameProjectPrefix) {
+			allowedResourceTypes = []string{ResourceTypeProject, ResourceTypeServiceAccount}
+		}
+		if !utils.ContainsString(allowedResourceTypes, rc.Type) {
+			validationErrors = append(validationErrors, fmt.Errorf("invalid resource type: %q", rc.Type))
+		}
+
+		if len(rc.Roles) == 0 {
+			validationErrors = append(validationErrors, ErrRolesShouldNotBeEmpty)
+		}
 	}
 
 	if len(validationErrors) > 0 {
@@ -142,37 +161,14 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 	return &credentials, nil
 }
 
-func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
-	resourceTypeValidation := fmt.Sprintf("oneof=%s %s", ResourceTypeProject, ResourceTypeOrganization)
-	if err := c.validator.Var(resource.Type, resourceTypeValidation); err != nil {
-		return err
-	}
-
-	if len(resource.Roles) == 0 {
-		return ErrRolesShouldNotBeEmpty
-	}
-
-	return nil
-}
-
 func (c *Config) validatePermissions(resource *domain.ResourceConfig, client GcloudIamClient) error {
-	iamRoles, err := client.GetRoles()
+	iamRoles, err := client.GetGrantableRoles(context.TODO(), resource.Type)
 	if err != nil {
 		return err
 	}
-
-	var roles []*domain.Role
-	for _, r := range iamRoles {
-		roles = append(roles, &domain.Role{
-			ID:          r.Name,
-			Name:        r.Title,
-			Description: r.Description,
-		})
-	}
-
-	rolesMap := make(map[string]*domain.Role)
-	for _, role := range roles {
-		rolesMap[role.ID] = role
+	rolesMap := make(map[string]bool)
+	for _, role := range iamRoles {
+		rolesMap[role.Name] = true
 	}
 
 	for _, ro := range resource.Roles {
