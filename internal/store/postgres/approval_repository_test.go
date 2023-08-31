@@ -117,6 +117,14 @@ func (s *ApprovalRepositoryTestSuite) TearDownSuite() {
 	}
 }
 
+func (s *ApprovalRepositoryTestSuite) TestGetApprovalsTotalCount() {
+
+	s.Run("should return 0", func() {
+		_, actualError := s.repository.GetApprovalsTotalCount(context.Background(), &domain.ListApprovalsFilter{})
+		s.Nil(actualError)
+	})
+}
+
 func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 	pendingAppeal := &domain.Appeal{
 		ResourceID:    s.dummyResource.ID,

@@ -38,6 +38,7 @@ type repository interface {
 	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
 	GetByID(ctx context.Context, id string) (*domain.Appeal, error)
 	Update(context.Context, *domain.Appeal) error
+	GetAppealsTotalCount(context.Context, *domain.ListAppealsFilter) (int64, error)
 }
 
 //go:generate mockery --name=iamManager --exported --with-expecter
@@ -1220,4 +1221,8 @@ func (s *Service) prepareGrant(ctx context.Context, appeal *domain.Appeal) (newG
 	}
 
 	return grant, deactivatedGrant, nil
+}
+
+func (s *Service) GetAppealsTotalCount(ctx context.Context, filters *domain.ListAppealsFilter) (int64, error) {
+	return s.repo.GetAppealsTotalCount(ctx, filters)
 }

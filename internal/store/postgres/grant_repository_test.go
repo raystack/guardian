@@ -120,6 +120,13 @@ func (s *GrantRepositoryTestSuite) TearDownSuite() {
 	}
 }
 
+func (s *GrantRepositoryTestSuite) TestGetGrantsTotalCount() {
+	s.Run("should return 0", func() {
+		_, actualError := s.repository.GetGrantsTotalCount(context.Background(), domain.ListGrantsFilter{})
+
+		s.Nil(actualError)
+	})
+}
 func (s *GrantRepositoryTestSuite) TestList() {
 	expDate := time.Now()
 	dummyGrants := []*domain.Grant{
@@ -205,6 +212,22 @@ func (s *GrantRepositoryTestSuite) TestList() {
 			s.Nil(actualError)
 		}
 
+	})
+
+	s.Run("Should return an array that matches q", func() {
+		grants, err := s.repository.List(context.Background(), domain.ListGrantsFilter{
+			Q: "123",
+		})
+
+		s.NoError(err)
+		s.Len(grants, 0)
+	})
+	s.Run("Should return an array of grants that matches account type", func() {
+		grants, err := s.repository.List(context.Background(), domain.ListGrantsFilter{
+			AccountTypes: []string{"x-account-type"},
+		})
+		s.NoError(err)
+		s.Len(grants, 0)
 	})
 }
 

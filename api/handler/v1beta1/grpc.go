@@ -83,6 +83,7 @@ type policyService interface {
 
 //go:generate mockery --name=appealService --exported --with-expecter
 type appealService interface {
+	GetAppealsTotalCount(context.Context, *domain.ListAppealsFilter) (int64, error)
 	GetByID(context.Context, string) (*domain.Appeal, error)
 	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
 	Create(context.Context, []*domain.Appeal, ...appeal.CreateAppealOption) error
@@ -101,6 +102,7 @@ type approvalService interface {
 
 //go:generate mockery --name=grantService --exported --with-expecter
 type grantService interface {
+	GetGrantsTotalCount(context.Context, domain.ListGrantsFilter) (int64, error)
 	List(context.Context, domain.ListGrantsFilter) ([]domain.Grant, error)
 	GetByID(context.Context, string) (*domain.Grant, error)
 	Update(context.Context, *domain.Grant) error

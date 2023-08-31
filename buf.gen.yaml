@@ -5,13 +5,13 @@ plugins:
     opt: paths=source_relative
   - plugin: buf.build/grpc/go:v1.2.0
     out: api/proto
-    opt: paths=source_relative,require_unimplemented_servers=true 
+    opt: paths=source_relative, require_unimplemented_servers=true 
   - plugin: buf.build/grpc-ecosystem/gateway:v2.15.1
     out: api/proto
     opt: paths=source_relative
   - plugin: buf.build/grpc-ecosystem/openapiv2:v2.15.1
     out: third_party/OpenAPI
-  # See https://github.com/bufbuild/protoc-gen-validate/issues/523
+#  See https://github.com/bufbuild/protoc-gen-validate/issues/523
   - remote: buf.build/jirkad/plugins/protoc-gen-validate:v0.6.7
     out: api/proto
     opt:

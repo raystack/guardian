@@ -277,6 +277,8 @@ type ApprovalAction struct {
 }
 
 type ListAppealsFilter struct {
+	Q                         string    `mapstructure:"q" validate:"omitempty"`
+	AccountTypes              []string  `mapstructure:"account_types" validate:"omitempty,min=1"`
 	CreatedBy                 string    `mapstructure:"created_by" validate:"omitempty,required"`
 	AccountID                 string    `mapstructure:"account_id" validate:"omitempty,required"`
 	AccountIDs                []string  `mapstructure:"account_ids" validate:"omitempty,required"`

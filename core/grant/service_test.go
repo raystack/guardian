@@ -989,3 +989,29 @@ func (s *ServiceTestSuite) TestDormancyCheck() {
 		s.NoError(err)
 	})
 }
+
+func (s *ServiceTestSuite) TestGetGrantsTotalCount() {
+	s.Run("should return error if got error from repository", func() {
+		expectedError := errors.New("repository error")
+		s.mockRepository.EXPECT().
+			GetGrantsTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(0, expectedError).Once()
+
+		actualCount, actualError := s.service.GetGrantsTotalCount(context.Background(), domain.ListGrantsFilter{})
+
+		s.Zero(actualCount)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return Grants count from repository", func() {
+		expectedCount := int64(1)
+		s.mockRepository.EXPECT().
+			GetGrantsTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedCount, nil).Once()
+
+		actualCount, actualError := s.service.GetGrantsTotalCount(context.Background(), domain.ListGrantsFilter{})
+
+		s.Equal(expectedCount, actualCount)
+		s.NoError(actualError)
+	})
+}

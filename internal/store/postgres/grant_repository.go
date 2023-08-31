@@ -30,65 +30,7 @@ func NewGrantRepository(db *gorm.DB) *GrantRepository {
 
 func (r *GrantRepository) List(ctx context.Context, filter domain.ListGrantsFilter) ([]domain.Grant, error) {
 	db := r.db.WithContext(ctx)
-	if filter.Size > 0 {
-		db = db.Limit(filter.Size)
-	}
-	if filter.Offset > 0 {
-		db = db.Offset(filter.Offset)
-	}
-	if filter.AccountIDs != nil {
-		db = db.Where(`"grants"."account_id" IN ?`, filter.AccountIDs)
-	}
-	if filter.AccountTypes != nil {
-		db = db.Where(`"grants"."account_type" IN ?`, filter.AccountTypes)
-	}
-	if filter.ResourceIDs != nil {
-		db = db.Where(`"grants"."resource_id" IN ?`, filter.ResourceIDs)
-	}
-	if filter.Statuses != nil {
-		db = db.Where(`"grants"."status" IN ?`, filter.Statuses)
-	}
-	if filter.Roles != nil {
-		db = db.Where(`"grants"."role" IN ?`, filter.Roles)
-	}
-	if filter.Permissions != nil {
-		db = db.Where(`"grants"."permissions" @> ?`, pq.StringArray(filter.Permissions))
-	}
-	if filter.Owner != "" {
-		db = db.Where(`"grants"."owner" = ?`, filter.Owner)
-	} else if filter.CreatedBy != "" {
-		db = db.Where(`"grants"."owner" = ?`, filter.CreatedBy)
-	}
-	if filter.IsPermanent != nil {
-		db = db.Where(`"grants"."is_permanent" = ?`, *filter.IsPermanent)
-	}
-	if !filter.CreatedAtLte.IsZero() {
-		db = db.Where(`"grants"."created_at" <= ?`, filter.CreatedAtLte)
-	}
-	if filter.OrderBy != nil {
-		db = addOrderByClause(db, filter.OrderBy, addOrderByClauseOptions{
-			statusColumnName: `"grants"."status"`,
-			statusesOrder:    GrantStatusDefaultSort,
-		})
-	}
-	if !filter.ExpirationDateLessThan.IsZero() {
-		db = db.Where(`"grants"."expiration_date" < ?`, filter.ExpirationDateLessThan)
-	}
-	if !filter.ExpirationDateGreaterThan.IsZero() {
-		db = db.Where(`"grants"."expiration_date" > ?`, filter.ExpirationDateGreaterThan)
-	}
-	if filter.ProviderTypes != nil {
-		db = db.Where(`"Resource"."provider_type" IN ?`, filter.ProviderTypes)
-	}
-	if filter.ProviderURNs != nil {
-		db = db.Where(`"Resource"."provider_urn" IN ?`, filter.ProviderURNs)
-	}
-	if filter.ResourceTypes != nil {
-		db = db.Where(`"Resource"."type" IN ?`, filter.ResourceTypes)
-	}
-	if filter.ResourceURNs != nil {
-		db = db.Where(`"Resource"."urn" IN ?`, filter.ResourceURNs)
-	}
+	db = applyGrantFilter(db, filter)
 
 	var models []model.Grant
 	if err := db.Joins("Resource").Joins("Appeal").Find(&models).Error; err != nil {
@@ -105,6 +47,15 @@ func (r *GrantRepository) List(ctx context.Context, filter domain.ListGrantsFilt
 	}
 
 	return grants, nil
+}
+
+func (r *GrantRepository) GetGrantsTotalCount(ctx context.Context, filter domain.ListGrantsFilter) (int64, error) {
+	db := r.db.WithContext(ctx)
+	db = applyGrantFilter(db, filter)
+	var count int64
+	err := db.Model(&model.Grant{}).Count(&count).Error
+
+	return count, err
 }
 
 func (r *GrantRepository) GetByID(ctx context.Context, id string) (*domain.Grant, error) {
@@ -245,4 +196,77 @@ func upsertResources(tx *gorm.DB, models []*model.Grant) error {
 	}
 
 	return nil
+}
+
+func applyGrantFilter(db *gorm.DB, filter domain.ListGrantsFilter) *gorm.DB {
+	db = db.Joins("JOIN resources ON grants.resource_id = resources.id")
+	if filter.Q != "" {
+		// NOTE: avoid adding conditions before this grouped where clause.
+		// Otherwise, it will be wrapped in parentheses and the query will be invalid.
+		db = db.Where(db.
+			Where(`"grants"."account_id" LIKE ?`, fmt.Sprintf("%%%s%%", filter.Q)).
+			Or(`"grants"."role" LIKE ?`, fmt.Sprintf("%%%s%%", filter.Q)).
+			Or(`"resources"."urn" LIKE ?`, fmt.Sprintf("%%%s%%", filter.Q)),
+		)
+	}
+	if filter.Size > 0 {
+		db = db.Limit(filter.Size)
+	}
+	if filter.Offset > 0 {
+		db = db.Offset(filter.Offset)
+	}
+	if filter.AccountIDs != nil {
+		db = db.Where(`"grants"."account_id" IN ?`, filter.AccountIDs)
+	}
+	if filter.AccountTypes != nil {
+		db = db.Where(`"grants"."account_type" IN ?`, filter.AccountTypes)
+	}
+	if filter.ResourceIDs != nil {
+		db = db.Where(`"grants"."resource_id" IN ?`, filter.ResourceIDs)
+	}
+	if filter.Statuses != nil {
+		db = db.Where(`"grants"."status" IN ?`, filter.Statuses)
+	}
+	if filter.Roles != nil {
+		db = db.Where(`"grants"."role" IN ?`, filter.Roles)
+	}
+	if filter.Permissions != nil {
+		db = db.Where(`"grants"."permissions" @> ?`, pq.StringArray(filter.Permissions))
+	}
+	if filter.Owner != "" {
+		db = db.Where(`"grants"."owner" = ?`, filter.Owner)
+	} else if filter.CreatedBy != "" {
+		db = db.Where(`"grants"."owner" = ?`, filter.CreatedBy)
+	}
+	if filter.IsPermanent != nil {
+		db = db.Where(`"grants"."is_permanent" = ?`, *filter.IsPermanent)
+	}
+	if !filter.CreatedAtLte.IsZero() {
+		db = db.Where(`"grants"."created_at" <= ?`, filter.CreatedAtLte)
+	}
+	if filter.OrderBy != nil {
+		db = addOrderByClause(db, filter.OrderBy, addOrderByClauseOptions{
+			statusColumnName: `"grants"."status"`,
+			statusesOrder:    GrantStatusDefaultSort,
+		})
+	}
+	if !filter.ExpirationDateLessThan.IsZero() {
+		db = db.Where(`"grants"."expiration_date" < ?`, filter.ExpirationDateLessThan)
+	}
+	if !filter.ExpirationDateGreaterThan.IsZero() {
+		db = db.Where(`"grants"."expiration_date" > ?`, filter.ExpirationDateGreaterThan)
+	}
+	if filter.ProviderTypes != nil {
+		db = db.Where(`"Resource"."provider_type" IN ?`, filter.ProviderTypes)
+	}
+	if filter.ProviderURNs != nil {
+		db = db.Where(`"Resource"."provider_urn" IN ?`, filter.ProviderURNs)
+	}
+	if filter.ResourceTypes != nil {
+		db = db.Where(`"Resource"."type" IN ?`, filter.ResourceTypes)
+	}
+	if filter.ResourceURNs != nil {
+		db = db.Where(`"Resource"."urn" IN ?`, filter.ResourceURNs)
+	}
+	return db
 }

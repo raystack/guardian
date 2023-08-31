@@ -26,6 +26,7 @@ type repository interface {
 	GetByID(context.Context, string) (*domain.Grant, error)
 	Update(context.Context, *domain.Grant) error
 	BulkUpsert(context.Context, []*domain.Grant) error
+	GetGrantsTotalCount(context.Context, domain.ListGrantsFilter) (int64, error)
 }
 
 //go:generate mockery --name=providerService --exported --with-expecter
@@ -667,4 +668,8 @@ func getGrantIDs(grants []domain.Grant) []string {
 		ids = append(ids, g.ID)
 	}
 	return ids
+}
+
+func (s *Service) GetGrantsTotalCount(ctx context.Context, filters domain.ListGrantsFilter) (int64, error) {
+	return s.repo.GetGrantsTotalCount(ctx, filters)
 }
