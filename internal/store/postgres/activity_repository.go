@@ -5,43 +5,47 @@ import (
 	"errors"
 	"fmt"
 
+	"gorm.io/gorm/clause"
+
 	"github.com/raystack/guardian/core/activity"
 	"github.com/raystack/guardian/domain"
 	"github.com/raystack/guardian/internal/store/postgres/model"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type ActivityRepository struct {
-	db *gorm.DB
+	store *Store
 }
 
-func NewActivityRepository(db *gorm.DB) *ActivityRepository {
-	return &ActivityRepository{db}
+func NewActivityRepository(store *Store) *ActivityRepository {
+	return &ActivityRepository{
+		store: store,
+	}
 }
 
 func (r *ActivityRepository) Find(ctx context.Context, filter domain.ListProviderActivitiesFilter) ([]*domain.Activity, error) {
 	var activities []*model.Activity
-	db := r.db.WithContext(ctx)
-	if filter.ProviderIDs != nil {
-		db = db.Where(`"provider_id" IN ?`, filter.ProviderIDs)
-	}
-	if filter.ResourceIDs != nil {
-		db = db.Where(`"resource_id" IN ?`, filter.ResourceIDs)
-	}
-	if filter.AccountIDs != nil {
-		db = db.Where(`"account_id" IN ?`, filter.AccountIDs)
-	}
-	if filter.Types != nil {
-		db = db.Where(`"type" IN ?`, filter.Types)
-	}
-	if filter.TimestampGte != nil {
-		db = db.Where(`"timestamp" >= ?`, *filter.TimestampGte)
-	}
-	if filter.TimestampLte != nil {
-		db = db.Where(`"timestamp" <= ?`, *filter.TimestampLte)
-	}
-	if err := db.Find(&activities).Error; err != nil {
+	if err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		if filter.ProviderIDs != nil {
+			tx = tx.Where(`"provider_id" IN ?`, filter.ProviderIDs)
+		}
+		if filter.ResourceIDs != nil {
+			tx = tx.Where(`"resource_id" IN ?`, filter.ResourceIDs)
+		}
+		if filter.AccountIDs != nil {
+			tx = tx.Where(`"account_id" IN ?`, filter.AccountIDs)
+		}
+		if filter.Types != nil {
+			tx = tx.Where(`"type" IN ?`, filter.Types)
+		}
+		if filter.TimestampGte != nil {
+			tx = tx.Where(`"timestamp" >= ?`, *filter.TimestampGte)
+		}
+		if filter.TimestampLte != nil {
+			tx = tx.Where(`"timestamp" <= ?`, *filter.TimestampLte)
+		}
+		return tx.Find(&activities).Error
+	}); err != nil {
 		return nil, err
 	}
 
@@ -58,12 +62,12 @@ func (r *ActivityRepository) Find(ctx context.Context, filter domain.ListProvide
 
 func (r *ActivityRepository) GetOne(ctx context.Context, id string) (*domain.Activity, error) {
 	var m model.Activity
-	if err := r.db.
-		WithContext(ctx).
-		Joins("Provider").
-		Joins("Resource").
-		Where(`"activities"."id" = ?`, id).
-		First(&m).Error; err != nil {
+	if err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		return tx.Joins("Provider").
+			Joins("Resource").
+			Where(`"activities"."id" = ?`, id).
+			First(&m).Error
+	}); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, activity.ErrNotFound
 		}
@@ -91,6 +95,7 @@ func (r *ActivityRepository) BulkUpsert(ctx context.Context, activities []*domai
 		if err := activityModels[i].FromDomain(a); err != nil {
 			return fmt.Errorf("failed to convert domain to model: %w", err)
 		}
+		activityModels[i].NamespaceID = namespaceFromContext(ctx)
 
 		// use single resource reference for activities with same resource
 		if r := activityModels[i].Resource; r != nil {
@@ -103,10 +108,11 @@ func (r *ActivityRepository) BulkUpsert(ctx context.Context, activities []*domai
 		}
 	}
 
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return r.store.Tx(ctx, func(tx *gorm.DB) error {
 		// upsert resources separately to avoid resource upsertion duplicate issue
 		var resources []*model.Resource
 		for _, r := range uniqueResourcesMap {
+			r.NamespaceID = namespaceFromContext(ctx)
 			resources = append(resources, r)
 		}
 		if len(resources) > 0 {
@@ -124,6 +130,7 @@ func (r *ActivityRepository) BulkUpsert(ctx context.Context, activities []*domai
 		if err := tx.Omit("Resource").
 			Clauses(clause.OnConflict{
 				Columns: []clause.Column{
+					{Name: "namespace_id"},
 					{Name: "provider_id"},
 					{Name: "provider_activity_id"},
 				},

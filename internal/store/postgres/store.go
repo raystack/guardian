@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"embed"
 	"errors"
 	"fmt"
@@ -8,6 +9,9 @@ import (
 	"net"
 	"net/url"
 	"strings"
+
+	"github.com/google/uuid"
+	"github.com/raystack/guardian/pkg/auth"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -24,6 +28,15 @@ type Store struct {
 	db *gorm.DB
 
 	config *store.Config
+}
+
+const (
+	namespaceRLSSetQuery   = "SET app.current_tenant = '%s'"
+	namespaceRLSResetQuery = "RESET app.current_tenant"
+)
+
+type Connection interface {
+	Tx(ctx context.Context, fc func(tx *gorm.DB) error) error
 }
 
 func NewStore(c *store.Config) (*Store, error) {
@@ -50,6 +63,24 @@ func NewStore(c *store.Config) (*Store, error) {
 
 func (s *Store) DB() *gorm.DB {
 	return s.db
+}
+
+func (s *Store) Tx(ctx context.Context, fc func(tx *gorm.DB) error) error {
+	return s.db.WithContext(ctx).Connection(func(conn *gorm.DB) error {
+		return conn.Transaction(func(tx *gorm.DB) error {
+			// set tenant context
+			if err := tx.Exec(fmt.Sprintf(namespaceRLSSetQuery, namespaceFromContext(ctx))).Error; err != nil {
+				return err
+			}
+
+			// execute the requested operation
+			fcErr := fc(tx)
+
+			// reset tenant context
+			_ = tx.Exec(namespaceRLSResetQuery).Error
+			return fcErr
+		})
+	})
 }
 
 func (s *Store) Migrate() error {
@@ -87,4 +118,8 @@ func toConnectionString(c *store.Config) string {
 	pgURL.RawQuery = q.Encode()
 
 	return pgURL.String()
+}
+
+func namespaceFromContext(ctx context.Context) uuid.UUID {
+	return auth.FetchNamespace(ctx)
 }

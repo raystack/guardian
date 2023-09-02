@@ -13,6 +13,7 @@ import (
 
 type Grant struct {
 	ID                      uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	NamespaceID             uuid.UUID `gorm:"type:uuid"`
 	Status                  string
 	StatusInProvider        string
 	AccountID               string

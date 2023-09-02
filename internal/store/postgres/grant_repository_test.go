@@ -45,7 +45,7 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	s.repository = postgres.NewGrantRepository(s.store.DB())
+	s.repository = postgres.NewGrantRepository(s.store)
 
 	ctx := context.Background()
 
@@ -53,7 +53,7 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 		ID:      "policy_test",
 		Version: 1,
 	}
-	policyRepository := postgres.NewPolicyRepository(s.store.DB())
+	policyRepository := postgres.NewPolicyRepository(s.store)
 	err = policyRepository.Create(ctx, s.dummyPolicy)
 	s.Require().NoError(err)
 
@@ -72,7 +72,7 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 			},
 		},
 	}
-	providerRepository := postgres.NewProviderRepository(s.store.DB())
+	providerRepository := postgres.NewProviderRepository(s.store)
 	err = providerRepository.Create(ctx, s.dummyProvider)
 	s.Require().NoError(err)
 
@@ -83,7 +83,7 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 		URN:          "resource_urn_test",
 		Name:         "resource_name_test",
 	}
-	resourceRepository := postgres.NewResourceRepository(s.store.DB())
+	resourceRepository := postgres.NewResourceRepository(s.store)
 	err = resourceRepository.BulkUpsert(ctx, []*domain.Resource{s.dummyResource})
 	s.Require().NoError(err)
 
@@ -97,7 +97,7 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 		Permissions:   []string{"permission_test"},
 		CreatedBy:     "user@example.com",
 	}
-	appealRepository := postgres.NewAppealRepository(s.store.DB())
+	appealRepository := postgres.NewAppealRepository(s.store)
 	err = appealRepository.BulkUpsert(ctx, []*domain.Appeal{s.dummyAppeal})
 	s.Require().NoError(err)
 }

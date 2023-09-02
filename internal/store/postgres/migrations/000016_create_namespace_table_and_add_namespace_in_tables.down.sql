@@ -2,15 +2,7 @@ BEGIN;
 
 -- drop all index we created
 ALTER TABLE resources DROP CONSTRAINT fk_resources_provider_type_urn;
-ALTER TABLE appeals DROP CONSTRAINT fk_appeals_resource;
 ALTER TABLE appeals DROP CONSTRAINT fk_appeals_policy_id_version;
-ALTER TABLE approvals DROP CONSTRAINT fk_approvals_appeal;
-ALTER TABLE approvers DROP CONSTRAINT fk_approvals_approvers;
-ALTER TABLE grants DROP CONSTRAINT fk_grants_resource_id;
-ALTER TABLE grants DROP CONSTRAINT fk_grants_appeal_id;
-ALTER TABLE resources DROP CONSTRAINT fk_resources_parent_id;
-ALTER TABLE activities DROP CONSTRAINT fk_activities_provider_id;
-ALTER TABLE activities DROP CONSTRAINT fk_activities_resource_id
 
 DROP INDEX IF EXISTS activities_provider_activity_provider_idx;
 DROP INDEX IF EXISTS providers_type_urn;
@@ -33,8 +25,11 @@ ALTER TABLE appeals DROP COLUMN IF EXISTS namespace_id;
 DROP INDEX IF EXISTS idx_approvals_namespace_id;
 ALTER TABLE approvals DROP COLUMN IF EXISTS namespace_id;
 
-DROP INDEX IF EXISTS idx_audit_logs_namespace_id;
-ALTER TABLE audit_logs DROP COLUMN IF EXISTS namespace_id;
+DROP INDEX IF EXISTS idx_approvers_namespace_id;
+ALTER TABLE approvers DROP COLUMN IF EXISTS namespace_id;
+
+-- DROP INDEX IF EXISTS idx_audit_logs_namespace_id;
+-- ALTER TABLE audit_logs DROP COLUMN IF EXISTS namespace_id;
 
 DROP INDEX IF EXISTS idx_grants_namespace_id;
 ALTER TABLE grants DROP COLUMN IF EXISTS namespace_id;

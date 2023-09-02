@@ -19,9 +19,10 @@ type DefaultAuth struct {
 }
 
 type Auth struct {
-	Provider string        `mapstructure:"provider" default:"default"`
-	Default  DefaultAuth   `mapstructure:"default"`
-	OIDC     auth.OIDCAuth `mapstructure:"oidc"`
+	Provider string              `mapstructure:"provider" default:"default"`
+	Default  DefaultAuth         `mapstructure:"default"`
+	OIDC     auth.OIDCAuth       `mapstructure:"oidc"`
+	Frontier auth.FrontierConfig `mapstructure:"frontier"`
 }
 
 type Jobs struct {
@@ -87,5 +88,9 @@ func LoadConfig(serverConfigFileFromFlag string) (Config, error) {
 		cfg.Auth.Default.HeaderKey = cfg.AuthenticatedUserHeaderKey
 	}
 
+	// fail if encryption secret key is not set
+	if cfg.EncryptionSecretKeyKey == "" {
+		fmt.Println("WARNING: encryption_secret_key is not set")
+	}
 	return cfg, nil
 }

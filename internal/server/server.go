@@ -8,6 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/raystack/guardian/domain"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -124,6 +127,7 @@ func RunServer(config *Config) error {
 			),
 			grpc_logrus.UnaryServerInterceptor(logrusEntry),
 			authInterceptor,
+			auth.FrontierJWTInterceptor(config.Auth.Frontier),
 			withLogrusContext(),
 			otelgrpc.UnaryServerInterceptor(),
 		)),
@@ -143,6 +147,7 @@ func RunServer(config *Config) error {
 		services.AppealService,
 		services.ApprovalService,
 		services.GrantService,
+		services.NamespaceService,
 		protoAdapter,
 		authUserContextKey[config.Auth.Provider],
 	))
@@ -192,7 +197,7 @@ func RunServer(config *Config) error {
 	})
 	baseMux.Handle("/api/", http.StripPrefix("/api", gwmux))
 
-	logger.Info(fmt.Sprintf("server running on %s", address))
+	logger.Info(fmt.Sprintf("server running on %s(rest) and %s(grpc)", address, grpcAddress))
 
 	return mux.Serve(
 		runtimeCtx,
@@ -208,7 +213,7 @@ func RunServer(config *Config) error {
 }
 
 // Migrate runs the schema migration scripts
-func Migrate(c *Config) error {
+func Migrate(ctx context.Context, c *Config) error {
 	store, err := getStore(c)
 	if err != nil {
 		return err
@@ -217,11 +222,30 @@ func Migrate(c *Config) error {
 	sqldb, _ := store.DB().DB()
 
 	auditRepository := audit_repos.NewPostgresRepository(sqldb)
-	if err := auditRepository.Init(context.Background()); err != nil {
+	if err := auditRepository.Init(ctx); err != nil {
 		return fmt.Errorf("initializing audit repository: %w", err)
 	}
 
-	return store.Migrate()
+	if err := store.Migrate(); err != nil {
+		return fmt.Errorf("migrating database: %w", err)
+	}
+	namespaceRepo := postgres.NewNamespaceRepository(store)
+	if _, err := namespaceRepo.GetOne(ctx, uuid.Nil.String()); err != nil {
+		fmt.Println("> migrating default namespace")
+		if err := namespaceRepo.BulkUpsert(ctx, []*domain.Namespace{
+			{
+				ID:    uuid.Nil.String(),
+				Name:  "default",
+				State: "active",
+			},
+		}); err != nil {
+			return fmt.Errorf("creating default namespace failed: %w", err)
+		}
+		fmt.Println("> default namespace migrated successfully")
+	}
+
+	fmt.Println("> migration completed successfully")
+	return nil
 }
 
 func getStore(c *Config) (*postgres.Store, error) {

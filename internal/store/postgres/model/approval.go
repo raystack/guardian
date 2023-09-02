@@ -12,6 +12,7 @@ import (
 // Approval database model
 type Approval struct {
 	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	NamespaceID   uuid.UUID `gorm:"type:uuid"`
 	Name          string    `gorm:"index"`
 	Index         int
 	AppealID      string

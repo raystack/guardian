@@ -42,7 +42,7 @@ func (s *ApprovalRepositoryTestSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	s.repository = postgres.NewApprovalRepository(s.store.DB())
+	s.repository = postgres.NewApprovalRepository(s.store)
 
 	ctx := context.Background()
 
@@ -50,7 +50,7 @@ func (s *ApprovalRepositoryTestSuite) SetupSuite() {
 		ID:      "policy_test",
 		Version: 1,
 	}
-	policyRepository := postgres.NewPolicyRepository(s.store.DB())
+	policyRepository := postgres.NewPolicyRepository(s.store)
 	err = policyRepository.Create(ctx, s.dummyPolicy)
 	s.Require().NoError(err)
 
@@ -69,7 +69,7 @@ func (s *ApprovalRepositoryTestSuite) SetupSuite() {
 			},
 		},
 	}
-	providerRepository := postgres.NewProviderRepository(s.store.DB())
+	providerRepository := postgres.NewProviderRepository(s.store)
 	err = providerRepository.Create(ctx, s.dummyProvider)
 	s.Require().NoError(err)
 
@@ -80,7 +80,7 @@ func (s *ApprovalRepositoryTestSuite) SetupSuite() {
 		URN:          "resource_urn_test",
 		Name:         "resource_name_test",
 	}
-	resourceRepository := postgres.NewResourceRepository(s.store.DB())
+	resourceRepository := postgres.NewResourceRepository(s.store)
 	err = resourceRepository.BulkUpsert(ctx, []*domain.Resource{s.dummyResource})
 	s.Require().NoError(err)
 
@@ -95,7 +95,7 @@ func (s *ApprovalRepositoryTestSuite) SetupSuite() {
 		CreatedBy:     "user@example.com",
 	}
 
-	s.appealRepository = postgres.NewAppealRepository(s.store.DB())
+	s.appealRepository = postgres.NewAppealRepository(s.store)
 	err = s.appealRepository.BulkUpsert(ctx, []*domain.Appeal{s.dummyAppeal})
 	s.Require().NoError(err)
 }

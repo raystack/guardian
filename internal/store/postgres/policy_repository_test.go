@@ -33,7 +33,7 @@ func (s *PolicyRepositoryTestSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	s.repository = postgres.NewPolicyRepository(s.store.DB())
+	s.repository = postgres.NewPolicyRepository(s.store)
 }
 
 func (s *PolicyRepositoryTestSuite) TearDownSuite() {

@@ -13,6 +13,7 @@ import (
 
 type Activity struct {
 	ID                 uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	NamespaceID        uuid.UUID `gorm:"type:uuid"`
 	ProviderID         uuid.UUID
 	ResourceID         uuid.UUID
 	ProviderActivityID string
@@ -83,7 +84,6 @@ func (m *Activity) FromDomain(a *domain.Activity) error {
 			return fmt.Errorf("failed to convert resource: %w", err)
 		}
 	}
-
 	return nil
 }
 

@@ -21,68 +21,69 @@ var (
 )
 
 type GrantRepository struct {
-	db *gorm.DB
+	store *Store
 }
 
-func NewGrantRepository(db *gorm.DB) *GrantRepository {
+func NewGrantRepository(db *Store) *GrantRepository {
 	return &GrantRepository{db}
 }
 
 func (r *GrantRepository) List(ctx context.Context, filter domain.ListGrantsFilter) ([]domain.Grant, error) {
-	db := r.db.WithContext(ctx)
-	if filter.AccountIDs != nil {
-		db = db.Where(`"grants"."account_id" IN ?`, filter.AccountIDs)
-	}
-	if filter.AccountTypes != nil {
-		db = db.Where(`"grants"."account_type" IN ?`, filter.AccountTypes)
-	}
-	if filter.ResourceIDs != nil {
-		db = db.Where(`"grants"."resource_id" IN ?`, filter.ResourceIDs)
-	}
-	if filter.Statuses != nil {
-		db = db.Where(`"grants"."status" IN ?`, filter.Statuses)
-	}
-	if filter.Roles != nil {
-		db = db.Where(`"grants"."role" IN ?`, filter.Roles)
-	}
-	if filter.Permissions != nil {
-		db = db.Where(`"grants"."permissions" @> ?`, pq.StringArray(filter.Permissions))
-	}
-	if filter.Owner != "" {
-		db = db.Where(`"grants"."owner" = ?`, filter.Owner)
-	} else if filter.CreatedBy != "" {
-		db = db.Where(`"grants"."owner" = ?`, filter.CreatedBy)
-	}
-	if filter.IsPermanent != nil {
-		db = db.Where(`"grants"."is_permanent" = ?`, *filter.IsPermanent)
-	}
-	if filter.OrderBy != nil {
-		db = addOrderByClause(db, filter.OrderBy, addOrderByClauseOptions{
-			statusColumnName: `"grants"."status"`,
-			statusesOrder:    GrantStatusDefaultSort,
-		})
-	}
-	if !filter.ExpirationDateLessThan.IsZero() {
-		db = db.Where(`"grants"."expiration_date" < ?`, filter.ExpirationDateLessThan)
-	}
-	if !filter.ExpirationDateGreaterThan.IsZero() {
-		db = db.Where(`"grants"."expiration_date" > ?`, filter.ExpirationDateGreaterThan)
-	}
-	if filter.ProviderTypes != nil {
-		db = db.Where(`"Resource"."provider_type" IN ?`, filter.ProviderTypes)
-	}
-	if filter.ProviderURNs != nil {
-		db = db.Where(`"Resource"."provider_urn" IN ?`, filter.ProviderURNs)
-	}
-	if filter.ResourceTypes != nil {
-		db = db.Where(`"Resource"."type" IN ?`, filter.ResourceTypes)
-	}
-	if filter.ResourceURNs != nil {
-		db = db.Where(`"Resource"."urn" IN ?`, filter.ResourceURNs)
-	}
-
 	var models []model.Grant
-	if err := db.Joins("Resource").Joins("Appeal").Find(&models).Error; err != nil {
+	err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		if filter.AccountIDs != nil {
+			tx = tx.Where(`"grants"."account_id" IN ?`, filter.AccountIDs)
+		}
+		if filter.AccountTypes != nil {
+			tx = tx.Where(`"grants"."account_type" IN ?`, filter.AccountTypes)
+		}
+		if filter.ResourceIDs != nil {
+			tx = tx.Where(`"grants"."resource_id" IN ?`, filter.ResourceIDs)
+		}
+		if filter.Statuses != nil {
+			tx = tx.Where(`"grants"."status" IN ?`, filter.Statuses)
+		}
+		if filter.Roles != nil {
+			tx = tx.Where(`"grants"."role" IN ?`, filter.Roles)
+		}
+		if filter.Permissions != nil {
+			tx = tx.Where(`"grants"."permissions" @> ?`, pq.StringArray(filter.Permissions))
+		}
+		if filter.Owner != "" {
+			tx = tx.Where(`"grants"."owner" = ?`, filter.Owner)
+		} else if filter.CreatedBy != "" {
+			tx = tx.Where(`"grants"."owner" = ?`, filter.CreatedBy)
+		}
+		if filter.IsPermanent != nil {
+			tx = tx.Where(`"grants"."is_permanent" = ?`, *filter.IsPermanent)
+		}
+		if filter.OrderBy != nil {
+			tx = addOrderByClause(tx, filter.OrderBy, addOrderByClauseOptions{
+				statusColumnName: `"grants"."status"`,
+				statusesOrder:    GrantStatusDefaultSort,
+			})
+		}
+		if !filter.ExpirationDateLessThan.IsZero() {
+			tx = tx.Where(`"grants"."expiration_date" < ?`, filter.ExpirationDateLessThan)
+		}
+		if !filter.ExpirationDateGreaterThan.IsZero() {
+			tx = tx.Where(`"grants"."expiration_date" > ?`, filter.ExpirationDateGreaterThan)
+		}
+		if filter.ProviderTypes != nil {
+			tx = tx.Where(`"Resource"."provider_type" IN ?`, filter.ProviderTypes)
+		}
+		if filter.ProviderURNs != nil {
+			tx = tx.Where(`"Resource"."provider_urn" IN ?`, filter.ProviderURNs)
+		}
+		if filter.ResourceTypes != nil {
+			tx = tx.Where(`"Resource"."type" IN ?`, filter.ResourceTypes)
+		}
+		if filter.ResourceURNs != nil {
+			tx = tx.Where(`"Resource"."urn" IN ?`, filter.ResourceURNs)
+		}
+		return tx.Joins("Resource").Joins("Appeal").Find(&models).Error
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -100,7 +101,9 @@ func (r *GrantRepository) List(ctx context.Context, filter domain.ListGrantsFilt
 
 func (r *GrantRepository) GetByID(ctx context.Context, id string) (*domain.Grant, error) {
 	m := new(model.Grant)
-	if err := r.db.WithContext(ctx).Joins("Resource").Joins("Appeal").First(&m, `"grants"."id" = ?`, id).Error; err != nil {
+	if err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		return tx.Joins("Resource").Joins("Appeal").First(&m, `"grants"."id" = ?`, id).Error
+	}); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, grant.ErrGrantNotFound
 		}
@@ -123,8 +126,9 @@ func (r *GrantRepository) Update(ctx context.Context, a *domain.Grant) error {
 	if err := m.FromDomain(*a); err != nil {
 		return fmt.Errorf("parsing grant payload: %w", err)
 	}
+	m.NamespaceID = namespaceFromContext(ctx)
 
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return r.store.Tx(ctx, func(tx *gorm.DB) error {
 		if err := tx.Model(m).Updates(*m).Error; err != nil {
 			return err
 		}
@@ -145,12 +149,13 @@ func (r *GrantRepository) BulkInsert(ctx context.Context, grants []*domain.Grant
 		if err := m.FromDomain(*g); err != nil {
 			return fmt.Errorf("serializing grant: %w", err)
 		}
+		m.NamespaceID = namespaceFromContext(ctx)
 		models = append(models, m)
 	}
 
 	if len(models) > 0 {
-		return r.db.Transaction(func(tx *gorm.DB) error {
-			if err := r.db.Create(models).Error; err != nil {
+		return r.store.Tx(ctx, func(tx *gorm.DB) error {
+			if err := tx.Create(models).Error; err != nil {
 				return err
 			}
 
@@ -176,10 +181,12 @@ func (r *GrantRepository) BulkUpsert(ctx context.Context, grants []*domain.Grant
 		if err := m.FromDomain(*g); err != nil {
 			return fmt.Errorf("serializing grant: %w", err)
 		}
+		m.NamespaceID = namespaceFromContext(ctx)
+		m.Resource.NamespaceID = m.NamespaceID
 		models = append(models, m)
 	}
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	return r.store.Tx(ctx, func(tx *gorm.DB) error {
 		// upsert resources separately to avoid resource upsertion duplicate issue
 		if err := upsertResources(tx, models); err != nil {
 			return fmt.Errorf("upserting resources: %w", err)

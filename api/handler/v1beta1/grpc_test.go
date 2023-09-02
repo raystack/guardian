@@ -13,14 +13,15 @@ type authEmailTestContextKey struct{}
 type GrpcHandlersSuite struct {
 	suite.Suite
 
-	resourceService *mocks.ResourceService
-	activityService *mocks.ActivityService
-	providerService *mocks.ProviderService
-	policyService   *mocks.PolicyService
-	appealService   *mocks.AppealService
-	approvalService *mocks.ApprovalService
-	grantService    *mocks.GrantService
-	grpcServer      *v1beta1.GRPCServer
+	resourceService  *mocks.ResourceService
+	activityService  *mocks.ActivityService
+	providerService  *mocks.ProviderService
+	policyService    *mocks.PolicyService
+	appealService    *mocks.AppealService
+	approvalService  *mocks.ApprovalService
+	grantService     *mocks.GrantService
+	namespaceService *mocks.NamespaceService
+	grpcServer       *v1beta1.GRPCServer
 }
 
 func TestGrpcHandler(t *testing.T) {
@@ -35,6 +36,7 @@ func (s *GrpcHandlersSuite) setup() {
 	s.appealService = new(mocks.AppealService)
 	s.approvalService = new(mocks.ApprovalService)
 	s.grantService = new(mocks.GrantService)
+	s.namespaceService = new(mocks.NamespaceService)
 	s.grpcServer = v1beta1.NewGRPCServer(
 		s.resourceService,
 		s.activityService,
@@ -43,6 +45,7 @@ func (s *GrpcHandlersSuite) setup() {
 		s.appealService,
 		s.approvalService,
 		s.grantService,
+		s.namespaceService,
 		v1beta1.NewAdapter(),
 		authEmailTestContextKey{},
 	)

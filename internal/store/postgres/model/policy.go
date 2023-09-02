@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/raystack/guardian/domain"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -11,8 +13,9 @@ import (
 
 // Policy is the database model for policy
 type Policy struct {
-	ID           string `gorm:"primaryKey"`
-	Version      uint   `gorm:"primaryKey"`
+	ID           string    `gorm:"primaryKey"`
+	NamespaceID  uuid.UUID `gorm:"type:uuid"`
+	Version      uint      `gorm:"primaryKey"`
 	Description  string
 	Steps        datatypes.JSON
 	AppealConfig datatypes.JSON

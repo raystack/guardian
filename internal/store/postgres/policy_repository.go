@@ -12,11 +12,11 @@ import (
 
 // PolicyRepository talks to the store to read or insert data
 type PolicyRepository struct {
-	db *gorm.DB
+	store *Store
 }
 
 // NewPolicyRepository returns repository struct
-func NewPolicyRepository(db *gorm.DB) *PolicyRepository {
+func NewPolicyRepository(db *Store) *PolicyRepository {
 	return &PolicyRepository{db}
 }
 
@@ -26,8 +26,9 @@ func (r *PolicyRepository) Create(ctx context.Context, p *domain.Policy) error {
 	if err := m.FromDomain(p); err != nil {
 		return fmt.Errorf("serializing policy: %w", err)
 	}
+	m.NamespaceID = namespaceFromContext(ctx)
 
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return r.store.Tx(ctx, func(tx *gorm.DB) error {
 		if result := tx.Create(m); result.Error != nil {
 			return result.Error
 		}
@@ -48,7 +49,9 @@ func (r *PolicyRepository) Find(ctx context.Context) ([]*domain.Policy, error) {
 	policies := []*domain.Policy{}
 
 	var models []*model.Policy
-	if err := r.db.WithContext(ctx).Find(&models).Error; err != nil {
+	if err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		return tx.Find(&models).Error
+	}); err != nil {
 		return nil, err
 	}
 	for _, m := range models {
@@ -75,7 +78,9 @@ func (r *PolicyRepository) GetOne(ctx context.Context, id string, version uint) 
 	}
 
 	conds := append([]interface{}{condition}, args...)
-	if err := r.db.WithContext(ctx).Order("version desc").First(m, conds...).Error; err != nil {
+	if err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		return tx.Order("version desc").First(m, conds...).Error
+	}); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, policy.ErrPolicyNotFound
 		}

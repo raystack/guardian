@@ -36,9 +36,9 @@ func (s *ProviderRepositoryTestSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	s.repository = postgres.NewProviderRepository(s.store.DB())
-	s.resourceRepository = postgres.NewResourceRepository(s.store.DB())
-	s.providerRepository = postgres.NewProviderRepository(s.store.DB())
+	s.repository = postgres.NewProviderRepository(s.store)
+	s.resourceRepository = postgres.NewResourceRepository(s.store)
+	s.providerRepository = postgres.NewProviderRepository(s.store)
 }
 
 func (s *ProviderRepositoryTestSuite) TearDownSuite() {

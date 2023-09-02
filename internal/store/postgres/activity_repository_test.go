@@ -42,9 +42,9 @@ func (s *ActivityRepositoryTestSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 	s.store = store
-	s.repository = postgres.NewActivityRepository(store.DB())
-	s.providerRepository = postgres.NewProviderRepository(store.DB())
-	s.resourceRepository = postgres.NewResourceRepository(store.DB())
+	s.repository = postgres.NewActivityRepository(store)
+	s.providerRepository = postgres.NewProviderRepository(store)
+	s.resourceRepository = postgres.NewResourceRepository(store)
 
 	s.T().Cleanup(func() {
 		db, err := s.store.DB().DB()
