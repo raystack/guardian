@@ -13,11 +13,11 @@ import (
 
 // ResourceRepository talks to the store/database to read/insert data
 type ResourceRepository struct {
-	db *gorm.DB
+	store *Store
 }
 
 // NewResourceRepository returns *Repository
-func NewResourceRepository(db *gorm.DB) *ResourceRepository {
+func NewResourceRepository(db *Store) *ResourceRepository {
 	return &ResourceRepository{db}
 }
 
@@ -27,41 +27,42 @@ func (r *ResourceRepository) Find(ctx context.Context, filter domain.ListResourc
 		return nil, err
 	}
 
-	db := r.db.WithContext(ctx)
-	if filter.IDs != nil {
-		db = db.Where(filter.IDs)
-	}
-	if !filter.IsDeleted {
-		db = db.Where(`"is_deleted" = ?`, filter.IsDeleted)
-	}
-	if filter.ResourceType != "" {
-		db = db.Where(`"type" = ?`, filter.ResourceType)
-	}
-	if filter.Name != "" {
-		db = db.Where(`"name" = ?`, filter.Name)
-	}
-	if filter.ProviderType != "" {
-		db = db.Where(`"provider_type" = ?`, filter.ProviderType)
-	}
-	if filter.ProviderURN != "" {
-		db = db.Where(`"provider_urn" = ?`, filter.ProviderURN)
-	}
-	if filter.ResourceURN != "" {
-		db = db.Where(`"urn" = ?`, filter.ResourceURN)
-	}
-	if filter.ResourceURNs != nil {
-		db = db.Where(`"urn" IN ?`, filter.ResourceURNs)
-	}
-	if filter.ResourceTypes != nil {
-		db = db.Where(`"type" IN ?`, filter.ResourceTypes)
-	}
-	for path, v := range filter.Details {
-		pathArr := "{" + strings.Join(strings.Split(path, "."), ",") + "}"
-		db = db.Where(`"details" #>> ? = ?`, pathArr, v)
-	}
-
 	var models []*model.Resource
-	if err := db.Find(&models).Error; err != nil {
+	err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		if filter.IDs != nil {
+			tx = tx.Where(filter.IDs)
+		}
+		if !filter.IsDeleted {
+			tx = tx.Where(`"is_deleted" = ?`, filter.IsDeleted)
+		}
+		if filter.ResourceType != "" {
+			tx = tx.Where(`"type" = ?`, filter.ResourceType)
+		}
+		if filter.Name != "" {
+			tx = tx.Where(`"name" = ?`, filter.Name)
+		}
+		if filter.ProviderType != "" {
+			tx = tx.Where(`"provider_type" = ?`, filter.ProviderType)
+		}
+		if filter.ProviderURN != "" {
+			tx = tx.Where(`"provider_urn" = ?`, filter.ProviderURN)
+		}
+		if filter.ResourceURN != "" {
+			tx = tx.Where(`"urn" = ?`, filter.ResourceURN)
+		}
+		if filter.ResourceURNs != nil {
+			tx = tx.Where(`"urn" IN ?`, filter.ResourceURNs)
+		}
+		if filter.ResourceTypes != nil {
+			tx = tx.Where(`"type" IN ?`, filter.ResourceTypes)
+		}
+		for path, v := range filter.Details {
+			pathArr := "{" + strings.Join(strings.Split(path, "."), ",") + "}"
+			tx = tx.Where(`"details" #>> ? = ?`, pathArr, v)
+		}
+		return tx.Find(&models).Error
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -85,7 +86,9 @@ func (r *ResourceRepository) GetOne(ctx context.Context, id string) (*domain.Res
 	}
 
 	var m model.Resource
-	if err := r.db.WithContext(ctx).Where("id = ?", id).Take(&m).Error; err != nil {
+	if err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		return tx.Where("id = ?", id).Take(&m).Error
+	}); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, resource.ErrRecordNotFound
 		}
@@ -108,14 +111,14 @@ func (r *ResourceRepository) BulkUpsert(ctx context.Context, resources []*domain
 		if err := m.FromDomain(r); err != nil {
 			return err
 		}
-
+		m.NamespaceID = namespaceFromContext(ctx)
 		models = append(models, m)
 	}
 
 	if len(models) > 0 {
-		return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		return r.store.Tx(ctx, func(tx *gorm.DB) error {
 			// upsert clause is moved to model.Resource.BeforeCreate() (gorm's hook) to apply the same for associations (model.Resource.Children)
-			if err := r.db.Create(models).Error; err != nil {
+			if err := tx.Create(models).Error; err != nil {
 				return err
 			}
 
@@ -144,8 +147,9 @@ func (r *ResourceRepository) Update(ctx context.Context, res *domain.Resource) e
 	if err := m.FromDomain(res); err != nil {
 		return err
 	}
+	m.NamespaceID = namespaceFromContext(ctx)
 
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return r.store.Tx(ctx, func(tx *gorm.DB) error {
 		if err := tx.Model(m).Where("id = ?", m.ID).Updates(*m).Error; err != nil {
 			return err
 		}
@@ -165,8 +169,11 @@ func (r *ResourceRepository) Delete(ctx context.Context, id string) error {
 	if id == "" {
 		return resource.ErrEmptyIDParam
 	}
-
-	result := r.db.WithContext(ctx).Where("id = ?", id).Delete(&model.Resource{})
+	var result *gorm.DB
+	_ = r.store.Tx(ctx, func(tx *gorm.DB) error {
+		result = tx.Where("id = ?", id).Delete(&model.Resource{})
+		return nil
+	})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -181,8 +188,11 @@ func (r *ResourceRepository) BatchDelete(ctx context.Context, ids []string) erro
 	if ids == nil {
 		return resource.ErrEmptyIDParam
 	}
-
-	result := r.db.WithContext(ctx).Delete(&model.Resource{}, ids)
+	var result *gorm.DB
+	_ = r.store.Tx(ctx, func(tx *gorm.DB) error {
+		result = tx.Delete(&model.Resource{}, ids)
+		return nil
+	})
 	if result.Error != nil {
 		return result.Error
 	}

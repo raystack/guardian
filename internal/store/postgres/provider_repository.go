@@ -12,11 +12,11 @@ import (
 
 // ProviderRepository talks to the store to read or insert data
 type ProviderRepository struct {
-	db *gorm.DB
+	store *Store
 }
 
 // NewProviderRepository returns repository struct
-func NewProviderRepository(db *gorm.DB) *ProviderRepository {
+func NewProviderRepository(db *Store) *ProviderRepository {
 	return &ProviderRepository{db}
 }
 
@@ -26,8 +26,9 @@ func (r *ProviderRepository) Create(ctx context.Context, p *domain.Provider) err
 	if err := m.FromDomain(p); err != nil {
 		return err
 	}
+	m.NamespaceID = namespaceFromContext(ctx)
 
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return r.store.Tx(ctx, func(tx *gorm.DB) error {
 		if result := tx.Create(m); result.Error != nil {
 			return result.Error
 		}
@@ -48,7 +49,9 @@ func (r *ProviderRepository) Find(ctx context.Context) ([]*domain.Provider, erro
 	providers := []*domain.Provider{}
 
 	var models []*model.Provider
-	if err := r.db.WithContext(ctx).Find(&models).Error; err != nil {
+	if err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		return tx.Find(&models).Error
+	}); err != nil {
 		return nil, err
 	}
 	for _, m := range models {
@@ -70,7 +73,9 @@ func (r *ProviderRepository) GetByID(ctx context.Context, id string) (*domain.Pr
 	}
 
 	var m model.Provider
-	if err := r.db.WithContext(ctx).First(&m, "id = ?", id).Error; err != nil {
+	if err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		return tx.First(&m, "id = ?", id).Error
+	}); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, provider.ErrRecordNotFound
 		}
@@ -91,9 +96,9 @@ func (r *ProviderRepository) GetTypes(ctx context.Context) ([]domain.ProviderTyp
 		ResourceType string
 	}
 
-	r.db.WithContext(ctx).
-		Raw("select distinct provider_type, type as resource_type from resources").Scan(&results)
-
+	_ = r.store.Tx(ctx, func(tx *gorm.DB) error {
+		return tx.Raw("select distinct provider_type, type as resource_type from resources").Scan(&results).Error
+	})
 	if len(results) == 0 {
 		return nil, errors.New("no provider types found")
 	}
@@ -128,8 +133,10 @@ func (r *ProviderRepository) GetOne(ctx context.Context, pType, urn string) (*do
 	}
 
 	m := &model.Provider{}
-	db := r.db.WithContext(ctx).Where("type = ?", pType).Where("urn = ?", urn)
-	if err := db.Take(m).Error; err != nil {
+	err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		return tx.Where("type = ?", pType).Where("urn = ?", urn).Take(m).Error
+	})
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, provider.ErrRecordNotFound
 		}
@@ -154,8 +161,9 @@ func (r *ProviderRepository) Update(ctx context.Context, p *domain.Provider) err
 	if err := m.FromDomain(p); err != nil {
 		return err
 	}
+	m.NamespaceID = namespaceFromContext(ctx)
 
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return r.store.Tx(ctx, func(tx *gorm.DB) error {
 		if err := tx.Model(m).Updates(*m).Error; err != nil {
 			return err
 		}
@@ -176,8 +184,11 @@ func (r *ProviderRepository) Delete(ctx context.Context, id string) error {
 	if id == "" {
 		return provider.ErrEmptyIDParam
 	}
-
-	result := r.db.WithContext(ctx).Where("id = ?", id).Delete(&model.Provider{})
+	var result *gorm.DB
+	r.store.Tx(ctx, func(tx *gorm.DB) error {
+		result = tx.Where("id = ?", id).Delete(&model.Provider{})
+		return nil
+	})
 	if result.Error != nil {
 		return result.Error
 	}

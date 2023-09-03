@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 
+	"github.com/raystack/guardian/core/namespace"
+
 	"github.com/raystack/guardian/plugins/providers/dataplex"
 
 	"github.com/go-playground/validator/v10"
@@ -35,13 +37,14 @@ import (
 )
 
 type Services struct {
-	ResourceService *resource.Service
-	ActivityService *activity.Service
-	ProviderService *provider.Service
-	PolicyService   *policy.Service
-	ApprovalService *approval.Service
-	AppealService   *appeal.Service
-	GrantService    *grant.Service
+	ResourceService  *resource.Service
+	ActivityService  *activity.Service
+	ProviderService  *provider.Service
+	PolicyService    *policy.Service
+	ApprovalService  *approval.Service
+	AppealService    *appeal.Service
+	GrantService     *grant.Service
+	NamespaceService *namespace.Service
 }
 
 type ServiceDeps struct {
@@ -94,13 +97,14 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		actorExtractor,
 	)
 
-	activityRepository := postgres.NewActivityRepository(store.DB())
-	providerRepository := postgres.NewProviderRepository(store.DB())
-	policyRepository := postgres.NewPolicyRepository(store.DB())
-	resourceRepository := postgres.NewResourceRepository(store.DB())
-	appealRepository := postgres.NewAppealRepository(store.DB())
-	approvalRepository := postgres.NewApprovalRepository(store.DB())
-	grantRepository := postgres.NewGrantRepository(store.DB())
+	activityRepository := postgres.NewActivityRepository(store)
+	providerRepository := postgres.NewProviderRepository(store)
+	policyRepository := postgres.NewPolicyRepository(store)
+	resourceRepository := postgres.NewResourceRepository(store)
+	appealRepository := postgres.NewAppealRepository(store)
+	approvalRepository := postgres.NewApprovalRepository(store)
+	grantRepository := postgres.NewGrantRepository(store)
+	namespaceRepository := postgres.NewNamespaceRepository(store)
 
 	providerClients := []provider.Client{
 		bigquery.NewProvider(domain.ProviderTypeBigQuery, deps.Crypto, deps.Logger),
@@ -154,6 +158,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		Validator:       deps.Validator,
 		AuditLogger:     auditLogger,
 	})
+	namespaceService := namespace.NewService(namespaceRepository)
 	approvalService := approval.NewService(approval.ServiceDeps{
 		Repository:    approvalRepository,
 		PolicyService: policyService,
@@ -180,6 +185,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		approvalService,
 		appealService,
 		grantService,
+		namespaceService,
 	}, nil
 }
 

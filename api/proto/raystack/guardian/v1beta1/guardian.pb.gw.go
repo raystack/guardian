@@ -1995,6 +1995,178 @@ func local_request_GuardianService_ImportGrantsFromProvider_0(ctx context.Contex
 
 }
 
+func request_GuardianService_CreateNamespace_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CreateNamespaceRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.CreateNamespace(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_GuardianService_CreateNamespace_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CreateNamespaceRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.CreateNamespace(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_GuardianService_GetNamespace_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetNamespaceRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+
+	protoReq.Id, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+
+	msg, err := client.GetNamespace(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_GuardianService_GetNamespace_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetNamespaceRequest
+	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+
+	protoReq.Id, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+
+	msg, err := server.GetNamespace(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_GuardianService_ListNamespaces_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListNamespacesRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.ListNamespaces(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_GuardianService_ListNamespaces_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListNamespacesRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := server.ListNamespaces(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_GuardianService_UpdateNamespace_0(ctx context.Context, marshaler runtime.Marshaler, client GuardianServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq UpdateNamespaceRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+
+	protoReq.Id, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+
+	msg, err := client.UpdateNamespace(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_GuardianService_UpdateNamespace_0(ctx context.Context, marshaler runtime.Marshaler, server GuardianServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq UpdateNamespaceRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+
+	protoReq.Id, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	}
+
+	msg, err := server.UpdateNamespace(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 // RegisterGuardianServiceHandlerServer registers the http handlers for service GuardianService to "mux".
 // UnaryRPC     :call GuardianServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -2007,13 +2179,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListProviders", runtime.WithHTTPPathPattern("/v1beta1/providers"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListProviders")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListProviders_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListProviders_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2031,13 +2202,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_GetProvider_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_GetProvider_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2055,13 +2225,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetProviderTypes", runtime.WithHTTPPathPattern("/v1beta1/providers/types"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetProviderTypes")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_GetProviderTypes_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_GetProviderTypes_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2079,13 +2248,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreateProvider", runtime.WithHTTPPathPattern("/v1beta1/providers"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreateProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_CreateProvider_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_CreateProvider_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2103,13 +2271,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_UpdateProvider_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_UpdateProvider_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2127,13 +2294,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{config.type}/{config.urn}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_UpdateProvider_1(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_UpdateProvider_1(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2151,13 +2317,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_DeleteProvider_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_DeleteProvider_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2175,13 +2340,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListRoles", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}/resources/{resource_type}/roles"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListRoles")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListRoles_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListRoles_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2199,13 +2363,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ImportActivities", runtime.WithHTTPPathPattern("/v1beta1/activities/import"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ImportActivities")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ImportActivities_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ImportActivities_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2223,13 +2386,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetActivity", runtime.WithHTTPPathPattern("/v1beta1/activities/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetActivity")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_GetActivity_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_GetActivity_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2247,13 +2409,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListActivities", runtime.WithHTTPPathPattern("/v1beta1/activities"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListActivities")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListActivities_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListActivities_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2271,13 +2432,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListPolicies", runtime.WithHTTPPathPattern("/v1beta1/policies"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListPolicies")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListPolicies_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListPolicies_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2295,13 +2455,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetPolicy", runtime.WithHTTPPathPattern("/v1beta1/policies/{id}/versions/{version}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetPolicy")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_GetPolicy_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_GetPolicy_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2319,13 +2478,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreatePolicy", runtime.WithHTTPPathPattern("/v1beta1/policies"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreatePolicy")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_CreatePolicy_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_CreatePolicy_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2343,13 +2501,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdatePolicy", runtime.WithHTTPPathPattern("/v1beta1/policies/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdatePolicy")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_UpdatePolicy_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_UpdatePolicy_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2367,13 +2524,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetPolicyPreferences", runtime.WithHTTPPathPattern("/v1beta1/policies/{id}/versions/{version}/preferences"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetPolicyPreferences")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_GetPolicyPreferences_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_GetPolicyPreferences_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2391,13 +2547,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListResources", runtime.WithHTTPPathPattern("/v1beta1/resources"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListResources")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListResources_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListResources_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2415,13 +2570,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetResource", runtime.WithHTTPPathPattern("/v1beta1/resources/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetResource")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_GetResource_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_GetResource_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2439,13 +2593,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateResource", runtime.WithHTTPPathPattern("/v1beta1/resources/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateResource")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_UpdateResource_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_UpdateResource_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2463,13 +2616,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteResource", runtime.WithHTTPPathPattern("/v1beta1/resources/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteResource")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_DeleteResource_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_DeleteResource_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2487,13 +2639,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserAppeals", runtime.WithHTTPPathPattern("/v1beta1/me/appeals"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserAppeals")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListUserAppeals_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListUserAppeals_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2511,13 +2662,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListAppeals", runtime.WithHTTPPathPattern("/v1beta1/appeals"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListAppeals")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListAppeals_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListAppeals_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2535,13 +2685,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetAppeal")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_GetAppeal_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_GetAppeal_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2559,13 +2708,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CancelAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}/cancel"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CancelAppeal")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_CancelAppeal_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_CancelAppeal_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2583,13 +2731,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreateAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreateAppeal")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_CreateAppeal_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_CreateAppeal_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2607,13 +2754,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserApprovals", runtime.WithHTTPPathPattern("/v1beta1/me/approvals"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserApprovals")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListUserApprovals_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListUserApprovals_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2631,13 +2777,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListApprovals", runtime.WithHTTPPathPattern("/v1beta1/approvals"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListApprovals")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListApprovals_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListApprovals_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2655,13 +2800,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateApproval", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}/approvals/{approval_name}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateApproval")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_UpdateApproval_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_UpdateApproval_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2679,13 +2823,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/AddApprover", runtime.WithHTTPPathPattern("/v1beta1/appeals/{appeal_id}/approvals/{approval_id}/approvers"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/AddApprover")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_AddApprover_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_AddApprover_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2703,13 +2846,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteApprover", runtime.WithHTTPPathPattern("/v1beta1/appeals/{appeal_id}/approvals/{approval_id}/approvers/{email}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteApprover")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_DeleteApprover_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_DeleteApprover_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2727,13 +2869,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListGrants", runtime.WithHTTPPathPattern("/v1beta1/grants"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListGrants")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListGrants_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListGrants_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2751,13 +2892,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserGrants", runtime.WithHTTPPathPattern("/v1beta1/me/grants"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserGrants")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ListUserGrants_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ListUserGrants_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2775,13 +2915,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetGrant", runtime.WithHTTPPathPattern("/v1beta1/grants/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetGrant")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_GetGrant_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_GetGrant_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2799,13 +2938,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateGrant", runtime.WithHTTPPathPattern("/v1beta1/grants/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateGrant")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_UpdateGrant_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_UpdateGrant_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2823,13 +2961,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/RevokeGrant", runtime.WithHTTPPathPattern("/v1beta1/grants/{id}/revoke"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/RevokeGrant")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_RevokeGrant_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_RevokeGrant_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2847,13 +2984,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/RevokeGrants", runtime.WithHTTPPathPattern("/v1beta1/grants/revoke"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/RevokeGrants")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_RevokeGrants_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_RevokeGrants_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2871,13 +3007,12 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ImportGrantsFromProvider", runtime.WithHTTPPathPattern("/v1beta1/grants/import"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ImportGrantsFromProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GuardianService_ImportGrantsFromProvider_0(ctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GuardianService_ImportGrantsFromProvider_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -2886,6 +3021,98 @@ func RegisterGuardianServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_GuardianService_ImportGrantsFromProvider_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_GuardianService_CreateNamespace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreateNamespace")
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_GuardianService_CreateNamespace_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_CreateNamespace_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_GuardianService_GetNamespace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetNamespace")
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_GuardianService_GetNamespace_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_GetNamespace_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_GuardianService_ListNamespaces_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListNamespaces")
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_GuardianService_ListNamespaces_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_ListNamespaces_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("PUT", pattern_GuardianService_UpdateNamespace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateNamespace")
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_GuardianService_UpdateNamespace_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_UpdateNamespace_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2934,13 +3161,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListProviders", runtime.WithHTTPPathPattern("/v1beta1/providers"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListProviders")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListProviders_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListProviders_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -2955,13 +3181,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_GetProvider_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_GetProvider_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -2976,13 +3201,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetProviderTypes", runtime.WithHTTPPathPattern("/v1beta1/providers/types"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetProviderTypes")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_GetProviderTypes_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_GetProviderTypes_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -2997,13 +3221,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreateProvider", runtime.WithHTTPPathPattern("/v1beta1/providers"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreateProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_CreateProvider_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_CreateProvider_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3018,13 +3241,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_UpdateProvider_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_UpdateProvider_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3039,13 +3261,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{config.type}/{config.urn}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_UpdateProvider_1(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_UpdateProvider_1(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3060,13 +3281,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteProvider", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_DeleteProvider_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_DeleteProvider_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3081,13 +3301,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListRoles", runtime.WithHTTPPathPattern("/v1beta1/providers/{id}/resources/{resource_type}/roles"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListRoles")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListRoles_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListRoles_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3102,13 +3321,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ImportActivities", runtime.WithHTTPPathPattern("/v1beta1/activities/import"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ImportActivities")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ImportActivities_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ImportActivities_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3123,13 +3341,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetActivity", runtime.WithHTTPPathPattern("/v1beta1/activities/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetActivity")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_GetActivity_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_GetActivity_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3144,13 +3361,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListActivities", runtime.WithHTTPPathPattern("/v1beta1/activities"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListActivities")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListActivities_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListActivities_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3165,13 +3381,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListPolicies", runtime.WithHTTPPathPattern("/v1beta1/policies"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListPolicies")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListPolicies_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListPolicies_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3186,13 +3401,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetPolicy", runtime.WithHTTPPathPattern("/v1beta1/policies/{id}/versions/{version}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetPolicy")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_GetPolicy_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_GetPolicy_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3207,13 +3421,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreatePolicy", runtime.WithHTTPPathPattern("/v1beta1/policies"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreatePolicy")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_CreatePolicy_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_CreatePolicy_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3228,13 +3441,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdatePolicy", runtime.WithHTTPPathPattern("/v1beta1/policies/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdatePolicy")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_UpdatePolicy_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_UpdatePolicy_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3249,13 +3461,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetPolicyPreferences", runtime.WithHTTPPathPattern("/v1beta1/policies/{id}/versions/{version}/preferences"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetPolicyPreferences")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_GetPolicyPreferences_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_GetPolicyPreferences_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3270,13 +3481,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListResources", runtime.WithHTTPPathPattern("/v1beta1/resources"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListResources")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListResources_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListResources_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3291,13 +3501,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetResource", runtime.WithHTTPPathPattern("/v1beta1/resources/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetResource")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_GetResource_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_GetResource_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3312,13 +3521,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateResource", runtime.WithHTTPPathPattern("/v1beta1/resources/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateResource")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_UpdateResource_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_UpdateResource_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3333,13 +3541,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteResource", runtime.WithHTTPPathPattern("/v1beta1/resources/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteResource")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_DeleteResource_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_DeleteResource_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3354,13 +3561,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserAppeals", runtime.WithHTTPPathPattern("/v1beta1/me/appeals"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserAppeals")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListUserAppeals_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListUserAppeals_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3375,13 +3581,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListAppeals", runtime.WithHTTPPathPattern("/v1beta1/appeals"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListAppeals")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListAppeals_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListAppeals_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3396,13 +3601,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetAppeal")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_GetAppeal_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_GetAppeal_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3417,13 +3621,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CancelAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}/cancel"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CancelAppeal")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_CancelAppeal_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_CancelAppeal_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3438,13 +3641,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreateAppeal", runtime.WithHTTPPathPattern("/v1beta1/appeals"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreateAppeal")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_CreateAppeal_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_CreateAppeal_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3459,13 +3661,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserApprovals", runtime.WithHTTPPathPattern("/v1beta1/me/approvals"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserApprovals")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListUserApprovals_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListUserApprovals_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3480,13 +3681,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListApprovals", runtime.WithHTTPPathPattern("/v1beta1/approvals"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListApprovals")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListApprovals_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListApprovals_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3501,13 +3701,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateApproval", runtime.WithHTTPPathPattern("/v1beta1/appeals/{id}/approvals/{approval_name}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateApproval")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_UpdateApproval_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_UpdateApproval_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3522,13 +3721,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/AddApprover", runtime.WithHTTPPathPattern("/v1beta1/appeals/{appeal_id}/approvals/{approval_id}/approvers"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/AddApprover")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_AddApprover_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_AddApprover_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3543,13 +3741,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteApprover", runtime.WithHTTPPathPattern("/v1beta1/appeals/{appeal_id}/approvals/{approval_id}/approvers/{email}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/DeleteApprover")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_DeleteApprover_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_DeleteApprover_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3564,13 +3761,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListGrants", runtime.WithHTTPPathPattern("/v1beta1/grants"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListGrants")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListGrants_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListGrants_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3585,13 +3781,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserGrants", runtime.WithHTTPPathPattern("/v1beta1/me/grants"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListUserGrants")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ListUserGrants_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ListUserGrants_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3606,13 +3801,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetGrant", runtime.WithHTTPPathPattern("/v1beta1/grants/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetGrant")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_GetGrant_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_GetGrant_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3627,13 +3821,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateGrant", runtime.WithHTTPPathPattern("/v1beta1/grants/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateGrant")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_UpdateGrant_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_UpdateGrant_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3648,13 +3841,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/RevokeGrant", runtime.WithHTTPPathPattern("/v1beta1/grants/{id}/revoke"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/RevokeGrant")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_RevokeGrant_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_RevokeGrant_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3669,13 +3861,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/RevokeGrants", runtime.WithHTTPPathPattern("/v1beta1/grants/revoke"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/RevokeGrants")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_RevokeGrants_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_RevokeGrants_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3690,13 +3881,12 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ImportGrantsFromProvider", runtime.WithHTTPPathPattern("/v1beta1/grants/import"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ImportGrantsFromProvider")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GuardianService_ImportGrantsFromProvider_0(ctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GuardianService_ImportGrantsFromProvider_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -3704,6 +3894,86 @@ func RegisterGuardianServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		}
 
 		forward_GuardianService_ImportGrantsFromProvider_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_GuardianService_CreateNamespace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/CreateNamespace")
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_GuardianService_CreateNamespace_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_CreateNamespace_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_GuardianService_GetNamespace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/GetNamespace")
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_GuardianService_GetNamespace_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_GetNamespace_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_GuardianService_ListNamespaces_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/ListNamespaces")
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_GuardianService_ListNamespaces_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_ListNamespaces_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("PUT", pattern_GuardianService_UpdateNamespace_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/raystack.guardian.v1beta1.GuardianService/UpdateNamespace")
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_GuardianService_UpdateNamespace_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GuardianService_UpdateNamespace_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -3784,6 +4054,14 @@ var (
 	pattern_GuardianService_RevokeGrants_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1beta1", "grants", "revoke"}, ""))
 
 	pattern_GuardianService_ImportGrantsFromProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1beta1", "grants", "import"}, ""))
+
+	pattern_GuardianService_CreateNamespace_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "namespaces"}, ""))
+
+	pattern_GuardianService_GetNamespace_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1beta1", "namespaces", "id"}, ""))
+
+	pattern_GuardianService_ListNamespaces_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1beta1", "namespaces"}, ""))
+
+	pattern_GuardianService_UpdateNamespace_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1beta1", "namespaces", "id"}, ""))
 )
 
 var (
@@ -3860,4 +4138,12 @@ var (
 	forward_GuardianService_RevokeGrants_0 = runtime.ForwardResponseMessage
 
 	forward_GuardianService_ImportGrantsFromProvider_0 = runtime.ForwardResponseMessage
+
+	forward_GuardianService_CreateNamespace_0 = runtime.ForwardResponseMessage
+
+	forward_GuardianService_GetNamespace_0 = runtime.ForwardResponseMessage
+
+	forward_GuardianService_ListNamespaces_0 = runtime.ForwardResponseMessage
+
+	forward_GuardianService_UpdateNamespace_0 = runtime.ForwardResponseMessage
 )

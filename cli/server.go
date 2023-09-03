@@ -57,7 +57,7 @@ func migrateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return server.Migrate(&cfg)
+			return server.Migrate(cmd.Context(), &cfg)
 		},
 	}
 

@@ -34,13 +34,13 @@ func (s *ResourceRepositoryTestSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	s.repository = postgres.NewResourceRepository(s.store.DB())
+	s.repository = postgres.NewResourceRepository(s.store)
 
 	s.dummyProvider = &domain.Provider{
 		Type: "provider_test",
 		URN:  "provider_urn_test",
 	}
-	providerRepository := postgres.NewProviderRepository(s.store.DB())
+	providerRepository := postgres.NewProviderRepository(s.store)
 	err = providerRepository.Create(context.Background(), s.dummyProvider)
 	s.Require().NoError(err)
 }

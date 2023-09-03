@@ -108,15 +108,24 @@ type grantService interface {
 	ImportFromProvider(ctx context.Context, criteria grant.ImportFromProviderCriteria) ([]*domain.Grant, error)
 }
 
+//go:generate mockery --name=namespaceService --exported --with-expecter
+type namespaceService interface {
+	Get(ctx context.Context, id string) (*domain.Namespace, error)
+	Create(ctx context.Context, namespace *domain.Namespace) error
+	Update(ctx context.Context, namespace *domain.Namespace) error
+	List(ctx context.Context, filter domain.NamespaceFilter) ([]*domain.Namespace, error)
+}
+
 type GRPCServer struct {
-	resourceService resourceService
-	activityService activityService
-	providerService providerService
-	policyService   policyService
-	appealService   appealService
-	approvalService approvalService
-	grantService    grantService
-	adapter         ProtoAdapter
+	resourceService  resourceService
+	activityService  activityService
+	providerService  providerService
+	policyService    policyService
+	appealService    appealService
+	approvalService  approvalService
+	grantService     grantService
+	namespaceService namespaceService
+	adapter          ProtoAdapter
 
 	authenticatedUserContextKey interface{}
 
@@ -131,6 +140,7 @@ func NewGRPCServer(
 	appealService appealService,
 	approvalService approvalService,
 	grantService grantService,
+	namespaceService namespaceService,
 	adapter ProtoAdapter,
 	authenticatedUserContextKey interface{},
 ) *GRPCServer {
@@ -142,6 +152,7 @@ func NewGRPCServer(
 		appealService:               appealService,
 		approvalService:             approvalService,
 		grantService:                grantService,
+		namespaceService:            namespaceService,
 		adapter:                     adapter,
 		authenticatedUserContextKey: authenticatedUserContextKey,
 	}

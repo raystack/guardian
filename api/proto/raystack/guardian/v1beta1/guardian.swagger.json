@@ -326,12 +326,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "email": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/v1beta1AddApproverRequest"
             }
           }
         ],
@@ -443,7 +438,7 @@
             "type": "string"
           },
           {
-            "name": "action",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -823,12 +818,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "owner": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/v1beta1UpdateGrantRequest"
             }
           }
         ],
@@ -866,12 +856,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "reason": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/v1beta1RevokeGrantRequest"
             }
           }
         ],
@@ -1168,6 +1153,125 @@
         ]
       }
     },
+    "/v1beta1/namespaces": {
+      "get": {
+        "operationId": "GuardianService_ListNamespaces",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListNamespacesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GuardianService"
+        ]
+      },
+      "post": {
+        "summary": "Namespace contains information about a tenant",
+        "operationId": "GuardianService_CreateNamespace",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1CreateNamespaceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1beta1CreateNamespaceRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
+    "/v1beta1/namespaces/{id}": {
+      "get": {
+        "operationId": "GuardianService_GetNamespace",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1GetNamespaceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      },
+      "put": {
+        "operationId": "GuardianService_UpdateNamespace",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1UpdateNamespaceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1beta1UpdateNamespaceRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
     "/v1beta1/policies": {
       "get": {
         "operationId": "GuardianService_ListPolicies",
@@ -1207,7 +1311,7 @@
         },
         "parameters": [
           {
-            "name": "policy",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1251,7 +1355,7 @@
             "type": "string"
           },
           {
-            "name": "policy",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1383,7 +1487,7 @@
         },
         "parameters": [
           {
-            "name": "config",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1455,43 +1559,11 @@
             "type": "string"
           },
           {
-            "name": "config",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "labels": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
-                },
-                "credentials": {
-                  "type": "object"
-                },
-                "appeal": {
-                  "$ref": "#/definitions/ProviderConfigAppealConfig"
-                },
-                "resources": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/ProviderConfigResourceConfig"
-                  }
-                },
-                "allowedAccountTypes": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "parameters": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/ProviderConfigProviderParameter"
-                  }
-                }
-              }
+              "$ref": "#/definitions/v1beta1ProviderConfig"
             }
           },
           {
@@ -1593,7 +1665,7 @@
             "type": "string"
           },
           {
-            "name": "config",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1799,7 +1871,7 @@
             "type": "string"
           },
           {
-            "name": "resource",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -2094,11 +2166,14 @@
     "protobufAny": {
       "type": "object",
       "properties": {
-        "@type": {
+        "typeUrl": {
           "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
         }
-      },
-      "additionalProperties": {}
+      }
     },
     "protobufNullValue": {
       "type": "string",
@@ -2123,6 +2198,20 @@
           "items": {
             "$ref": "#/definitions/protobufAny"
           }
+        }
+      }
+    },
+    "v1beta1AddApproverRequest": {
+      "type": "object",
+      "properties": {
+        "appealId": {
+          "type": "string"
+        },
+        "approvalId": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
         }
       }
     },
@@ -2339,6 +2428,17 @@
         }
       }
     },
+    "v1beta1CreateNamespaceRequest": {
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "$ref": "#/definitions/v1beta1Namespace"
+        }
+      }
+    },
+    "v1beta1CreateNamespaceResponse": {
+      "type": "object"
+    },
     "v1beta1CreatePolicyResponse": {
       "type": "object",
       "properties": {
@@ -2390,6 +2490,14 @@
       "properties": {
         "grant": {
           "$ref": "#/definitions/v1beta1Grant"
+        }
+      }
+    },
+    "v1beta1GetNamespaceResponse": {
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "$ref": "#/definitions/v1beta1Namespace"
         }
       }
     },
@@ -2631,6 +2739,17 @@
         }
       }
     },
+    "v1beta1ListNamespacesResponse": {
+      "type": "object",
+      "properties": {
+        "namespaces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1beta1Namespace"
+          }
+        }
+      }
+    },
     "v1beta1ListPoliciesResponse": {
       "type": "object",
       "properties": {
@@ -2705,6 +2824,31 @@
           "items": {
             "$ref": "#/definitions/v1beta1Grant"
           }
+        }
+      }
+    },
+    "v1beta1Namespace": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -2933,6 +3077,17 @@
         }
       }
     },
+    "v1beta1RevokeGrantRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
     "v1beta1RevokeGrantResponse": {
       "type": "object",
       "properties": {
@@ -3018,6 +3173,17 @@
         }
       }
     },
+    "v1beta1UpdateGrantRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        }
+      }
+    },
     "v1beta1UpdateGrantResponse": {
       "type": "object",
       "properties": {
@@ -3025,6 +3191,20 @@
           "$ref": "#/definitions/v1beta1Grant"
         }
       }
+    },
+    "v1beta1UpdateNamespaceRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "namespace": {
+          "$ref": "#/definitions/v1beta1Namespace"
+        }
+      }
+    },
+    "v1beta1UpdateNamespaceResponse": {
+      "type": "object"
     },
     "v1beta1UpdatePolicyResponse": {
       "type": "object",

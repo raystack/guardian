@@ -15,11 +15,12 @@ import (
 // Resource is the database model for resource
 type Resource struct {
 	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	NamespaceID  uuid.UUID `gorm:"type:uuid"`
 	ParentID     *string   `gorm:"type:uuid"`
-	ProviderType string    `gorm:"uniqueIndex:resource_index"`
-	ProviderURN  string    `gorm:"uniqueIndex:resource_index"`
-	Type         string    `gorm:"uniqueIndex:resource_index"`
-	URN          string    `gorm:"uniqueIndex:resource_index"`
+	ProviderType string    `gorm:"uniqueIndex:resources_provider_type_provider_urn_type_urn"`
+	ProviderURN  string    `gorm:"uniqueIndex:resources_provider_type_provider_urn_type_urn"`
+	Type         string    `gorm:"uniqueIndex:resources_provider_type_provider_urn_type_urn"`
+	URN          string    `gorm:"uniqueIndex:resources_provider_type_provider_urn_type_urn"`
 	Name         string
 	Details      datatypes.JSON
 	Labels       datatypes.JSON
@@ -41,6 +42,7 @@ func (Resource) TableName() string {
 func (r *Resource) BeforeCreate(tx *gorm.DB) error {
 	tx.Statement.AddClause(clause.OnConflict{
 		Columns: []clause.Column{
+			{Name: "namespace_id"},
 			{Name: "provider_type"},
 			{Name: "provider_urn"},
 			{Name: "type"},

@@ -3,7 +3,7 @@ COMMIT := $(shell git rev-parse --short HEAD)
 TAG := "$(shell git rev-list --tags --max-count=1)"
 VERSION := "$(shell git describe --tags ${TAG})-next"
 BUILD_DIR=dist
-PROTON_COMMIT := "ccbf219312db35a934361ebad895cb40145ca235"
+PROTON_COMMIT := "95140abe54e3c27f0bf4f06bc780a289f41aadf1"
 
 .PHONY: all build clean test tidy vet proto setup format generate
 
@@ -24,6 +24,10 @@ format:
 lint: ## Lint checker
 	@echo "Running lint checks using golangci-lint..."
 	@golangci-lint run
+
+lintf: ## Lint checker and fix
+	@echo "Running lint checks using golangci-lint..."
+	@golangci-lint run --fix
 
 clean: tidy ## Clean the build artifacts
 	@echo "Cleaning up build directories..."

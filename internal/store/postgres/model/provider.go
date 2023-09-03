@@ -13,13 +13,14 @@ import (
 
 // Provider is the database model for provider
 type Provider struct {
-	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	Type      string    `gorm:"uniqueIndex:provider_index"`
-	URN       string    `gorm:"uniqueIndex:provider_index"`
-	Config    datatypes.JSON
-	CreatedAt time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	NamespaceID uuid.UUID `gorm:"type:uuid"`
+	Type        string    `gorm:"uniqueIndex:providers_type_urn"`
+	URN         string    `gorm:"uniqueIndex:providers_type_urn"`
+	Config      datatypes.JSON
+	CreatedAt   time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 // TableName overrides the table name
@@ -45,7 +46,7 @@ func (m *Provider) FromDomain(p *domain.Provider) error {
 	m.ID = id
 	m.Type = p.Type
 	m.URN = p.URN
-	m.Config = datatypes.JSON(config)
+	m.Config = config
 	m.CreatedAt = p.CreatedAt
 	m.UpdatedAt = p.UpdatedAt
 

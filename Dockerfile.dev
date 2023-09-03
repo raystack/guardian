@@ -1,0 +1,24 @@
+FROM golang:1.20-alpine3.17 as builder
+
+RUN apk add make
+
+WORKDIR /go/src/app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN make build
+
+FROM alpine:3.17
+COPY --from=builder /go/src/app/dist/guardian /usr/bin/guardian
+RUN apk update
+RUN apk add ca-certificates
+
+# glibc compatibility library, since go binaries
+# don't work well with musl libc that alpine uses
+RUN apk add libc6-compat
+
+EXPOSE 8080
+ENTRYPOINT ["./guardian"]

@@ -11,10 +11,11 @@ import (
 
 // Approver database model
 type Approver struct {
-	ID         uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	ApprovalID string
-	AppealID   string `gorm:"index"`
-	Email      string `gorm:"index"`
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	NamespaceID uuid.UUID `gorm:"type:uuid"`
+	ApprovalID  string
+	AppealID    string `gorm:"index"`
+	Email       string `gorm:"index"`
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
