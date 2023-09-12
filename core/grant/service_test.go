@@ -1015,3 +1015,43 @@ func (s *ServiceTestSuite) TestGetGrantsTotalCount() {
 		s.NoError(actualError)
 	})
 }
+
+func (s *ServiceTestSuite) TestListUserRoles() {
+	s.Run("should return roles", func() {
+		s.setup()
+		expectedOutput := []string{
+			"role-1",
+			"role-2",
+		}
+		s.mockRepository.EXPECT().
+			ListUserRoles(mock.AnythingOfType("*context.emptyCtx"), "user@example.com").
+			Return(expectedOutput, nil).Once()
+
+		roles, err := s.service.ListUserRoles(context.Background(), "user@example.com")
+
+		s.Equal(expectedOutput, roles)
+		s.NoError(err)
+	})
+	s.Run("should return error unauthenticated user", func() {
+		s.setup()
+		expectedError := grant.ErrEmptyOwner
+		roles, err := s.service.ListUserRoles(context.Background(), "")
+
+		s.ErrorIs(err, expectedError)
+		s.Nil(roles)
+		s.mockRepository.AssertExpectations(s.T())
+	})
+	s.Run("should return error if got error from repository", func() {
+		s.setup()
+		expectedError := errors.New("repository error")
+		s.mockRepository.EXPECT().
+			ListUserRoles(mock.AnythingOfType("*context.emptyCtx"), "user").
+			Return(nil, expectedError).Once()
+
+		roles, actualError := s.service.ListUserRoles(context.Background(), "user")
+
+		s.Zero(roles)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+}

@@ -74,6 +74,15 @@ func (r *GrantRepository) GetByID(ctx context.Context, id string) (*domain.Grant
 	return g, nil
 }
 
+func (r *GrantRepository) ListUserRoles(ctx context.Context, id string) ([]string, error) {
+	db := r.db.WithContext(ctx)
+	db = db.Where(`"grants"."owner" = ?`, id)
+	db = db.Distinct("role")
+	var roles []string
+	err := db.Model(&model.Grant{}).Pluck("role", &roles).Error
+	return roles, err
+}
+
 func (r *GrantRepository) Update(ctx context.Context, a *domain.Grant) error {
 	if a == nil || a.ID == "" {
 		return grant.ErrEmptyIDParam

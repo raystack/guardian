@@ -44,6 +44,7 @@ func (s *GRPCServer) ListGrants(ctx context.Context, req *guardianv1beta1.ListGr
 
 func (s *GRPCServer) ListUserGrants(ctx context.Context, req *guardianv1beta1.ListUserGrantsRequest) (*guardianv1beta1.ListUserGrantsResponse, error) {
 	user, err := s.getUser(ctx)
+
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "failed to get metadata: user")
 	}
@@ -242,5 +243,20 @@ func (s *GRPCServer) ImportGrantsFromProvider(ctx context.Context, req *guardian
 
 	return &guardianv1beta1.ImportGrantsFromProviderResponse{
 		Grants: grantsProto,
+	}, nil
+}
+
+func (s *GRPCServer) ListUserRoles(ctx context.Context, req *guardianv1beta1.ListUserRolesRequest) (*guardianv1beta1.ListUserRolesResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "failed to get metadata: user")
+	}
+
+	roles, err := s.grantService.ListUserRoles(ctx, user)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Internal Error")
+	}
+	return &guardianv1beta1.ListUserRolesResponse{
+		Roles: roles,
 	}, nil
 }

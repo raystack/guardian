@@ -27,6 +27,7 @@ type repository interface {
 	Update(context.Context, *domain.Grant) error
 	BulkUpsert(context.Context, []*domain.Grant) error
 	GetGrantsTotalCount(context.Context, domain.ListGrantsFilter) (int64, error)
+	ListUserRoles(context.Context, string) ([]string, error)
 }
 
 //go:generate mockery --name=providerService --exported --with-expecter
@@ -672,4 +673,11 @@ func getGrantIDs(grants []domain.Grant) []string {
 
 func (s *Service) GetGrantsTotalCount(ctx context.Context, filters domain.ListGrantsFilter) (int64, error) {
 	return s.repo.GetGrantsTotalCount(ctx, filters)
+}
+
+func (s *Service) ListUserRoles(ctx context.Context, owner string) ([]string, error) {
+	if owner == "" {
+		return nil, ErrEmptyOwner
+	}
+	return s.repo.ListUserRoles(ctx, owner)
 }

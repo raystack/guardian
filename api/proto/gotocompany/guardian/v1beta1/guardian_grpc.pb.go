@@ -53,6 +53,7 @@ type GuardianServiceClient interface {
 	DeleteApprover(ctx context.Context, in *DeleteApproverRequest, opts ...grpc.CallOption) (*DeleteApproverResponse, error)
 	ListGrants(ctx context.Context, in *ListGrantsRequest, opts ...grpc.CallOption) (*ListGrantsResponse, error)
 	ListUserGrants(ctx context.Context, in *ListUserGrantsRequest, opts ...grpc.CallOption) (*ListUserGrantsResponse, error)
+	ListUserRoles(ctx context.Context, in *ListUserRolesRequest, opts ...grpc.CallOption) (*ListUserRolesResponse, error)
 	GetGrant(ctx context.Context, in *GetGrantRequest, opts ...grpc.CallOption) (*GetGrantResponse, error)
 	UpdateGrant(ctx context.Context, in *UpdateGrantRequest, opts ...grpc.CallOption) (*UpdateGrantResponse, error)
 	RevokeGrant(ctx context.Context, in *RevokeGrantRequest, opts ...grpc.CallOption) (*RevokeGrantResponse, error)
@@ -347,6 +348,15 @@ func (c *guardianServiceClient) ListUserGrants(ctx context.Context, in *ListUser
 	return out, nil
 }
 
+func (c *guardianServiceClient) ListUserRoles(ctx context.Context, in *ListUserRolesRequest, opts ...grpc.CallOption) (*ListUserRolesResponse, error) {
+	out := new(ListUserRolesResponse)
+	err := c.cc.Invoke(ctx, "/gotocompany.guardian.v1beta1.GuardianService/ListUserRoles", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *guardianServiceClient) GetGrant(ctx context.Context, in *GetGrantRequest, opts ...grpc.CallOption) (*GetGrantResponse, error) {
 	out := new(GetGrantResponse)
 	err := c.cc.Invoke(ctx, "/gotocompany.guardian.v1beta1.GuardianService/GetGrant", in, out, opts...)
@@ -427,6 +437,7 @@ type GuardianServiceServer interface {
 	DeleteApprover(context.Context, *DeleteApproverRequest) (*DeleteApproverResponse, error)
 	ListGrants(context.Context, *ListGrantsRequest) (*ListGrantsResponse, error)
 	ListUserGrants(context.Context, *ListUserGrantsRequest) (*ListUserGrantsResponse, error)
+	ListUserRoles(context.Context, *ListUserRolesRequest) (*ListUserRolesResponse, error)
 	GetGrant(context.Context, *GetGrantRequest) (*GetGrantResponse, error)
 	UpdateGrant(context.Context, *UpdateGrantRequest) (*UpdateGrantResponse, error)
 	RevokeGrant(context.Context, *RevokeGrantRequest) (*RevokeGrantResponse, error)
@@ -531,6 +542,9 @@ func (UnimplementedGuardianServiceServer) ListGrants(context.Context, *ListGrant
 }
 func (UnimplementedGuardianServiceServer) ListUserGrants(context.Context, *ListUserGrantsRequest) (*ListUserGrantsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUserGrants not implemented")
+}
+func (UnimplementedGuardianServiceServer) ListUserRoles(context.Context, *ListUserRolesRequest) (*ListUserRolesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUserRoles not implemented")
 }
 func (UnimplementedGuardianServiceServer) GetGrant(context.Context, *GetGrantRequest) (*GetGrantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGrant not implemented")
@@ -1118,6 +1132,24 @@ func _GuardianService_ListUserGrants_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GuardianService_ListUserRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserRolesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GuardianServiceServer).ListUserRoles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gotocompany.guardian.v1beta1.GuardianService/ListUserRoles",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GuardianServiceServer).ListUserRoles(ctx, req.(*ListUserRolesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _GuardianService_GetGrant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetGrantRequest)
 	if err := dec(in); err != nil {
@@ -1338,6 +1370,10 @@ var GuardianService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListUserGrants",
 			Handler:    _GuardianService_ListUserGrants_Handler,
+		},
+		{
+			MethodName: "ListUserRoles",
+			Handler:    _GuardianService_ListUserRoles_Handler,
 		},
 		{
 			MethodName: "GetGrant",

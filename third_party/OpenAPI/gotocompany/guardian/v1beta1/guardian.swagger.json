@@ -1320,6 +1320,28 @@
         ]
       }
     },
+    "/v1beta1/me/grants/roles": {
+      "get": {
+        "operationId": "GuardianService_ListUserRoles",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1beta1ListUserRolesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "GuardianService"
+        ]
+      }
+    },
     "/v1beta1/policies": {
       "get": {
         "operationId": "GuardianService_ListPolicies",
@@ -2900,6 +2922,17 @@
         "total": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "v1beta1ListUserRolesResponse": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

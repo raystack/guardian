@@ -102,6 +102,7 @@ type approvalService interface {
 
 //go:generate mockery --name=grantService --exported --with-expecter
 type grantService interface {
+	ListUserRoles(context.Context, string) ([]string, error)
 	GetGrantsTotalCount(context.Context, domain.ListGrantsFilter) (int64, error)
 	List(context.Context, domain.ListGrantsFilter) ([]domain.Grant, error)
 	GetByID(context.Context, string) (*domain.Grant, error)
