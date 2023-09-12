@@ -256,6 +256,7 @@ func applyGrantFilter(db *gorm.DB, filter domain.ListGrantsFilter) *gorm.DB {
 	if !filter.ExpirationDateGreaterThan.IsZero() {
 		db = db.Where(`"grants"."expiration_date" > ?`, filter.ExpirationDateGreaterThan)
 	}
+	db = db.Joins("Resource")
 	if filter.ProviderTypes != nil {
 		db = db.Where(`"Resource"."provider_type" IN ?`, filter.ProviderTypes)
 	}

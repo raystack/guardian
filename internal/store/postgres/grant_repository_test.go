@@ -229,8 +229,15 @@ func (s *GrantRepositoryTestSuite) TestList() {
 		s.NoError(err)
 		s.Len(grants, 0)
 	})
+	s.Run("Should check accessing resource table", func() {
+		grants, err := s.repository.List(context.Background(), domain.ListGrantsFilter{
+			ProviderTypes: []string{"x"},
+			ProviderURNs:  []string{"x"},
+		})
+		s.NoError(err)
+		s.Len(grants, 0)
+	})
 }
-
 func (s *GrantRepositoryTestSuite) TestGetByID() {
 	dummyGrants := []*domain.Grant{
 		{
