@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/goto/guardian/pkg/evaluator"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -33,18 +34,29 @@ type userResponse struct {
 	Error string `json:"error"`
 }
 
-type Notifier struct {
-	accessToken string
+type SlackWorkspace struct {
+	WorkspaceName string `mapstructure:"workspace" validate:"required"`
+	AccessToken   string `mapstructure:"access_token" validate:"required"`
+	Criteria      string `mapstructure:"criteria" validate:"required"`
+}
 
-	slackIDCache        map[string]string
+type Notifier struct {
+	workspaces []SlackWorkspace
+
+	slackIDCache        map[string]*slackIDCacheItem
 	Messages            domain.NotificationMessages
 	httpClient          utils.HTTPClient
 	defaultMessageFiles embed.FS
 }
 
+type slackIDCacheItem struct {
+	SlackID   string
+	Workspace *SlackWorkspace
+}
+
 type Config struct {
-	AccessToken string `mapstructure:"access_token"`
-	Messages    domain.NotificationMessages
+	Workspaces []SlackWorkspace `mapstructure:"workspaces"`
+	Messages   domain.NotificationMessages
 }
 
 //go:embed templates/*
@@ -52,8 +64,8 @@ var defaultTemplates embed.FS
 
 func NewNotifier(config *Config, httpClient utils.HTTPClient) *Notifier {
 	return &Notifier{
-		accessToken:         config.AccessToken,
-		slackIDCache:        map[string]string{},
+		workspaces:          config.Workspaces,
+		slackIDCache:        map[string]*slackIDCacheItem{},
 		Messages:            config.Messages,
 		httpClient:          httpClient,
 		defaultMessageFiles: defaultTemplates,
@@ -63,26 +75,49 @@ func NewNotifier(config *Config, httpClient utils.HTTPClient) *Notifier {
 func (n *Notifier) Notify(items []domain.Notification) []error {
 	errs := make([]error, 0)
 	for _, item := range items {
+		var ws *SlackWorkspace
+		var slackID string
 		labelSlice := utils.MapToSlice(item.Labels)
-		slackID, err := n.findSlackIDByEmail(item.User)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("%v | %w", labelSlice, err))
+
+		// check cache
+		if n.slackIDCache[item.User] != nil {
+			slackID = n.slackIDCache[item.User].SlackID
+			ws = n.slackIDCache[item.User].Workspace
+		} else {
+			ws, err := n.GetSlackWorkspaceForUser(item.User)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%v | %w", labelSlice, err))
+				continue
+			}
+			slackID, err = n.findSlackIDByEmail(item.User, *ws)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("%v | %w", labelSlice, err))
+				continue
+			}
+
+			// cache
+			n.slackIDCache[item.User] = &slackIDCacheItem{
+				SlackID:   slackID,
+				Workspace: ws,
+			}
 		}
 
 		msg, err := ParseMessage(item.Message, n.Messages, n.defaultMessageFiles)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("%v | error parsing message : %w", labelSlice, err))
+			continue
 		}
 
-		if err := n.sendMessage(slackID, msg); err != nil {
-			errs = append(errs, fmt.Errorf("%v | error sending message to user:%s | %w", labelSlice, item.User, err))
+		if err := n.sendMessage(*ws, slackID, msg); err != nil {
+			errs = append(errs, fmt.Errorf("%v | error sending message to user:%s in workspace:%s | %w", labelSlice, item.User, ws.WorkspaceName, err))
+			continue
 		}
 	}
 
 	return errs
 }
 
-func (n *Notifier) sendMessage(channel, messageBlock string) error {
+func (n *Notifier) sendMessage(workspace SlackWorkspace, channel, messageBlock string) error {
 	url := slackHost + "/api/chat.postMessage"
 	var messageblockList []interface{}
 
@@ -101,18 +136,40 @@ func (n *Notifier) sendMessage(channel, messageBlock string) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Authorization", "Bearer "+n.accessToken)
+	req.Header.Add("Authorization", "Bearer "+workspace.AccessToken)
 	req.Header.Add("Content-Type", "application/json")
 
 	_, err = n.sendRequest(req)
 	return err
 }
 
-func (n *Notifier) findSlackIDByEmail(email string) (string, error) {
-	if n.slackIDCache[email] != "" {
-		return n.slackIDCache[email], nil
+func (n *Notifier) GetSlackWorkspaceForUser(email string) (*SlackWorkspace, error) {
+	var ws *SlackWorkspace
+	for _, workspace := range n.workspaces {
+		v, err := evaluator.Expression(workspace.Criteria).EvaluateWithVars(map[string]interface{}{
+			"email": email,
+		})
+		if err != nil {
+			return ws, fmt.Errorf("error evaluating notifier expression: %w", err)
+		}
+
+		// if the expression evaluates to true, return the workspace
+		if match, ok := v.(bool); !ok {
+			return ws, errors.New("notifier expression did not evaluate to a boolean")
+		} else if match {
+			ws = &workspace
+			break
+		}
 	}
 
+	if ws == nil {
+		return ws, errors.New(fmt.Sprintf("no slack workspace found for user: %s", email))
+	}
+
+	return ws, nil
+}
+
+func (n *Notifier) findSlackIDByEmail(email string, ws SlackWorkspace) (string, error) {
 	slackURL := slackHost + "/api/users.lookupByEmail"
 	form := url.Values{}
 	form.Add("email", email)
@@ -121,18 +178,17 @@ func (n *Notifier) findSlackIDByEmail(email string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	req.Header.Add("Authorization", "Bearer "+n.accessToken)
+	req.Header.Add("Authorization", "Bearer "+ws.AccessToken)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	result, err := n.sendRequest(req)
 	if err != nil {
-		return "", fmt.Errorf("error finding slack id for email %s - %s", email, err)
+		return "", fmt.Errorf("error finding slack id for email %s in workspace: %s - %s", email, ws.WorkspaceName, err)
 	}
 	if result.User == nil {
-		return "", errors.New(fmt.Sprintf("user not found: %s", email))
+		return "", errors.New(fmt.Sprintf("user not found: %s in workspace: %s", email, ws.WorkspaceName))
 	}
 
-	n.slackIDCache[email] = result.User.ID
 	return result.User.ID, nil
 }
 

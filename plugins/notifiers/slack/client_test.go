@@ -26,14 +26,26 @@ type ClientTestSuite struct {
 
 func (s *ClientTestSuite) setup() {
 	s.mockHttpClient = new(mocks.HTTPClient)
+	workspaces := []slack.SlackWorkspace{
+		{
+			WorkspaceName: "ws-1",
+			AccessToken:   "XXXXX-TOKEN-1-XXXXX",
+			Criteria:      "$email contains '@abc'",
+		},
+		{
+			WorkspaceName: "ws-2",
+			AccessToken:   "XXXXX-TOKEN-2-XXXXX",
+			Criteria:      "$email contains '@xyz'",
+		},
+	}
 	s.accessToken = "XXXXX-TOKEN-XXXXX"
 	s.messages = domain.NotificationMessages{
 		AppealRejected: "[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"Your appeal to {{.resource_name}} with role {{.role}} has been rejected\"}}]",
 	}
 
 	conf := &slack.Config{
-		AccessToken: s.accessToken,
-		Messages:    s.messages,
+		Workspaces: workspaces,
+		Messages:   s.messages,
 	}
 
 	s.notifier = slack.NewNotifier(conf, s.mockHttpClient)
@@ -47,8 +59,7 @@ func (s *ClientTestSuite) TestNotify() {
 		resp := &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(slackAPIResponse)))}
 		s.mockHttpClient.On("Do", mock.Anything).Return(resp, nil)
 		expectedErrs := []error{
-			fmt.Errorf("[appeal_id=test-appeal-id] | %w", errors.New("error finding slack id for email test-user@abc.com - users_not_found")),
-			fmt.Errorf("[appeal_id=test-appeal-id] | error sending message to user:test-user@abc.com | %w", errors.New("EOF")),
+			fmt.Errorf("[appeal_id=test-appeal-id] | %w", errors.New("error finding slack id for email test-user@abc.com in workspace: ws-1 - users_not_found")),
 		}
 
 		notifications := []domain.Notification{
@@ -112,6 +123,41 @@ func (s *ClientTestSuite) TestParseMessage() {
 		_, err := slack.ParseMessage(notificationMsg, s.messages, embed.FS{})
 		s.Errorf(err, "template not found for message type AppealSuspended")
 	})
+}
+
+func (s *ClientTestSuite) TestGetSlackWorkspaceForUser() {
+	s.setup()
+	s.Run("should return slack workspace 1 for user", func() {
+		userEmail := "example-user@abc.com"
+		expectedWs := &slack.SlackWorkspace{
+			WorkspaceName: "ws-1",
+			AccessToken:   "XXXXX-TOKEN-1-XXXXX",
+			Criteria:      "$email contains '@abc'",
+		}
+		actualWs, err := s.notifier.GetSlackWorkspaceForUser(userEmail)
+		s.Nil(err)
+		s.Equal(expectedWs, actualWs)
+	})
+
+	s.Run("should return slack workspace 2 for user", func() {
+		userEmail := "example-user@xyz.com"
+		expectedWs := &slack.SlackWorkspace{
+			WorkspaceName: "ws-2",
+			AccessToken:   "XXXXX-TOKEN-2-XXXXX",
+			Criteria:      "$email contains '@xyz'",
+		}
+		actualWs, err := s.notifier.GetSlackWorkspaceForUser(userEmail)
+		s.Nil(err)
+		s.Equal(expectedWs, actualWs)
+	})
+
+	s.Run("should return error if slack workspace not found for user", func() {
+		userEmail := "example-user@def.com"
+		expectedErr := fmt.Errorf("no slack workspace found for user: %s", userEmail)
+		_, actualErr := s.notifier.GetSlackWorkspaceForUser(userEmail)
+		s.Equal(expectedErr, actualErr)
+	})
+
 }
 
 func TestClient(t *testing.T) {

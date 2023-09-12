@@ -32,6 +32,10 @@ clean: tidy
 test:
 	go test ./... -race -coverprofile=coverage.out
 
+test-short:
+	@echo "Running short tests by disabling store tests..."
+	go test ./... -race -short -coverprofile=coverage.out
+
 coverage: test
 	@echo "Generating coverage report..."
 	@go tool cover -html=coverage.out
