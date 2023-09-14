@@ -2,6 +2,9 @@ package notifiers
 
 import (
 	"errors"
+	"fmt"
+	"github.com/goto/salt/log"
+	"github.com/mitchellh/mapstructure"
 	"net/http"
 	"time"
 
@@ -17,18 +20,25 @@ const (
 	ProviderTypeSlack = "slack"
 )
 
+// SlackConfig is a map of workspace name to config
+type SlackConfig map[string]interface{}
+
+func (c SlackConfig) Decode(v interface{}) error {
+	return mapstructure.Decode(c, v)
+}
+
 type Config struct {
 	Provider string `mapstructure:"provider" validate:"omitempty,oneof=slack"`
 
 	// slack
-	AccessToken string                 `mapstructure:"access_token" validate:"required_without=Workspaces"`
-	Workspaces  []slack.SlackWorkspace `mapstructure:"workspaces" validate:"required_without=AccessToken,dive"`
+	AccessToken string      `mapstructure:"access_token" validate:"required_without=SlackConfig"`
+	SlackConfig SlackConfig `mapstructure:"slack_config" validate:"required_without=AccessToken,dive"`
 
 	// custom messages
 	Messages domain.NotificationMessages
 }
 
-func NewClient(config *Config) (Client, error) {
+func NewClient(config *Config, logger *log.Logrus) (Client, error) {
 	if config.Provider == ProviderTypeSlack {
 
 		slackConfig, err := NewSlackConfig(config)
@@ -37,7 +47,7 @@ func NewClient(config *Config) (Client, error) {
 		}
 
 		httpClient := &http.Client{Timeout: 10 * time.Second}
-		return slack.NewNotifier(slackConfig, httpClient), nil
+		return slack.NewNotifier(slackConfig, httpClient, logger), nil
 	}
 
 	return nil, errors.New("invalid notifier provider type")
@@ -46,11 +56,11 @@ func NewClient(config *Config) (Client, error) {
 func NewSlackConfig(config *Config) (*slack.Config, error) {
 
 	// validation
-	if config.AccessToken == "" && len(config.Workspaces) == 0 {
-		return nil, errors.New("slack access token or workspaces must be provided")
+	if config.AccessToken == "" && config.SlackConfig == nil {
+		return nil, errors.New("slack access token or workSpaceConfig must be provided")
 	}
-	if config.AccessToken != "" && len(config.Workspaces) != 0 {
-		return nil, errors.New("slack access token and workspaces cannot be provided at the same time")
+	if config.AccessToken != "" && config.SlackConfig != nil {
+		return nil, errors.New("slack access token and workSpaceConfig cannot be provided at the same time")
 	}
 
 	var slackConfig *slack.Config
@@ -69,8 +79,13 @@ func NewSlackConfig(config *Config) (*slack.Config, error) {
 		return slackConfig, nil
 	}
 
+	var workSpaceConfig slack.WorkSpaceConfig
+	if err := config.SlackConfig.Decode(&workSpaceConfig); err != nil {
+		return nil, fmt.Errorf("invalid slack workspace config: %w", err)
+	}
+
 	slackConfig = &slack.Config{
-		Workspaces: config.Workspaces,
+		Workspaces: workSpaceConfig.Workspaces,
 		Messages:   config.Messages,
 	}
 

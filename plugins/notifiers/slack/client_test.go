@@ -48,7 +48,7 @@ func (s *ClientTestSuite) setup() {
 		Messages:   s.messages,
 	}
 
-	s.notifier = slack.NewNotifier(conf, s.mockHttpClient)
+	s.notifier = slack.NewNotifier(conf, s.mockHttpClient, nil)
 }
 
 func (s *ClientTestSuite) TestNotify() {

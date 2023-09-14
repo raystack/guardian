@@ -69,7 +69,7 @@ func runJobCmd() *cobra.Command {
 			logger := log.NewLogrus(log.LogrusWithLevel(config.LogLevel))
 			crypto := crypto.NewAES(config.EncryptionSecretKeyKey)
 			validator := validator.New()
-			notifier, err := notifiers.NewClient(&config.Notifier)
+			notifier, err := notifiers.NewClient(&config.Notifier, logger)
 			if err != nil {
 				return err
 			}
