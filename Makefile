@@ -34,7 +34,11 @@ clean: tidy ## Clean the build artifacts
 	@rm -rf $coverage.out ${BUILD_DIR}
 
 test:  ## Run the tests
-	go test ./... -race -coverprofile=coverage.out
+	go test ./ ... -race -coverprofile=coverage.out
+
+test-short:
+	@echo "Running short tests by disabling store tests..."
+	go test ./... -race -short -coverprofile=coverage.out
 
 coverage: test ## Print the code coverage
 	@echo "Generating coverage report..."

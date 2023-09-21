@@ -1153,6 +1153,13 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 					AllowFailed: false,
 					ApproveIf:   "1==1",
 				},
+				{
+					Name:        "step_2",
+					Strategy:    "manual",
+					When:        "1==0",
+					AllowFailed: false,
+					Approvers:   []string{"test-approver@email.com"},
+				},
 			},
 			IAM: &domain.IAMConfig{
 				Provider: "http",
@@ -1188,6 +1195,13 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 					Status:        domain.ApprovalStatusApproved,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
+				}, {
+					Name:          "step_2",
+					Index:         1,
+					Status:        domain.ApprovalStatusSkipped,
+					PolicyID:      "policy_1",
+					PolicyVersion: 1,
+					Approvers:     []string{"test-approver@email.com"},
 				},
 			},
 			Grant: &domain.Grant{
@@ -1224,6 +1238,14 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 					Status:        domain.ApprovalStatusApproved,
 					PolicyID:      "policy_1",
 					PolicyVersion: 1,
+				}, {
+					ID:            "2",
+					Name:          "step_2",
+					Index:         1,
+					Status:        domain.ApprovalStatusSkipped,
+					PolicyID:      "policy_1",
+					PolicyVersion: 1,
+					Approvers:     []string{"test-approver@email.com"},
 				},
 			},
 			Grant: &domain.Grant{
@@ -1269,6 +1291,14 @@ func (s *ServiceTestSuite) TestCreateAppeal__WithExistingAppealAndWithAutoApprov
 			ResourceIDs: []string{appeals[0].ResourceID},
 			Roles:       []string{appeals[0].Role},
 			OrderBy:     []string{"updated_at:desc"},
+		}).
+		Return(expectedExistingGrants, nil).Once()
+	s.mockGrantService.EXPECT().
+		List(mock.AnythingOfType("*context.emptyCtx"), domain.ListGrantsFilter{
+			Statuses:    []string{string(domain.GrantStatusActive)},
+			AccountIDs:  []string{appeals[0].AccountID},
+			ResourceIDs: []string{appeals[0].ResourceID},
+			Permissions: []string{"test-permission"},
 		}).
 		Return(expectedExistingGrants, nil).Once()
 	s.mockProviderService.On("ValidateAppeal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
