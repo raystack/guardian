@@ -7,6 +7,7 @@ import (
 	guardianv1beta1 "github.com/raystack/guardian/api/proto/raystack/guardian/v1beta1"
 	"github.com/raystack/guardian/core/appeal"
 	"github.com/raystack/guardian/domain"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -17,8 +18,11 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1beta1
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}
 
-	approvals, err := s.listApprovals(ctx, &domain.ListApprovalsFilter{
+	approvals, total, err := s.listApprovals(ctx, &domain.ListApprovalsFilter{
+		Q:              req.GetQ(),
 		AccountID:      req.GetAccountId(),
+		AccountTypes:   req.GetAccountTypes(),
+		ResourceTypes:  req.GetResourceTypes(),
 		CreatedBy:      user,
 		Statuses:       req.GetStatuses(),
 		OrderBy:        req.GetOrderBy(),
@@ -32,12 +36,16 @@ func (s *GRPCServer) ListUserApprovals(ctx context.Context, req *guardianv1beta1
 
 	return &guardianv1beta1.ListUserApprovalsResponse{
 		Approvals: approvals,
+		Total:     int32(total),
 	}, nil
 }
 
 func (s *GRPCServer) ListApprovals(ctx context.Context, req *guardianv1beta1.ListApprovalsRequest) (*guardianv1beta1.ListApprovalsResponse, error) {
-	approvals, err := s.listApprovals(ctx, &domain.ListApprovalsFilter{
+	approvals, total, err := s.listApprovals(ctx, &domain.ListApprovalsFilter{
+		Q:              req.GetQ(),
 		AccountID:      req.GetAccountId(),
+		AccountTypes:   req.GetAccountTypes(),
+		ResourceTypes:  req.GetResourceTypes(),
 		CreatedBy:      req.GetCreatedBy(),
 		Statuses:       req.GetStatuses(),
 		OrderBy:        req.GetOrderBy(),
@@ -51,6 +59,7 @@ func (s *GRPCServer) ListApprovals(ctx context.Context, req *guardianv1beta1.Lis
 
 	return &guardianv1beta1.ListApprovalsResponse{
 		Approvals: approvals,
+		Total:     int32(total),
 	}, nil
 }
 
@@ -150,20 +159,41 @@ func (s *GRPCServer) DeleteApprover(ctx context.Context, req *guardianv1beta1.De
 	}, nil
 }
 
-func (s *GRPCServer) listApprovals(ctx context.Context, filters *domain.ListApprovalsFilter) ([]*guardianv1beta1.Approval, error) {
-	approvals, err := s.approvalService.ListApprovals(ctx, filters)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get approval list: %s", err)
+func (s *GRPCServer) listApprovals(ctx context.Context, filters *domain.ListApprovalsFilter) ([]*guardianv1beta1.Approval, int64, error) {
+	eg, ctx := errgroup.WithContext(ctx)
+	var approvals []*domain.Approval
+	var total int64
+
+	eg.Go(func() error {
+		approvalRecords, err := s.approvalService.ListApprovals(ctx, filters)
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to get approval list: %s", err)
+		}
+		approvals = approvalRecords
+		return nil
+	})
+
+	eg.Go(func() error {
+		totalRecord, err := s.approvalService.GetApprovalsTotalCount(ctx, filters)
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to get approval list: %v", err)
+		}
+		total = totalRecord
+		return nil
+	})
+
+	if err := eg.Wait(); err != nil {
+		return nil, 0, err
 	}
 
 	approvalProtos := []*guardianv1beta1.Approval{}
 	for _, a := range approvals {
 		approvalProto, err := s.adapter.ToApprovalProto(a)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse approval: %v: %s", a.ID, err)
+			return nil, 0, status.Errorf(codes.Internal, "failed to parse approval: %v: %s", a.ID, err)
 		}
 		approvalProtos = append(approvalProtos, approvalProto)
 	}
 
-	return approvalProtos, nil
+	return approvalProtos, total, nil
 }

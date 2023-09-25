@@ -107,9 +107,12 @@ func (s *GrpcHandlersSuite) TestListUserApprovals() {
 					},
 				},
 			},
+			Total: 1,
 		}
-		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.valueCtx"), expectedFilters).
+		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.cancelCtx"), expectedFilters).
 			Return(expectedApprovals, nil).Once()
+		s.approvalService.EXPECT().GetApprovalsTotalCount(mock.AnythingOfType("*context.cancelCtx"), expectedFilters).
+			Return(int64(1), nil).Once()
 
 		req := &guardianv1beta1.ListUserApprovalsRequest{
 			AccountId: "test-account-id",
@@ -138,12 +141,32 @@ func (s *GrpcHandlersSuite) TestListUserApprovals() {
 		s.approvalService.AssertExpectations(s.T())
 	})
 
-	s.Run("should return internal error if approval service returns an error", func() {
+	s.Run("should return internal error if approvalService.ListApprovals returns an error", func() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.valueCtx"), mock.Anything).
+		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.cancelCtx"), mock.Anything).
 			Return(nil, expectedError).Once()
+		s.approvalService.EXPECT().GetApprovalsTotalCount(mock.AnythingOfType("*context.cancelCtx"), mock.Anything).
+			Return(int64(0), nil).Once()
+
+		req := &guardianv1beta1.ListUserApprovalsRequest{}
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "test-user")
+		res, err := s.grpcServer.ListUserApprovals(ctx, req)
+
+		s.Equal(codes.Internal, status.Code(err))
+		s.Nil(res)
+		s.approvalService.AssertExpectations(s.T())
+	})
+
+	s.Run("should return internal error if approvalService.GetApprovalsTotalCount returns an error", func() {
+		s.setup()
+
+		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.cancelCtx"), mock.Anything).
+			Return([]*domain.Approval{}, nil).Once()
+		expectedError := errors.New("random error")
+		s.approvalService.EXPECT().GetApprovalsTotalCount(mock.AnythingOfType("*context.cancelCtx"), mock.Anything).
+			Return(int64(0), expectedError).Once()
 
 		req := &guardianv1beta1.ListUserApprovalsRequest{}
 		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "test-user")
@@ -166,8 +189,10 @@ func (s *GrpcHandlersSuite) TestListUserApprovals() {
 				},
 			},
 		}
-		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.valueCtx"), mock.Anything).
+		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.cancelCtx"), mock.Anything).
 			Return(invalidApprovals, nil).Once()
+		s.approvalService.EXPECT().GetApprovalsTotalCount(mock.AnythingOfType("*context.cancelCtx"), mock.Anything).
+			Return(int64(1), nil).Once()
 
 		req := &guardianv1beta1.ListUserApprovalsRequest{}
 		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "test-user")
@@ -268,9 +293,12 @@ func (s *GrpcHandlersSuite) TestListApprovals() {
 					},
 				},
 			},
+			Total: 1,
 		}
-		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.emptyCtx"), expectedFilters).
+		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.cancelCtx"), expectedFilters).
 			Return(expectedApprovals, nil).Once()
+		s.approvalService.EXPECT().GetApprovalsTotalCount(mock.AnythingOfType("*context.cancelCtx"), expectedFilters).
+			Return(int64(1), nil).Once()
 
 		req := &guardianv1beta1.ListApprovalsRequest{
 			AccountId: "test-account-id",
@@ -289,8 +317,10 @@ func (s *GrpcHandlersSuite) TestListApprovals() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.cancelCtx"), mock.Anything).
 			Return(nil, expectedError).Once()
+		s.approvalService.EXPECT().GetApprovalsTotalCount(mock.AnythingOfType("*context.cancelCtx"), mock.Anything).
+			Return(int64(0), nil).Once()
 
 		req := &guardianv1beta1.ListApprovalsRequest{}
 		res, err := s.grpcServer.ListApprovals(context.Background(), req)
@@ -312,8 +342,10 @@ func (s *GrpcHandlersSuite) TestListApprovals() {
 				},
 			},
 		}
-		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+		s.approvalService.EXPECT().ListApprovals(mock.AnythingOfType("*context.cancelCtx"), mock.Anything).
 			Return(invalidApprovals, nil).Once()
+		s.approvalService.EXPECT().GetApprovalsTotalCount(mock.AnythingOfType("*context.cancelCtx"), mock.Anything).
+			Return(int64(1), nil).Once()
 
 		req := &guardianv1beta1.ListApprovalsRequest{}
 		res, err := s.grpcServer.ListApprovals(context.Background(), req)

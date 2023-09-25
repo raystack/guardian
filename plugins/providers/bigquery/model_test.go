@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/raystack/guardian/core/resource"
+
 	"github.com/raystack/guardian/domain"
 	"github.com/raystack/guardian/plugins/providers/bigquery"
 	"github.com/stretchr/testify/assert"

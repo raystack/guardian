@@ -1,13 +1,13 @@
 package domain
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"time"
 
 	"github.com/raystack/guardian/pkg/evaluator"
+	"github.com/raystack/guardian/utils"
 )
 
 const (
@@ -203,7 +203,7 @@ func (a *Appeal) AdvanceApproval(policy *Policy) error {
 		if approval.Status == ApprovalStatusPending {
 			stepConfig := policy.Steps[approval.Index]
 
-			appealMap, err := structToMap(a)
+			appealMap, err := utils.StructToMap(a)
 			if err != nil {
 				return fmt.Errorf("parsing appeal struct to map: %w", err)
 			}
@@ -261,36 +261,6 @@ func (a *Appeal) AdvanceApproval(policy *Policy) error {
 	return nil
 }
 
-func structToMap(item interface{}) (map[string]interface{}, error) {
-	result := map[string]interface{}{}
-
-	if item != nil {
-		jsonString, err := json.Marshal(item)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := json.Unmarshal(jsonString, &result); err != nil {
-			return nil, err
-		}
-	}
-
-	return result, nil
-}
-
-func uniqueSlice(arr []string) []string {
-	keys := map[string]bool{}
-	result := []string{}
-
-	for _, v := range arr {
-		if _, exist := keys[v]; !exist {
-			result = append(result, v)
-			keys[v] = true
-		}
-	}
-	return result
-}
-
 type ApprovalActionType string
 
 const (
@@ -307,6 +277,8 @@ type ApprovalAction struct {
 }
 
 type ListAppealsFilter struct {
+	Q                         string    `mapstructure:"q" validate:"omitempty"`
+	AccountTypes              []string  `mapstructure:"account_types" validate:"omitempty,min=1"`
 	CreatedBy                 string    `mapstructure:"created_by" validate:"omitempty,required"`
 	AccountID                 string    `mapstructure:"account_id" validate:"omitempty,required"`
 	AccountIDs                []string  `mapstructure:"account_ids" validate:"omitempty,required"`
@@ -320,4 +292,6 @@ type ListAppealsFilter struct {
 	ResourceTypes             []string  `mapstructure:"resource_types" validate:"omitempty,min=1"`
 	ResourceURNs              []string  `mapstructure:"resource_urns" validate:"omitempty,min=1"`
 	OrderBy                   []string  `mapstructure:"order_by" validate:"omitempty,min=1"`
+	Size                      int       `mapstructure:"size" validate:"omitempty"`
+	Offset                    int       `mapstructure:"offset" validate:"omitempty"`
 }

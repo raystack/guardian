@@ -128,6 +128,70 @@ func (s *AppealRepositoryTestSuite) TestGetByID() {
 		s.Nil(actualError)
 		s.Equal(dummyAppeal.ID, actualRecord.ID)
 	})
+
+	s.Run("should run query based on filters", func() {
+		timeNowPlusAnHour := time.Now().Add(time.Hour)
+		dummyAppeals := []*domain.Appeal{
+			{
+				ResourceID:    s.dummyResource.ID,
+				PolicyID:      s.dummyPolicy.ID,
+				PolicyVersion: s.dummyPolicy.Version,
+				AccountID:     "user@example.com",
+				AccountType:   domain.DefaultAppealAccountType,
+				Role:          "role_test",
+				Status:        domain.AppealStatusApproved,
+				Permissions:   []string{"permission_test"},
+				CreatedBy:     "user@example.com",
+				Options: &domain.AppealOptions{
+					ExpirationDate: &time.Time{},
+				},
+			},
+			{
+				ResourceID:    s.dummyResource.ID,
+				PolicyID:      s.dummyPolicy.ID,
+				PolicyVersion: s.dummyPolicy.Version,
+				AccountID:     "user2@example.com",
+				AccountType:   domain.DefaultAppealAccountType,
+				Status:        domain.AppealStatusCanceled,
+				Role:          "role_test",
+				Permissions:   []string{"permission_test_2"},
+				CreatedBy:     "user2@example.com",
+				Options: &domain.AppealOptions{
+					ExpirationDate: &timeNowPlusAnHour,
+				},
+			},
+		}
+		testCases := []struct {
+			filters        *domain.ListAppealsFilter
+			expectedArgs   []driver.Value
+			expectedResult []*domain.Appeal
+		}{
+			{
+				filters: &domain.ListAppealsFilter{
+					Q: "user",
+				},
+				expectedResult: []*domain.Appeal{dummyAppeals[0], dummyAppeals[1]},
+			},
+			{
+				filters: &domain.ListAppealsFilter{
+					AccountTypes: []string{"x-account-type"},
+				},
+				expectedResult: []*domain.Appeal{dummyAppeals[0], dummyAppeals[1]},
+			},
+		}
+
+		for _, tc := range testCases {
+			_, actualError := s.repository.Find(context.Background(), tc.filters)
+			s.Nil(actualError)
+		}
+	})
+}
+
+func (s *AppealRepositoryTestSuite) TestGetAppealsTotalCount() {
+	s.Run("should return 0", func() {
+		_, actualError := s.repository.GetAppealsTotalCount(context.Background(), &domain.ListAppealsFilter{})
+		s.Nil(actualError)
+	})
 }
 
 func (s *AppealRepositoryTestSuite) TestFind() {
@@ -283,12 +347,51 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 				},
 				expectedResult: []*domain.Appeal{dummyAppeals[1], dummyAppeals[0]},
 			},
+			{
+				filters: &domain.ListAppealsFilter{
+					Q: "user",
+				},
+				expectedResult: []*domain.Appeal{dummyAppeals[1], dummyAppeals[0]},
+			},
+			{
+				filters: &domain.ListAppealsFilter{
+					AccountTypes: []string{"x-account-type"},
+				},
+				expectedResult: []*domain.Appeal{dummyAppeals[1], dummyAppeals[0]},
+			},
 		}
 
 		for _, tc := range testCases {
 			_, actualError := s.repository.Find(context.Background(), tc.filters)
 			s.Nil(actualError)
 		}
+	})
+
+	s.Run("Should return an array size and offset of n on success", func() {
+		testCases := []struct {
+			filters        *domain.ListAppealsFilter
+			expectedArgs   []driver.Value
+			expectedResult []*domain.Appeal
+		}{
+			{
+				filters: &domain.ListAppealsFilter{
+					Size:   1,
+					Offset: 0,
+				},
+				expectedResult: []*domain.Appeal{dummyAppeals[0]},
+			},
+			{
+				filters: &domain.ListAppealsFilter{
+					Offset: 1,
+				},
+				expectedResult: []*domain.Appeal{dummyAppeals[1]},
+			},
+		}
+		for _, tc := range testCases {
+			_, actualError := s.repository.Find(context.Background(), tc.filters)
+			s.Nil(actualError)
+		}
+
 	})
 }
 

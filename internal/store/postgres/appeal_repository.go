@@ -138,6 +138,15 @@ func (r *AppealRepository) Find(ctx context.Context, filters *domain.ListAppeals
 	return records, nil
 }
 
+func (r *AppealRepository) GetAppealsTotalCount(ctx context.Context, filter *domain.ListAppealsFilter) (int64, error) {
+	db := r.store.db.WithContext(ctx)
+	db = applyAppealFilter(db, filter)
+	var count int64
+	err := db.Model(&model.Appeal{}).Count(&count).Error
+
+	return count, err
+}
+
 // BulkUpsert new record to database
 func (r *AppealRepository) BulkUpsert(ctx context.Context, appeals []*domain.Appeal) error {
 	models := []*model.Appeal{}
@@ -193,4 +202,82 @@ func (r *AppealRepository) Update(ctx context.Context, a *domain.Appeal) error {
 
 		return nil
 	})
+}
+
+func applyAppealFilter(db *gorm.DB, filters *domain.ListAppealsFilter) *gorm.DB {
+	db = db.Joins("JOIN resources ON appeals.resource_id = resources.id")
+	if filters.Q != "" {
+		// NOTE: avoid adding conditions before this grouped where clause.
+		// Otherwise, it will be wrapped in parentheses and the query will be invalid.
+		db = db.Where(db.
+			Where(`"appeals"."account_id" LIKE ?`, fmt.Sprintf("%%%s%%", filters.Q)).
+			Or(`"appeals"."role" LIKE ?`, fmt.Sprintf("%%%s%%", filters.Q)).
+			Or(`"resources"."urn" LIKE ?`, fmt.Sprintf("%%%s%%", filters.Q)),
+		)
+	}
+	if filters.Statuses != nil {
+		db = db.Where(`"appeals"."status" IN ?`, filters.Statuses)
+	}
+	if filters.AccountTypes != nil {
+		db = db.Where(`"appeals"."account_type" IN ?`, filters.AccountTypes)
+	}
+	if filters.ResourceTypes != nil {
+		db = db.Where(`"resources"."type" IN ?`, filters.ResourceTypes)
+	}
+	if filters.Size > 0 {
+		db = db.Limit(filters.Size)
+	}
+	if filters.Offset > 0 {
+		db = db.Offset(filters.Offset)
+	}
+	if filters.CreatedBy != "" {
+		db = db.Where(`"appeals"."created_by" = ?`, filters.CreatedBy)
+	}
+	accounts := make([]string, 0)
+	if filters.AccountID != "" {
+		accounts = append(accounts, filters.AccountID)
+	}
+	if filters.AccountIDs != nil {
+		accounts = append(accounts, filters.AccountIDs...)
+	}
+	if len(accounts) > 0 {
+		db = db.Where(`"appeals"."account_id" IN ?`, accounts)
+	}
+	if filters.Statuses != nil {
+		db = db.Where(`"appeals"."status" IN ?`, filters.Statuses)
+	}
+	if filters.ResourceID != "" {
+		db = db.Where(`"appeals"."resource_id" = ?`, filters.ResourceID)
+	}
+	if filters.Role != "" {
+		db = db.Where(`"appeals"."role" = ?`, filters.Role)
+	}
+	if !filters.ExpirationDateLessThan.IsZero() {
+		db = db.Where(`"options" -> 'expiration_date' < ?`, filters.ExpirationDateLessThan)
+	}
+	if !filters.ExpirationDateGreaterThan.IsZero() {
+		db = db.Where(`"options" -> 'expiration_date' > ?`, filters.ExpirationDateGreaterThan)
+	}
+	if filters.OrderBy != nil {
+		db = addOrderByClause(db, filters.OrderBy, addOrderByClauseOptions{
+			statusColumnName: `"appeals"."status"`,
+			statusesOrder:    AppealStatusDefaultSort,
+		})
+	}
+
+	db = db.Joins("Resource")
+	if filters.ProviderTypes != nil {
+		db = db.Where(`"Resource"."provider_type" IN ?`, filters.ProviderTypes)
+	}
+	if filters.ProviderURNs != nil {
+		db = db.Where(`"Resource"."provider_urn" IN ?`, filters.ProviderURNs)
+	}
+	if filters.ResourceTypes != nil {
+		db = db.Where(`"Resource"."type" IN ?`, filters.ResourceTypes)
+	}
+	if filters.ResourceURNs != nil {
+		db = db.Where(`"Resource"."urn" IN ?`, filters.ResourceURNs)
+	}
+
+	return db
 }
