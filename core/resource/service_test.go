@@ -57,6 +57,32 @@ func (s *ServiceTestSuite) TestFind() {
 	})
 }
 
+func (s *ServiceTestSuite) TestGetResourcesTotalCount() {
+	s.Run("should return error if got error from repository", func() {
+		expectedError := errors.New("repository error")
+		s.mockRepository.EXPECT().
+			GetResourcesTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(0, expectedError).Once()
+
+		actualCount, actualError := s.service.GetResourcesTotalCount(context.Background(), domain.ListResourcesFilter{})
+
+		s.Zero(actualCount)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return Resources count from repository", func() {
+		expectedCount := int64(1)
+		s.mockRepository.EXPECT().
+			GetResourcesTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedCount, nil).Once()
+
+		actualCount, actualError := s.service.GetResourcesTotalCount(context.Background(), domain.ListResourcesFilter{})
+
+		s.Equal(expectedCount, actualCount)
+		s.NoError(actualError)
+	})
+}
+
 func (s *ServiceTestSuite) TestBulkUpsert() {
 	s.Run("should return error if got error from repository", func() {
 		expectedError := errors.New("error from repository")

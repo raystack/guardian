@@ -3,6 +3,7 @@ package v1beta1
 import (
 	"context"
 	"errors"
+	"golang.org/x/sync/errgroup"
 	"strings"
 
 	guardianv1beta1 "github.com/goto/guardian/api/proto/gotocompany/guardian/v1beta1"
@@ -25,7 +26,7 @@ func (s *GRPCServer) ListResources(ctx context.Context, req *guardianv1beta1.Lis
 			}
 		}
 	}
-	resources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
+	filter := domain.ListResourcesFilter{
 		IsDeleted:    req.GetIsDeleted(),
 		ResourceType: req.GetType(),
 		ResourceURN:  req.GetUrn(),
@@ -33,23 +34,56 @@ func (s *GRPCServer) ListResources(ctx context.Context, req *guardianv1beta1.Lis
 		ProviderURN:  req.GetProviderUrn(),
 		Name:         req.GetName(),
 		Details:      details,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get resource list: %v", err)
+		Size:         req.GetSize(),
+		Offset:       req.GetOffset(),
 	}
 
-	resourceProtos := []*guardianv1beta1.Resource{}
-	for _, r := range resources {
-		resourceProto, err := s.adapter.ToResourceProto(r)
+	resources, total, err := s.listResources(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return &guardianv1beta1.ListResourcesResponse{
+		Resources: resources,
+		Total:     uint32(total),
+	}, nil
+}
+
+func (s *GRPCServer) listResources(ctx context.Context, filter domain.ListResourcesFilter) ([]*guardianv1beta1.Resource, int64, error) {
+	eg, ctx := errgroup.WithContext(ctx)
+	var resources []*domain.Resource
+	var total int64
+
+	eg.Go(func() error {
+		resourceRecords, err := s.resourceService.Find(ctx, filter)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse resource %v: %v", r.Name, err)
+			return status.Errorf(codes.Internal, "failed to get resource list: %s", err)
+		}
+		resources = resourceRecords
+		return nil
+	})
+	eg.Go(func() error {
+		totalRecord, err := s.resourceService.GetResourcesTotalCount(ctx, filter)
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to get resource total count: %s", err)
+		}
+		total = totalRecord
+		return nil
+	})
+
+	if err := eg.Wait(); err != nil {
+		return nil, 0, err
+	}
+	var resourceProtos []*guardianv1beta1.Resource
+	for i, r := range resources {
+		resourceProto, err := s.adapter.ToResourceProto(resources[i])
+		if err != nil {
+			return nil, 0, status.Errorf(codes.Internal, "failed to parse resource %v: %v", r.Name, err)
 		}
 		resourceProtos = append(resourceProtos, resourceProto)
 	}
 
-	return &guardianv1beta1.ListResourcesResponse{
-		Resources: resourceProtos,
-	}, nil
+	return resourceProtos, total, nil
 }
 
 func (s *GRPCServer) GetResource(ctx context.Context, req *guardianv1beta1.GetResourceRequest) (*guardianv1beta1.GetResourceResponse, error) {

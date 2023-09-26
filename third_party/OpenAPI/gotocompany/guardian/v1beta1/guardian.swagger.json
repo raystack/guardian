@@ -1885,6 +1885,20 @@
               "type": "string"
             },
             "collectionFormat": "multi"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -2862,6 +2876,10 @@
             "type": "object",
             "$ref": "#/definitions/guardianv1beta1Resource"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },

@@ -28,6 +28,35 @@ func (r *ResourceRepository) Find(ctx context.Context, filter domain.ListResourc
 	}
 
 	db := r.db.WithContext(ctx)
+	db = applyResourceFilter(db, filter)
+	var models []*model.Resource
+	if err := db.Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	records := []*domain.Resource{}
+	for _, m := range models {
+		r, err := m.ToDomain()
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, r)
+	}
+
+	return records, nil
+}
+
+func (r *ResourceRepository) GetResourcesTotalCount(ctx context.Context, filter domain.ListResourcesFilter) (int64, error) {
+	db := r.db.WithContext(ctx)
+	db = applyResourceFilter(db, filter)
+	var count int64
+	err := db.Model(&model.Resource{}).Count(&count).Error
+
+	return count, err
+}
+
+func applyResourceFilter(db *gorm.DB, filter domain.ListResourcesFilter) *gorm.DB {
 	if filter.IDs != nil {
 		db = db.Where(filter.IDs)
 	}
@@ -55,27 +84,19 @@ func (r *ResourceRepository) Find(ctx context.Context, filter domain.ListResourc
 	if filter.ResourceTypes != nil {
 		db = db.Where(`"type" IN ?`, filter.ResourceTypes)
 	}
+
+	if filter.Size > 0 {
+		db = db.Limit(int(filter.Size))
+	}
+	if filter.Offset > 0 {
+		db = db.Offset(int(filter.Offset))
+	}
+
 	for path, v := range filter.Details {
 		pathArr := "{" + strings.Join(strings.Split(path, "."), ",") + "}"
 		db = db.Where(`"details" #>> ? = ?`, pathArr, v)
 	}
-
-	var models []*model.Resource
-	if err := db.Find(&models).Error; err != nil {
-		return nil, err
-	}
-
-	records := []*domain.Resource{}
-	for _, m := range models {
-		r, err := m.ToDomain()
-		if err != nil {
-			return nil, err
-		}
-
-		records = append(records, r)
-	}
-
-	return records, nil
+	return db
 }
 
 // GetOne record by ID

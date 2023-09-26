@@ -20,8 +20,6 @@ func (s *GrpcHandlersSuite) TestListResources() {
 		s.setup()
 		timeNow := time.Now()
 
-		ctx := context.Background()
-
 		req := &guardianv1beta1.ListResourcesRequest{
 			IsDeleted:    true,
 			Type:         "test-type",
@@ -85,9 +83,10 @@ func (s *GrpcHandlersSuite) TestListResources() {
 				Details:      expectedDetails,
 			},
 		}
-		s.resourceService.EXPECT().Find(ctx, expectedFilters).Return(dummyResources, nil)
-
-		res, err := s.grpcServer.ListResources(ctx, req)
+		s.resourceService.EXPECT().Find(mock.AnythingOfType("*context.cancelCtx"), expectedFilters).Return(dummyResources, nil)
+		s.resourceService.EXPECT().GetResourcesTotalCount(mock.AnythingOfType("*context.cancelCtx"),
+			expectedFilters).Return(0, nil).Once()
+		res, err := s.grpcServer.ListResources(context.Background(), req)
 
 		s.NoError(err)
 		s.Equal(expectedResponse, res)
@@ -98,7 +97,10 @@ func (s *GrpcHandlersSuite) TestListResources() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.resourceService.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, expectedError).Once()
+		s.resourceService.EXPECT().Find(mock.AnythingOfType("*context.cancelCtx"),
+			mock.AnythingOfType("domain.ListResourcesFilter")).Return(nil, expectedError).Once()
+		s.resourceService.EXPECT().GetResourcesTotalCount(mock.AnythingOfType("*context.cancelCtx"),
+			mock.AnythingOfType("domain.ListResourcesFilter")).Return(0, nil).Once()
 
 		req := &guardianv1beta1.ListResourcesRequest{}
 		res, err := s.grpcServer.ListResources(context.Background(), req)
@@ -118,7 +120,10 @@ func (s *GrpcHandlersSuite) TestListResources() {
 				},
 			},
 		}
-		s.resourceService.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(invalidResources, nil).Once()
+		s.resourceService.EXPECT().Find(mock.AnythingOfType("*context.cancelCtx"),
+			mock.AnythingOfType("domain.ListResourcesFilter")).Return(invalidResources, nil).Once()
+		s.resourceService.EXPECT().GetResourcesTotalCount(mock.AnythingOfType("*context.cancelCtx"),
+			mock.AnythingOfType("domain.ListResourcesFilter")).Return(0, nil).Once()
 
 		req := &guardianv1beta1.ListResourcesRequest{}
 		res, err := s.grpcServer.ListResources(context.Background(), req)

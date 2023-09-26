@@ -25,6 +25,7 @@ type repository interface {
 	Update(context.Context, *domain.Resource) error
 	Delete(ctx context.Context, id string) error
 	BatchDelete(context.Context, []string) error
+	GetResourcesTotalCount(context.Context, domain.ListResourcesFilter) (int64, error)
 }
 
 //go:generate mockery --name=auditLogger --exported --with-expecter
@@ -166,4 +167,8 @@ func (s *Service) BatchDelete(ctx context.Context, ids []string) error {
 	}
 
 	return nil
+}
+
+func (s *Service) GetResourcesTotalCount(ctx context.Context, filters domain.ListResourcesFilter) (int64, error) {
+	return s.repo.GetResourcesTotalCount(ctx, filters)
 }

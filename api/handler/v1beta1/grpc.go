@@ -48,6 +48,7 @@ type resourceService interface {
 	Get(context.Context, *domain.ResourceIdentifier) (*domain.Resource, error)
 	Delete(context.Context, string) error
 	BatchDelete(context.Context, []string) error
+	GetResourcesTotalCount(context.Context, domain.ListResourcesFilter) (int64, error)
 }
 
 //go:generate mockery --name=activityService --exported --with-expecter

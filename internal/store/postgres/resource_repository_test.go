@@ -153,6 +153,21 @@ func (s *ResourceRepositoryTestSuite) TestFind() {
 				},
 				expectedResult: []*domain.Resource{dummyResources[0]},
 			},
+			{
+				name: "filter by size and offset",
+				filters: domain.ListResourcesFilter{
+					Size:   1,
+					Offset: 1,
+				},
+				expectedResult: []*domain.Resource{dummyResources[1]},
+			},
+			{
+				name: "filter by size only",
+				filters: domain.ListResourcesFilter{
+					Size: 1,
+				},
+				expectedResult: []*domain.Resource{dummyResources[0]},
+			},
 		}
 
 		for _, tc := range testCases {
@@ -222,6 +237,14 @@ func (s *ResourceRepositoryTestSuite) TestGetOne() {
 		r, actualError := s.repository.GetOne(context.Background(), expectedResource.ID)
 		s.Nil(actualError)
 		s.Equal(expectedResource.URN, r.URN)
+	})
+}
+
+func (s *ResourceRepositoryTestSuite) TestGetResourcesTotalCount() {
+	s.Run("should return 0", func() {
+		_, actualError := s.repository.GetResourcesTotalCount(context.Background(), domain.ListResourcesFilter{})
+
+		s.Nil(actualError)
 	})
 }
 

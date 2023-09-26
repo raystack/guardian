@@ -38,6 +38,8 @@ type ListResourcesFilter struct {
 	ResourceURNs  []string          `mapstructure:"urns" validate:"omitempty"`
 	ResourceTypes []string          `mapstructure:"types" validate:"omitempty"`
 	Details       map[string]string `mapstructure:"details"`
+	Size          uint32            `mapstructure:"size" validate:"omitempty"`
+	Offset        uint32            `mapstructure:"offset" validate:"omitempty"`
 }
 
 type Resources []*Resource

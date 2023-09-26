@@ -330,6 +330,60 @@ func (_m *ResourceService) Update(_a0 context.Context, _a1 *domain.Resource) err
 	return r0
 }
 
+
+// GetResourcesTotalCount provides a mock function with given fields: _a0, _a1
+func (_m *ResourceService) GetResourcesTotalCount(_a0 context.Context, _a1 domain.ListResourcesFilter) (int64, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ListResourcesFilter) (int64, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ListResourcesFilter) int64); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, domain.ListResourcesFilter) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ResourceService_GetResourcesTotalCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetResourcesTotalCount'
+type ResourceService_GetResourcesTotalCount_Call struct {
+	*mock.Call
+}
+
+// GetResourcesTotalCount is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 domain.ListResourcesFilter
+func (_e *ResourceService_Expecter) GetResourcesTotalCount(_a0 interface{}, _a1 interface{}) *ResourceService_GetResourcesTotalCount_Call {
+	return &ResourceService_GetResourcesTotalCount_Call{Call: _e.mock.On("GetResourcesTotalCount", _a0, _a1)}
+}
+
+func (_c *ResourceService_GetResourcesTotalCount_Call) Run(run func(_a0 context.Context, _a1 domain.ListResourcesFilter)) *ResourceService_GetResourcesTotalCount_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(domain.ListResourcesFilter))
+	})
+	return _c
+}
+
+func (_c *ResourceService_GetResourcesTotalCount_Call) Return(_a0 int64, _a1 error) *ResourceService_GetResourcesTotalCount_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ResourceService_GetResourcesTotalCount_Call) RunAndReturn(run func(context.Context, domain.ListResourcesFilter) (int64, error)) *ResourceService_GetResourcesTotalCount_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ResourceService_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
 type ResourceService_Update_Call struct {
 	*mock.Call
