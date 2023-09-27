@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/goto/guardian/pkg/evaluator"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -127,37 +129,54 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 
 	resources := []*domain.Resource{}
 	eg, ctx := errgroup.WithContext(context.TODO())
-	eg.SetLimit(10)
+	eg.SetLimit(20)
 	var mu sync.Mutex
 
 	datasets, err := client.GetDatasets(ctx)
 	if err != nil {
 		return nil, err
 	}
+	datasetFilter := pc.GetFilterForResourceType(ResourceTypeDataset)
+
 	for _, d := range datasets {
 		d := d
 		eg.Go(func() error {
 			dataset := d.ToDomain()
 			dataset.ProviderType = pc.Type
 			dataset.ProviderURN = pc.URN
+			var fetchTables bool
 
 			if containsString(resourceTypes, ResourceTypeDataset) {
 				mu.Lock()
 				defer mu.Unlock()
-				resources = append(resources, dataset)
+				if datasetFilter != "" {
+					v, err := evaluator.Expression(datasetFilter).EvaluateWithStruct(dataset)
+					if err != nil {
+						p.logger.Error(fmt.Sprintf("evaluating filter expression %q for dataset %q: %v", datasetFilter, dataset.URN, err))
+					}
+					if !reflect.ValueOf(v).IsZero() {
+						resources = append(resources, dataset)
+						fetchTables = true
+					}
+				} else {
+					resources = append(resources, dataset)
+					fetchTables = true
+				}
 			}
 
-			if containsString(resourceTypes, ResourceTypeTable) {
+			if containsString(resourceTypes, ResourceTypeTable) && fetchTables {
 				tables, err := client.GetTables(ctx, dataset.Name)
 				if err != nil {
 					return fmt.Errorf("fetching tables for dataset %q: %w", dataset.URN, err)
 				}
-				for _, t := range tables {
+				children := make([]*domain.Resource, len(tables))
+				for i, t := range tables {
 					table := t.ToDomain()
 					table.ProviderType = pc.Type
 					table.ProviderURN = pc.URN
-					dataset.Children = append(dataset.Children, table)
+					children[i] = table
 				}
+				dataset.Children = children
 			}
 			return nil
 		})
