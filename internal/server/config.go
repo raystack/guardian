@@ -37,6 +37,7 @@ type Jobs struct {
 
 type Config struct {
 	Port                   int              `mapstructure:"port" default:"8080"`
+	GRPC                   GRPCConfig       `mapstructure:"grpc"`
 	EncryptionSecretKeyKey string           `mapstructure:"encryption_secret_key"`
 	Notifier               notifiers.Config `mapstructure:"notifier"`
 	LogLevel               string           `mapstructure:"log_level" default:"info"`
@@ -47,6 +48,15 @@ type Config struct {
 	Jobs                       Jobs           `mapstructure:"jobs"`
 	Telemetry                  tracing.Config `mapstructure:"telemetry"`
 	Auth                       Auth           `mapstructure:"auth"`
+}
+
+type GRPCConfig struct {
+	// TimeoutInSeconds is the maximum time in seconds a request can take before being cancelled. Default = 5
+	TimeoutInSeconds int `mapstructure:"timeout_in_seconds" default:"5"`
+	// MaxCallRecvMsgSize is the maximum message size the server can receive in bytes. Default = 1 << 25 (32MB)
+	MaxCallRecvMsgSize int `mapstructure:"max_call_recv_msg_size" default:"33554432"`
+	// MaxCallSendMsgSize is the maximum message size the server can send in bytes. Default = 1 << 25 (32MB)
+	MaxCallSendMsgSize int `mapstructure:"max_call_send_msg_size" default:"33554432"`
 }
 
 func LoadConfig(configFile string) (Config, error) {
