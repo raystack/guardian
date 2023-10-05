@@ -282,9 +282,10 @@ func TestGetResources(t *testing.T) {
 		}
 		expectedPolicies := []*dataplex.Policy{
 			{
-				Name:        "p_name",
-				DisplayName: "p_displayname",
-				Description: "p_description",
+				Name:                "p_name",
+				DisplayName:         "p_displayname",
+				Description:         "p_description",
+				TaxonomyDisplayName: "p_taxonomydisplayname",
 			},
 		}
 		client.On("GetPolicies", mock.Anything).Return(expectedPolicies, nil).Once()
@@ -298,6 +299,7 @@ func TestGetResources(t *testing.T) {
 				URN:          "p_name",
 				Details: map[string]interface{}{
 					"description": "p_description",
+					"taxonomy":    "p_taxonomydisplayname",
 				},
 			},
 		}
