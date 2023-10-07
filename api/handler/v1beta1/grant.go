@@ -49,6 +49,7 @@ func (s *GRPCServer) ListUserGrants(ctx context.Context, req *guardianv1beta1.Li
 	}
 
 	filter := domain.ListGrantsFilter{
+		Q:             req.GetQ(),
 		Statuses:      req.GetStatuses(),
 		AccountIDs:    req.GetAccountIds(),
 		AccountTypes:  req.GetAccountTypes(),

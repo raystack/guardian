@@ -31,6 +31,16 @@ func NewGrantRepository(db *Store) *GrantRepository {
 func (r *GrantRepository) List(ctx context.Context, filter domain.ListGrantsFilter) ([]domain.Grant, error) {
 	var models []model.Grant
 	err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		tx = tx.Joins("JOIN resources ON grants.resource_id = resources.id")
+		if filter.Q != "" {
+			// NOTE: avoid adding conditions before this grouped where clause.
+			// Otherwise, it will be wrapped in parentheses and the query will be invalid.
+			tx = tx.Where(tx.
+				Where(`"grants"."account_id" LIKE ?`, fmt.Sprintf("%%%s%%", filter.Q)).
+				Or(`"grants"."role" LIKE ?`, fmt.Sprintf("%%%s%%", filter.Q)).
+				Or(`"resources"."urn" LIKE ?`, fmt.Sprintf("%%%s%%", filter.Q)),
+			)
+		}
 		if filter.AccountIDs != nil {
 			tx = tx.Where(`"grants"."account_id" IN ?`, filter.AccountIDs)
 		}
