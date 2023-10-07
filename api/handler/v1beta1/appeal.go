@@ -7,6 +7,7 @@ import (
 	guardianv1beta1 "github.com/raystack/guardian/api/proto/raystack/guardian/v1beta1"
 	"github.com/raystack/guardian/core/appeal"
 	"github.com/raystack/guardian/domain"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -35,24 +36,36 @@ func (s *GRPCServer) ListUserAppeals(ctx context.Context, req *guardianv1beta1.L
 	if req.GetResourceTypes() != nil {
 		filters.ResourceTypes = req.GetResourceTypes()
 	}
+	if req.GetAccountTypes() != nil {
+		filters.AccountTypes = req.GetAccountTypes()
+	}
 	if req.GetResourceUrns() != nil {
 		filters.ResourceURNs = req.GetResourceUrns()
 	}
 	if req.GetOrderBy() != nil {
 		filters.OrderBy = req.GetOrderBy()
 	}
-	appeals, err := s.listAppeals(ctx, filters)
+	if req.GetQ() != "" {
+		filters.Q = req.GetQ()
+	}
+	filters.Offset = int(req.GetOffset())
+	filters.Size = int(req.GetSize())
+
+	appeals, total, err := s.listAppeals(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
 
 	return &guardianv1beta1.ListUserAppealsResponse{
 		Appeals: appeals,
+		Total:   int32(total),
 	}, nil
 }
 
 func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListAppealsRequest) (*guardianv1beta1.ListAppealsResponse, error) {
 	filters := &domain.ListAppealsFilter{
+		Q:             req.GetQ(),
+		AccountTypes:  req.GetAccountTypes(),
 		AccountID:     req.GetAccountId(),
 		Statuses:      req.GetStatuses(),
 		Role:          req.GetRole(),
@@ -60,15 +73,18 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListA
 		ProviderURNs:  req.GetProviderUrns(),
 		ResourceTypes: req.GetResourceTypes(),
 		ResourceURNs:  req.GetResourceUrns(),
+		Size:          int(req.GetSize()),
+		Offset:        int(req.GetOffset()),
 		OrderBy:       req.GetOrderBy(),
 	}
-	appeals, err := s.listAppeals(ctx, filters)
+	appeals, total, err := s.listAppeals(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
 
 	return &guardianv1beta1.ListAppealsResponse{
 		Appeals: appeals,
+		Total:   int32(total),
 	}, nil
 }
 
@@ -106,6 +122,7 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *guardianv1beta1.Crea
 
 func (s *GRPCServer) GetAppeal(ctx context.Context, req *guardianv1beta1.GetAppealRequest) (*guardianv1beta1.GetAppealResponse, error) {
 	id := req.GetId()
+
 	a, err := s.appealService.GetByID(ctx, id)
 	if err != nil {
 		if errors.As(err, new(appeal.InvalidError)) || errors.Is(err, appeal.ErrAppealIDEmptyParam) {
@@ -113,6 +130,7 @@ func (s *GRPCServer) GetAppeal(ctx context.Context, req *guardianv1beta1.GetAppe
 		}
 		return nil, status.Errorf(codes.Internal, "failed to retrieve appeal: %v", err)
 	}
+
 	if a == nil {
 		return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
 	}
@@ -129,11 +147,13 @@ func (s *GRPCServer) GetAppeal(ctx context.Context, req *guardianv1beta1.GetAppe
 
 func (s *GRPCServer) CancelAppeal(ctx context.Context, req *guardianv1beta1.CancelAppealRequest) (*guardianv1beta1.CancelAppealResponse, error) {
 	id := req.GetId()
+
 	a, err := s.appealService.Cancel(ctx, id)
 	if err != nil {
 		if errors.As(err, new(appeal.InvalidError)) || errors.Is(err, appeal.ErrAppealIDEmptyParam) {
 			return nil, status.Errorf(codes.InvalidArgument, err.Error())
 		}
+
 		switch err {
 		case appeal.ErrAppealNotFound:
 			return nil, status.Errorf(codes.NotFound, "appeal not found: %v", id)
@@ -157,20 +177,40 @@ func (s *GRPCServer) CancelAppeal(ctx context.Context, req *guardianv1beta1.Canc
 	}, nil
 }
 
-func (s *GRPCServer) listAppeals(ctx context.Context, filters *domain.ListAppealsFilter) ([]*guardianv1beta1.Appeal, error) {
-	appeals, err := s.appealService.Find(ctx, filters)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get appeal list: %s", err)
+func (s *GRPCServer) listAppeals(ctx context.Context, filters *domain.ListAppealsFilter) ([]*guardianv1beta1.Appeal, int64, error) {
+	eg, ctx := errgroup.WithContext(ctx)
+	var appeals []*domain.Appeal
+	var total int64
+
+	eg.Go(func() error {
+		appealRecords, err := s.appealService.Find(ctx, filters)
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to get appeal list: %s", err)
+		}
+		appeals = appealRecords
+		return nil
+	})
+	eg.Go(func() error {
+		totalRecord, err := s.appealService.GetAppealsTotalCount(ctx, filters)
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to get appeal total count: %s", err)
+		}
+		total = totalRecord
+		return nil
+	})
+
+	if err := eg.Wait(); err != nil {
+		return nil, 0, err
 	}
 
 	appealProtos := []*guardianv1beta1.Appeal{}
 	for _, a := range appeals {
 		appealProto, err := s.adapter.ToAppealProto(a)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse appeal: %s", err)
+			return nil, 0, status.Errorf(codes.Internal, "failed to parse appeal: %s", err)
 		}
 		appealProtos = append(appealProtos, appealProto)
 	}
 
-	return appealProtos, nil
+	return appealProtos, total, nil
 }

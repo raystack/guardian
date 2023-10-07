@@ -254,6 +254,36 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "accountTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -326,7 +356,12 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1beta1AddApproverRequest"
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                }
+              }
             }
           }
         ],
@@ -438,7 +473,7 @@
             "type": "string"
           },
           {
-            "name": "body",
+            "name": "action",
             "in": "body",
             "required": true,
             "schema": {
@@ -547,6 +582,32 @@
           },
           {
             "name": "appealStatuses",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "accountTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceTypes",
             "in": "query",
             "required": false,
             "type": "array",
@@ -690,6 +751,26 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -818,7 +899,12 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1beta1UpdateGrantRequest"
+              "type": "object",
+              "properties": {
+                "owner": {
+                  "type": "string"
+                }
+              }
             }
           }
         ],
@@ -856,7 +942,12 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1beta1RevokeGrantRequest"
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "type": "string"
+                }
+              }
             }
           }
         ],
@@ -948,6 +1039,36 @@
               "type": "string"
             },
             "collectionFormat": "multi"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "accountTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [
@@ -1015,6 +1136,32 @@
           },
           {
             "name": "appealStatuses",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "accountTypes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "resourceTypes",
             "in": "query",
             "required": false,
             "type": "array",
@@ -1146,6 +1293,26 @@
               "type": "string"
             },
             "collectionFormat": "multi"
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1263,7 +1430,12 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1beta1UpdateNamespaceRequest"
+              "type": "object",
+              "properties": {
+                "namespace": {
+                  "$ref": "#/definitions/v1beta1Namespace"
+                }
+              }
             }
           }
         ],
@@ -1311,7 +1483,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "policy",
             "in": "body",
             "required": true,
             "schema": {
@@ -1355,7 +1527,7 @@
             "type": "string"
           },
           {
-            "name": "body",
+            "name": "policy",
             "in": "body",
             "required": true,
             "schema": {
@@ -1487,7 +1659,7 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "config",
             "in": "body",
             "required": true,
             "schema": {
@@ -1559,11 +1731,43 @@
             "type": "string"
           },
           {
-            "name": "body",
+            "name": "config",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1beta1ProviderConfig"
+              "type": "object",
+              "properties": {
+                "labels": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "credentials": {},
+                "appeal": {
+                  "$ref": "#/definitions/ProviderConfigAppealConfig"
+                },
+                "resources": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "$ref": "#/definitions/ProviderConfigResourceConfig"
+                  }
+                },
+                "allowedAccountTypes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "parameters": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "$ref": "#/definitions/ProviderConfigProviderParameter"
+                  }
+                }
+              }
             }
           },
           {
@@ -1665,7 +1869,7 @@
             "type": "string"
           },
           {
-            "name": "body",
+            "name": "config",
             "in": "body",
             "required": true,
             "schema": {
@@ -1871,7 +2075,7 @@
             "type": "string"
           },
           {
-            "name": "body",
+            "name": "resource",
             "in": "body",
             "required": true,
             "schema": {
@@ -1909,9 +2113,7 @@
     "ConditionMatchCondition": {
       "type": "object",
       "properties": {
-        "eq": {
-          "type": "object"
-        }
+        "eq": {}
       }
     },
     "PolicyAppealConfigDurationOptions": {
@@ -1980,9 +2182,7 @@
         "provider": {
           "type": "string"
         },
-        "config": {
-          "type": "object"
-        },
+        "config": {},
         "schema": {
           "type": "object",
           "additionalProperties": {
@@ -2000,6 +2200,7 @@
         "appeals": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/RequirementAdditionalAppeal"
           }
         }
@@ -2045,6 +2246,7 @@
         "roles": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Role"
           }
         },
@@ -2091,6 +2293,7 @@
         "conditions": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Condition"
           }
         },
@@ -2157,6 +2360,7 @@
         "children": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/guardianv1beta1Resource"
           }
         }
@@ -2166,14 +2370,11 @@
     "protobufAny": {
       "type": "object",
       "properties": {
-        "typeUrl": {
+        "@type": {
           "type": "string"
-        },
-        "value": {
-          "type": "string",
-          "format": "byte"
         }
-      }
+      },
+      "additionalProperties": {}
     },
     "protobufNullValue": {
       "type": "string",
@@ -2196,22 +2397,9 @@
         "details": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
-        }
-      }
-    },
-    "v1beta1AddApproverRequest": {
-      "type": "object",
-      "properties": {
-        "appealId": {
-          "type": "string"
-        },
-        "approvalId": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
         }
       }
     },
@@ -2249,7 +2437,8 @@
           "type": "string"
         },
         "options": {
-          "$ref": "#/definitions/v1beta1AppealOptions"
+          "$ref": "#/definitions/v1beta1AppealOptions",
+          "title": "optional"
         },
         "labels": {
           "type": "object",
@@ -2258,11 +2447,13 @@
           }
         },
         "resource": {
-          "$ref": "#/definitions/guardianv1beta1Resource"
+          "$ref": "#/definitions/guardianv1beta1Resource",
+          "title": "optional"
         },
         "approvals": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
         },
@@ -2283,9 +2474,7 @@
         "createdBy": {
           "type": "string"
         },
-        "creator": {
-          "type": "object"
-        },
+        "creator": {},
         "permissions": {
           "type": "array",
           "items": {
@@ -2306,7 +2495,8 @@
       "properties": {
         "expirationDate": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "title": "optional"
         },
         "duration": {
           "type": "string"
@@ -2389,6 +2579,7 @@
         "resources": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1CreateAppealRequestResource"
           }
         },
@@ -2423,6 +2614,7 @@
         "appeals": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
         }
@@ -2531,6 +2723,7 @@
         "providerTypes": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderType"
           }
         }
@@ -2653,6 +2846,7 @@
         "activities": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderActivity"
           }
         }
@@ -2690,6 +2884,7 @@
         "grants": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         }
@@ -2701,6 +2896,7 @@
         "activities": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderActivity"
           }
         }
@@ -2712,8 +2908,13 @@
         "appeals": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -2723,8 +2924,13 @@
         "approvals": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -2734,8 +2940,13 @@
         "grants": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -2745,6 +2956,7 @@
         "namespaces": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Namespace"
           }
         }
@@ -2756,6 +2968,7 @@
         "policies": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Policy"
           }
         }
@@ -2767,6 +2980,7 @@
         "providers": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Provider"
           }
         }
@@ -2778,6 +2992,7 @@
         "resources": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/guardianv1beta1Resource"
           }
         }
@@ -2789,6 +3004,7 @@
         "roles": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Role"
           }
         }
@@ -2800,8 +3016,13 @@
         "appeals": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -2811,8 +3032,13 @@
         "approvals": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -2822,8 +3048,13 @@
         "grants": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -2868,6 +3099,7 @@
         "steps": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/PolicyApprovalStep"
           }
         },
@@ -2888,6 +3120,7 @@
         "requirements": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/PolicyRequirement"
           }
         },
@@ -2906,6 +3139,7 @@
         "durationOptions": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/PolicyAppealConfigDurationOptions"
           }
         },
@@ -2921,6 +3155,7 @@
         "questions": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/PolicyAppealConfigQuestion"
           }
         },
@@ -3037,15 +3272,14 @@
             "type": "string"
           }
         },
-        "credentials": {
-          "type": "object"
-        },
+        "credentials": {},
         "appeal": {
           "$ref": "#/definitions/ProviderConfigAppealConfig"
         },
         "resources": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/ProviderConfigResourceConfig"
           }
         },
@@ -3058,6 +3292,7 @@
         "parameters": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/ProviderConfigProviderParameter"
           }
         }
@@ -3074,17 +3309,6 @@
           "items": {
             "type": "string"
           }
-        }
-      }
-    },
-    "v1beta1RevokeGrantRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "reason": {
-          "type": "string"
         }
       }
     },
@@ -3140,6 +3364,7 @@
         "grants": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         }
@@ -3159,9 +3384,7 @@
         },
         "permissions": {
           "type": "array",
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         }
       }
     },
@@ -3173,33 +3396,11 @@
         }
       }
     },
-    "v1beta1UpdateGrantRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "owner": {
-          "type": "string"
-        }
-      }
-    },
     "v1beta1UpdateGrantResponse": {
       "type": "object",
       "properties": {
         "grant": {
           "$ref": "#/definitions/v1beta1Grant"
-        }
-      }
-    },
-    "v1beta1UpdateNamespaceRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "namespace": {
-          "$ref": "#/definitions/v1beta1Namespace"
         }
       }
     },

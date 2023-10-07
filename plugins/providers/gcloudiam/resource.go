@@ -1,8 +1,9 @@
 package gcloudiam
 
 const (
-	ResourceTypeProject      = "project"
-	ResourceTypeOrganization = "organization"
+	ResourceTypeProject        = "project"
+	ResourceTypeOrganization   = "organization"
+	ResourceTypeServiceAccount = "service_account"
 )
 
 type Role struct {

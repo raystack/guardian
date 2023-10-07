@@ -45,7 +45,13 @@ type Client interface {
 
 //go:generate mockery --name=activityManager --exported --with-expecter
 type activityManager interface {
-	GetActivities(context.Context, domain.Provider, domain.ImportActivitiesFilter) ([]*domain.Activity, error)
+	GetActivities(context.Context, domain.Provider, domain.ListActivitiesFilter) ([]*domain.Activity, error)
+}
+
+//go:generate mockery --name=dormancyChecker --exported --with-expecter
+type dormancyChecker interface {
+	ListActivities(context.Context, domain.Provider, domain.ListActivitiesFilter) ([]*domain.Activity, error)
+	CorrelateGrantActivities(context.Context, domain.Provider, []*domain.Grant, []*domain.Activity) error
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter
@@ -468,7 +474,7 @@ func (s *Service) ListAccess(ctx context.Context, p domain.Provider, resources [
 	return providerAccesses, nil
 }
 
-func (s *Service) ImportActivities(ctx context.Context, filter domain.ImportActivitiesFilter) ([]*domain.Activity, error) {
+func (s *Service) ImportActivities(ctx context.Context, filter domain.ListActivitiesFilter) ([]*domain.Activity, error) {
 	p, err := s.GetByID(ctx, filter.ProviderID)
 	if err != nil {
 		return nil, fmt.Errorf("getting provider details: %w", err)
@@ -496,6 +502,25 @@ func (s *Service) ImportActivities(ctx context.Context, filter domain.ImportActi
 	}
 
 	return activities, nil
+}
+
+func (s *Service) ListActivities(ctx context.Context, p domain.Provider, filter domain.ListActivitiesFilter) ([]*domain.Activity, error) {
+	c := s.getClient(p.Type)
+	activityClient, ok := c.(dormancyChecker)
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", ErrGetActivityMethodNotSupported, p.Type)
+	}
+
+	return activityClient.ListActivities(ctx, p, filter)
+}
+
+func (s *Service) CorrelateGrantActivities(ctx context.Context, p domain.Provider, grants []*domain.Grant, activities []*domain.Activity) error {
+	c := s.getClient(p.Type)
+	activityClient, ok := c.(dormancyChecker)
+	if !ok {
+		return fmt.Errorf("%w: %s", ErrGetActivityMethodNotSupported, p.Type)
+	}
+	return activityClient.CorrelateGrantActivities(ctx, p, grants, activities)
 }
 
 func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*domain.Resource, error) {

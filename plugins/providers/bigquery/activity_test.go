@@ -1,14 +1,16 @@
 package bigquery_test
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
-	"cloud.google.com/go/logging"
 	"github.com/raystack/guardian/domain"
 	"github.com/raystack/guardian/plugins/providers/bigquery"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/api/googleapi"
+	"google.golang.org/api/logging/v2"
 	"google.golang.org/genproto/googleapis/cloud/audit"
 )
 
@@ -19,28 +21,30 @@ func TestActivity_ToProviderActivity(t *testing.T) {
 		Type: "bigquery",
 		URN:  "dummy-provider-urn",
 	}
-	a := bigquery.Activity{
-		&logging.Entry{
-			InsertID:  "dummy-insert-id",
-			Timestamp: now,
-			Payload: &audit.AuditLog{
-				MethodName: "test-method-name",
-				AuthenticationInfo: &audit.AuthenticationInfo{
-					PrincipalEmail: "test-principal-email",
-				},
-				AuthorizationInfo: []*audit.AuthorizationInfo{
-					{
-						Permission: "test-permission",
-					},
-				},
-				ResourceName: "projects/xxx/datasets/yyy/tables/zzz",
+	auditLog := &audit.AuditLog{
+		MethodName: "test-method-name",
+		AuthenticationInfo: &audit.AuthenticationInfo{
+			PrincipalEmail: "test-principal-email",
+		},
+		AuthorizationInfo: []*audit.AuthorizationInfo{
+			{
+				Permission: "test-permission",
 			},
+		},
+		ResourceName: "projects/xxx/datasets/yyy/tables/zzz",
+	}
+	auditLogBytes, err := json.Marshal(auditLog)
+	if err != nil {
+		require.NoError(t, err)
+	}
+	a := bigquery.Activity{
+		&logging.LogEntry{
+			InsertId:     "dummy-insert-id",
+			Timestamp:    now.Format(time.RFC3339Nano),
+			ProtoPayload: googleapi.RawMessage(auditLogBytes),
 		},
 	}
 
-	timestampStr, err := a.Timestamp.MarshalJSON()
-	require.NoError(t, err)
-	timestampStr = timestampStr[1 : len(timestampStr)-1] // trim quotes
 	expectedMetadata := map[string]interface{}{
 		"logging_entry": map[string]interface{}{
 			"payload": map[string]interface{}{
@@ -55,23 +59,26 @@ func TestActivity_ToProviderActivity(t *testing.T) {
 				},
 				"resource_name": "projects/xxx/datasets/yyy/tables/zzz",
 			},
-			"insert_id":       a.InsertID,
-			"severity":        float64(0),
+			"insert_id":       a.InsertId,
+			"severity":        "",
 			"resource":        nil,
 			"labels":          nil,
 			"operation":       nil,
 			"trace":           "",
 			"source_location": nil,
-			"timestamp":       string(timestampStr),
+			"timestamp":       a.Timestamp,
 			"span_id":         "",
 			"trace_sampled":   false,
 		},
 	}
 
+	expectedTimestamp, err := time.Parse(time.RFC3339Nano, a.Timestamp)
+	require.NoError(t, err)
+
 	expectedActivity := &domain.Activity{
 		ProviderID:         dummyProvider.ID,
 		ProviderActivityID: "dummy-insert-id",
-		Timestamp:          a.Timestamp,
+		Timestamp:          expectedTimestamp,
 		Type:               "test-method-name",
 		AccountID:          "test-principal-email",
 		AccountType:        "user",

@@ -8,10 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"cloud.google.com/go/logging"
-	"cloud.google.com/go/logging/logadmin"
 	"github.com/raystack/guardian/domain"
-	"google.golang.org/api/iterator"
+	"google.golang.org/api/logging/v2"
 	"google.golang.org/api/option"
 	"google.golang.org/genproto/googleapis/cloud/audit"
 )
@@ -19,6 +17,10 @@ import (
 var (
 	ErrInvalidActivityPayloadType = errors.New("payload is not of type *audit.AuditLog")
 	ErrEmptyActivityPayload       = errors.New("couldn't get payload from log entry")
+)
+
+const (
+	PrivateLogViewerPermission = "logging.privateLogEntries.list"
 )
 
 type auditLog struct {
@@ -51,22 +53,31 @@ func (a auditLog) GetResource(p domain.Provider) *domain.Resource {
 }
 
 type Activity struct {
-	*logging.Entry
+	*logging.LogEntry
 }
 
 func (a Activity) getAuditLog() (*auditLog, error) {
-	l, ok := a.Payload.(*audit.AuditLog)
-	if !ok {
-		return nil, fmt.Errorf("%w: %T", ErrInvalidActivityPayloadType, a.Payload)
+	payload, err := a.ProtoPayload.MarshalJSON()
+	if err != nil {
+		return nil, fmt.Errorf("marshalling proto payload: %w", err)
 	}
-	return &auditLog{l}, nil
+	var al audit.AuditLog
+	if err := json.Unmarshal(payload, &al); err != nil {
+		return nil, fmt.Errorf("unmarshalling proto payload: %w", err)
+	}
+	return &auditLog{&al}, nil
 }
 
 func (a Activity) ToDomainActivity(p domain.Provider) (*domain.Activity, error) {
+	t, err := time.Parse(time.RFC3339Nano, a.Timestamp)
+	if err != nil {
+		return nil, fmt.Errorf("parsing timestamp: %w", err)
+	}
+
 	activity := &domain.Activity{
 		ProviderID:         p.ID,
-		Timestamp:          a.Timestamp,
-		ProviderActivityID: a.InsertID,
+		Timestamp:          t,
+		ProviderActivityID: a.InsertId,
 	}
 
 	al, err := a.getAuditLog()
@@ -86,7 +97,7 @@ func (a Activity) ToDomainActivity(p domain.Provider) (*domain.Activity, error) 
 	loggingEntryMetadata := map[string]interface{}{}
 	loggingEntryMap := map[string]interface{}{
 		"payload":         al,
-		"insert_id":       a.InsertID,
+		"insert_id":       a.InsertId,
 		"severity":        a.Severity,
 		"resource":        a.Resource,
 		"labels":          a.Labels,
@@ -94,7 +105,7 @@ func (a Activity) ToDomainActivity(p domain.Provider) (*domain.Activity, error) 
 		"trace":           a.Trace,
 		"source_location": a.SourceLocation,
 		"timestamp":       a.Timestamp,
-		"span_id":         a.SpanID,
+		"span_id":         a.SpanId,
 		"trace_sampled":   a.TraceSampled,
 	}
 	if jsonData, err := json.Marshal(loggingEntryMap); err != nil {
@@ -118,7 +129,8 @@ func (a Activity) ToDomainActivity(p domain.Provider) (*domain.Activity, error) 
 }
 
 type cloudLoggingClient struct {
-	client *logadmin.Client
+	client    *logging.Service
+	projectID string
 }
 
 func NewCloudLoggingClient(ctx context.Context, projectID string, credentialsJSON []byte) (*cloudLoggingClient, error) {
@@ -126,13 +138,14 @@ func NewCloudLoggingClient(ctx context.Context, projectID string, credentialsJSO
 	if credentialsJSON != nil {
 		options = append(options, option.WithCredentialsJSON(credentialsJSON))
 	}
-	client, err := logadmin.NewClient(ctx, projectID, options...)
+	service, err := logging.NewService(ctx, options...)
 	if err != nil {
 		return nil, err
 	}
 
 	return &cloudLoggingClient{
-		client: client,
+		client:    service,
+		projectID: projectID,
 	}, nil
 }
 
@@ -158,80 +171,33 @@ func (r bqResource) fullURN() string {
 	return s
 }
 
-type ImportActivitiesFilter struct {
-	domain.ImportActivitiesFilter
-	Types          []string
-	Authorizations []string
-	Limit          int
-}
-
-type bqFilter ImportActivitiesFilter
-
-func (f bqFilter) String() string {
-	criteria := []string{
-		`protoPayload.serviceName="bigquery.googleapis.com"`,
-		`resource.type="bigquery_dataset"`, // exclude logs for bigquery jobs ("bigquery_project")
-	}
-
-	if len(f.AccountIDs) > 0 {
-		criteria = append(criteria,
-			fmt.Sprintf(`protoPayload.authenticationInfo.principalEmail=("%s")`, strings.Join(f.AccountIDs, `" OR "`)),
-		)
-	}
-
-	resources := f.GetResources()
-	if len(resources) > 0 {
-		resourceNames := []string{}
-		for _, r := range resources {
-			resourceNames = append(resourceNames, (*bqResource)(r).fullURN())
-		}
-		criteria = append(criteria, fmt.Sprintf(`protoPayload.resourceName:("%s")`, strings.Join(resourceNames, `" OR "`)))
-		// uses ":" (has/contains) operator instead of "=" (equals) operator for resource name so that the result will also
-		// include activities on tables under the specified dataset (e.g. "projects/xxx/datasets/yyy" will also include
-		// activities on "projects/xxx/datasets/yyy/tables/zzz")
-	}
-	if len(f.Types) > 0 {
-		criteria = append(criteria, fmt.Sprintf(`protoPayload.methodName=("%s")`, strings.Join(f.Types, `" OR "`)))
-	}
-	// TODO: authorizations
-	if f.TimestampGte != nil {
-		criteria = append(criteria, fmt.Sprintf(`timestamp>="%s"`, f.TimestampGte.Format(time.RFC3339)))
-	}
-	if f.TimestampLte != nil {
-		criteria = append(criteria, fmt.Sprintf(`timestamp<="%s"`, f.TimestampLte.Format(time.RFC3339)))
-	}
-
-	return strings.Join(criteria, " AND ")
-}
-
-func (c *cloudLoggingClient) ListLogEntries(ctx context.Context, filter ImportActivitiesFilter) ([]*Activity, error) {
+func (c *cloudLoggingClient) ListLogEntries(ctx context.Context, filter string, limit int) ([]*Activity, error) {
 	var entries []*Activity
 
-	options := []logadmin.EntriesOption{logadmin.Filter(bqFilter(filter).String())}
-	if filter.Limit > 0 {
-		options = append(options, logadmin.NewestFirst())
+	req := &logging.ListLogEntriesRequest{
+		Filter:        filter,
+		ResourceNames: []string{`projects/` + c.projectID},
 	}
-	it := c.client.Entries(ctx, options...)
-	for {
-		if filter.Limit > 0 && len(entries) >= filter.Limit {
-			break
-		}
+	if limit > 0 {
+		req.OrderBy = "timestamp desc"
+	}
 
-		e, err := it.Next()
-		if err != nil {
-			if err == iterator.Done {
-				break
+	errLimitReached := errors.New("limit reached")
+	if err := c.client.Entries.List(req).Pages(ctx, func(page *logging.ListLogEntriesResponse) error {
+		for _, e := range page.Entries {
+			if limit != 0 && len(entries) >= limit {
+				return errLimitReached
 			}
-			return nil, fmt.Errorf("iterating over cloud logging entries: %w", err)
-		}
-		if e != nil {
 			entries = append(entries, &Activity{e})
 		}
+		return nil
+	}); err != nil && err != errLimitReached {
+		return nil, err
 	}
 
 	return entries, nil
 }
 
-func (c *cloudLoggingClient) Close() error {
-	return c.client.Close()
+func (c *cloudLoggingClient) GetLogBucket(ctx context.Context, name string) (*logging.LogBucket, error) {
+	return c.client.Projects.Locations.Buckets.Get(name).Context(ctx).Do()
 }

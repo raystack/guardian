@@ -117,8 +117,16 @@ func (s *ApprovalRepositoryTestSuite) TearDownSuite() {
 	}
 }
 
+func (s *ApprovalRepositoryTestSuite) TestGetApprovalsTotalCount() {
+
+	s.Run("should return 0", func() {
+		_, actualError := s.repository.GetApprovalsTotalCount(context.Background(), &domain.ListApprovalsFilter{})
+		s.Nil(actualError)
+	})
+}
+
 func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
-	appealA := &domain.Appeal{
+	pendingAppeal := &domain.Appeal{
 		ResourceID:    s.dummyResource.ID,
 		PolicyID:      s.dummyPolicy.ID,
 		PolicyVersion: s.dummyPolicy.Version,
@@ -130,7 +138,7 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 		Status:        domain.AppealStatusPending,
 	}
 
-	appealB := &domain.Appeal{
+	cancelledAppeal := &domain.Appeal{
 		ResourceID:    s.dummyResource.ID,
 		PolicyID:      s.dummyPolicy.ID,
 		PolicyVersion: s.dummyPolicy.Version,
@@ -142,7 +150,7 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 		Status:        domain.AppealStatusCanceled,
 	}
 
-	s.appealRepository.BulkUpsert(context.Background(), []*domain.Appeal{appealA, appealB})
+	s.appealRepository.BulkUpsert(context.Background(), []*domain.Appeal{pendingAppeal, cancelledAppeal})
 
 	dummyApprovals := []*domain.Approval{
 		{
@@ -175,20 +183,20 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 		{
 			Name:          "test-approval-name-4",
 			Index:         1,
-			AppealID:      appealA.ID,
+			AppealID:      pendingAppeal.ID,
 			Status:        "test-status-1",
 			PolicyID:      "test-policy-id",
 			PolicyVersion: 1,
-			Appeal:        appealA,
+			Appeal:        pendingAppeal,
 		},
 		{
 			Name:          "test-approval-name-5",
 			Index:         1,
-			AppealID:      appealB.ID,
+			AppealID:      cancelledAppeal.ID,
 			Status:        "test-status-1",
 			PolicyID:      "test-policy-id",
 			PolicyVersion: 1,
-			Appeal:        appealB,
+			Appeal:        cancelledAppeal,
 		},
 	}
 
@@ -213,12 +221,12 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 		},
 		{
 			ApprovalID: dummyApprovals[3].ID,
-			AppealID:   appealA.ID,
+			AppealID:   pendingAppeal.ID,
 			Email:      "approver3@email.com",
 		},
 		{
 			ApprovalID: dummyApprovals[4].ID,
-			AppealID:   appealB.ID,
+			AppealID:   cancelledAppeal.ID,
 			Email:      "approver3@email.com",
 		},
 	}
@@ -244,9 +252,37 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 		s.Equal(dummyApprovals[0].ID, approvals[0].ID)
 	})
 
+	s.Run("should return approvals based on query search input", func() {
+		approvals, err := s.repository.ListApprovals(context.Background(), &domain.ListApprovalsFilter{
+			Q: "abc-user", // expected to match account_id: "abc-user@example.com"
+		})
+
+		s.NoError(err)
+		s.Len(approvals, 1)
+		s.Equal(pendingAppeal.ID, approvals[0].AppealID)
+	})
+
+	s.Run("should return list of approvals based account types filter", func() {
+		approvals, err := s.repository.ListApprovals(context.Background(), &domain.ListApprovalsFilter{
+			AccountTypes: []string{"x-account-type"}, // match 0 records
+		})
+
+		s.NoError(err)
+		s.Len(approvals, 0)
+	})
+
+	s.Run("should return list of approvals based resource types filter", func() {
+		approvals, err := s.repository.ListApprovals(context.Background(), &domain.ListApprovalsFilter{
+			ResourceTypes: []string{"x-resource-type"}, // match 0 records
+		})
+
+		s.NoError(err)
+		s.Len(approvals, 0)
+	})
+
 	s.Run("should return list of approvals where appeal status is canceled", func() {
 		approvals, err := s.repository.ListApprovals(context.Background(), &domain.ListApprovalsFilter{
-			AccountID:      appealB.AccountID,
+			AccountID:      cancelledAppeal.AccountID,
 			CreatedBy:      dummyApprover[3].Email,
 			AppealStatuses: []string{domain.AppealStatusCanceled},
 			OrderBy:        []string{"status", "updated_at:desc", "created_at"},
@@ -259,7 +295,7 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 
 	s.Run("should return list of approvals where appeal status is pending", func() {
 		approvals, err := s.repository.ListApprovals(context.Background(), &domain.ListApprovalsFilter{
-			AccountID:      appealA.AccountID,
+			AccountID:      pendingAppeal.AccountID,
 			CreatedBy:      dummyApprover[3].Email,
 			AppealStatuses: []string{domain.AppealStatusPending},
 			OrderBy:        []string{"status", "updated_at:desc", "created_at"},
@@ -289,6 +325,86 @@ func (s *ApprovalRepositoryTestSuite) TestListApprovals() {
 
 		s.Error(err)
 		s.Nil(approvals)
+	})
+}
+
+func (s *ApprovalRepositoryTestSuite) TestListApprovals__Search() {
+	s.Run("should pass grouped condition properly and return result accordingly", func() {
+		dummyAppeals := []*domain.Appeal{
+			{
+				ResourceID:    s.dummyResource.ID,
+				PolicyID:      s.dummyPolicy.ID,
+				PolicyVersion: s.dummyPolicy.Version,
+				AccountID:     "user1@example.com",
+				AccountType:   domain.DefaultAppealAccountType,
+				Role:          "role_test",
+				Permissions:   []string{"permission_test"},
+				CreatedBy:     "user1@example.com",
+				Status:        domain.AppealStatusPending,
+			},
+			{
+				ResourceID:    s.dummyResource.ID,
+				PolicyID:      s.dummyPolicy.ID,
+				PolicyVersion: s.dummyPolicy.Version,
+				AccountID:     "user2@example.com",
+				AccountType:   domain.DefaultAppealAccountType,
+				Role:          "role_test",
+				Permissions:   []string{"permission_test"},
+				CreatedBy:     "user2@example.com",
+				Status:        domain.AppealStatusPending,
+			},
+		}
+		err := s.appealRepository.BulkUpsert(context.Background(), dummyAppeals)
+		s.Require().NoError(err)
+
+		dummyApprovals := []*domain.Approval{
+			{
+				Name:          "test-approval-name-1",
+				Index:         0,
+				AppealID:      dummyAppeals[0].ID,
+				Status:        domain.ApprovalStatusPending,
+				PolicyID:      "test-policy-id",
+				PolicyVersion: 1,
+				Appeal:        dummyAppeals[0],
+			},
+			{
+				Name:          "test-approval-name-1",
+				Index:         0,
+				AppealID:      dummyAppeals[1].ID,
+				Status:        domain.ApprovalStatusPending,
+				PolicyID:      "test-policy-id",
+				PolicyVersion: 1,
+				Appeal:        dummyAppeals[1],
+			},
+		}
+		err = s.repository.BulkInsert(context.Background(), dummyApprovals)
+		s.Require().NoError(err)
+
+		dummyApprover := []*domain.Approver{
+			{
+				ApprovalID: dummyApprovals[0].ID,
+				AppealID:   dummyAppeals[0].ID,
+				Email:      "approver@email.com",
+			},
+			{
+				ApprovalID: dummyApprovals[1].ID,
+				AppealID:   dummyAppeals[1].ID,
+				Email:      "approver2@email.com",
+			},
+		}
+		for _, ap := range dummyApprover {
+			err = s.repository.AddApprover(context.Background(), ap)
+			s.Require().NoError(err)
+		}
+
+		approvals, err := s.repository.ListApprovals(context.Background(), &domain.ListApprovalsFilter{
+			CreatedBy: "approver@email.com",
+			Q:         "role_test",
+		})
+
+		s.NoError(err)
+		s.Len(approvals, 1)
+		s.Equal(dummyApprovals[0].ID, approvals[0].ID)
 	})
 }
 

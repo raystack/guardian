@@ -8,17 +8,16 @@ import (
 )
 
 type GrantStatus string
+type GrantSource string
 
 const (
 	GrantStatusActive   GrantStatus = "active"
 	GrantStatusInactive GrantStatus = "inactive"
-)
 
-type GrantSource string
-
-const (
 	GrantSourceAppeal GrantSource = "appeal"
 	GrantSourceImport GrantSource = "import"
+
+	GrantExpirationReasonDormant = "grant/access hasn't been used for a while"
 )
 
 type Grant struct {
@@ -44,8 +43,9 @@ type Grant struct {
 	CreatedAt               time.Time   `json:"created_at" yaml:"created_at"`
 	UpdatedAt               time.Time   `json:"updated_at" yaml:"updated_at"`
 
-	Resource *Resource `json:"resource,omitempty" yaml:"resource,omitempty"`
-	Appeal   *Appeal   `json:"appeal,omitempty" yaml:"appeal,omitempty"`
+	Resource   *Resource   `json:"resource,omitempty" yaml:"resource,omitempty"`
+	Appeal     *Appeal     `json:"appeal,omitempty" yaml:"appeal,omitempty"`
+	Activities []*Activity `json:"activities,omitempty" yaml:"activities,omitempty"`
 }
 
 func (g Grant) PermissionsKey() string {
@@ -103,6 +103,10 @@ type ListGrantsFilter struct {
 	ExpirationDateLessThan    time.Time
 	ExpirationDateGreaterThan time.Time
 	IsPermanent               *bool
+	CreatedAtLte              time.Time
+	Size                      int    `mapstructure:"size" validate:"omitempty"`
+	Offset                    int    `mapstructure:"offset" validate:"omitempty"`
+	Q                         string `mapstructure:"q" validate:"omitempty"`
 }
 
 type RevokeGrantsFilter struct {
@@ -139,3 +143,27 @@ func (ae AccessEntry) ToGrant(resource Resource) Grant {
 
 // MapResourceAccess is list of UserAccess grouped by resource urn
 type MapResourceAccess map[string][]AccessEntry
+
+type DormancyCheckCriteria struct {
+	ProviderID     string
+	Period         time.Duration
+	RetainDuration time.Duration
+	DryRun         bool
+}
+
+func (c DormancyCheckCriteria) Validate() error {
+	if c.ProviderID == "" {
+		return errors.New("provider id is required")
+	}
+	if c.Period == 0 {
+		return errors.New("period is required")
+	} else if c.Period < 0 {
+		return errors.New("period must be positive")
+	}
+	if c.RetainDuration == 0 {
+		return errors.New("retain duration is required")
+	} else if c.RetainDuration < 0 {
+		return errors.New("retain duration must be positive")
+	}
+	return nil
+}

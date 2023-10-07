@@ -20,4 +20,5 @@ var (
 
 	ErrUnimplementedMethod                = errors.New("method is not yet implemented")
 	ErrImportActivitiesMethodNotSupported = errors.New("import activities is not supported for this provider type")
+	ErrGetActivityMethodNotSupported      = errors.New("get activity is not supported for this provider type")
 )

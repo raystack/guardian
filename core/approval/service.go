@@ -9,6 +9,7 @@ import (
 //go:generate mockery --name=repository --exported --with-expecter
 type repository interface {
 	BulkInsert(context.Context, []*domain.Approval) error
+	GetApprovalsTotalCount(context.Context, *domain.ListApprovalsFilter) (int64, error)
 	ListApprovals(context.Context, *domain.ListApprovalsFilter) ([]*domain.Approval, error)
 	AddApprover(context.Context, *domain.Approver) error
 	DeleteApprover(ctx context.Context, approvalID, email string) error
@@ -37,6 +38,10 @@ func NewService(deps ServiceDeps) *Service {
 
 func (s *Service) ListApprovals(ctx context.Context, filters *domain.ListApprovalsFilter) ([]*domain.Approval, error) {
 	return s.repo.ListApprovals(ctx, filters)
+}
+
+func (s *Service) GetApprovalsTotalCount(ctx context.Context, filters *domain.ListApprovalsFilter) (int64, error) {
+	return s.repo.GetApprovalsTotalCount(ctx, filters)
 }
 
 func (s *Service) BulkInsert(ctx context.Context, approvals []*domain.Approval) error {
