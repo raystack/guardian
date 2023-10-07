@@ -54,7 +54,7 @@ type resourceService interface {
 type activityService interface {
 	GetOne(context.Context, string) (*domain.Activity, error)
 	Find(context.Context, domain.ListProviderActivitiesFilter) ([]*domain.Activity, error)
-	Import(context.Context, domain.ImportActivitiesFilter) ([]*domain.Activity, error)
+	Import(context.Context, domain.ListActivitiesFilter) ([]*domain.Activity, error)
 }
 
 //go:generate mockery --name=providerService --exported --with-expecter
@@ -83,6 +83,7 @@ type policyService interface {
 
 //go:generate mockery --name=appealService --exported --with-expecter
 type appealService interface {
+	GetAppealsTotalCount(context.Context, *domain.ListAppealsFilter) (int64, error)
 	GetByID(context.Context, string) (*domain.Appeal, error)
 	Find(context.Context, *domain.ListAppealsFilter) ([]*domain.Appeal, error)
 	Create(context.Context, []*domain.Appeal, ...appeal.CreateAppealOption) error
@@ -95,11 +96,13 @@ type appealService interface {
 //go:generate mockery --name=approvalService --exported --with-expecter
 type approvalService interface {
 	ListApprovals(context.Context, *domain.ListApprovalsFilter) ([]*domain.Approval, error)
+	GetApprovalsTotalCount(context.Context, *domain.ListApprovalsFilter) (int64, error)
 	BulkInsert(context.Context, []*domain.Approval) error
 }
 
 //go:generate mockery --name=grantService --exported --with-expecter
 type grantService interface {
+	GetGrantsTotalCount(context.Context, domain.ListGrantsFilter) (int64, error)
 	List(context.Context, domain.ListGrantsFilter) ([]domain.Grant, error)
 	GetByID(context.Context, string) (*domain.Grant, error)
 	Update(context.Context, *domain.Grant) error

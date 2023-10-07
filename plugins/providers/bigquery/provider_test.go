@@ -3,12 +3,13 @@ package bigquery_test
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
-	"cloud.google.com/go/logging"
 	"github.com/google/go-cmp/cmp"
 	"github.com/raystack/guardian/core/provider"
 	"github.com/raystack/guardian/domain"
@@ -18,7 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"google.golang.org/genproto/googleapis/api/monitoredres"
+	"google.golang.org/api/googleapi"
+	"google.golang.org/api/logging/v2"
 	"google.golang.org/genproto/googleapis/cloud/audit"
 )
 
@@ -256,6 +258,9 @@ func TestCreateConfig(t *testing.T) {
 				ResourceName:      "projects/test-resource-name",
 			},
 			URN: providerURN,
+			Activity: &domain.ActivityConfig{
+				Source: "default",
+			},
 		}
 		encryptor.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
 
@@ -1057,24 +1062,30 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 	s.Run("should map bigquery logging entries to guardian activities", func() {
 		now := time.Now()
 
+		auditLog := &audit.AuditLog{
+			ResourceName: "projects/test-project-id/datasets/test-dataset-id",
+			ServiceName:  "bigquery.googleapis.com",
+			AuthenticationInfo: &audit.AuthenticationInfo{
+				PrincipalEmail: "user@example.com",
+			},
+			AuthorizationInfo: []*audit.AuthorizationInfo{
+				{
+					Permission: "bigquery.datasets.get",
+				},
+			},
+		}
+		auditLogBytes, err := json.Marshal(auditLog)
+		if err != nil {
+			s.Require().NoError(err)
+		}
+
 		expectedBigQueryActivities := []*bigquery.Activity{
 			{
-				&logging.Entry{
-					Timestamp: now,
-					InsertID:  "test-activity-id",
-					Payload: &audit.AuditLog{
-						ResourceName: "projects/test-project-id/datasets/test-dataset-id",
-						ServiceName:  "bigquery.googleapis.com",
-						AuthenticationInfo: &audit.AuthenticationInfo{
-							PrincipalEmail: "user@example.com",
-						},
-						AuthorizationInfo: []*audit.AuthorizationInfo{
-							{
-								Permission: "bigquery.datasets.get",
-							},
-						},
-					},
-					Resource: &monitoredres.MonitoredResource{
+				&logging.LogEntry{
+					Timestamp:    now.Format(time.RFC3339Nano),
+					InsertId:     "test-activity-id",
+					ProtoPayload: googleapi.RawMessage(auditLogBytes),
+					Resource: &logging.MonitoredResource{
 						Type: "bigquery_dataset",
 						Labels: map[string]string{
 							"dataset_id": "test-dataset-id",
@@ -1084,10 +1095,13 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 				},
 			},
 		}
+		expectedListLogEntriesFilter := strings.Join([]string{
+			`protoPayload.serviceName="bigquery.googleapis.com"`,
+			`resource.type="bigquery_dataset"`,
+			fmt.Sprintf(`protoPayload.methodName=("%s")`, strings.Join(bigquery.BigQueryAuditMetadataMethods, `" OR "`)),
+		}, ` AND `)
 		s.mockCloudLoggingClient.EXPECT().
-			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), bigquery.ImportActivitiesFilter{
-				Types: bigquery.BigQueryAuditMetadataMethods,
-			}).Return(expectedBigQueryActivities, nil).Once()
+			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), expectedListLogEntriesFilter, 0).Return(expectedBigQueryActivities, nil).Once()
 		s.mockBigQueryClient.EXPECT().
 			GetRolePermissions(mock.AnythingOfType("*context.emptyCtx"), "roles/bigquery.dataViewer").Return([]string{"bigquery.datasets.get"}, nil).Once()
 		s.mockBigQueryClient.EXPECT().
@@ -1133,7 +1147,7 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 							},
 							"type": "bigquery_dataset",
 						},
-						"severity":        float64(0),
+						"severity":        "",
 						"source_location": nil,
 						"span_id":         "",
 						"timestamp":       now.Format(time.RFC3339Nano),
@@ -1144,7 +1158,7 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 			},
 		}
 
-		actualActivities, err := s.provider.GetActivities(context.Background(), *s.validProvider, domain.ImportActivitiesFilter{})
+		actualActivities, err := s.provider.GetActivities(context.Background(), *s.validProvider, domain.ListActivitiesFilter{})
 
 		s.mockCloudLoggingClient.AssertExpectations(s.T())
 		s.mockBigQueryClient.AssertExpectations(s.T())
@@ -1167,7 +1181,7 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 				},
 			},
 		}
-		_, err := s.provider.GetActivities(context.Background(), *invalidProvider, domain.ImportActivitiesFilter{})
+		_, err := s.provider.GetActivities(context.Background(), *invalidProvider, domain.ListActivitiesFilter{})
 
 		s.mockEncryptor.AssertExpectations(s.T())
 		s.ErrorIs(err, expectedError)
@@ -1176,12 +1190,170 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 	s.Run("should return error if there is an error on listing log entries", func() {
 		expectedError := errors.New("error")
 		s.mockCloudLoggingClient.EXPECT().
-			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("bigquery.ImportActivitiesFilter")).Return(nil, expectedError).Once()
+			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string"), 0).Return(nil, expectedError).Once()
 
-		_, err := s.provider.GetActivities(context.Background(), *s.validProvider, domain.ImportActivitiesFilter{})
+		_, err := s.provider.GetActivities(context.Background(), *s.validProvider, domain.ListActivitiesFilter{})
 
 		s.mockCloudLoggingClient.AssertExpectations(s.T())
 		s.ErrorIs(err, expectedError)
+	})
+}
+
+func (s *BigQueryProviderTestSuite) TestListActivities() {
+	timeNow := time.Now()
+
+	s.Run("should return list of activity on success", func() {
+		expectedLogBucket := &logging.LogBucket{
+			RetentionDays: 30,
+		}
+		s.mockCloudLoggingClient.EXPECT().
+			GetLogBucket(mock.AnythingOfType("*context.emptyCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
+			Return(expectedLogBucket, nil).Once()
+		s.mockBigQueryClient.EXPECT().
+			CheckGrantedPermission(mock.AnythingOfType("*context.emptyCtx"), []string{bigquery.PrivateLogViewerPermission}).
+			Return([]string{bigquery.PrivateLogViewerPermission}, nil).Once()
+		expectedBqActivities := []*bigquery.Activity{
+			{
+				LogEntry: &logging.LogEntry{
+					Timestamp: timeNow.Format(time.RFC3339Nano),
+					ProtoPayload: googleapi.RawMessage(`{
+	"authentication_info": { "principal_email": "user@example.com" },
+	"authorization_info": [
+		{ "permission": "bigquery.datasets.get" }
+	],
+	"resource_name": "projects/test-project-id/datasets/test-dataset-id"
+}`),
+				},
+			},
+		}
+		s.mockCloudLoggingClient.EXPECT().
+			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string"), 0).
+			Return(expectedBqActivities, nil).Once()
+
+		expectedActivities := []*domain.Activity{
+			{
+				AccountType:    "user",
+				AccountID:      "user@example.com",
+				Timestamp:      timeNow,
+				Authorizations: []string{"bigquery.datasets.get"},
+				Metadata: map[string]interface{}{
+					"logging_entry": map[string]interface{}{
+						"insert_id": string(""),
+						"labels":    nil,
+						"operation": nil,
+						"payload": map[string]interface{}{
+							"authentication_info": map[string]interface{}{
+								"principal_email": "user@example.com",
+							},
+							"authorization_info": []interface{}{
+								map[string]interface{}{
+									"permission": "bigquery.datasets.get",
+								},
+							},
+							"resource_name": "projects/test-project-id/datasets/test-dataset-id",
+						},
+						"resource":        nil,
+						"severity":        "",
+						"source_location": nil,
+						"span_id":         "",
+						"timestamp":       timeNow.Format(time.RFC3339Nano),
+						"trace":           "",
+						"trace_sampled":   false,
+					},
+				},
+				Resource: &domain.Resource{
+					ProviderType: s.validProvider.Type,
+					ProviderURN:  s.validProvider.URN,
+					Type:         "dataset",
+					URN:          "test-project-id:test-dataset-id",
+					Name:         "test-dataset-id",
+				},
+			},
+		}
+
+		activities, err := s.provider.ListActivities(context.Background(), *s.validProvider, domain.ListActivitiesFilter{
+			AccountIDs: []string{"user@example.com", "user2@example.com"},
+		})
+
+		s.NoError(err)
+		s.Empty(cmp.Diff(expectedActivities, activities))
+	})
+
+	s.Run("should return error if specified time range is more than the log bucket's retention period", func() {
+		s.mockCloudLoggingClient.EXPECT().
+			GetLogBucket(mock.AnythingOfType("*context.emptyCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
+			Return(&logging.LogBucket{
+				RetentionDays: 30,
+			}, nil).Once()
+
+		timestampGte := timeNow.Add(-32 * 24 * time.Hour)
+		_, err := s.provider.ListActivities(context.Background(), *s.validProvider, domain.ListActivitiesFilter{
+			TimestampGte: &timestampGte,
+		})
+
+		s.mockCloudLoggingClient.AssertExpectations(s.T())
+		s.ErrorIs(err, bigquery.ErrInvalidTimeRange)
+	})
+
+	s.Run("should return error if credentials doesn't have bigquery.privateLogViewer permission", func() {
+		s.mockCloudLoggingClient.EXPECT().
+			GetLogBucket(mock.AnythingOfType("*context.emptyCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
+			Return(&logging.LogBucket{
+				RetentionDays: 30,
+			}, nil).Once()
+		s.mockBigQueryClient.EXPECT().
+			CheckGrantedPermission(mock.AnythingOfType("*context.emptyCtx"), []string{bigquery.PrivateLogViewerPermission}).
+			Return([]string{}, nil).Once()
+
+		_, err := s.provider.ListActivities(context.Background(), *s.validProvider, domain.ListActivitiesFilter{})
+
+		s.mockCloudLoggingClient.AssertExpectations(s.T())
+		s.ErrorIs(err, bigquery.ErrPrivateLogViewerAccessNotGranted)
+	})
+}
+
+func (s *BigQueryProviderTestSuite) TestCorrelateGrantActivities() {
+	s.Run("should attach activities to the related grants and return nil error on success", func() {
+		dummyRolePermissions := map[string][]string{
+			"role-1": {"permission-1", "permission-2"},
+			"role-2": {"permission-3", "permission-4"},
+			"role-3": {"permission-4"},
+			"role-4": {"permission-1", "permission-2", "permission-3"},
+		}
+		grants := []*domain.Grant{
+			{ID: "g1", Permissions: []string{"role-1"}},
+			{ID: "g2", Permissions: []string{"role-2"}},
+			{ID: "g3", Permissions: []string{"role-3"}},
+			{ID: "g4", Permissions: []string{"role-4"}},
+		}
+		activities := []*domain.Activity{
+			{ID: "a1", Authorizations: []string{"permission-1", "permission-2"}},
+			{ID: "a2", Authorizations: []string{"permission-3"}},
+			{ID: "a3", Authorizations: []string{"permission-1"}},
+			{ID: "a4", Authorizations: []string{"permission-2"}},
+		}
+
+		expectedUniqueRoles := []string{"role-1", "role-2", "role-3", "role-4"}
+		s.mockBigQueryClient.EXPECT().
+			ListRolePermissions(mock.AnythingOfType("*context.emptyCtx"), expectedUniqueRoles).
+			Return(dummyRolePermissions, nil).Once()
+		expectedAssociatedGrants := map[string][]string{
+			"g1": {"a1", "a3", "a4"},
+			"g2": {"a2"},
+			"g3": {},
+			"g4": {"a1", "a2", "a3", "a4"},
+		}
+
+		err := s.provider.CorrelateGrantActivities(context.Background(), *s.validProvider, grants, activities)
+		s.NoError(err)
+		for _, g := range grants {
+			expectedActivityIDs := expectedAssociatedGrants[g.ID]
+			actualActivityIDs := []string{}
+			for _, a := range g.Activities {
+				actualActivityIDs = append(actualActivityIDs, a.ID)
+			}
+			s.Equal(expectedActivityIDs, actualActivityIDs)
+		}
 	})
 }
 

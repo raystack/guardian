@@ -892,3 +892,126 @@ func (s *ServiceTestSuite) TestImportFromProvider() {
 		}
 	})
 }
+
+func (s *ServiceTestSuite) TestDormancyCheck() {
+	s.Run("should update grants and return nil error on success", func() {
+		s.setup()
+
+		timeNow := time.Now()
+		dummyProvider := &domain.Provider{
+			ID: "test-provider-id",
+		}
+		dummyGrants := []domain.Grant{
+			{
+				ID:          "g1",
+				AccountID:   "user@example.com",
+				Permissions: []string{"role-1"},
+				IsPermanent: true,
+			},
+			{
+				ID:          "g2",
+				AccountID:   "user2@example.com",
+				Permissions: []string{"role-2"},
+			},
+		}
+		dummyActivities := []*domain.Activity{}
+
+		dormancyCheckCriteria := domain.DormancyCheckCriteria{
+			ProviderID:     dummyProvider.ID,
+			Period:         30 * 24 * time.Hour, // 30 days back
+			RetainDuration: 7 * 24 * time.Hour,  // update grant exp date to 7 days from now
+		}
+
+		newExpDate := timeNow.Add(dormancyCheckCriteria.RetainDuration)
+		expectedReason := fmt.Sprintf("%s: %s", domain.GrantExpirationReasonDormant, dormancyCheckCriteria.RetainDuration)
+		expectedUpdatedGrants := []*domain.Grant{
+			{
+				ID:                   "g1",
+				AccountID:            "user@example.com",
+				Permissions:          []string{"role-1"},
+				ExpirationDate:       &newExpDate,
+				IsPermanent:          false,
+				ExpirationDateReason: expectedReason,
+			},
+			{
+				ID:                   "g2",
+				AccountID:            "user2@example.com",
+				Permissions:          []string{"role-2"},
+				ExpirationDate:       &newExpDate,
+				ExpirationDateReason: expectedReason,
+			},
+		}
+
+		s.mockProviderService.EXPECT().
+			GetByID(mock.AnythingOfType("*context.emptyCtx"), dummyProvider.ID).
+			Return(dummyProvider, nil).Once()
+		expectedListGrantsFilter := domain.ListGrantsFilter{
+			Statuses:      []string{string(domain.GrantStatusActive)},
+			ProviderTypes: []string{dummyProvider.Type},
+			ProviderURNs:  []string{dummyProvider.URN},
+			CreatedAtLte:  timeNow.Add(-dormancyCheckCriteria.Period),
+		}
+		s.mockRepository.EXPECT().
+			List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
+			Run(func(_a0 context.Context, f domain.ListGrantsFilter) {
+				s.Empty(cmp.Diff(expectedListGrantsFilter, f, cmpopts.EquateApproxTime(time.Second)))
+			}).
+			Return(dummyGrants, nil).Once()
+		timestampGte := timeNow.Add(-dormancyCheckCriteria.Period)
+		expectedListActivitiesFilter := domain.ListActivitiesFilter{
+			AccountIDs:   []string{"user@example.com", "user2@example.com"},
+			TimestampGte: &timestampGte,
+		}
+		s.mockProviderService.EXPECT().
+			ListActivities(mock.AnythingOfType("*context.emptyCtx"), *dummyProvider, mock.AnythingOfType("domain.ListActivitiesFilter")).
+			Run(func(_a0 context.Context, _a1 domain.Provider, f domain.ListActivitiesFilter) {
+				s.Empty(cmp.Diff(expectedListActivitiesFilter, f,
+					cmpopts.EquateApproxTime(time.Second),
+					cmpopts.IgnoreUnexported(domain.ListActivitiesFilter{}),
+				))
+			}).
+			Return(dummyActivities, nil).Once()
+		s.mockProviderService.EXPECT().
+			CorrelateGrantActivities(mock.AnythingOfType("*context.emptyCtx"), *dummyProvider, mock.AnythingOfType("[]*domain.Grant"), dummyActivities).
+			Return(nil).Once()
+		s.mockRepository.EXPECT().
+			BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("[]*domain.Grant")).
+			Run(func(_a0 context.Context, grants []*domain.Grant) {
+				s.Empty(cmp.Diff(expectedUpdatedGrants, grants,
+					cmpopts.EquateApproxTime(time.Second),
+				))
+			}).
+			Return(nil).Once()
+
+		s.mockNotifier.EXPECT().Notify(mock.Anything).Return(nil).Once() // TODO
+
+		err := s.service.DormancyCheck(context.Background(), dormancyCheckCriteria)
+		s.NoError(err)
+	})
+}
+
+func (s *ServiceTestSuite) TestGetGrantsTotalCount() {
+	s.Run("should return error if got error from repository", func() {
+		expectedError := errors.New("repository error")
+		s.mockRepository.EXPECT().
+			GetGrantsTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(0, expectedError).Once()
+
+		actualCount, actualError := s.service.GetGrantsTotalCount(context.Background(), domain.ListGrantsFilter{})
+
+		s.Zero(actualCount)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return Grants count from repository", func() {
+		expectedCount := int64(1)
+		s.mockRepository.EXPECT().
+			GetGrantsTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedCount, nil).Once()
+
+		actualCount, actualError := s.service.GetGrantsTotalCount(context.Background(), domain.ListGrantsFilter{})
+
+		s.Equal(expectedCount, actualCount)
+		s.NoError(actualError)
+	})
+}

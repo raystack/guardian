@@ -2871,6 +2871,32 @@ func (s *ServiceTestSuite) TestDeleteApprover() {
 	})
 }
 
+func (s *ServiceTestSuite) TestGetAppealsTotalCount() {
+	s.Run("should return error if got error from repository", func() {
+		expectedError := errors.New("repository error")
+		s.mockRepository.EXPECT().
+			GetAppealsTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(0, expectedError).Once()
+
+		actualCount, actualError := s.service.GetAppealsTotalCount(context.Background(), &domain.ListAppealsFilter{})
+
+		s.Zero(actualCount)
+		s.EqualError(actualError, expectedError.Error())
+	})
+
+	s.Run("should return appeals count from repository", func() {
+		expectedCount := int64(1)
+		s.mockRepository.EXPECT().
+			GetAppealsTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			Return(expectedCount, nil).Once()
+
+		actualCount, actualError := s.service.GetAppealsTotalCount(context.Background(), &domain.ListAppealsFilter{})
+
+		s.Equal(expectedCount, actualCount)
+		s.NoError(actualError)
+	})
+}
+
 func TestService(t *testing.T) {
 	suite.Run(t, new(ServiceTestSuite))
 }

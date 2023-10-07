@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/raystack/guardian/domain"
+	"github.com/raystack/guardian/pkg/slices"
 	"github.com/raystack/guardian/plugins/notifiers"
 	"github.com/raystack/guardian/utils"
 	"github.com/raystack/salt/log"
@@ -24,6 +26,7 @@ type repository interface {
 	GetByID(context.Context, string) (*domain.Grant, error)
 	Update(context.Context, *domain.Grant) error
 	BulkUpsert(context.Context, []*domain.Grant) error
+	GetGrantsTotalCount(context.Context, domain.ListGrantsFilter) (int64, error)
 }
 
 //go:generate mockery --name=providerService --exported --with-expecter
@@ -31,6 +34,8 @@ type providerService interface {
 	GetByID(context.Context, string) (*domain.Provider, error)
 	RevokeAccess(context.Context, domain.Grant) error
 	ListAccess(context.Context, domain.Provider, []*domain.Resource) (domain.MapResourceAccess, error)
+	ListActivities(context.Context, domain.Provider, domain.ListActivitiesFilter) ([]*domain.Activity, error)
+	CorrelateGrantActivities(context.Context, domain.Provider, []*domain.Grant, []*domain.Activity) error
 }
 
 //go:generate mockery --name=resourceService --exported --with-expecter
@@ -480,6 +485,129 @@ func (s *Service) ImportFromProvider(ctx context.Context, criteria ImportFromPro
 	return newAndUpdatedGrants, nil
 }
 
+func (s *Service) DormancyCheck(ctx context.Context, criteria domain.DormancyCheckCriteria) error {
+	if err := criteria.Validate(); err != nil {
+		return fmt.Errorf("invalid dormancy check criteria: %w", err)
+	}
+	startDate := time.Now().Add(-criteria.Period)
+
+	provider, err := s.providerService.GetByID(ctx, criteria.ProviderID)
+	if err != nil {
+		return fmt.Errorf("getting provider details: %w", err)
+	}
+
+	s.logger.Info("getting active grants", "provider_urn", provider.URN)
+	grants, err := s.List(ctx, domain.ListGrantsFilter{
+		Statuses:      []string{string(domain.GrantStatusActive)}, // TODO: evaluate later to use status_in_provider
+		ProviderTypes: []string{provider.Type},
+		ProviderURNs:  []string{provider.URN},
+		CreatedAtLte:  startDate,
+	})
+	if err != nil {
+		return fmt.Errorf("listing active grants: %w", err)
+	}
+	if len(grants) == 0 {
+		s.logger.Info("no active grants found", "provider_urn", provider.URN)
+		return nil
+	}
+	grantIDs := getGrantIDs(grants)
+	s.logger.Info(fmt.Sprintf("found %d active grants", len(grants)), "grant_ids", grantIDs, "provider_urn", provider.URN)
+
+	var accountIDs []string
+	for _, g := range grants {
+		accountIDs = append(accountIDs, g.AccountID)
+	}
+	accountIDs = slices.UniqueStringSlice(accountIDs)
+
+	s.logger.Info("getting activities", "provider_urn", provider.URN)
+	activities, err := s.providerService.ListActivities(ctx, *provider, domain.ListActivitiesFilter{
+		AccountIDs:   accountIDs,
+		TimestampGte: &startDate,
+	})
+	if err != nil {
+		return fmt.Errorf("listing activities for provider %q: %w", provider.URN, err)
+	}
+	s.logger.Info(fmt.Sprintf("found %d activities", len(activities)), "provider_urn", provider.URN)
+
+	grantsPointer := make([]*domain.Grant, len(grants))
+	for i, g := range grants {
+		g := g
+		grantsPointer[i] = &g
+	}
+	if err := s.providerService.CorrelateGrantActivities(ctx, *provider, grantsPointer, activities); err != nil {
+		return fmt.Errorf("correlating grant activities: %w", err)
+	}
+
+	s.logger.Info("checking grants dormancy...", "provider_urn", provider.URN)
+	var dormantGrants []*domain.Grant
+	var dormantGrantsIDs []string
+	var dormantGrantsByOwner = map[string][]*domain.Grant{}
+	for _, g := range grantsPointer {
+		if len(g.Activities) == 0 {
+			g.ExpirationDateReason = fmt.Sprintf("%s: %s", domain.GrantExpirationReasonDormant, criteria.RetainDuration)
+			newExpDate := time.Now().Add(criteria.RetainDuration)
+			g.ExpirationDate = &newExpDate
+			g.IsPermanent = false
+
+			dormantGrants = append(dormantGrants, g)
+			dormantGrantsIDs = append(dormantGrantsIDs, g.ID)
+
+			dormantGrantsByOwner[g.Owner] = append(dormantGrantsByOwner[g.Owner], g)
+		}
+	}
+	s.logger.Info(fmt.Sprintf("found %d dormant grants", len(dormantGrants)), "grant_ids", dormantGrantsIDs, "provider_urn", provider.URN)
+
+	if criteria.DryRun {
+		s.logger.Info("dry run mode, skipping updating grants expiration date", "provider_urn", provider.URN)
+		return nil
+	}
+
+	if err := s.repo.BulkUpsert(ctx, dormantGrants); err != nil {
+		return fmt.Errorf("updating grants expiration date: %w", err)
+	}
+
+	var notifications []domain.Notification
+prepare_notifications:
+	for owner, grants := range dormantGrantsByOwner {
+		var grantsMap []map[string]interface{}
+		var grantIDs []string
+
+		for _, g := range grants {
+			grantMap, err := utils.StructToMap(g)
+			if err != nil {
+				s.logger.Error("failed to convert grant to map", "error", err)
+				continue prepare_notifications
+			}
+			grantsMap = append(grantsMap, grantMap)
+		}
+
+		notifications = append(notifications, domain.Notification{
+			User: owner,
+			Labels: map[string]string{
+				"owner":     owner,
+				"grant_ids": strings.Join(grantIDs, ", "),
+			},
+			Message: domain.NotificationMessage{
+				Type: domain.NotificationTypeUnusedGrant,
+				Variables: map[string]interface{}{
+					"dormant_grants":       grantsMap,
+					"period":               criteria.Period.String(),
+					"retain_duration":      criteria.RetainDuration.String(),
+					"start_date_formatted": startDate.Format("Jan 02, 2006 15:04:05 UTC"),
+				},
+			},
+		})
+	}
+
+	if errs := s.notifier.Notify(notifications); errs != nil {
+		for _, err1 := range errs {
+			s.logger.Error("failed to send notifications", "error", err1.Error(), "provider_urn", provider.URN)
+		}
+	}
+
+	return nil
+}
+
 func getAccountSignature(accountType, accountID string) string {
 	return fmt.Sprintf("%s:%s", accountType, accountID)
 }
@@ -532,4 +660,16 @@ func reduceGrantsByProviderRole(rc domain.ResourceConfig, grants []*domain.Grant
 	}
 
 	return
+}
+
+func getGrantIDs(grants []domain.Grant) []string {
+	var ids []string
+	for _, g := range grants {
+		ids = append(ids, g.ID)
+	}
+	return ids
+}
+
+func (s *Service) GetGrantsTotalCount(ctx context.Context, filters domain.ListGrantsFilter) (int64, error) {
+	return s.repo.GetGrantsTotalCount(ctx, filters)
 }
