@@ -33,8 +33,8 @@ clean: tidy ## Clean the build artifacts
 	@echo "Cleaning up build directories..."
 	@rm -rf $coverage.out ${BUILD_DIR}
 
-test:  ## Run the tests
-	go test ./ ... -race -coverprofile=coverage.out
+test: tidy ## Run the tests
+	go test ./... -race -coverprofile=coverage.out
 
 test-short:
 	@echo "Running short tests by disabling store tests..."
