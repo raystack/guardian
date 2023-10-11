@@ -103,6 +103,17 @@ func (s *GrantRepositoryTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
+func (s *GrantRepositoryTestSuite) AfterTest(suiteName, testName string) {
+	// clean grants table
+	db, err := s.store.DB().DB()
+	if err != nil {
+		s.T().Fatal(err)
+	}
+	if _, err := db.Exec("DELETE FROM grants"); err != nil {
+		s.T().Fatal(err)
+	}
+}
+
 func (s *GrantRepositoryTestSuite) TearDownSuite() {
 	// Clean tests
 	db, err := s.store.DB().DB()
