@@ -164,7 +164,6 @@ func TestEvaluate(t *testing.T) {
 			},
 			expectedResult: true,
 		},
-
 		{
 			expression: "len(Split($user.email_id, '@')[0])  > 2",
 			params: map[string]interface{}{

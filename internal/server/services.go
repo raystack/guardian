@@ -107,7 +107,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 		metabase.NewProvider(domain.ProviderTypeMetabase, deps.Crypto, deps.Logger),
 		grafana.NewProvider(domain.ProviderTypeGrafana, deps.Crypto),
 		tableau.NewProvider(domain.ProviderTypeTableau, deps.Crypto),
-		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, deps.Crypto),
+		gcloudiam.NewProvider(domain.ProviderTypeGCloudIAM, deps.Crypto, deps.Logger),
 		noop.NewProvider(domain.ProviderTypeNoOp, deps.Logger),
 		gcs.NewProvider(domain.ProviderTypeGCS, deps.Crypto),
 		dataplex.NewProvider(domain.ProviderTypePolicyTag, deps.Crypto),

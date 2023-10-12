@@ -127,6 +127,16 @@ func (c *Config) parseAndValidate() error {
 		if len(rc.Roles) == 0 {
 			validationErrors = append(validationErrors, ErrRolesShouldNotBeEmpty)
 		}
+
+		// check for duplicates in roles
+		rolesMap := make(map[string]bool, 0)
+		for _, role := range rc.Roles {
+			if val, ok := rolesMap[role.ID]; ok && val {
+				validationErrors = append(validationErrors, fmt.Errorf("duplicate role: %q", role.ID))
+			} else {
+				rolesMap[role.ID] = true
+			}
+		}
 	}
 
 	if len(validationErrors) > 0 {

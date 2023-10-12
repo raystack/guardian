@@ -3,6 +3,7 @@ package gcloudiam_test
 import (
 	"encoding/base64"
 	"errors"
+	"github.com/goto/salt/log"
 	"testing"
 
 	"github.com/goto/guardian/domain"
@@ -18,7 +19,8 @@ func TestCreateConfig(t *testing.T) {
 		providerURN := "test-URN"
 		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -91,7 +93,8 @@ func TestCreateConfig(t *testing.T) {
 		providerURN := "test-URN"
 		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -181,7 +184,8 @@ func TestCreateConfig(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -229,7 +233,8 @@ func TestCreateConfig(t *testing.T) {
 		providerURN := "test-URN"
 		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -278,7 +283,8 @@ func TestGetType(t *testing.T) {
 	t.Run("should return provider type name", func(t *testing.T) {
 		expectedTypeName := domain.ProviderTypeMetabase
 		crypto := new(mocks.Encryptor)
-		p := gcloudiam.NewProvider(expectedTypeName, crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider(expectedTypeName, crypto, l)
 
 		actualTypeName := p.GetType()
 
@@ -289,7 +295,8 @@ func TestGetType(t *testing.T) {
 func TestGetResources(t *testing.T) {
 	t.Run("should error when credentials are invalid", func(t *testing.T) {
 		crypto := new(mocks.Encryptor)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 		pc := &domain.ProviderConfig{
 			Type:        domain.ProviderTypeGCloudIAM,
 			URN:         "test-project-id",
@@ -308,7 +315,8 @@ func TestGetResources(t *testing.T) {
 	providerURN := "test-provider-urn"
 	crypto := new(mocks.Encryptor)
 	client := new(mocks.GcloudIamClient)
-	p := gcloudiam.NewProvider("", crypto)
+	l := log.NewNoop()
+	p := gcloudiam.NewProvider("", crypto, l)
 	p.Clients = map[string]gcloudiam.GcloudIamClient{
 		providerURN: client,
 	}
@@ -517,7 +525,8 @@ func TestGetResources(t *testing.T) {
 func TestGrantAccess(t *testing.T) {
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Encryptor)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 
 		pc := &domain.ProviderConfig{
 			Credentials: "invalid-credentials",
@@ -541,7 +550,8 @@ func TestGrantAccess(t *testing.T) {
 	t.Run("should return error if resource type is unknown", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Encryptor)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 		crypto.On("Decrypt", "c2VydmljZS1hY2NvdW50LWtleS1qc29u").Return(`{"type":"service_account"}`, nil) // tests the newIamClient when p.Clients is not initialised in the provider config
 		expectedError := errors.New("invalid resource type")
 
@@ -614,7 +624,8 @@ func TestGrantAccess(t *testing.T) {
 				providerURN := "test-provider-urn"
 				crypto := new(mocks.Encryptor)
 				client := new(mocks.GcloudIamClient)
-				p := gcloudiam.NewProvider("", crypto)
+				l := log.NewNoop()
+				p := gcloudiam.NewProvider("", crypto, l)
 				p.Clients = map[string]gcloudiam.GcloudIamClient{
 					providerURN: client,
 				}
@@ -662,11 +673,12 @@ func TestGrantAccess(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
+		l := log.NewNoop()
 		expectedRole := "role-1"
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
 		expectedPermission := "roles/bigquery.admin"
-		p := gcloudiam.NewProvider("", crypto)
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -714,7 +726,8 @@ func TestGrantAccess(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -758,7 +771,8 @@ func TestRevokeAccess(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -829,7 +843,8 @@ func TestRevokeAccess(t *testing.T) {
 				providerURN := "test-provider-urn"
 				crypto := new(mocks.Encryptor)
 				client := new(mocks.GcloudIamClient)
-				p := gcloudiam.NewProvider("", crypto)
+				l := log.NewNoop()
+				p := gcloudiam.NewProvider("", crypto, l)
 				p.Clients = map[string]gcloudiam.GcloudIamClient{
 					providerURN: client,
 				}
@@ -881,7 +896,8 @@ func TestRevokeAccess(t *testing.T) {
 		expectedPermission := "roles/bigquery.admin"
 		expectedAccountType := "user"
 		expectedAccountID := "test@email.com"
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -928,7 +944,8 @@ func TestRevokeAccess(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -973,7 +990,8 @@ func TestGetRoles(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -996,6 +1014,7 @@ func TestGetRoles(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
+		l := log.NewNoop()
 		expectedRoles := []*domain.Role{
 			{
 				ID:          "role-1",
@@ -1004,7 +1023,7 @@ func TestGetRoles(t *testing.T) {
 			},
 		}
 
-		p := gcloudiam.NewProvider("", crypto)
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -1038,9 +1057,10 @@ func TestGetPermissions(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Encryptor)
 		client := new(mocks.GcloudIamClient)
+		l := log.NewNoop()
 		expectedPermissions := []interface{}{"roles/bigquery.admin"}
 
-		p := gcloudiam.NewProvider("", crypto)
+		p := gcloudiam.NewProvider("", crypto, l)
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
@@ -1073,7 +1093,8 @@ func TestGetAccountTypes(t *testing.T) {
 	t.Run("should return the supported account types: user, serviceAccount", func(t *testing.T) {
 		expectedAccountTypes := []string{"user", "serviceAccount", "group"}
 		crypto := new(mocks.Encryptor)
-		p := gcloudiam.NewProvider("", crypto)
+		l := log.NewNoop()
+		p := gcloudiam.NewProvider("", crypto, l)
 
 		actualAccountTypes := p.GetAccountTypes()
 

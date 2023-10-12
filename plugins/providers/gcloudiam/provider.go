@@ -6,6 +6,7 @@ import (
 
 	"github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
+	"github.com/goto/salt/log"
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iam/v1"
@@ -34,13 +35,15 @@ type Provider struct {
 	typeName string
 	Clients  map[string]GcloudIamClient
 	crypto   encryptor
+	logger   log.Logger
 }
 
-func NewProvider(typeName string, crypto encryptor) *Provider {
+func NewProvider(typeName string, crypto encryptor, logger log.Logger) *Provider {
 	return &Provider{
 		typeName: typeName,
 		Clients:  map[string]GcloudIamClient{},
 		crypto:   crypto,
+		logger:   logger,
 	}
 }
 

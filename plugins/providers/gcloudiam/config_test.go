@@ -3,6 +3,8 @@ package gcloudiam_test
 import (
 	"encoding/base64"
 	"errors"
+	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/pkg/crypto"
 	"testing"
 
 	"github.com/goto/guardian/mocks"
@@ -92,4 +94,149 @@ func TestCredentials(t *testing.T) {
 			decryptor.AssertExpectations(t)
 		})
 	})
+}
+
+func TestConfig_ParseAndValidate(t *testing.T) {
+
+	t.Run("should return error if resource config is nil", func(t *testing.T) {
+		crypo := crypto.NewAES("encryption_key")
+		providerConfig := domain.ProviderConfig{
+			Type: "gcloudiam",
+			URN:  "test-urn",
+			Credentials: gcloudiam.Credentials{
+				ServiceAccountKey: getBase64EncodedString(),
+				ResourceName:      "projects/test-project",
+			},
+			Resources: nil,
+		}
+		config := gcloudiam.NewConfig(&providerConfig, crypo)
+
+		actualErr := config.ParseAndValidate()
+		assert.EqualError(t, actualErr, "empty resource config")
+	})
+
+	t.Run("should return error if service account key is not base64", func(t *testing.T) {
+		crypo := crypto.NewAES("encryption_key")
+		providerConfig := domain.ProviderConfig{
+			Type: "gcloudiam",
+			URN:  "test-urn",
+			Credentials: gcloudiam.Credentials{
+				ServiceAccountKey: "test-service-account-key",
+				ResourceName:      "projects/test-project",
+			},
+			Resources: nil,
+		}
+		config := gcloudiam.NewConfig(&providerConfig, crypo)
+
+		actualErr := config.ParseAndValidate()
+		assert.NotNil(t, actualErr)
+	})
+	t.Run("should return error if duplicate resource type is present", func(t *testing.T) {
+		crypo := crypto.NewAES("encryption_key")
+		providerConfig := domain.ProviderConfig{
+			Type: "gcloudiam",
+			URN:  "test-urn",
+			Credentials: gcloudiam.Credentials{
+				ServiceAccountKey: getBase64EncodedString(),
+				ResourceName:      "projects/test-project",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "project",
+					Roles: []*domain.Role{
+						{ID: "test-roleA", Name: "test role A", Permissions: []interface{}{"test-permission-a"}},
+					},
+				},
+				{
+					Type: "project",
+					Roles: []*domain.Role{
+						{ID: "test-roleB", Name: "test role B", Permissions: []interface{}{"test-permission-b"}},
+					}},
+			},
+		}
+		expectedErr := "duplicate resource type: \"project\""
+		config := gcloudiam.NewConfig(&providerConfig, crypo)
+
+		actualErr := config.ParseAndValidate()
+		assert.Equal(t, expectedErr, actualErr.Error())
+	})
+
+	t.Run("should return error for invalid resource type", func(t *testing.T) {
+		crypo := crypto.NewAES("encryption_key")
+		providerConfig := domain.ProviderConfig{
+			Type: "gcloudiam",
+			URN:  "test-urn",
+			Credentials: gcloudiam.Credentials{
+				ServiceAccountKey: getBase64EncodedString(),
+				ResourceName:      "projects/test-project",
+			},
+			Resources: []*domain.ResourceConfig{
+				{Type: "invalid-resource-type"},
+			},
+		}
+		expectedErr := "invalid resource type: \"invalid-resource-type\"\ngcloud_iam provider should not have empty roles"
+		config := gcloudiam.NewConfig(&providerConfig, crypo)
+
+		actualErr := config.ParseAndValidate()
+		assert.Equal(t, expectedErr, actualErr.Error())
+	})
+
+	t.Run("should return nil if config is valid", func(t *testing.T) {
+		crypo := crypto.NewAES("encryption_key")
+		providerConfig := domain.ProviderConfig{
+			Type: "gcloudiam",
+			URN:  "test-urn",
+			Credentials: gcloudiam.Credentials{
+				ServiceAccountKey: getBase64EncodedString(),
+				ResourceName:      "projects/test-project",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "project",
+					Roles: []*domain.Role{
+						{ID: "test-role", Name: "test role", Permissions: []interface{}{"test-permission"}},
+					},
+				},
+			},
+		}
+		config := gcloudiam.NewConfig(&providerConfig, crypo)
+
+		actualErr := config.ParseAndValidate()
+		assert.Nil(t, actualErr)
+	})
+
+	t.Run("should return error if duplicate role is configured", func(t *testing.T) {
+		crypo := crypto.NewAES("encryption_key")
+		providerConfig := domain.ProviderConfig{
+			Type: "gcloudiam",
+			URN:  "test-urn",
+			Credentials: gcloudiam.Credentials{
+				ServiceAccountKey: getBase64EncodedString(),
+				ResourceName:      "projects/test-project",
+			},
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "project",
+					Roles: []*domain.Role{
+						{ID: "test-role1", Name: "test role 1", Permissions: []interface{}{"test-permission-1"}},
+						{ID: "test-role2", Name: "test role 2", Permissions: []interface{}{"test-permission-2"}},
+						{ID: "test-role1", Name: "test role 1", Permissions: []interface{}{"test-permission-11"}},
+						{ID: "test-role3", Name: "test role 3", Permissions: []interface{}{"test-permission-3"}},
+					},
+				},
+			},
+		}
+
+		expectedErr := "duplicate role: \"test-role1\""
+
+		config := gcloudiam.NewConfig(&providerConfig, crypo)
+
+		actualErr := config.ParseAndValidate()
+		assert.EqualError(t, actualErr, expectedErr)
+	})
+
+}
+
+func getBase64EncodedString() string {
+	return base64.StdEncoding.EncodeToString([]byte("test-service-account-key"))
 }
