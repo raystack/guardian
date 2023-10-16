@@ -211,7 +211,6 @@ func (s *GrantRepositoryTestSuite) TestList() {
 			_, actualError := s.repository.List(context.Background(), tc.filters)
 			s.Nil(actualError)
 		}
-
 	})
 
 	s.Run("Should return an array that matches q", func() {
@@ -225,6 +224,14 @@ func (s *GrantRepositoryTestSuite) TestList() {
 	s.Run("Should return an array of grants that matches account type", func() {
 		grants, err := s.repository.List(context.Background(), domain.ListGrantsFilter{
 			AccountTypes: []string{"x-account-type"},
+		})
+		s.NoError(err)
+		s.Len(grants, 0)
+	})
+	s.Run("Should check accessing resource table", func() {
+		grants, err := s.repository.List(context.Background(), domain.ListGrantsFilter{
+			ProviderTypes: []string{"x"},
+			ProviderURNs:  []string{"x"},
 		})
 		s.NoError(err)
 		s.Len(grants, 0)
