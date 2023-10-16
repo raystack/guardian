@@ -1,6 +1,7 @@
 package bigquery
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -85,6 +86,9 @@ type Config struct {
 
 	crypto    domain.Crypto
 	validator *validator.Validate
+
+	cachedDatasetGrantableRoles []string
+	cachedTableGrantableRoles   []string
 }
 
 // NewConfig returns bigquery config struct
@@ -197,12 +201,23 @@ func (c *Config) validatePermission(value interface{}, resourceType string, clie
 		return nil, ErrInvalidPermissionConfig
 	}
 
+	ctx := context.TODO()
 	if resourceType == ResourceTypeDataset {
 		if !utils.ContainsString([]string{DatasetRoleReader, DatasetRoleWriter, DatasetRoleOwner}, permision) {
-			return nil, fmt.Errorf("%v: %v", ErrInvalidDatasetPermission, permision)
+			grantableRoles, err := c.getGrantableRolesForDataset(ctx, client)
+			if err != nil {
+				if errors.Is(err, ErrEmptyResource) {
+					return nil, fmt.Errorf("cannot verify dataset permission: %v", permision)
+				}
+				return nil, err
+			}
+
+			if !utils.ContainsString(grantableRoles, permision) {
+				return nil, fmt.Errorf("%v: %v", ErrInvalidDatasetPermission, permision)
+			}
 		}
 	} else if resourceType == ResourceTypeTable {
-		roles, err := client.getGrantableRolesForTables()
+		roles, err := c.getGrantableRolesForTables(ctx, client)
 		if err != nil {
 			if err == ErrEmptyResource {
 				return nil, ErrCannotVerifyTablePermission
@@ -219,4 +234,32 @@ func (c *Config) validatePermission(value interface{}, resourceType string, clie
 
 	configValue := Permission(permision)
 	return &configValue, nil
+}
+
+func (c *Config) getGrantableRolesForDataset(ctx context.Context, client *bigQueryClient) ([]string, error) {
+	if len(c.cachedDatasetGrantableRoles) > 0 {
+		return c.cachedDatasetGrantableRoles, nil
+	}
+
+	roles, err := client.getGrantableRolesForDataset(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	c.cachedDatasetGrantableRoles = roles
+	return roles, nil
+}
+
+func (c *Config) getGrantableRolesForTables(ctx context.Context, client *bigQueryClient) ([]string, error) {
+	if len(c.cachedTableGrantableRoles) > 0 {
+		return c.cachedTableGrantableRoles, nil
+	}
+
+	roles, err := client.getGrantableRolesForTables(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	c.cachedTableGrantableRoles = roles
+	return roles, nil
 }

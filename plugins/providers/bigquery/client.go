@@ -11,7 +11,6 @@ import (
 	bqApi "google.golang.org/api/bigquery/v2"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/iam/v1"
-	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
@@ -365,55 +364,99 @@ func (c *bigQueryClient) CheckGrantedPermission(ctx context.Context, permissions
 	return res.Permissions, nil
 }
 
-func (c *bigQueryClient) getGrantableRolesForTables() ([]string, error) {
-	var resourceName string
-	ctx := context.Background()
-	datasetIterator := c.client.Datasets(ctx)
-	for {
-		dataset, err := datasetIterator.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		tableIterator := c.client.Dataset(dataset.DatasetID).Tables(ctx)
-		for {
-			table, err := tableIterator.Next()
-			if err == iterator.Done {
-				break
-			}
-			if err != nil {
-				return nil, err
-			}
-
-			resourceName = fmt.Sprintf("//bigquery.googleapis.com/projects/%v/datasets/%v/tables/%v", table.ProjectID, table.DatasetID, table.TableID)
-			break
-		}
-		if resourceName != "" {
-			break
-		}
+func (c *bigQueryClient) getGrantableRolesForDataset(ctx context.Context) ([]string, error) {
+	sampleDataset, err := c.getSampleDataset(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting a sample dataset, %w", err)
 	}
+	resourceName := fmt.Sprintf("//bigquery.googleapis.com/projects/%v/datasets/%v", sampleDataset.ProjectId, sampleDataset.DatasetId)
 
-	if resourceName == "" {
-		return nil, ErrEmptyResource
-	}
-
+	var grantableRoles []string
 	request := &iam.QueryGrantableRolesRequest{
 		FullResourceName: resourceName,
 	}
-	response, err := c.iamService.Roles.QueryGrantableRoles(request).Do()
-	if err != nil {
+	if err := c.iamService.Roles.QueryGrantableRoles(request).Pages(ctx, func(page *iam.QueryGrantableRolesResponse) error {
+		for _, role := range page.Roles {
+			grantableRoles = append(grantableRoles, role.Name)
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
-	var roles []string
-	for _, role := range response.Roles {
-		roles = append(roles, role.Name)
+	return grantableRoles, nil
+}
+
+func (c *bigQueryClient) getGrantableRolesForTables(ctx context.Context) ([]string, error) {
+	sampleTable, err := c.getSampleTable(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("getting a sample table, %w", err)
 	}
 
-	return roles, nil
+	resourceName := fmt.Sprintf("//bigquery.googleapis.com/projects/%v/datasets/%v/tables/%v", sampleTable.ProjectId, sampleTable.DatasetId, sampleTable.TableId)
+
+	var grantableRoles []string
+	request := &iam.QueryGrantableRolesRequest{
+		FullResourceName: resourceName,
+	}
+	if err := c.iamService.Roles.QueryGrantableRoles(request).Pages(ctx, func(page *iam.QueryGrantableRolesResponse) error {
+		for _, role := range page.Roles {
+			grantableRoles = append(grantableRoles, role.Name)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return grantableRoles, nil
+}
+
+func (c *bigQueryClient) getSampleDataset(ctx context.Context) (*bqApi.DatasetReference, error) {
+	var dataset *bqApi.DatasetReference
+	if err := c.apiClient.Datasets.List(c.projectID).Pages(ctx, func(page *bqApi.DatasetList) error {
+		for _, d := range page.Datasets {
+			dataset = d.DatasetReference
+			break
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	if dataset == nil {
+		return nil, fmt.Errorf("%w: dataset", ErrEmptyResource)
+	}
+
+	return dataset, nil
+}
+
+func (c *bigQueryClient) getSampleTable(ctx context.Context) (*bqApi.TableReference, error) {
+	var table *bqApi.TableReference
+	if err := c.apiClient.Datasets.List(c.projectID).Pages(ctx, func(page *bqApi.DatasetList) error {
+		for _, d := range page.Datasets {
+			if err := c.apiClient.Tables.
+				List(c.projectID, d.DatasetReference.DatasetId).
+				Pages(ctx, func(page *bqApi.TableList) error {
+					for _, t := range page.Tables {
+						table = t.TableReference
+						break
+					}
+					return nil
+				}); err != nil {
+				return fmt.Errorf("getting a sample table, %w", err)
+			}
+			if table != nil {
+				break
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	if table == nil {
+		return nil, fmt.Errorf("%w: table", ErrEmptyResource)
+	}
+
+	return table, nil
 }
 
 func containsString(arr []string, v string) bool {
