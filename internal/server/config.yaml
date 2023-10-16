@@ -24,6 +24,10 @@ DB:
 NOTIFIER:
   PROVIDER: slack
   ACCESS_TOKEN:
+  WORKSPACES:
+    - WORKSPACE: raystack
+      ACCESS_TOKEN:
+      CRITERIA: "email contains '@raystack.io'"
 JOBS:
   FETCH_RESOURCES:
     ENABLED: true
