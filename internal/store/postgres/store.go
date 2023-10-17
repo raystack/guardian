@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/raystack/guardian/pkg/auth"
@@ -56,6 +57,30 @@ func NewStore(c *store.Config) (*Store, error) {
 	}
 	if strings.ToLower(c.LogLevel) == "debug" {
 		gormDB = gormDB.Debug()
+	}
+
+	// Get generic database object sql.DB to use its functions
+	sqlDB, err := gormDB.DB()
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// set connection pool settings only if user provided them
+	// otherwise default to gorm settings
+	if c.MaxIdleConns != 0 {
+		sqlDB.SetMaxIdleConns(c.MaxIdleConns)
+	}
+
+	if c.MaxOpenConns != 0 {
+		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
+	}
+
+	if c.ConnMaxLifetimeInMs != 0 {
+		sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetimeInMs) * time.Millisecond)
+	}
+
+	if c.ConnMaxIdleTimeInMs != 0 {
+		sqlDB.SetConnMaxIdleTime(time.Duration(c.ConnMaxIdleTimeInMs) * time.Millisecond)
 	}
 
 	return &Store{gormDB, c}, nil
