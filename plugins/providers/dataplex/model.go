@@ -13,9 +13,10 @@ const (
 
 // Policy is a reference to a Dataplex Policy Tag
 type Policy struct {
-	Name        string
-	DisplayName string
-	Description string
+	Name                string
+	DisplayName         string
+	Description         string
+	TaxonomyDisplayName string
 }
 
 func (p *Policy) ToDomain() *domain.Resource {
@@ -25,6 +26,7 @@ func (p *Policy) ToDomain() *domain.Resource {
 		URN:  p.Name,
 		Details: map[string]interface{}{
 			"description": p.Description,
+			"taxonomy":    p.TaxonomyDisplayName,
 		},
 	}
 }
