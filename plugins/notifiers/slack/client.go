@@ -13,6 +13,7 @@ import (
 
 	"github.com/raystack/guardian/pkg/evaluator"
 	"github.com/raystack/guardian/utils"
+	"github.com/raystack/salt/log"
 
 	"github.com/raystack/guardian/domain"
 )
@@ -34,6 +35,10 @@ type userResponse struct {
 	Error string `json:"error"`
 }
 
+type WorkSpaceConfig struct {
+	Workspaces []SlackWorkspace `mapstructure:"workspaces"`
+}
+
 type SlackWorkspace struct {
 	WorkspaceName string `mapstructure:"workspace" validate:"required"`
 	AccessToken   string `mapstructure:"access_token" validate:"required"`
@@ -47,6 +52,7 @@ type Notifier struct {
 	Messages            domain.NotificationMessages
 	httpClient          utils.HTTPClient
 	defaultMessageFiles embed.FS
+	logger              *log.Logrus
 }
 
 type slackIDCacheItem struct {
@@ -62,27 +68,28 @@ type Config struct {
 //go:embed templates/*
 var defaultTemplates embed.FS
 
-func NewNotifier(config *Config, httpClient utils.HTTPClient) *Notifier {
+func NewNotifier(config *Config, httpClient utils.HTTPClient, logger *log.Logrus) *Notifier {
 	return &Notifier{
 		workspaces:          config.Workspaces,
 		slackIDCache:        map[string]*slackIDCacheItem{},
 		Messages:            config.Messages,
 		httpClient:          httpClient,
 		defaultMessageFiles: defaultTemplates,
+		logger:              logger,
 	}
 }
 
 func (n *Notifier) Notify(items []domain.Notification) []error {
 	errs := make([]error, 0)
 	for _, item := range items {
-		var ws *SlackWorkspace
+		var slackWorkspace *SlackWorkspace
 		var slackID string
 		labelSlice := utils.MapToSlice(item.Labels)
 
 		// check cache
 		if n.slackIDCache[item.User] != nil {
 			slackID = n.slackIDCache[item.User].SlackID
-			ws = n.slackIDCache[item.User].Workspace
+			slackWorkspace = n.slackIDCache[item.User].Workspace
 		} else {
 			ws, err := n.GetSlackWorkspaceForUser(item.User)
 			if err != nil {
@@ -100,7 +107,15 @@ func (n *Notifier) Notify(items []domain.Notification) []error {
 				SlackID:   slackID,
 				Workspace: ws,
 			}
+			slackWorkspace = ws
 		}
+
+		if slackWorkspace == nil {
+			errs = append(errs, fmt.Errorf("%v | no slack workspace found for user: %s", labelSlice, item.User))
+			continue
+		}
+
+		n.logger.Debug(fmt.Sprintf("%v | sending slack notification to user:%s in workspace:%s", labelSlice, item.User, slackWorkspace.WorkspaceName))
 
 		msg, err := ParseMessage(item.Message, n.Messages, n.defaultMessageFiles)
 		if err != nil {
@@ -108,8 +123,8 @@ func (n *Notifier) Notify(items []domain.Notification) []error {
 			continue
 		}
 
-		if err := n.sendMessage(*ws, slackID, msg); err != nil {
-			errs = append(errs, fmt.Errorf("%v | error sending message to user:%s in workspace:%s | %w", labelSlice, item.User, ws.WorkspaceName, err))
+		if err := n.sendMessage(*slackWorkspace, slackID, msg); err != nil {
+			errs = append(errs, fmt.Errorf("%v | error sending message to user:%s in workspace:%s | %w", labelSlice, item.User, slackWorkspace.WorkspaceName, err))
 			continue
 		}
 	}

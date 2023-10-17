@@ -32,11 +32,13 @@ func TestNewSlackConfig(t *testing.T) {
 				config: &Config{
 					Provider:    ProviderTypeSlack,
 					AccessToken: "foo",
-					Workspaces: []slack.SlackWorkspace{
-						{
-							WorkspaceName: "default",
-							AccessToken:   "bar",
-							Criteria:      "1==1",
+					SlackConfig: SlackConfig{
+						"workspaces": []slack.SlackWorkspace{
+							{
+								WorkspaceName: "default",
+								AccessToken:   "bar",
+								Criteria:      "1==1",
+							},
 						},
 					},
 				},
@@ -66,16 +68,18 @@ func TestNewSlackConfig(t *testing.T) {
 			args: args{
 				config: &Config{
 					Provider: ProviderTypeSlack,
-					Workspaces: []slack.SlackWorkspace{
-						{
-							WorkspaceName: "A",
-							AccessToken:   "foo",
-							Criteria:      "$email contains '@abc'",
-						},
-						{
-							WorkspaceName: "B",
-							AccessToken:   "bar",
-							Criteria:      "$email contains '@xyz'",
+					SlackConfig: SlackConfig{
+						"workspaces": []slack.SlackWorkspace{
+							{
+								WorkspaceName: "A",
+								AccessToken:   "foo",
+								Criteria:      "$email contains '@abc'",
+							},
+							{
+								WorkspaceName: "B",
+								AccessToken:   "bar",
+								Criteria:      "$email contains '@xyz'",
+							},
 						},
 					},
 				},
