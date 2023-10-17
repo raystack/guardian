@@ -14,10 +14,16 @@ host: "localhost:8080"
 
 ```yml
 port: 8080
+grpc:
+    timeout_in_seconds: 5
+    max_call_recv_msg_size: 33554432
+    max_call_send_msg_size: 33554432
+    
 encryption_secret_key: "<secret-key>"
 notifier:
     provider: "slack"
     access_token: "<slack-access-token>"
+    slack_config: "{\"workspaces\":[{\"workspace\":\"ws-1\",\"access_token\":\"xxxx-000-xxxx\",\"criteria\":\"$email contains '@raystack.com'\"}]}"
     messages:
         expiration_reminder: "Your access {{.account_id}} to {{.resource_name}} with role {{.role}} will expire at {{.expiration_date}}. Extend the access if it's still needed"
         appeal_approved: "Your appeal to {{.resource_name}} with role {{.role}} has been approved"
@@ -71,13 +77,23 @@ telemetry:
 | `audit_log_trace_id_header_key`              | `string`                         | Header key name for trace id (eg: `X-Trace-Id`)                         |
 | `jobs`                                       | [`Object(Jobs)`](#jobs)          | Server Jobs Configuration                                               |
 
+
+### GRPCConfig
+
+| Field                    | Type      | Description                                                                         |
+| -------------------------| --------- |-------------------------------------------------------------------------------------|
+| `timeout_in_seconds`     | `int`     | GRPC Timeout in seconds (default: `5`)                                              |
+| `max_call_recv_msg_size` | `int`     | maximum message size the server can receive in bytes. (default = `33554432` (`32MB`)) |
+| `max_call_send_msg_size` | `int`     | maximum message size the server can send in bytes. (default = `33554432` (`32MB`))    |
+
 ### NotifierConfig
 
-| Field          | Type                                                     | Description                                                             |
-| -------------- | -------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `provider`     | `string`                                                 | Provider for notification (Only `slack` supported for now)              |
-| `access_token` | `string`                                                 | Access Token for notification provider (eg: slack access token)         |
-| `messages`     | [`Object(NotificationMessages)`](#notificationmessages)  | Message templates configuration                                         |
+| Field          | Type                                                     | Description                                                                                                |
+| -------------- | -------------------------------------------------------- |------------------------------------------------------------------------------------------------------------|
+| `provider`     | `string`                                                 | Provider for notification (Only `slack` supported for now)                                                 |
+| `access_token` | `string`                                                 | Access Token for notification provider (eg: slack access token). Required if `slack_config` is not present |
+| `messages`     | [`Object(NotificationMessages)`](#notificationmessages)  | Message templates configuration                                                                            |
+| `slack_config` | `string`                                                 | Slack configuration in json format. Required if `access_token` is not present                              |
 
 ### NotificationMessages
 
