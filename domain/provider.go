@@ -92,6 +92,15 @@ func (pc ProviderConfig) GetResourceTypes() (resourceTypes []string) {
 	return
 }
 
+func (pc ProviderConfig) GetFilterForResourceType(resourceType string) string {
+	for _, resource := range pc.Resources {
+		if resource.Type == resourceType {
+			return resource.Filter
+		}
+	}
+	return ""
+}
+
 // Provider domain structure
 type Provider struct {
 	ID        string          `json:"id" yaml:"id"`
