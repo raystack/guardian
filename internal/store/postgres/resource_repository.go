@@ -118,7 +118,7 @@ func (r *ResourceRepository) BulkUpsert(ctx context.Context, resources []*domain
 	if len(models) > 0 {
 		return r.store.Tx(ctx, func(tx *gorm.DB) error {
 			// upsert clause is moved to model.Resource.BeforeCreate() (gorm's hook) to apply the same for associations (model.Resource.Children)
-			if err := tx.Create(models).Error; err != nil {
+			if err := tx.Session(&gorm.Session{CreateBatchSize: 1000}).Create(models).Error; err != nil {
 				return err
 			}
 
