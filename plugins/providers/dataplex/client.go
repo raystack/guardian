@@ -55,9 +55,10 @@ func (p *policyTagClient) GetPolicies(ctx context.Context) ([]*Policy, error) {
 				break
 			}
 			policyTags = append(policyTags, &Policy{
-				Name:        tag.Name,
-				DisplayName: tag.DisplayName,
-				Description: tag.Description,
+				Name:                tag.Name,
+				DisplayName:         tag.DisplayName,
+				Description:         tag.Description,
+				TaxonomyDisplayName: taxonomy.DisplayName,
 			})
 		}
 	}
