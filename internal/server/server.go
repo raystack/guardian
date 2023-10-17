@@ -40,8 +40,8 @@ import (
 )
 
 const (
-	GRPCMaxClientSendSize = 32 << 20
-	defaultGracePeriod    = 5 * time.Second
+	// defaultGracePeriod is the default time to wait for graceful shutdown
+	defaultGracePeriod = 5 * time.Second
 )
 
 // RunServer runs the application server
@@ -153,7 +153,8 @@ func RunServer(config *Config) error {
 	))
 
 	// init http proxy
-	timeoutGrpcDialCtx, grpcDialCancel := context.WithTimeout(context.Background(), time.Second*5)
+	timeoutInSeconds := time.Duration(config.GRPC.TimeoutInSeconds) * time.Second
+	timeoutGrpcDialCtx, grpcDialCancel := context.WithTimeout(context.Background(), timeoutInSeconds)
 	defer grpcDialCancel()
 
 	headerMatcher := makeHeaderMatcher(config)
@@ -176,8 +177,8 @@ func RunServer(config *Config) error {
 		grpcAddress,
 		grpc.WithInsecure(),
 		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(GRPCMaxClientSendSize),
-			grpc.MaxCallSendMsgSize(GRPCMaxClientSendSize),
+			grpc.MaxCallRecvMsgSize(config.GRPC.MaxCallRecvMsgSize),
+			grpc.MaxCallSendMsgSize(config.GRPC.MaxCallSendMsgSize),
 		),
 	)
 	if err != nil {
