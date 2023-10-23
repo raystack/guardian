@@ -98,19 +98,6 @@ func (c *bigQueryClient) GetTables(ctx context.Context, datasetID string) ([]*Ta
 	return results, nil
 }
 
-func (c *bigQueryClient) ResolveDatasetRole(role string) (bq.AccessRole, error) {
-	switch role {
-	case DatasetRoleReader:
-		return bq.ReaderRole, nil
-	case DatasetRoleWriter:
-		return bq.WriterRole, nil
-	case DatasetRoleOwner:
-		return bq.OwnerRole, nil
-	default:
-		return "", ErrInvalidRole
-	}
-}
-
 func (c *bigQueryClient) GrantDatasetAccess(ctx context.Context, d *Dataset, user, role string) error {
 	dataset := c.client.Dataset(d.DatasetID)
 	metadata, err := dataset.Metadata(ctx)
@@ -118,18 +105,14 @@ func (c *bigQueryClient) GrantDatasetAccess(ctx context.Context, d *Dataset, use
 		return err
 	}
 
-	bqRole, err := c.ResolveDatasetRole(role)
-	if err != nil {
-		return err
-	}
 	for _, a := range metadata.Access {
-		if a.Entity == user && a.Role == bqRole {
+		if a.Entity == user && string(a.Role) == role {
 			return ErrPermissionAlreadyExists
 		}
 	}
 	update := bq.DatasetMetadataToUpdate{
 		Access: append(metadata.Access, &bq.AccessEntry{
-			Role:       bqRole,
+			Role:       bq.AccessRole(role),
 			EntityType: bq.UserEmailEntity,
 			Entity:     user,
 		}),
@@ -145,14 +128,10 @@ func (c *bigQueryClient) RevokeDatasetAccess(ctx context.Context, d *Dataset, us
 	if err != nil {
 		return err
 	}
-	bqRole, err := c.ResolveDatasetRole(role)
-	if err != nil {
-		return err
-	}
 
 	remainingAccessEntries := []*bq.AccessEntry{}
 	for _, a := range metadata.Access {
-		if a.Entity == user && a.Role == bqRole {
+		if a.Entity == user && string(a.Role) == role {
 			continue
 		}
 		remainingAccessEntries = append(remainingAccessEntries, a)

@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/goto/guardian/pkg/evaluator"
 	"reflect"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	bq "cloud.google.com/go/bigquery"
+	"github.com/goto/guardian/pkg/evaluator"
+
 	"github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/pkg/slices"
@@ -51,7 +51,6 @@ type BigQueryClient interface {
 	RevokeDatasetAccess(ctx context.Context, d *Dataset, user, role string) error
 	GrantTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
 	RevokeTableAccess(ctx context.Context, t *Table, accountType, accountID, role string) error
-	ResolveDatasetRole(role string) (bq.AccessRole, error)
 	ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error)
 	GetRolePermissions(context.Context, string) ([]string, error)
 	ListRolePermissions(context.Context, []string) (map[string][]string, error)
