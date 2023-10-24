@@ -79,10 +79,18 @@ setup: ## Install all the dependencies
 	go install github.com/golang/protobuf/proto@v1.5.2
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2
 	go install google.golang.org/grpc@v1.40.0
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.29.0
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.5.0
-	go install github.com/bufbuild/buf/cmd/buf@v1.15.1
+	go install github.com/bufbuild/buf/cmd/buf@v1.29.0
 
 help: ## Display this help message
 	@cat $(MAKEFILE_LIST) | grep -e "^[a-zA-Z_\-]*: *.*## *" | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+doc: ## Generate api documentation
+	@echo ">genetate api docs"
+	@cd $(CURDIR)/docs/docs; yarn docusaurus clean-api-docs all;  yarn docusaurus gen-api-docs all
+
+doc-build: ## Run documentation locally
+	@echo "> building docs"
+	@cd $(CURDIR)/docs/docs; yarn start
