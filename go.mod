@@ -9,7 +9,7 @@ require (
 	cloud.google.com/go/storage v1.29.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/MakeNowJust/heredoc v1.0.0
-	github.com/antonmedv/expr v1.12.5
+	github.com/antonmedv/expr v1.15.3
 	github.com/envoyproxy/protoc-gen-validate v0.6.7
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
@@ -29,7 +29,7 @@ require (
 	github.com/sergi/go-diff v1.0.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.4
 	github.com/uptrace/opentelemetry-go-extra/otelgorm v0.1.17
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.28.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.37.0

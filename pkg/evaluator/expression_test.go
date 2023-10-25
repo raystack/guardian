@@ -174,6 +174,15 @@ func TestEvaluate(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			expression: "lower($appeal.role) == 'bigquery data viewer'",
+			params: map[string]interface{}{
+				"appeal": map[string]interface{}{
+					"role": "BigQuery Data Viewer",
+				},
+			},
+			expectedResult: true,
+		},
+		{
 			expression: "$Bar",
 			aStruct: ParamStruct{
 				Bar: "baz",
