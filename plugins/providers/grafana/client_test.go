@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -114,7 +113,7 @@ func (s *ClientTestSuite) TestGetFolders() {
 		s.Require().NoError(err)
 
 		folderResponseJSON := `[]`
-		folderResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(folderResponseJSON)))}
+		folderResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(folderResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&folderResponse, errors.New("Http Client Error")).Once()
 
 		actualFolders, err1 := s.client.GetFolders()
@@ -140,7 +139,7 @@ func (s *ClientTestSuite) TestGetFolders() {
 			},
 		}
 		folderResponseJSON := `[{"id":1,"title":"fd_1"},{"id":2,"title":"fd_2"}]`
-		folderResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(folderResponseJSON)))}
+		folderResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(folderResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&folderResponse, nil).Once()
 
 		result, err1 := s.client.GetFolders()
@@ -163,7 +162,7 @@ func (s *ClientTestSuite) TestGetDashboards() {
 		testRequest, err := s.getTestRequest(http.MethodGet, url, nil)
 		s.Require().NoError(err)
 
-		dashboardResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("")))}
+		dashboardResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte("")))}
 		s.mockHttpClient.On("Do", testRequest).Return(&dashboardResponse, errors.New("http client error")).Once()
 
 		result, err1 := s.client.GetDashboards(folderID)
@@ -191,7 +190,7 @@ func (s *ClientTestSuite) TestGetDashboards() {
 			},
 		}
 		dashboardResponseJSON := `[{"id":1,"title":"db_1"},{"id":2,"title":"db_2"}]`
-		dashboardResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(dashboardResponseJSON)))}
+		dashboardResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(dashboardResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&dashboardResponse, nil).Once()
 
 		result, err1 := s.client.GetDashboards(folderID)
@@ -241,7 +240,7 @@ func (s *ClientTestSuite) TestGrantDashboardAccess() {
 		testRequest, err := s.getTestRequest(http.MethodGet, url, nil)
 		s.Require().NoError(err)
 
-		userResponse := http.Response{StatusCode: 404, Body: ioutil.NopCloser(bytes.NewReader([]byte(nil)))}
+		userResponse := http.Response{StatusCode: 404, Body: io.NopCloser(bytes.NewReader([]byte(nil)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&userResponse, expectedError).Once()
 
 		resource := grafana.Dashboard{
@@ -266,7 +265,7 @@ func (s *ClientTestSuite) TestGrantDashboardAccess() {
 		s.Require().NoError(err)
 
 		userResponseJSON := `{ "id":55,"email":"test-email@gojek.com" }`
-		userResponse := http.Response{StatusCode: 404, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 404, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&userResponse, nil).Once()
 
 		resource := grafana.Dashboard{
@@ -293,7 +292,7 @@ func (s *ClientTestSuite) TestGrantDashboardAccess() {
 		s.Require().NoError(err)
 
 		userResponseJSON := `{ "id":55,"email":"test-email@gojek.com" }`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&userResponse, nil).Once()
 
 		resource := grafana.Dashboard{
@@ -318,7 +317,7 @@ func (s *ClientTestSuite) TestGrantDashboardAccess() {
 		s.Require().NoError(err)
 
 		userResponseJSON := `{ "id":55,"email":"test-email@gojek.com" }`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&userResponse, nil).Once()
 
 		resource := grafana.Dashboard{
@@ -334,11 +333,11 @@ func (s *ClientTestSuite) TestGrantDashboardAccess() {
 		s.Require().NoError(err2)
 
 		permissionsResponseJSON := `[{"userID":55, "permission":1,"inherited":false}]` //permission codes are: "view": 1, "edit": 2, "admin": 4
-		permissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(permissionsResponseJSON)))}
+		permissionsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(permissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", permissionsRequest).Return(&permissionsResponse, nil).Once()
 
 		updatePermissionsResponseJSON := `[{"permission":1,"inherited":true}]`
-		updatePermissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updatePermissionsResponseJSON)))}
+		updatePermissionsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(updatePermissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&updatePermissionsResponse, nil).Once()
 
 		actualError := s.client.GrantDashboardAccess(&resource, user, role)
@@ -356,7 +355,7 @@ func (s *ClientTestSuite) TestGrantDashboardAccess() {
 		s.Require().NoError(err)
 
 		userResponseJSON := `{ "id":1,"email":"test-email@gojek.com" }`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&userResponse, nil).Once()
 
 		resource := grafana.Dashboard{
@@ -372,11 +371,11 @@ func (s *ClientTestSuite) TestGrantDashboardAccess() {
 		s.Require().NoError(err2)
 
 		permissionsResponseJSON := `[{"permission":1,"inherited":true}]` //permission codes are: "view": 1, "edit": 2, "admin": 4
-		permissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(permissionsResponseJSON)))}
+		permissionsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(permissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", permissionsRequest).Return(&permissionsResponse, nil).Once()
 
 		updatePermissionsResponseJSON := `[{"permission":1,"inherited":true}]`
-		updatePermissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updatePermissionsResponseJSON)))}
+		updatePermissionsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(updatePermissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&updatePermissionsResponse, nil).Once()
 
 		actualError := s.client.GrantDashboardAccess(&resource, user, role)
@@ -396,7 +395,7 @@ func (s *ClientTestSuite) TestRevokeDashboardAccess() {
 		testRequest, err := s.getTestRequest(http.MethodGet, url, nil)
 		s.Require().NoError(err)
 
-		userResponse := http.Response{StatusCode: 404, Body: ioutil.NopCloser(bytes.NewReader([]byte(nil)))}
+		userResponse := http.Response{StatusCode: 404, Body: io.NopCloser(bytes.NewReader([]byte(nil)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&userResponse, expectedError).Once()
 
 		resource := grafana.Dashboard{
@@ -422,7 +421,7 @@ func (s *ClientTestSuite) TestRevokeDashboardAccess() {
 		s.Require().NoError(err)
 
 		userResponseJSON := `{ "id":55,"email":"test-email@gojek.com" }`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&userResponse, nil).Once()
 
 		resource := grafana.Dashboard{
@@ -446,7 +445,7 @@ func (s *ClientTestSuite) TestRevokeDashboardAccess() {
 		testRequest, err := s.getTestRequest(http.MethodGet, url, nil)
 		s.Require().NoError(err)
 		userResponseJSON := `{ "id":1,"email":"test-email@gojek.com" }`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&userResponse, nil).Once()
 
 		resource := grafana.Dashboard{
@@ -460,11 +459,11 @@ func (s *ClientTestSuite) TestRevokeDashboardAccess() {
 		permissionsRequest, err2 := s.getTestRequest(http.MethodGet, permissionsUrl, nil)
 		s.Require().NoError(err2)
 		permissionsResponseJSON := `[{"permission":1,"inherited":false,"userID":0}]` //permission codes are: "view": 1, "edit": 2, "admin": 4
-		permissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(permissionsResponseJSON)))}
+		permissionsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(permissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", permissionsRequest).Return(&permissionsResponse, nil).Once()
 
 		updatePermissionsResponseJSON := `[{"permission":1,"inherited":false}]`
-		updatePermissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updatePermissionsResponseJSON)))}
+		updatePermissionsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(updatePermissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&updatePermissionsResponse, nil).Once()
 
 		actualError := s.client.RevokeDashboardAccess(&resource, user, role)
@@ -481,7 +480,7 @@ func (s *ClientTestSuite) TestRevokeDashboardAccess() {
 		testRequest, err := s.getTestRequest(http.MethodGet, url, nil)
 		s.Require().NoError(err)
 		userResponseJSON := `{ "id":1,"email":"test-email@gojek.com" }`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&userResponse, nil).Once()
 
 		resource := grafana.Dashboard{
@@ -495,11 +494,11 @@ func (s *ClientTestSuite) TestRevokeDashboardAccess() {
 		permissionsRequest, err2 := s.getTestRequest(http.MethodGet, permissionsUrl, nil)
 		s.Require().NoError(err2)
 		permissionsResponseJSON := `[{"permission":1,"inherited":false,"userID":1}]` //permission codes are: "view": 1, "edit": 2, "admin": 4
-		permissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(permissionsResponseJSON)))}
+		permissionsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(permissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", permissionsRequest).Return(&permissionsResponse, nil).Once()
 
 		updatePermissionsResponseJSON := `[{"permission":1,"inherited":false}]`
-		updatePermissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updatePermissionsResponseJSON)))}
+		updatePermissionsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(updatePermissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&updatePermissionsResponse, nil).Once()
 
 		actualError := s.client.RevokeDashboardAccess(&resource, user, role)

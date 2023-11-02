@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -74,7 +73,7 @@ func TestNewClient(t *testing.T) {
 
 		sessionToken := "93df71b4-6887-46bd-b4bf-7ad3b94bd6fe"
 		responseJSON := `{"id":"` + sessionToken + `"}`
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJSON)))}
+		response := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJSON)))}
 		mockHttpClient.On("Do", mock.Anything).Return(&response, nil).Once()
 
 		_, actualError := metabase.NewClient(config, logger)
@@ -103,7 +102,7 @@ func (s *ClientTestSuite) setup() {
 	s.sessionToken = "93df71b4-6887-46bd-b4bf-7ad3b94bd6fe"
 	sessionResponse := http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{"id":"` + s.sessionToken + `"}`))),
+		Body:       io.NopCloser(bytes.NewReader([]byte(`{"id":"` + s.sessionToken + `"}`))),
 	}
 	s.mockHttpClient.On("Do", mock.Anything).Return(&sessionResponse, nil).Once()
 
@@ -126,7 +125,7 @@ func (s *ClientTestSuite) TestGetCollections() {
 		s.Require().NoError(err)
 
 		collectionResponseJSON := `[{"authority_level":null,"name":"Our analytics","id":"root","parent_id":null,"effective_location":null,"effective_ancestors":[],"can_write":true},{"authority_level":null,"description":null,"archived":false,"slug":"cabfares","color":"#509EE3","can_write":true,"name":"CabFares","personal_owner_id":null,"id":2,"location":"/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"countries","color":"#509EE3","can_write":true,"name":"Countries","personal_owner_id":null,"id":5,"location":"/4/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"ds_analysis","color":"#509EE3","can_write":true,"name":"DS Analysis","personal_owner_id":null,"id":3,"location":"/2/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"ds_analysis","color":"#509EE3","can_write":true,"name":"DS Analysis","personal_owner_id":null,"id":6,"location":"/4/5/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"spending","color":"#509EE3","can_write":true,"name":"Spending","personal_owner_id":null,"id":4,"location":"/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"summary","color":"#509EE3","can_write":true,"name":"Summary","personal_owner_id":null,"id":7,"location":"/2/3/","namespace":null},{"authority_level":null,"description":null,"archived":false,"slug":"alex_s_personal_collection","color":"#31698A","can_write":true,"name":"Alex's Personal Collection","personal_owner_id":1,"id":1,"location":"/","namespace":null}]`
-		collectionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(collectionResponseJSON)))}
+		collectionResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(collectionResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&collectionResponse, nil).Once()
 
 		expectedCollections := []metabase.Collection{
@@ -155,7 +154,7 @@ func (s *ClientTestSuite) TestGetDatabases() {
 		testRequest, err := s.getTestRequest(http.MethodGet, "/api/database?include=tables", nil)
 		s.Require().NoError(err)
 
-		databaseResponse := http.Response{StatusCode: 400, Body: ioutil.NopCloser(bytes.NewReader([]byte(nil)))}
+		databaseResponse := http.Response{StatusCode: 400, Body: io.NopCloser(bytes.NewReader([]byte(nil)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
 
 		result, err1 := s.client.GetDatabases()
@@ -169,7 +168,7 @@ func (s *ClientTestSuite) TestGetDatabases() {
 		testRequest, err := s.getTestRequest(http.MethodGet, "/api/database?include=tables", nil)
 		s.Require().NoError(err)
 
-		databaseResponse := http.Response{StatusCode: 500, Body: ioutil.NopCloser(bytes.NewReader([]byte(nil)))}
+		databaseResponse := http.Response{StatusCode: 500, Body: io.NopCloser(bytes.NewReader([]byte(nil)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
 
 		result, err1 := s.client.GetDatabases()
@@ -183,18 +182,18 @@ func (s *ClientTestSuite) TestGetDatabases() {
 		testRequest, err := s.getTestRequest(http.MethodGet, "/api/database?include=tables", nil)
 		s.Require().NoError(err)
 
-		databaseResponse := http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte(nil)))}
+		databaseResponse := http.Response{StatusCode: 401, Body: io.NopCloser(bytes.NewReader([]byte(nil)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
 
 		s.sessionToken = "93df71b4-6887-46bd-b4bf-7ad3b94bd6fe"
 		sessionResponse := http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{"id":"` + s.sessionToken + `"}`))),
+			Body:       io.NopCloser(bytes.NewReader([]byte(`{"id":"` + s.sessionToken + `"}`))),
 		}
 		s.mockHttpClient.On("Do", mock.Anything).Return(&sessionResponse, nil).Once()
 
 		databasesResponseJSON := `[{"id":1,"name":"test-Name","cache_field_values_schedule":"testCache","timezone":"test-time","auto_run_queries":true,"metadata_sync_schedule":"test-sync","engine":"test-engine","native_permissions":"per" }]`
-		correctdatabaseResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
+		correctdatabaseResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&correctdatabaseResponse, nil).Once()
 
 		expectedDatabases := []metabase.Database{
@@ -218,7 +217,7 @@ func (s *ClientTestSuite) TestGetDatabases() {
 		s.Require().NoError(err)
 
 		databasesResponseJSON := `{"data":[{"id":1,"name":"test-Name","cache_field_values_schedule":"testCache","timezone":"test-time","auto_run_queries":true,"metadata_sync_schedule":"test-sync","engine":"test-engine","native_permissions":"per" }]}`
-		databaseResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
+		databaseResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
 
 		expectedDatabases := []metabase.Database{
@@ -276,7 +275,7 @@ func (s *ClientTestSuite) TestGetGroups() {
 		expectedgroupResponse := groups
 
 		groupResponseJSON := `[{"id":1,"name":"All Users","database":[{"permission":["schema:all"],"urn":"database:1"},{"permission":["native:write"],"urn":"database:2"}], "collection":[{"name":"All Users","permission":["read"], "urn":"collection:1"},{"name":"All Users","permission":["write"], "urn":"collection:2"}] }]`
-		groupResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
+		groupResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
 		s.mockHttpClient.On("Do", fetchGroupstestRequest).Return(&groupResponse, nil).Once()
 
 		//test fetch database permissions
@@ -285,14 +284,14 @@ func (s *ClientTestSuite) TestGetGroups() {
 		expectedDatabaseGroupResponse := metabase.ResourceGroupDetails{"database:3": []map[string]interface{}{{"name": "All Users", "permissions": []string{"schema:all"}, "urn": "group:1"}}}
 		databaseResourceGroupsResponseJSON := `{"groups":{"1":{ "3":{"schema":"all"}} } }`
 
-		databaseResourceGroupsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databaseResourceGroupsResponseJSON)))}
+		databaseResourceGroupsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(databaseResourceGroupsResponseJSON)))}
 		s.mockHttpClient.On("Do", fetchDatabasePermissionstestRequest).Return(&databaseResourceGroupsResponse, nil).Once()
 
 		fetchCollectionPermissionstestRequest, err := s.getTestRequest(http.MethodGet, "/api/collection/graph", nil)
 		s.Require().NoError(err)
 
 		fetchCollectionPermissionsResponseJSON := `{"groups":{"1":{ "3":"read"} } }`
-		fetchCollectionPermissionsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(fetchCollectionPermissionsResponseJSON)))}
+		fetchCollectionPermissionsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(fetchCollectionPermissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", fetchCollectionPermissionstestRequest).Return(&fetchCollectionPermissionsResponse, nil).Once()
 
 		actualGroupResponse, actualDatabaseGroupResponse, _, err := s.client.GetGroups()
@@ -311,18 +310,18 @@ func (s *ClientTestSuite) TestGrantDatabaseAccess() {
 		testRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
 		s.Require().NoError(err)
 		databasesResponseJSON := `{"revision":1,"groups":{"gid_1":{"db_1":{"schema":"all"},"db_2":{"native":"write"}}}}`
-		databaseResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
+		databaseResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
 
 		// createGroup mock
 		createGroupResponseJSON := `{"id":1,"name":"","members":[{"id":1,"email":"","membership_id":1,"group_ids":[1,2]}]}`
-		createGroupResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(createGroupResponseJSON)))}
+		createGroupResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(createGroupResponseJSON)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).
 			Return(&createGroupResponse, nil).Once()
 
 		// updateDatabaseAccess mock
 		updateDatabaseAccessResponseJSON := `{"revision":1,"groups":{"gid_1":{"db_1":{"schema":"all"},"db_2":{"native":"write"}}}}`
-		updateDatabaseAccessResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updateDatabaseAccessResponseJSON)))}
+		updateDatabaseAccessResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(updateDatabaseAccessResponseJSON)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).
 			Return(&updateDatabaseAccessResponse, nil).Once()
 
@@ -332,12 +331,12 @@ func (s *ClientTestSuite) TestGrantDatabaseAccess() {
 		testUserRequest, err := s.getTestRequest(http.MethodGet, getUserUrl, nil)
 		s.Require().NoError(err)
 		userResponseJSON := `{"data":[{"id":1,"email":"test-email@gojek.com"}]}`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testUserRequest).Return(&userResponse, nil).Once()
 
 		//test for addGroupMember()
 
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		response := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
 		role := "schemas:all"
@@ -363,15 +362,15 @@ func (s *ClientTestSuite) TestGrantCollectionAccess() {
 		testRequest, err := s.getTestRequest(http.MethodGet, "/api/collection/graph", nil)
 		s.Require().NoError(err)
 		collectionResponseJSON := `{"revision":1,"groups":{"51": {"999":"write"},"52":{"1000":"read"} } }`
-		collectionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(collectionResponseJSON)))}
+		collectionResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(collectionResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&collectionResponse, nil).Once()
 
 		groupResJSON := `{"id":53,"name":"_guardian_collection_999_read"}`
-		res := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResJSON)))}
+		res := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(groupResJSON)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&res, nil).Once()
 
 		updatedcollectionResponseJSON := `{"revision":1,"groups":{"51": {"999":"write"},"52":{"1000":"read"},"53":{"999":"read"} } }`
-		updatedcollectionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updatedcollectionResponseJSON)))}
+		updatedcollectionResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(updatedcollectionResponseJSON)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&updatedcollectionResponse, nil).Once()
 
 		email := "test-email@gojek.com"
@@ -380,10 +379,10 @@ func (s *ClientTestSuite) TestGrantCollectionAccess() {
 		testUserRequest, err := s.getTestRequest(http.MethodGet, getUserUrl, nil)
 		s.Require().NoError(err)
 		userResponseJSON := `{"data":[{"id":1,"email":"test-email@gojek.com"}]}`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testUserRequest).Return(&userResponse, nil).Once()
 
-		res2 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		res2 := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&res2, nil).Once()
 
 		role := "read" //valid collection roles are "read" and "write"
@@ -403,7 +402,7 @@ func (s *ClientTestSuite) TestGrantCollectionAccess() {
 		testRequest, err := s.getTestRequest(http.MethodGet, "/api/collection/graph", nil)
 		s.Require().NoError(err)
 		collectionResponseJSON := `{"revision":1,"groups":{"51": {"999":"write"},"52":{"1000":"read"} } }`
-		collectionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(collectionResponseJSON)))}
+		collectionResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(collectionResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&collectionResponse, nil).Once()
 
 		email := "test-email@gojek.com"
@@ -412,10 +411,10 @@ func (s *ClientTestSuite) TestGrantCollectionAccess() {
 		testUserRequest, err := s.getTestRequest(http.MethodGet, getUserUrl, nil)
 		s.Require().NoError(err)
 		userResponseJSON := `{"data":[{"id":1,"email":"test-email@gojek.com"}]}`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testUserRequest).Return(&userResponse, nil).Once()
 
-		res := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		res := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&res, nil).Once()
 
 		role := "write" //valid collection roles are "read" and "write"
@@ -437,7 +436,7 @@ func (s *ClientTestSuite) TestRevokeCollectionAccess() {
 		testRequest, err := s.getTestRequest(http.MethodGet, "/api/collection/graph", nil) //test getcollection access
 		s.Require().NoError(err)
 		collectionResponseJSON := `{"revision":1,"groups":{"51": {"999":"write"},"52":{"1000":"read"} } }`
-		collectionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(collectionResponseJSON)))}
+		collectionResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(collectionResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&collectionResponse, nil).Once()
 
 		email := "test-email@gojek.com"
@@ -447,14 +446,14 @@ func (s *ClientTestSuite) TestRevokeCollectionAccess() {
 		req, err2 := s.getTestRequest(http.MethodGet, url, nil)
 		s.Require().NoError(err2)
 		groupResponseJSON := `{"id":51 ,"name":"999", "members":[{"id":1,"email":"test-email@gojek.com","membership_id":500,"group_ids":[51,52,53]}] }`
-		groupResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
+		groupResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
 		s.mockHttpClient.On("Do", req).Return(&groupResponse, nil).Once()
 
 		membershipID := 500 //test removeGroupMember
 		revokeGroupMemeberURL := fmt.Sprintf("/api/permissions/membership/%d", membershipID)
 		revokeGroupMemeberRequest, err3 := s.getTestRequest(http.MethodDelete, revokeGroupMemeberURL, nil)
 		s.Require().NoError(err3)
-		revokeGroupMemeberResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		revokeGroupMemeberResponse := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", revokeGroupMemeberRequest).Return(&revokeGroupMemeberResponse, nil).Once()
 
 		role := "write" //valid collection roles are "read" and "write"
@@ -478,7 +477,7 @@ func (s *ClientTestSuite) TestGrantGroupAccesss() {
 		testUserRequest, err := s.getTestRequest(http.MethodGet, getUserUrl, nil)
 		s.Require().NoError(err)
 		userResponseJSON := `{"data":[{"id":1,"email":"test-email@gojek.com","membership_id":500,"group_ids":[51,52,53]}]}`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testUserRequest).Return(&userResponse, nil).Once()
 
 		groupID := 53
@@ -497,12 +496,12 @@ func (s *ClientTestSuite) TestGrantGroupAccesss() {
 		testUserRequest, err := s.getTestRequest(http.MethodGet, getUserUrl, nil)
 		s.Require().NoError(err)
 		userResponseJSON := `{"data":[{"id":1,"email":"test-email@gojek.com","membership_id":500,"group_ids":[51,52,53]}]}`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testUserRequest).Return(&userResponse, nil).Once()
 
 		groupID := 54
 
-		res := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		res := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&res, nil).Once()
 
 		actualError := s.client.GrantGroupAccess(groupID, email)
@@ -520,7 +519,7 @@ func (s *ClientTestSuite) TestGrantTableAccess() {
 		testRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
 		s.Require().NoError(err)
 		databasesResponseJSON := `{"revision":1,"groups":{"999":{"1":{"schema":"all"},"2":{"native":"write"}}}}`
-		databaseResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
+		databaseResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
 
 		expectedTable := &metabase.Table{
@@ -535,11 +534,11 @@ func (s *ClientTestSuite) TestGrantTableAccess() {
 			"table_1_999_all1": {ID: 1, Name: "1", DatabaseResources: []*metabase.GroupResource{{Permissions: []string{"schema:all"}, Urn: "database:1"}}}}
 
 		groupResponseJSON := `{"id":0,"name":"_guardian_table_1_999_all"}`
-		response2 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))} // test for createGroup
+		response2 := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))} // test for createGroup
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response2, nil).Once()
 
 		updateDatabaseAccessResponseJSON := `{"revision":1,"groups":{"999":{"1":{"schema":"all"},"2":{"native":"write"}},"1":{"1":{"schemas":{"public":{"999":"all"} } } }  }}`
-		updateDatabaseAccessResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updateDatabaseAccessResponseJSON)))}
+		updateDatabaseAccessResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(updateDatabaseAccessResponseJSON)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).
 			Return(&updateDatabaseAccessResponse, nil).Once()
 
@@ -549,10 +548,10 @@ func (s *ClientTestSuite) TestGrantTableAccess() {
 		testUserRequest, err := s.getTestRequest(http.MethodGet, getUserUrl, nil)
 		s.Require().NoError(err)
 		userResponseJSON := `{"data":[{"id":1,"email":"test-email@gojek.com"}]}`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testUserRequest).Return(&userResponse, nil).Once()
 
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)} // test for addGroupMember
+		response := http.Response{StatusCode: 200, Body: io.NopCloser(nil)} // test for addGroupMember
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
 		actualError := s.client.GrantTableAccess(resource, email, role, groups)
@@ -567,7 +566,7 @@ func (s *ClientTestSuite) TestGrantTableAccess() {
 		testRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
 		s.Require().NoError(err)
 		databasesResponseJSON := `{"revision":1,"groups":{"999":{"1":{"schema":"all"},"2":{"native":"write"}}}}`
-		databaseResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
+		databaseResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
 
 		expectedTable := &metabase.Table{
@@ -582,7 +581,7 @@ func (s *ClientTestSuite) TestGrantTableAccess() {
 			"table_1_999_all": {ID: 1, Name: "1", DatabaseResources: []*metabase.GroupResource{{Permissions: []string{"schema:all"}, Urn: "database:1"}}}}
 
 		updateDatabaseAccessResponseJSON := `{"revision":1,"groups":{"999":{"1":{"schema":"all"},"2":{"native":"write"}},"1":{"1":{"schemas":{"public":{"999":"all"} } } }  }}`
-		updateDatabaseAccessResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(updateDatabaseAccessResponseJSON)))}
+		updateDatabaseAccessResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(updateDatabaseAccessResponseJSON)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).
 			Return(&updateDatabaseAccessResponse, nil).Once()
 
@@ -592,10 +591,10 @@ func (s *ClientTestSuite) TestGrantTableAccess() {
 		testUserRequest, err := s.getTestRequest(http.MethodGet, getUserUrl, nil)
 		s.Require().NoError(err)
 		userResponseJSON := `{"data":[{"id":1,"email":"test-email@gojek.com"}]}`
-		userResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
+		userResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(userResponseJSON)))}
 		s.mockHttpClient.On("Do", testUserRequest).Return(&userResponse, nil).Once()
 
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)} // test for addGroupMember
+		response := http.Response{StatusCode: 200, Body: io.NopCloser(nil)} // test for addGroupMember
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
 		actualError := s.client.GrantTableAccess(resource, email, role, groups)
@@ -611,7 +610,7 @@ func (s *ClientTestSuite) TestRevokeDatabaseAccess() {
 		testRequest, err := s.getTestRequest(http.MethodGet, "/api/permissions/graph", nil)
 		s.Require().NoError(err)
 		databasesResponseJSON := `{"revision":1,"groups":{"51":{"999":{"schemas":"all"}}}}`
-		databaseResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
+		databaseResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(databasesResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
 
 		expectedDatabase := &metabase.Database{
@@ -627,14 +626,14 @@ func (s *ClientTestSuite) TestRevokeDatabaseAccess() {
 		req, err2 := s.getTestRequest(http.MethodGet, url, nil)
 		s.Require().NoError(err2)
 		groupResponseJSON := `{"id":51 ,"name":"999", "members":[{"id":1,"email":"test-email@gojek.com","membership_id":500,"group_ids":[51]}] }`
-		groupResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
+		groupResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
 		s.mockHttpClient.On("Do", req).Return(&groupResponse, nil).Once()
 
 		membershipID := 500 //test removeGroupMember
 		revokeGroupMemeberURL := fmt.Sprintf("/api/permissions/membership/%d", membershipID)
 		revokeGroupMemeberRequest, err3 := s.getTestRequest(http.MethodDelete, revokeGroupMemeberURL, nil)
 		s.Require().NoError(err3)
-		revokeGroupMemeberResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		revokeGroupMemeberResponse := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", revokeGroupMemeberRequest).Return(&revokeGroupMemeberResponse, nil).Once()
 
 		actualError := s.client.RevokeDatabaseAccess(resource, email, role)

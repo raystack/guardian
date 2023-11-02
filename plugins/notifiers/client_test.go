@@ -1,9 +1,10 @@
 package notifiers
 
 import (
-	"github.com/goto/guardian/plugins/notifiers/slack"
 	"reflect"
 	"testing"
+
+	"github.com/goto/guardian/plugins/notifiers/slack"
 )
 
 func TestNewSlackConfig(t *testing.T) {

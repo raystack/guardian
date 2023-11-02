@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -75,7 +74,7 @@ func TestNewClient(t *testing.T) {
 
 		sessionToken := "93df71b4-6887-46bd-b4bf-7ad3b94bd6fe"
 		responseJSON := `{"id":"` + sessionToken + `"}`
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJSON)))}
+		response := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJSON)))}
 		mockHttpClient.On("Do", mock.Anything).Return(&response, nil).Once()
 
 		_, actualError := tableau.NewClient(config)
@@ -109,7 +108,7 @@ func (s *ClientTestSuite) setup() {
 	sessionResponseJSON := fmt.Sprintf(`{"credentials":{"token":"%s","site":{"id":"%s"},"user":{"id":"%s"}}}`, s.sessionToken, s.siteID, s.userID)
 	sessionResponse := http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewReader([]byte(sessionResponseJSON))),
+		Body:       io.NopCloser(bytes.NewReader([]byte(sessionResponseJSON))),
 	}
 	s.mockHttpClient.On("Do", mock.Anything).Return(&sessionResponse, nil).Once()
 	s.apiVersion = "3.12"
@@ -136,7 +135,7 @@ func (s *ClientTestSuite) TestGetWorkbooks() {
 		s.Require().NoError(err)
 
 		workbookResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"workbooks":{"workbook":[{"id":"test-workbook"}]}}`
-		workbookResponse := http.Response{StatusCode: 403, Body: ioutil.NopCloser(bytes.NewReader([]byte(workbookResponseJSON)))}
+		workbookResponse := http.Response{StatusCode: 403, Body: io.NopCloser(bytes.NewReader([]byte(workbookResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&workbookResponse, nil).Once()
 
 		actualWorkbooks, err1 := s.client.GetWorkbooks()
@@ -153,7 +152,7 @@ func (s *ClientTestSuite) TestGetWorkbooks() {
 		s.Require().NoError(err)
 
 		workbookResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"workbooks":{"workbook":[{"id":"test-workbook"}]}}`
-		workbookResponse := http.Response{StatusCode: 400, Body: ioutil.NopCloser(bytes.NewReader([]byte(workbookResponseJSON)))}
+		workbookResponse := http.Response{StatusCode: 400, Body: io.NopCloser(bytes.NewReader([]byte(workbookResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&workbookResponse, nil).Once()
 
 		expectedWorkbooks := []*tableau.Workbook{
@@ -202,7 +201,7 @@ func (s *ClientTestSuite) TestGetFlows() {
 
 		flowResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"flows": {"flow":[{"id":"flow-1","name":"fl_1"}]}} `
 
-		folderResponse := http.Response{StatusCode: 403, Body: ioutil.NopCloser(bytes.NewReader([]byte(flowResponseJSON)))}
+		folderResponse := http.Response{StatusCode: 403, Body: io.NopCloser(bytes.NewReader([]byte(flowResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&folderResponse, nil).Once()
 
 		actualFlows, err1 := s.client.GetFlows()
@@ -228,18 +227,18 @@ func (s *ClientTestSuite) TestGetFlows() {
 
 		flowResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"flows": {"flow":[{"id":"flow-1","name":"fl_1"}]}} `
 
-		folderResponse := http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte(flowResponseJSON)))}
+		folderResponse := http.Response{StatusCode: 401, Body: io.NopCloser(bytes.NewReader([]byte(flowResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&folderResponse, nil).Once()
 
 		sessionResponseJSON := fmt.Sprintf(`{"credentials":{"token":"%s","site":{"id":"%s"},"user":{"id":"%s"}}}`, s.sessionToken, s.siteID, s.userID)
 		sessionResponse := http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(sessionResponseJSON))),
+			Body:       io.NopCloser(bytes.NewReader([]byte(sessionResponseJSON))),
 		}
 
 		s.mockHttpClient.On("Do", mock.Anything).Return(&sessionResponse, nil).Once()
 
-		folderResponse2 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(flowResponseJSON)))}
+		folderResponse2 := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(flowResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&folderResponse2, nil).Once()
 
 		actualFlows, err1 := s.client.GetFlows()
@@ -265,7 +264,7 @@ func (s *ClientTestSuite) TestGetFlows() {
 
 		flowResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"flows": {"flow":[{"id":"flow-1","name":"fl_1"}]}} `
 
-		folderResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(flowResponseJSON)))}
+		folderResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(flowResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&folderResponse, nil).Once()
 
 		actualFlows, err1 := s.client.GetFlows()
@@ -285,7 +284,7 @@ func (s *ClientTestSuite) TestGetDataSources() {
 		s.Require().NoError(err)
 
 		DataSourcesJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"datasources": {"datasource":[{"id":"datasource-1","name":"ds_1"}]}} `
-		DataSourcesResponse := http.Response{StatusCode: 403, Body: ioutil.NopCloser(bytes.NewReader([]byte(DataSourcesJSON)))}
+		DataSourcesResponse := http.Response{StatusCode: 403, Body: io.NopCloser(bytes.NewReader([]byte(DataSourcesJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&DataSourcesResponse, nil).Once()
 
 		actualDataSources, err1 := s.client.GetDataSources()
@@ -310,7 +309,7 @@ func (s *ClientTestSuite) TestGetDataSources() {
 		}
 
 		DataSourcesJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"datasources": {"datasource":[{"id":"datasource-1","name":"ds_1"}]}} `
-		DataSourcesResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(DataSourcesJSON)))}
+		DataSourcesResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(DataSourcesJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&DataSourcesResponse, nil).Once()
 
 		actualDataSources, err1 := s.client.GetDataSources()
@@ -331,7 +330,7 @@ func (s *ClientTestSuite) TestGetViews() {
 
 		ViewsResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"views": {"view":[{"id":"view-1","name":"vw_1"}]}} `
 
-		ViewsResponse := http.Response{StatusCode: 403, Body: ioutil.NopCloser(bytes.NewReader([]byte(ViewsResponseJSON)))}
+		ViewsResponse := http.Response{StatusCode: 403, Body: io.NopCloser(bytes.NewReader([]byte(ViewsResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&ViewsResponse, nil).Once()
 
 		actualViews, err1 := s.client.GetViews()
@@ -357,7 +356,7 @@ func (s *ClientTestSuite) TestGetViews() {
 
 		ViewsResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"views": {"view":[{"id":"view-1","name":"vw_1"}]}} `
 
-		ViewsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(ViewsResponseJSON)))}
+		ViewsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(ViewsResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&ViewsResponse, nil).Once()
 
 		actualViews, err1 := s.client.GetViews()
@@ -377,7 +376,7 @@ func (s *ClientTestSuite) TestGetMetrics() {
 		s.Require().NoError(err)
 		MetricsResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"metrics": {"metric":[{"id": "metric-1","name":"mt_1"}]}} `
 
-		MetricsResponse := http.Response{StatusCode: 403, Body: ioutil.NopCloser(bytes.NewReader([]byte(MetricsResponseJSON)))}
+		MetricsResponse := http.Response{StatusCode: 403, Body: io.NopCloser(bytes.NewReader([]byte(MetricsResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&MetricsResponse, nil).Once()
 
 		actualMetrics, err1 := s.client.GetMetrics()
@@ -403,7 +402,7 @@ func (s *ClientTestSuite) TestGetMetrics() {
 
 		MetricsResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"metrics": {"metric":[{"id": "metric-1","name":"mt_1"}]}} `
 
-		MetricsResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(MetricsResponseJSON)))}
+		MetricsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(MetricsResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&MetricsResponse, nil).Once()
 
 		actualMetrics, err1 := s.client.GetMetrics()
@@ -428,7 +427,7 @@ func (s *ClientTestSuite) TestUpdateSiteRole() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		role := "Viewer"
@@ -450,10 +449,10 @@ func (s *ClientTestSuite) TestUpdateSiteRole() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		response := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 		role := "Viewer"
 
@@ -478,7 +477,7 @@ func (s *ClientTestSuite) TestGrantWorkbookAccess() { //the body have to be upda
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		role := "write:allow"
@@ -502,10 +501,10 @@ func (s *ClientTestSuite) TestGrantWorkbookAccess() { //the body have to be upda
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		response := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
 		role := "write:allow"
@@ -533,7 +532,7 @@ func (s *ClientTestSuite) TestGrantFlowAccess() { //the body have to be updated 
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		role := "write:allow"
@@ -557,10 +556,10 @@ func (s *ClientTestSuite) TestGrantFlowAccess() { //the body have to be updated 
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		response := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
 		role := "write:allow"
@@ -588,7 +587,7 @@ func (s *ClientTestSuite) TestGrantMetricAccess() { //the body have to be update
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		role := "write:allow"
@@ -611,10 +610,10 @@ func (s *ClientTestSuite) TestGrantMetricAccess() { //the body have to be update
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		response := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
 		role := "write:allow"
@@ -642,7 +641,7 @@ func (s *ClientTestSuite) TestGrantDataSourceAccess() { //the body have to be up
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		role := "write:allow"
@@ -665,12 +664,12 @@ func (s *ClientTestSuite) TestGrantDataSourceAccess() { //the body have to be up
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		//body:=
 		//request:=
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		response := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
 		role := "write:allow"
@@ -697,7 +696,7 @@ func (s *ClientTestSuite) TestGrantViewAccess() { //the body have to be updated 
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		role := "write:allow"
@@ -721,12 +720,12 @@ func (s *ClientTestSuite) TestGrantViewAccess() { //the body have to be updated 
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		//body:=
 		//request:=
-		response := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		response := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
 		role := "write:allow"
@@ -753,7 +752,7 @@ func (s *ClientTestSuite) TestRevokeWorkbookAccess() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		role := "write:allow"
@@ -776,7 +775,7 @@ func (s *ClientTestSuite) TestRevokeWorkbookAccess() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		userID := "userID-1"
@@ -792,7 +791,7 @@ func (s *ClientTestSuite) TestRevokeWorkbookAccess() {
 		deleteWbPermissionRequest, err := s.getTestRequest(http.MethodDelete, deleteWbPath, nil)
 		s.Require().NoError(err)
 
-		deleteWbPermissionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		deleteWbPermissionResponse := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", deleteWbPermissionRequest).Return(&deleteWbPermissionResponse, nil).Once()
 
 		actualError := s.client.RevokeWorkbookAccess(resource, userEmail, role)
@@ -815,7 +814,7 @@ func (s *ClientTestSuite) TestRevokeFlowAccess() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		role := "write:allow"
@@ -839,7 +838,7 @@ func (s *ClientTestSuite) TestRevokeFlowAccess() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		userID := "userID-1"
@@ -855,7 +854,7 @@ func (s *ClientTestSuite) TestRevokeFlowAccess() {
 		deleteFlowPermissionRequest, err := s.getTestRequest(http.MethodDelete, deleteFlowPath, nil)
 		s.Require().NoError(err)
 
-		deleteFlowPermissionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		deleteFlowPermissionResponse := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", deleteFlowPermissionRequest).Return(&deleteFlowPermissionResponse, nil).Once()
 
 		actualError := s.client.RevokeFlowAccess(resource, userEmail, role)
@@ -878,7 +877,7 @@ func (s *ClientTestSuite) TestRevokeMetricAccess() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		role := "write:allow"
@@ -901,7 +900,7 @@ func (s *ClientTestSuite) TestRevokeMetricAccess() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		userID := "userID-1"
@@ -917,7 +916,7 @@ func (s *ClientTestSuite) TestRevokeMetricAccess() {
 		deleteMetricPermissionRequest, err := s.getTestRequest(http.MethodDelete, deleteMetricPath, nil)
 		s.Require().NoError(err)
 
-		deleteMetricPermissionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		deleteMetricPermissionResponse := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", deleteMetricPermissionRequest).Return(&deleteMetricPermissionResponse, nil).Once()
 
 		actualError := s.client.RevokeMetricAccess(resource, userEmail, role)
@@ -940,7 +939,7 @@ func (s *ClientTestSuite) TestRevokeDataSourceAccess() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		role := "write:allow"
@@ -963,7 +962,7 @@ func (s *ClientTestSuite) TestRevokeDataSourceAccess() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		userID := "userID-1"
@@ -979,7 +978,7 @@ func (s *ClientTestSuite) TestRevokeDataSourceAccess() {
 		deleteDsPermissionRequest, err := s.getTestRequest(http.MethodDelete, deleteDsPath, nil)
 		s.Require().NoError(err)
 
-		deleteDsPermissionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		deleteDsPermissionResponse := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", deleteDsPermissionRequest).Return(&deleteDsPermissionResponse, nil).Once()
 
 		actualError := s.client.RevokeDataSourceAccess(resource, userEmail, role)
@@ -1002,7 +1001,7 @@ func (s *ClientTestSuite) TestRevokeViewAccess() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		role := "write:allow"
@@ -1025,7 +1024,7 @@ func (s *ClientTestSuite) TestRevokeViewAccess() {
 
 		GetUserResponseJSON := `{"pagination":{"pageNumber":"1","pageSize":"1","totalAvailable":"1"},"users": {"user":[{"id": "userID-1"}]}} `
 
-		GetUserResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
+		GetUserResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(GetUserResponseJSON)))}
 		s.mockHttpClient.On("Do", GetUserRequest).Return(&GetUserResponse, nil).Once()
 
 		userID := "userID-1"
@@ -1041,7 +1040,7 @@ func (s *ClientTestSuite) TestRevokeViewAccess() {
 		deleteViewPermissionRequest, err := s.getTestRequest(http.MethodDelete, deleteViewPath, nil)
 		s.Require().NoError(err)
 
-		deleteViewPermissionResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(nil)}
+		deleteViewPermissionResponse := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", deleteViewPermissionRequest).Return(&deleteViewPermissionResponse, nil).Once()
 
 		actualError := s.client.RevokeViewAccess(resource, userEmail, role)
@@ -1068,13 +1067,13 @@ func (s *ClientTestSuite) TestRevokeViewAccess() {
 // 	sessionResponseJSON := fmt.Sprintf(`{"credentials":{"token":"%s","site":{"id":"%s"},"user":{"id":"%s"}}}`, sessionToken, siteID, userID)
 // 	sessionResponse := http.Response{
 // 		StatusCode: 401,
-// 		Body:       ioutil.NopCloser(bytes.NewReader([]byte(sessionResponseJSON))),
+// 		Body:       io.NopCloser(bytes.NewReader([]byte(sessionResponseJSON))),
 // 	}
 // 	mockHttpClient.On("Do", mock.Anything).Return(&sessionResponse, nil).Once()
 
 // 	// sessionToken := "93df71b4-6887-46bd-b4bf-7ad3b94bd6fe"
 // 	// responseJSON := `{"id":"` + sessionToken + `"}`
-// 	// response := http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJSON)))}
+// 	// response := http.Response{StatusCode: 401, Body: io.NopCloser(bytes.NewReader([]byte(responseJSON)))}
 // 	// mockHttpClient.On("Do", mock.Anything).Return(&response, nil).Once()
 
 // 	//sessionResponseJSON := fmt.Sprintf(`{"credentials":{"token":"%s","site":{"id":"%s"},"user":{"id":"%s"}}}`, sessionToken, siteID, userID)
@@ -1085,7 +1084,7 @@ func (s *ClientTestSuite) TestRevokeViewAccess() {
 
 // 	sessionResponse2 := http.Response{
 // 		StatusCode: 200,
-// 		Body:       ioutil.NopCloser(bytes.NewReader([]byte(sessionResponseJSON))),
+// 		Body:       io.NopCloser(bytes.NewReader([]byte(sessionResponseJSON))),
 // 	}
 // 	mockHttpClient.On("Do", mock.Anything).Return(&sessionResponse2, nil).Once()
 

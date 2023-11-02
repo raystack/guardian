@@ -3,8 +3,9 @@ package gcloudiam_test
 import (
 	"encoding/base64"
 	"errors"
-	"github.com/goto/salt/log"
 	"testing"
+
+	"github.com/goto/salt/log"
 
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/plugins/providers/gcloudiam"

@@ -232,7 +232,6 @@ func (s *GrantRepositoryTestSuite) TestList() {
 			_, actualError := s.repository.List(context.Background(), tc.filters)
 			s.Nil(actualError)
 		}
-
 	})
 
 	s.Run("Should return an array that matches q", func() {

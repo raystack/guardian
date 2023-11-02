@@ -3,9 +3,10 @@ package gcloudiam_test
 import (
 	"encoding/base64"
 	"errors"
+	"testing"
+
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/pkg/crypto"
-	"testing"
 
 	"github.com/goto/guardian/mocks"
 	"github.com/goto/guardian/plugins/providers/gcloudiam"
@@ -97,7 +98,6 @@ func TestCredentials(t *testing.T) {
 }
 
 func TestConfig_ParseAndValidate(t *testing.T) {
-
 	t.Run("should return error if resource config is nil", func(t *testing.T) {
 		crypo := crypto.NewAES("encryption_key")
 		providerConfig := domain.ProviderConfig{
@@ -234,7 +234,6 @@ func TestConfig_ParseAndValidate(t *testing.T) {
 		actualErr := config.ParseAndValidate()
 		assert.EqualError(t, actualErr, expectedErr)
 	})
-
 }
 
 func getBase64EncodedString() string {

@@ -3,8 +3,9 @@ package v1beta1
 import (
 	"context"
 	"errors"
-	"golang.org/x/sync/errgroup"
 	"strings"
+
+	"golang.org/x/sync/errgroup"
 
 	guardianv1beta1 "github.com/goto/guardian/api/proto/gotocompany/guardian/v1beta1"
 	"github.com/goto/guardian/core/resource"

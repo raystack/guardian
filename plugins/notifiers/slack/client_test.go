@@ -5,7 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -56,7 +56,7 @@ func (s *ClientTestSuite) TestNotify() {
 		s.setup()
 
 		slackAPIResponse := `{"ok":false,"error":"users_not_found"}`
-		resp := &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(slackAPIResponse)))}
+		resp := &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(slackAPIResponse)))}
 		s.mockHttpClient.On("Do", mock.Anything).Return(resp, nil)
 		expectedErrs := []error{
 			fmt.Errorf("[appeal_id=test-appeal-id] | %w", errors.New("error finding slack id for email test-user@abc.com in workspace: ws-1 - users_not_found")),
@@ -157,7 +157,6 @@ func (s *ClientTestSuite) TestGetSlackWorkspaceForUser() {
 		_, actualErr := s.notifier.GetSlackWorkspaceForUser(userEmail)
 		s.Equal(expectedErr, actualErr)
 	})
-
 }
 
 func TestClient(t *testing.T) {

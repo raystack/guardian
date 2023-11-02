@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/goto/guardian/pkg/evaluator"
-	"github.com/goto/salt/log"
 	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/goto/guardian/pkg/evaluator"
+	"github.com/goto/salt/log"
 
 	"github.com/goto/guardian/utils"
 

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -153,7 +152,7 @@ func (s *ClientTestSuite) TestGetTeams() {
 		        }
 		    ]
 		}`
-		teamResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(teamResponseJSON)))}
+		teamResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(teamResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&teamResponse, nil).Once()
 
 		expectedTeams := []shield.Team{
@@ -204,10 +203,10 @@ func (s *ClientTestSuite) TestGetTeams() {
 				}]
 		}`
 
-		teamAdminResponse1 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(teamAdminResponse)))}
+		teamAdminResponse1 := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(teamAdminResponse)))}
 		s.mockHttpClient.On("Do", testAdminsRequest1).Return(&teamAdminResponse1, nil).Once()
 
-		teamAdminResponse2 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(teamAdminResponse)))}
+		teamAdminResponse2 := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(teamAdminResponse)))}
 		s.mockHttpClient.On("Do", testAdminsRequest2).Return(&teamAdminResponse2, nil).Once()
 
 		result, err1 := s.client.GetTeams()
@@ -244,7 +243,7 @@ func (s *ClientTestSuite) TestGetProjects() {
 		        }
 		    ]
 		}`
-		projectResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(projectResponseJSON)))}
+		projectResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(projectResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&projectResponse, nil).Once()
 
 		expectedProjects := []shield.Project{
@@ -276,7 +275,7 @@ func (s *ClientTestSuite) TestGetProjects() {
 			]
 		}`
 
-		projectAdminResponse1 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(projectAdminResponse)))}
+		projectAdminResponse1 := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(projectAdminResponse)))}
 		s.mockHttpClient.On("Do", testAdminsRequest).Return(&projectAdminResponse1, nil).Once()
 
 		result, err1 := s.client.GetProjects()
@@ -311,7 +310,7 @@ func (s *ClientTestSuite) TestGetOrganizations() {
 		        }
 		    ]
 		}`
-		orgResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(organizationsResponseJSON)))}
+		orgResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(organizationsResponseJSON)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&orgResponse, nil).Once()
 
 		expectedOrganizations := []shield.Organization{
@@ -342,7 +341,7 @@ func (s *ClientTestSuite) TestGetOrganizations() {
 			]
 		}`
 
-		orgAdminResponse1 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(orgAdminResponse)))}
+		orgAdminResponse1 := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(orgAdminResponse)))}
 		s.mockHttpClient.On("Do", testAdminsRequest).Return(&orgAdminResponse1, nil).Once()
 
 		result, err1 := s.client.GetOrganizations()
@@ -386,7 +385,7 @@ func (s *ClientTestSuite) TestGrantTeamAccess() {
 			]
 		}`
 
-		responseUsers := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
+		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
 		actualError := s.client.GrantTeamAccess(teamObj, testUserId, role)
@@ -425,7 +424,7 @@ func (s *ClientTestSuite) TestGrantProjectAccess() {
 			]
 		}`
 
-		responseUsers := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
+		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
 		actualError := s.client.GrantProjectAccess(projectObj, testUserId, role)
@@ -463,7 +462,7 @@ func (s *ClientTestSuite) TestGrantOrganizationAccess() {
 			]
 		}`
 
-		responseUsers := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
+		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
 		actualError := s.client.GrantOrganizationAccess(orgObj, testUserId, role)
@@ -489,7 +488,7 @@ func (s *ClientTestSuite) TestRevokeTeamAccess() {
 			"message": "Removed User from group"
 		}`
 
-		responseUsers := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
+		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
 		actualError := s.client.RevokeTeamAccess(teamObj, testUserId, role)
@@ -516,7 +515,7 @@ func (s *ClientTestSuite) TestRevokeProjectAccess() {
 			"message": "Removed User from group"
 		}`
 
-		responseUsers := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
+		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
 		actualError := s.client.RevokeProjectAccess(projectObj, testUserId, role)
@@ -542,7 +541,7 @@ func (s *ClientTestSuite) TestRevokeOrganizationAccess() {
 			"message": "Removed User from group"
 		}`
 
-		responseUsers := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
+		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
 		actualError := s.client.RevokeOrganizationAccess(orgObj, testUserId, role)
@@ -564,7 +563,7 @@ func (s *ClientTestSuite) TestGetSelfUser() {
 			"details": []
 		}`
 
-		responseUser := http.Response{StatusCode: 500, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
+		responseUser := http.Response{StatusCode: 500, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", testGetSelfRequest).Return(&responseUser, nil).Once()
 
 		_, actualError := s.client.GetSelfUser(testUserEmail)
@@ -591,7 +590,7 @@ func (s *ClientTestSuite) TestGetSelfUser() {
 			}
 		}`
 
-		responseUser := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
+		responseUser := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", testGetSelfRequest).Return(&responseUser, nil).Once()
 
 		expectedUser := &shield.User{

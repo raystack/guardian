@@ -3,10 +3,11 @@ package notifiers
 import (
 	"errors"
 	"fmt"
-	"github.com/goto/salt/log"
-	"github.com/mitchellh/mapstructure"
 	"net/http"
 	"time"
+
+	"github.com/goto/salt/log"
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/plugins/notifiers/slack"
@@ -40,7 +41,6 @@ type Config struct {
 
 func NewClient(config *Config, logger *log.Logrus) (Client, error) {
 	if config.Provider == ProviderTypeSlack {
-
 		slackConfig, err := NewSlackConfig(config)
 		if err != nil {
 			return nil, err
@@ -54,7 +54,6 @@ func NewClient(config *Config, logger *log.Logrus) (Client, error) {
 }
 
 func NewSlackConfig(config *Config) (*slack.Config, error) {
-
 	// validation
 	if config.AccessToken == "" && config.SlackConfig == nil {
 		return nil, errors.New("slack access token or workSpaceConfig must be provided")

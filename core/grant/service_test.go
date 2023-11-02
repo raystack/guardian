@@ -1053,5 +1053,4 @@ func (s *ServiceTestSuite) TestListUserRoles() {
 		s.Zero(roles)
 		s.EqualError(actualError, expectedError.Error())
 	})
-
 }
