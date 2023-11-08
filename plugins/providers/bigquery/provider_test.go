@@ -366,6 +366,68 @@ func TestGetResources(t *testing.T) {
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
 	})
+
+	t.Run("should return table resource only", func(t *testing.T) {
+		encryptor := new(mocks.Encryptor)
+		client := new(mocks.BigQueryClient)
+		l := log.NewNoop()
+		p := bigquery.NewProvider("", encryptor, l)
+		p.Clients = map[string]bigquery.BigQueryClient{
+			"resource-name": client,
+		}
+		validCredentials := bigquery.Credentials{
+			ServiceAccountKey: base64.StdEncoding.EncodeToString([]byte("service-account-key-json")),
+			ResourceName:      "projects/resource-name",
+		}
+		pc := &domain.ProviderConfig{
+			Type:        domain.ProviderTypeBigQuery,
+			URN:         "test-project-id",
+			Credentials: validCredentials,
+			Resources: []*domain.ResourceConfig{
+				{
+					Type: "table",
+					Roles: []*domain.Role{
+						{
+							ID:          "VIEWER",
+							Name:        "VIEWER",
+							Permissions: []interface{}{"VIEWER"},
+						},
+					},
+				},
+			},
+		}
+		expectedDatasets := []*bigquery.Dataset{
+			{
+				ProjectID: "p_id",
+				DatasetID: "d_id",
+			},
+		}
+		expectedTables := []*bigquery.Table{
+			{
+				ProjectID: "p_id",
+				DatasetID: "d_id",
+				TableID:   "t_id",
+			},
+		}
+		client.On("GetDatasets", mock.Anything).Return(expectedDatasets, nil).Once()
+		client.On("GetTables", mock.Anything, mock.Anything).Return(expectedTables, nil).Once()
+		var resources []*domain.Resource
+		children := []*domain.Resource{
+			{
+				ProviderType: domain.ProviderTypeBigQuery,
+				ProviderURN:  "test-project-id",
+				Name:         "t_id",
+				URN:          "p_id:d_id.t_id",
+				Type:         "table",
+			},
+		}
+		expectedResources := append(resources, children...)
+		actualResources, actualError := p.GetResources(pc)
+
+		assert.Equal(t, expectedResources, actualResources)
+		assert.Nil(t, actualError)
+		client.AssertExpectations(t)
+	})
 }
 
 func TestGrantAccess(t *testing.T) {
