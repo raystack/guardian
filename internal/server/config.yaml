@@ -35,15 +35,6 @@ NOTIFIER:
       ACCESS_TOKEN:
       CRITERIA: "email contains '@goto'"
 JOBS:
-  FETCH_RESOURCES:
-    ENABLED: true
-    INTERVAL: "0 */2 * * *"
-  REVOKE_EXPIRED_ACCESS:
-    ENABLED: true
-    INTERVAL: "*/20 * * * *"
-  EXPIRING_ACCESS_NOTIFICATION:
-    ENABLED: true
-    INTERVAL: "0 9 * * *"
   REVOKE_GRANTS_BY_USER_CRITERIA:
     CONFIG:
       IAM:

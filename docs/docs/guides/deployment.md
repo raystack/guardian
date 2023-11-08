@@ -43,9 +43,6 @@ DB_PASSWORD=<db-password>
 DB_PORT=<db-port>
 DB_USER=<db-user>
 ENCRYPTION_SECRET_KEY=<secure-encription-key>
-JOBS_EXPIRING_GRANT_NOTIFICATION_ENABLED=true
-JOBS_REVOKE_EXPIRED_GRANTS_ENABLED=true
-JOBS_REVOKE_EXPIRED_GRANTS_INTERVAL="*/20 * * * *"
 NOTIFIER_ACCESS_TOKEN=<slack-access-token>
 NOTIFIER_PROVIDER=slack
 ```
@@ -74,16 +71,6 @@ db:
     name: "<db-name>"
     port: "<db-port>"
 authenticated_user_header_key: "X-Auth-Email"
-jobs:
-    fetch_resources:
-        enabled: true
-        interval: "0 */2 * * *"
-    revoke_expired_grants:
-        enabled: true
-        interval: "*/20 * * * *"
-    expiring_grant_notification:
-        enabled: true
-        interval: "0 9 * * *"
 notifier:
     provider: "slack"
     access_token: "<slack-access-token>"
@@ -176,22 +163,22 @@ app:
           - job
           - run
           - fetch_resources
-      - name: "appeal-expiration-reminder"
+      - name: "expiring-grant-notification"
         schedule: "0 9 * * *"
         restartPolicy: Never
         command: []
         args:
           - job
           - run
-          - appeal_expiration_reminder
-      - name: "appeal-expiration-revocation"
+          - expiring_grant_notification
+      - name: "revoke-expired-grants"
         schedule: "*/20 * * * *"
         restartPolicy: Never
         command: []
         args:
           - job
           - run
-          - appeal_expiration_revocation
+          - revoke_expired_grants
 
   ingress:
     enabled: true
@@ -212,12 +199,6 @@ app:
     LOG_LEVEL: info
     AUTHENTICATED_USER_HEADER_KEY: x-authenticated-user-email
     NOTIFIER_PROVIDER: slack
-    JOBS_FETCH_RESOURCES_ENABLED: false
-    JOBS_FETCH_RESOURCES_INTERVAL: "0 */2 * * *"
-    JOBS_REVOKE_EXPIRED_ACCESS_ENABLED: false
-    JOBS_REVOKE_EXPIRED_ACCESS_INTERVAL: "*/20 * * * *"
-    JOBS_EXPIRING_ACCESS_NOTIFICATION_ENABLED: false
-    JOBS_EXPIRING_ACCESS_NOTIFICATION_INTERVAL: "0 9 * * *"
 
 
   secretConfig:

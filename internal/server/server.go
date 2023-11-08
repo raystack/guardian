@@ -15,10 +15,8 @@ import (
 	handlerv1beta1 "github.com/goto/guardian/api/handler/v1beta1"
 	guardianv1beta1 "github.com/goto/guardian/api/proto/gotocompany/guardian/v1beta1"
 	"github.com/goto/guardian/internal/store/postgres"
-	"github.com/goto/guardian/jobs"
 	"github.com/goto/guardian/pkg/auth"
 	"github.com/goto/guardian/pkg/crypto"
-	"github.com/goto/guardian/pkg/scheduler"
 	"github.com/goto/guardian/pkg/tracing"
 	"github.com/goto/guardian/plugins/notifiers"
 	audit_repos "github.com/goto/salt/audit/repositories"
@@ -71,40 +69,6 @@ func RunServer(config *Config) error {
 	if err != nil {
 		return fmt.Errorf("initializing services: %w", err)
 	}
-
-	jobHandler := jobs.NewHandler(
-		logger,
-		services.GrantService,
-		services.ProviderService,
-		notifier,
-		crypto,
-		validator,
-	)
-
-	// init scheduler
-	// TODO: allow timeout configuration for job handler context
-	jobsMap := map[jobs.Type]func(context.Context, jobs.Config) error{
-		jobs.TypeFetchResources:            jobHandler.FetchResources,
-		jobs.TypeExpiringGrantNotification: jobHandler.GrantExpirationReminder,
-		jobs.TypeRevokeExpiredGrants:       jobHandler.RevokeExpiredGrants,
-	}
-
-	enabledJobs := fetchJobsToRun(config)
-	tasks := make([]*scheduler.Task, 0)
-	for _, job := range enabledJobs {
-		fn := jobsMap[job.Type]
-		task := scheduler.Task{
-			CronTab: job.Interval,
-			Func:    func() error { return fn(context.Background(), job.Config) },
-		}
-		tasks = append(tasks, &task)
-	}
-
-	s, err := scheduler.New(tasks)
-	if err != nil {
-		return err
-	}
-	s.Run()
 
 	// init grpc server
 	logrusEntry := logrus.NewEntry(logrus.New()) // TODO: get logrus instance from `logger` var
@@ -245,46 +209,6 @@ func makeHeaderMatcher(c *Config) func(key string) (string, bool) {
 		default:
 			return runtime.DefaultHeaderMatcher(key)
 		}
-	}
-}
-
-func fetchJobsToRun(config *Config) []*jobs.Job {
-	jobsToRun := make([]*jobs.Job, 0)
-
-	if config.Jobs.FetchResources.Enabled {
-		job := config.Jobs.FetchResources
-		job.Type = jobs.TypeFetchResources
-		jobsToRun = append(jobsToRun, &job)
-	}
-
-	if config.Jobs.ExpiringAccessNotification.Enabled || config.Jobs.ExpiringGrantNotification.Enabled {
-		job := config.Jobs.ExpiringAccessNotification
-		job.Type = jobs.TypeExpiringGrantNotification
-		jobsToRun = append(jobsToRun, &job)
-	}
-
-	if config.Jobs.RevokeExpiredAccess.Enabled || config.Jobs.RevokeExpiredGrants.Enabled {
-		job := config.Jobs.RevokeExpiredAccess
-		job.Type = jobs.TypeRevokeExpiredGrants
-		jobsToRun = append(jobsToRun, &job)
-	}
-
-	jobScheduleMapping := fetchDefaultJobScheduleMapping()
-	for _, jobConfig := range jobsToRun {
-		schedule, ok := jobScheduleMapping[jobConfig.Type]
-		if ok && jobConfig.Interval == "" {
-			jobConfig.Interval = schedule
-		}
-	}
-
-	return jobsToRun
-}
-
-func fetchDefaultJobScheduleMapping() map[jobs.Type]string {
-	return map[jobs.Type]string{
-		jobs.TypeFetchResources:            "0 */2 * * *",
-		jobs.TypeRevokeExpiredGrants:       "*/20 * * * *",
-		jobs.TypeExpiringGrantNotification: "0 9 * * *",
 	}
 }
 

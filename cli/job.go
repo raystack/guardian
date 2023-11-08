@@ -52,9 +52,6 @@ func runJobCmd() *cobra.Command {
 			string(jobs.TypeRevokeExpiredGrants),
 			string(jobs.TypeRevokeGrantsByUserCriteria),
 			string(jobs.TypeGrantDormancyCheck),
-
-			string(jobs.TypeRevokeExpiredAccess),
-			string(jobs.TypeExpiringAccessNotification),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configFile, err := cmd.Flags().GetString("config")
@@ -117,16 +114,6 @@ func runJobCmd() *cobra.Command {
 				jobs.TypeGrantDormancyCheck: {
 					handler: handler.GrantDormancyCheck,
 					config:  config.Jobs.GrantDormancyCheck.Config,
-				},
-
-				// deprecated job names
-				jobs.TypeExpiringAccessNotification: {
-					handler: handler.GrantExpirationReminder,
-					config:  config.Jobs.ExpiringAccessNotification.Config,
-				},
-				jobs.TypeRevokeExpiredAccess: {
-					handler: handler.RevokeExpiredGrants,
-					config:  config.Jobs.RevokeExpiredAccess.Config,
 				},
 			}
 

@@ -6,7 +6,7 @@ Basic building blocks of Guardian are
 - Guardian Service
 - Guardian Database
 - Guardian Providers
-- Scheduler
+- Jobs
 
 ### Overview
 
@@ -31,6 +31,9 @@ offer. Guardian cli uses GRPC to communicate with the Guardian service for almos
 operations that takes `host` as the flag. Service also exposes few REST endpoints
 that can be used with simple curl request for manage appeals, policies, providers, grants and resources.
 
+#### Jobs
+You can run [jobs](../reference/jobs.md) using `guardian` cli command to perform one time actions. You can also run them periodically using cronjob through [helm chart](../guides/deployment.md#use-the-helm-chart).
+These jobs support in keeping the list of resources up to date, revoking expired grants, notifying users about expiring grants, etc.
 
 ### Guardian Database
 
@@ -44,9 +47,4 @@ Provider instances need to be registered in Guardian so that Guardian can manage
 
 Provider manages roles, resources, provider credentials and also points each resource type to a considered policy. 
 Once a provider configuration is registered, Guardian will immediately fetch the resources and store it in the database.
-
-### Scheduler
-
-Guardian have multiple schedulers that are responsible for fetching the resources from the providers and storing it in the database.
-Scheduler also manages the lifecycle of the grants. For example, if access is about to expire, scheduler will notify the user before the access expires.
 

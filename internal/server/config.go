@@ -28,11 +28,6 @@ type Jobs struct {
 	ExpiringGrantNotification  jobs.Job `mapstructure:"expiring_grant_notification"`
 	RevokeGrantsByUserCriteria jobs.Job `mapstructure:"revoke_grants_by_user_criteria"`
 	GrantDormancyCheck         jobs.Job `mapstructure:"grant_dormancy_check"`
-
-	// Deprecated: use ExpiringGrantNotification instead
-	ExpiringAccessNotification jobs.Job `mapstructure:"expiring_access_notification"`
-	// Deprecated: use RevokeExpiredGrants instead
-	RevokeExpiredAccess jobs.Job `mapstructure:"revoke_expired_access"`
 }
 
 type Config struct {
