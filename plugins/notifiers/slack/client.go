@@ -2,6 +2,7 @@ package slack
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"encoding/json"
 	"errors"
@@ -12,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/goto/guardian/pkg/evaluator"
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 
 	"github.com/goto/guardian/utils"
 
@@ -53,7 +54,7 @@ type Notifier struct {
 	Messages            domain.NotificationMessages
 	httpClient          utils.HTTPClient
 	defaultMessageFiles embed.FS
-	logger              *log.Logrus
+	logger              log.Logger
 }
 
 type slackIDCacheItem struct {
@@ -69,7 +70,7 @@ type Config struct {
 //go:embed templates/*
 var defaultTemplates embed.FS
 
-func NewNotifier(config *Config, httpClient utils.HTTPClient, logger *log.Logrus) *Notifier {
+func NewNotifier(config *Config, httpClient utils.HTTPClient, logger log.Logger) *Notifier {
 	return &Notifier{
 		workspaces:          config.Workspaces,
 		slackIDCache:        map[string]*slackIDCacheItem{},
@@ -80,7 +81,7 @@ func NewNotifier(config *Config, httpClient utils.HTTPClient, logger *log.Logrus
 	}
 }
 
-func (n *Notifier) Notify(items []domain.Notification) []error {
+func (n *Notifier) Notify(ctx context.Context, items []domain.Notification) []error {
 	errs := make([]error, 0)
 	for _, item := range items {
 		var slackWorkspace *SlackWorkspace
@@ -116,7 +117,7 @@ func (n *Notifier) Notify(items []domain.Notification) []error {
 			continue
 		}
 
-		n.logger.Debug(fmt.Sprintf("%v | sending slack notification to user:%s in workspace:%s", labelSlice, item.User, slackWorkspace.WorkspaceName))
+		n.logger.Debug(ctx, fmt.Sprintf("%v | sending slack notification to user:%s in workspace:%s", labelSlice, item.User, slackWorkspace.WorkspaceName))
 
 		msg, err := ParseMessage(item.Message, n.Messages, n.defaultMessageFiles)
 		if err != nil {

@@ -21,6 +21,17 @@ func NewResourceRepository(db *gorm.DB) *ResourceRepository {
 	return &ResourceRepository{db}
 }
 
+/*
+only one active provider for a given resource & resource type.
+eg: tables for gojek-integration should be onboarded through one-project, intersection with another provider for same project & resource must not be present
+index will have `global_urn` and a check on deleted_at is null. because there can be deleted providers(which is fine)
+
+
+
+
+
+*/
+
 // Find records based on filters
 func (r *ResourceRepository) Find(ctx context.Context, filter domain.ListResourcesFilter) ([]*domain.Resource, error) {
 	if err := utils.ValidateStruct(filter); err != nil {

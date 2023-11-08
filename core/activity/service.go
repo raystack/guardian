@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/domain"
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 )
 
 //go:generate mockery --name=repository --exported --with-expecter

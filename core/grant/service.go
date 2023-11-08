@@ -9,10 +9,10 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/goto/guardian/pkg/slices"
 	"github.com/goto/guardian/plugins/notifiers"
 	"github.com/goto/guardian/utils"
-	"github.com/goto/salt/log"
 )
 
 const (
@@ -129,13 +129,14 @@ func (s *Service) Update(ctx context.Context, payload *domain.Grant) error {
 	grantDetails.Owner = updatedGrant.Owner
 	grantDetails.UpdatedAt = updatedGrant.UpdatedAt
 	*payload = *grantDetails
+	s.logger.Info(ctx, "grant updated", "grant_id", grantDetails.ID, "updatedGrant", updatedGrant)
 
 	if err := s.auditLogger.Log(ctx, AuditKeyUpdate, map[string]interface{}{
 		"grant_id":      grantDetails.ID,
 		"payload":       updatedGrant,
 		"updated_grant": payload,
 	}); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+		s.logger.Error(ctx, "failed to record audit log", "error", err)
 	}
 
 	if previousOwner != updatedGrant.Owner {
@@ -165,9 +166,9 @@ func (s *Service) Update(ctx context.Context, payload *domain.Grant) error {
 				Message: message,
 			})
 		}
-		if errs := s.notifier.Notify(notifications); errs != nil {
+		if errs := s.notifier.Notify(ctx, notifications); errs != nil {
 			for _, err1 := range errs {
-				s.logger.Error("failed to send notifications", "error", err1.Error())
+				s.logger.Error(ctx, "failed to send notifications", "error", err1.Error())
 			}
 		}
 	}
@@ -217,7 +218,7 @@ func (s *Service) Revoke(ctx context.Context, id, actor, reason string, opts ...
 	}
 
 	if !options.skipNotification {
-		if errs := s.notifier.Notify([]domain.Notification{{
+		if errs := s.notifier.Notify(ctx, []domain.Notification{{
 			User: grant.CreatedBy,
 			Labels: map[string]string{
 				"appeal_id": grant.AppealID,
@@ -235,16 +236,18 @@ func (s *Service) Revoke(ctx context.Context, id, actor, reason string, opts ...
 			},
 		}}); errs != nil {
 			for _, err1 := range errs {
-				s.logger.Error("failed to send notifications", "error", err1.Error())
+				s.logger.Error(ctx, "failed to send notifications", "error", err1.Error())
 			}
 		}
 	}
+
+	s.logger.Info(ctx, "grant revoked", "grant_id", id)
 
 	if err := s.auditLogger.Log(ctx, AuditKeyRevoke, map[string]interface{}{
 		"grant_id": id,
 		"reason":   reason,
 	}); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+		s.logger.Error(ctx, "failed to record audit log", "error", err)
 	}
 
 	return grant, nil
@@ -317,9 +320,9 @@ func (s *Service) BulkRevoke(ctx context.Context, filter domain.RevokeGrantsFilt
 			}
 			result = append(result, grant)
 			if len(result) == totalRequests {
-				s.logger.Info("successful grant revocation", "count", len(successRevoke), "ids", successRevoke)
+				s.logger.Info(ctx, "successful grant revocation", "count", len(successRevoke), "ids", successRevoke)
 				if len(failedRevoke) > 0 {
-					s.logger.Info("failed grant revocation", "count", len(failedRevoke), "ids", failedRevoke)
+					s.logger.Info(ctx, "failed grant revocation", "count", len(failedRevoke), "ids", failedRevoke)
 				}
 				return result, nil
 			}
@@ -334,23 +337,23 @@ func (s *Service) expiredInActiveUserAccess(ctx context.Context, timeLimiter cha
 		revokedGrant := &domain.Grant{}
 		*revokedGrant = *grant
 		if err := revokedGrant.Revoke(actor, reason); err != nil {
-			s.logger.Error("failed to revoke grant", "id", grant.ID, "error", err)
+			s.logger.Error(ctx, "failed to revoke grant", "id", grant.ID, "error", err)
 			return
 		}
 		if err := s.providerService.RevokeAccess(ctx, *grant); err != nil {
 			done <- grant
-			s.logger.Error("failed to revoke grant in provider", "id", grant.ID, "error", err)
+			s.logger.Error(ctx, "failed to revoke grant in provider", "id", grant.ID, "error", err)
 			return
 		}
 
 		revokedGrant.Status = domain.GrantStatusInactive
 		if err := s.repo.Update(ctx, revokedGrant); err != nil {
 			done <- grant
-			s.logger.Error("failed to update access-revoke status", "id", grant.ID, "error", err)
+			s.logger.Error(ctx, "failed to update access-revoke status", "id", grant.ID, "error", err)
 			return
 		} else {
 			done <- revokedGrant
-			s.logger.Info("grant revoked", "id", grant.ID)
+			s.logger.Info(ctx, "grant revoked", "id", grant.ID)
 		}
 	}
 }
@@ -497,7 +500,7 @@ func (s *Service) DormancyCheck(ctx context.Context, criteria domain.DormancyChe
 		return fmt.Errorf("getting provider details: %w", err)
 	}
 
-	s.logger.Info("getting active grants", "provider_urn", provider.URN)
+	s.logger.Info(ctx, "getting active grants", "provider_urn", provider.URN)
 	grants, err := s.List(ctx, domain.ListGrantsFilter{
 		Statuses:      []string{string(domain.GrantStatusActive)}, // TODO: evaluate later to use status_in_provider
 		ProviderTypes: []string{provider.Type},
@@ -508,11 +511,11 @@ func (s *Service) DormancyCheck(ctx context.Context, criteria domain.DormancyChe
 		return fmt.Errorf("listing active grants: %w", err)
 	}
 	if len(grants) == 0 {
-		s.logger.Info("no active grants found", "provider_urn", provider.URN)
+		s.logger.Info(ctx, "no active grants found", "provider_urn", provider.URN)
 		return nil
 	}
 	grantIDs := getGrantIDs(grants)
-	s.logger.Info(fmt.Sprintf("found %d active grants", len(grants)), "grant_ids", grantIDs, "provider_urn", provider.URN)
+	s.logger.Info(ctx, fmt.Sprintf("found %d active grants", len(grants)), "grant_ids", grantIDs, "provider_urn", provider.URN)
 
 	var accountIDs []string
 	for _, g := range grants {
@@ -520,7 +523,7 @@ func (s *Service) DormancyCheck(ctx context.Context, criteria domain.DormancyChe
 	}
 	accountIDs = slices.UniqueStringSlice(accountIDs)
 
-	s.logger.Info("getting activities", "provider_urn", provider.URN)
+	s.logger.Info(ctx, "getting activities", "provider_urn", provider.URN)
 	activities, err := s.providerService.ListActivities(ctx, *provider, domain.ListActivitiesFilter{
 		AccountIDs:   accountIDs,
 		TimestampGte: &startDate,
@@ -528,7 +531,7 @@ func (s *Service) DormancyCheck(ctx context.Context, criteria domain.DormancyChe
 	if err != nil {
 		return fmt.Errorf("listing activities for provider %q: %w", provider.URN, err)
 	}
-	s.logger.Info(fmt.Sprintf("found %d activities", len(activities)), "provider_urn", provider.URN)
+	s.logger.Info(ctx, fmt.Sprintf("found %d activities", len(activities)), "provider_urn", provider.URN)
 
 	grantsPointer := make([]*domain.Grant, len(grants))
 	for i, g := range grants {
@@ -539,7 +542,7 @@ func (s *Service) DormancyCheck(ctx context.Context, criteria domain.DormancyChe
 		return fmt.Errorf("correlating grant activities: %w", err)
 	}
 
-	s.logger.Info("checking grants dormancy...", "provider_urn", provider.URN)
+	s.logger.Info(ctx, "checking grants dormancy...", "provider_urn", provider.URN)
 	var dormantGrants []*domain.Grant
 	var dormantGrantsIDs []string
 	var dormantGrantsByOwner = map[string][]*domain.Grant{}
@@ -556,10 +559,10 @@ func (s *Service) DormancyCheck(ctx context.Context, criteria domain.DormancyChe
 			dormantGrantsByOwner[g.Owner] = append(dormantGrantsByOwner[g.Owner], g)
 		}
 	}
-	s.logger.Info(fmt.Sprintf("found %d dormant grants", len(dormantGrants)), "grant_ids", dormantGrantsIDs, "provider_urn", provider.URN)
+	s.logger.Info(ctx, fmt.Sprintf("found %d dormant grants", len(dormantGrants)), "grant_ids", dormantGrantsIDs, "provider_urn", provider.URN)
 
 	if criteria.DryRun {
-		s.logger.Info("dry run mode, skipping updating grants expiration date", "provider_urn", provider.URN)
+		s.logger.Info(ctx, "dry run mode, skipping updating grants expiration date", "provider_urn", provider.URN)
 		return nil
 	}
 
@@ -576,7 +579,7 @@ prepare_notifications:
 		for _, g := range grants {
 			grantMap, err := utils.StructToMap(g)
 			if err != nil {
-				s.logger.Error("failed to convert grant to map", "error", err)
+				s.logger.Error(ctx, "failed to convert grant to map", "error", err)
 				continue prepare_notifications
 			}
 			grantsMap = append(grantsMap, grantMap)
@@ -600,9 +603,9 @@ prepare_notifications:
 		})
 	}
 
-	if errs := s.notifier.Notify(notifications); errs != nil {
+	if errs := s.notifier.Notify(ctx, notifications); errs != nil {
 		for _, err1 := range errs {
-			s.logger.Error("failed to send notifications", "error", err1.Error(), "provider_urn", provider.URN)
+			s.logger.Error(ctx, "failed to send notifications", "error", err1.Error(), "provider_urn", provider.URN)
 		}
 	}
 

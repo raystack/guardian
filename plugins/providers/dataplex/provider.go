@@ -54,7 +54,7 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 	return c.EncryptCredentials()
 }
 
-func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
+func (p *Provider) GetResources(ctx context.Context, pc *domain.ProviderConfig) ([]*domain.Resource, error) {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	return resources, nil
 }
 
-func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
+func (p *Provider) GrantAccess(ctx context.Context, pc *domain.ProviderConfig, a domain.Grant) error {
 	if err := validateProviderConfigAndAppealParams(pc, a); err != nil {
 		return err
 	}
@@ -98,7 +98,6 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 
 	permissions := getPermissions(a)
 
-	ctx := context.Background()
 	if a.Resource.Type == ResourceTypeTag {
 		policy := new(Policy)
 		policy.FromDomain(a.Resource)
@@ -116,7 +115,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 	return ErrInvalidResourceType
 }
 
-func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
+func (p *Provider) RevokeAccess(ctx context.Context, pc *domain.ProviderConfig, a domain.Grant) error {
 	if err := validateProviderConfigAndAppealParams(pc, a); err != nil {
 		return err
 	}
@@ -131,7 +130,6 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 	}
 
 	permissions := getPermissions(a)
-	ctx := context.Background()
 
 	if a.Resource.Type == ResourceTypeTag {
 		policy := new(Policy)

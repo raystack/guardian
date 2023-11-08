@@ -1,6 +1,7 @@
 package grafana_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -185,6 +186,7 @@ func TestCreateConfig(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := grafana.NewProvider("", crypto)
@@ -193,7 +195,7 @@ func TestGetResources(t *testing.T) {
 			Credentials: "invalid-creds",
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.Error(t, actualError)
@@ -211,7 +213,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.EqualError(t, actualError, expectedError.Error())
@@ -233,7 +235,7 @@ func TestGetResources(t *testing.T) {
 		expectedError := errors.New("client error")
 		client.On("GetFolders").Return(nil, expectedError).Once()
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.EqualError(t, actualError, expectedError.Error())
@@ -262,7 +264,7 @@ func TestGetResources(t *testing.T) {
 		client.On("GetFolders").Return(expectedFolders, nil).Once()
 		client.On("GetDashboards", 1).Return(nil, expectedError).Times(2)
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.EqualError(t, actualError, expectedError.Error())
@@ -305,7 +307,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
@@ -313,6 +315,7 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := grafana.NewProvider("", crypto)
@@ -338,7 +341,7 @@ func TestGrantAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(ctx, pc, a)
 		assert.Error(t, actualError)
 	})
 
@@ -374,7 +377,7 @@ func TestGrantAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(ctx, pc, a)
 
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
@@ -412,7 +415,7 @@ func TestGrantAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(ctx, pc, a)
 
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
@@ -458,7 +461,7 @@ func TestGrantAccess(t *testing.T) {
 				Permissions: []string{"test-permission-config"},
 			}
 
-			actualError := p.GrantAccess(pc, a)
+			actualError := p.GrantAccess(ctx, pc, a)
 
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
@@ -510,7 +513,7 @@ func TestGrantAccess(t *testing.T) {
 				ID:         "999",
 			}
 
-			actualError := p.GrantAccess(pc, a)
+			actualError := p.GrantAccess(ctx, pc, a)
 
 			assert.Nil(t, actualError)
 		})
@@ -518,6 +521,7 @@ func TestGrantAccess(t *testing.T) {
 }
 
 func TestRevokeAccess(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := grafana.NewProvider("", crypto)
@@ -543,7 +547,7 @@ func TestRevokeAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 		assert.Error(t, actualError)
 	})
 
@@ -579,7 +583,7 @@ func TestRevokeAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
@@ -617,7 +621,7 @@ func TestRevokeAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
@@ -663,7 +667,7 @@ func TestRevokeAccess(t *testing.T) {
 				Permissions: []string{"test-permission-config"},
 			}
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
@@ -717,7 +721,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"view"},
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)

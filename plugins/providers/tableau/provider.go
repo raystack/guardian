@@ -1,6 +1,8 @@
 package tableau
 
 import (
+	"context"
+
 	pv "github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
 	"github.com/mitchellh/mapstructure"
@@ -37,7 +39,7 @@ func (p *provider) CreateConfig(pc *domain.ProviderConfig) error {
 	return c.EncryptCredentials()
 }
 
-func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
+func (p *provider) GetResources(ctx context.Context, pc *domain.ProviderConfig) ([]*domain.Resource, error) {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return nil, err
@@ -119,7 +121,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	return resources, nil
 }
 
-func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
+func (p *provider) GrantAccess(ctx context.Context, pc *domain.ProviderConfig, a domain.Grant) error {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -231,7 +233,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 	return ErrInvalidResourceType
 }
 
-func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
+func (p *provider) RevokeAccess(ctx context.Context, pc *domain.ProviderConfig, a domain.Grant) error {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err

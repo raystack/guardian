@@ -11,9 +11,9 @@ import (
 	"github.com/goto/guardian/core/grant"
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/pkg/evaluator"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/goto/guardian/plugins/notifiers"
 	"github.com/goto/guardian/utils"
-	"github.com/goto/salt/log"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -262,7 +262,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return fmt.Errorf("validating cross-individual appeal: %w", err)
 		}
 
-		if err := s.addCreatorDetails(appeal, policy); err != nil {
+		if err := s.addCreatorDetails(ctx, appeal, policy); err != nil {
 			return fmt.Errorf("retrieving creator details: %w", err)
 		}
 
@@ -323,7 +323,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 	}
 
 	if err := s.auditLogger.Log(ctx, AuditKeyBulkInsert, appeals); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+		s.logger.Error(ctx, "failed to record audit log", "error", err)
 	}
 
 	for _, a := range appeals {
@@ -355,13 +355,13 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			})
 		}
 
-		notifications = append(notifications, s.getApprovalNotifications(a)...)
+		notifications = append(notifications, s.getApprovalNotifications(ctx, a)...)
 	}
 
 	if len(notifications) > 0 {
-		if errs := s.notifier.Notify(notifications); errs != nil {
+		if errs := s.notifier.Notify(ctx, notifications); errs != nil {
 			for _, err1 := range errs {
-				s.logger.Error("failed to send notifications", "error", err1.Error())
+				s.logger.Error(ctx, "failed to send notifications", "error", err1.Error())
 			}
 		}
 	}
@@ -567,12 +567,12 @@ func (s *Service) UpdateApproval(ctx context.Context, approvalAction domain.Appr
 				},
 			})
 		} else {
-			notifications = append(notifications, s.getApprovalNotifications(appeal)...)
+			notifications = append(notifications, s.getApprovalNotifications(ctx, appeal)...)
 		}
 		if len(notifications) > 0 {
-			if errs := s.notifier.Notify(notifications); errs != nil {
+			if errs := s.notifier.Notify(ctx, notifications); errs != nil {
 				for _, err1 := range errs {
-					s.logger.Error("failed to send notifications", "error", err1.Error())
+					s.logger.Error(ctx, "failed to send notifications", "error", err1.Error())
 				}
 			}
 		}
@@ -585,7 +585,7 @@ func (s *Service) UpdateApproval(ctx context.Context, approvalAction domain.Appr
 		}
 		if auditKey != "" {
 			if err := s.auditLogger.Log(ctx, auditKey, approvalAction); err != nil {
-				s.logger.Error("failed to record audit log", "error", err)
+				s.logger.Error(ctx, "failed to record audit log", "error", err)
 			}
 		}
 
@@ -627,7 +627,7 @@ func (s *Service) Cancel(ctx context.Context, id string) (*domain.Appeal, error)
 	if err := s.auditLogger.Log(ctx, AuditKeyCancel, map[string]interface{}{
 		"appeal_id": id,
 	}); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+		s.logger.Error(ctx, "failed to record audit log", "error", err)
 	}
 
 	return appeal, nil
@@ -666,18 +666,18 @@ func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email s
 	approval.Approvers = append(approval.Approvers, email)
 
 	if err := s.auditLogger.Log(ctx, AuditKeyAddApprover, approval); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+		s.logger.Error(ctx, "failed to record audit log", "error", err)
 	}
 
 	duration := domain.PermanentDurationLabel
 	if !appeal.IsDurationEmpty() {
 		duration, err = utils.GetReadableDuration(appeal.Options.Duration)
 		if err != nil {
-			s.logger.Error("failed to get readable duration", "error", err, "appeal_id", appeal.ID)
+			s.logger.Error(ctx, "failed to get readable duration", "error", err, "appeal_id", appeal.ID)
 		}
 	}
 
-	if errs := s.notifier.Notify([]domain.Notification{
+	if errs := s.notifier.Notify(ctx, []domain.Notification{
 		{
 			User: email,
 			Labels: map[string]string{
@@ -705,7 +705,7 @@ func (s *Service) AddApprover(ctx context.Context, appealID, approvalID, email s
 		},
 	}); errs != nil {
 		for _, err1 := range errs {
-			s.logger.Error("failed to send notifications", "error", err1.Error())
+			s.logger.Error(ctx, "failed to send notifications", "error", err1.Error())
 		}
 	}
 
@@ -756,7 +756,7 @@ func (s *Service) DeleteApprover(ctx context.Context, appealID, approvalID, emai
 	approval.Approvers = newApprovers
 
 	if err := s.auditLogger.Log(ctx, AuditKeyDeleteApprover, approval); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+		s.logger.Error(ctx, "failed to record audit log", "error", err)
 	}
 
 	return appeal, nil
@@ -858,7 +858,7 @@ func (s *Service) getPoliciesMap(ctx context.Context) (map[string]map[uint]*doma
 	return policiesMap, nil
 }
 
-func (s *Service) getApprovalNotifications(appeal *domain.Appeal) []domain.Notification {
+func (s *Service) getApprovalNotifications(ctx context.Context, appeal *domain.Appeal) []domain.Notification {
 	notifications := []domain.Notification{}
 	approval := appeal.GetNextPendingApproval()
 
@@ -867,7 +867,7 @@ func (s *Service) getApprovalNotifications(appeal *domain.Appeal) []domain.Notif
 	if !appeal.IsDurationEmpty() {
 		duration, err = utils.GetReadableDuration(appeal.Options.Duration)
 		if err != nil {
-			s.logger.Error("failed to get readable duration", "error", err, "appeal_id", appeal.ID)
+			s.logger.Error(ctx, "failed to get readable duration", "error", err, "appeal_id", appeal.ID)
 		}
 	}
 
@@ -1091,7 +1091,7 @@ func getPolicy(a *domain.Appeal, p *domain.Provider, policiesMap map[string]map[
 	return policiesMap[policyConfig.ID][uint(policyConfig.Version)], nil
 }
 
-func (s *Service) addCreatorDetails(a *domain.Appeal, p *domain.Policy) error {
+func (s *Service) addCreatorDetails(ctx context.Context, a *domain.Appeal, p *domain.Policy) error {
 	if p.IAM == nil {
 		return nil
 	}
@@ -1108,7 +1108,7 @@ func (s *Service) addCreatorDetails(a *domain.Appeal, p *domain.Policy) error {
 	userDetails, err := iamClient.GetUser(a.CreatedBy)
 	if err != nil {
 		if p.AppealConfig != nil && p.AppealConfig.AllowCreatorDetailsFailure {
-			s.logger.Warn("fetching creator's user iam", "error", err)
+			s.logger.Warn(ctx, "fetching creator's user iam", "error", err)
 			return nil
 		}
 		return fmt.Errorf("fetching creator's user iam: %w", err)
@@ -1141,6 +1141,8 @@ func (s *Service) addCreatorDetails(a *domain.Appeal, p *domain.Policy) error {
 	}
 
 	a.Creator = creator
+	s.logger.Debug(ctx, "added creator details", "creator", creator)
+
 	return nil
 }
 

@@ -635,7 +635,7 @@ func (s *GrpcHandlersSuite) TestAddApprover() {
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		}
-		s.appealService.EXPECT().AddApprover(mock.AnythingOfType("*context.emptyCtx"), appealID, approvalID, email).Return(expectedAppeal, nil).Once()
+		s.appealService.EXPECT().AddApprover(mock.Anything, appealID, approvalID, email).Return(expectedAppeal, nil).Once()
 		expectedResponse := &guardianv1beta1.AddApproverResponse{
 			Appeal: &guardianv1beta1.Appeal{
 				Id:            expectedAppeal.ID,
@@ -760,7 +760,7 @@ func (s *GrpcHandlersSuite) TestDeleteApprover() {
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		}
-		s.appealService.EXPECT().DeleteApprover(mock.AnythingOfType("*context.emptyCtx"), appealID, approvalID, email).Return(expectedAppeal, nil).Once()
+		s.appealService.EXPECT().DeleteApprover(mock.MatchedBy(func(ctx context.Context) bool { return true }), appealID, approvalID, email).Return(expectedAppeal, nil).Once()
 		expectedResponse := &guardianv1beta1.DeleteApproverResponse{
 			Appeal: &guardianv1beta1.Appeal{
 				Id:            expectedAppeal.ID,

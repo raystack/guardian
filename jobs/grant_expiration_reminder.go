@@ -9,11 +9,11 @@ import (
 )
 
 func (h *handler) GrantExpirationReminder(ctx context.Context, cfg Config) error {
-	h.logger.Info("running grant expiration reminder job")
+	h.logger.Info(ctx, "running grant expiration reminder job")
 
 	daysBeforeExpired := []int{7, 3, 1}
 	for _, d := range daysBeforeExpired {
-		h.logger.Info("retrieving active grants", "expiration_window_in_days", d)
+		h.logger.Info(ctx, "retrieving active grants", "expiration_window_in_days", d)
 
 		now := time.Now().AddDate(0, 0, d)
 		year, month, day := now.Date()
@@ -26,12 +26,13 @@ func (h *handler) GrantExpirationReminder(ctx context.Context, cfg Config) error
 		}
 		grants, err := h.grantService.List(ctx, filters)
 		if err != nil {
-			h.logger.Error("failed to retrieve active grants",
+			h.logger.Error(ctx, "failed to retrieve active grants",
 				"expiration_window_in_days", d,
 				"error", err,
 			)
 			continue
 		}
+		h.logger.Info(ctx, "retrieved active grants", "count", len(grants), "expiration_window_in_days", d)
 
 		// TODO: group notifications by username
 		var notifications []domain.Notification
@@ -56,9 +57,9 @@ func (h *handler) GrantExpirationReminder(ctx context.Context, cfg Config) error
 			})
 		}
 
-		if errs := h.notifier.Notify(notifications); errs != nil {
+		if errs := h.notifier.Notify(ctx, notifications); errs != nil {
 			for _, err1 := range errs {
-				h.logger.Error("failed to send notifications", "error", err1)
+				h.logger.Error(ctx, "failed to send notifications", "error", err1)
 			}
 		}
 	}

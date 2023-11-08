@@ -2,6 +2,7 @@ package slack_test
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"errors"
 	"fmt"
@@ -77,7 +78,7 @@ func (s *ClientTestSuite) TestNotify() {
 				},
 			},
 		}
-		actualErrs := s.notifier.Notify(notifications)
+		actualErrs := s.notifier.Notify(context.Background(), notifications)
 
 		s.Equal(expectedErrs, actualErrs)
 	})

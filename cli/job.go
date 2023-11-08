@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/goto/guardian/pkg/log"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/internal/server"
 	"github.com/goto/guardian/jobs"
 	"github.com/goto/guardian/pkg/crypto"
 	"github.com/goto/guardian/plugins/notifiers"
-	"github.com/goto/salt/log"
 	"github.com/spf13/cobra"
 )
 
@@ -63,7 +64,7 @@ func runJobCmd() *cobra.Command {
 				return fmt.Errorf("loading config: %w", err)
 			}
 
-			logger := log.NewLogrus(log.LogrusWithLevel(config.LogLevel))
+			logger := log.NewCtxLogger(config.LogLevel, []string{config.AuditLogTraceIDHeaderKey})
 			crypto := crypto.NewAES(config.EncryptionSecretKeyKey)
 			validator := validator.New()
 			notifier, err := notifiers.NewClient(&config.Notifier, logger)

@@ -95,8 +95,7 @@ func (c *iamClient) GetGrantableRoles(ctx context.Context, resourceType string) 
 	return roles, nil
 }
 
-func (c *iamClient) GrantAccess(accountType, accountID, role string) error {
-	ctx := context.TODO()
+func (c *iamClient) GrantAccess(ctx context.Context, accountType, accountID, role string) error {
 	policy, err := c.getIamPolicy(ctx)
 	if err != nil {
 		return err
@@ -124,8 +123,7 @@ func (c *iamClient) GrantAccess(accountType, accountID, role string) error {
 	return err
 }
 
-func (c *iamClient) RevokeAccess(accountType, accountID, role string) error {
-	ctx := context.TODO()
+func (c *iamClient) RevokeAccess(ctx context.Context, accountType, accountID, role string) error {
 	policy, err := c.getIamPolicy(ctx)
 	if err != nil {
 		return err

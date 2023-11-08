@@ -11,10 +11,10 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/goto/guardian/plugins/providers"
 	"github.com/goto/guardian/utils"
 	"github.com/goto/salt/audit"
-	"github.com/goto/salt/log"
 )
 
 const (
@@ -114,11 +114,13 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 
 	accountTypes := c.GetAccountTypes()
 	if err := s.validateAccountTypes(p.Config, accountTypes); err != nil {
+		s.logger.Error(ctx, "failed to validate account types", "type", p.Type, "provider_urn", p.URN, "error", err)
 		return err
 	}
 
 	if p.Config.Appeal != nil {
 		if err := s.validateAppealConfig(p.Config.Appeal); err != nil {
+			s.logger.Error(ctx, "failed to validate appeal config", "type", p.Type, "provider_urn", p.URN, "error", err)
 			return err
 		}
 	}
@@ -126,6 +128,7 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 	if err := c.CreateConfig(p.Config); err != nil {
 		return err
 	}
+	s.logger.Debug(ctx, "provider config created", "provider_urn", p.URN)
 
 	dryRun := isDryRun(ctx)
 
@@ -135,25 +138,25 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 		}
 
 		if err := s.auditLogger.Log(ctx, AuditKeyCreate, p); err != nil {
-			s.logger.Error("failed to record audit log", "error", err)
+			s.logger.Error(ctx, "failed to record audit log", "error", err)
 		}
+	} else {
+		s.logger.Info(ctx, "dry run enabled, skipping provider creation", "provider_urn", p.URN)
 	}
 
 	go func() {
-		s.logger.Info("provider create fetching resources", "provider_urn", p.URN)
+		s.logger.Info(ctx, "provider create fetching resources", "provider_urn", p.URN)
 		ctx := audit.WithActor(context.Background(), domain.SystemActorName)
 		resources, err := s.getResources(ctx, p)
 		if err != nil {
-			s.logger.Error("failed to fetch resources", "error", err)
+			s.logger.Error(ctx, "failed to fetch resources", "error", err)
 		}
+		s.logger.Debug(ctx, "provider create fetched resources", "provider_urn", p.URN, "count", len(resources))
 		if !dryRun {
 			if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
-				s.logger.Error("failed to insert resources to db", "error", err)
+				s.logger.Error(ctx, "failed to insert resources to db", "error", err)
 			} else {
-				s.logger.Info("resources added",
-					"provider_urn", p.URN,
-					"count", len(resources),
-				)
+				s.logger.Info(ctx, "resources added", "provider_urn", p.URN, "count", len(resources))
 			}
 		}
 	}()
@@ -192,11 +195,13 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 
 	accountTypes := c.GetAccountTypes()
 	if err := s.validateAccountTypes(p.Config, accountTypes); err != nil {
+		s.logger.Error(ctx, "failed to validate account types", "type", p.Type, "provider_urn", p.URN, "error", err)
 		return err
 	}
 
 	if p.Config.Appeal != nil {
 		if err := s.validateAppealConfig(p.Config.Appeal); err != nil {
+			s.logger.Error(ctx, "failed to validate appeal config", "type", p.Type, "provider_urn", p.URN, "error", err)
 			return err
 		}
 	}
@@ -204,6 +209,7 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 	if err := c.CreateConfig(p.Config); err != nil {
 		return err
 	}
+	s.logger.Debug(ctx, "provider config created", "provider_urn", p.URN)
 
 	dryRun := isDryRun(ctx)
 
@@ -213,23 +219,26 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 		}
 
 		if err := s.auditLogger.Log(ctx, AuditKeyUpdate, p); err != nil {
-			s.logger.Error("failed to record audit log", "error", err)
+			s.logger.Error(ctx, "failed to record audit log", "error", err)
 		}
+	} else {
+		s.logger.Info(ctx, "dry run enabled, skipping provider update", "provider_urn", p.URN)
 	}
 
 	go func() {
-		s.logger.Info("provider update fetching resources", "provider_urn", p.URN)
+		s.logger.Info(ctx, "provider update fetching resources", "provider_urn", p.URN)
 		ctx := audit.WithActor(context.Background(), domain.SystemActorName)
 		resources, err := s.getResources(ctx, p)
 		if err != nil {
-			s.logger.Error("failed to fetch resources", "error", err)
+			s.logger.Error(ctx, "failed to fetch resources", "error", err)
 		}
+		s.logger.Debug(ctx, "provider create fetched resources", "provider_urn", p.URN, "count", len(resources))
 
 		if !dryRun {
 			if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
-				s.logger.Error("failed to insert resources to db", "error", err)
+				s.logger.Error(ctx, "failed to insert resources to db", "error", err)
 			} else {
-				s.logger.Info("resources added", "provider_urn", p.URN, "count", len(resources))
+				s.logger.Info(ctx, "resources added", "provider_urn", p.URN, "count", len(resources))
 			}
 		}
 	}()
@@ -246,19 +255,16 @@ func (s *Service) FetchResources(ctx context.Context) error {
 
 	failedProviders := make([]string, 0)
 	for _, p := range providers {
-		s.logger.Info("fetching resources", "provider_urn", p.URN)
+		s.logger.Info(ctx, "fetching resources", "provider_urn", p.URN)
 		resources, err := s.getResources(ctx, p)
 		if err != nil {
-			s.logger.Error("failed to get resources", "error", err)
+			s.logger.Error(ctx, "failed to get resources", "error", err)
 			continue
 		}
-		s.logger.Info("resources added",
-			"provider_urn", p.URN,
-			"count", len(flattenResources(resources)),
-		)
+		s.logger.Info(ctx, "resources added", "provider_urn", p.URN, "count", len(flattenResources(resources)))
 		if err := s.resourceService.BulkUpsert(ctx, resources); err != nil {
 			failedProviders = append(failedProviders, p.URN)
-			s.logger.Error("failed to add resources", "provider_urn", p.URN)
+			s.logger.Error(ctx, "failed to add resources", "provider_urn", p.URN)
 		}
 	}
 
@@ -400,7 +406,7 @@ func (s *Service) GrantAccess(ctx context.Context, a domain.Grant) error {
 		return err
 	}
 
-	return c.GrantAccess(p.Config, a)
+	return c.GrantAccess(ctx, p.Config, a)
 }
 
 func (s *Service) RevokeAccess(ctx context.Context, a domain.Grant) error {
@@ -418,7 +424,7 @@ func (s *Service) RevokeAccess(ctx context.Context, a domain.Grant) error {
 		return err
 	}
 
-	return c.RevokeAccess(p.Config, a)
+	return c.RevokeAccess(ctx, p.Config, a)
 }
 
 func (s *Service) Delete(ctx context.Context, id string) error {
@@ -427,6 +433,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 		return fmt.Errorf("getting provider details: %w", err)
 	}
 
+	s.logger.Info(ctx, "retrieving related resources", "provider", id)
 	resources, err := s.resourceService.Find(ctx, domain.ListResourcesFilter{
 		ProviderType: p.Type,
 		ProviderURN:  p.URN,
@@ -438,6 +445,8 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	for _, r := range resources {
 		resourceIds = append(resourceIds, r.ID)
 	}
+	s.logger.Info(ctx, "deleting resources", "provider", id, "count", len(resourceIds))
+
 	// TODO: execute in transaction
 	if err := s.resourceService.BatchDelete(ctx, resourceIds); err != nil {
 		return fmt.Errorf("batch deleting resources: %w", err)
@@ -446,9 +455,10 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	if err := s.repository.Delete(ctx, id); err != nil {
 		return err
 	}
+	s.logger.Info(ctx, "provider deleted", "provider", id)
 
 	if err := s.auditLogger.Log(ctx, AuditKeyDelete, p); err != nil {
-		s.logger.Error("failed to record audit log", "error", err)
+		s.logger.Error(ctx, "failed to record audit log", "error", err)
 	}
 
 	return nil
@@ -544,7 +554,7 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 		}
 	}
 
-	newProviderResources, err := c.GetResources(p.Config)
+	newProviderResources, err := c.GetResources(ctx, p.Config)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching resources for %v: %w", p.ID, err)
 	}
@@ -580,7 +590,6 @@ func (s *Service) getResources(ctx context.Context, p *domain.Provider) ([]*doma
 						r.Details = existingDetails
 					}
 				}
-
 				existingProviderResources[er.ID] = true
 				break
 			}

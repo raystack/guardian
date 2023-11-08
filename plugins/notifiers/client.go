@@ -1,12 +1,13 @@
 package notifiers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/goto/guardian/domain"
@@ -14,7 +15,7 @@ import (
 )
 
 type Client interface {
-	Notify([]domain.Notification) []error
+	Notify(context.Context, []domain.Notification) []error
 }
 
 const (
@@ -39,7 +40,7 @@ type Config struct {
 	Messages domain.NotificationMessages
 }
 
-func NewClient(config *Config, logger *log.Logrus) (Client, error) {
+func NewClient(config *Config, logger log.Logger) (Client, error) {
 	if config.Provider == ProviderTypeSlack {
 		slackConfig, err := NewSlackConfig(config)
 		if err != nil {
@@ -47,6 +48,7 @@ func NewClient(config *Config, logger *log.Logrus) (Client, error) {
 		}
 
 		httpClient := &http.Client{Timeout: 10 * time.Second}
+
 		return slack.NewNotifier(slackConfig, httpClient, logger), nil
 	}
 

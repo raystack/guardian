@@ -2,6 +2,7 @@ package metabase
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,8 +14,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/goto/guardian/pkg/log"
 	"github.com/goto/guardian/pkg/tracing"
-	"github.com/goto/salt/log"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -45,17 +46,17 @@ const (
 type ResourceGroupDetails map[string][]map[string]interface{}
 
 type MetabaseClient interface {
-	GetDatabases() ([]*Database, error)
-	GetCollections() ([]*Collection, error)
-	GetGroups() ([]*Group, ResourceGroupDetails, ResourceGroupDetails, error)
-	GrantDatabaseAccess(resource *Database, user, role string, groups map[string]*Group) error
-	RevokeDatabaseAccess(resource *Database, user, role string) error
-	GrantCollectionAccess(resource *Collection, user, role string) error
-	RevokeCollectionAccess(resource *Collection, user, role string) error
-	GrantTableAccess(resource *Table, user, role string, groups map[string]*Group) error
-	RevokeTableAccess(resource *Table, user, role string) error
-	GrantGroupAccess(groupID int, email string) error
-	RevokeGroupAccess(groupID int, email string) error
+	GetDatabases(ctx context.Context) ([]*Database, error)
+	GetCollections(ctx context.Context) ([]*Collection, error)
+	GetGroups(ctx context.Context) ([]*Group, ResourceGroupDetails, ResourceGroupDetails, error)
+	GrantDatabaseAccess(ctx context.Context, resource *Database, user, role string, groups map[string]*Group) error
+	RevokeDatabaseAccess(ctx context.Context, resource *Database, user, role string) error
+	GrantCollectionAccess(ctx context.Context, resource *Collection, user, role string) error
+	RevokeCollectionAccess(ctx context.Context, resource *Collection, user, role string) error
+	GrantTableAccess(ctx context.Context, resource *Table, user, role string, groups map[string]*Group) error
+	RevokeTableAccess(ctx context.Context, resource *Table, user, role string) error
+	GrantGroupAccess(ctx context.Context, groupID int, email string) error
+	RevokeGroupAccess(ctx context.Context, groupID int, email string) error
 }
 
 type ClientConfig struct {
@@ -163,7 +164,7 @@ func NewClient(config *ClientConfig, logger log.Logger) (*client, error) {
 	return c, nil
 }
 
-func (c *client) GetDatabases() ([]*Database, error) {
+func (c *client) GetDatabases(ctx context.Context) ([]*Database, error) {
 	req, err := c.newRequest(http.MethodGet, databaseEndpoint, nil)
 	if err != nil {
 		return nil, err
@@ -172,7 +173,7 @@ func (c *client) GetDatabases() ([]*Database, error) {
 	var databases []*Database
 	var response interface{}
 
-	_, err = c.do(req, &response)
+	_, err = c.do(nil, req, &response)
 	if err != nil {
 		return databases, err
 	}
@@ -188,11 +189,11 @@ func (c *client) GetDatabases() ([]*Database, error) {
 	if err != nil {
 		return databases, err
 	}
-	c.logger.Info("Fetch database from request", "total", len(databases), req.URL)
+	c.logger.Info(ctx, "Fetch database from request", "total", len(databases), req.URL)
 	return databases, err
 }
 
-func (c *client) GetCollections() ([]*Collection, error) {
+func (c *client) GetCollections(ctx context.Context) ([]*Collection, error) {
 	req, err := c.newRequest(http.MethodGet, collectionEndpoint, nil)
 	if err != nil {
 		return nil, err
@@ -200,10 +201,10 @@ func (c *client) GetCollections() ([]*Collection, error) {
 
 	var collections []*Collection
 	result := make([]*Collection, 0)
-	if _, err := c.do(req, &collections); err != nil {
+	if _, err := c.do(ctx, req, &collections); err != nil {
 		return nil, err
 	}
-	c.logger.Info("Fetch collections from request", "total", len(collections), req.URL)
+	c.logger.Info(ctx, "Fetch collections from request", "total", len(collections), req.URL)
 
 	collectionIdNameMap := make(map[string]string, 0)
 	for _, collection := range collections {
@@ -231,19 +232,19 @@ func (c *client) GetCollections() ([]*Collection, error) {
 	return result, nil
 }
 
-func (c *client) GetGroups() ([]*Group, ResourceGroupDetails, ResourceGroupDetails, error) {
+func (c *client) GetGroups(ctx context.Context) ([]*Group, ResourceGroupDetails, ResourceGroupDetails, error) {
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 
 	var groups []*Group
 	var err error
-	go c.fetchGroups(&wg, &groups, err)
+	go c.fetchGroups(ctx, &wg, &groups, err)
 
 	databaseResourceGroups := make(ResourceGroupDetails, 0)
-	go c.fetchDatabasePermissions(&wg, databaseResourceGroups, err)
+	go c.fetchDatabasePermissions(ctx, &wg, databaseResourceGroups, err)
 
 	collectionResourceGroups := make(ResourceGroupDetails, 0)
-	go c.fetchCollectionPermissions(&wg, collectionResourceGroups, err)
+	go c.fetchCollectionPermissions(ctx, &wg, collectionResourceGroups, err)
 
 	wg.Wait()
 
@@ -258,21 +259,21 @@ func (c *client) GetGroups() ([]*Group, ResourceGroupDetails, ResourceGroupDetai
 	return groups, databaseResourceGroups, collectionResourceGroups, err
 }
 
-func (c *client) fetchGroups(wg *sync.WaitGroup, groups *[]*Group, err error) {
+func (c *client) fetchGroups(ctx context.Context, wg *sync.WaitGroup, groups *[]*Group, err error) {
 	defer wg.Done()
 	req, err := c.newRequest(http.MethodGet, groupEndpoint, nil)
 	if err != nil {
 		return
 	}
 
-	_, err = c.do(req, &groups)
+	_, err = c.do(ctx, req, &groups)
 	if err != nil {
 		return
 	}
-	c.logger.Info("Fetch groups from request", "total", len(*groups), req.URL)
+	c.logger.Info(ctx, "Fetch groups from request", "total", len(*groups), req.URL)
 }
 
-func (c *client) fetchDatabasePermissions(wg *sync.WaitGroup, resourceGroups ResourceGroupDetails, err error) {
+func (c *client) fetchDatabasePermissions(ctx context.Context, wg *sync.WaitGroup, resourceGroups ResourceGroupDetails, err error) {
 	defer wg.Done()
 
 	req, err := c.newRequest(http.MethodGet, databasePermissionEndpoint, nil)
@@ -281,7 +282,7 @@ func (c *client) fetchDatabasePermissions(wg *sync.WaitGroup, resourceGroups Res
 	}
 
 	graphs := make(map[string]interface{}, 0)
-	_, err = c.do(req, &graphs)
+	_, err = c.do(ctx, req, &graphs)
 	if err != nil {
 		return
 	}
@@ -297,7 +298,7 @@ func (c *client) fetchDatabasePermissions(wg *sync.WaitGroup, resourceGroups Res
 								for tableId, tablePermission := range tables {
 									perm, ok := tablePermission.(string)
 									if !ok {
-										c.logger.Warn("Invalid permission type for metabase group", "dbId", dbId, "tableId", tableId, "groupId", groupId, "permission", tablePermission, "type", reflect.TypeOf(tablePermission))
+										c.logger.Warn(ctx, "Invalid permission type for metabase group", "dbId", dbId, "tableId", tableId, "groupId", groupId, "permission", tablePermission, "type", reflect.TypeOf(tablePermission))
 										continue
 									}
 									addGroupToResource(resourceGroups, fmt.Sprintf("%s:%s.%s", table, dbId, tableId), groupId, []string{perm}, err)
@@ -314,7 +315,7 @@ func (c *client) fetchDatabasePermissions(wg *sync.WaitGroup, resourceGroups Res
 	}
 }
 
-func (c *client) fetchCollectionPermissions(wg *sync.WaitGroup, resourceGroups ResourceGroupDetails, err error) {
+func (c *client) fetchCollectionPermissions(ctx context.Context, wg *sync.WaitGroup, resourceGroups ResourceGroupDetails, err error) {
 	defer wg.Done()
 
 	req, err := c.newRequest(http.MethodGet, collectionPermissionEndpoint, nil)
@@ -323,17 +324,17 @@ func (c *client) fetchCollectionPermissions(wg *sync.WaitGroup, resourceGroups R
 	}
 
 	graphs := make(map[string]interface{}, 0)
-	_, err = c.do(req, &graphs)
+	_, err = c.do(ctx, req, &graphs)
 	if err != nil {
 		return
 	}
-	c.logger.Info(fmt.Sprintf("Fetch permissions for collections from request: %v", req.URL))
+	c.logger.Info(ctx, fmt.Sprintf("Fetch permissions for collections from request: %v", req.URL))
 	for groupId, r := range graphs[groups].(map[string]interface{}) {
 		for collectionId, permission := range r.(map[string]interface{}) {
 			if permission != none {
 				p, ok := permission.(string)
 				if !ok {
-					c.logger.Warn("Invalid permission type for metabase collection", "collectionId", collectionId, "groupId", groupId, "permission", permission, "type", reflect.TypeOf(permission))
+					c.logger.Warn(ctx, "Invalid permission type for metabase collection", "collectionId", collectionId, "groupId", groupId, "permission", permission, "type", reflect.TypeOf(permission))
 					continue
 				}
 				addGroupToResource(resourceGroups, fmt.Sprintf("%s:%s", collection, collectionId), groupId, []string{p}, err)
@@ -375,7 +376,7 @@ func addGroupToResource(resourceGroups ResourceGroupDetails, resourceId string, 
 	}
 }
 
-func (c *client) GrantDatabaseAccess(resource *Database, email, role string, groups map[string]*Group) error {
+func (c *client) GrantDatabaseAccess(ctx context.Context, resource *Database, email, role string, groups map[string]*Group) error {
 	access, err := c.getDatabaseAccess()
 	if err != nil {
 		return err
@@ -436,7 +437,7 @@ func (c *client) GrantDatabaseAccess(resource *Database, email, role string, gro
 	return c.addGroupMember(groupIDInt, user.ID)
 }
 
-func (c *client) RevokeDatabaseAccess(resource *Database, user, role string) error {
+func (c *client) RevokeDatabaseAccess(ctx context.Context, resource *Database, user, role string) error {
 	access, err := c.getDatabaseAccess()
 	if err != nil {
 		return err
@@ -463,7 +464,7 @@ func (c *client) RevokeDatabaseAccess(resource *Database, user, role string) err
 	return c.removeMembership(groupIDInt, user)
 }
 
-func (c *client) GrantCollectionAccess(resource *Collection, email, role string) error {
+func (c *client) GrantCollectionAccess(ctx context.Context, resource *Collection, email, role string) error {
 	access, err := c.getCollectionAccess()
 	if err != nil {
 		return err
@@ -512,7 +513,7 @@ func (c *client) GrantCollectionAccess(resource *Collection, email, role string)
 	return c.addGroupMember(groupIDInt, user.ID)
 }
 
-func (c *client) RevokeCollectionAccess(resource *Collection, user, role string) error {
+func (c *client) RevokeCollectionAccess(ctx context.Context, resource *Collection, user, role string) error {
 	access, err := c.getCollectionAccess()
 	if err != nil {
 		return err
@@ -532,7 +533,7 @@ func (c *client) RevokeCollectionAccess(resource *Collection, user, role string)
 	return c.removeMembership(groupIDInt, user)
 }
 
-func (c *client) GrantTableAccess(resource *Table, email, role string, groups map[string]*Group) error {
+func (c *client) GrantTableAccess(ctx context.Context, resource *Table, email, role string, groups map[string]*Group) error {
 	access, err := c.getDatabaseAccess()
 	if err != nil {
 		return err
@@ -597,7 +598,7 @@ func (c *client) GrantTableAccess(resource *Table, email, role string, groups ma
 	return c.addGroupMember(groupIDInt, user.ID)
 }
 
-func (c *client) RevokeTableAccess(resource *Table, user, role string) error {
+func (c *client) RevokeTableAccess(ctx context.Context, resource *Table, user, role string) error {
 	access, err := c.getDatabaseAccess()
 	if err != nil {
 		return err
@@ -632,7 +633,7 @@ func (c *client) RevokeTableAccess(resource *Table, user, role string) error {
 	return c.removeMembership(groupIDInt, user)
 }
 
-func (c *client) GrantGroupAccess(groupID int, email string) error {
+func (c *client) GrantGroupAccess(ctx context.Context, groupID int, email string) error {
 	user, err := c.getUser(email)
 	if err != nil {
 		return err
@@ -640,7 +641,7 @@ func (c *client) GrantGroupAccess(groupID int, email string) error {
 
 	for _, userGroupId := range user.GroupIds {
 		if userGroupId == groupID {
-			c.logger.Warn(fmt.Sprintf("User %s is already member of group %d", email, groupID))
+			c.logger.Warn(ctx, fmt.Sprintf("User %s is already member of group %d", email, groupID))
 			return nil
 		}
 	}
@@ -648,7 +649,7 @@ func (c *client) GrantGroupAccess(groupID int, email string) error {
 	return c.addGroupMember(groupID, user.ID)
 }
 
-func (c *client) RevokeGroupAccess(groupID int, email string) error {
+func (c *client) RevokeGroupAccess(ctx context.Context, groupID int, email string) error {
 	return c.removeMembership(groupID, email)
 }
 
@@ -680,7 +681,7 @@ func (c *client) getUser(email string) (user, error) {
 
 	var users []user
 	var response interface{}
-	if _, err := c.do(req, &response); err != nil {
+	if _, err := c.do(nil, req, &response); err != nil {
 		return user{}, err
 	}
 
@@ -716,7 +717,7 @@ func (c *client) getSessionToken() (string, error) {
 	}
 
 	var sessionResponse SessionResponse
-	if _, err := c.do(req, &sessionResponse); err != nil {
+	if _, err := c.do(nil, req, &sessionResponse); err != nil {
 		return "", err
 	}
 
@@ -730,7 +731,7 @@ func (c *client) getCollectionAccess() (*collectionGraph, error) {
 	}
 
 	var graph collectionGraph
-	if _, err := c.do(req, &graph); err != nil {
+	if _, err := c.do(nil, req, &graph); err != nil {
 		return nil, err
 	}
 
@@ -743,7 +744,7 @@ func (c *client) updateCollectionAccess(access *collectionGraph) error {
 		return err
 	}
 
-	if _, err := c.do(req, &access); err != nil {
+	if _, err := c.do(nil, req, &access); err != nil {
 		return err
 	}
 
@@ -757,7 +758,7 @@ func (c *client) getDatabaseAccess() (*databaseGraph, error) {
 	}
 
 	var dbGraph databaseGraph
-	if _, err := c.do(req, &dbGraph); err != nil {
+	if _, err := c.do(nil, req, &dbGraph); err != nil {
 		return nil, err
 	}
 
@@ -770,7 +771,7 @@ func (c *client) updateDatabaseAccess(dbGraph *databaseGraph) error {
 		return err
 	}
 
-	if _, err := c.do(req, &dbGraph); err != nil {
+	if _, err := c.do(nil, req, &dbGraph); err != nil {
 		return err
 	}
 
@@ -784,7 +785,7 @@ func (c *client) createGroup(group *group) error {
 		return err
 	}
 
-	if _, err := c.do(req, group); err != nil {
+	if _, err := c.do(nil, req, group); err != nil {
 		return err
 	}
 
@@ -800,7 +801,7 @@ func (c *client) getGroup(id int) (*group, error) {
 
 	var group group
 
-	if _, err := c.do(req, &group); err != nil {
+	if _, err := c.do(nil, req, &group); err != nil {
 		return nil, err
 	}
 
@@ -816,7 +817,7 @@ func (c *client) addGroupMember(groupID, userID int) error {
 		return err
 	}
 
-	if _, err := c.do(req, nil); err != nil {
+	if _, err := c.do(nil, req, nil); err != nil {
 		return err
 	}
 
@@ -831,7 +832,7 @@ func (c *client) removeGroupMember(membershipID int) error {
 		return err
 	}
 
-	if _, err := c.do(req, nil); err != nil {
+	if _, err := c.do(nil, req, nil); err != nil {
 		return err
 	}
 
@@ -912,10 +913,10 @@ func (c *client) newRequest(method, path string, body interface{}) (*http.Reques
 	return req, nil
 }
 
-func (c *client) do(req *http.Request, v interface{}) (*http.Response, error) {
+func (c *client) do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		c.logger.Error(fmt.Sprintf("Failed to execute request %v with error %v", req.URL, err))
+		c.logger.Error(ctx, fmt.Sprintf("Failed to execute request %v with error %v", req.URL, err))
 		return nil, err
 	}
 	defer resp.Body.Close()

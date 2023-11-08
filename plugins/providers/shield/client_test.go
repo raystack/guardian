@@ -2,6 +2,7 @@ package shield_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 
 	"github.com/goto/guardian/mocks"
 	"github.com/goto/guardian/plugins/providers/shield"
@@ -21,7 +22,7 @@ import (
 func TestNewClient(t *testing.T) {
 	t.Run("should return error if config is invalid", func(t *testing.T) {
 		invalidConfig := &shield.ClientConfig{}
-		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		logger := log.NewCtxLogger("info", []string{"test"})
 		actualClient, actualError := shield.NewClient(invalidConfig, logger)
 
 		assert.Nil(t, actualClient)
@@ -34,7 +35,7 @@ func TestNewClient(t *testing.T) {
 			AuthEmail:  "test-email",
 			Host:       "invalid-url",
 		}
-		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		logger := log.NewCtxLogger("info", []string{"test"})
 		actualClient, actualError := shield.NewClient(invalidHostConfig, logger)
 
 		assert.Nil(t, actualClient)
@@ -50,7 +51,7 @@ func TestNewClient(t *testing.T) {
 			Host:       "http://localhost",
 			HTTPClient: mockHttpClient,
 		}
-		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		logger := log.NewCtxLogger("info", []string{"test"})
 
 		_, actualError := shield.NewClient(config, logger)
 		mockHttpClient.AssertExpectations(t)
@@ -209,7 +210,7 @@ func (s *ClientTestSuite) TestGetTeams() {
 		teamAdminResponse2 := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(teamAdminResponse)))}
 		s.mockHttpClient.On("Do", testAdminsRequest2).Return(&teamAdminResponse2, nil).Once()
 
-		result, err1 := s.client.GetTeams()
+		result, err1 := s.client.GetTeams(context.Background())
 		var teams []shield.Team
 		for _, team := range result {
 			teams = append(teams, *team)
@@ -278,7 +279,7 @@ func (s *ClientTestSuite) TestGetProjects() {
 		projectAdminResponse1 := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(projectAdminResponse)))}
 		s.mockHttpClient.On("Do", testAdminsRequest).Return(&projectAdminResponse1, nil).Once()
 
-		result, err1 := s.client.GetProjects()
+		result, err1 := s.client.GetProjects(context.Background())
 		var projects []shield.Project
 		for _, project := range result {
 			projects = append(projects, *project)
@@ -344,7 +345,7 @@ func (s *ClientTestSuite) TestGetOrganizations() {
 		orgAdminResponse1 := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(orgAdminResponse)))}
 		s.mockHttpClient.On("Do", testAdminsRequest).Return(&orgAdminResponse1, nil).Once()
 
-		result, err1 := s.client.GetOrganizations()
+		result, err1 := s.client.GetOrganizations(context.Background())
 		var orgs []shield.Organization
 		for _, org := range result {
 			orgs = append(orgs, *org)
@@ -388,7 +389,7 @@ func (s *ClientTestSuite) TestGrantTeamAccess() {
 		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
-		actualError := s.client.GrantTeamAccess(teamObj, testUserId, role)
+		actualError := s.client.GrantTeamAccess(context.Background(), teamObj, testUserId, role)
 		s.Nil(actualError)
 	})
 }
@@ -427,7 +428,7 @@ func (s *ClientTestSuite) TestGrantProjectAccess() {
 		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
-		actualError := s.client.GrantProjectAccess(projectObj, testUserId, role)
+		actualError := s.client.GrantProjectAccess(context.Background(), projectObj, testUserId, role)
 		s.Nil(actualError)
 	})
 }
@@ -465,7 +466,7 @@ func (s *ClientTestSuite) TestGrantOrganizationAccess() {
 		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
-		actualError := s.client.GrantOrganizationAccess(orgObj, testUserId, role)
+		actualError := s.client.GrantOrganizationAccess(context.Background(), orgObj, testUserId, role)
 		s.Nil(actualError)
 	})
 }
@@ -491,7 +492,7 @@ func (s *ClientTestSuite) TestRevokeTeamAccess() {
 		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
-		actualError := s.client.RevokeTeamAccess(teamObj, testUserId, role)
+		actualError := s.client.RevokeTeamAccess(context.Background(), teamObj, testUserId, role)
 		s.Nil(actualError)
 	})
 }
@@ -518,7 +519,7 @@ func (s *ClientTestSuite) TestRevokeProjectAccess() {
 		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
-		actualError := s.client.RevokeProjectAccess(projectObj, testUserId, role)
+		actualError := s.client.RevokeProjectAccess(context.Background(), projectObj, testUserId, role)
 		s.Nil(actualError)
 	})
 }
@@ -544,7 +545,7 @@ func (s *ClientTestSuite) TestRevokeOrganizationAccess() {
 		responseUsers := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
-		actualError := s.client.RevokeOrganizationAccess(orgObj, testUserId, role)
+		actualError := s.client.RevokeOrganizationAccess(context.Background(), orgObj, testUserId, role)
 		s.Nil(actualError)
 	})
 }
@@ -566,7 +567,7 @@ func (s *ClientTestSuite) TestGetSelfUser() {
 		responseUser := http.Response{StatusCode: 500, Body: io.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", testGetSelfRequest).Return(&responseUser, nil).Once()
 
-		_, actualError := s.client.GetSelfUser(testUserEmail)
+		_, actualError := s.client.GetSelfUser(context.Background(), testUserEmail)
 		s.NotNil(actualError)
 	})
 	s.Run("Should return shield user on success", func() {
@@ -599,7 +600,7 @@ func (s *ClientTestSuite) TestGetSelfUser() {
 			Email: "test_user@email.com",
 		}
 
-		user, actualError := s.client.GetSelfUser(testUserEmail)
+		user, actualError := s.client.GetSelfUser(context.Background(), testUserEmail)
 		s.EqualValues(expectedUser, user)
 		s.Nil(actualError)
 	})

@@ -1,12 +1,13 @@
 package postgres_test
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/goto/guardian/internal/store"
 	"github.com/goto/guardian/internal/store/postgres"
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 )
@@ -22,6 +23,7 @@ var (
 )
 
 func newTestStore(logger log.Logger) (*postgres.Store, *dockertest.Pool, *dockertest.Resource, error) {
+	ctx := context.Background()
 	opts := &dockertest.RunOptions{
 		Repository: "postgres",
 		Tag:        "13",
@@ -62,17 +64,17 @@ func newTestStore(logger log.Logger) (*postgres.Store, *dockertest.Pool, *docker
 			Stream:       true,
 		})
 		if err != nil {
-			logger.Fatal("could not connect to postgres container log output", "error", err)
+			logger.Fatal(ctx, "could not connect to postgres container log output", "error", err)
 		}
 		defer func() {
 			err = logWaiter.Close()
 			if err != nil {
-				logger.Fatal("could not close container log", "error", err)
+				logger.Fatal(ctx, "could not close container log", "error", err)
 			}
 
 			err = logWaiter.Wait()
 			if err != nil {
-				logger.Fatal("could not wait for container log to close", "error", err)
+				logger.Fatal(ctx, "could not wait for container log to close", "error", err)
 			}
 		}()
 	}
@@ -100,7 +102,7 @@ func newTestStore(logger log.Logger) (*postgres.Store, *dockertest.Pool, *docker
 
 	err = setup(st)
 	if err != nil {
-		logger.Fatal("failed to setup and migrate DB", "error", err)
+		logger.Fatal(ctx, "failed to setup and migrate DB", "error", err)
 	}
 	return st, pool, resource, nil
 }

@@ -152,6 +152,7 @@ func TestCreateConfig(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if error in decoding credentials", func(t *testing.T) {
 		p := initProvider()
 
@@ -169,7 +170,7 @@ func TestGetResources(t *testing.T) {
 				},
 			},
 		}
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.Error(t, actualError)
@@ -208,7 +209,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.Error(t, actualError)
@@ -261,7 +262,7 @@ func TestGetResources(t *testing.T) {
 				Name:         "test-bucket-name",
 			},
 		}
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
@@ -270,6 +271,7 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			name           string
@@ -338,7 +340,7 @@ func TestGrantAccess(t *testing.T) {
 				pc := tc.providerConfig
 				g := tc.grant
 
-				actualError := p.GrantAccess(pc, g)
+				actualError := p.GrantAccess(ctx, pc, g)
 				assert.EqualError(t, actualError, tc.expectedError.Error())
 			})
 		}
@@ -367,7 +369,7 @@ func TestGrantAccess(t *testing.T) {
 			},
 			Role: "test-role",
 		}
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 		assert.Error(t, actualError)
 	})
 
@@ -421,7 +423,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 
 		assert.Error(t, actualError)
 	})
@@ -472,7 +474,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 
 		assert.Error(t, actualError)
 	})
@@ -529,13 +531,14 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
 	})
 }
 
 func TestRevokeAccess(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			name           string
@@ -604,7 +607,7 @@ func TestRevokeAccess(t *testing.T) {
 				pc := tc.providerConfig
 				a := tc.grant
 
-				actualError := p.RevokeAccess(pc, a)
+				actualError := p.RevokeAccess(ctx, pc, a)
 				assert.EqualError(t, actualError, tc.expectedError.Error())
 			})
 		}
@@ -633,7 +636,7 @@ func TestRevokeAccess(t *testing.T) {
 			},
 			Role: "test-role",
 		}
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 		assert.Error(t, actualError)
 	})
 
@@ -687,7 +690,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 
 		assert.Error(t, actualError)
 	})
@@ -738,7 +741,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 
 		assert.Error(t, actualError)
 	})
@@ -795,7 +798,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"Storage Legacy Bucket Writer"},
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
 	})
@@ -866,7 +869,7 @@ func TestListAccess(t *testing.T) {
 	dummyResources := []*domain.Resource{}
 	expectedResourcesAccess := domain.MapResourceAccess{}
 	client.EXPECT().
-		ListAccess(mock.AnythingOfType("*context.emptyCtx"), dummyResources).
+		ListAccess(mock.MatchedBy(func(ctx context.Context) bool { return true }), dummyResources).
 		Return(expectedResourcesAccess, nil).Once()
 
 	actualResourcesAccess, err := p.ListAccess(context.Background(), *dummyProviderConfig, dummyResources)

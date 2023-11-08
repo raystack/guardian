@@ -63,8 +63,8 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 	return nil
 }
 
-func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
-	client, err := p.getGCSClient(*pc)
+func (p *Provider) GetResources(ctx context.Context, pc *domain.ProviderConfig) ([]*domain.Resource, error) {
+	client, err := p.getGCSClient(ctx, *pc)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	}
 
 	var resources []*domain.Resource
-	buckets, err := client.GetBuckets(context.TODO())
+	buckets, err := client.GetBuckets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -95,14 +95,14 @@ func (p *Provider) GetType() string {
 	return p.typeName
 }
 
-func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
+func (p *Provider) GrantAccess(ctx context.Context, pc *domain.ProviderConfig, a domain.Grant) error {
 	if err := validateProviderConfigAndAppealParams(pc, a); err != nil {
 		return fmt.Errorf("invalid provider/appeal config: %w", err)
 	}
 
 	permissions := getPermissions(a)
 
-	client, err := p.getGCSClient(*pc)
+	client, err := p.getGCSClient(ctx, *pc)
 	if err != nil {
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
@@ -115,7 +115,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 		}
 		for _, p := range permissions {
 			role := iam.RoleName(string(p))
-			if err := client.GrantBucketAccess(context.TODO(), *b, identity, role); err != nil {
+			if err := client.GrantBucketAccess(ctx, *b, identity, role); err != nil {
 				if errors.Is(err, ErrPermissionAlreadyExists) {
 					return nil
 				}
@@ -127,14 +127,14 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 	return ErrInvalidResourceType
 }
 
-func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
+func (p *Provider) RevokeAccess(ctx context.Context, pc *domain.ProviderConfig, a domain.Grant) error {
 	if err := validateProviderConfigAndAppealParams(pc, a); err != nil {
 		return fmt.Errorf("invalid provider/appeal config: %w", err)
 	}
 
 	permissions := getPermissions(a)
 
-	client, err := p.getGCSClient(*pc)
+	client, err := p.getGCSClient(ctx, *pc)
 	if err != nil {
 		return fmt.Errorf("error in getting new client: %w", err)
 	}
@@ -148,7 +148,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 		}
 		for _, p := range permissions {
 			var role iam.RoleName = iam.RoleName(string(p))
-			if err := client.RevokeBucketAccess(context.TODO(), *b, identity, role); err != nil {
+			if err := client.RevokeBucketAccess(ctx, *b, identity, role); err != nil {
 				if errors.Is(err, ErrPermissionAlreadyExists) {
 					return nil
 				}
@@ -193,7 +193,7 @@ func getPermissions(a domain.Grant) []Permission {
 }
 
 func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, resources []*domain.Resource) (domain.MapResourceAccess, error) {
-	client, err := p.getGCSClient(pc)
+	client, err := p.getGCSClient(ctx, pc)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,7 @@ func (p *Provider) ListAccess(ctx context.Context, pc domain.ProviderConfig, res
 	return client.ListAccess(ctx, resources)
 }
 
-func (p *Provider) getGCSClient(pc domain.ProviderConfig) (GCSClient, error) {
+func (p *Provider) getGCSClient(ctx context.Context, pc domain.ProviderConfig) (GCSClient, error) {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return nil, fmt.Errorf("decoding credentials: %w", err)
@@ -216,7 +216,7 @@ func (p *Provider) getGCSClient(pc domain.ProviderConfig) (GCSClient, error) {
 		return p.Clients[projectID], nil
 	}
 
-	client, err := newGCSClient(projectID, []byte(creds.ServiceAccountKey))
+	client, err := newGCSClient(ctx, projectID, []byte(creds.ServiceAccountKey))
 	if err != nil {
 		return nil, err
 	}

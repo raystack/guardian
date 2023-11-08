@@ -1,11 +1,12 @@
 package metabase
 
 import (
+	"context"
 	"strings"
 
 	pv "github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -42,7 +43,7 @@ func (p *provider) CreateConfig(pc *domain.ProviderConfig) error {
 	return c.EncryptCredentials()
 }
 
-func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
+func (p *provider) GetResources(ctx context.Context, pc *domain.ProviderConfig) ([]*domain.Resource, error) {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return nil, err
@@ -63,7 +64,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	var databases []*Database
 	var collections []*Collection
 	if _, ok := resourceTypes[ResourceTypeDatabase]; ok {
-		databases, err = client.GetDatabases()
+		databases, err = client.GetDatabases(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +73,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 
 	if _, ok := resourceTypes[ResourceTypeTable]; ok {
 		if databases == nil {
-			databases, err = client.GetDatabases()
+			databases, err = client.GetDatabases(ctx)
 		}
 		if err != nil {
 			return nil, err
@@ -81,14 +82,14 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	}
 
 	if _, ok := resourceTypes[ResourceTypeCollection]; ok {
-		collections, err = client.GetCollections()
+		collections, err = client.GetCollections(ctx)
 		if err != nil {
 			return nil, err
 		}
 		resources = p.addCollection(pc, collections, resources)
 	}
 
-	groups, databaseResourceGroups, collectionResourceGroups, err := client.GetGroups()
+	groups, databaseResourceGroups, collectionResourceGroups, err := client.GetGroups(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +112,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		collectionResourceMap := make(map[string]*domain.Resource, 0)
 
 		if databases == nil {
-			databases, err = client.GetDatabases()
+			databases, err = client.GetDatabases(ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -122,7 +123,7 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 		}
 
 		if collections == nil {
-			collections, err = client.GetCollections()
+			collections, err = client.GetCollections(ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -200,7 +201,7 @@ func (p *provider) addTables(pc *domain.ProviderConfig, databases []*Database, r
 	return resources
 }
 
-func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
+func (p *provider) GrantAccess(ctx context.Context, pc *domain.ProviderConfig, a domain.Grant) error {
 	// TODO: validate provider config and appeal
 
 	var creds Credentials
@@ -212,7 +213,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 		return err
 	}
 
-	groups, _, _, err := client.GetGroups()
+	groups, _, _, err := client.GetGroups(ctx)
 	if err != nil {
 		return err
 	}
@@ -230,7 +231,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 		}
 
 		for _, p := range permissions {
-			if err := client.GrantDatabaseAccess(d, a.AccountID, string(p), groupMap); err != nil {
+			if err := client.GrantDatabaseAccess(ctx, d, a.AccountID, string(p), groupMap); err != nil {
 				return err
 			}
 		}
@@ -243,7 +244,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 		}
 
 		for _, p := range permissions {
-			if err := client.GrantCollectionAccess(c, a.AccountID, string(p)); err != nil {
+			if err := client.GrantCollectionAccess(ctx, c, a.AccountID, string(p)); err != nil {
 				return err
 			}
 		}
@@ -255,7 +256,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 			return err
 		}
 
-		if err := client.GrantGroupAccess(g.ID, a.AccountID); err != nil {
+		if err := client.GrantGroupAccess(ctx, g.ID, a.AccountID); err != nil {
 			return err
 		}
 		return nil
@@ -266,7 +267,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 		}
 
 		for _, p := range permissions {
-			if err := client.GrantTableAccess(t, a.AccountID, string(p), groupMap); err != nil {
+			if err := client.GrantTableAccess(ctx, t, a.AccountID, string(p), groupMap); err != nil {
 				return err
 			}
 		}
@@ -276,7 +277,7 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 	return ErrInvalidResourceType
 }
 
-func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error {
+func (p *provider) RevokeAccess(ctx context.Context, pc *domain.ProviderConfig, a domain.Grant) error {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -294,7 +295,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 		}
 
 		for _, p := range permissions {
-			if err := client.RevokeDatabaseAccess(d, a.AccountID, string(p)); err != nil {
+			if err := client.RevokeDatabaseAccess(ctx, d, a.AccountID, string(p)); err != nil {
 				return err
 			}
 		}
@@ -307,7 +308,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 		}
 
 		for _, p := range permissions {
-			if err := client.RevokeCollectionAccess(c, a.AccountID, string(p)); err != nil {
+			if err := client.RevokeCollectionAccess(ctx, c, a.AccountID, string(p)); err != nil {
 				return err
 			}
 		}
@@ -319,7 +320,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 			return err
 		}
 
-		if err := client.RevokeGroupAccess(g.ID, a.AccountID); err != nil {
+		if err := client.RevokeGroupAccess(ctx, g.ID, a.AccountID); err != nil {
 			return err
 		}
 
@@ -331,7 +332,7 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 		}
 
 		for _, p := range permissions {
-			if err := client.RevokeTableAccess(t, a.AccountID, string(p)); err != nil {
+			if err := client.RevokeTableAccess(ctx, t, a.AccountID, string(p)); err != nil {
 				return err
 			}
 		}

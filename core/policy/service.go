@@ -11,8 +11,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/pkg/evaluator"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/goto/guardian/utils"
-	"github.com/goto/salt/log"
 )
 
 const (
@@ -111,7 +111,7 @@ func (s *Service) Create(ctx context.Context, p *domain.Policy) error {
 		}
 
 		if err := s.auditLogger.Log(ctx, AuditKeyPolicyCreate, p); err != nil {
-			s.logger.Error("failed to record audit log", "error", err)
+			s.logger.Error(ctx, "failed to record audit log", "error", err)
 		}
 	}
 
@@ -197,7 +197,7 @@ func (s *Service) Update(ctx context.Context, p *domain.Policy) error {
 		}
 
 		if err := s.auditLogger.Log(ctx, AuditKeyPolicyUpdate, p); err != nil {
-			s.logger.Error("failed to record audit log", "error", err)
+			s.logger.Error(ctx, "failed to record audit log", "error", err)
 		}
 	}
 

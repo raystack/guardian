@@ -1,18 +1,19 @@
 package noop_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/goto/guardian/plugins/providers/noop"
-	"github.com/goto/salt/log"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetType(t *testing.T) {
 	t.Run("should return the proper type name based on the initialization", func(t *testing.T) {
-		logger := log.NewLogrus()
+		logger := log.NewNoop()
 
 		expectedTypeName := "test-type-name"
 		p := noop.NewProvider(expectedTypeName, logger)
@@ -212,7 +213,7 @@ func TestGetResources(t *testing.T) {
 			Name:         validConfig.URN,
 		}
 
-		actualResources, actualError := p.GetResources(validConfig)
+		actualResources, actualError := p.GetResources(context.TODO(), validConfig)
 
 		assert.NoError(t, actualError)
 		assert.Equal(t, []*domain.Resource{expectedResource}, actualResources)
@@ -223,7 +224,7 @@ func TestGrantAccess(t *testing.T) {
 	t.Run("should return nil", func(t *testing.T) {
 		p := initProvider()
 
-		actualError := p.GrantAccess(nil, domain.Grant{})
+		actualError := p.GrantAccess(context.TODO(), nil, domain.Grant{})
 
 		assert.NoError(t, actualError)
 	})
@@ -233,7 +234,7 @@ func TestRevokeAccess(t *testing.T) {
 	t.Run("should return nil", func(t *testing.T) {
 		p := initProvider()
 
-		actualError := p.RevokeAccess(nil, domain.Grant{})
+		actualError := p.RevokeAccess(context.TODO(), nil, domain.Grant{})
 
 		assert.NoError(t, actualError)
 	})
@@ -308,6 +309,6 @@ func TestGetAccountTypes(t *testing.T) {
 }
 
 func initProvider() *noop.Provider {
-	logger := log.NewLogrus()
+	logger := log.NewNoop()
 	return noop.NewProvider("noop", logger)
 }

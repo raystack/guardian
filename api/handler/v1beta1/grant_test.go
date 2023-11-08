@@ -191,7 +191,7 @@ func (s *GrpcHandlersSuite) TestGetGrant() {
 			},
 		}
 		s.grantService.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), grantID).
+			GetByID(mock.MatchedBy(func(ctx context.Context) bool { return true }), grantID).
 			Return(dummyGrant, nil).Once()
 
 		req := &guardianv1beta1.GetGrantRequest{Id: grantID}
@@ -225,7 +225,7 @@ func (s *GrpcHandlersSuite) TestGetGrant() {
 				s.setup()
 
 				s.grantService.EXPECT().
-					GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
+					GetByID(mock.MatchedBy(func(ctx context.Context) bool { return true }), mock.AnythingOfType("string")).
 					Return(nil, tc.expectedError).Once()
 
 				req := &guardianv1beta1.GetGrantRequest{Id: "test-id"}
@@ -249,7 +249,7 @@ func (s *GrpcHandlersSuite) TestGetGrant() {
 			},
 		}
 		s.grantService.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
+			GetByID(mock.MatchedBy(func(ctx context.Context) bool { return true }), mock.AnythingOfType("string")).
 			Return(expectedGrant, nil).Once()
 
 		req := &guardianv1beta1.GetGrantRequest{Id: "test-id"}
@@ -287,7 +287,7 @@ func (s *GrpcHandlersSuite) TestListUserRoles() {
 		s.setup()
 
 		s.grantService.EXPECT().
-			ListUserRoles(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
+			ListUserRoles(mock.MatchedBy(func(ctx context.Context) bool { return true }), mock.AnythingOfType("string")).
 			Return(nil, nil).Once()
 
 		req := &guardianv1beta1.ListUserRolesRequest{}
@@ -324,7 +324,7 @@ func (s *GrpcHandlersSuite) TestUpdateGrant() {
 		}
 		now := time.Now()
 		s.grantService.EXPECT().
-			Update(mock.AnythingOfType("*context.emptyCtx"), expectedGrant).
+			Update(mock.MatchedBy(func(ctx context.Context) bool { return true }), expectedGrant).
 			Run(func(_a0 context.Context, g *domain.Grant) {
 				g.UpdatedAt = now
 			}).
@@ -370,7 +370,7 @@ func (s *GrpcHandlersSuite) TestUpdateGrant() {
 				s.setup()
 
 				s.grantService.EXPECT().
-					Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Grant")).
+					Update(mock.MatchedBy(func(ctx context.Context) bool { return true }), mock.AnythingOfType("*domain.Grant")).
 					Return(tc.expectedError).Once()
 
 				req := &guardianv1beta1.UpdateGrantRequest{
@@ -443,7 +443,7 @@ func (s *GrpcHandlersSuite) TestImportFromProvider() {
 			},
 		}
 		s.grantService.EXPECT().
-			ImportFromProvider(mock.AnythingOfType("*context.emptyCtx"), grant.ImportFromProviderCriteria{
+			ImportFromProvider(mock.MatchedBy(func(ctx context.Context) bool { return true }), grant.ImportFromProviderCriteria{
 				ProviderID:    "test-provider-id",
 				ResourceIDs:   []string{"test-resource-id"},
 				ResourceTypes: []string{"test-resource-type"},

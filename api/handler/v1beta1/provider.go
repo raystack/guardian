@@ -82,6 +82,7 @@ func (s *GRPCServer) CreateProvider(ctx context.Context, req *guardianv1beta1.Cr
 	}
 
 	if err := s.providerService.Create(ctx, p); err != nil {
+		s.logger.Error(ctx, "failed to create provider", "provider_urn", p.URN, "type", p.Type, "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
 	}
 
@@ -110,6 +111,7 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.Up
 	}
 
 	if err := s.providerService.Update(ctx, p); err != nil {
+		s.logger.Error(ctx, "failed to update provider", "provider_id", id, "provider_urn", p.URN, "type", p.Type, "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to update provider: %v", err)
 	}
 

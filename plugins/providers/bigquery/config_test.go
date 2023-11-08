@@ -1,6 +1,7 @@
 package bigquery_test
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"testing"
@@ -163,7 +164,7 @@ func TestValidate(t *testing.T) {
 				}
 				mockCrypto.On("Encrypt", mock.Anything).Return("", nil).Once()
 
-				err := bigquery.NewConfig(pc, mockCrypto).ParseAndValidate()
+				err := bigquery.NewConfig(pc, mockCrypto).ParseAndValidate(context.Background())
 				assert.Error(t, err)
 			})
 		}

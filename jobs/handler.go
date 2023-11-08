@@ -6,8 +6,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/goto/guardian/core/grant"
 	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/goto/guardian/plugins/notifiers"
-	"github.com/goto/salt/log"
 )
 
 //go:generate mockery --name=grantService --exported --with-expecter

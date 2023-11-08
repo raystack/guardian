@@ -18,6 +18,7 @@ import (
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/internal/store/postgres"
 	"github.com/goto/guardian/pkg/auth"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/goto/guardian/plugins/identities"
 	"github.com/goto/guardian/plugins/notifiers"
 	"github.com/goto/guardian/plugins/providers/bigquery"
@@ -30,7 +31,6 @@ import (
 	"github.com/goto/guardian/plugins/providers/tableau"
 	"github.com/goto/salt/audit"
 	audit_repos "github.com/goto/salt/audit/repositories"
-	"github.com/goto/salt/log"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -87,7 +87,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 			if traceID == "" {
 				traceID = uuid.New().String()
 			}
-			md["trace_id"] = traceID
+			md[domain.TraceIDKey] = traceID
 
 			return md
 		}),

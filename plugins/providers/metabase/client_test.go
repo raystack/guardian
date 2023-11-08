@@ -2,6 +2,7 @@ package metabase_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 
 	"github.com/goto/guardian/mocks"
 	"github.com/goto/guardian/plugins/providers/metabase"
@@ -21,7 +22,7 @@ import (
 func TestNewClient(t *testing.T) {
 	t.Run("should return error if config is invalid", func(t *testing.T) {
 		invalidConfig := &metabase.ClientConfig{}
-		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		logger := log.NewCtxLogger("info", []string{"test"})
 		actualClient, actualError := metabase.NewClient(invalidConfig, logger)
 
 		assert.Nil(t, actualClient)
@@ -34,7 +35,7 @@ func TestNewClient(t *testing.T) {
 			Password: "test-password",
 			Host:     "invalid-url",
 		}
-		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		logger := log.NewCtxLogger("info", []string{"test"})
 		actualClient, actualError := metabase.NewClient(invalidHostConfig, logger)
 
 		assert.Nil(t, actualClient)
@@ -49,7 +50,7 @@ func TestNewClient(t *testing.T) {
 			Host:       "http://localhost",
 			HTTPClient: mockHttpClient,
 		}
-		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		logger := log.NewCtxLogger("info", []string{"test"})
 		expectedError := errors.New("request error")
 		mockHttpClient.On("Do", mock.Anything).Return(nil, expectedError).Once()
 
@@ -69,7 +70,7 @@ func TestNewClient(t *testing.T) {
 			Host:       "http://localhost",
 			HTTPClient: mockHttpClient,
 		}
-		logger := log.NewLogrus(log.LogrusWithLevel("info"))
+		logger := log.NewCtxLogger("info", []string{"test"})
 
 		sessionToken := "93df71b4-6887-46bd-b4bf-7ad3b94bd6fe"
 		responseJSON := `{"id":"` + sessionToken + `"}`
@@ -137,7 +138,7 @@ func (s *ClientTestSuite) TestGetCollections() {
 			{ID: float64(7), Name: "CabFares/DS Analysis/Summary", Slug: "summary", Location: "/2/3/"},
 		}
 
-		result, err1 := s.client.GetCollections()
+		result, err1 := s.client.GetCollections(context.Background())
 		var collections []metabase.Collection
 		for _, coll := range result {
 			collections = append(collections, *coll)
@@ -157,7 +158,7 @@ func (s *ClientTestSuite) TestGetDatabases() {
 		databaseResponse := http.Response{StatusCode: 400, Body: io.NopCloser(bytes.NewReader([]byte(nil)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
 
-		result, err1 := s.client.GetDatabases()
+		result, err1 := s.client.GetDatabases(context.Background())
 		s.Nil(result)
 		s.Error(err1)
 	})
@@ -171,7 +172,7 @@ func (s *ClientTestSuite) TestGetDatabases() {
 		databaseResponse := http.Response{StatusCode: 500, Body: io.NopCloser(bytes.NewReader([]byte(nil)))}
 		s.mockHttpClient.On("Do", testRequest).Return(&databaseResponse, nil).Once()
 
-		result, err1 := s.client.GetDatabases()
+		result, err1 := s.client.GetDatabases(context.Background())
 		s.Nil(result)
 		s.Error(err1)
 	})
@@ -200,7 +201,7 @@ func (s *ClientTestSuite) TestGetDatabases() {
 			{ID: 1, Name: "test-Name", CacheFieldValuesSchedule: "testCache", Timezone: "test-time", AutoRunQueries: true, MetadataSyncSchedule: "test-sync", Engine: "test-engine", NativePermissions: "per"},
 		}
 
-		result, err1 := s.client.GetDatabases()
+		result, err1 := s.client.GetDatabases(context.Background())
 		var databases []metabase.Database
 		for _, db := range result {
 			databases = append(databases, *db)
@@ -225,7 +226,7 @@ func (s *ClientTestSuite) TestGetDatabases() {
 			//Tables: []metabase.Table{{ID: 2, Name: "tab1", DbId: 1, Database: &domain.Resource{ID: "5", ProviderType: "metabase", ProviderURN: "test-URN", Type: "database"} }} },
 		}
 
-		result, err1 := s.client.GetDatabases()
+		result, err1 := s.client.GetDatabases(context.Background())
 		var databases []metabase.Database
 		for _, db := range result {
 			databases = append(databases, *db)
@@ -294,7 +295,7 @@ func (s *ClientTestSuite) TestGetGroups() {
 		fetchCollectionPermissionsResponse := http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader([]byte(fetchCollectionPermissionsResponseJSON)))}
 		s.mockHttpClient.On("Do", fetchCollectionPermissionstestRequest).Return(&fetchCollectionPermissionsResponse, nil).Once()
 
-		actualGroupResponse, actualDatabaseGroupResponse, _, err := s.client.GetGroups()
+		actualGroupResponse, actualDatabaseGroupResponse, _, err := s.client.GetGroups(context.Background())
 
 		s.Nil(err)
 		s.Equal(expectedgroupResponse, actualGroupResponse)
@@ -349,7 +350,7 @@ func (s *ClientTestSuite) TestGrantDatabaseAccess() {
 			"gid_1": {ID: 1, Name: "db_1"},
 			"gid_2": {ID: 2, Name: "db_2"},
 		}
-		actualError := s.client.GrantDatabaseAccess(resource, email, role, groups)
+		actualError := s.client.GrantDatabaseAccess(context.Background(), resource, email, role, groups)
 		s.Nil(actualError)
 		s.mockHttpClient.AssertExpectations(s.T())
 	})
@@ -391,7 +392,7 @@ func (s *ClientTestSuite) TestGrantCollectionAccess() {
 			Name: "test-collection",
 		}
 		resource := expectedCollection
-		actualError := s.client.GrantCollectionAccess(resource, email, role)
+		actualError := s.client.GrantCollectionAccess(context.Background(), resource, email, role)
 		s.Nil(actualError)
 		s.mockHttpClient.AssertExpectations(s.T())
 	})
@@ -423,7 +424,7 @@ func (s *ClientTestSuite) TestGrantCollectionAccess() {
 			Name: "test-collection",
 		}
 		resource := expectedCollection
-		actualError := s.client.GrantCollectionAccess(resource, email, role)
+		actualError := s.client.GrantCollectionAccess(context.Background(), resource, email, role)
 		s.Nil(actualError)
 		s.mockHttpClient.AssertExpectations(s.T())
 	})
@@ -462,7 +463,7 @@ func (s *ClientTestSuite) TestRevokeCollectionAccess() {
 			Name: "test-collection",
 		}
 		resource := expectedCollection
-		actualError := s.client.RevokeCollectionAccess(resource, email, role)
+		actualError := s.client.RevokeCollectionAccess(context.Background(), resource, email, role)
 		s.Nil(actualError)
 		s.mockHttpClient.AssertExpectations(s.T())
 	})
@@ -482,7 +483,7 @@ func (s *ClientTestSuite) TestGrantGroupAccesss() {
 
 		groupID := 53
 
-		actualError := s.client.GrantGroupAccess(groupID, email)
+		actualError := s.client.GrantGroupAccess(context.Background(), groupID, email)
 
 		s.Nil(actualError)
 		s.mockHttpClient.AssertExpectations(s.T())
@@ -504,7 +505,7 @@ func (s *ClientTestSuite) TestGrantGroupAccesss() {
 		res := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&res, nil).Once()
 
-		actualError := s.client.GrantGroupAccess(groupID, email)
+		actualError := s.client.GrantGroupAccess(context.Background(), groupID, email)
 
 		s.Nil(actualError)
 		s.mockHttpClient.AssertExpectations(s.T())
@@ -554,7 +555,7 @@ func (s *ClientTestSuite) TestGrantTableAccess() {
 		response := http.Response{StatusCode: 200, Body: io.NopCloser(nil)} // test for addGroupMember
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
-		actualError := s.client.GrantTableAccess(resource, email, role, groups)
+		actualError := s.client.GrantTableAccess(context.Background(), resource, email, role, groups)
 
 		s.Nil(actualError)
 	})
@@ -597,7 +598,7 @@ func (s *ClientTestSuite) TestGrantTableAccess() {
 		response := http.Response{StatusCode: 200, Body: io.NopCloser(nil)} // test for addGroupMember
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&response, nil).Once()
 
-		actualError := s.client.GrantTableAccess(resource, email, role, groups)
+		actualError := s.client.GrantTableAccess(context.Background(), resource, email, role, groups)
 
 		s.Nil(actualError)
 	})
@@ -630,13 +631,13 @@ func (s *ClientTestSuite) TestRevokeDatabaseAccess() {
 		s.mockHttpClient.On("Do", req).Return(&groupResponse, nil).Once()
 
 		membershipID := 500 //test removeGroupMember
-		revokeGroupMemeberURL := fmt.Sprintf("/api/permissions/membership/%d", membershipID)
-		revokeGroupMemeberRequest, err3 := s.getTestRequest(http.MethodDelete, revokeGroupMemeberURL, nil)
+		revokeGroupMemberURL := fmt.Sprintf("/api/permissions/membership/%d", membershipID)
+		revokeGroupMemeberRequest, err3 := s.getTestRequest(http.MethodDelete, revokeGroupMemberURL, nil)
 		s.Require().NoError(err3)
 		revokeGroupMemeberResponse := http.Response{StatusCode: 200, Body: io.NopCloser(nil)}
 		s.mockHttpClient.On("Do", revokeGroupMemeberRequest).Return(&revokeGroupMemeberResponse, nil).Once()
 
-		actualError := s.client.RevokeDatabaseAccess(resource, email, role)
+		actualError := s.client.RevokeDatabaseAccess(context.Background(), resource, email, role)
 
 		s.Nil(actualError)
 	})

@@ -11,7 +11,7 @@ import (
 	"github.com/goto/guardian/core/activity"
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/internal/store/postgres"
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -36,7 +36,7 @@ func TestActivityRepository(t *testing.T) {
 }
 
 func (s *ActivityRepositoryTestSuite) SetupSuite() {
-	logger := log.NewLogrus(log.LogrusWithLevel("debug"))
+	logger := log.NewCtxLogger("info", []string{"test"})
 	store, pool, resource, err := newTestStore(logger)
 	if err != nil {
 		s.T().Fatal(err)

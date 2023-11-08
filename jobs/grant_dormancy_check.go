@@ -35,14 +35,14 @@ func (h *handler) GrantDormancyCheck(ctx context.Context, c Config) error {
 	}
 
 	for _, p := range providers {
-		h.logger.Info(fmt.Sprintf("checking dormancy for grants under provider: %q", p.URN))
+		h.logger.Info(ctx, fmt.Sprintf("checking dormancy for grants under provider: %q", p.URN))
 		if err := h.grantService.DormancyCheck(ctx, domain.DormancyCheckCriteria{
 			ProviderID:     p.ID,
 			Period:         period,
 			RetainDuration: retainGrantFor,
 			DryRun:         cfg.DryRun,
 		}); err != nil {
-			h.logger.Error(fmt.Sprintf("failed to check dormancy for provider %q", p.URN), "error", err)
+			h.logger.Error(ctx, fmt.Sprintf("failed to check dormancy for provider %q", p.URN), "error", err)
 		}
 	}
 

@@ -236,6 +236,7 @@ func TestCreateConfig(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should error when credentials are invalid", func(t *testing.T) {
 		encryptor := new(mocks.Encryptor)
 		p := dataplex.NewProvider("", encryptor)
@@ -245,7 +246,7 @@ func TestGetResources(t *testing.T) {
 			Credentials: "invalid-creds",
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.Error(t, actualError)
@@ -303,7 +304,7 @@ func TestGetResources(t *testing.T) {
 				},
 			},
 		}
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
@@ -312,6 +313,8 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
+	ctx := context.Background()
+	mockCtx := mock.MatchedBy(func(ctx context.Context) bool { return true })
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			name           string
@@ -375,7 +378,7 @@ func TestGrantAccess(t *testing.T) {
 			pc := tc.providerConfig
 			a := tc.grant
 
-			actualError := p.GrantAccess(pc, a)
+			actualError := p.GrantAccess(ctx, pc, a)
 			assert.EqualError(t, actualError, tc.expectedError.Error())
 		}
 	})
@@ -404,7 +407,7 @@ func TestGrantAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 		assert.Error(t, actualError)
 	})
 
@@ -423,7 +426,7 @@ func TestGrantAccess(t *testing.T) {
 			ResourceName:      "projects/resource-name/locations/us",
 		}
 		policy := &dataplex.Policy{}
-		client.On("GrantPolicyAccess", mock.AnythingOfType("*context.emptyCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(expectedError).Once()
+		client.On("GrantPolicyAccess", mockCtx, policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(expectedError).Once()
 
 		pc := &domain.ProviderConfig{
 			Type:        "dataplex",
@@ -456,7 +459,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"roles/datacatalog.categoryFineGrainedReader"},
 		}
 
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 
 		assert.Equal(t, expectedError, actualError)
 	})
@@ -480,7 +483,7 @@ func TestGrantAccess(t *testing.T) {
 			DisplayName: "",
 			Description: "",
 		}
-		client.On("GrantPolicyAccess", mock.AnythingOfType("*context.emptyCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(dataplex.ErrPermissionAlreadyExists).Once()
+		client.On("GrantPolicyAccess", mockCtx, policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(dataplex.ErrPermissionAlreadyExists).Once()
 
 		pc := &domain.ProviderConfig{
 			Type:        "dataplex",
@@ -515,7 +518,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"roles/datacatalog.categoryFineGrainedReader"},
 		}
 
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
@@ -523,6 +526,7 @@ func TestGrantAccess(t *testing.T) {
 }
 
 func TestRevokeAccess(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			providerConfig *domain.ProviderConfig
@@ -585,7 +589,7 @@ func TestRevokeAccess(t *testing.T) {
 			pc := tc.providerConfig
 			a := tc.grant
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 			assert.EqualError(t, actualError, tc.expectedError.Error())
 		}
 	})
@@ -614,7 +618,7 @@ func TestRevokeAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.RevokeAccess(pc, g)
+		actualError := p.RevokeAccess(ctx, pc, g)
 		assert.Error(t, actualError)
 	})
 
@@ -635,7 +639,7 @@ func TestRevokeAccess(t *testing.T) {
 		}
 		policy := &dataplex.Policy{}
 
-		client.On("RevokePolicyAccess", mock.AnythingOfType("*context.emptyCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(expectedError).Once()
+		client.On("RevokePolicyAccess", mock.MatchedBy(func(ctx context.Context) bool { return true }), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(expectedError).Once()
 
 		pc := &domain.ProviderConfig{
 			Type:        "dataplex",
@@ -668,7 +672,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"roles/datacatalog.categoryFineGrainedReader"},
 		}
 
-		actualError := p.RevokeAccess(pc, g)
+		actualError := p.RevokeAccess(ctx, pc, g)
 
 		assert.Equal(t, expectedError, actualError)
 	})
@@ -688,7 +692,7 @@ func TestRevokeAccess(t *testing.T) {
 		}
 		policy := &dataplex.Policy{}
 
-		client.On("RevokePolicyAccess", mock.AnythingOfType("*context.emptyCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(dataplex.ErrPermissionNotFound).Once()
+		client.On("RevokePolicyAccess", mock.MatchedBy(func(ctx context.Context) bool { return true }), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(dataplex.ErrPermissionNotFound).Once()
 
 		pc := &domain.ProviderConfig{
 			Type:        "dataplex",
@@ -721,7 +725,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"roles/datacatalog.categoryFineGrainedReader"},
 		}
 
-		actualError := p.RevokeAccess(pc, g)
+		actualError := p.RevokeAccess(ctx, pc, g)
 
 		assert.Nil(t, actualError)
 	})

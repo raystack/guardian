@@ -6,7 +6,7 @@ import (
 
 	"github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iam/v1"
@@ -15,8 +15,8 @@ import (
 //go:generate mockery --name=GcloudIamClient --exported --with-expecter
 type GcloudIamClient interface {
 	GetGrantableRoles(ctx context.Context, resourceType string) ([]*iam.Role, error)
-	GrantAccess(accountType, accountID, role string) error
-	RevokeAccess(accountType, accountID, role string) error
+	GrantAccess(ctx context.Context, accountType, accountID, role string) error
+	RevokeAccess(ctx context.Context, accountType, accountID, role string) error
 	ListAccess(ctx context.Context, resources []*domain.Resource) (domain.MapResourceAccess, error)
 	ListServiceAccounts(context.Context) ([]*iam.ServiceAccount, error)
 	GrantServiceAccountAccess(ctx context.Context, sa, accountType, accountID, roles string) error
@@ -72,7 +72,7 @@ func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 	return c.EncryptCredentials()
 }
 
-func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
+func (p *Provider) GetResources(ctx context.Context, pc *domain.ProviderConfig) ([]*domain.Resource, error) {
 	resources := []*domain.Resource{}
 
 	for _, rc := range pc.Resources {
@@ -96,7 +96,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 				return nil, fmt.Errorf("initializing iam client: %w", err)
 			}
 
-			serviceAccounts, err := client.ListServiceAccounts(context.TODO())
+			serviceAccounts, err := client.ListServiceAccounts(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("listing service accounts: %w", err)
 			}
@@ -121,7 +121,7 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	return resources, nil
 }
 
-func (p *Provider) GrantAccess(pc *domain.ProviderConfig, g domain.Grant) error {
+func (p *Provider) GrantAccess(ctx context.Context, pc *domain.ProviderConfig, g domain.Grant) error {
 	// TODO: validate provider config and appeal
 
 	var creds Credentials
@@ -137,7 +137,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, g domain.Grant) error 
 	switch g.Resource.Type {
 	case ResourceTypeProject, ResourceTypeOrganization:
 		for _, p := range g.Permissions {
-			if err := client.GrantAccess(g.AccountType, g.AccountID, p); err != nil {
+			if err := client.GrantAccess(ctx, g.AccountType, g.AccountID, p); err != nil {
 				if !errors.Is(err, ErrPermissionAlreadyExists) {
 					return err
 				}
@@ -147,7 +147,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, g domain.Grant) error 
 
 	case ResourceTypeServiceAccount:
 		for _, p := range g.Permissions {
-			if err := client.GrantServiceAccountAccess(context.TODO(), g.Resource.URN, g.AccountType, g.AccountID, p); err != nil {
+			if err := client.GrantServiceAccountAccess(ctx, g.Resource.URN, g.AccountType, g.AccountID, p); err != nil {
 				if !errors.Is(err, ErrPermissionAlreadyExists) {
 					return err
 				}
@@ -160,7 +160,7 @@ func (p *Provider) GrantAccess(pc *domain.ProviderConfig, g domain.Grant) error 
 	}
 }
 
-func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, g domain.Grant) error {
+func (p *Provider) RevokeAccess(ctx context.Context, pc *domain.ProviderConfig, g domain.Grant) error {
 	var creds Credentials
 	if err := mapstructure.Decode(pc.Credentials, &creds); err != nil {
 		return err
@@ -174,7 +174,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, g domain.Grant) error
 	switch g.Resource.Type {
 	case ResourceTypeProject, ResourceTypeOrganization:
 		for _, p := range g.Permissions {
-			if err := client.RevokeAccess(g.AccountType, g.AccountID, p); err != nil {
+			if err := client.RevokeAccess(ctx, g.AccountType, g.AccountID, p); err != nil {
 				if !errors.Is(err, ErrPermissionNotFound) {
 					return err
 				}
@@ -184,7 +184,7 @@ func (p *Provider) RevokeAccess(pc *domain.ProviderConfig, g domain.Grant) error
 
 	case ResourceTypeServiceAccount:
 		for _, p := range g.Permissions {
-			if err := client.RevokeServiceAccountAccess(context.TODO(), g.Resource.URN, g.AccountType, g.AccountID, p); err != nil {
+			if err := client.RevokeServiceAccountAccess(ctx, g.Resource.URN, g.AccountType, g.AccountID, p); err != nil {
 				if !errors.Is(err, ErrPermissionNotFound) {
 					return err
 				}

@@ -12,7 +12,7 @@ import (
 	"github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/internal/store/postgres"
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/suite"
 )
@@ -30,7 +30,7 @@ type ProviderRepositoryTestSuite struct {
 func (s *ProviderRepositoryTestSuite) SetupSuite() {
 	var err error
 
-	logger := log.NewLogrus(log.LogrusWithLevel("debug"))
+	logger := log.NewCtxLogger("debug", []string{"test"})
 	s.store, s.pool, s.resource, err = newTestStore(logger)
 	if err != nil {
 		s.T().Fatal(err)

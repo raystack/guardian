@@ -1,11 +1,12 @@
 package gcloudiam_test
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"testing"
 
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 
 	"github.com/goto/guardian/domain"
 	"github.com/goto/guardian/plugins/providers/gcloudiam"
@@ -202,7 +203,7 @@ func TestCreateConfig(t *testing.T) {
 			},
 		}
 		client.EXPECT().
-			GetGrantableRoles(mock.AnythingOfType("*context.emptyCtx"), gcloudiam.ResourceTypeProject).
+			GetGrantableRoles(mock.MatchedBy(func(ctx context.Context) bool { return true }), gcloudiam.ResourceTypeProject).
 			Return(gCloudRolesList, nil).Once()
 
 		pc := &domain.ProviderConfig{
@@ -248,7 +249,7 @@ func TestCreateConfig(t *testing.T) {
 			},
 		}
 		client.EXPECT().
-			GetGrantableRoles(mock.AnythingOfType("*context.emptyCtx"), gcloudiam.ResourceTypeProject).
+			GetGrantableRoles(mock.MatchedBy(func(ctx context.Context) bool { return true }), gcloudiam.ResourceTypeProject).
 			Return(gCloudRolesList, nil).Once()
 
 		crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
@@ -294,6 +295,8 @@ func TestGetType(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
+	ctx := context.Background()
+	mockCtx := mock.MatchedBy(func(ctx context.Context) bool { return true })
 	t.Run("should error when credentials are invalid", func(t *testing.T) {
 		crypto := new(mocks.Encryptor)
 		l := log.NewNoop()
@@ -307,7 +310,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.Error(t, actualError)
@@ -343,10 +346,10 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 		client.EXPECT().
-			GetGrantableRoles(mock.AnythingOfType("*context.emptyCtx"), gcloudiam.ResourceTypeProject).
+			GetGrantableRoles(mockCtx, gcloudiam.ResourceTypeProject).
 			Return(projectRoles, nil).Once()
 		client.EXPECT().
-			GetGrantableRoles(mock.AnythingOfType("*context.emptyCtx"), gcloudiam.ResourceTypeServiceAccount).
+			GetGrantableRoles(mockCtx, gcloudiam.ResourceTypeServiceAccount).
 			Return(saRoles, nil).Once()
 
 		expectedServiceAccounts := []*iam.ServiceAccount{
@@ -356,7 +359,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 		client.EXPECT().
-			ListServiceAccounts(mock.AnythingOfType("*context.emptyCtx")).
+			ListServiceAccounts(mockCtx).
 			Return(expectedServiceAccounts, nil).Once()
 
 		pc := &domain.ProviderConfig{
@@ -411,7 +414,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
 	})
@@ -425,7 +428,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 		client.EXPECT().
-			GetGrantableRoles(mock.AnythingOfType("*context.emptyCtx"), gcloudiam.ResourceTypeOrganization).
+			GetGrantableRoles(mockCtx, gcloudiam.ResourceTypeOrganization).
 			Return(gCloudRolesList, nil).Once()
 		pc := &domain.ProviderConfig{
 			Type: domain.ProviderTypeGCloudIAM,
@@ -457,7 +460,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
@@ -474,7 +477,7 @@ func TestGetResources(t *testing.T) {
 				{Type: "invalid-resource-type"},
 			},
 		}
-		_, err := p.GetResources(pc)
+		_, err := p.GetResources(ctx, pc)
 
 		assert.ErrorIs(t, err, gcloudiam.ErrInvalidResourceType)
 	})
@@ -494,14 +497,14 @@ func TestGetResources(t *testing.T) {
 				},
 			}
 
-			_, actualError := p.GetResources(pc)
+			_, actualError := p.GetResources(ctx, pc)
 
 			assert.Error(t, actualError)
 		})
 
 		t.Run("should return error if client returns an error", func(t *testing.T) {
 			expectedError := errors.New("client error")
-			client.On("ListServiceAccounts", mock.AnythingOfType("*context.emptyCtx")).Return(nil, expectedError).Once()
+			client.On("ListServiceAccounts", mockCtx).Return(nil, expectedError).Once()
 
 			pc := &domain.ProviderConfig{
 				Type: domain.ProviderTypeGCloudIAM,
@@ -516,7 +519,7 @@ func TestGetResources(t *testing.T) {
 				},
 			}
 
-			_, actualError := p.GetResources(pc)
+			_, actualError := p.GetResources(ctx, pc)
 
 			assert.ErrorIs(t, actualError, expectedError)
 		})
@@ -524,6 +527,7 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Encryptor)
 		l := log.NewNoop()
@@ -544,7 +548,7 @@ func TestGrantAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(ctx, pc, a)
 		assert.Error(t, actualError)
 	})
 
@@ -575,13 +579,14 @@ func TestGrantAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(ctx, pc, a)
 
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
 
 	t.Run("should return error if there is an error in granting the access", func(t *testing.T) {
 		expectedError := errors.New("client error in granting access")
+		mockCtx := mock.MatchedBy(func(ctx context.Context) bool { return true })
 		testCases := []struct {
 			name               string
 			resourceType       string
@@ -594,7 +599,7 @@ func TestGrantAccess(t *testing.T) {
 				expectedError: expectedError,
 				setExpectationFunc: func(c *mocks.GcloudIamClient) {
 					c.EXPECT().
-						GrantAccess(mock.Anything, mock.Anything, mock.Anything).
+						GrantAccess(mockCtx, mock.Anything, mock.Anything, mock.Anything).
 						Return(expectedError).Once()
 				},
 			},
@@ -604,7 +609,7 @@ func TestGrantAccess(t *testing.T) {
 				expectedError: expectedError,
 				setExpectationFunc: func(c *mocks.GcloudIamClient) {
 					c.EXPECT().
-						GrantAccess(mock.Anything, mock.Anything, mock.Anything).
+						GrantAccess(mockCtx, mock.Anything, mock.Anything, mock.Anything).
 						Return(expectedError).Once()
 				},
 			},
@@ -614,7 +619,7 @@ func TestGrantAccess(t *testing.T) {
 				expectedError: expectedError,
 				setExpectationFunc: func(c *mocks.GcloudIamClient) {
 					c.EXPECT().
-						GrantServiceAccountAccess(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+						GrantServiceAccountAccess(mockCtx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 						Return(expectedError).Once()
 				},
 			},
@@ -663,7 +668,7 @@ func TestGrantAccess(t *testing.T) {
 					Permissions: []string{"permission-1"},
 				}
 
-				actualError := p.GrantAccess(pc, a)
+				actualError := p.GrantAccess(ctx, pc, a)
 
 				assert.EqualError(t, actualError, tc.expectedError.Error())
 			})
@@ -683,7 +688,7 @@ func TestGrantAccess(t *testing.T) {
 		p.Clients = map[string]gcloudiam.GcloudIamClient{
 			providerURN: client,
 		}
-		client.On("GrantAccess", expectedAccountType, expectedAccountID, expectedPermission).Return(nil).Once()
+		client.On("GrantAccess", mock.MatchedBy(func(ctx context.Context) bool { return true }), expectedAccountType, expectedAccountID, expectedPermission).Return(nil).Once()
 
 		pc := &domain.ProviderConfig{
 			Resources: []*domain.ResourceConfig{
@@ -718,7 +723,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"roles/bigquery.admin"},
 		}
 
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 
 		assert.Nil(t, actualError)
 	})
@@ -759,15 +764,16 @@ func TestGrantAccess(t *testing.T) {
 		}
 
 		client.EXPECT().
-			GrantServiceAccountAccess(mock.AnythingOfType("*context.emptyCtx"), g.Resource.URN, g.AccountType, g.AccountID, g.Permissions[0]).
+			GrantServiceAccountAccess(mock.MatchedBy(func(ctx context.Context) bool { return true }), g.Resource.URN, g.AccountType, g.AccountID, g.Permissions[0]).
 			Return(nil).Once()
 
-		err := p.GrantAccess(pc, g)
+		err := p.GrantAccess(ctx, pc, g)
 		assert.NoError(t, err)
 	})
 }
 
 func TestRevokeAccess(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if resource type is unknown", func(t *testing.T) {
 		providerURN := "test-provider-urn"
 		crypto := new(mocks.Encryptor)
@@ -794,13 +800,14 @@ func TestRevokeAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
 
 	t.Run("should return error if there is an error in revoking the access", func(t *testing.T) {
 		expectedError := errors.New("client error in revoking access")
+		mockCtx := mock.MatchedBy(func(ctx context.Context) bool { return true })
 		testCases := []struct {
 			name               string
 			resourceType       string
@@ -813,7 +820,7 @@ func TestRevokeAccess(t *testing.T) {
 				expectedError: expectedError,
 				setExpectationFunc: func(c *mocks.GcloudIamClient) {
 					c.EXPECT().
-						RevokeAccess(mock.Anything, mock.Anything, mock.Anything).
+						RevokeAccess(mockCtx, mock.Anything, mock.Anything, mock.Anything).
 						Return(expectedError).Once()
 				},
 			},
@@ -823,7 +830,7 @@ func TestRevokeAccess(t *testing.T) {
 				expectedError: expectedError,
 				setExpectationFunc: func(c *mocks.GcloudIamClient) {
 					c.EXPECT().
-						RevokeAccess(mock.Anything, mock.Anything, mock.Anything).
+						RevokeAccess(mockCtx, mock.Anything, mock.Anything, mock.Anything).
 						Return(expectedError).Once()
 				},
 			},
@@ -833,7 +840,7 @@ func TestRevokeAccess(t *testing.T) {
 				expectedError: expectedError,
 				setExpectationFunc: func(c *mocks.GcloudIamClient) {
 					c.EXPECT().
-						RevokeServiceAccountAccess(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+						RevokeServiceAccountAccess(mockCtx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 						Return(expectedError).Once()
 				},
 			},
@@ -882,7 +889,7 @@ func TestRevokeAccess(t *testing.T) {
 					Permissions: []string{"permission-1"},
 				}
 
-				actualError := p.RevokeAccess(pc, a)
+				actualError := p.RevokeAccess(ctx, pc, a)
 
 				assert.EqualError(t, actualError, tc.expectedError.Error())
 			})
@@ -936,7 +943,7 @@ func TestRevokeAccess(t *testing.T) {
 			ID:          "999",
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 
 		assert.Nil(t, actualError)
 	})
@@ -977,10 +984,10 @@ func TestRevokeAccess(t *testing.T) {
 		}
 
 		client.EXPECT().
-			RevokeServiceAccountAccess(mock.AnythingOfType("*context.emptyCtx"), g.Resource.URN, g.AccountType, g.AccountID, g.Permissions[0]).
+			RevokeServiceAccountAccess(mock.MatchedBy(func(ctx context.Context) bool { return true }), g.Resource.URN, g.AccountType, g.AccountID, g.Permissions[0]).
 			Return(nil).Once()
 
-		err := p.RevokeAccess(pc, g)
+		err := p.RevokeAccess(ctx, pc, g)
 		assert.NoError(t, err)
 	})
 }

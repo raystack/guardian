@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/goto/guardian/pkg/log"
+
 	"github.com/goto/guardian/core/appeal"
 	"github.com/goto/guardian/core/grant"
 
@@ -124,6 +126,7 @@ type GRPCServer struct {
 	adapter         ProtoAdapter
 
 	authenticatedUserContextKey interface{}
+	logger                      log.Logger
 
 	guardianv1beta1.UnimplementedGuardianServiceServer
 }
@@ -138,6 +141,7 @@ func NewGRPCServer(
 	grantService grantService,
 	adapter ProtoAdapter,
 	authenticatedUserContextKey interface{},
+	logger log.Logger,
 ) *GRPCServer {
 	return &GRPCServer{
 		resourceService:             resourceService,
@@ -149,6 +153,7 @@ func NewGRPCServer(
 		grantService:                grantService,
 		adapter:                     adapter,
 		authenticatedUserContextKey: authenticatedUserContextKey,
+		logger:                      logger,
 	}
 }
 

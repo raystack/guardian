@@ -1,11 +1,12 @@
 package noop
 
 import (
+	"context"
 	"errors"
 
 	"github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
-	"github.com/goto/salt/log"
+	"github.com/goto/guardian/pkg/log"
 )
 
 var (
@@ -68,7 +69,7 @@ func (p *Provider) CreateConfig(cfg *domain.ProviderConfig) error {
 	return nil
 }
 
-func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, error) {
+func (p *Provider) GetResources(ctx context.Context, pc *domain.ProviderConfig) ([]*domain.Resource, error) {
 	return []*domain.Resource{
 		{
 			ProviderType: domain.ProviderTypeNoOp,
@@ -80,11 +81,11 @@ func (p *Provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	}, nil
 }
 
-func (p *Provider) GrantAccess(*domain.ProviderConfig, domain.Grant) error {
+func (p *Provider) GrantAccess(context.Context, *domain.ProviderConfig, domain.Grant) error {
 	return nil
 }
 
-func (p *Provider) RevokeAccess(*domain.ProviderConfig, domain.Grant) error {
+func (p *Provider) RevokeAccess(context.Context, *domain.ProviderConfig, domain.Grant) error {
 	return nil
 }
 

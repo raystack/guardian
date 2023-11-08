@@ -658,7 +658,7 @@ func (s *GrpcHandlersSuite) TestGetAppeal() {
 				UpdatedAt: timestamppb.New(timeNow),
 			},
 		}
-		s.appealService.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), expectedID).Return(expectedAppeal, nil).Once()
+		s.appealService.EXPECT().GetByID(mock.MatchedBy(func(ctx context.Context) bool { return true }), expectedID).Return(expectedAppeal, nil).Once()
 
 		req := &guardianv1beta1.GetAppealRequest{
 			Id: expectedID,
@@ -674,7 +674,7 @@ func (s *GrpcHandlersSuite) TestGetAppeal() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.appealService.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+		s.appealService.EXPECT().GetByID(mock.MatchedBy(func(ctx context.Context) bool { return true }), mock.Anything).
 			Return(nil, expectedError).Once()
 
 		req := &guardianv1beta1.GetAppealRequest{
@@ -690,7 +690,7 @@ func (s *GrpcHandlersSuite) TestGetAppeal() {
 	s.Run("should return not found error if appeal not found", func() {
 		s.setup()
 
-		s.appealService.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+		s.appealService.EXPECT().GetByID(mock.MatchedBy(func(ctx context.Context) bool { return true }), mock.Anything).
 			Return(nil, nil).Once()
 
 		req := &guardianv1beta1.GetAppealRequest{
@@ -711,7 +711,7 @@ func (s *GrpcHandlersSuite) TestGetAppeal() {
 				"foo": make(chan int),
 			},
 		}
-		s.appealService.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+		s.appealService.EXPECT().GetByID(mock.MatchedBy(func(ctx context.Context) bool { return true }), mock.Anything).
 			Return(invalidAppeal, nil).Once()
 
 		req := &guardianv1beta1.GetAppealRequest{
@@ -726,6 +726,7 @@ func (s *GrpcHandlersSuite) TestGetAppeal() {
 }
 
 func (s *GrpcHandlersSuite) TestCancelAppeal() {
+	mockCtx := mock.MatchedBy(func(ctx context.Context) bool { return true })
 	s.Run("should return appeal details on success", func() {
 		s.setup()
 		timeNow := time.Now()
@@ -809,7 +810,7 @@ func (s *GrpcHandlersSuite) TestCancelAppeal() {
 				UpdatedAt: timestamppb.New(timeNow),
 			},
 		}
-		s.appealService.EXPECT().Cancel(mock.AnythingOfType("*context.emptyCtx"), expectedID).Return(expectedAppeal, nil).Once()
+		s.appealService.EXPECT().Cancel(mockCtx, expectedID).Return(expectedAppeal, nil).Once()
 
 		req := &guardianv1beta1.CancelAppealRequest{
 			Id: expectedID,
@@ -863,7 +864,7 @@ func (s *GrpcHandlersSuite) TestCancelAppeal() {
 			s.Run(tc.name, func() {
 				s.setup()
 
-				s.appealService.EXPECT().Cancel(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+				s.appealService.EXPECT().Cancel(mockCtx, mock.Anything).
 					Return(nil, tc.expectedError).Once()
 
 				req := &guardianv1beta1.CancelAppealRequest{
@@ -886,7 +887,7 @@ func (s *GrpcHandlersSuite) TestCancelAppeal() {
 				"foo": make(chan int),
 			},
 		}
-		s.appealService.EXPECT().Cancel(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+		s.appealService.EXPECT().Cancel(mockCtx, mock.Anything).
 			Return(invalidAppeal, nil).Once()
 
 		req := &guardianv1beta1.CancelAppealRequest{

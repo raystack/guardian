@@ -19,8 +19,8 @@ type gcsClient struct {
 	projectID string
 }
 
-func newGCSClient(projectID string, credentialsJSON []byte) (*gcsClient, error) {
-	client, err := storage.NewClient(context.TODO(), option.WithCredentialsJSON(credentialsJSON))
+func newGCSClient(ctx context.Context, projectID string, credentialsJSON []byte) (*gcsClient, error) {
+	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(credentialsJSON))
 	if err != nil {
 		return nil, err
 	}

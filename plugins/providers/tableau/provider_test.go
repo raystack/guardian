@@ -1,6 +1,7 @@
 package tableau_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -279,6 +280,7 @@ func TestCreateConfig(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := tableau.NewProvider("", crypto)
@@ -287,7 +289,7 @@ func TestGetResources(t *testing.T) {
 			Credentials: "invalid-creds",
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.Error(t, actualError)
@@ -305,7 +307,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.EqualError(t, actualError, expectedError.Error())
@@ -341,7 +343,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Error(t, actualError)
 		assert.Nil(t, actualResources)
@@ -368,7 +370,7 @@ func TestGetResources(t *testing.T) {
 		expectedError := errors.New("client error")
 		client.On("GetWorkbooks").Return(nil, expectedError).Once()
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.EqualError(t, actualError, expectedError.Error())
@@ -395,7 +397,7 @@ func TestGetResources(t *testing.T) {
 		expectedError := errors.New("client error")
 		client.On("GetFlows").Return(nil, expectedError).Once()
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.EqualError(t, actualError, expectedError.Error())
@@ -422,7 +424,7 @@ func TestGetResources(t *testing.T) {
 		expectedError := errors.New("client error")
 		client.On("GetDataSources").Return(nil, expectedError).Once()
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.EqualError(t, actualError, expectedError.Error())
@@ -449,7 +451,7 @@ func TestGetResources(t *testing.T) {
 		expectedError := errors.New("client error")
 		client.On("GetViews").Return(nil, expectedError).Once()
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.EqualError(t, actualError, expectedError.Error())
@@ -476,7 +478,7 @@ func TestGetResources(t *testing.T) {
 		expectedError := errors.New("client error")
 		client.On("GetMetrics").Return(nil, expectedError).Once()
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.EqualError(t, actualError, expectedError.Error())
@@ -632,7 +634,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
@@ -641,6 +643,7 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := tableau.NewProvider("", crypto)
@@ -670,7 +673,7 @@ func TestGrantAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(ctx, pc, a)
 		assert.Error(t, actualError)
 	})
 
@@ -710,7 +713,7 @@ func TestGrantAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(ctx, pc, a)
 
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
@@ -752,7 +755,7 @@ func TestGrantAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, a)
+		actualError := p.GrantAccess(ctx, pc, a)
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
 
@@ -851,7 +854,7 @@ func TestGrantAccess(t *testing.T) {
 
 			for _, tc := range testcases {
 				t.Run(tc.name, func(t *testing.T) {
-					actualError := p.GrantAccess(tc.pc, tc.a)
+					actualError := p.GrantAccess(ctx, tc.pc, tc.a)
 
 					assert.EqualError(t, actualError, expectedError.Error())
 				})
@@ -910,7 +913,7 @@ func TestGrantAccess(t *testing.T) {
 				ID:         "999",
 			}
 
-			actualError := p.GrantAccess(pc, a)
+			actualError := p.GrantAccess(ctx, pc, a)
 
 			assert.Nil(t, actualError)
 		})
@@ -1011,7 +1014,7 @@ func TestGrantAccess(t *testing.T) {
 
 			for _, tc := range testcases {
 				t.Run(tc.name, func(t *testing.T) {
-					actualError := p.GrantAccess(tc.pc, tc.a)
+					actualError := p.GrantAccess(ctx, tc.pc, tc.a)
 
 					assert.EqualError(t, actualError, expectedError.Error())
 				})
@@ -1070,7 +1073,7 @@ func TestGrantAccess(t *testing.T) {
 				ID:         "999",
 			}
 
-			actualError := p.GrantAccess(pc, a)
+			actualError := p.GrantAccess(ctx, pc, a)
 
 			assert.Nil(t, actualError)
 		})
@@ -1171,7 +1174,7 @@ func TestGrantAccess(t *testing.T) {
 
 			for _, tc := range testcases {
 				t.Run(tc.name, func(t *testing.T) {
-					actualError := p.GrantAccess(tc.pc, tc.a)
+					actualError := p.GrantAccess(ctx, tc.pc, tc.a)
 
 					assert.EqualError(t, actualError, expectedError.Error())
 				})
@@ -1230,7 +1233,7 @@ func TestGrantAccess(t *testing.T) {
 				ID:         "99",
 			}
 
-			actualError := p.GrantAccess(pc, a)
+			actualError := p.GrantAccess(ctx, pc, a)
 
 			assert.Nil(t, actualError)
 		})
@@ -1330,7 +1333,7 @@ func TestGrantAccess(t *testing.T) {
 
 			for _, tc := range testcases {
 				t.Run(tc.name, func(t *testing.T) {
-					actualError := p.GrantAccess(tc.pc, tc.a)
+					actualError := p.GrantAccess(ctx, tc.pc, tc.a)
 
 					assert.EqualError(t, actualError, expectedError.Error())
 				})
@@ -1389,7 +1392,7 @@ func TestGrantAccess(t *testing.T) {
 				ID:         "99",
 			}
 
-			actualError := p.GrantAccess(pc, a)
+			actualError := p.GrantAccess(ctx, pc, a)
 
 			assert.Nil(t, actualError)
 		})
@@ -1490,7 +1493,7 @@ func TestGrantAccess(t *testing.T) {
 
 			for _, tc := range testcases {
 				t.Run(tc.name, func(t *testing.T) {
-					actualError := p.GrantAccess(tc.pc, tc.a)
+					actualError := p.GrantAccess(ctx, tc.pc, tc.a)
 
 					assert.EqualError(t, actualError, expectedError.Error())
 				})
@@ -1549,7 +1552,7 @@ func TestGrantAccess(t *testing.T) {
 				ID:         "99",
 			}
 
-			actualError := p.GrantAccess(pc, a)
+			actualError := p.GrantAccess(ctx, pc, a)
 
 			assert.Nil(t, actualError)
 		})
@@ -1557,6 +1560,7 @@ func TestGrantAccess(t *testing.T) {
 }
 
 func TestRevokeAccess(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if credentials is invalid", func(t *testing.T) {
 		crypto := new(mocks.Crypto)
 		p := tableau.NewProvider("", crypto)
@@ -1586,7 +1590,7 @@ func TestRevokeAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 		assert.Error(t, actualError)
 	})
 
@@ -1626,7 +1630,7 @@ func TestRevokeAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
@@ -1668,7 +1672,7 @@ func TestRevokeAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.RevokeAccess(pc, a)
+		actualError := p.RevokeAccess(ctx, pc, a)
 
 		assert.EqualError(t, actualError, expectedError.Error())
 	})
@@ -1719,7 +1723,7 @@ func TestRevokeAccess(t *testing.T) {
 				Permissions: []string{"test-permission-config"},
 			}
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
@@ -1776,7 +1780,7 @@ func TestRevokeAccess(t *testing.T) {
 				ID:         "999",
 			}
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 
 			assert.Nil(t, actualError)
 		})
@@ -1828,7 +1832,7 @@ func TestRevokeAccess(t *testing.T) {
 				Permissions: []string{"test-permission-config"},
 			}
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
@@ -1886,7 +1890,7 @@ func TestRevokeAccess(t *testing.T) {
 				ID:         "999",
 			}
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 
 			assert.Nil(t, actualError)
 		})
@@ -1938,7 +1942,7 @@ func TestRevokeAccess(t *testing.T) {
 				Permissions: []string{"test-permission-config"},
 			}
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
@@ -1996,7 +2000,7 @@ func TestRevokeAccess(t *testing.T) {
 				ID:         "99",
 			}
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 
 			assert.Nil(t, actualError)
 		})
@@ -2048,7 +2052,7 @@ func TestRevokeAccess(t *testing.T) {
 				Permissions: []string{"test-permission-config"},
 			}
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
@@ -2106,7 +2110,7 @@ func TestRevokeAccess(t *testing.T) {
 				ID:         "99",
 			}
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 
 			assert.Nil(t, actualError)
 		})
@@ -2158,7 +2162,7 @@ func TestRevokeAccess(t *testing.T) {
 				Permissions: []string{"test-permission-config"},
 			}
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 
 			assert.EqualError(t, actualError, expectedError.Error())
 		})
@@ -2216,7 +2220,7 @@ func TestRevokeAccess(t *testing.T) {
 				ID:         "99",
 			}
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 
 			assert.Nil(t, actualError)
 		})

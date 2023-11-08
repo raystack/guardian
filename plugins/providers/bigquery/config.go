@@ -101,13 +101,13 @@ func NewConfig(pc *domain.ProviderConfig, crypto domain.Crypto) *Config {
 }
 
 // ParseAndValidate validates bigquery config within provider config and make the interface{} config value castable into the expected bigquery config value
-func (c *Config) ParseAndValidate() error {
-	return c.parseAndValidate()
+func (c *Config) ParseAndValidate(ctx context.Context) error {
+	return c.parseAndValidate(ctx)
 }
 
 // EncryptCredentials encrypts the bigquery credentials config
-func (c *Config) EncryptCredentials() error {
-	if err := c.parseAndValidate(); err != nil {
+func (c *Config) EncryptCredentials(ctx context.Context) error {
+	if err := c.parseAndValidate(ctx); err != nil {
 		return err
 	}
 
@@ -124,7 +124,7 @@ func (c *Config) EncryptCredentials() error {
 	return nil
 }
 
-func (c *Config) parseAndValidate() error {
+func (c *Config) parseAndValidate(ctx context.Context) error {
 	if c.valid {
 		return nil
 	}
@@ -154,7 +154,7 @@ func (c *Config) parseAndValidate() error {
 	for _, resource := range c.ProviderConfig.Resources {
 		for _, role := range resource.Roles {
 			for i, permission := range role.Permissions {
-				if permissionConfig, err := c.validatePermission(permission, resource.Type, client); err != nil {
+				if permissionConfig, err := c.validatePermission(ctx, permission, resource.Type, client); err != nil {
 					permissionValidationErrors = append(permissionValidationErrors, err)
 				} else {
 					role.Permissions[i] = permissionConfig
@@ -195,13 +195,12 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 	return &credentials, nil
 }
 
-func (c *Config) validatePermission(value interface{}, resourceType string, client *bigQueryClient) (*Permission, error) {
+func (c *Config) validatePermission(ctx context.Context, value interface{}, resourceType string, client *bigQueryClient) (*Permission, error) {
 	permision, ok := value.(string)
 	if !ok {
 		return nil, ErrInvalidPermissionConfig
 	}
 
-	ctx := context.TODO()
 	if resourceType == ResourceTypeDataset {
 		if !utils.ContainsString([]string{DatasetRoleReader, DatasetRoleWriter, DatasetRoleOwner}, permision) {
 			grantableRoles, err := c.getGrantableRolesForDataset(ctx, client)

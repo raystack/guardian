@@ -13,9 +13,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
+	"github.com/goto/guardian/pkg/log"
 	"github.com/goto/guardian/plugins/providers/bigquery"
 	"github.com/goto/guardian/plugins/providers/bigquery/mocks"
-	"github.com/goto/salt/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -272,6 +272,7 @@ func TestCreateConfig(t *testing.T) {
 }
 
 func TestGetResources(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should error when credentials are invalid", func(t *testing.T) {
 		encryptor := new(mocks.Encryptor)
 		l := log.NewNoop()
@@ -282,7 +283,7 @@ func TestGetResources(t *testing.T) {
 			Credentials: "invalid-creds",
 		}
 
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Nil(t, actualResources)
 		assert.Error(t, actualError)
@@ -360,7 +361,7 @@ func TestGetResources(t *testing.T) {
 				},
 			},
 		}
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(ctx, pc)
 
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
@@ -422,7 +423,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 		expectedResources := append(resources, children...)
-		actualResources, actualError := p.GetResources(pc)
+		actualResources, actualError := p.GetResources(context.Background(), pc)
 
 		assert.Equal(t, expectedResources, actualResources)
 		assert.Nil(t, actualError)
@@ -431,6 +432,7 @@ func TestGetResources(t *testing.T) {
 }
 
 func TestGrantAccess(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			name           string
@@ -494,7 +496,7 @@ func TestGrantAccess(t *testing.T) {
 			pc := tc.providerConfig
 			a := tc.grant
 
-			actualError := p.GrantAccess(pc, a)
+			actualError := p.GrantAccess(ctx, pc, a)
 			assert.EqualError(t, actualError, tc.expectedError.Error())
 		}
 	})
@@ -523,7 +525,7 @@ func TestGrantAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 		assert.Error(t, actualError)
 	})
 
@@ -575,7 +577,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 
 		assert.Equal(t, expectedError, actualError)
 	})
@@ -627,7 +629,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
@@ -683,7 +685,7 @@ func TestGrantAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.GrantAccess(pc, g)
+		actualError := p.GrantAccess(ctx, pc, g)
 
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
@@ -691,6 +693,7 @@ func TestGrantAccess(t *testing.T) {
 }
 
 func TestRevokeAccess(t *testing.T) {
+	ctx := context.Background()
 	t.Run("should return error if Provider Config or Appeal doesn't have required parameters", func(t *testing.T) {
 		testCases := []struct {
 			providerConfig *domain.ProviderConfig
@@ -753,7 +756,7 @@ func TestRevokeAccess(t *testing.T) {
 			pc := tc.providerConfig
 			a := tc.grant
 
-			actualError := p.RevokeAccess(pc, a)
+			actualError := p.RevokeAccess(ctx, pc, a)
 			assert.EqualError(t, actualError, tc.expectedError.Error())
 		}
 	})
@@ -782,7 +785,7 @@ func TestRevokeAccess(t *testing.T) {
 			Role: "test-role",
 		}
 
-		actualError := p.RevokeAccess(pc, g)
+		actualError := p.RevokeAccess(ctx, pc, g)
 		assert.Error(t, actualError)
 	})
 
@@ -834,7 +837,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.RevokeAccess(pc, g)
+		actualError := p.RevokeAccess(ctx, pc, g)
 
 		assert.Equal(t, expectedError, actualError)
 	})
@@ -886,7 +889,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.RevokeAccess(pc, g)
+		actualError := p.RevokeAccess(ctx, pc, g)
 
 		assert.Nil(t, actualError)
 	})
@@ -941,7 +944,7 @@ func TestRevokeAccess(t *testing.T) {
 			Permissions: []string{"VIEWER"},
 		}
 
-		actualError := p.RevokeAccess(pc, g)
+		actualError := p.RevokeAccess(ctx, pc, g)
 
 		assert.Nil(t, actualError)
 		client.AssertExpectations(t)
@@ -1108,7 +1111,7 @@ func (s *BigQueryProviderTestSuite) TestListAccess() {
 		expectedResourcesAccess := domain.MapResourceAccess{}
 		expectedResources := []*domain.Resource{}
 		s.mockBigQueryClient.EXPECT().
-			ListAccess(mock.AnythingOfType("*context.emptyCtx"), expectedResources).
+			ListAccess(mock.MatchedBy(func(ctx context.Context) bool { return true }), expectedResources).
 			Return(expectedResourcesAccess, nil).Once()
 
 		ctx := context.Background()
@@ -1162,12 +1165,13 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 			`resource.type="bigquery_dataset"`,
 			fmt.Sprintf(`protoPayload.methodName=("%s")`, strings.Join(bigquery.BigQueryAuditMetadataMethods, `" OR "`)),
 		}, ` AND `)
+		mockCtx := mock.MatchedBy(func(ctx context.Context) bool { return true })
 		s.mockCloudLoggingClient.EXPECT().
-			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), expectedListLogEntriesFilter, 0).Return(expectedBigQueryActivities, nil).Once()
+			ListLogEntries(mockCtx, expectedListLogEntriesFilter, 0).Return(expectedBigQueryActivities, nil).Once()
 		s.mockBigQueryClient.EXPECT().
-			GetRolePermissions(mock.AnythingOfType("*context.emptyCtx"), "roles/bigquery.dataViewer").Return([]string{"bigquery.datasets.get"}, nil).Once()
+			GetRolePermissions(mockCtx, "roles/bigquery.dataViewer").Return([]string{"bigquery.datasets.get"}, nil).Once()
 		s.mockBigQueryClient.EXPECT().
-			GetRolePermissions(mock.AnythingOfType("*context.emptyCtx"), "roles/bigquery.dataEditor").Return([]string{"bigquery.datasets.get"}, nil).Once()
+			GetRolePermissions(mockCtx, "roles/bigquery.dataEditor").Return([]string{"bigquery.datasets.get"}, nil).Once()
 
 		expectedActivities := []*domain.Activity{
 			{
@@ -1252,7 +1256,7 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 	s.Run("should return error if there is an error on listing log entries", func() {
 		expectedError := errors.New("error")
 		s.mockCloudLoggingClient.EXPECT().
-			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string"), 0).Return(nil, expectedError).Once()
+			ListLogEntries(mock.MatchedBy(func(ctx context.Context) bool { return true }), mock.AnythingOfType("string"), 0).Return(nil, expectedError).Once()
 
 		_, err := s.provider.GetActivities(context.Background(), *s.validProvider, domain.ListActivitiesFilter{})
 
@@ -1263,16 +1267,16 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 
 func (s *BigQueryProviderTestSuite) TestListActivities() {
 	timeNow := time.Now()
-
+	mockCtx := mock.MatchedBy(func(ctx context.Context) bool { return true })
 	s.Run("should return list of activity on success", func() {
 		expectedLogBucket := &logging.LogBucket{
 			RetentionDays: 30,
 		}
 		s.mockCloudLoggingClient.EXPECT().
-			GetLogBucket(mock.AnythingOfType("*context.emptyCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
+			GetLogBucket(mockCtx, fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
 			Return(expectedLogBucket, nil).Once()
 		s.mockBigQueryClient.EXPECT().
-			CheckGrantedPermission(mock.AnythingOfType("*context.emptyCtx"), []string{bigquery.PrivateLogViewerPermission}).
+			CheckGrantedPermission(mockCtx, []string{bigquery.PrivateLogViewerPermission}).
 			Return([]string{bigquery.PrivateLogViewerPermission}, nil).Once()
 		expectedBqActivities := []*bigquery.Activity{
 			{
@@ -1289,7 +1293,7 @@ func (s *BigQueryProviderTestSuite) TestListActivities() {
 			},
 		}
 		s.mockCloudLoggingClient.EXPECT().
-			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string"), 0).
+			ListLogEntries(mockCtx, mock.AnythingOfType("string"), 0).
 			Return(expectedBqActivities, nil).Once()
 
 		expectedActivities := []*domain.Activity{
@@ -1343,7 +1347,7 @@ func (s *BigQueryProviderTestSuite) TestListActivities() {
 
 	s.Run("should return error if specified time range is more than the log bucket's retention period", func() {
 		s.mockCloudLoggingClient.EXPECT().
-			GetLogBucket(mock.AnythingOfType("*context.emptyCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
+			GetLogBucket(mockCtx, fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
 			Return(&logging.LogBucket{
 				RetentionDays: 30,
 			}, nil).Once()
@@ -1359,12 +1363,12 @@ func (s *BigQueryProviderTestSuite) TestListActivities() {
 
 	s.Run("should return error if credentials doesn't have bigquery.privateLogViewer permission", func() {
 		s.mockCloudLoggingClient.EXPECT().
-			GetLogBucket(mock.AnythingOfType("*context.emptyCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
+			GetLogBucket(mockCtx, fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
 			Return(&logging.LogBucket{
 				RetentionDays: 30,
 			}, nil).Once()
 		s.mockBigQueryClient.EXPECT().
-			CheckGrantedPermission(mock.AnythingOfType("*context.emptyCtx"), []string{bigquery.PrivateLogViewerPermission}).
+			CheckGrantedPermission(mockCtx, []string{bigquery.PrivateLogViewerPermission}).
 			Return([]string{}, nil).Once()
 
 		_, err := s.provider.ListActivities(context.Background(), *s.validProvider, domain.ListActivitiesFilter{})
@@ -1397,7 +1401,7 @@ func (s *BigQueryProviderTestSuite) TestCorrelateGrantActivities() {
 
 		expectedUniqueRoles := []string{"role-1", "role-2", "role-3", "role-4"}
 		s.mockBigQueryClient.EXPECT().
-			ListRolePermissions(mock.AnythingOfType("*context.emptyCtx"), expectedUniqueRoles).
+			ListRolePermissions(mock.MatchedBy(func(ctx context.Context) bool { return true }), expectedUniqueRoles).
 			Return(dummyRolePermissions, nil).Once()
 		expectedAssociatedGrants := map[string][]string{
 			"g1": {"a1", "a3", "a4"},
