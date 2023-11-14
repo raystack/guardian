@@ -60,7 +60,7 @@ func listGrantsCommand() *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.ListGrants(cmd.Context(), &guardianv1beta1.ListGrantsRequest{
+			res, err := client.ListGrants(createCtx(cmd), &guardianv1beta1.ListGrantsRequest{
 				Statuses:      statuses,
 				AccountIds:    accountIDs,
 				AccountTypes:  accountTypes,
@@ -130,7 +130,7 @@ func viewGrantCommand(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			res, err := client.GetGrant(cmd.Context(), &guardianv1beta1.GetGrantRequest{
+			res, err := client.GetGrant(createCtx(cmd), &guardianv1beta1.GetGrantRequest{
 				Id: id,
 			})
 			if err != nil {
@@ -173,7 +173,7 @@ func revokeGrantCommand() *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			if _, err := client.RevokeGrant(cmd.Context(), &guardianv1beta1.RevokeGrantRequest{
+			if _, err := client.RevokeGrant(createCtx(cmd), &guardianv1beta1.RevokeGrantRequest{
 				Id:     id,
 				Reason: reason,
 			}); err != nil {
@@ -218,7 +218,7 @@ func bulkRevokeGrantCommand() *cobra.Command {
 			}
 			defer cancel()
 
-			response, err := client.RevokeGrants(cmd.Context(), &guardianv1beta1.RevokeGrantsRequest{
+			response, err := client.RevokeGrants(createCtx(cmd), &guardianv1beta1.RevokeGrantsRequest{
 				AccountIds:    accountIds,
 				ProviderTypes: providerTypes,
 				ProviderUrns:  providerUrns,

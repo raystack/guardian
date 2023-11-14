@@ -23,7 +23,7 @@ func (s *GrpcHandlersSuite) TestListUserApprovals() {
 		s.setup()
 		timeNow := time.Now()
 
-		expectedUser := "test-user"
+		expectedUser := "test@example.com"
 		expectedFilters := &domain.ListApprovalsFilter{
 			CreatedBy: expectedUser,
 			AccountID: "test-account-id",
@@ -119,8 +119,7 @@ func (s *GrpcHandlersSuite) TestListUserApprovals() {
 			Statuses:  []string{"active", "pending"},
 			OrderBy:   []string{"test-order"},
 		}
-		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, expectedUser)
-		res, err := s.grpcServer.ListUserApprovals(ctx, req)
+		res, err := s.grpcServer.ListUserApprovals(s.ctx, req)
 
 		s.NoError(err)
 		s.Equal(expectedResponse, res)
@@ -151,8 +150,7 @@ func (s *GrpcHandlersSuite) TestListUserApprovals() {
 			Return(int64(0), nil).Once()
 
 		req := &guardianv1beta1.ListUserApprovalsRequest{}
-		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "test-user")
-		res, err := s.grpcServer.ListUserApprovals(ctx, req)
+		res, err := s.grpcServer.ListUserApprovals(s.ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)
@@ -169,8 +167,7 @@ func (s *GrpcHandlersSuite) TestListUserApprovals() {
 			Return(int64(0), expectedError).Once()
 
 		req := &guardianv1beta1.ListUserApprovalsRequest{}
-		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "test-user")
-		res, err := s.grpcServer.ListUserApprovals(ctx, req)
+		res, err := s.grpcServer.ListUserApprovals(s.ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)
@@ -195,8 +192,7 @@ func (s *GrpcHandlersSuite) TestListUserApprovals() {
 			Return(int64(1), nil).Once()
 
 		req := &guardianv1beta1.ListUserApprovalsRequest{}
-		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "test-user")
-		res, err := s.grpcServer.ListUserApprovals(ctx, req)
+		res, err := s.grpcServer.ListUserApprovals(s.ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)
@@ -361,7 +357,7 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 		s.setup()
 		timeNow := time.Now()
 
-		expectedUser := "user@example.com"
+		expectedUser := "test@example.com"
 		expectedID := "test-appeal-id"
 		expectedApprovalName := "test-approval-name"
 		expectedAction := "approve"
@@ -463,8 +459,7 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 				Reason: expectedReason,
 			},
 		}
-		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, expectedUser)
-		res, err := s.grpcServer.UpdateApproval(ctx, req)
+		res, err := s.grpcServer.UpdateApproval(s.ctx, req)
 
 		s.NoError(err)
 		s.Equal(expectedResponse, res)
@@ -564,13 +559,11 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 			s.Run(tc.name, func() {
 				s.setup()
 
-				expectedUser := "user@example.com"
 				s.appealService.EXPECT().UpdateApproval(mock.AnythingOfType("*context.valueCtx"), mock.Anything).
 					Return(nil, tc.expectedError).Once()
 
 				req := &guardianv1beta1.UpdateApprovalRequest{}
-				ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, expectedUser)
-				res, err := s.grpcServer.UpdateApproval(ctx, req)
+				res, err := s.grpcServer.UpdateApproval(s.ctx, req)
 
 				s.Equal(tc.expectedStatusCode, status.Code(err))
 				s.Nil(res)
@@ -579,7 +572,7 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 		}
 	})
 
-	s.Run("should return unathenticated error if request is not authenticated", func() {
+	s.Run("should return unauthenticated error if request is not authenticated", func() {
 		s.setup()
 
 		invalidAppeal := &domain.Appeal{
@@ -591,10 +584,10 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 			Return(invalidAppeal, nil).Once()
 
 		req := &guardianv1beta1.UpdateApprovalRequest{}
-		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "user@example.com")
+		ctx := context.WithValue(context.Background(), authEmailTestContextKey{}, "")
 		res, err := s.grpcServer.UpdateApproval(ctx, req)
 
-		s.Equal(codes.Internal, status.Code(err))
+		s.Equal(codes.Unauthenticated, status.Code(err))
 		s.Nil(res)
 		s.approvalService.AssertExpectations(s.T())
 	})
@@ -635,7 +628,7 @@ func (s *GrpcHandlersSuite) TestAddApprover() {
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		}
-		s.appealService.EXPECT().AddApprover(mock.AnythingOfType("*context.emptyCtx"), appealID, approvalID, email).Return(expectedAppeal, nil).Once()
+		s.appealService.EXPECT().AddApprover(mock.AnythingOfType("context.backgroundCtx"), appealID, approvalID, email).Return(expectedAppeal, nil).Once()
 		expectedResponse := &guardianv1beta1.AddApproverResponse{
 			Appeal: &guardianv1beta1.Appeal{
 				Id:            expectedAppeal.ID,
@@ -760,7 +753,7 @@ func (s *GrpcHandlersSuite) TestDeleteApprover() {
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		}
-		s.appealService.EXPECT().DeleteApprover(mock.AnythingOfType("*context.emptyCtx"), appealID, approvalID, email).Return(expectedAppeal, nil).Once()
+		s.appealService.EXPECT().DeleteApprover(mock.AnythingOfType("context.backgroundCtx"), appealID, approvalID, email).Return(expectedAppeal, nil).Once()
 		expectedResponse := &guardianv1beta1.DeleteApproverResponse{
 			Appeal: &guardianv1beta1.Appeal{
 				Id:            expectedAppeal.ID,

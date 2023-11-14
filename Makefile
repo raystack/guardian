@@ -3,7 +3,7 @@ COMMIT := $(shell git rev-parse --short HEAD)
 TAG := "$(shell git rev-list --tags --max-count=1)"
 VERSION := "$(shell git describe --tags ${TAG})-next"
 BUILD_DIR=dist
-PROTON_COMMIT := "17305c2660e06ff9c82c1b6130799a703e4e543b"
+PROTON_COMMIT := "0568961fb6571a7a9889d5f16eb896e371e39b8e"
 
 .PHONY: all build clean test tidy vet proto setup format generate
 
@@ -75,7 +75,7 @@ proto: ## Generate the protobuf files
 setup: ## Install all the dependencies
 	@echo "Installing dependencies..."
 	go mod tidy
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.31.0
 	go install github.com/golang/protobuf/proto@v1.5.2
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2
 	go install google.golang.org/grpc@v1.40.0

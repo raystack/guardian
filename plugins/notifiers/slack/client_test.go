@@ -156,7 +156,6 @@ func (s *ClientTestSuite) TestGetSlackWorkspaceForUser() {
 		_, actualErr := s.notifier.GetSlackWorkspaceForUser(userEmail)
 		s.Equal(expectedErr, actualErr)
 	})
-
 }
 
 func TestClient(t *testing.T) {

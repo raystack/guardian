@@ -423,7 +423,7 @@ func TestGrantAccess(t *testing.T) {
 			ResourceName:      "projects/resource-name/locations/us",
 		}
 		policy := &dataplex.Policy{}
-		client.On("GrantPolicyAccess", mock.AnythingOfType("*context.emptyCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(expectedError).Once()
+		client.On("GrantPolicyAccess", mock.AnythingOfType("context.backgroundCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(expectedError).Once()
 
 		pc := &domain.ProviderConfig{
 			Type:        "dataplex",
@@ -480,7 +480,7 @@ func TestGrantAccess(t *testing.T) {
 			DisplayName: "",
 			Description: "",
 		}
-		client.On("GrantPolicyAccess", mock.AnythingOfType("*context.emptyCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(dataplex.ErrPermissionAlreadyExists).Once()
+		client.On("GrantPolicyAccess", mock.AnythingOfType("context.backgroundCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(dataplex.ErrPermissionAlreadyExists).Once()
 
 		pc := &domain.ProviderConfig{
 			Type:        "dataplex",
@@ -635,7 +635,7 @@ func TestRevokeAccess(t *testing.T) {
 		}
 		policy := &dataplex.Policy{}
 
-		client.On("RevokePolicyAccess", mock.AnythingOfType("*context.emptyCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(expectedError).Once()
+		client.On("RevokePolicyAccess", mock.AnythingOfType("context.backgroundCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(expectedError).Once()
 
 		pc := &domain.ProviderConfig{
 			Type:        "dataplex",
@@ -688,7 +688,7 @@ func TestRevokeAccess(t *testing.T) {
 		}
 		policy := &dataplex.Policy{}
 
-		client.On("RevokePolicyAccess", mock.AnythingOfType("*context.emptyCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(dataplex.ErrPermissionNotFound).Once()
+		client.On("RevokePolicyAccess", mock.AnythingOfType("context.backgroundCtx"), policy, "user:test@email.com", "roles/datacatalog.categoryFineGrainedReader").Return(dataplex.ErrPermissionNotFound).Once()
 
 		pc := &domain.ProviderConfig{
 			Type:        "dataplex",

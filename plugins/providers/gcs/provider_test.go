@@ -866,7 +866,7 @@ func TestListAccess(t *testing.T) {
 	dummyResources := []*domain.Resource{}
 	expectedResourcesAccess := domain.MapResourceAccess{}
 	client.EXPECT().
-		ListAccess(mock.AnythingOfType("*context.emptyCtx"), dummyResources).
+		ListAccess(mock.AnythingOfType("context.backgroundCtx"), dummyResources).
 		Return(expectedResourcesAccess, nil).Once()
 
 	actualResourcesAccess, err := p.ListAccess(context.Background(), *dummyProviderConfig, dummyResources)

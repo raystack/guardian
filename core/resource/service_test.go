@@ -36,7 +36,7 @@ func (s *ServiceTestSuite) SetupTest() {
 func (s *ServiceTestSuite) TestFind() {
 	s.Run("should return nil and error if got error from repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(nil, expectedError).Once()
+		s.mockRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), mock.Anything).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.Find(context.Background(), domain.ListResourcesFilter{})
 
@@ -47,7 +47,7 @@ func (s *ServiceTestSuite) TestFind() {
 	s.Run("should return list of records on success", func() {
 		expectedFilters := domain.ListResourcesFilter{}
 		expectedResult := []*domain.Resource{}
-		s.mockRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx"), expectedFilters).Return(expectedResult, nil).Once()
+		s.mockRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), expectedFilters).Return(expectedResult, nil).Once()
 
 		actualResult, actualError := s.service.Find(context.Background(), expectedFilters)
 
@@ -60,7 +60,7 @@ func (s *ServiceTestSuite) TestFind() {
 func (s *ServiceTestSuite) TestBulkUpsert() {
 	s.Run("should return error if got error from repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockRepository.EXPECT().BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(expectedError).Once()
+		s.mockRepository.EXPECT().BulkUpsert(mock.AnythingOfType("context.backgroundCtx"), mock.Anything).Return(expectedError).Once()
 		s.mockAuditLogger.EXPECT().Log(mock.Anything, resource.AuditKeyResoruceBulkUpsert, mock.Anything).Return(nil)
 
 		actualError := s.service.BulkUpsert(context.Background(), []*domain.Resource{})
@@ -94,7 +94,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 			}
 			expectedError := tc.expectedError
 			s.mockRepository.EXPECT().
-				GetOne(mock.AnythingOfType("*context.emptyCtx"), expectedResource.ID).
+				GetOne(mock.AnythingOfType("context.backgroundCtx"), expectedResource.ID).
 				Return(tc.expectedExistingResource, tc.expectedRepositoryError).Once()
 
 			actualError := s.service.Update(context.Background(), expectedResource)
@@ -105,9 +105,9 @@ func (s *ServiceTestSuite) TestUpdate() {
 
 	s.Run("should return error if got error from repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+		s.mockRepository.EXPECT().GetOne(mock.AnythingOfType("context.backgroundCtx"), mock.Anything).
 			Return(&domain.Resource{}, nil).Once()
-		s.mockRepository.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+		s.mockRepository.EXPECT().Update(mock.AnythingOfType("context.backgroundCtx"), mock.Anything).
 			Return(expectedError).Once()
 
 		actualError := s.service.Update(context.Background(), &domain.Resource{})
@@ -207,8 +207,8 @@ func (s *ServiceTestSuite) TestUpdate() {
 
 		for _, tc := range testCases {
 			s.Run(tc.name, func() {
-				s.mockRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), tc.resourceUpdatePayload.ID).Return(tc.existingResource, nil).Once()
-				s.mockRepository.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Resource")).
+				s.mockRepository.EXPECT().GetOne(mock.AnythingOfType("context.backgroundCtx"), tc.resourceUpdatePayload.ID).Return(tc.existingResource, nil).Once()
+				s.mockRepository.EXPECT().Update(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*domain.Resource")).
 					Run(func(_a0 context.Context, updateResourcePayload *domain.Resource) {
 						s.Empty(cmp.Diff(tc.expectedUpdatedValues, updateResourcePayload, cmpopts.IgnoreFields(domain.Resource{}, "UpdatedAt", "CreatedAt")))
 					}).Return(nil).Once()
@@ -229,7 +229,7 @@ func (s *ServiceTestSuite) TestGet() {
 			expectedResource := &domain.Resource{
 				ID: "1",
 			}
-			s.mockRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), expectedResource.ID).
+			s.mockRepository.EXPECT().GetOne(mock.AnythingOfType("context.backgroundCtx"), expectedResource.ID).
 				Return(expectedResource, nil).Once()
 
 			actualResource, actualError := s.service.Get(context.Background(), &domain.ResourceIdentifier{ID: expectedResource.ID})
@@ -246,7 +246,7 @@ func (s *ServiceTestSuite) TestGet() {
 				Type:         "test-type",
 				URN:          "test-urn",
 			}
-			s.mockRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx"), domain.ListResourcesFilter{
+			s.mockRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), domain.ListResourcesFilter{
 				ProviderType: "test-provider",
 				ProviderURN:  "test-provider-urn",
 				ResourceType: "test-type",
@@ -268,7 +268,7 @@ func (s *ServiceTestSuite) TestGet() {
 
 	s.Run("should return not found if resource not found", func() {
 		expectedError := resource.ErrRecordNotFound
-		s.mockRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListResourcesFilter")).
+		s.mockRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("domain.ListResourcesFilter")).
 			Return([]*domain.Resource{}, nil).Once()
 
 		actualResource, actualError := s.service.Get(context.Background(), &domain.ResourceIdentifier{
@@ -287,7 +287,7 @@ func (s *ServiceTestSuite) TestDelete() {
 	s.Run("should delete resource", func() {
 		expectedResourceID := "test-resource-id"
 
-		s.mockRepository.EXPECT().Delete(mock.AnythingOfType("*context.emptyCtx"), expectedResourceID).
+		s.mockRepository.EXPECT().Delete(mock.AnythingOfType("context.backgroundCtx"), expectedResourceID).
 			Return(nil).Once()
 		s.mockAuditLogger.EXPECT().Log(mock.Anything, resource.AuditKeyResourceDelete, mock.Anything).Return(nil)
 
@@ -300,7 +300,7 @@ func (s *ServiceTestSuite) TestDelete() {
 		expectedResourceID := "test-resource-id"
 		expectedError := errors.New("test-error")
 
-		s.mockRepository.EXPECT().Delete(mock.AnythingOfType("*context.emptyCtx"), expectedResourceID).
+		s.mockRepository.EXPECT().Delete(mock.AnythingOfType("context.backgroundCtx"), expectedResourceID).
 			Return(expectedError).Once()
 
 		actualError := s.service.Delete(context.Background(), expectedResourceID)
@@ -313,7 +313,7 @@ func (s *ServiceTestSuite) TestBatchDelete() {
 	s.Run("should delete resources", func() {
 		expectedResourceIDs := []string{"test-resource-id"}
 
-		s.mockRepository.EXPECT().BatchDelete(mock.AnythingOfType("*context.emptyCtx"), expectedResourceIDs).
+		s.mockRepository.EXPECT().BatchDelete(mock.AnythingOfType("context.backgroundCtx"), expectedResourceIDs).
 			Return(nil).Once()
 		s.mockAuditLogger.EXPECT().Log(mock.Anything, resource.AuditKeyResourceBatchDelete, mock.Anything).Return(nil)
 
@@ -326,7 +326,7 @@ func (s *ServiceTestSuite) TestBatchDelete() {
 		expectedResourceIDs := []string{"test-resource-id"}
 		expectedError := errors.New("test-error")
 
-		s.mockRepository.EXPECT().BatchDelete(mock.AnythingOfType("*context.emptyCtx"), expectedResourceIDs).
+		s.mockRepository.EXPECT().BatchDelete(mock.AnythingOfType("context.backgroundCtx"), expectedResourceIDs).
 			Return(expectedError).Once()
 
 		actualError := s.service.BatchDelete(context.Background(), expectedResourceIDs)

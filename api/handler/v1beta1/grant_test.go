@@ -191,7 +191,7 @@ func (s *GrpcHandlersSuite) TestGetGrant() {
 			},
 		}
 		s.grantService.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), grantID).
+			GetByID(mock.AnythingOfType("context.backgroundCtx"), grantID).
 			Return(dummyGrant, nil).Once()
 
 		req := &guardianv1beta1.GetGrantRequest{Id: grantID}
@@ -225,7 +225,7 @@ func (s *GrpcHandlersSuite) TestGetGrant() {
 				s.setup()
 
 				s.grantService.EXPECT().
-					GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
+					GetByID(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string")).
 					Return(nil, tc.expectedError).Once()
 
 				req := &guardianv1beta1.GetGrantRequest{Id: "test-id"}
@@ -249,7 +249,7 @@ func (s *GrpcHandlersSuite) TestGetGrant() {
 			},
 		}
 		s.grantService.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
+			GetByID(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string")).
 			Return(expectedGrant, nil).Once()
 
 		req := &guardianv1beta1.GetGrantRequest{Id: "test-id"}
@@ -271,7 +271,7 @@ func (s *GrpcHandlersSuite) TestUpdateGrant() {
 		}
 		now := time.Now()
 		s.grantService.EXPECT().
-			Update(mock.AnythingOfType("*context.emptyCtx"), expectedGrant).
+			Update(mock.AnythingOfType("context.backgroundCtx"), expectedGrant).
 			Run(func(_a0 context.Context, g *domain.Grant) {
 				g.UpdatedAt = now
 			}).
@@ -317,7 +317,7 @@ func (s *GrpcHandlersSuite) TestUpdateGrant() {
 				s.setup()
 
 				s.grantService.EXPECT().
-					Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Grant")).
+					Update(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*domain.Grant")).
 					Return(tc.expectedError).Once()
 
 				req := &guardianv1beta1.UpdateGrantRequest{
@@ -390,7 +390,7 @@ func (s *GrpcHandlersSuite) TestImportFromProvider() {
 			},
 		}
 		s.grantService.EXPECT().
-			ImportFromProvider(mock.AnythingOfType("*context.emptyCtx"), grant.ImportFromProviderCriteria{
+			ImportFromProvider(mock.AnythingOfType("context.backgroundCtx"), grant.ImportFromProviderCriteria{
 				ProviderID:    "test-provider-id",
 				ResourceIDs:   []string{"test-resource-id"},
 				ResourceTypes: []string{"test-resource-type"},

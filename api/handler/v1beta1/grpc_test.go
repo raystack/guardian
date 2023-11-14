@@ -1,7 +1,10 @@
 package v1beta1_test
 
 import (
+	"context"
 	"testing"
+
+	"github.com/raystack/guardian/pkg/auth"
 
 	"github.com/raystack/guardian/api/handler/v1beta1"
 	"github.com/raystack/guardian/api/handler/v1beta1/mocks"
@@ -22,6 +25,7 @@ type GrpcHandlersSuite struct {
 	grantService     *mocks.GrantService
 	namespaceService *mocks.NamespaceService
 	grpcServer       *v1beta1.GRPCServer
+	ctx              context.Context
 }
 
 func TestGrpcHandler(t *testing.T) {
@@ -47,6 +51,7 @@ func (s *GrpcHandlersSuite) setup() {
 		s.grantService,
 		s.namespaceService,
 		v1beta1.NewAdapter(),
-		authEmailTestContextKey{},
+		auth.AuthenticatedUserEmailContextKey{},
 	)
+	s.ctx = auth.WrapEmailInCtx(context.Background(), "test@example.com")
 }

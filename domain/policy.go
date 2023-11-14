@@ -284,12 +284,14 @@ type Requirement struct {
 type Policy struct {
 	ID           string              `json:"id" yaml:"id" validate:"required"`
 	Version      uint                `json:"version" yaml:"version" validate:"required"`
+	Title        string              `json:"title" yaml:"title"`
 	Description  string              `json:"description" yaml:"description"`
 	Steps        []*Step             `json:"steps" yaml:"steps" validate:"required,min=1,dive"`
 	AppealConfig *PolicyAppealConfig `json:"appeal_config" yaml:"appeal_config" validate:"omitempty,dive"`
 	Requirements []*Requirement      `json:"requirements,omitempty" yaml:"requirements,omitempty" validate:"omitempty,min=1,dive"`
 	Labels       map[string]string   `json:"labels,omitempty" yaml:"labels,omitempty"`
 	IAM          *IAMConfig          `json:"iam,omitempty" yaml:"iam,omitempty" validate:"omitempty,dive"`
+	CreatedBy    string              `json:"created_by" yaml:"created_by"`
 	CreatedAt    time.Time           `json:"created_at,omitempty" yaml:"created_at,omitempty"`
 	UpdatedAt    time.Time           `json:"updated_at,omitempty" yaml:"updated_at,omitempty"`
 }

@@ -3,6 +3,8 @@ package cli
 import (
 	"context"
 	"errors"
+	"fmt"
+	"google.golang.org/grpc/metadata"
 	"time"
 
 	guardianv1beta1 "github.com/raystack/guardian/api/proto/raystack/guardian/v1beta1"
@@ -21,6 +23,15 @@ func createConnection(ctx context.Context, host string) (*grpc.ClientConn, error
 	}
 
 	return grpc.DialContext(ctx, host, opts...)
+}
+
+func createCtx(cmd *cobra.Command) context.Context {
+	bearerToken, err := cmd.Flags().GetString("bearer")
+	if err == nil {
+		md := metadata.New(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", bearerToken)})
+		return metadata.NewOutgoingContext(cmd.Context(), md)
+	}
+	return cmd.Context()
 }
 
 func createClient(cmd *cobra.Command) (guardianv1beta1.GuardianServiceClient, func(), error) {

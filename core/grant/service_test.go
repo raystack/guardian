@@ -57,7 +57,7 @@ func (s *ServiceTestSuite) TestList() {
 		filter := domain.ListGrantsFilter{}
 		expectedGrants := []domain.Grant{}
 		s.mockRepository.EXPECT().
-			List(mock.AnythingOfType("*context.emptyCtx"), filter).
+			List(mock.AnythingOfType("context.backgroundCtx"), filter).
 			Return(expectedGrants, nil).Once()
 
 		grants, err := s.service.List(context.Background(), filter)
@@ -72,7 +72,7 @@ func (s *ServiceTestSuite) TestList() {
 
 		expectedError := errors.New("unexpected error")
 		s.mockRepository.EXPECT().
-			List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
+			List(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
 			Return(nil, expectedError).Once()
 
 		grants, err := s.service.List(context.Background(), domain.ListGrantsFilter{})
@@ -90,7 +90,7 @@ func (s *ServiceTestSuite) TestGetByID() {
 		id := uuid.New().String()
 		expectedGrant := &domain.Grant{}
 		s.mockRepository.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), id).
+			GetByID(mock.AnythingOfType("context.backgroundCtx"), id).
 			Return(expectedGrant, nil).
 			Once()
 
@@ -118,7 +118,7 @@ func (s *ServiceTestSuite) TestGetByID() {
 
 		expectedError := errors.New("unexpected error")
 		s.mockRepository.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
+			GetByID(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string")).
 			Return(nil, expectedError).Once()
 
 		grant, err := s.service.GetByID(context.Background(), "test-id")
@@ -163,15 +163,15 @@ func (s *ServiceTestSuite) TestUpdate() {
 		expectedUpdatedGrant.UpdatedAt = time.Now()
 
 		s.mockRepository.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), id).
+			GetByID(mock.AnythingOfType("context.backgroundCtx"), id).
 			Return(existingGrant, nil).Once()
 		s.mockRepository.EXPECT().
-			Update(mock.AnythingOfType("*context.emptyCtx"), expectedUpdateParam).
+			Update(mock.AnythingOfType("context.backgroundCtx"), expectedUpdateParam).
 			Return(nil).Run(func(_a0 context.Context, g *domain.Grant) {
 			g.UpdatedAt = time.Now()
 		}).Once()
 		s.mockAuditLogger.EXPECT().
-			Log(mock.AnythingOfType("*context.emptyCtx"), grant.AuditKeyUpdate, mock.AnythingOfType("map[string]interface {}")).Return(nil).Once()
+			Log(mock.AnythingOfType("context.backgroundCtx"), grant.AuditKeyUpdate, mock.AnythingOfType("map[string]interface {}")).Return(nil).Once()
 		notificationMessage := domain.NotificationMessage{
 			Type: domain.NotificationTypeGrantOwnerChanged,
 			Variables: map[string]interface{}{
@@ -221,7 +221,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 		}
 
 		s.mockRepository.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), id).
+			GetByID(mock.AnythingOfType("context.backgroundCtx"), id).
 			Return(existingGrant, nil).Once()
 
 		actualError := s.service.Update(context.Background(), updatePayload)
@@ -246,10 +246,10 @@ func (s *ServiceTestSuite) TestRevoke() {
 		s.setup()
 
 		s.mockRepository.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), id).
+			GetByID(mock.AnythingOfType("context.backgroundCtx"), id).
 			Return(expectedGrantDetails, nil).Once()
 		s.mockRepository.EXPECT().
-			Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Grant")).
+			Update(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*domain.Grant")).
 			Run(func(_a0 context.Context, _a1 *domain.Grant) {
 				s.Equal(id, _a1.ID)
 				s.Equal(actor, _a1.RevokedBy)
@@ -258,7 +258,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 			}).
 			Return(nil).Once()
 		s.mockProviderService.EXPECT().
-			RevokeAccess(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.Grant")).
+			RevokeAccess(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("domain.Grant")).
 			Run(func(_a0 context.Context, _a1 domain.Grant) {
 				s.Equal(id, _a1.ID)
 				s.Equal(expectedGrantDetails.AccountID, _a1.AccountID)
@@ -287,7 +287,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 			}}).
 			Return(nil).Once()
 		s.mockAuditLogger.EXPECT().
-			Log(mock.AnythingOfType("*context.emptyCtx"), grant.AuditKeyRevoke, map[string]interface{}{
+			Log(mock.AnythingOfType("context.backgroundCtx"), grant.AuditKeyRevoke, map[string]interface{}{
 				"grant_id": id,
 				"reason":   reason,
 			}).
@@ -308,10 +308,10 @@ func (s *ServiceTestSuite) TestRevoke() {
 		s.setup()
 
 		s.mockRepository.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), id).
+			GetByID(mock.AnythingOfType("context.backgroundCtx"), id).
 			Return(expectedGrantDetails, nil).Once()
 		s.mockRepository.EXPECT().
-			Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Grant")).
+			Update(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*domain.Grant")).
 			Run(func(_a0 context.Context, _a1 *domain.Grant) {
 				s.Equal(id, _a1.ID)
 				s.Equal(actor, _a1.RevokedBy)
@@ -321,7 +321,7 @@ func (s *ServiceTestSuite) TestRevoke() {
 			Return(nil).Once()
 
 		s.mockAuditLogger.EXPECT().
-			Log(mock.AnythingOfType("*context.emptyCtx"), grant.AuditKeyRevoke, map[string]interface{}{
+			Log(mock.AnythingOfType("context.backgroundCtx"), grant.AuditKeyRevoke, map[string]interface{}{
 				"grant_id": id,
 				"reason":   reason,
 			}).
@@ -377,12 +377,12 @@ func (s *ServiceTestSuite) TestBulkRevoke() {
 		}
 
 		s.mockRepository.EXPECT().
-			List(mock.AnythingOfType("*context.emptyCtx"), expectedListGrantsFilter).
+			List(mock.AnythingOfType("context.backgroundCtx"), expectedListGrantsFilter).
 			Return(expectedGrants, nil).Once()
 		for _, g := range expectedGrants {
 			grant := g
 			s.mockProviderService.EXPECT().
-				RevokeAccess(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.Grant")).
+				RevokeAccess(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("domain.Grant")).
 				Run(func(_a0 context.Context, _a1 domain.Grant) {
 					s.Equal(grant.ID, _a1.ID)
 					s.Equal(grant.AccountID, _a1.AccountID)
@@ -392,7 +392,7 @@ func (s *ServiceTestSuite) TestBulkRevoke() {
 				Return(nil).Once()
 
 			s.mockRepository.EXPECT().
-				Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Grant")).
+				Update(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*domain.Grant")).
 				Run(func(_a0 context.Context, _a1 *domain.Grant) {
 					s.Equal(grant.ID, _a1.ID)
 					s.Equal(actor, _a1.RevokedBy)
@@ -848,17 +848,17 @@ func (s *ServiceTestSuite) TestImportFromProvider() {
 				s.setup()
 
 				s.mockProviderService.EXPECT().
-					GetByID(mock.AnythingOfType("*context.emptyCtx"), "test-provider-id").
+					GetByID(mock.AnythingOfType("context.backgroundCtx"), "test-provider-id").
 					Return(&tc.provider, nil).Once()
 				expectedListResourcesFilter := domain.ListResourcesFilter{
 					ProviderType: "test-provider-type",
 					ProviderURN:  "test-provider-urn",
 				}
 				s.mockResourceService.EXPECT().
-					Find(mock.AnythingOfType("*context.emptyCtx"), expectedListResourcesFilter).
+					Find(mock.AnythingOfType("context.backgroundCtx"), expectedListResourcesFilter).
 					Return(dummyResources, nil).Once()
 				s.mockProviderService.EXPECT().
-					ListAccess(mock.AnythingOfType("*context.emptyCtx"), tc.provider, dummyResources).
+					ListAccess(mock.AnythingOfType("context.backgroundCtx"), tc.provider, dummyResources).
 					Return(tc.importedGrants, nil).Once()
 				expectedListGrantsFilter := domain.ListGrantsFilter{
 					ProviderTypes: []string{"test-provider-type"},
@@ -866,15 +866,15 @@ func (s *ServiceTestSuite) TestImportFromProvider() {
 					Statuses:      []string{string(domain.GrantStatusActive)},
 				}
 				s.mockRepository.EXPECT().
-					List(mock.AnythingOfType("*context.emptyCtx"), expectedListGrantsFilter).
+					List(mock.AnythingOfType("context.backgroundCtx"), expectedListGrantsFilter).
 					Return(tc.existingGrants, nil).Once()
 
 				s.mockRepository.EXPECT().
-					BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("[]*domain.Grant")).
+					BulkUpsert(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("[]*domain.Grant")).
 					Return(nil).Once()
 
 				s.mockRepository.EXPECT().
-					BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), tc.expectedDeactivatedGrants).
+					BulkUpsert(mock.AnythingOfType("context.backgroundCtx"), tc.expectedDeactivatedGrants).
 					Return(nil).Once()
 
 				newGrants, err := s.service.ImportFromProvider(context.Background(), grant.ImportFromProviderCriteria{
@@ -943,7 +943,7 @@ func (s *ServiceTestSuite) TestDormancyCheck() {
 		}
 
 		s.mockProviderService.EXPECT().
-			GetByID(mock.AnythingOfType("*context.emptyCtx"), dummyProvider.ID).
+			GetByID(mock.AnythingOfType("context.backgroundCtx"), dummyProvider.ID).
 			Return(dummyProvider, nil).Once()
 		expectedListGrantsFilter := domain.ListGrantsFilter{
 			Statuses:      []string{string(domain.GrantStatusActive)},
@@ -952,7 +952,7 @@ func (s *ServiceTestSuite) TestDormancyCheck() {
 			CreatedAtLte:  timeNow.Add(-dormancyCheckCriteria.Period),
 		}
 		s.mockRepository.EXPECT().
-			List(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
+			List(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("domain.ListGrantsFilter")).
 			Run(func(_a0 context.Context, f domain.ListGrantsFilter) {
 				s.Empty(cmp.Diff(expectedListGrantsFilter, f, cmpopts.EquateApproxTime(time.Second)))
 			}).
@@ -963,7 +963,7 @@ func (s *ServiceTestSuite) TestDormancyCheck() {
 			TimestampGte: &timestampGte,
 		}
 		s.mockProviderService.EXPECT().
-			ListActivities(mock.AnythingOfType("*context.emptyCtx"), *dummyProvider, mock.AnythingOfType("domain.ListActivitiesFilter")).
+			ListActivities(mock.AnythingOfType("context.backgroundCtx"), *dummyProvider, mock.AnythingOfType("domain.ListActivitiesFilter")).
 			Run(func(_a0 context.Context, _a1 domain.Provider, f domain.ListActivitiesFilter) {
 				s.Empty(cmp.Diff(expectedListActivitiesFilter, f,
 					cmpopts.EquateApproxTime(time.Second),
@@ -972,10 +972,10 @@ func (s *ServiceTestSuite) TestDormancyCheck() {
 			}).
 			Return(dummyActivities, nil).Once()
 		s.mockProviderService.EXPECT().
-			CorrelateGrantActivities(mock.AnythingOfType("*context.emptyCtx"), *dummyProvider, mock.AnythingOfType("[]*domain.Grant"), dummyActivities).
+			CorrelateGrantActivities(mock.AnythingOfType("context.backgroundCtx"), *dummyProvider, mock.AnythingOfType("[]*domain.Grant"), dummyActivities).
 			Return(nil).Once()
 		s.mockRepository.EXPECT().
-			BulkUpsert(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("[]*domain.Grant")).
+			BulkUpsert(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("[]*domain.Grant")).
 			Run(func(_a0 context.Context, grants []*domain.Grant) {
 				s.Empty(cmp.Diff(expectedUpdatedGrants, grants,
 					cmpopts.EquateApproxTime(time.Second),
@@ -994,7 +994,7 @@ func (s *ServiceTestSuite) TestGetGrantsTotalCount() {
 	s.Run("should return error if got error from repository", func() {
 		expectedError := errors.New("repository error")
 		s.mockRepository.EXPECT().
-			GetGrantsTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			GetGrantsTotalCount(mock.AnythingOfType("context.backgroundCtx"), mock.Anything).
 			Return(0, expectedError).Once()
 
 		actualCount, actualError := s.service.GetGrantsTotalCount(context.Background(), domain.ListGrantsFilter{})
@@ -1006,7 +1006,7 @@ func (s *ServiceTestSuite) TestGetGrantsTotalCount() {
 	s.Run("should return Grants count from repository", func() {
 		expectedCount := int64(1)
 		s.mockRepository.EXPECT().
-			GetGrantsTotalCount(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).
+			GetGrantsTotalCount(mock.AnythingOfType("context.backgroundCtx"), mock.Anything).
 			Return(expectedCount, nil).Once()
 
 		actualCount, actualError := s.service.GetGrantsTotalCount(context.Background(), domain.ListGrantsFilter{})

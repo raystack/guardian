@@ -77,7 +77,7 @@ func listPoliciesCmd() *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.ListPolicies(cmd.Context(), &guardianv1beta1.ListPoliciesRequest{})
+			res, err := client.ListPolicies(createCtx(cmd), &guardianv1beta1.ListPoliciesRequest{})
 			if err != nil {
 				return err
 			}
@@ -149,7 +149,7 @@ func getPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 				return err
 			}
 
-			res, err := client.GetPolicy(cmd.Context(), &guardianv1beta1.GetPolicyRequest{
+			res, err := client.GetPolicy(createCtx(cmd), &guardianv1beta1.GetPolicyRequest{
 				Id:      id,
 				Version: uint32(version),
 			})
@@ -157,7 +157,7 @@ func getPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 				return err
 			}
 
-			p := adapter.FromPolicyProto(res.GetPolicy())
+			p := adapter.FromPolicyProto(res.GetPolicy(), "")
 
 			spinner.Stop()
 
@@ -210,7 +210,7 @@ func createPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.CreatePolicy(cmd.Context(), &guardianv1beta1.CreatePolicyRequest{
+			res, err := client.CreatePolicy(createCtx(cmd), &guardianv1beta1.CreatePolicyRequest{
 				Policy: policyProto,
 				DryRun: dryRun,
 			})
@@ -276,7 +276,7 @@ func updatePolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			defer cancel()
 
 			policyID := policyProto.GetId()
-			_, err = client.UpdatePolicy(cmd.Context(), &guardianv1beta1.UpdatePolicyRequest{
+			_, err = client.UpdatePolicy(createCtx(cmd), &guardianv1beta1.UpdatePolicyRequest{
 				Id:     policyID,
 				Policy: policyProto,
 				DryRun: dryRun,
@@ -377,7 +377,7 @@ func applyPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			defer cancel()
 
 			policyID := policyProto.GetId()
-			_, err = client.GetPolicy(cmd.Context(), &guardianv1beta1.GetPolicyRequest{
+			_, err = client.GetPolicy(createCtx(cmd), &guardianv1beta1.GetPolicyRequest{
 				Id: policyID,
 			})
 			policyExists := true
@@ -390,7 +390,7 @@ func applyPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			}
 
 			if policyExists {
-				res, err := client.UpdatePolicy(cmd.Context(), &guardianv1beta1.UpdatePolicyRequest{
+				res, err := client.UpdatePolicy(createCtx(cmd), &guardianv1beta1.UpdatePolicyRequest{
 					Id:     policyID,
 					Policy: policyProto,
 				})
@@ -401,7 +401,7 @@ func applyPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 				fmt.Printf("Policy updated to version: %v\n", res.GetPolicy().GetVersion())
 			} else {
-				res, err := client.CreatePolicy(cmd.Context(), &guardianv1beta1.CreatePolicyRequest{
+				res, err := client.CreatePolicy(createCtx(cmd), &guardianv1beta1.CreatePolicyRequest{
 					Policy: policyProto,
 				})
 				if err != nil {
@@ -458,14 +458,14 @@ func planPolicyCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			defer cancel()
 
 			policyID := policyProto.GetId()
-			res, err := client.GetPolicy(cmd.Context(), &guardianv1beta1.GetPolicyRequest{
+			res, err := client.GetPolicy(createCtx(cmd), &guardianv1beta1.GetPolicyRequest{
 				Id: policyID,
 			})
 			if err != nil {
 				return err
 			}
 
-			existingPolicy := adapter.FromPolicyProto(res.GetPolicy())
+			existingPolicy := adapter.FromPolicyProto(res.GetPolicy(), "")
 			if existingPolicy != nil {
 				newPolicy.Version = existingPolicy.Version + 1
 				newPolicy.CreatedAt = existingPolicy.CreatedAt
