@@ -68,7 +68,7 @@ func listAppealsCommand() *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.ListAppeals(cmd.Context(), &guardianv1beta1.ListAppealsRequest{
+			res, err := client.ListAppeals(createCtx(cmd), &guardianv1beta1.ListAppealsRequest{
 				Statuses:  statuses,
 				Role:      role,
 				AccountId: accountID,
@@ -135,7 +135,7 @@ func createAppealCommand() *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.CreateAppeal(cmd.Context(), &guardianv1beta1.CreateAppealRequest{
+			res, err := client.CreateAppeal(createCtx(cmd), &guardianv1beta1.CreateAppealRequest{
 				AccountId:   accountID,
 				AccountType: accountType,
 				Resources: []*guardianv1beta1.CreateAppealRequest_Resource{
@@ -200,7 +200,7 @@ func approveApprovalStepCommand() *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			_, err = client.UpdateApproval(cmd.Context(), &guardianv1beta1.UpdateApprovalRequest{
+			_, err = client.UpdateApproval(createCtx(cmd), &guardianv1beta1.UpdateApprovalRequest{
 				Id:           id,
 				ApprovalName: approvalName,
 				Action: &guardianv1beta1.UpdateApprovalRequest_Action{
@@ -246,7 +246,7 @@ func rejectApprovalStepCommand() *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			_, err = client.UpdateApproval(cmd.Context(), &guardianv1beta1.UpdateApprovalRequest{
+			_, err = client.UpdateApproval(createCtx(cmd), &guardianv1beta1.UpdateApprovalRequest{
 				Id:           id,
 				ApprovalName: approvalName,
 				Action: &guardianv1beta1.UpdateApprovalRequest_Action{
@@ -290,7 +290,7 @@ func statusAppealCommand() *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			res, err := client.GetAppeal(cmd.Context(), &guardianv1beta1.GetAppealRequest{
+			res, err := client.GetAppeal(createCtx(cmd), &guardianv1beta1.GetAppealRequest{
 				Id: id,
 			})
 			if err != nil {
@@ -356,7 +356,7 @@ func cancelAppealCommand() *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			_, err = client.CancelAppeal(cmd.Context(), &guardianv1beta1.CancelAppealRequest{
+			_, err = client.CancelAppeal(createCtx(cmd), &guardianv1beta1.CancelAppealRequest{
 				Id: id,
 			})
 			if err != nil {
@@ -393,7 +393,7 @@ func addApproverCommand() *cobra.Command {
 			}
 			defer cancel()
 
-			if _, err := client.AddApprover(cmd.Context(), &guardianv1beta1.AddApproverRequest{
+			if _, err := client.AddApprover(createCtx(cmd), &guardianv1beta1.AddApproverRequest{
 				AppealId:   appealID,
 				ApprovalId: approvalID,
 				Email:      email,
@@ -436,7 +436,7 @@ func deleteApproverCommand() *cobra.Command {
 			}
 			defer cancel()
 
-			if _, err := client.DeleteApprover(cmd.Context(), &guardianv1beta1.DeleteApproverRequest{
+			if _, err := client.DeleteApprover(createCtx(cmd), &guardianv1beta1.DeleteApproverRequest{
 				AppealId:   appealID,
 				ApprovalId: approvalID,
 				Email:      email,

@@ -71,7 +71,7 @@ func listResourcesCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 				IsDeleted:    isDeleted,
 				Details:      details,
 			}
-			res, err := client.ListResources(cmd.Context(), req)
+			res, err := client.ListResources(createCtx(cmd), req)
 			if err != nil {
 				return err
 			}
@@ -152,7 +152,7 @@ func viewResourceCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			res, err := client.GetResource(cmd.Context(), &guardianv1beta1.GetResourceRequest{
+			res, err := client.GetResource(createCtx(cmd), &guardianv1beta1.GetResourceRequest{
 				Id: id,
 			})
 			if err != nil {
@@ -246,7 +246,7 @@ func setResourceCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			_, err = client.UpdateResource(cmd.Context(), &guardianv1beta1.UpdateResourceRequest{
+			_, err = client.UpdateResource(createCtx(cmd), &guardianv1beta1.UpdateResourceRequest{
 				Id:       id,
 				Resource: resourceProto,
 			})

@@ -56,7 +56,12 @@ func (s *GRPCServer) CreatePolicy(ctx context.Context, req *guardianv1beta1.Crea
 		ctx = policy.WithDryRun(ctx)
 	}
 
-	p := s.adapter.FromPolicyProto(req.GetPolicy())
+	authenticatedUser, err := s.getUser(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, err.Error())
+	}
+
+	p := s.adapter.FromPolicyProto(req.GetPolicy(), authenticatedUser)
 
 	if err := s.policyService.Create(ctx, p); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create policy: %v", err)
@@ -76,7 +81,11 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *guardianv1beta1.Upda
 	if req.GetDryRun() {
 		ctx = policy.WithDryRun(ctx)
 	}
-	p := s.adapter.FromPolicyProto(req.GetPolicy())
+	authenticatedUser, err := s.getUser(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, err.Error())
+	}
+	p := s.adapter.FromPolicyProto(req.GetPolicy(), authenticatedUser)
 
 	p.ID = req.GetId()
 	if err := s.policyService.Update(ctx, p); err != nil {

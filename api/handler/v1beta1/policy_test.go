@@ -29,7 +29,7 @@ func (s *GrpcHandlersSuite) TestListPolicies() {
 		dummyPolicies := []*domain.Policy{
 			{ID: "test-policy"},
 		}
-		s.policyService.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(dummyPolicies, nil).Once()
+		s.policyService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return(dummyPolicies, nil).Once()
 
 		req := &guardianv1beta1.ListPoliciesRequest{}
 		res, err := s.grpcServer.ListPolicies(context.Background(), req)
@@ -43,7 +43,7 @@ func (s *GrpcHandlersSuite) TestListPolicies() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.policyService.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(nil, expectedError).Once()
+		s.policyService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return(nil, expectedError).Once()
 
 		req := &guardianv1beta1.ListPoliciesRequest{}
 		res, err := s.grpcServer.ListPolicies(context.Background(), req)
@@ -64,7 +64,7 @@ func (s *GrpcHandlersSuite) TestListPolicies() {
 				},
 			},
 		}
-		s.policyService.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(dummyPolicies, nil).Once()
+		s.policyService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return(dummyPolicies, nil).Once()
 
 		req := &guardianv1beta1.ListPoliciesRequest{}
 		res, err := s.grpcServer.ListPolicies(context.Background(), req)
@@ -176,7 +176,7 @@ func (s *GrpcHandlersSuite) TestGetPolicy() {
 				UpdatedAt: timestamppb.New(timeNow),
 			},
 		}
-		s.policyService.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), "test-policy", uint(1)).
+		s.policyService.EXPECT().GetOne(mock.AnythingOfType("context.backgroundCtx"), "test-policy", uint(1)).
 			Return(dummyPolicy, nil).Once()
 
 		req := &guardianv1beta1.GetPolicyRequest{
@@ -193,7 +193,7 @@ func (s *GrpcHandlersSuite) TestGetPolicy() {
 	s.Run("should return not found error if policy not found", func() {
 		s.setup()
 
-		s.policyService.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("uint")).
+		s.policyService.EXPECT().GetOne(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("uint")).
 			Return(nil, policy.ErrPolicyNotFound).Once()
 
 		req := &guardianv1beta1.GetPolicyRequest{}
@@ -208,7 +208,7 @@ func (s *GrpcHandlersSuite) TestGetPolicy() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.policyService.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("uint")).
+		s.policyService.EXPECT().GetOne(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("uint")).
 			Return(nil, expectedError).Once()
 
 		req := &guardianv1beta1.GetPolicyRequest{}
@@ -229,7 +229,7 @@ func (s *GrpcHandlersSuite) TestGetPolicy() {
 				Config: make(chan int), // invalid json
 			},
 		}
-		s.policyService.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("uint")).
+		s.policyService.EXPECT().GetOne(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("uint")).
 			Return(dummyPolicy, nil).Once()
 
 		req := &guardianv1beta1.GetPolicyRequest{}
@@ -249,6 +249,7 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 		expectedPolicy := &domain.Policy{
 			ID:          "test-policy",
 			Description: "test-description",
+			CreatedBy:   "test@example.com",
 			Steps: []*domain.Step{
 				{
 					Name:            "test-approval-step",
@@ -310,6 +311,7 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 				Id:          expectedPolicy.ID,
 				Version:     uint32(expectedVersion),
 				Description: expectedPolicy.Description,
+				CreatedBy:   expectedPolicy.CreatedBy,
 				Steps: []*guardianv1beta1.Policy_ApprovalStep{
 					{
 						Name:            "test-approval-step",
@@ -366,7 +368,7 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 				UpdatedAt: timestamppb.New(timeNow),
 			},
 		}
-		s.policyService.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), expectedPolicy).
+		s.policyService.EXPECT().Create(s.ctx, expectedPolicy).
 			Run(func(_a0 context.Context, _a1 *domain.Policy) {
 				_a1.CreatedAt = timeNow
 				_a1.UpdatedAt = timeNow
@@ -431,7 +433,7 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 				},
 			},
 		}
-		res, err := s.grpcServer.CreatePolicy(context.Background(), req)
+		res, err := s.grpcServer.CreatePolicy(s.ctx, req)
 
 		s.NoError(err)
 		s.Equal(expectedResponse, res)
@@ -442,10 +444,10 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.policyService.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Policy")).Return(expectedError).Once()
+		s.policyService.EXPECT().Create(s.ctx, mock.AnythingOfType("*domain.Policy")).Return(expectedError).Once()
 
 		req := &guardianv1beta1.CreatePolicyRequest{}
-		res, err := s.grpcServer.CreatePolicy(context.Background(), req)
+		res, err := s.grpcServer.CreatePolicy(s.ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)
@@ -460,13 +462,13 @@ func (s *GrpcHandlersSuite) TestCreatePolicy() {
 				Config: make(chan int), // invalid json
 			},
 		}
-		s.policyService.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Policy")).Return(nil).
+		s.policyService.EXPECT().Create(s.ctx, mock.AnythingOfType("*domain.Policy")).Return(nil).
 			Run(func(_a0 context.Context, _a1 *domain.Policy) {
 				*_a1 = *invalidPolicy
 			}).Once()
 
 		req := &guardianv1beta1.CreatePolicyRequest{}
-		res, err := s.grpcServer.CreatePolicy(context.Background(), req)
+		res, err := s.grpcServer.CreatePolicy(s.ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)
@@ -482,6 +484,7 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 		expectedPolicy := &domain.Policy{
 			ID:          "test-policy",
 			Description: "test-description",
+			CreatedBy:   "test@example.com",
 			Steps: []*domain.Step{
 				{
 					Name:            "test-approval-step",
@@ -530,6 +533,7 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 				Id:          expectedPolicy.ID,
 				Version:     uint32(expectedVersion),
 				Description: expectedPolicy.Description,
+				CreatedBy:   expectedPolicy.CreatedBy,
 				Steps: []*guardianv1beta1.Policy_ApprovalStep{
 					{
 						Name:            "test-approval-step",
@@ -573,7 +577,7 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 				UpdatedAt: timestamppb.New(timeNow),
 			},
 		}
-		s.policyService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), expectedPolicy).
+		s.policyService.EXPECT().Update(s.ctx, expectedPolicy).
 			Run(func(_a0 context.Context, _a1 *domain.Policy) {
 				_a1.CreatedAt = timeNow
 				_a1.UpdatedAt = timeNow
@@ -625,7 +629,7 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 				},
 			},
 		}
-		res, err := s.grpcServer.UpdatePolicy(context.Background(), req)
+		res, err := s.grpcServer.UpdatePolicy(s.ctx, req)
 
 		s.NoError(err)
 		s.Equal(expectedResponse, res)
@@ -636,10 +640,10 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 		s.setup()
 
 		expectedError := policy.ErrPolicyNotFound
-		s.policyService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Policy")).Return(expectedError).Once()
+		s.policyService.EXPECT().Update(s.ctx, mock.AnythingOfType("*domain.Policy")).Return(expectedError).Once()
 
 		req := &guardianv1beta1.UpdatePolicyRequest{}
-		res, err := s.grpcServer.UpdatePolicy(context.Background(), req)
+		res, err := s.grpcServer.UpdatePolicy(s.ctx, req)
 
 		s.Equal(codes.NotFound, status.Code(err))
 		s.Nil(res)
@@ -650,10 +654,10 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 		s.setup()
 
 		expectedError := policy.ErrEmptyIDParam
-		s.policyService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Policy")).Return(expectedError).Once()
+		s.policyService.EXPECT().Update(s.ctx, mock.AnythingOfType("*domain.Policy")).Return(expectedError).Once()
 
 		req := &guardianv1beta1.UpdatePolicyRequest{}
-		res, err := s.grpcServer.UpdatePolicy(context.Background(), req)
+		res, err := s.grpcServer.UpdatePolicy(s.ctx, req)
 
 		s.Equal(codes.InvalidArgument, status.Code(err))
 		s.Nil(res)
@@ -664,10 +668,10 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.policyService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Policy")).Return(expectedError).Once()
+		s.policyService.EXPECT().Update(s.ctx, mock.AnythingOfType("*domain.Policy")).Return(expectedError).Once()
 
 		req := &guardianv1beta1.UpdatePolicyRequest{}
-		res, err := s.grpcServer.UpdatePolicy(context.Background(), req)
+		res, err := s.grpcServer.UpdatePolicy(s.ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)
@@ -682,13 +686,13 @@ func (s *GrpcHandlersSuite) TestUpdatePolicy() {
 				Config: make(chan int), // invalid json
 			},
 		}
-		s.policyService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Policy")).Return(nil).
+		s.policyService.EXPECT().Update(s.ctx, mock.AnythingOfType("*domain.Policy")).Return(nil).
 			Run(func(_a0 context.Context, _a1 *domain.Policy) {
 				*_a1 = *invalidPolicy
 			}).Once()
 
 		req := &guardianv1beta1.UpdatePolicyRequest{}
-		res, err := s.grpcServer.UpdatePolicy(context.Background(), req)
+		res, err := s.grpcServer.UpdatePolicy(s.ctx, req)
 
 		s.Equal(codes.Internal, status.Code(err))
 		s.Nil(res)

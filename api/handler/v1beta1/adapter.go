@@ -221,12 +221,17 @@ func (a *adapter) ToRole(role *domain.Role) (*guardianv1beta1.Role, error) {
 	return roleProto, nil
 }
 
-func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy) *domain.Policy {
+func (a *adapter) FromPolicyProto(p *guardianv1beta1.Policy, createdBy string) *domain.Policy {
 	policy := &domain.Policy{
 		ID:          p.GetId(),
+		Title:       p.GetTitle(),
 		Version:     uint(p.GetVersion()),
 		Description: p.GetDescription(),
 		Labels:      p.GetLabels(),
+		CreatedBy:   p.GetCreatedBy(),
+	}
+	if createdBy != "" {
+		policy.CreatedBy = createdBy
 	}
 
 	if p.GetSteps() != nil {
@@ -352,8 +357,10 @@ func (a *adapter) ToPolicyProto(p *domain.Policy) (*guardianv1beta1.Policy, erro
 	policyProto := &guardianv1beta1.Policy{
 		Id:          p.ID,
 		Version:     uint32(p.Version),
+		Title:       p.Title,
 		Description: p.Description,
 		Labels:      p.Labels,
+		CreatedBy:   p.CreatedBy,
 	}
 
 	if p.Steps != nil {

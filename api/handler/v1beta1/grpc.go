@@ -21,7 +21,7 @@ type ProtoAdapter interface {
 	ToProviderTypeProto(domain.ProviderType) *guardianv1beta1.ProviderType
 	ToRole(*domain.Role) (*guardianv1beta1.Role, error)
 
-	FromPolicyProto(*guardianv1beta1.Policy) *domain.Policy
+	FromPolicyProto(*guardianv1beta1.Policy, string) *domain.Policy
 	ToPolicyProto(*domain.Policy) (*guardianv1beta1.Policy, error)
 
 	ToPolicyAppealConfigProto(policy *domain.Policy) *guardianv1beta1.PolicyAppealConfig

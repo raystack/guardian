@@ -13,7 +13,8 @@ import (
 
 // Policy is the database model for policy
 type Policy struct {
-	ID           string    `gorm:"primaryKey"`
+	ID           string `gorm:"primaryKey"`
+	Title        string
 	NamespaceID  uuid.UUID `gorm:"type:uuid"`
 	Version      uint      `gorm:"primaryKey"`
 	Description  string
@@ -22,6 +23,7 @@ type Policy struct {
 	Labels       datatypes.JSON
 	Requirements datatypes.JSON
 	IAM          datatypes.JSON
+	CreatedBy    string
 	CreatedAt    time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt    time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
@@ -61,6 +63,7 @@ func (m *Policy) FromDomain(p *domain.Policy) error {
 
 	m.ID = p.ID
 	m.Version = p.Version
+	m.Title = p.Title
 	m.Description = p.Description
 	m.Steps = datatypes.JSON(steps)
 	m.AppealConfig = datatypes.JSON(appeal)
@@ -69,6 +72,7 @@ func (m *Policy) FromDomain(p *domain.Policy) error {
 	m.IAM = datatypes.JSON(iam)
 	m.CreatedAt = p.CreatedAt
 	m.UpdatedAt = p.UpdatedAt
+	m.CreatedBy = p.CreatedBy
 
 	return nil
 }
@@ -108,6 +112,7 @@ func (m *Policy) ToDomain() (*domain.Policy, error) {
 
 	return &domain.Policy{
 		ID:           m.ID,
+		Title:        m.Title,
 		Version:      m.Version,
 		Description:  m.Description,
 		Steps:        steps,
@@ -115,6 +120,7 @@ func (m *Policy) ToDomain() (*domain.Policy, error) {
 		Labels:       labels,
 		Requirements: requirements,
 		IAM:          iam,
+		CreatedBy:    m.CreatedBy,
 		CreatedAt:    m.CreatedAt,
 		UpdatedAt:    m.UpdatedAt,
 	}, nil

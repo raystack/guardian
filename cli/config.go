@@ -27,6 +27,7 @@ func LoadConfig() (*Config, error) {
 
 func bindFlagsFromConfig(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringP("host", "H", "", "Guardian service to connect to")
+	cmd.PersistentFlags().String("bearer", "B", "Bearer token to use for authentication")
 
 	if cliConfig != nil {
 		if cliConfig.Host != "" {

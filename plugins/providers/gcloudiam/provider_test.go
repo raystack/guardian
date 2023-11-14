@@ -1,6 +1,7 @@
 package gcloudiam_test
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"testing"
@@ -197,7 +198,7 @@ func TestCreateConfig(t *testing.T) {
 			},
 		}
 		client.EXPECT().
-			GetGrantableRoles(mock.AnythingOfType("*context.emptyCtx"), gcloudiam.ResourceTypeProject).
+			GetGrantableRoles(context.TODO(), gcloudiam.ResourceTypeProject).
 			Return(gCloudRolesList, nil).Once()
 
 		pc := &domain.ProviderConfig{
@@ -242,7 +243,7 @@ func TestCreateConfig(t *testing.T) {
 			},
 		}
 		client.EXPECT().
-			GetGrantableRoles(mock.AnythingOfType("*context.emptyCtx"), gcloudiam.ResourceTypeProject).
+			GetGrantableRoles(context.TODO(), gcloudiam.ResourceTypeProject).
 			Return(gCloudRolesList, nil).Once()
 
 		crypto.On("Encrypt", `{"type":"service_account"}`).Return(`{"type":"service_account"}`, nil)
@@ -334,10 +335,10 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 		client.EXPECT().
-			GetGrantableRoles(mock.AnythingOfType("*context.emptyCtx"), gcloudiam.ResourceTypeProject).
+			GetGrantableRoles(mock.AnythingOfType("context.todoCtx"), gcloudiam.ResourceTypeProject).
 			Return(projectRoles, nil).Once()
 		client.EXPECT().
-			GetGrantableRoles(mock.AnythingOfType("*context.emptyCtx"), gcloudiam.ResourceTypeServiceAccount).
+			GetGrantableRoles(mock.AnythingOfType("context.todoCtx"), gcloudiam.ResourceTypeServiceAccount).
 			Return(saRoles, nil).Once()
 
 		expectedServiceAccounts := []*iam.ServiceAccount{
@@ -347,7 +348,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 		client.EXPECT().
-			ListServiceAccounts(mock.AnythingOfType("*context.emptyCtx")).
+			ListServiceAccounts(mock.AnythingOfType("context.todoCtx")).
 			Return(expectedServiceAccounts, nil).Once()
 
 		pc := &domain.ProviderConfig{
@@ -416,7 +417,7 @@ func TestGetResources(t *testing.T) {
 			},
 		}
 		client.EXPECT().
-			GetGrantableRoles(mock.AnythingOfType("*context.emptyCtx"), gcloudiam.ResourceTypeOrganization).
+			GetGrantableRoles(mock.AnythingOfType("context.backgroundCtx"), gcloudiam.ResourceTypeOrganization).
 			Return(gCloudRolesList, nil).Once()
 		pc := &domain.ProviderConfig{
 			Type: domain.ProviderTypeGCloudIAM,
@@ -492,7 +493,7 @@ func TestGetResources(t *testing.T) {
 
 		t.Run("should return error if client returns an error", func(t *testing.T) {
 			expectedError := errors.New("client error")
-			client.On("ListServiceAccounts", mock.AnythingOfType("*context.emptyCtx")).Return(nil, expectedError).Once()
+			client.On("ListServiceAccounts", mock.AnythingOfType("context.todoCtx")).Return(nil, expectedError).Once()
 
 			pc := &domain.ProviderConfig{
 				Type: domain.ProviderTypeGCloudIAM,
@@ -745,7 +746,7 @@ func TestGrantAccess(t *testing.T) {
 		}
 
 		client.EXPECT().
-			GrantServiceAccountAccess(mock.AnythingOfType("*context.emptyCtx"), g.Resource.URN, g.AccountType, g.AccountID, g.Permissions[0]).
+			GrantServiceAccountAccess(mock.AnythingOfType("context.todoCtx"), g.Resource.URN, g.AccountType, g.AccountID, g.Permissions[0]).
 			Return(nil).Once()
 
 		err := p.GrantAccess(pc, g)
@@ -959,7 +960,7 @@ func TestRevokeAccess(t *testing.T) {
 		}
 
 		client.EXPECT().
-			RevokeServiceAccountAccess(mock.AnythingOfType("*context.emptyCtx"), g.Resource.URN, g.AccountType, g.AccountID, g.Permissions[0]).
+			RevokeServiceAccountAccess(mock.AnythingOfType("context.todoCtx"), g.Resource.URN, g.AccountType, g.AccountID, g.Permissions[0]).
 			Return(nil).Once()
 
 		err := p.RevokeAccess(pc, g)

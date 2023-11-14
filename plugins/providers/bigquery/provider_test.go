@@ -1046,7 +1046,7 @@ func (s *BigQueryProviderTestSuite) TestListAccess() {
 		expectedResourcesAccess := domain.MapResourceAccess{}
 		expectedResources := []*domain.Resource{}
 		s.mockBigQueryClient.EXPECT().
-			ListAccess(mock.AnythingOfType("*context.emptyCtx"), expectedResources).
+			ListAccess(mock.AnythingOfType("context.backgroundCtx"), expectedResources).
 			Return(expectedResourcesAccess, nil).Once()
 
 		ctx := context.Background()
@@ -1101,11 +1101,11 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 			fmt.Sprintf(`protoPayload.methodName=("%s")`, strings.Join(bigquery.BigQueryAuditMetadataMethods, `" OR "`)),
 		}, ` AND `)
 		s.mockCloudLoggingClient.EXPECT().
-			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), expectedListLogEntriesFilter, 0).Return(expectedBigQueryActivities, nil).Once()
+			ListLogEntries(mock.AnythingOfType("context.backgroundCtx"), expectedListLogEntriesFilter, 0).Return(expectedBigQueryActivities, nil).Once()
 		s.mockBigQueryClient.EXPECT().
-			GetRolePermissions(mock.AnythingOfType("*context.emptyCtx"), "roles/bigquery.dataViewer").Return([]string{"bigquery.datasets.get"}, nil).Once()
+			GetRolePermissions(mock.AnythingOfType("context.backgroundCtx"), "roles/bigquery.dataViewer").Return([]string{"bigquery.datasets.get"}, nil).Once()
 		s.mockBigQueryClient.EXPECT().
-			GetRolePermissions(mock.AnythingOfType("*context.emptyCtx"), "roles/bigquery.dataEditor").Return([]string{"bigquery.datasets.get"}, nil).Once()
+			GetRolePermissions(mock.AnythingOfType("context.backgroundCtx"), "roles/bigquery.dataEditor").Return([]string{"bigquery.datasets.get"}, nil).Once()
 
 		expectedActivities := []*domain.Activity{
 			{
@@ -1190,7 +1190,7 @@ func (s *BigQueryProviderTestSuite) TestGetActivities_Success() {
 	s.Run("should return error if there is an error on listing log entries", func() {
 		expectedError := errors.New("error")
 		s.mockCloudLoggingClient.EXPECT().
-			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string"), 0).Return(nil, expectedError).Once()
+			ListLogEntries(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string"), 0).Return(nil, expectedError).Once()
 
 		_, err := s.provider.GetActivities(context.Background(), *s.validProvider, domain.ListActivitiesFilter{})
 
@@ -1207,10 +1207,10 @@ func (s *BigQueryProviderTestSuite) TestListActivities() {
 			RetentionDays: 30,
 		}
 		s.mockCloudLoggingClient.EXPECT().
-			GetLogBucket(mock.AnythingOfType("*context.emptyCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
+			GetLogBucket(mock.AnythingOfType("context.backgroundCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
 			Return(expectedLogBucket, nil).Once()
 		s.mockBigQueryClient.EXPECT().
-			CheckGrantedPermission(mock.AnythingOfType("*context.emptyCtx"), []string{bigquery.PrivateLogViewerPermission}).
+			CheckGrantedPermission(mock.AnythingOfType("context.backgroundCtx"), []string{bigquery.PrivateLogViewerPermission}).
 			Return([]string{bigquery.PrivateLogViewerPermission}, nil).Once()
 		expectedBqActivities := []*bigquery.Activity{
 			{
@@ -1227,7 +1227,7 @@ func (s *BigQueryProviderTestSuite) TestListActivities() {
 			},
 		}
 		s.mockCloudLoggingClient.EXPECT().
-			ListLogEntries(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string"), 0).
+			ListLogEntries(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string"), 0).
 			Return(expectedBqActivities, nil).Once()
 
 		expectedActivities := []*domain.Activity{
@@ -1281,7 +1281,7 @@ func (s *BigQueryProviderTestSuite) TestListActivities() {
 
 	s.Run("should return error if specified time range is more than the log bucket's retention period", func() {
 		s.mockCloudLoggingClient.EXPECT().
-			GetLogBucket(mock.AnythingOfType("*context.emptyCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
+			GetLogBucket(mock.AnythingOfType("context.backgroundCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
 			Return(&logging.LogBucket{
 				RetentionDays: 30,
 			}, nil).Once()
@@ -1297,12 +1297,12 @@ func (s *BigQueryProviderTestSuite) TestListActivities() {
 
 	s.Run("should return error if credentials doesn't have bigquery.privateLogViewer permission", func() {
 		s.mockCloudLoggingClient.EXPECT().
-			GetLogBucket(mock.AnythingOfType("*context.emptyCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
+			GetLogBucket(mock.AnythingOfType("context.backgroundCtx"), fmt.Sprintf("projects/%s/locations/global/buckets/_Default", s.dummyProjectID)).
 			Return(&logging.LogBucket{
 				RetentionDays: 30,
 			}, nil).Once()
 		s.mockBigQueryClient.EXPECT().
-			CheckGrantedPermission(mock.AnythingOfType("*context.emptyCtx"), []string{bigquery.PrivateLogViewerPermission}).
+			CheckGrantedPermission(mock.AnythingOfType("context.backgroundCtx"), []string{bigquery.PrivateLogViewerPermission}).
 			Return([]string{}, nil).Once()
 
 		_, err := s.provider.ListActivities(context.Background(), *s.validProvider, domain.ListActivitiesFilter{})
@@ -1335,7 +1335,7 @@ func (s *BigQueryProviderTestSuite) TestCorrelateGrantActivities() {
 
 		expectedUniqueRoles := []string{"role-1", "role-2", "role-3", "role-4"}
 		s.mockBigQueryClient.EXPECT().
-			ListRolePermissions(mock.AnythingOfType("*context.emptyCtx"), expectedUniqueRoles).
+			ListRolePermissions(mock.AnythingOfType("context.backgroundCtx"), expectedUniqueRoles).
 			Return(dummyRolePermissions, nil).Once()
 		expectedAssociatedGrants := map[string][]string{
 			"g1": {"a1", "a3", "a4"},

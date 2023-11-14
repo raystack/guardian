@@ -1,0 +1,2 @@
+ALTER TABLE policies DROP COLUMN IF EXISTS title;
+ALTER TABLE policies DROP COLUMN IF EXISTS created_by;

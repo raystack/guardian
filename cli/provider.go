@@ -65,7 +65,7 @@ func listProvidersCmd() *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.ListProviders(cmd.Context(), &guardianv1beta1.ListProvidersRequest{})
+			res, err := client.ListProviders(createCtx(cmd), &guardianv1beta1.ListProvidersRequest{})
 			if err != nil {
 				return err
 			}
@@ -122,7 +122,7 @@ func viewProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			res, err := client.GetProvider(cmd.Context(), &guardianv1beta1.GetProviderRequest{
+			res, err := client.GetProvider(createCtx(cmd), &guardianv1beta1.GetProviderRequest{
 				Id: id,
 			})
 			if err != nil {
@@ -181,7 +181,7 @@ func createProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			}
 			defer cancel()
 
-			res, err := client.CreateProvider(cmd.Context(), &guardianv1beta1.CreateProviderRequest{
+			res, err := client.CreateProvider(createCtx(cmd), &guardianv1beta1.CreateProviderRequest{
 				Config: configProto,
 				DryRun: dryRun,
 			})
@@ -244,7 +244,7 @@ func editProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			defer cancel()
 
 			id := args[0]
-			_, err = client.UpdateProvider(cmd.Context(), &guardianv1beta1.UpdateProviderRequest{
+			_, err = client.UpdateProvider(createCtx(cmd), &guardianv1beta1.UpdateProviderRequest{
 				Id:     id,
 				Config: configProto,
 				DryRun: dryRun,
@@ -345,7 +345,7 @@ func applyProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			pType := configProto.GetType()
 			pUrn := configProto.GetUrn()
 
-			listRes, err := client.ListProviders(cmd.Context(), &guardianv1beta1.ListProvidersRequest{}) // TODO: filter by type & urn
+			listRes, err := client.ListProviders(createCtx(cmd), &guardianv1beta1.ListProvidersRequest{}) // TODO: filter by type & urn
 			if err != nil {
 				return err
 			}
@@ -357,7 +357,7 @@ func applyProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			}
 
 			if providerID == "" {
-				res, err := client.CreateProvider(cmd.Context(), &guardianv1beta1.CreateProviderRequest{
+				res, err := client.CreateProvider(createCtx(cmd), &guardianv1beta1.CreateProviderRequest{
 					Config: configProto,
 					DryRun: dryRun,
 				})
@@ -374,7 +374,7 @@ func applyProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 				fmt.Printf(msg+"\n", res.GetProvider().GetId())
 			} else {
-				_, err = client.UpdateProvider(cmd.Context(), &guardianv1beta1.UpdateProviderRequest{
+				_, err = client.UpdateProvider(createCtx(cmd), &guardianv1beta1.UpdateProviderRequest{
 					Id:     providerID,
 					Config: configProto,
 					DryRun: dryRun,
@@ -435,7 +435,7 @@ func planProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 			pType := newProvider.Type
 			pUrn := newProvider.URN
 
-			listRes, err := client.ListProviders(cmd.Context(), &guardianv1beta1.ListProvidersRequest{}) // TODO: filter by type & urn
+			listRes, err := client.ListProviders(createCtx(cmd), &guardianv1beta1.ListProvidersRequest{}) // TODO: filter by type & urn
 			if err != nil {
 				return err
 			}
@@ -448,7 +448,7 @@ func planProviderCmd(adapter handlerv1beta1.ProtoAdapter) *cobra.Command {
 
 			var existingProvider *domain.ProviderConfig
 			if providerID != "" {
-				getRes, err := client.GetProvider(cmd.Context(), &guardianv1beta1.GetProviderRequest{
+				getRes, err := client.GetProvider(createCtx(cmd), &guardianv1beta1.GetProviderRequest{
 					Id: providerID,
 				})
 				if err != nil {

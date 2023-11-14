@@ -391,7 +391,6 @@ func (s *AppealRepositoryTestSuite) TestFind() {
 			_, actualError := s.repository.Find(context.Background(), tc.filters)
 			s.Nil(actualError)
 		}
-
 	})
 }
 

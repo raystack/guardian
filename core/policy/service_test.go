@@ -341,7 +341,7 @@ func (s *ServiceTestSuite) TestCreate() {
 
 	s.Run("should return error if got error from the policy repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), mock.Anything).Return(expectedError).Once()
+		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("context.backgroundCtx"), mock.Anything).Return(expectedError).Once()
 		s.mockCrypto.EXPECT().Encrypt("test-password").Return("test-password", nil).Once()
 		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
 
@@ -357,7 +357,7 @@ func (s *ServiceTestSuite) TestCreate() {
 		}
 
 		expectedVersion := uint(1)
-		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), p).Return(nil).Once()
+		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("context.backgroundCtx"), p).Return(nil).Once()
 		s.mockCrypto.EXPECT().Encrypt("test-password").Return("test-password", nil).Once()
 		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
 		s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
@@ -371,7 +371,7 @@ func (s *ServiceTestSuite) TestCreate() {
 	})
 
 	s.Run("should pass the model from the param", func() {
-		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), validPolicy).Return(nil).Once()
+		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("context.backgroundCtx"), validPolicy).Return(nil).Once()
 		s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
 		s.mockCrypto.EXPECT().Encrypt("test-password").Return("test-password", nil).Once()
 		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
@@ -624,7 +624,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 							Once()
 					}
 				}
-				s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), p).Return(nil).Once()
+				s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("context.backgroundCtx"), p).Return(nil).Once()
 				s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyCreate, mock.Anything).Return(nil).Once()
 
 				actualError := s.service.Create(context.Background(), p)
@@ -637,7 +637,7 @@ func (s *ServiceTestSuite) TestPolicyRequirements() {
 func (s *ServiceTestSuite) TestFind() {
 	s.Run("should return nil and error if got error from repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockPolicyRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(nil, expectedError).Once()
+		s.mockPolicyRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.Find(context.Background())
 
@@ -661,7 +661,7 @@ func (s *ServiceTestSuite) TestFind() {
 				},
 			},
 		}
-		s.mockPolicyRepository.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).Return(expectedResult, nil).Once()
+		s.mockPolicyRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return(expectedResult, nil).Once()
 		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
 
 		actualResult, actualError := s.service.Find(context.Background())
@@ -675,7 +675,7 @@ func (s *ServiceTestSuite) TestFind() {
 func (s *ServiceTestSuite) TestGetOne() {
 	s.Run("should return nil and error if got error from repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockPolicyRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything, mock.Anything).Return(nil, expectedError).Once()
+		s.mockPolicyRepository.EXPECT().GetOne(mock.AnythingOfType("context.backgroundCtx"), mock.Anything, mock.Anything).Return(nil, expectedError).Once()
 
 		actualResult, actualError := s.service.GetOne(context.Background(), "", 0)
 
@@ -697,7 +697,7 @@ func (s *ServiceTestSuite) TestGetOne() {
 				},
 			},
 		}
-		s.mockPolicyRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), mock.Anything, mock.Anything).Return(expectedResult, nil).Once()
+		s.mockPolicyRepository.EXPECT().GetOne(mock.AnythingOfType("context.backgroundCtx"), mock.Anything, mock.Anything).Return(expectedResult, nil).Once()
 		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
 
 		actualResult, actualError := s.service.GetOne(context.Background(), "", 0)
@@ -749,8 +749,8 @@ func (s *ServiceTestSuite) TestUpdate() {
 			Version: 5,
 		}
 		expectedNewVersion := uint(6)
-		s.mockPolicyRepository.EXPECT().GetOne(mock.AnythingOfType("*context.emptyCtx"), p.ID, uint(0)).Return(expectedLatestPolicy, nil).Once()
-		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), p).Return(nil)
+		s.mockPolicyRepository.EXPECT().GetOne(mock.AnythingOfType("context.backgroundCtx"), p.ID, uint(0)).Return(expectedLatestPolicy, nil).Once()
+		s.mockPolicyRepository.EXPECT().Create(mock.AnythingOfType("context.backgroundCtx"), p).Return(nil)
 		s.mockCrypto.EXPECT().Encrypt("test-password").Return("test-password", nil).Once()
 		s.mockCrypto.EXPECT().Decrypt("test-password").Return("test-password", nil).Once()
 		s.mockAuditLogger.EXPECT().Log(mock.Anything, policy.AuditKeyPolicyUpdate, mock.Anything).Return(nil).Once()

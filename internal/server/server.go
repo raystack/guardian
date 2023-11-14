@@ -134,7 +134,7 @@ func RunServer(config *Config) error {
 	)
 
 	authUserContextKey := map[string]interface{}{
-		"default": authenticatedUserEmailContextKey{},
+		"default": auth.AuthenticatedUserEmailContextKey{},
 		"oidc":    auth.OIDCEmailContextKey{},
 	}
 

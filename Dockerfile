@@ -1,4 +1,4 @@
-FROM alpine:3.13
+FROM alpine:3.18
 
 RUN apk add curl
 RUN apk add openssl

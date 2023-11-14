@@ -192,7 +192,7 @@ func InitServices(deps ServiceDeps) (*Services, error) {
 func getActorExtractor(config *Config) audit.AuditOption {
 	var contextKey interface{}
 
-	contextKey = authenticatedUserEmailContextKey{}
+	contextKey = auth.AuthenticatedUserEmailContextKey{}
 	if config.Auth.Provider == "oidc" {
 		contextKey = auth.OIDCEmailContextKey{}
 	}

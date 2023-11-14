@@ -88,7 +88,7 @@ func (s *GrpcHandlersSuite) TestListProvider() {
 				},
 			},
 		}
-		s.providerService.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).
+		s.providerService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).
 			Return(dummyProviders, nil).Once()
 
 		req := &guardianv1beta1.ListProvidersRequest{}
@@ -103,7 +103,7 @@ func (s *GrpcHandlersSuite) TestListProvider() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.providerService.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).
+		s.providerService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).
 			Return(nil, expectedError).Once()
 
 		req := &guardianv1beta1.ListProvidersRequest{}
@@ -132,7 +132,7 @@ func (s *GrpcHandlersSuite) TestListProvider() {
 				},
 			},
 		}
-		s.providerService.EXPECT().Find(mock.AnythingOfType("*context.emptyCtx")).
+		s.providerService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).
 			Return(expectedProviders, nil).Once()
 
 		req := &guardianv1beta1.ListProvidersRequest{}
@@ -205,7 +205,7 @@ func (s *GrpcHandlersSuite) TestGetProvider() {
 				UpdatedAt: timestamppb.New(timeNow),
 			},
 		}
-		s.providerService.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), expectedProvider.ID).Return(expectedProvider, nil).Once()
+		s.providerService.EXPECT().GetByID(mock.AnythingOfType("context.backgroundCtx"), expectedProvider.ID).Return(expectedProvider, nil).Once()
 
 		req := &guardianv1beta1.GetProviderRequest{
 			Id: expectedProvider.ID,
@@ -221,7 +221,7 @@ func (s *GrpcHandlersSuite) TestGetProvider() {
 		s.setup()
 
 		expectedError := provider.ErrRecordNotFound
-		s.providerService.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
+		s.providerService.EXPECT().GetByID(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string")).
 			Return(nil, expectedError).Once()
 
 		req := &guardianv1beta1.GetProviderRequest{}
@@ -236,7 +236,7 @@ func (s *GrpcHandlersSuite) TestGetProvider() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.providerService.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
+		s.providerService.EXPECT().GetByID(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string")).
 			Return(nil, expectedError).Once()
 
 		req := &guardianv1beta1.GetProviderRequest{}
@@ -255,7 +255,7 @@ func (s *GrpcHandlersSuite) TestGetProvider() {
 				Credentials: make(chan int), // invalid json
 			},
 		}
-		s.providerService.EXPECT().GetByID(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
+		s.providerService.EXPECT().GetByID(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string")).
 			Return(expectedProvider, nil).Once()
 
 		req := &guardianv1beta1.GetProviderRequest{}
@@ -285,7 +285,7 @@ func (s *GrpcHandlersSuite) TestGetProviderTypes() {
 				},
 			},
 		}
-		s.providerService.EXPECT().GetTypes(mock.AnythingOfType("*context.emptyCtx")).
+		s.providerService.EXPECT().GetTypes(mock.AnythingOfType("context.backgroundCtx")).
 			Return(expectedProviderTypes, nil).Once()
 
 		req := &guardianv1beta1.GetProviderTypesRequest{}
@@ -300,7 +300,7 @@ func (s *GrpcHandlersSuite) TestGetProviderTypes() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.providerService.EXPECT().GetTypes(mock.AnythingOfType("*context.emptyCtx")).
+		s.providerService.EXPECT().GetTypes(mock.AnythingOfType("context.backgroundCtx")).
 			Return(nil, expectedError).Once()
 
 		req := &guardianv1beta1.GetProviderTypesRequest{}
@@ -395,7 +395,7 @@ func (s *GrpcHandlersSuite) TestCreateProvider() {
 				UpdatedAt: timestamppb.New(timeNow),
 			},
 		}
-		s.providerService.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), expectedProvider).Return(nil).
+		s.providerService.EXPECT().Create(mock.AnythingOfType("context.backgroundCtx"), expectedProvider).Return(nil).
 			Run(func(_a0 context.Context, _a1 *domain.Provider) {
 				_a1.ID = expectedID
 				_a1.CreatedAt = timeNow
@@ -447,7 +447,7 @@ func (s *GrpcHandlersSuite) TestCreateProvider() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.providerService.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Provider")).Return(expectedError).Once()
+		s.providerService.EXPECT().Create(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*domain.Provider")).Return(expectedError).Once()
 
 		req := &guardianv1beta1.CreateProviderRequest{}
 		res, err := s.grpcServer.CreateProvider(context.Background(), req)
@@ -465,7 +465,7 @@ func (s *GrpcHandlersSuite) TestCreateProvider() {
 				Credentials: make(chan int), // invalid json
 			},
 		}
-		s.providerService.EXPECT().Create(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Provider")).Return(nil).
+		s.providerService.EXPECT().Create(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*domain.Provider")).Return(nil).
 			Run(func(_a0 context.Context, _a1 *domain.Provider) {
 				*_a1 = *expectedProvider
 			}).Once()
@@ -539,7 +539,7 @@ func (s *GrpcHandlersSuite) TestUpdatedProvider() {
 				UpdatedAt: timestamppb.New(timeNow),
 			},
 		}
-		s.providerService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), expectedProvider).Return(nil).
+		s.providerService.EXPECT().Update(mock.AnythingOfType("context.backgroundCtx"), expectedProvider).Return(nil).
 			Run(func(_a0 context.Context, _a1 *domain.Provider) {
 				_a1.CreatedAt = timeNow
 				_a1.UpdatedAt = timeNow
@@ -579,7 +579,7 @@ func (s *GrpcHandlersSuite) TestUpdatedProvider() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.providerService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Provider")).Return(expectedError).Once()
+		s.providerService.EXPECT().Update(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*domain.Provider")).Return(expectedError).Once()
 
 		req := &guardianv1beta1.UpdateProviderRequest{}
 		res, err := s.grpcServer.UpdateProvider(context.Background(), req)
@@ -597,7 +597,7 @@ func (s *GrpcHandlersSuite) TestUpdatedProvider() {
 				Credentials: make(chan int), // invalid json
 			},
 		}
-		s.providerService.EXPECT().Update(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("*domain.Provider")).Return(nil).
+		s.providerService.EXPECT().Update(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*domain.Provider")).Return(nil).
 			Run(func(_a0 context.Context, _a1 *domain.Provider) {
 				*_a1 = *expectedProvider
 			}).Once()
@@ -617,7 +617,7 @@ func (s *GrpcHandlersSuite) TestDeleteProvider() {
 
 		expectedResponse := &guardianv1beta1.DeleteProviderResponse{}
 		expectedID := "test-id"
-		s.providerService.EXPECT().Delete(mock.AnythingOfType("*context.emptyCtx"), expectedID).Return(nil).Once()
+		s.providerService.EXPECT().Delete(mock.AnythingOfType("context.backgroundCtx"), expectedID).Return(nil).Once()
 
 		req := &guardianv1beta1.DeleteProviderRequest{
 			Id: expectedID,
@@ -633,7 +633,7 @@ func (s *GrpcHandlersSuite) TestDeleteProvider() {
 		s.setup()
 
 		expectedError := provider.ErrRecordNotFound
-		s.providerService.EXPECT().Delete(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
+		s.providerService.EXPECT().Delete(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string")).
 			Return(expectedError).Once()
 
 		req := &guardianv1beta1.DeleteProviderRequest{}
@@ -648,7 +648,7 @@ func (s *GrpcHandlersSuite) TestDeleteProvider() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.providerService.EXPECT().Delete(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string")).
+		s.providerService.EXPECT().Delete(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string")).
 			Return(expectedError).Once()
 
 		req := &guardianv1beta1.DeleteProviderRequest{}
@@ -686,7 +686,7 @@ func (s *GrpcHandlersSuite) TestListRoles() {
 				},
 			},
 		}
-		s.providerService.EXPECT().GetRoles(mock.AnythingOfType("*context.emptyCtx"), expectedProviderID, expectedResourceType).
+		s.providerService.EXPECT().GetRoles(mock.AnythingOfType("context.backgroundCtx"), expectedProviderID, expectedResourceType).
 			Return(expectedRoles, nil).Once()
 
 		req := &guardianv1beta1.ListRolesRequest{
@@ -704,7 +704,7 @@ func (s *GrpcHandlersSuite) TestListRoles() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.providerService.EXPECT().GetRoles(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+		s.providerService.EXPECT().GetRoles(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 			Return(nil, expectedError).Once()
 
 		req := &guardianv1beta1.ListRolesRequest{}
@@ -725,7 +725,7 @@ func (s *GrpcHandlersSuite) TestListRoles() {
 				},
 			},
 		}
-		s.providerService.EXPECT().GetRoles(mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+		s.providerService.EXPECT().GetRoles(mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).
 			Return(invalidRoles, nil).Once()
 
 		req := &guardianv1beta1.ListRolesRequest{}

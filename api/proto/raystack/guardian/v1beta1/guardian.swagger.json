@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "raystack/guardian/v1beta1/guardian.proto",
+    "title": "Guardian APIs",
     "version": "0.1.0"
   },
   "tags": [
@@ -9,6 +9,7 @@
       "name": "GuardianService"
     }
   ],
+  "host": "127.0.0.1:7400",
   "schemes": [
     "http"
   ],
@@ -21,12 +22,44 @@
   "paths": {
     "/v1beta1/activities": {
       "get": {
+        "summary": "List Activities",
+        "description": "List Activities returns a list of activities",
         "operationId": "GuardianService_ListActivities",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ListActivitiesResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -93,18 +126,49 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Activities"
         ]
       }
     },
     "/v1beta1/activities/import": {
       "post": {
+        "summary": "Import Activities",
         "operationId": "GuardianService_ImportActivities",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ImportActivitiesResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -125,18 +189,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Activities"
         ]
       }
     },
     "/v1beta1/activities/{id}": {
       "get": {
+        "summary": "Get Activity",
+        "description": "Get Activity returns an activity by ID",
         "operationId": "GuardianService_GetActivity",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1GetActivityResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -155,18 +251,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Activities"
         ]
       }
     },
     "/v1beta1/appeals": {
       "get": {
+        "summary": "List Appeals",
+        "description": "List Appeals returns a list of appeals",
         "operationId": "GuardianService_ListAppeals",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ListAppealsResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -287,16 +415,48 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Appeals"
         ]
       },
       "post": {
+        "summary": "Create Appeal",
+        "description": "Create Appeal allows a user to create an access request to resources along with the role",
         "operationId": "GuardianService_CreateAppeal",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1CreateAppealResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -317,18 +477,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Appeals"
         ]
       }
     },
     "/v1beta1/appeals/{appealId}/approvals/{approvalId}/approvers": {
       "post": {
+        "summary": "Add Approver",
+        "description": "Add Approver adds an approver email to an appeal approval step",
         "operationId": "GuardianService_AddApprover",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1AddApproverResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -341,12 +533,14 @@
         "parameters": [
           {
             "name": "appealId",
+            "description": "UUID of the appeal",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
             "name": "approvalId",
+            "description": "Unique identifier or name of the approval",
             "in": "path",
             "required": true,
             "type": "string"
@@ -356,28 +550,55 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "email": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/v1beta1AddApproverRequest"
             }
           }
         ],
         "tags": [
-          "GuardianService"
+          "Approvals"
         ]
       }
     },
     "/v1beta1/appeals/{appealId}/approvals/{approvalId}/approvers/{email}": {
       "delete": {
+        "summary": "Delete Approver",
+        "description": "Delete Approver deletes an approver from an approval",
         "operationId": "GuardianService_DeleteApprover",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1DeleteApproverResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -408,18 +629,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Approvals"
         ]
       }
     },
     "/v1beta1/appeals/{id}": {
       "get": {
+        "summary": "Get Appeal",
+        "description": "Get Appeal returns an appeal by ID",
         "operationId": "GuardianService_GetAppeal",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1GetAppealResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -438,18 +691,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Appeals"
         ]
       }
     },
     "/v1beta1/appeals/{id}/approvals/{approvalName}": {
       "post": {
+        "summary": "Update Approval",
+        "description": "Update Approval is used to approve or reject a user appeal",
         "operationId": "GuardianService_UpdateApproval",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1UpdateApprovalResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -468,12 +753,13 @@
           },
           {
             "name": "approvalName",
+            "description": "Name of the approval step",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
-            "name": "action",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -482,18 +768,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Approvals"
         ]
       }
     },
     "/v1beta1/appeals/{id}/cancel": {
       "put": {
+        "summary": "Cancel Appeal",
+        "description": "Cancel Appeal cancels an appeal",
         "operationId": "GuardianService_CancelAppeal",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1CancelAppealResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -512,18 +830,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Appeals"
         ]
       }
     },
     "/v1beta1/approvals": {
       "get": {
+        "summary": "List Approvals",
+        "description": "List Approvals returns a list of approvals",
         "operationId": "GuardianService_ListApprovals",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ListApprovalsResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -618,18 +968,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Approvals"
         ]
       }
     },
     "/v1beta1/grants": {
       "get": {
+        "summary": "List Grants",
+        "description": "List Grants returns a list of grants",
         "operationId": "GuardianService_ListGrants",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ListGrantsResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -774,18 +1156,49 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Grants"
         ]
       }
     },
     "/v1beta1/grants/import": {
       "post": {
+        "summary": "Import Grants From Provider",
         "operationId": "GuardianService_ImportGrantsFromProvider",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ImportGrantsFromProviderResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -806,18 +1219,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Grants"
         ]
       }
     },
     "/v1beta1/grants/revoke": {
       "put": {
+        "summary": "Revoke Grants",
+        "description": "Revoke Grants revokes a list of grants",
         "operationId": "GuardianService_RevokeGrants",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1RevokeGrantsResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -838,12 +1283,14 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Grants"
         ]
       }
     },
     "/v1beta1/grants/{id}": {
       "get": {
+        "summary": "Get Grant",
+        "description": "Get Grant returns a grant by ID",
         "operationId": "GuardianService_GetGrant",
         "responses": {
           "200": {
@@ -852,6 +1299,36 @@
               "$ref": "#/definitions/v1beta1GetGrantResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -868,10 +1345,12 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Grants"
         ]
       },
       "patch": {
+        "summary": "Update Grant",
+        "description": "Update Grant updates a grant",
         "operationId": "GuardianService_UpdateGrant",
         "responses": {
           "200": {
@@ -880,6 +1359,36 @@
               "$ref": "#/definitions/v1beta1UpdateGrantResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -899,22 +1408,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "owner": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/v1beta1UpdateGrantRequest"
             }
           }
         ],
         "tags": [
-          "GuardianService"
+          "Grants"
         ]
       }
     },
     "/v1beta1/grants/{id}/revoke": {
       "put": {
+        "summary": "Revoke Grant",
+        "description": "Revoke Grant revokes a grant",
         "operationId": "GuardianService_RevokeGrant",
         "responses": {
           "200": {
@@ -923,6 +1429,36 @@
               "$ref": "#/definitions/v1beta1RevokeGrantResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -942,28 +1478,55 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "reason": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/v1beta1RevokeGrantRequest"
             }
           }
         ],
         "tags": [
-          "GuardianService"
+          "Grants"
         ]
       }
     },
     "/v1beta1/me/appeals": {
       "get": {
+        "summary": "List User Appeals",
+        "description": "List User Appeals returns a list of appeals created by the user",
         "operationId": "GuardianService_ListUserAppeals",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ListUserAppealsResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1072,18 +1635,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Appeals"
         ]
       }
     },
     "/v1beta1/me/approvals": {
       "get": {
+        "summary": "List User Approvals",
+        "description": "List User Approvals returns a list of approvals created by the current user",
         "operationId": "GuardianService_ListUserApprovals",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ListUserApprovalsResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1096,6 +1691,7 @@
         "parameters": [
           {
             "name": "statuses",
+            "description": "List of approval statuses to filter by. Possible values are \"pending\", \"active\", \"rejected\", \"cancelled\", \"terminated\"",
             "in": "query",
             "required": false,
             "type": "array",
@@ -1116,6 +1712,7 @@
           },
           {
             "name": "accountId",
+            "description": "Account ID of the user or service account who is creating the appeal",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1172,18 +1769,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Approvals"
         ]
       }
     },
     "/v1beta1/me/grants": {
       "get": {
+        "summary": "List User Grants",
+        "description": "List User Grants returns a list of grants created by the user",
         "operationId": "GuardianService_ListUserGrants",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ListUserGrantsResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1316,18 +1945,49 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Grants"
         ]
       }
     },
     "/v1beta1/namespaces": {
       "get": {
+        "summary": "List Namespaces",
         "operationId": "GuardianService_ListNamespaces",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ListNamespacesResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1338,17 +1998,47 @@
           }
         },
         "tags": [
-          "GuardianService"
+          "Namespaces"
         ]
       },
       "post": {
-        "summary": "Namespace contains information about a tenant",
+        "summary": "Create Namespace",
         "operationId": "GuardianService_CreateNamespace",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1CreateNamespaceResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1369,18 +2059,49 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Namespaces"
         ]
       }
     },
     "/v1beta1/namespaces/{id}": {
       "get": {
+        "summary": "Get Namespace",
         "operationId": "GuardianService_GetNamespace",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1GetNamespaceResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1399,16 +2120,47 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Namespaces"
         ]
       },
       "put": {
+        "summary": "Update Namespace",
         "operationId": "GuardianService_UpdateNamespace",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1UpdateNamespaceResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1430,22 +2182,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "namespace": {
-                  "$ref": "#/definitions/v1beta1Namespace"
-                }
-              }
+              "$ref": "#/definitions/v1beta1UpdateNamespaceRequest"
             }
           }
         ],
         "tags": [
-          "GuardianService"
+          "Namespaces"
         ]
       }
     },
     "/v1beta1/policies": {
       "get": {
+        "summary": "List Policies",
+        "description": "List Policies returns a list of policies",
         "operationId": "GuardianService_ListPolicies",
         "responses": {
           "200": {
@@ -1454,6 +2203,36 @@
               "$ref": "#/definitions/v1beta1ListPoliciesResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -1462,10 +2241,12 @@
           }
         },
         "tags": [
-          "GuardianService"
+          "Policies"
         ]
       },
       "post": {
+        "summary": "Create Policy",
+        "description": "Create Policy creates a new policy in Guardian",
         "operationId": "GuardianService_CreatePolicy",
         "responses": {
           "200": {
@@ -1474,6 +2255,36 @@
               "$ref": "#/definitions/v1beta1CreatePolicyResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -1483,7 +2294,7 @@
         },
         "parameters": [
           {
-            "name": "policy",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1498,12 +2309,14 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Policies"
         ]
       }
     },
     "/v1beta1/policies/{id}": {
       "put": {
+        "summary": "Update Policy",
+        "description": "Update Policy updates a policy in Guardian",
         "operationId": "GuardianService_UpdatePolicy",
         "responses": {
           "200": {
@@ -1512,6 +2325,36 @@
               "$ref": "#/definitions/v1beta1UpdatePolicyResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -1527,7 +2370,7 @@
             "type": "string"
           },
           {
-            "name": "policy",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1542,12 +2385,14 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Policies"
         ]
       }
     },
     "/v1beta1/policies/{id}/versions/{version}": {
       "get": {
+        "summary": "Get Policy",
+        "description": "Get Policy returns a policy by ID and version",
         "operationId": "GuardianService_GetPolicy",
         "responses": {
           "200": {
@@ -1556,6 +2401,36 @@
               "$ref": "#/definitions/v1beta1GetPolicyResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -1579,12 +2454,14 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Policies"
         ]
       }
     },
     "/v1beta1/policies/{id}/versions/{version}/preferences": {
       "get": {
+        "summary": "Get Policy Preferences",
+        "description": "Get Policy Preferences returns a policy preferences by ID and version",
         "operationId": "GuardianService_GetPolicyPreferences",
         "responses": {
           "200": {
@@ -1593,6 +2470,36 @@
               "$ref": "#/definitions/v1beta1GetPolicyPreferencesResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -1616,18 +2523,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Policies"
         ]
       }
     },
     "/v1beta1/providers": {
       "get": {
+        "summary": "List Providers",
+        "description": "List Providers returns a list of providers supported by Guardian",
         "operationId": "GuardianService_ListProviders",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ListProvidersResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1638,16 +2577,48 @@
           }
         },
         "tags": [
-          "GuardianService"
+          "Providers"
         ]
       },
       "post": {
+        "summary": "Create Provider",
+        "description": "Create Provider registers a new provider in Guardian. Once a provider config is registered, Guardian will immediately fetch the resources and store it in the database.",
         "operationId": "GuardianService_CreateProvider",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1CreateProviderResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1659,7 +2630,7 @@
         },
         "parameters": [
           {
-            "name": "config",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1674,18 +2645,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Providers"
         ]
       }
     },
     "/v1beta1/providers/types": {
       "get": {
+        "summary": "Get Provider Types",
+        "description": "Get Provider Types returns a list of provider types supported by Guardian",
         "operationId": "GuardianService_GetProviderTypes",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1GetProviderTypesResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1696,18 +2699,50 @@
           }
         },
         "tags": [
-          "GuardianService"
+          "Providers"
         ]
       }
     },
     "/v1beta1/providers/{config.type}/{config.urn}": {
       "put": {
+        "summary": "Update Provider",
+        "description": "Update Provider updates a provider config in Guardian",
         "operationId": "GuardianService_UpdateProvider2",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1UpdateProviderResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1731,43 +2766,11 @@
             "type": "string"
           },
           {
-            "name": "config",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "labels": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
-                },
-                "credentials": {},
-                "appeal": {
-                  "$ref": "#/definitions/ProviderConfigAppealConfig"
-                },
-                "resources": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "$ref": "#/definitions/ProviderConfigResourceConfig"
-                  }
-                },
-                "allowedAccountTypes": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "parameters": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "$ref": "#/definitions/ProviderConfigProviderParameter"
-                  }
-                }
-              }
+              "$ref": "#/definitions/v1beta1ProviderConfig"
             }
           },
           {
@@ -1784,12 +2787,14 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Providers"
         ]
       }
     },
     "/v1beta1/providers/{id}": {
       "get": {
+        "summary": "Get Provider",
+        "description": "Get Provider returns a provider by ID",
         "operationId": "GuardianService_GetProvider",
         "responses": {
           "200": {
@@ -1798,6 +2803,36 @@
               "$ref": "#/definitions/v1beta1GetProviderResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -1814,10 +2849,12 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Providers"
         ]
       },
       "delete": {
+        "summary": "Delete Provider",
+        "description": "Delete Provider deletes a provider regsitered in Guardian database",
         "operationId": "GuardianService_DeleteProvider",
         "responses": {
           "200": {
@@ -1826,6 +2863,36 @@
               "$ref": "#/definitions/v1beta1DeleteProviderResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -1842,16 +2909,48 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Providers"
         ]
       },
       "put": {
+        "summary": "Update Provider",
+        "description": "Update Provider updates a provider config in Guardian",
         "operationId": "GuardianService_UpdateProvider",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1UpdateProviderResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1869,7 +2968,7 @@
             "type": "string"
           },
           {
-            "name": "config",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1884,18 +2983,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Providers"
         ]
       }
     },
     "/v1beta1/providers/{id}/resources/{resourceType}/roles": {
       "get": {
+        "summary": "List Roles",
+        "description": "List Roles returns a list of roles supported by a provider for a particular resource type.",
         "operationId": "GuardianService_ListRoles",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ListRolesResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1920,18 +3051,50 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Providers"
         ]
       }
     },
     "/v1beta1/resources": {
       "get": {
+        "summary": "List Resources",
+        "description": "List Resources returns a list of resources",
         "operationId": "GuardianService_ListResources",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1beta1ListResourcesResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -1990,12 +3153,14 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Resources"
         ]
       }
     },
     "/v1beta1/resources/{id}": {
       "get": {
+        "summary": "Get Resource",
+        "description": "Get Resource returns a resource by ID",
         "operationId": "GuardianService_GetResource",
         "responses": {
           "200": {
@@ -2004,6 +3169,36 @@
               "$ref": "#/definitions/v1beta1GetResourceResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -2020,10 +3215,12 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Resources"
         ]
       },
       "delete": {
+        "summary": "Delete Resource",
+        "description": "Delete Resource deletes a resource in Guardian",
         "operationId": "GuardianService_DeleteResource",
         "responses": {
           "200": {
@@ -2032,6 +3229,36 @@
               "$ref": "#/definitions/v1beta1DeleteResourceResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -2048,10 +3275,12 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Resources"
         ]
       },
       "put": {
+        "summary": "Update Resource",
+        "description": "Update Resource updates a resource in Guardian",
         "operationId": "GuardianService_UpdateResource",
         "responses": {
           "200": {
@@ -2060,6 +3289,36 @@
               "$ref": "#/definitions/v1beta1UpdateResourceResponse"
             }
           },
+          "400": {
+            "description": "Bad Request - The request was malformed or contained invalid parameters.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Forbidden - User does not have permission to access the resource",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource was not found",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error. Returned when theres is something wrong with Frontier server.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -2075,7 +3334,7 @@
             "type": "string"
           },
           {
-            "name": "resource",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -2084,7 +3343,7 @@
           }
         ],
         "tags": [
-          "GuardianService"
+          "Resources"
         ]
       }
     }
@@ -2113,94 +3372,164 @@
     "ConditionMatchCondition": {
       "type": "object",
       "properties": {
-        "eq": {}
+        "eq": {
+          "type": "object"
+        }
       }
     },
     "PolicyAppealConfigDurationOptions": {
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the duration option",
+          "required": [
+            "name"
+          ]
         },
         "value": {
-          "type": "string"
+          "type": "string",
+          "description": "Actual value of duration such as 24h, 72h. value will be 0h in case of permanent duration. Valid time units are ns, us (or µs). Reference: [ParseDuration](https://pkg.go.dev/time#ParseDuration)",
+          "required": [
+            "value"
+          ]
         }
-      }
+      },
+      "required": [
+        "name",
+        "value"
+      ]
     },
     "PolicyAppealConfigQuestion": {
       "type": "object",
       "properties": {
         "key": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique key of the question",
+          "required": [
+            "key"
+          ]
         },
         "question": {
-          "type": "string"
+          "type": "string",
+          "description": "Question to be asked to the appeal creator",
+          "required": [
+            "question"
+          ]
         },
         "required": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the question is required or not",
+          "required": [
+            "required"
+          ]
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "The description to be shown to the appeal creator"
         }
-      }
+      },
+      "required": [
+        "key",
+        "question",
+        "required"
+      ]
     },
     "PolicyApprovalStep": {
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "example": "Step 1",
+          "description": "Approval step identifier",
+          "required": [
+            "name"
+          ]
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "example": "Step 1 description",
+          "description": "Approval step description"
         },
         "allowFailed": {
-          "type": "boolean"
+          "type": "boolean",
+          "example": true,
+          "description": "If set true, and current step is rejected, it will mark the appeal status as skipped instead of rejected"
         },
         "when": {
-          "type": "string"
+          "type": "string",
+          "description": "Determines whether the step should be evaluated or it can be skipped. If it evaluates to be falsy, the step will automatically skipped. Otherwise, step become pending/blocked (normal)."
         },
         "strategy": {
-          "type": "string"
+          "type": "string",
+          "example": "auto",
+          "description": "Execution behaviour of the step. Possible values are `auto` or `manual`",
+          "required": [
+            "strategy"
+          ]
         },
         "approveIf": {
-          "type": "string"
+          "type": "string",
+          "description": "Determines the automatic resolution of current step when strategy is `auto`. Required when strategy is `auto`"
         },
         "approvers": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of email or Expression string. The Expression is expected to return an email address or list of email addresses. Required when strategy is `manual`"
         },
         "rejectionReason": {
-          "type": "string"
+          "type": "string",
+          "description": "This fills `Approval.Reason` if current approval step gets rejected based on `ApproveIf` expression. If strategy is manual, this field ignored."
         }
-      }
+      },
+      "required": [
+        "name",
+        "strategy"
+      ]
     },
     "PolicyIAM": {
       "type": "object",
       "properties": {
         "provider": {
-          "type": "string"
+          "type": "string",
+          "example": "bigquery",
+          "description": "Identity manager type. Supported types are http and frontier",
+          "required": [
+            "provider"
+          ]
         },
-        "config": {},
+        "config": {
+          "type": "object",
+          "description": "Client configuration according to the provider type",
+          "required": [
+            "config"
+          ]
+        },
         "schema": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          }
+          },
+          "description": "User (appeal creator) profile details schema to be shown in the creator field in an appeal"
         }
-      }
+      },
+      "required": [
+        "provider",
+        "config"
+      ]
     },
     "PolicyRequirement": {
       "type": "object",
       "properties": {
         "on": {
-          "$ref": "#/definitions/RequirementRequirementTrigger"
+          "$ref": "#/definitions/RequirementRequirementTrigger",
+          "description": "Requirement trigger. If the trigger is matched, the requirement will be evaluated"
         },
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/RequirementAdditionalAppeal"
           }
         }
@@ -2246,7 +3575,6 @@
         "roles": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Role"
           }
         },
@@ -2276,24 +3604,28 @@
       "type": "object",
       "properties": {
         "providerType": {
-          "type": "string"
+          "type": "string",
+          "description": "Criteria for the provider type of the current appeal's selected resource. Regex supported"
         },
         "providerUrn": {
-          "type": "string"
+          "type": "string",
+          "description": "Criteria for the provider URN of the current appeal's selected resource. Regex supported"
         },
         "resourceType": {
-          "type": "string"
+          "type": "string",
+          "description": "Criteria for the resource type of the current appeal's selected resource. Regex supported"
         },
         "resourceUrn": {
-          "type": "string"
+          "type": "string",
+          "description": "Criteria for the resource URN of the current appeal's selected resource. Regex supported"
         },
         "role": {
-          "type": "string"
+          "type": "string",
+          "description": "Criteria for the role of the current appeal. Regex supported"
         },
         "conditions": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Condition"
           }
         },
@@ -2306,10 +3638,13 @@
       "type": "object",
       "properties": {
         "action": {
-          "type": "string"
+          "type": "string",
+          "example": "approve",
+          "description": "Action to take on the approval. Possible values are \"approve\" or \"reject\""
         },
         "reason": {
-          "type": "string"
+          "type": "string",
+          "description": "In case an appeal is rejected, the reason is to be updated in this field"
         }
       }
     },
@@ -2317,25 +3652,35 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "example": "f4b7a3c0-9f9b-4b9b-9b0a-9e4b1a1b1b1b",
+          "description": "Resource unique identifier"
         },
         "providerType": {
-          "type": "string"
+          "type": "string",
+          "example": "bigquery",
+          "description": "Type of the provider that manages this resource"
         },
         "providerUrn": {
-          "type": "string"
+          "type": "string",
+          "example": "my-bq",
+          "description": "Unique resource urn"
         },
         "type": {
-          "type": "string"
+          "type": "string",
+          "example": "table",
+          "description": "Type of the resource. Depends on the provider type. For example, for BigQuery, it can be dataset, table, view, etc."
         },
         "urn": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique resource urn"
         },
         "name": {
           "type": "string"
         },
         "details": {
-          "type": "object"
+          "type": "object",
+          "description": "Additional information of the resource that can be updated from Guardian"
         },
         "labels": {
           "type": "object",
@@ -2345,24 +3690,30 @@
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-06-07T05:39:56.961Z",
+          "description": "Resource creation timestamp"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-06-07T05:39:56.961Z",
+          "description": "Resource last update timestamp"
         },
         "isDeleted": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the resource is deleted or not"
         },
         "parentId": {
-          "type": "string"
+          "type": "string",
+          "description": "Parent resource id"
         },
         "children": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/guardianv1beta1Resource"
-          }
+          },
+          "description": "List of child resources"
         }
       },
       "title": "Resource contains information of resource from providers"
@@ -2370,11 +3721,14 @@
     "protobufAny": {
       "type": "object",
       "properties": {
-        "@type": {
+        "typeUrl": {
           "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
         }
-      },
-      "additionalProperties": {}
+      }
     },
     "protobufNullValue": {
       "type": "string",
@@ -2397,11 +3751,44 @@
         "details": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }
       }
+    },
+    "v1beta1AddApproverRequest": {
+      "type": "object",
+      "properties": {
+        "appealId": {
+          "type": "string",
+          "example": "f1b9a9a0-1f0b-4b7a-8b0a-9b0a9b0a9b0a",
+          "description": "UUID of the appeal",
+          "required": [
+            "appeal_id"
+          ]
+        },
+        "approvalId": {
+          "type": "string",
+          "example": "f1b9a9a0-1f0b-4b7a-8b0a-9b0a9b0a9b0a",
+          "description": "Unique identifier or name of the approval",
+          "required": [
+            "approval_id"
+          ]
+        },
+        "email": {
+          "type": "string",
+          "example": "john@raystack.org",
+          "description": "Email of the approver",
+          "required": [
+            "email"
+          ]
+        }
+      },
+      "required": [
+        "appealId",
+        "approvalId",
+        "email"
+      ]
     },
     "v1beta1AddApproverResponse": {
       "type": "object",
@@ -2437,8 +3824,7 @@
           "type": "string"
         },
         "options": {
-          "$ref": "#/definitions/v1beta1AppealOptions",
-          "title": "optional"
+          "$ref": "#/definitions/v1beta1AppealOptions"
         },
         "labels": {
           "type": "object",
@@ -2447,23 +3833,25 @@
           }
         },
         "resource": {
-          "$ref": "#/definitions/guardianv1beta1Resource",
-          "title": "optional"
+          "$ref": "#/definitions/guardianv1beta1Resource"
         },
         "approvals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-01-01T00:00:00Z",
+          "description": "Creation time of the appeal"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-01-01T00:00:00Z",
+          "description": "Last update time of the appeal"
         },
         "details": {
           "type": "object"
@@ -2474,7 +3862,9 @@
         "createdBy": {
           "type": "string"
         },
-        "creator": {},
+        "creator": {
+          "type": "object"
+        },
         "permissions": {
           "type": "array",
           "items": {
@@ -2495,8 +3885,7 @@
       "properties": {
         "expirationDate": {
           "type": "string",
-          "format": "date-time",
-          "title": "optional"
+          "format": "date-time"
         },
         "duration": {
           "type": "string"
@@ -2539,11 +3928,15 @@
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-06-07T05:39:56.961Z",
+          "description": "Approval creation timestamp"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-06-07T05:39:56.961Z",
+          "description": "Approval last update timestamp"
         },
         "reason": {
           "type": "string"
@@ -2574,17 +3967,19 @@
       "type": "object",
       "properties": {
         "accountId": {
-          "type": "string"
+          "type": "string",
+          "description": "Account ID of the user or service account who is creating the appeal"
         },
         "resources": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1CreateAppealRequestResource"
-          }
+          },
+          "description": "List of resources that the user is requesting access to"
         },
         "accountType": {
-          "type": "string"
+          "type": "string",
+          "description": "Account type of the user or service account who is creating the appeal. For example for BigQuery and Google Cloud IAM values are \"user\" or \"service_account\""
         },
         "description": {
           "type": "string"
@@ -2614,7 +4009,6 @@
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
         }
@@ -2723,7 +4117,6 @@
         "providerTypes": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderType"
           }
         }
@@ -2776,7 +4169,9 @@
         },
         "revokedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-01-01T00:00:00Z",
+          "description": "Timestamp when the grant is revoked"
         },
         "revokeReason": {
           "type": "string"
@@ -2786,11 +4181,15 @@
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-01-01T00:00:00Z",
+          "description": "Creation time of the grant"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-01-01T00:00:00Z",
+          "description": "Last update time of the grant"
         },
         "resource": {
           "$ref": "#/definitions/guardianv1beta1Resource"
@@ -2846,7 +4245,6 @@
         "activities": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderActivity"
           }
         }
@@ -2884,7 +4282,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         }
@@ -2896,7 +4293,6 @@
         "activities": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderActivity"
           }
         }
@@ -2908,7 +4304,6 @@
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
         },
@@ -2924,7 +4319,6 @@
         "approvals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
         },
@@ -2940,7 +4334,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         },
@@ -2956,7 +4349,6 @@
         "namespaces": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Namespace"
           }
         }
@@ -2968,7 +4360,6 @@
         "policies": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Policy"
           }
         }
@@ -2980,7 +4371,6 @@
         "providers": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Provider"
           }
         }
@@ -2992,7 +4382,6 @@
         "resources": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/guardianv1beta1Resource"
           }
         }
@@ -3004,7 +4393,6 @@
         "roles": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Role"
           }
         }
@@ -3016,7 +4404,6 @@
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
         },
@@ -3032,7 +4419,6 @@
         "approvals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
         },
@@ -3048,7 +4434,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         },
@@ -3075,11 +4460,15 @@
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-01-01T00:00:00Z",
+          "description": "Creation time of the namespace"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-01-01T00:00:00Z",
+          "description": "Last update time of the namespace"
         }
       }
     },
@@ -3087,11 +4476,15 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "example": "f4b7a3c0-9f9b-4b9b-9b0a-9e4b1a1b1b1b",
+          "description": "Policy unique identifier"
         },
         "version": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "example": 1,
+          "description": "Policy version. Auto-incremented when policy is updated"
         },
         "description": {
           "type": "string"
@@ -3099,9 +4492,10 @@
         "steps": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyApprovalStep"
-          }
+          },
+          "description": "Sequence of approval steps. Each step can have different approval strategy and approvers",
+          "title": "add description"
         },
         "labels": {
           "type": "object",
@@ -3111,16 +4505,19 @@
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-06-07T05:39:56.961Z",
+          "description": "Policy creation timestamp"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-06-07T05:39:56.961Z",
+          "description": "Policy last update timestamp"
         },
         "requirements": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyRequirement"
           }
         },
@@ -3129,6 +4526,12 @@
         },
         "appeal": {
           "$ref": "#/definitions/v1beta1PolicyAppealConfig"
+        },
+        "title": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
         }
       },
       "title": "Policy is a configurable steps for appeal's approval"
@@ -3139,25 +4542,27 @@
         "durationOptions": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyAppealConfigDurationOptions"
-          }
+          },
+          "description": "List of duration options"
         },
         "allowOnBehalf": {
           "type": "boolean"
         },
         "allowPermanentAccess": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Set this to true if you want to allow users to have permanent access to the resources. Default is false"
         },
         "allowActiveAccessExtensionIn": {
-          "type": "string"
+          "type": "string",
+          "description": "Duration before the access expiration date when the user allowed to create appeal to the same resource (extend their current access). Valid time units are ns, us (or µs), ms, s, m, h"
         },
         "questions": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyAppealConfigQuestion"
-          }
+          },
+          "description": "List of questions to be asked to the appeal creator"
         },
         "allowCreatorDetailsFailure": {
           "type": "boolean"
@@ -3193,11 +4598,15 @@
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-01-01T00:00:00Z",
+          "description": "Creation time of the provider"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-01-01T00:00:00Z",
+          "description": "Last update time of the provider"
         }
       },
       "title": "Provider contains information about external data provider such as BigQuery, Metabase, etc., credentials, policy, and allowed roles"
@@ -3238,7 +4647,9 @@
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time"
+          "format": "date-time",
+          "example": "2023-01-01T00:00:00Z",
+          "description": "Creation time of the provider activity"
         },
         "provider": {
           "$ref": "#/definitions/v1beta1Provider"
@@ -3272,14 +4683,15 @@
             "type": "string"
           }
         },
-        "credentials": {},
+        "credentials": {
+          "type": "object"
+        },
         "appeal": {
           "$ref": "#/definitions/ProviderConfigAppealConfig"
         },
         "resources": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/ProviderConfigResourceConfig"
           }
         },
@@ -3292,7 +4704,6 @@
         "parameters": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/ProviderConfigProviderParameter"
           }
         }
@@ -3309,6 +4720,17 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "v1beta1RevokeGrantRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
         }
       }
     },
@@ -3364,7 +4786,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         }
@@ -3384,7 +4805,9 @@
         },
         "permissions": {
           "type": "array",
-          "items": {}
+          "items": {
+            "type": "object"
+          }
         }
       }
     },
@@ -3396,11 +4819,33 @@
         }
       }
     },
+    "v1beta1UpdateGrantRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        }
+      }
+    },
     "v1beta1UpdateGrantResponse": {
       "type": "object",
       "properties": {
         "grant": {
           "$ref": "#/definitions/v1beta1Grant"
+        }
+      }
+    },
+    "v1beta1UpdateNamespaceRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "namespace": {
+          "$ref": "#/definitions/v1beta1Namespace"
         }
       }
     },
@@ -3431,5 +4876,18 @@
         }
       }
     }
-  }
+  },
+  "securityDefinitions": {
+    "apiKey": {
+      "type": "apiKey",
+      "description": "Email address of the user",
+      "name": "X-Auth-Email",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "apiKey": []
+    }
+  ]
 }

@@ -13,6 +13,7 @@ import (
 type FrontierConfig struct {
 	Host               string `mapstructure:"host"`
 	NamespaceClaimsKey string `mapstructure:"namespace_claims_key" default:"project_id"`
+	EmailClaimsKey     string `mapstructure:"email_claims_key" default:"email"`
 }
 
 type namespaceContextKey struct{}
@@ -34,6 +35,11 @@ func FrontierJWTInterceptor(conf FrontierConfig) grpc.UnaryServerInterceptor {
 						if namespace, claimExists := insecureToken.Get(conf.NamespaceClaimsKey); claimExists {
 							if id, err := uuid.Parse(namespace.(string)); err == nil {
 								ctx = context.WithValue(ctx, namespaceContextKey{}, id)
+							}
+						}
+						if email, emailExists := insecureToken.Get(conf.EmailClaimsKey); emailExists {
+							if email, ok := email.(string); ok {
+								ctx = WrapEmailInCtx(ctx, email)
 							}
 						}
 					}
