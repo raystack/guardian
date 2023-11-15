@@ -11,8 +11,15 @@ import (
 )
 
 const (
-	RoleMember = "users"
-	RoleAdmin  = "admins"
+	RoleOrgViewer        = "app_organization_viewer"
+	RoleOrgManager       = "app_organization_manager"
+	RoleOrgOwner         = "app_organization_owner"
+	RoleOrgAccessManager = "app_organization_accessmanager"
+	RoleProjectOwner     = "app_project_owner"
+	RoleProjectManager   = "app_project_manager"
+	RoleProjectViewer    = "app_project_viewer"
+	RoleGroupOwner       = "app_group_owner"
+	RoleGroupMember      = "app_group_member"
 
 	AccountTypeUser = "user"
 )
@@ -118,11 +125,11 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 
 	var nameValidation string
 	if resourceType == ResourceTypeTeam {
-		nameValidation = "oneof=users admins"
+		nameValidation = fmt.Sprintf("oneof=%s %s", RoleGroupOwner, RoleGroupMember)
 	} else if resourceType == ResourceTypeProject {
-		nameValidation = "oneof=admins"
+		nameValidation = fmt.Sprintf("oneof=%s %s %s", RoleProjectManager, RoleProjectOwner, RoleProjectViewer)
 	} else if resourceType == ResourceTypeOrganization {
-		nameValidation = "oneof=admins"
+		nameValidation = fmt.Sprintf("oneof=%s %s %s %s", RoleOrgViewer, RoleOrgManager, RoleOrgOwner, RoleOrgAccessManager)
 	}
 
 	if err := c.validator.Var(pc, nameValidation); err != nil {

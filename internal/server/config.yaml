@@ -14,8 +14,9 @@ GRPC:
   TIMEOUT_IN_SECONDS: 5
   MAX_CALL_RECV_MSG_SIZE: 33554432
   MAX_CALL_SEND_MSG_SIZE: 33554432
-ENCRYPTION_SECRET_KEY:
+ENCRYPTION_SECRET_KEY: "<secret-key>"
 AUTHENTICATED_USER_HEADER_KEY: X-Auth-Email
+AUDIT_LOG_TRACE_ID_HEADER_KEY: X-Trace-Id
 LOG:
   LEVEL: info
 DB:
@@ -27,11 +28,18 @@ DB:
   SSLMODE: disable
 NOTIFIER:
   PROVIDER: slack
-  ACCESS_TOKEN:
+  ACCESS_TOKEN: <slack-access-token>
   WORKSPACES:
     - WORKSPACE: raystack
-      ACCESS_TOKEN:
+      ACCESS_TOKEN: <slack-access-token>
       CRITERIA: "email contains '@raystack.io'"
+  MESSAGES:
+      EXPIRATION_REMINDER: "Your access {{.account_id}} to {{.resource_name}} with role {{.role}} will expire at {{.expiration_date}}. Extend the access if it's still needed"
+      APPEAL_APPROVED: "Your appeal to {{.resource_name}} with role {{.role}} has been approved"
+      APPEAL_REJECTED: "Your appeal to {{.resource_name}} with role {{.role}} has been rejected"
+      ACCESS_REVOKED: "Your access to {{.resource_name}}} with role {{.role}} has been revoked"
+      APPROVER_NOTIFICATION: "You have an appeal created by {{.requestor}} requesting access to {{.resource_name}} with role {{.role}}. Appeal ID: {{.appeal_id}}"
+      OTHERS_APPEAL_APPROVED: "Your appeal to {{.resource_name}} with role {{.role}} created by {{.requestor}} has been approved"
 JOBS:
   FETCH_RESOURCES:
     ENABLED: true

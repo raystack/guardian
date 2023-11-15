@@ -62,28 +62,29 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 	var projects []*Project
 	var organizations []*Organization
 
-	if _, ok := resourceTypes[ResourceTypeTeam]; ok {
-		teams, err = client.GetTeams()
-		if err != nil {
-			return nil, err
-		}
-		resources = p.addTeams(pc, teams, resources)
-	}
-
-	if _, ok := resourceTypes[ResourceTypeProject]; ok {
-		projects, err = client.GetProjects()
-		if err != nil {
-			return nil, err
-		}
-		resources = p.addProjects(pc, projects, resources)
-	}
-
 	if _, ok := resourceTypes[ResourceTypeOrganization]; ok {
 		organizations, err = client.GetOrganizations()
 		if err != nil {
 			return nil, err
 		}
 		resources = p.addOrganizations(pc, organizations, resources)
+		for _, orgs := range organizations {
+			if _, ok := resourceTypes[ResourceTypeProject]; ok {
+				projects, err = client.GetProjects(orgs.ID)
+				if err != nil {
+					return nil, err
+				}
+				resources = p.addProjects(pc, projects, resources)
+			}
+
+			if _, ok := resourceTypes[ResourceTypeTeam]; ok {
+				teams, err = client.GetTeams(orgs.ID)
+				if err != nil {
+					return nil, err
+				}
+				resources = p.addTeams(pc, teams, resources)
+			}
+		}
 	}
 
 	return resources, nil
