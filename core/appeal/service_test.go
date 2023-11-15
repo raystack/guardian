@@ -298,7 +298,18 @@ func (s *ServiceTestSuite) TestCreate() {
 				}},
 				providers:     []*domain.Provider{testProvider},
 				appeals:       []*domain.Appeal{{ResourceID: "1"}},
-				expectedError: appeal.ErrProviderTypeNotFound,
+				expectedError: appeal.ErrProviderNotFound,
+			},
+			{
+				name: "provider urn not found",
+				resources: []*domain.Resource{{
+					ID:           "1",
+					ProviderType: "provider_type",
+					ProviderURN:  "invalid_provider_urn",
+				}},
+				providers:     []*domain.Provider{testProvider},
+				appeals:       []*domain.Appeal{{ResourceID: "1"}},
+				expectedError: appeal.ErrProviderNotFound,
 			},
 			{
 				name: "user still have active grant",
@@ -394,17 +405,6 @@ func (s *ServiceTestSuite) TestCreate() {
 				expectedError: appeal.ErrGrantNotEligibleForExtension,
 			},
 			{
-				name: "provider urn not found",
-				resources: []*domain.Resource{{
-					ID:           "1",
-					ProviderType: "provider_type",
-					ProviderURN:  "invalid_provider_urn",
-				}},
-				providers:     []*domain.Provider{testProvider},
-				appeals:       []*domain.Appeal{{ResourceID: "1"}},
-				expectedError: appeal.ErrProviderURNNotFound,
-			},
-			{
 				name: "duration not found when the appeal config prevents permanent access",
 				resources: []*domain.Resource{{
 					ID:           "1",
@@ -415,11 +415,11 @@ func (s *ServiceTestSuite) TestCreate() {
 				policies:                      []*domain.Policy{{ID: "policy_id", Version: 1}},
 				providers:                     []*domain.Provider{testProvider},
 				callMockValidateAppeal:        true,
-				expectedAppealValidationError: provider.ErrOptionsDurationNotFound,
+				expectedAppealValidationError: provider.ErrAppealValidationDurationNotSpecified,
 				appeals: []*domain.Appeal{{
 					ResourceID: "1",
 				}},
-				expectedError: appeal.ErrOptionsDurationNotFound,
+				expectedError: provider.ErrAppealValidationDurationNotSpecified,
 			},
 			{
 				name: "empty duration option",
@@ -432,14 +432,34 @@ func (s *ServiceTestSuite) TestCreate() {
 				policies:                      testPolicies,
 				providers:                     []*domain.Provider{testProvider},
 				callMockValidateAppeal:        true,
-				expectedAppealValidationError: provider.ErrDurationIsRequired,
+				expectedAppealValidationError: provider.ErrAppealValidationEmptyDuration,
 				appeals: []*domain.Appeal{{
 					ResourceID: "1",
 					Options: &domain.AppealOptions{
 						Duration: "",
 					},
 				}},
-				expectedError: appeal.ErrDurationIsRequired,
+				expectedError: provider.ErrAppealValidationEmptyDuration,
+			},
+			{
+				name: "invalid duration value",
+				resources: []*domain.Resource{{
+					ID:           "1",
+					ProviderType: "provider_type",
+					ProviderURN:  "provider_urn",
+					Type:         "resource_type",
+				}},
+				policies:                      testPolicies,
+				providers:                     []*domain.Provider{testProvider},
+				callMockValidateAppeal:        true,
+				expectedAppealValidationError: provider.ErrAppealValidationInvalidDurationValue,
+				appeals: []*domain.Appeal{{
+					ResourceID: "1",
+					Options: &domain.AppealOptions{
+						Duration: "invalid-duration",
+					},
+				}},
+				expectedError: provider.ErrAppealValidationInvalidDurationValue,
 			},
 			{
 				name: "invalid role",
@@ -473,7 +493,7 @@ func (s *ServiceTestSuite) TestCreate() {
 				policies:      testPolicies,
 				providers:     []*domain.Provider{testProvider},
 				appeals:       []*domain.Appeal{{ResourceID: "1"}},
-				expectedError: appeal.ErrResourceTypeNotFound,
+				expectedError: appeal.ErrInvalidResourceType,
 			},
 			{
 				name: "policy id not found",
@@ -491,7 +511,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						ExpirationDate: &timeNow,
 					},
 				}},
-				expectedError: appeal.ErrPolicyIDNotFound,
+				expectedError: appeal.ErrPolicyNotFound,
 			},
 			{
 				name: "policy version not found",
@@ -512,7 +532,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						ExpirationDate: &timeNow,
 					},
 				}},
-				expectedError: appeal.ErrPolicyVersionNotFound,
+				expectedError: appeal.ErrPolicyNotFound,
 			},
 			{
 				name: "appeal duration not found in policy appeal config",
@@ -545,7 +565,7 @@ func (s *ServiceTestSuite) TestCreate() {
 						Duration: "100h",
 					},
 				}},
-				expectedError: appeal.ErrOptionsDurationNotFound,
+				expectedError: appeal.ErrDurationNotAllowed,
 			},
 		}
 

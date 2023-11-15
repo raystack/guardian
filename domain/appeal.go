@@ -28,7 +28,10 @@ const (
 )
 
 var (
-	ErrApproverInvalidType = errors.New("invalid approver type, expected an email string or array of email string")
+	ErrFailedToGetApprovers   = errors.New("failed to get approvers")
+	ErrApproversNotFound      = errors.New("approvers not found")
+	ErrUnexpectedApproverType = errors.New("unexpected approver type")
+	ErrInvalidApproverValue   = errors.New("approver value is not a valid email")
 )
 
 // AppealOptions

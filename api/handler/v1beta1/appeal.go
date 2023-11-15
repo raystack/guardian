@@ -6,6 +6,7 @@ import (
 
 	guardianv1beta1 "github.com/goto/guardian/api/proto/gotocompany/guardian/v1beta1"
 	"github.com/goto/guardian/core/appeal"
+	"github.com/goto/guardian/core/provider"
 	"github.com/goto/guardian/domain"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
@@ -100,10 +101,34 @@ func (s *GRPCServer) CreateAppeal(ctx context.Context, req *guardianv1beta1.Crea
 	}
 
 	if err := s.appealService.Create(ctx, appeals); err != nil {
-		if errors.Is(err, appeal.ErrAppealDuplicate) {
-			return nil, status.Errorf(codes.AlreadyExists, "appeal already exists: %v", err)
+		switch {
+		case errors.Is(err, provider.ErrAppealValidationInvalidAccountType),
+			errors.Is(err, provider.ErrAppealValidationInvalidRole),
+			errors.Is(err, provider.ErrAppealValidationDurationNotSpecified),
+			errors.Is(err, provider.ErrAppealValidationEmptyDuration),
+			errors.Is(err, provider.ErrAppealValidationInvalidDurationValue),
+			errors.Is(err, provider.ErrAppealValidationMissingRequiredParameter),
+			errors.Is(err, provider.ErrAppealValidationMissingRequiredQuestion),
+			errors.Is(err, appeal.ErrDurationNotAllowed),
+			errors.Is(err, appeal.ErrCannotCreateAppealForOtherUser):
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		case errors.Is(err, appeal.ErrAppealDuplicate):
+			return nil, status.Errorf(codes.AlreadyExists, err.Error())
+		case errors.Is(err, appeal.ErrResourceNotFound),
+			errors.Is(err, appeal.ErrResourceDeleted),
+			errors.Is(err, appeal.ErrProviderNotFound),
+			errors.Is(err, appeal.ErrPolicyNotFound),
+			errors.Is(err, appeal.ErrInvalidResourceType),
+			errors.Is(err, appeal.ErrAppealInvalidExtensionDuration),
+			errors.Is(err, appeal.ErrGrantNotEligibleForExtension),
+			errors.Is(err, domain.ErrFailedToGetApprovers),
+			errors.Is(err, domain.ErrApproversNotFound),
+			errors.Is(err, domain.ErrUnexpectedApproverType),
+			errors.Is(err, domain.ErrInvalidApproverValue):
+			return nil, status.Errorf(codes.FailedPrecondition, err.Error())
+		default:
+			return nil, status.Errorf(codes.Internal, "failed to create appeal(s): %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "failed to create appeal: %v", err)
 	}
 
 	appealProtos := []*guardianv1beta1.Appeal{}

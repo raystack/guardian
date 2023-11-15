@@ -57,7 +57,7 @@ type policyService interface {
 	GetOne(context.Context, string, uint) (*domain.Policy, error)
 }
 
-//go:generate mockery --name=approvalService --exported --with-expecter
+//go:generate mockery --name=approvalService --exported --with-expe	cter
 type approvalService interface {
 	AddApprover(ctx context.Context, approvalID, email string) error
 	DeleteApprover(ctx context.Context, approvalID, email string) error
@@ -216,11 +216,11 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 			return err
 		}
 		if err := addResource(appeal, resources); err != nil {
-			return fmt.Errorf("retrieving resource details for %s: %w", appeal.ResourceID, err)
+			return fmt.Errorf("couldn't find resource with id %q: %w", appeal.ResourceID, err)
 		}
 		provider, err := getProvider(appeal, providers)
 		if err != nil {
-			return fmt.Errorf("retrieving provider: %w", err)
+			return err
 		}
 
 		var policy *domain.Policy
@@ -229,7 +229,7 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		} else {
 			policy, err = getPolicy(appeal, provider, policies)
 			if err != nil {
-				return fmt.Errorf("retrieving policy: %w", err)
+				return err
 			}
 		}
 
@@ -240,12 +240,12 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 
 		if activeGrant != nil {
 			if err := s.checkExtensionEligibility(appeal, provider, policy, activeGrant); err != nil {
-				return fmt.Errorf("checking grant extension eligibility: %w", err)
+				return err
 			}
 		}
 
 		if err := s.providerService.ValidateAppeal(ctx, appeal, provider, policy); err != nil {
-			return fmt.Errorf("validating appeal based on provider: %w", err)
+			return fmt.Errorf("provider validation: %w", err)
 		}
 
 		strPermissions, err := s.getPermissions(ctx, provider.Config, appeal.Resource.Type, appeal.Role)
@@ -255,23 +255,23 @@ func (s *Service) Create(ctx context.Context, appeals []*domain.Appeal, opts ...
 		appeal.Permissions = strPermissions
 
 		if err := validateAppealDurationConfig(appeal, policy); err != nil {
-			return fmt.Errorf("validating appeal duration: %w", err)
+			return err
 		}
 
 		if err := validateAppealOnBehalf(appeal, policy); err != nil {
-			return fmt.Errorf("validating cross-individual appeal: %w", err)
+			return err
 		}
 
 		if err := s.addCreatorDetails(ctx, appeal, policy); err != nil {
-			return fmt.Errorf("retrieving creator details: %w", err)
+			return fmt.Errorf("getting creator details: %w", err)
 		}
 
 		if err := appeal.ApplyPolicy(policy); err != nil {
-			return fmt.Errorf("populating approvals: %w", err)
+			return err
 		}
 
 		if err := appeal.AdvanceApproval(policy); err != nil {
-			return fmt.Errorf("initializing approval step statuses: %w", err)
+			return fmt.Errorf("initializing approvals: %w", err)
 		}
 		appeal.Policy = nil
 
@@ -422,7 +422,7 @@ func validateAppealDurationConfig(appeal *domain.Appeal, policy *domain.Policy) 
 		}
 	}
 
-	return fmt.Errorf("%w: %s", ErrOptionsDurationNotFound, appeal.Options.Duration)
+	return fmt.Errorf("invalid duration: %w: %q", ErrDurationNotAllowed, appeal.Options.Duration)
 }
 
 func validateAppealOnBehalf(a *domain.Appeal, policy *domain.Policy) error {
@@ -1040,31 +1040,31 @@ func (s *Service) GrantAccessToProvider(ctx context.Context, a *domain.Appeal, o
 }
 
 func (s *Service) checkExtensionEligibility(a *domain.Appeal, p *domain.Provider, policy *domain.Policy, activeGrant *domain.Grant) error {
-	AllowActiveAccessExtensionIn := ""
+	allowActiveAccessExtensionIn := ""
 
 	// Default to use provider config if policy config is not set
 	if p.Config.Appeal != nil {
-		AllowActiveAccessExtensionIn = p.Config.Appeal.AllowActiveAccessExtensionIn
+		allowActiveAccessExtensionIn = p.Config.Appeal.AllowActiveAccessExtensionIn
 	}
 
 	// Use policy config if set
 	if policy != nil &&
 		policy.AppealConfig != nil &&
 		policy.AppealConfig.AllowActiveAccessExtensionIn != "" {
-		AllowActiveAccessExtensionIn = policy.AppealConfig.AllowActiveAccessExtensionIn
+		allowActiveAccessExtensionIn = policy.AppealConfig.AllowActiveAccessExtensionIn
 	}
 
-	if AllowActiveAccessExtensionIn == "" {
+	if allowActiveAccessExtensionIn == "" {
 		return ErrAppealFoundActiveGrant
 	}
 
-	extensionDurationRule, err := time.ParseDuration(AllowActiveAccessExtensionIn)
+	extensionDurationRule, err := time.ParseDuration(allowActiveAccessExtensionIn)
 	if err != nil {
-		return fmt.Errorf("%w: %v: %v", ErrAppealInvalidExtensionDuration, AllowActiveAccessExtensionIn, err)
+		return fmt.Errorf("%w: %q: %v", ErrAppealInvalidExtensionDuration, allowActiveAccessExtensionIn, err)
 	}
 
 	if !activeGrant.IsEligibleForExtension(extensionDurationRule) {
-		return ErrGrantNotEligibleForExtension
+		return fmt.Errorf("%w: extension is allowed %q before grant expiration", ErrGrantNotEligibleForExtension, allowActiveAccessExtensionIn)
 	}
 	return nil
 }
@@ -1078,17 +1078,15 @@ func getPolicy(a *domain.Appeal, p *domain.Provider, policiesMap map[string]map[
 		}
 	}
 	if resourceConfig == nil {
-		return nil, ErrResourceTypeNotFound
+		return nil, fmt.Errorf("%w: couldn't find %q resource type in the provider config", ErrInvalidResourceType, a.Resource.Type)
 	}
-
 	policyConfig := resourceConfig.Policy
-	if policiesMap[policyConfig.ID] == nil {
-		return nil, ErrPolicyIDNotFound
-	} else if policiesMap[policyConfig.ID][uint(policyConfig.Version)] == nil {
-		return nil, ErrPolicyVersionNotFound
-	}
 
-	return policiesMap[policyConfig.ID][uint(policyConfig.Version)], nil
+	policy, ok := policiesMap[policyConfig.ID][uint(policyConfig.Version)]
+	if !ok {
+		return nil, fmt.Errorf("couldn't find details for policy %q: %w", fmt.Sprintf("%s@%v", policyConfig.ID, policyConfig.Version), ErrPolicyNotFound)
+	}
+	return policy, nil
 }
 
 func (s *Service) addCreatorDetails(ctx context.Context, a *domain.Appeal, p *domain.Policy) error {
@@ -1098,20 +1096,20 @@ func (s *Service) addCreatorDetails(ctx context.Context, a *domain.Appeal, p *do
 
 	iamConfig, err := s.iam.ParseConfig(p.IAM)
 	if err != nil {
-		return fmt.Errorf("parsing iam config: %w", err)
+		return fmt.Errorf("parsing policy.iam config: %w", err)
 	}
 	iamClient, err := s.iam.GetClient(iamConfig)
 	if err != nil {
-		return fmt.Errorf("getting iam client: %w", err)
+		return fmt.Errorf("initializing iam client: %w", err)
 	}
 
 	userDetails, err := iamClient.GetUser(a.CreatedBy)
 	if err != nil {
 		if p.AppealConfig != nil && p.AppealConfig.AllowCreatorDetailsFailure {
-			s.logger.Warn(ctx, "fetching creator's user iam", "error", err)
+			s.logger.Warn(ctx, "unable to get creator details", "error", err)
 			return nil
 		}
-		return fmt.Errorf("fetching creator's user iam: %w", err)
+		return fmt.Errorf("unable to get creator details: %w", err)
 	}
 
 	userDetailsMap, ok := userDetails.(map[string]interface{})
@@ -1151,7 +1149,7 @@ func addResource(a *domain.Appeal, resourcesMap map[string]*domain.Resource) err
 	if r == nil {
 		return ErrResourceNotFound
 	} else if r.IsDeleted {
-		return ErrResourceIsDeleted
+		return ErrResourceDeleted
 	}
 
 	a.Resource = r
@@ -1159,13 +1157,11 @@ func addResource(a *domain.Appeal, resourcesMap map[string]*domain.Resource) err
 }
 
 func getProvider(a *domain.Appeal, providersMap map[string]map[string]*domain.Provider) (*domain.Provider, error) {
-	if providersMap[a.Resource.ProviderType] == nil {
-		return nil, ErrProviderTypeNotFound
-	} else if providersMap[a.Resource.ProviderType][a.Resource.ProviderURN] == nil {
-		return nil, ErrProviderURNNotFound
+	provider, ok := providersMap[a.Resource.ProviderType][a.Resource.ProviderURN]
+	if !ok {
+		return nil, fmt.Errorf("couldn't find details for provider %q: %w", a.Resource.ProviderType+" - "+a.Resource.ProviderURN, ErrProviderNotFound)
 	}
-
-	return providersMap[a.Resource.ProviderType][a.Resource.ProviderURN], nil
+	return provider, nil
 }
 
 func validateAppeal(a *domain.Appeal, pendingAppealsMap map[string]map[string]map[string]*domain.Appeal) error {

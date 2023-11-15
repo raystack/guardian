@@ -22,7 +22,8 @@ const (
 
 var (
 	ErrInvalidConditionField = errors.New("unable to parse condition's field")
-	validate                 = validator.New()
+
+	validate = validator.New()
 )
 
 type ApprovalStepStrategy string
@@ -129,9 +130,9 @@ func (s Step) ResolveApprovers(a *Appeal) ([]string, error) {
 
 			approversValue, err := evaluator.Expression(expr).EvaluateWithVars(params)
 			if err != nil {
-				return nil, fmt.Errorf("evaluating aprrovers expression: %w", err)
+				return nil, fmt.Errorf("%w: %s", ErrFailedToGetApprovers, err)
 			} else if approversValue == nil {
-				return nil, fmt.Errorf("evaluating aprrovers expression: evaluation result is nil")
+				return nil, ErrApproversNotFound
 			}
 
 			value := reflect.ValueOf(approversValue)
@@ -145,27 +146,29 @@ func (s Step) ResolveApprovers(a *Appeal) ([]string, error) {
 					case reflect.String:
 						approvers = append(approvers, itemValue.String())
 					default:
-						return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, itemValue.Type().Kind())
+						return nil, fmt.Errorf(`%w: %q`, ErrUnexpectedApproverType, itemValue.Type().Kind())
 					}
 				}
 			default:
-				return nil, fmt.Errorf(`%w: %s`, ErrApproverInvalidType, value.Type().Kind())
+				return nil, fmt.Errorf(`%w: %q`, ErrUnexpectedApproverType, value.Type().Kind())
 			}
 		}
 	}
 
-	distinctApprovers := slices.UniqueStringSlice(approvers)
-	if err := validate.Var(distinctApprovers, "dive,email"); err != nil {
-		return nil, err
+	uniqueApprovers := slices.UniqueStringSlice(approvers)
+	for _, approverEmail := range uniqueApprovers {
+		if err := validate.Var(approverEmail, "email"); err != nil {
+			return nil, fmt.Errorf("%w: %q", ErrInvalidApproverValue, approverEmail)
+		}
 	}
 
-	return distinctApprovers, nil
+	return uniqueApprovers, nil
 }
 
 func (s Step) ToApproval(a *Appeal, p *Policy, index int) (*Approval, error) {
 	approvers, err := s.ResolveApprovers(a)
 	if err != nil {
-		return nil, fmt.Errorf("resolving approvers `%s`: %w", s.Approvers, err)
+		return nil, fmt.Errorf("unable to set approvers for %q: %w", s.Name, err)
 	}
 
 	approval := &Approval{

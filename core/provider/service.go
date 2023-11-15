@@ -302,7 +302,7 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 
 	if !utils.ContainsString(p.Config.AllowedAccountTypes, a.AccountType) {
 		allowedAccountTypesStr := strings.Join(p.Config.AllowedAccountTypes, ", ")
-		return fmt.Errorf("invalid account type: %v. allowed account types for %v: %v", a.AccountType, p.Type, allowedAccountTypesStr)
+		return fmt.Errorf("%w: %q. allowed account types: %v", ErrAppealValidationInvalidAccountType, a.AccountType, allowedAccountTypesStr)
 	}
 
 	roles, err := c.GetRoles(p.Config, resourceType)
@@ -319,7 +319,7 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 	}
 
 	if !isRoleExists {
-		return ErrInvalidRole
+		return fmt.Errorf("%w: %q", ErrAppealValidationInvalidRole, a.Role)
 	}
 
 	// Default to use provider config if policy config is not set
@@ -334,15 +334,15 @@ func (s *Service) ValidateAppeal(ctx context.Context, a *domain.Appeal, p *domai
 
 	if !AllowPermanentAccess {
 		if a.Options == nil {
-			return ErrOptionsDurationNotFound
+			return ErrAppealValidationDurationNotSpecified
 		}
 
 		if a.Options.Duration == "" {
-			return ErrDurationIsRequired
+			return ErrAppealValidationEmptyDuration
 		}
 
 		if err := validateDuration(a.Options.Duration); err != nil {
-			return fmt.Errorf("invalid duration: %v", err)
+			return fmt.Errorf("%w: %q", ErrAppealValidationInvalidDurationValue, a.Options.Duration)
 		}
 	}
 
@@ -360,15 +360,16 @@ func (*Service) validateQuestionsAndParameters(a *domain.Appeal, p *domain.Provi
 	if p != nil && p.Config.Parameters != nil {
 		for _, param := range p.Config.Parameters {
 			if param.Required && !utils.ContainsString(parameterKeys, param.Key) {
-				return fmt.Errorf(`parameter "%s" is required`, param.Key)
+				return fmt.Errorf("%w: %q", ErrAppealValidationMissingRequiredParameter, fmt.Sprintf("details.%s.%s", ReservedDetailsKeyProviderParameters, param.Key))
 			}
 		}
 	}
 
+	// TODO: do validation outside of provider.ValidateAppeal
 	if policy != nil && policy.AppealConfig != nil && len(policy.AppealConfig.Questions) > 0 {
 		for _, question := range policy.AppealConfig.Questions {
 			if question.Required && !utils.ContainsString(questionKeys, question.Key) {
-				return fmt.Errorf(`question "%s" is required`, question.Key)
+				return fmt.Errorf("%w: %q", ErrAppealValidationMissingRequiredQuestion, fmt.Sprintf("details.%s.%s", ReservedDetailsKeyPolicyQuestions, question.Key))
 			}
 		}
 	}
@@ -670,10 +671,8 @@ func (s *Service) validateAppealConfig(a *domain.AppealConfig) error {
 }
 
 func validateDuration(d string) error {
-	if _, err := time.ParseDuration(d); err != nil {
-		return fmt.Errorf("parsing duration: %v", err)
-	}
-	return nil
+	_, err := time.ParseDuration(d)
+	return err
 }
 
 func flattenResources(resources []*domain.Resource) []*domain.Resource {

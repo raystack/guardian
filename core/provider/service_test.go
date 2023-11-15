@@ -846,7 +846,7 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 		}
 		policy := &domain.Policy{}
 
-		expectedError := fmt.Errorf("invalid account type: %v. allowed account types for %v: %v", appeal.AccountType, mockProviderType, provider.Config.AllowedAccountTypes[0])
+		expectedError := fmt.Errorf("invalid account type: %q. allowed account types: %v", appeal.AccountType, provider.Config.AllowedAccountTypes[0])
 
 		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
 
@@ -878,7 +878,7 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 	})
 
 	s.Run("should return error if get roles not exist", func() {
-		expectedError := provider.ErrInvalidRole
+		expectedError := provider.ErrAppealValidationInvalidRole
 
 		appeal := &domain.Appeal{
 			AccountType: "test",
@@ -900,11 +900,11 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 
 		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
 
-		s.EqualError(actualError, expectedError.Error())
+		s.ErrorIs(actualError, expectedError)
 	})
 
 	s.Run("should return error if not allow permanent access and duration option not found", func() {
-		expectedError := provider.ErrOptionsDurationNotFound
+		expectedError := provider.ErrAppealValidationDurationNotSpecified
 		role1 := &domain.Role{ID: "role-1"}
 
 		appeal := &domain.Appeal{
@@ -933,7 +933,7 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 	})
 
 	s.Run("should return error if not allow permanent access and duration is empty", func() {
-		expectedError := provider.ErrDurationIsRequired
+		expectedError := provider.ErrAppealValidationEmptyDuration
 		role1 := &domain.Role{ID: "role-1"}
 
 		appeal := &domain.Appeal{
@@ -964,7 +964,7 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 		s.EqualError(actualError, expectedError.Error())
 	})
 
-	s.Run("should return error if not allow permanent access and duration is empty", func() {
+	s.Run("should return error if not allow permanent access and duration value is invalid", func() {
 		role1 := &domain.Role{ID: "role-1"}
 		appeal := &domain.Appeal{
 			AccountType: "test",
@@ -976,7 +976,7 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 				Duration: "invalid-duration",
 			},
 		}
-		expectedError := fmt.Errorf("invalid duration: parsing duration: time: invalid duration \"invalid-duration\"")
+		expectedError := provider.ErrAppealValidationInvalidDurationValue
 
 		provider := &domain.Provider{
 			Config: &domain.ProviderConfig{
@@ -993,43 +993,7 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 
 		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
 
-		s.EqualError(actualError, expectedError.Error())
-	})
-
-	s.Run("should return error if not allow permanent access and duration is empty", func() {
-		role1 := &domain.Role{ID: "role-1"}
-		appeal := &domain.Appeal{
-			AccountType: "test",
-			Resource: &domain.Resource{
-				ProviderType: mockProviderType,
-			},
-			Role: role1.ID,
-			Options: &domain.AppealOptions{
-				Duration: "invalid-duration",
-			},
-		}
-		expectedError := fmt.Errorf("invalid duration: parsing duration: time: invalid duration \"invalid-duration\"")
-
-		provider := &domain.Provider{
-			Config: &domain.ProviderConfig{
-				AllowedAccountTypes: []string{"test"},
-				Appeal: &domain.AppealConfig{
-					AllowPermanentAccess: true,
-				},
-			},
-			Type: mockProviderType,
-		}
-		policy := &domain.Policy{
-			AppealConfig: &domain.PolicyAppealConfig{
-				AllowPermanentAccess: false,
-			},
-		}
-
-		s.mockProvider.On("GetRoles", mock.Anything, mock.Anything).Return([]*domain.Role{role1}, nil).Once()
-
-		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
-
-		s.EqualError(actualError, expectedError.Error())
+		s.ErrorIs(actualError, expectedError)
 	})
 
 	s.Run("should return error when required provider parameter not present", func() {
@@ -1043,9 +1007,14 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 			Options: &domain.AppealOptions{
 				Duration: "24h",
 			},
+			Details: map[string]interface{}{
+				provider.ReservedDetailsKeyProviderParameters: map[string]interface{}{
+					"username": "",
+				},
+			},
 		}
 
-		expectedError := fmt.Errorf(`parameter "%s" is required`, "username")
+		expectedError := provider.ErrAppealValidationMissingRequiredParameter
 
 		provider := &domain.Provider{
 			Config: &domain.ProviderConfig{
@@ -1070,7 +1039,7 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 
 		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
 
-		s.EqualError(actualError, expectedError.Error())
+		s.ErrorIs(actualError, expectedError)
 	})
 
 	s.Run("should return error when required policy question not present", func() {
@@ -1086,7 +1055,7 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 			},
 		}
 
-		expectedError := fmt.Errorf(`question "%s" is required`, "team")
+		expectedError := provider.ErrAppealValidationMissingRequiredQuestion
 
 		provider := &domain.Provider{
 			Config: &domain.ProviderConfig{
@@ -1114,7 +1083,7 @@ func (s *ServiceTestSuite) TestValidateAppeal() {
 
 		actualError := s.service.ValidateAppeal(context.Background(), appeal, provider, policy)
 
-		s.EqualError(actualError, expectedError.Error())
+		s.ErrorIs(actualError, expectedError)
 	})
 
 	s.Run("should return nil when all valids", func() {
