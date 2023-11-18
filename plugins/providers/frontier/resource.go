@@ -21,13 +21,14 @@ type Metadata struct {
 type User struct {
 	ID    string `json:"id" mapstructure:"id"`
 	Name  string `json:"name" mapstructure:"name"`
+	Title string `json:"title" mapstructure:"title"`
 	Email string `json:"email" mapstructure:"email"`
 }
 
 type Team struct {
 	ID       string   `json:"id" mapstructure:"id"`
 	Name     string   `json:"name" mapstructure:"name"`
-	Slug     string   `json:"slug" mapstructure:"slug"`
+	Title    string   `json:"title" mapstructure:"title"`
 	OrgId    string   `json:"orgId" mapstructure:"orgId"`
 	Metadata Metadata `json:"metadata" mapstructure:"metadata"`
 	Admins   []string `json:"admins" mapstructure:"admins"`
@@ -36,7 +37,7 @@ type Team struct {
 type Project struct {
 	ID     string   `json:"id" mapstructure:"id"`
 	Name   string   `json:"name" mapstructure:"name"`
-	Slug   string   `json:"slug" mapstructure:"slug"`
+	Title  string   `json:"title" mapstructure:"title"`
 	OrgId  string   `json:"orgId" mapstructure:"orgId"`
 	Admins []string `json:"admins" mapstructure:"admins"`
 }
@@ -44,7 +45,7 @@ type Project struct {
 type Organization struct {
 	ID     string   `json:"id" mapstructure:"id"`
 	Name   string   `json:"name" mapstructure:"name"`
-	Slug   string   `json:"slug" mapstructure:"slug"`
+	Title  string   `json:"title" mapstructure:"title"`
 	Admins []string `json:"admins" mapstructure:"admins"`
 }
 

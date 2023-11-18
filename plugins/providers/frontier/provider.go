@@ -7,7 +7,6 @@ import (
 	"github.com/raystack/salt/log"
 )
 
-// TODO: fix this to use latest frontier APIs
 type provider struct {
 	pv.UnimplementedClient
 	pv.PermissionManager

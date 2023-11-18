@@ -31,8 +31,6 @@ const (
 	policiesConst      = "policies"
 )
 
-type successAccess interface{}
-
 type Policy struct {
 	ID string `json:"id"`
 }
