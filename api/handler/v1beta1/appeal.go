@@ -76,6 +76,7 @@ func (s *GRPCServer) ListAppeals(ctx context.Context, req *guardianv1beta1.ListA
 		Size:          int(req.GetSize()),
 		Offset:        int(req.GetOffset()),
 		OrderBy:       req.GetOrderBy(),
+		CreatedBy:     req.GetCreatedBy(),
 	}
 	appeals, total, err := s.listAppeals(ctx, filters)
 	if err != nil {

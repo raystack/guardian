@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"google.golang.org/grpc/metadata"
 	"time"
+
+	"google.golang.org/grpc/metadata"
 
 	guardianv1beta1 "github.com/raystack/guardian/api/proto/raystack/guardian/v1beta1"
 	"github.com/spf13/cobra"
