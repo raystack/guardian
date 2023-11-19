@@ -117,80 +117,80 @@ func (s *ClientTestSuite) getTestRequest(method, path string, body interface{}, 
 	return req, nil
 }
 
-func (s *ClientTestSuite) TestGetTeams() {
-	s.Run("should get teams and nil error on success", func() {
+func (s *ClientTestSuite) TestGetGroups() {
+	s.Run("should get groups and nil error on success", func() {
 		s.setup()
 
 		testRequest, err := s.getTestRequest(http.MethodGet, "/v1beta1/organizations/org_id_1/groups", nil, "")
 		s.Require().NoError(err)
 
-		teamResponseJSON := `{
+		groupResponseJSON := `{
 		    "groups": [
 		        {
-		            "id": "team_id_1",
-		            "name": "team_1",
-		            "title": "team_1",
+		            "id": "group_id_1",
+		            "name": "group_1",
+		            "title": "group_1",
 		            "orgId": "org_id_1",
 		            "metadata": {
-		                "email": "team_1@email.com",
+		                "email": "group_1@email.com",
 		                "privacy": "public",
-		                "slack": "@team_1"
+		                "slack": "@group_1"
 		            },
 		            "createdAt": "2022-03-17T06:19:47.176089Z",
 		            "updatedAt": "2022-03-17T06:19:47.176089Z"
 		        },
 		        {
-		            "id": "team_id_2",
-		            "name": "team_2",
-		            "title": "team_2",
+		            "id": "group_id_2",
+		            "name": "group_2",
+		            "title": "group_2",
 		            "orgId": "org_id_1",
 		            "metadata": {
-		                "email": "team_2@email.com",
+		                "email": "group_2@email.com",
 		                "privacy": "public",
-		                "slack": "@team_2"
+		                "slack": "@group_2"
 		            },
 		            "createdAt": "2022-03-30T10:49:10.965916Z",
 		            "updatedAt": "2022-03-30T10:49:10.965916Z"
 		        }
 		    ]
 		}`
-		teamResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(teamResponseJSON)))}
-		s.mockHttpClient.On("Do", testRequest).Return(&teamResponse, nil).Once()
+		groupResponse := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupResponseJSON)))}
+		s.mockHttpClient.On("Do", testRequest).Return(&groupResponse, nil).Once()
 
-		expectedTeams := []frontier.Team{
+		expectedTeams := []frontier.Group{
 			{
-				ID:    "team_id_1",
-				Name:  "team_1",
-				Title: "team_1",
+				ID:    "group_id_1",
+				Name:  "group_1",
+				Title: "group_1",
 				OrgId: "org_id_1",
 				Metadata: frontier.Metadata{
-					Email:   "team_1@email.com",
+					Email:   "group_1@email.com",
 					Privacy: "public",
-					Slack:   "@team_1",
+					Slack:   "@group_1",
 				},
 				Admins: []string{"test.admin@email.com"},
 			},
 			{
-				ID:    "team_id_2",
-				Name:  "team_2",
-				Title: "team_2",
+				ID:    "group_id_2",
+				Name:  "group_2",
+				Title: "group_2",
 				OrgId: "org_id_1",
 				Metadata: frontier.Metadata{
-					Email:   "team_2@email.com",
+					Email:   "group_2@email.com",
 					Privacy: "public",
-					Slack:   "@team_2",
+					Slack:   "@group_2",
 				},
 				Admins: []string{"test.admin@email.com"},
 			},
 		}
 
-		testAdminsRequest1, err := s.getTestRequest(http.MethodGet, "/v1beta1/organizations/org_id_1/groups/team_id_1/admins", nil, "")
+		testAdminsRequest1, err := s.getTestRequest(http.MethodGet, "/v1beta1/organizations/org_id_1/groups/group_id_1/admins", nil, "")
 		s.Require().NoError(err)
 
-		testAdminsRequest2, err := s.getTestRequest(http.MethodGet, "/v1beta1/organizations/org_id_1/groups/team_id_2/admins", nil, "")
+		testAdminsRequest2, err := s.getTestRequest(http.MethodGet, "/v1beta1/organizations/org_id_1/groups/group_id_2/admins", nil, "")
 		s.Require().NoError(err)
 
-		teamAdminResponse := `{
+		groupAdminResponse := `{
 			"users": [
 				{
 					"id": "admin_id",
@@ -205,19 +205,19 @@ func (s *ClientTestSuite) TestGetTeams() {
 				}]
 		}`
 
-		teamAdminResponse1 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(teamAdminResponse)))}
-		s.mockHttpClient.On("Do", testAdminsRequest1).Return(&teamAdminResponse1, nil).Once()
+		groupAdminResponse1 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupAdminResponse)))}
+		s.mockHttpClient.On("Do", testAdminsRequest1).Return(&groupAdminResponse1, nil).Once()
 
-		teamAdminResponse2 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(teamAdminResponse)))}
-		s.mockHttpClient.On("Do", testAdminsRequest2).Return(&teamAdminResponse2, nil).Once()
+		groupAdminResponse2 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupAdminResponse)))}
+		s.mockHttpClient.On("Do", testAdminsRequest2).Return(&groupAdminResponse2, nil).Once()
 
-		result, err1 := s.client.GetTeams("org_id_1")
-		var teams []frontier.Team
-		for _, team := range result {
-			teams = append(teams, *team)
+		result, err1 := s.client.GetGroups("org_id_1")
+		var groups []frontier.Group
+		for _, group := range result {
+			groups = append(groups, *group)
 		}
 		s.Nil(err1)
-		s.ElementsMatch(expectedTeams, teams)
+		s.ElementsMatch(expectedTeams, groups)
 	})
 }
 
@@ -305,7 +305,7 @@ func (s *ClientTestSuite) TestGetOrganizations() {
 		            "title": "org_1",
 		            "metadata": {
 		                "dwh_group_id": "dwh_group",
-                		"dwh_team_name": "dwh_team"
+                		"dwh_group_name": "dwh_group"
 		            },
 		            "createdAt": "2022-03-17T06:19:47.176089Z",
 		            "updatedAt": "2022-03-17T06:19:47.176089Z"
@@ -357,18 +357,18 @@ func (s *ClientTestSuite) TestGetOrganizations() {
 }
 
 func (s *ClientTestSuite) TestGrantTeamAccess() {
-	s.Run("should grant access to team and nil error on success", func() {
+	s.Run("should grant access to group and nil error on success", func() {
 		s.setup()
 
 		testUserId := "test_user_id"
-		var teamObj *frontier.Team
-		teamObj = new(frontier.Team)
-		teamObj.ID = "test_team_id"
+		var groupObj *frontier.Group
+		groupObj = new(frontier.Group)
+		groupObj.ID = "test_group_id"
 		role := "users"
 
 		body := make(map[string]string)
 		body["principal"] = fmt.Sprintf("%s:%s", "app/user", testUserId)
-		body["resource"] = fmt.Sprintf("%s:%s", "app/group", teamObj.ID)
+		body["resource"] = fmt.Sprintf("%s:%s", "app/group", groupObj.ID)
 		body["roleId"] = role
 
 		responseJson := `{}`
@@ -376,7 +376,7 @@ func (s *ClientTestSuite) TestGrantTeamAccess() {
 		responseUsers := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.AnythingOfType("*http.Request")).Return(&responseUsers, nil).Once()
 
-		actualError := s.client.GrantTeamAccess(teamObj, testUserId, role)
+		actualError := s.client.GrantGroupAccess(groupObj, testUserId, role)
 		s.Nil(actualError)
 	})
 }
@@ -431,13 +431,13 @@ func (s *ClientTestSuite) TestGrantOrganizationAccess() {
 }
 
 func (s *ClientTestSuite) TestRevokeTeamAccess() {
-	s.Run("should revoke access to team and nil error on success", func() {
+	s.Run("should revoke access to group and nil error on success", func() {
 		s.setup()
 		testUserId := "test_user_id"
 		role := frontier.RoleGroupMember
-		var teamObj *frontier.Team
-		teamObj = new(frontier.Team)
-		teamObj.ID = "test_team_id"
+		var groupObj *frontier.Group
+		groupObj = new(frontier.Group)
+		groupObj.ID = "test_group_id"
 
 		responseJson := `{
 			"policies": [
@@ -453,7 +453,7 @@ func (s *ClientTestSuite) TestRevokeTeamAccess() {
 		deletePolicyResp := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(responseJson)))}
 		s.mockHttpClient.On("Do", mock.Anything).Return(&deletePolicyResp, nil).Once()
 
-		actualError := s.client.RevokeTeamAccess(teamObj, testUserId, role)
+		actualError := s.client.RevokeGroupAccess(groupObj, testUserId, role)
 		s.Nil(actualError)
 	})
 }

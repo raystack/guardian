@@ -12,6 +12,32 @@ type Client struct {
 	mock.Mock
 }
 
+// GetGroups provides a mock function with given fields: orgID
+func (_m *Client) GetGroups(orgID string) ([]*frontier.Group, error) {
+	ret := _m.Called(orgID)
+
+	var r0 []*frontier.Group
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]*frontier.Group, error)); ok {
+		return rf(orgID)
+	}
+	if rf, ok := ret.Get(0).(func(string) []*frontier.Group); ok {
+		r0 = rf(orgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*frontier.Group)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetOrganizations provides a mock function with given fields:
 func (_m *Client) GetOrganizations() ([]*frontier.Organization, error) {
 	ret := _m.Called()
@@ -90,30 +116,18 @@ func (_m *Client) GetSelfUser(email string) (*frontier.User, error) {
 	return r0, r1
 }
 
-// GetTeams provides a mock function with given fields: orgID
-func (_m *Client) GetTeams(orgID string) ([]*frontier.Team, error) {
-	ret := _m.Called(orgID)
+// GrantGroupAccess provides a mock function with given fields: group, userId, role
+func (_m *Client) GrantGroupAccess(group *frontier.Group, userId string, role string) error {
+	ret := _m.Called(group, userId, role)
 
-	var r0 []*frontier.Team
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) ([]*frontier.Team, error)); ok {
-		return rf(orgID)
-	}
-	if rf, ok := ret.Get(0).(func(string) []*frontier.Team); ok {
-		r0 = rf(orgID)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*frontier.Group, string, string) error); ok {
+		r0 = rf(group, userId, role)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*frontier.Team)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(orgID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // GrantOrganizationAccess provides a mock function with given fields: organization, userId, role
@@ -144,13 +158,13 @@ func (_m *Client) GrantProjectAccess(project *frontier.Project, userId string, r
 	return r0
 }
 
-// GrantTeamAccess provides a mock function with given fields: team, userId, role
-func (_m *Client) GrantTeamAccess(team *frontier.Team, userId string, role string) error {
-	ret := _m.Called(team, userId, role)
+// RevokeGroupAccess provides a mock function with given fields: group, userId, role
+func (_m *Client) RevokeGroupAccess(group *frontier.Group, userId string, role string) error {
+	ret := _m.Called(group, userId, role)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*frontier.Team, string, string) error); ok {
-		r0 = rf(team, userId, role)
+	if rf, ok := ret.Get(0).(func(*frontier.Group, string, string) error); ok {
+		r0 = rf(group, userId, role)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -179,20 +193,6 @@ func (_m *Client) RevokeProjectAccess(project *frontier.Project, userId string, 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*frontier.Project, string, string) error); ok {
 		r0 = rf(project, userId, role)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// RevokeTeamAccess provides a mock function with given fields: team, userId, role
-func (_m *Client) RevokeTeamAccess(team *frontier.Team, userId string, role string) error {
-	ret := _m.Called(team, userId, role)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*frontier.Team, string, string) error); ok {
-		r0 = rf(team, userId, role)
 	} else {
 		r0 = ret.Error(0)
 	}

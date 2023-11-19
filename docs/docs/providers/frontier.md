@@ -2,9 +2,9 @@
 
 [Frontier](https://raystack-frontier.vercel.app/) by Raystack is a role-based cloud-native user management system and authorization server for your applications and API endpoints. With Frontier, you can assign roles to users or groups of users to configure policies that determine whether a particular user has the ability to perform a certain action on a given resource. Guardian supports access management to the following resources in Frontier:
 
-1. Team
-2. Project
-3. Organization
+1. Organization
+2. Group
+3. Project
 
 ## Compatible version of Frontier :
 
@@ -38,7 +38,7 @@ credentials:
 allowed_account_types:
   - user
 resources:
-  - type: team
+  - type: group
     policy:
       id: policy_id
       version: 1
@@ -98,9 +98,9 @@ resources:
 
 ### Frontier Resource Type
 
-- team
-- project
 - organization
+- group
+- project
 
 ### Frontier Resource Permission
 
@@ -113,5 +113,5 @@ resources:
 | project           | app_project_owner              | Project Owner               |
 | project           | app_project_manager            | Project Manager             |
 | project           | app_project_member             | Project Member              |
-| team              | app_group_owner                | Group Owner                 |
-| team              | app_group_member               | Group Member                |
+| group             | app_group_owner                | Group Owner                 |
+| group             | app_group_member               | Group Member                |

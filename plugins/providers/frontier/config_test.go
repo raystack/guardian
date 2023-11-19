@@ -31,10 +31,10 @@ func TestValidate(t *testing.T) {
 
 	validResourceConfig := []*domain.ResourceConfig{
 		{
-			Type: frontier.ResourceTypeTeam,
+			Type: frontier.ResourceTypeGroup,
 			Roles: []*domain.Role{
 				{
-					Permissions: []interface{}{"users", "admins"},
+					Permissions: []interface{}{frontier.RoleGroupMember, frontier.RoleGroupOwner},
 				},
 			},
 		},
@@ -42,7 +42,7 @@ func TestValidate(t *testing.T) {
 			Type: frontier.ResourceTypeProject,
 			Roles: []*domain.Role{
 				{
-					Permissions: []interface{}{"admins"},
+					Permissions: []interface{}{frontier.RoleProjectOwner, frontier.RoleProjectManager, frontier.RoleProjectViewer},
 				},
 			},
 		},
@@ -50,7 +50,7 @@ func TestValidate(t *testing.T) {
 			Type: frontier.ResourceTypeOrganization,
 			Roles: []*domain.Role{
 				{
-					Permissions: []interface{}{"admins"},
+					Permissions: []interface{}{frontier.RoleOrgOwner, frontier.RoleOrgManager, frontier.RoleOrgAccessManager, frontier.RoleOrgViewer},
 				},
 			},
 		},
@@ -58,7 +58,7 @@ func TestValidate(t *testing.T) {
 
 	inValidResourcePermissionConfig := []*domain.ResourceConfig{
 		{
-			Type: frontier.ResourceTypeTeam,
+			Type: frontier.ResourceTypeGroup,
 			Roles: []*domain.Role{
 				{
 					Permissions: []interface{}{"member"},

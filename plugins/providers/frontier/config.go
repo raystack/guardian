@@ -94,7 +94,7 @@ func (c *Config) validateCredentials(value interface{}) (*Credentials, error) {
 }
 
 func (c *Config) validateResourceConfig(resource *domain.ResourceConfig) error {
-	resourceTypeValidation := fmt.Sprintf("oneof=%s %s %s", ResourceTypeTeam, ResourceTypeProject, ResourceTypeOrganization)
+	resourceTypeValidation := fmt.Sprintf("oneof=%s %s %s", ResourceTypeGroup, ResourceTypeProject, ResourceTypeOrganization)
 	if err := c.validator.Var(resource.Type, resourceTypeValidation); err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (c *Config) validatePermission(resourceType string, value interface{}) (*Pe
 	}
 
 	var nameValidation string
-	if resourceType == ResourceTypeTeam {
+	if resourceType == ResourceTypeGroup {
 		nameValidation = fmt.Sprintf("oneof=%s %s", RoleGroupOwner, RoleGroupMember)
 	} else if resourceType == ResourceTypeProject {
 		nameValidation = fmt.Sprintf("oneof=%s %s %s", RoleProjectManager, RoleProjectOwner, RoleProjectViewer)

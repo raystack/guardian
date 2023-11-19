@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	ResourceTypeTeam         = "team"
+	ResourceTypeGroup        = "group"
 	ResourceTypeProject      = "project"
 	ResourceTypeOrganization = "organization"
 )
@@ -25,7 +25,7 @@ type User struct {
 	Email string `json:"email" mapstructure:"email"`
 }
 
-type Team struct {
+type Group struct {
 	ID       string   `json:"id" mapstructure:"id"`
 	Name     string   `json:"name" mapstructure:"name"`
 	Title    string   `json:"title" mapstructure:"title"`
@@ -49,8 +49,8 @@ type Organization struct {
 	Admins []string `json:"admins" mapstructure:"admins"`
 }
 
-func (t *Team) FromDomain(r *domain.Resource) error {
-	if r.Type != ResourceTypeTeam {
+func (t *Group) FromDomain(r *domain.Resource) error {
+	if r.Type != ResourceTypeGroup {
 		return ErrInvalidResourceType
 	}
 
@@ -83,11 +83,11 @@ func (t *Team) FromDomain(r *domain.Resource) error {
 	return nil
 }
 
-func (t *Team) ToDomain() *domain.Resource {
+func (t *Group) ToDomain() *domain.Resource {
 	return &domain.Resource{
-		Type: ResourceTypeTeam,
+		Type: ResourceTypeGroup,
 		Name: t.Name,
-		URN:  fmt.Sprintf("team:%v", t.ID),
+		URN:  fmt.Sprintf("group:%v", t.ID),
 		Details: map[string]interface{}{
 			"id":       t.ID,
 			"metadata": t.Metadata,

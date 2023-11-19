@@ -36,11 +36,11 @@ type Policy struct {
 }
 
 type Client interface {
-	GetTeams(orgID string) ([]*Team, error)
+	GetGroups(orgID string) ([]*Group, error)
 	GetProjects(orgID string) ([]*Project, error)
 	GetOrganizations() ([]*Organization, error)
-	GrantTeamAccess(team *Team, userId string, role string) error
-	RevokeTeamAccess(team *Team, userId string, role string) error
+	GrantGroupAccess(group *Group, userId string, role string) error
+	RevokeGroupAccess(group *Group, userId string, role string) error
 	GrantProjectAccess(project *Project, userId string, role string) error
 	RevokeProjectAccess(project *Project, userId string, role string) error
 	GrantOrganizationAccess(organization *Organization, userId string, role string) error
@@ -148,34 +148,34 @@ func (c *client) GetAdminsOfGivenResourceType(id string, resourceTypeEndPoint st
 	return userEmails, err
 }
 
-func (c *client) GetTeams(orgID string) ([]*Team, error) {
+func (c *client) GetGroups(orgID string) ([]*Group, error) {
 	groupsEndpoint := fmt.Sprintf(groupsEndpoint, orgID)
 	req, err := c.newRequest(http.MethodGet, groupsEndpoint, nil, "")
 	if err != nil {
 		return nil, err
 	}
 
-	var teams []*Team
+	var groups []*Group
 	var response interface{}
 	if _, err := c.do(req, &response); err != nil {
 		return nil, err
 	}
 
 	if v, ok := response.(map[string]interface{}); ok && v[groupsConst] != nil {
-		err = mapstructure.Decode(v[groupsConst], &teams)
+		err = mapstructure.Decode(v[groupsConst], &groups)
 	}
 
-	for _, team := range teams {
-		admins, err := c.GetAdminsOfGivenResourceType(team.ID, groupsEndpoint)
+	for _, group := range groups {
+		admins, err := c.GetAdminsOfGivenResourceType(group.ID, groupsEndpoint)
 		if err != nil {
 			return nil, err
 		}
-		team.Admins = admins
+		group.Admins = admins
 	}
 
-	c.logger.Info("Fetch teams from request", "total", len(teams), req.URL)
+	c.logger.Info("Fetch groups from request", "total", len(groups), req.URL)
 
-	return teams, err
+	return groups, err
 }
 
 func (c *client) GetProjects(orgID string) ([]*Project, error) {
@@ -238,7 +238,7 @@ func (c *client) GetOrganizations() ([]*Organization, error) {
 	return organizations, err
 }
 
-func (c *client) GrantTeamAccess(resource *Team, userId string, role string) error {
+func (c *client) GrantGroupAccess(resource *Group, userId string, role string) error {
 	body := make(map[string]string)
 	body["principal"] = fmt.Sprintf("%s:%s", "app/user", userId)
 	body["resource"] = fmt.Sprintf("%s:%s", "app/group", resource.ID)
@@ -301,7 +301,7 @@ func (c *client) GrantOrganizationAccess(resource *Organization, userId string, 
 	return nil
 }
 
-func (c *client) RevokeTeamAccess(resource *Team, userId string, role string) error {
+func (c *client) RevokeGroupAccess(resource *Group, userId string, role string) error {
 	endpoint := createPolicyEndpoint + "?groupId=" + resource.ID + "&userId=" + userId + "&roleId=" + role
 	req, err := c.newRequest(http.MethodGet, endpoint, "", "")
 	if err != nil {
