@@ -258,7 +258,7 @@ func (s *ClientTestSuite) TestGetProjects() {
 			},
 		}
 
-		testAdminsRequest, err := s.getTestRequest(http.MethodGet, "/v1beta1/organizations/org_id_1/projects/project_id_1/admins", nil, "")
+		testAdminsRequest, err := s.getTestRequest(http.MethodGet, "/v1beta1/projects/project_id_1/admins", nil, "")
 		s.Require().NoError(err)
 
 		projectAdminResponse := `{

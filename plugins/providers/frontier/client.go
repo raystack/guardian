@@ -11,17 +11,17 @@ import (
 	"path"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/mitchellh/mapstructure"
 	"github.com/raystack/guardian/pkg/tracing"
 	"github.com/raystack/salt/log"
 )
 
 const (
-	groupsEndpoint       = "/v1beta1/organizations/%s/groups"
-	projectsEndpoint     = "/v1beta1/organizations/%s/projects"
-	organizationEndpoint = "/v1beta1/organizations"
-	selfUserEndpoint     = "/v1beta1/users/self"
-	createPolicyEndpoint = "/v1beta1/policies"
+	groupsEndpoint         = "/v1beta1/organizations/%s/groups"
+	projectsEndpoint       = "/v1beta1/organizations/%s/projects"
+	projectsAdminsEndpoint = "/v1beta1/projects"
+	organizationEndpoint   = "/v1beta1/organizations"
+	selfUserEndpoint       = "/v1beta1/users/self"
+	createPolicyEndpoint   = "/v1beta1/policies"
 
 	groupsConst        = "groups"
 	projectsConst      = "projects"
@@ -125,20 +125,17 @@ func (c *client) newRequest(method, path string, body interface{}, authEmail str
 }
 
 func (c *client) GetAdminsOfGivenResourceType(id string, resourceTypeEndPoint string) ([]string, error) {
-	endPoint := path.Join(resourceTypeEndPoint, "/", id, "/admins")
+	endPoint := fmt.Sprintf("%s/%s/admins", resourceTypeEndPoint, id)
 	req, err := c.newRequest(http.MethodGet, endPoint, nil, "")
 	if err != nil {
 		return nil, err
 	}
 
-	var users []*User
-	var response interface{}
+	var response map[string][]*User
 	if _, err := c.do(req, &response); err != nil {
 		return nil, err
 	}
-	if v, ok := response.(map[string]interface{}); ok && v[usersConst] != nil {
-		err = mapstructure.Decode(v[usersConst], &users)
-	}
+	users := response[usersConst]
 
 	var userEmails []string
 	for _, user := range users {
@@ -155,15 +152,11 @@ func (c *client) GetGroups(orgID string) ([]*Group, error) {
 		return nil, err
 	}
 
-	var groups []*Group
-	var response interface{}
+	var response map[string][]*Group
 	if _, err := c.do(req, &response); err != nil {
 		return nil, err
 	}
-
-	if v, ok := response.(map[string]interface{}); ok && v[groupsConst] != nil {
-		err = mapstructure.Decode(v[groupsConst], &groups)
-	}
+	groups := response[groupsConst]
 
 	for _, group := range groups {
 		admins, err := c.GetAdminsOfGivenResourceType(group.ID, groupsEndpoint)
@@ -173,7 +166,7 @@ func (c *client) GetGroups(orgID string) ([]*Group, error) {
 		group.Admins = admins
 	}
 
-	c.logger.Info("Fetch groups from request", "total", len(groups), req.URL)
+	c.logger.Info("Fetch groups from request", "total", len(groups), "url", req.URL)
 
 	return groups, err
 }
@@ -185,26 +178,21 @@ func (c *client) GetProjects(orgID string) ([]*Project, error) {
 		return nil, err
 	}
 
-	var projects []*Project
-	var response interface{}
-
+	var response map[string][]*Project
 	if _, err := c.do(req, &response); err != nil {
 		return nil, err
 	}
-
-	if v, ok := response.(map[string]interface{}); ok && v[projectsConst] != nil {
-		err = mapstructure.Decode(v[projectsConst], &projects)
-	}
+	projects := response[projectsConst]
 
 	for _, project := range projects {
-		admins, err := c.GetAdminsOfGivenResourceType(project.ID, projectsEndpoint)
+		admins, err := c.GetAdminsOfGivenResourceType(project.ID, projectsAdminsEndpoint)
 		if err != nil {
 			return nil, err
 		}
 		project.Admins = admins
 	}
 
-	c.logger.Info("Fetch projects from request", "total", len(projects), req.URL)
+	c.logger.Info("Fetch projects from request", "total", len(projects), "url", req.URL)
 
 	return projects, err
 }
@@ -215,15 +203,11 @@ func (c *client) GetOrganizations() ([]*Organization, error) {
 		return nil, err
 	}
 
-	var organizations []*Organization
-	var response interface{}
+	var response map[string][]*Organization
 	if _, err := c.do(req, &response); err != nil {
 		return nil, err
 	}
-
-	if v, ok := response.(map[string]interface{}); ok && v[organizationsConst] != nil {
-		err = mapstructure.Decode(v[organizationsConst], &organizations)
-	}
+	organizations := response[organizationsConst]
 
 	for _, org := range organizations {
 		admins, err := c.GetAdminsOfGivenResourceType(org.ID, organizationEndpoint)
@@ -233,7 +217,7 @@ func (c *client) GetOrganizations() ([]*Organization, error) {
 		org.Admins = admins
 	}
 
-	c.logger.Info("Fetch organizations from request", "total", len(organizations), req.URL)
+	c.logger.Info("Fetch organizations from request", "total", len(organizations), "url", req.URL)
 
 	return organizations, err
 }
@@ -251,11 +235,11 @@ func (c *client) GrantGroupAccess(resource *Group, userId string, role string) e
 
 	var response interface{}
 	if _, err := c.do(req, &response); err != nil {
-		c.logger.Error("Failed to grant access to the user", "Users", userId, req.URL)
+		c.logger.Error("Failed to grant access to the user", "user", userId, "url", req.URL)
 		return err
 	}
 
-	c.logger.Info("Team access to the user", "Users", userId, req.URL)
+	c.logger.Info("Group access to the user", "user", userId, "url", req.URL)
 	return nil
 }
 
@@ -272,11 +256,11 @@ func (c *client) GrantProjectAccess(resource *Project, userId string, role strin
 
 	var response interface{}
 	if _, err := c.do(req, &response); err != nil {
-		c.logger.Error("Failed to grant access to the user", "Users", userId, req.URL)
+		c.logger.Error("Failed to grant access to the user", "user", userId, "url", req.URL)
 		return err
 	}
 
-	c.logger.Info("Project access to the user", "Users", userId, req.URL)
+	c.logger.Info("Project access to the user", "user", userId, "url", req.URL)
 	return nil
 }
 
@@ -293,33 +277,26 @@ func (c *client) GrantOrganizationAccess(resource *Organization, userId string, 
 
 	var response interface{}
 	if _, err := c.do(req, &response); err != nil {
-		c.logger.Error("Failed to grant access to the user", "Users", userId, req.URL)
+		c.logger.Error("Failed to grant access to the user", "user", userId, "url", req.URL)
 		return err
 	}
 
-	c.logger.Info("Organization access to the user,", "Users", userId, req.URL)
+	c.logger.Info("Organization access to the user,", "user", userId, "url", req.URL)
 	return nil
 }
 
 func (c *client) RevokeGroupAccess(resource *Group, userId string, role string) error {
-	endpoint := createPolicyEndpoint + "?groupId=" + resource.ID + "&userId=" + userId + "&roleId=" + role
+	endpoint := fmt.Sprintf("%s?groupId=%s&userId=%s&roleId=%s", createPolicyEndpoint, resource.ID, userId, role)
 	req, err := c.newRequest(http.MethodGet, endpoint, "", "")
 	if err != nil {
 		return err
 	}
 
-	var policies []*Policy
-	var response interface{}
+	var response map[string][]*Policy
 	if _, err := c.do(req, &response); err != nil {
 		return err
 	}
-
-	if v, ok := response.(map[string]interface{}); ok && v != nil {
-		err = mapstructure.Decode(v[policiesConst], &policies)
-		if err != nil {
-			return err
-		}
-	}
+	policies := response[policiesConst]
 
 	for _, policy := range policies {
 		endPoint := path.Join(createPolicyEndpoint, "/", policy.ID)
@@ -327,35 +304,29 @@ func (c *client) RevokeGroupAccess(resource *Group, userId string, role string) 
 		if err != nil {
 			return err
 		}
-		if _, err := c.do(req, &response); err != nil {
-			c.logger.Error("Failed to revoke access of the user from team", "Users", userId, req.URL)
+		var res interface{}
+		if _, err := c.do(req, &res); err != nil {
+			c.logger.Error("Failed to revoke access of the user from group", "user", userId, "url", req.URL)
 			return err
 		}
 	}
 
-	c.logger.Info("Remove access of the user from team", "Users", userId, req.URL)
+	c.logger.Info("Remove access of the user from group", "user", userId, "url", req.URL)
 	return nil
 }
 
 func (c *client) RevokeProjectAccess(resource *Project, userId string, role string) error {
-	endpoint := createPolicyEndpoint + "?projectId=" + resource.ID + "&userId=" + userId + "&roleId=" + role
+	endpoint := fmt.Sprintf("%s?projectId=%s&userId=%s&roleId=%s", createPolicyEndpoint, resource.ID, userId, role)
 	req, err := c.newRequest(http.MethodGet, endpoint, "", "")
 	if err != nil {
 		return err
 	}
 
-	var policies []*Policy
-	var response interface{}
+	var response map[string][]*Policy
 	if _, err := c.do(req, &response); err != nil {
 		return err
 	}
-
-	if v, ok := response.(map[string]interface{}); ok && v != nil {
-		err = mapstructure.Decode(v[policiesConst], &policies)
-		if err != nil {
-			return err
-		}
-	}
+	policies := response[policiesConst]
 
 	for _, policy := range policies {
 		endPoint := path.Join(createPolicyEndpoint, "/", policy.ID)
@@ -363,35 +334,29 @@ func (c *client) RevokeProjectAccess(resource *Project, userId string, role stri
 		if err != nil {
 			return err
 		}
-		if _, err := c.do(req, &response); err != nil {
-			c.logger.Error("Failed to revoke access of the user from project", "Users", userId, req.URL)
+		var res interface{}
+		if _, err := c.do(req, &res); err != nil {
+			c.logger.Error("Failed to revoke access of the user from project", "user", userId, "url", req.URL)
 			return err
 		}
 	}
 
-	c.logger.Info("Remove access of the user from project", "Users", userId, req.URL)
+	c.logger.Info("Remove access of the user from project", "user", userId, "url", req.URL)
 	return nil
 }
 
 func (c *client) RevokeOrganizationAccess(resource *Organization, userId string, role string) error {
-	endpoint := createPolicyEndpoint + "?orgId=" + resource.ID + "&userId=" + userId + "&roleId=" + role
+	endpoint := fmt.Sprintf("%s?orgId=%s&userId=%s&roleId=%s", createPolicyEndpoint, resource.ID, userId, role)
 	req, err := c.newRequest(http.MethodGet, endpoint, "", "")
 	if err != nil {
 		return err
 	}
 
-	var policies []*Policy
-	var response interface{}
+	var response map[string][]*Policy
 	if _, err := c.do(req, &response); err != nil {
 		return err
 	}
-
-	if v, ok := response.(map[string]interface{}); ok && v != nil {
-		err = mapstructure.Decode(v[policiesConst], &policies)
-		if err != nil {
-			return err
-		}
-	}
+	policies := response[policiesConst]
 
 	for _, policy := range policies {
 		endPoint := path.Join(createPolicyEndpoint, "/", policy.ID)
@@ -399,12 +364,13 @@ func (c *client) RevokeOrganizationAccess(resource *Organization, userId string,
 		if err != nil {
 			return err
 		}
-		if _, err := c.do(req, &response); err != nil {
+		var res interface{}
+		if _, err := c.do(req, &res); err != nil {
 			return err
 		}
 	}
 
-	c.logger.Info("Remove access of the user from organization", "Users", userId, req.URL)
+	c.logger.Info("Remove access of the user from organization", "user", userId, "url", req.URL)
 	return nil
 }
 
@@ -414,17 +380,13 @@ func (c *client) GetSelfUser(email string) (*User, error) {
 		return nil, err
 	}
 
-	var user *User
-	var response interface{}
+	var response map[string]*User
 	if _, err := c.do(req, &response); err != nil {
 		return nil, err
 	}
+	user := response[userConst]
 
-	if v, ok := response.(map[string]interface{}); ok && v[userConst] != nil {
-		err = mapstructure.Decode(v[userConst], &user)
-	}
-
-	c.logger.Info("Fetch user from request", "Id", user.ID, req.URL)
+	c.logger.Info("Fetch user from request", "Id", user.ID, "url", req.URL)
 
 	return user, err
 }
