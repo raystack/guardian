@@ -1,11 +1,15 @@
 module.exports = {
   docsSidebar: [
-    'introduction',
-    'installation',
-    'roadmap',
+    "introduction",
+    "installation",
+    "roadmap",
     {
       type: "category",
       label: "Tour",
+      link: {
+        type: "doc",
+        id: "tour/introduction",
+      },
       items: [
         "tour/introduction",
         "tour/configuration",
@@ -20,21 +24,29 @@ module.exports = {
     {
       type: "category",
       label: "Concepts",
-      items: [
-        "concepts/overview",
-        "concepts/architecture",
-      ],
+      link: {
+        type: "doc",
+        id: "concepts/overview",
+      },
+      items: ["concepts/overview", "concepts/architecture"],
     },
     {
       type: "category",
       label: "Guides",
-      items: [
-        "guides/deployment",
-      ],
+      link: {
+        type: "doc",
+        id: "guides/deployment",
+      },
+      items: ["guides/deployment"],
     },
     {
       type: "category",
       label: "Providers",
+      link: {
+        type: "generated-index",
+        title: "Overview",
+        slug: "providers/overview",
+      },
       items: [
         "providers/bigquery",
         "providers/gcloud_iam",
@@ -43,11 +55,17 @@ module.exports = {
         "providers/metabase",
         "providers/noop",
         "providers/tableau",
+        "providers/frontier",
       ],
     },
     {
       type: "category",
       label: "Reference",
+      link: {
+        type: "generated-index",
+        title: "Overview",
+        slug: "reference/overview",
+      },
       items: [
         "reference/api",
         "reference/cli",
@@ -62,18 +80,30 @@ module.exports = {
     },
     {
       type: "category",
+      label: "APIs",
+      link: {
+        type: "doc",
+        id: "apis/guardian-apis",
+      },
+      items: require("./docs/apis/sidebar.js"),
+    },
+    {
+      type: "category",
       label: "Extend",
-      items: [
-        "contribute/provider",
-      ]
+      link: {
+        type: "doc",
+        id: "contribute/provider",
+      },
+      items: ["contribute/provider"],
     },
     {
       type: "category",
       label: "Contribute",
-      items: [
-        "contribute/architecture",
-        "contribute/contribution",
-      ],
+      link: {
+        type: "doc",
+        id: "contribute/contribution",
+      },
+      items: ["contribute/architecture", "contribute/contribution"],
     },
   ],
 };

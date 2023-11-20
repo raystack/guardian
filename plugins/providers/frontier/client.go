@@ -11,32 +11,36 @@ import (
 	"path"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/mitchellh/mapstructure"
 	"github.com/raystack/guardian/pkg/tracing"
 	"github.com/raystack/salt/log"
 )
 
 const (
-	groupsEndpoint       = "/v1beta1/groups"
-	projectsEndpoint     = "/v1beta1/projects"
-	organizationEndpoint = "/v1beta1/organizations"
-	selfUserEndpoint     = "/v1beta1/users/self"
+	groupsEndpoint         = "/v1beta1/organizations/%s/groups"
+	projectsEndpoint       = "/v1beta1/organizations/%s/projects"
+	projectsAdminsEndpoint = "/v1beta1/projects"
+	organizationEndpoint   = "/v1beta1/organizations"
+	selfUserEndpoint       = "/v1beta1/users/self"
+	createPolicyEndpoint   = "/v1beta1/policies"
 
 	groupsConst        = "groups"
 	projectsConst      = "projects"
 	organizationsConst = "organizations"
 	usersConst         = "users"
 	userConst          = "user"
+	policiesConst      = "policies"
 )
 
-type successAccess interface{}
+type Policy struct {
+	ID string `json:"id"`
+}
 
 type Client interface {
-	GetTeams() ([]*Team, error)
-	GetProjects() ([]*Project, error)
+	GetGroups(orgID string) ([]*Group, error)
+	GetProjects(orgID string) ([]*Project, error)
 	GetOrganizations() ([]*Organization, error)
-	GrantTeamAccess(team *Team, userId string, role string) error
-	RevokeTeamAccess(team *Team, userId string, role string) error
+	GrantGroupAccess(group *Group, userId string, role string) error
+	RevokeGroupAccess(group *Group, userId string, role string) error
 	GrantProjectAccess(project *Project, userId string, role string) error
 	RevokeProjectAccess(project *Project, userId string, role string) error
 	GrantOrganizationAccess(organization *Organization, userId string, role string) error
@@ -77,7 +81,7 @@ func NewClient(config *ClientConfig, logger log.Logger) (*client, error) {
 
 	httpClient := config.HTTPClient
 	if httpClient == nil {
-		httpClient = tracing.NewHttpClient("ShieldHttpClient")
+		httpClient = tracing.NewHttpClient("FrontierHttpClient")
 	}
 
 	c := &client{
@@ -121,20 +125,17 @@ func (c *client) newRequest(method, path string, body interface{}, authEmail str
 }
 
 func (c *client) GetAdminsOfGivenResourceType(id string, resourceTypeEndPoint string) ([]string, error) {
-	endPoint := path.Join(resourceTypeEndPoint, "/", id, "/admins")
+	endPoint := fmt.Sprintf("%s/%s/admins", resourceTypeEndPoint, id)
 	req, err := c.newRequest(http.MethodGet, endPoint, nil, "")
 	if err != nil {
 		return nil, err
 	}
 
-	var users []*User
-	var response interface{}
+	var response map[string][]*User
 	if _, err := c.do(req, &response); err != nil {
 		return nil, err
 	}
-	if v, ok := response.(map[string]interface{}); ok && v[usersConst] != nil {
-		err = mapstructure.Decode(v[usersConst], &users)
-	}
+	users := response[usersConst]
 
 	var userEmails []string
 	for _, user := range users {
@@ -144,61 +145,54 @@ func (c *client) GetAdminsOfGivenResourceType(id string, resourceTypeEndPoint st
 	return userEmails, err
 }
 
-func (c *client) GetTeams() ([]*Team, error) {
+func (c *client) GetGroups(orgID string) ([]*Group, error) {
+	groupsEndpoint := fmt.Sprintf(groupsEndpoint, orgID)
 	req, err := c.newRequest(http.MethodGet, groupsEndpoint, nil, "")
 	if err != nil {
 		return nil, err
 	}
 
-	var teams []*Team
-	var response interface{}
+	var response map[string][]*Group
 	if _, err := c.do(req, &response); err != nil {
 		return nil, err
 	}
+	groups := response[groupsConst]
 
-	if v, ok := response.(map[string]interface{}); ok && v[groupsConst] != nil {
-		err = mapstructure.Decode(v[groupsConst], &teams)
-	}
-
-	for _, team := range teams {
-		admins, err := c.GetAdminsOfGivenResourceType(team.ID, groupsEndpoint)
+	for _, group := range groups {
+		admins, err := c.GetAdminsOfGivenResourceType(group.ID, groupsEndpoint)
 		if err != nil {
 			return nil, err
 		}
-		team.Admins = admins
+		group.Admins = admins
 	}
 
-	c.logger.Info("Fetch teams from request", "total", len(teams), req.URL)
+	c.logger.Info("Fetch groups from request", "total", len(groups), "url", req.URL)
 
-	return teams, err
+	return groups, err
 }
 
-func (c *client) GetProjects() ([]*Project, error) {
+func (c *client) GetProjects(orgID string) ([]*Project, error) {
+	projectsEndpoint := fmt.Sprintf(projectsEndpoint, orgID)
 	req, err := c.newRequest(http.MethodGet, projectsEndpoint, nil, "")
 	if err != nil {
 		return nil, err
 	}
 
-	var projects []*Project
-	var response interface{}
-
+	var response map[string][]*Project
 	if _, err := c.do(req, &response); err != nil {
 		return nil, err
 	}
-
-	if v, ok := response.(map[string]interface{}); ok && v[projectsConst] != nil {
-		err = mapstructure.Decode(v[projectsConst], &projects)
-	}
+	projects := response[projectsConst]
 
 	for _, project := range projects {
-		admins, err := c.GetAdminsOfGivenResourceType(project.ID, projectsEndpoint)
+		admins, err := c.GetAdminsOfGivenResourceType(project.ID, projectsAdminsEndpoint)
 		if err != nil {
 			return nil, err
 		}
 		project.Admins = admins
 	}
 
-	c.logger.Info("Fetch projects from request", "total", len(projects), req.URL)
+	c.logger.Info("Fetch projects from request", "total", len(projects), "url", req.URL)
 
 	return projects, err
 }
@@ -209,15 +203,11 @@ func (c *client) GetOrganizations() ([]*Organization, error) {
 		return nil, err
 	}
 
-	var organizations []*Organization
-	var response interface{}
+	var response map[string][]*Organization
 	if _, err := c.do(req, &response); err != nil {
 		return nil, err
 	}
-
-	if v, ok := response.(map[string]interface{}); ok && v[organizationsConst] != nil {
-		err = mapstructure.Decode(v[organizationsConst], &organizations)
-	}
+	organizations := response[organizationsConst]
 
 	for _, org := range organizations {
 		admins, err := c.GetAdminsOfGivenResourceType(org.ID, organizationEndpoint)
@@ -227,163 +217,160 @@ func (c *client) GetOrganizations() ([]*Organization, error) {
 		org.Admins = admins
 	}
 
-	c.logger.Info("Fetch organizations from request", "total", len(organizations), req.URL)
+	c.logger.Info("Fetch organizations from request", "total", len(organizations), "url", req.URL)
 
 	return organizations, err
 }
 
-func (c *client) GrantTeamAccess(resource *Team, userId string, role string) error {
-	body := make(map[string][]string)
-	body["userIds"] = append(body["userIds"], userId)
+func (c *client) GrantGroupAccess(resource *Group, userId string, role string) error {
+	body := make(map[string]string)
+	body["principal"] = fmt.Sprintf("%s:%s", "app/user", userId)
+	body["resource"] = fmt.Sprintf("%s:%s", "app/group", resource.ID)
+	body["roleId"] = role
 
-	endPoint := path.Join(groupsEndpoint, "/", resource.ID, "/", role)
-	req, err := c.newRequest(http.MethodPost, endPoint, body, "")
+	req, err := c.newRequest(http.MethodPost, createPolicyEndpoint, body, "")
 	if err != nil {
 		return err
 	}
 
-	var users []*User
 	var response interface{}
 	if _, err := c.do(req, &response); err != nil {
+		c.logger.Error("Failed to grant access to the user", "user", userId, "url", req.URL)
 		return err
 	}
 
-	if v, ok := response.(map[string]interface{}); ok && v[usersConst] != nil {
-		err = mapstructure.Decode(v[usersConst], &users)
-		if err != nil {
-			return err
-		}
-	}
-
-	c.logger.Info("Team access to the user,", "total users", len(users), req.URL)
-
+	c.logger.Info("Group access to the user", "user", userId, "url", req.URL)
 	return nil
 }
 
 func (c *client) GrantProjectAccess(resource *Project, userId string, role string) error {
-	body := make(map[string][]string)
-	body["userIds"] = append(body["userIds"], userId)
+	body := make(map[string]string)
+	body["principal"] = fmt.Sprintf("%s:%s", "app/user", userId)
+	body["resource"] = fmt.Sprintf("%s:%s", "app/project", resource.ID)
+	body["roleId"] = role
 
-	endPoint := path.Join(projectsEndpoint, "/", resource.ID, "/", role)
-	req, err := c.newRequest(http.MethodPost, endPoint, body, "")
+	req, err := c.newRequest(http.MethodPost, createPolicyEndpoint, body, "")
 	if err != nil {
 		return err
 	}
 
-	var users []*User
 	var response interface{}
 	if _, err := c.do(req, &response); err != nil {
+		c.logger.Error("Failed to grant access to the user", "user", userId, "url", req.URL)
 		return err
 	}
 
-	if v, ok := response.(map[string]interface{}); ok && v[usersConst] != nil {
-		err = mapstructure.Decode(v[usersConst], &users)
-		if err != nil {
-			return err
-		}
-	}
-
-	c.logger.Info("Project access to the user,", "total users", len(users), req.URL)
+	c.logger.Info("Project access to the user", "user", userId, "url", req.URL)
 	return nil
 }
 
-func (c *client) GrantOrganizationAccess(resource *Organization, userId string, role string) error {
-	body := make(map[string][]string)
-	body["userIds"] = append(body["userIds"], userId)
+func (c *client) GrantOrganizationAccess(resource *Organization, userId string, roleId string) error {
+	body := make(map[string]string)
+	body["roleId"] = roleId
+	body["resource"] = fmt.Sprintf("%s:%s", "app/organization", resource.ID)
+	body["principal"] = fmt.Sprintf("%s:%s", "app/user", userId)
 
-	endPoint := path.Join(organizationEndpoint, "/", resource.ID, "/", role)
-	req, err := c.newRequest(http.MethodPost, endPoint, body, "")
-
+	req, err := c.newRequest(http.MethodPost, createPolicyEndpoint, body, "")
 	if err != nil {
 		return err
 	}
 
-	var users []*User
 	var response interface{}
 	if _, err := c.do(req, &response); err != nil {
+		c.logger.Error("Failed to grant access to the user", "user", userId, "url", req.URL)
 		return err
 	}
 
-	if v, ok := response.(map[string]interface{}); ok && v[usersConst] != nil {
-		err = mapstructure.Decode(v[usersConst], &users)
-		if err != nil {
-			return err
-		}
-	}
-
-	c.logger.Info("Organization access to the user,", "total users", len(users), req.URL)
+	c.logger.Info("Organization access to the user,", "user", userId, "url", req.URL)
 	return nil
 }
 
-func (c *client) RevokeTeamAccess(resource *Team, userId string, role string) error {
-	endPoint := path.Join(groupsEndpoint, "/", resource.ID, "/", role, "/", userId)
-	req, err := c.newRequest(http.MethodDelete, endPoint, "", "")
+func (c *client) RevokeGroupAccess(resource *Group, userId string, role string) error {
+	endpoint := fmt.Sprintf("%s?groupId=%s&userId=%s&roleId=%s", createPolicyEndpoint, resource.ID, userId, role)
+	req, err := c.newRequest(http.MethodGet, endpoint, "", "")
 	if err != nil {
 		return err
 	}
 
-	var success successAccess
-	var response interface{}
+	var response map[string][]*Policy
 	if _, err := c.do(req, &response); err != nil {
 		return err
 	}
+	policies := response[policiesConst]
 
-	if v, ok := response.(map[string]interface{}); ok && v != nil {
-		err = mapstructure.Decode(v, &success)
+	for _, policy := range policies {
+		endPoint := path.Join(createPolicyEndpoint, "/", policy.ID)
+		req, err := c.newRequest(http.MethodDelete, endPoint, "", "")
 		if err != nil {
+			return err
+		}
+		var res interface{}
+		if _, err := c.do(req, &res); err != nil {
+			c.logger.Error("Failed to revoke access of the user from group", "user", userId, "url", req.URL)
 			return err
 		}
 	}
 
-	c.logger.Info("Remove access of the user from team,", "Users", userId, req.URL)
+	c.logger.Info("Remove access of the user from group", "user", userId, "url", req.URL)
 	return nil
 }
 
 func (c *client) RevokeProjectAccess(resource *Project, userId string, role string) error {
-	endPoint := path.Join(projectsEndpoint, "/", resource.ID, "/", role, "/", userId)
-	req, err := c.newRequest(http.MethodDelete, endPoint, "", "")
+	endpoint := fmt.Sprintf("%s?projectId=%s&userId=%s&roleId=%s", createPolicyEndpoint, resource.ID, userId, role)
+	req, err := c.newRequest(http.MethodGet, endpoint, "", "")
 	if err != nil {
 		return err
 	}
 
-	var success successAccess
-	var response interface{}
+	var response map[string][]*Policy
 	if _, err := c.do(req, &response); err != nil {
 		return err
 	}
+	policies := response[policiesConst]
 
-	if v, ok := response.(map[string]interface{}); ok && v != nil {
-		err = mapstructure.Decode(v, &success)
+	for _, policy := range policies {
+		endPoint := path.Join(createPolicyEndpoint, "/", policy.ID)
+		req, err := c.newRequest(http.MethodDelete, endPoint, "", "")
 		if err != nil {
+			return err
+		}
+		var res interface{}
+		if _, err := c.do(req, &res); err != nil {
+			c.logger.Error("Failed to revoke access of the user from project", "user", userId, "url", req.URL)
 			return err
 		}
 	}
 
-	c.logger.Info("Remove access of the user from project", "Users", userId, req.URL)
+	c.logger.Info("Remove access of the user from project", "user", userId, "url", req.URL)
 	return nil
 }
 
 func (c *client) RevokeOrganizationAccess(resource *Organization, userId string, role string) error {
-	endPoint := path.Join(organizationEndpoint, "/", resource.ID, "/", role, "/", userId)
-	req, err := c.newRequest(http.MethodDelete, endPoint, "", "")
+	endpoint := fmt.Sprintf("%s?orgId=%s&userId=%s&roleId=%s", createPolicyEndpoint, resource.ID, userId, role)
+	req, err := c.newRequest(http.MethodGet, endpoint, "", "")
 	if err != nil {
 		return err
 	}
 
-	var success successAccess
-	var response interface{}
+	var response map[string][]*Policy
 	if _, err := c.do(req, &response); err != nil {
 		return err
 	}
+	policies := response[policiesConst]
 
-	if v, ok := response.(map[string]interface{}); ok && v != nil {
-		err = mapstructure.Decode(v, &success)
+	for _, policy := range policies {
+		endPoint := path.Join(createPolicyEndpoint, "/", policy.ID)
+		req, err := c.newRequest(http.MethodDelete, endPoint, "", "")
 		if err != nil {
+			return err
+		}
+		var res interface{}
+		if _, err := c.do(req, &res); err != nil {
 			return err
 		}
 	}
 
-	c.logger.Info("Remove access of the user from organization", "Users", userId, req.URL)
+	c.logger.Info("Remove access of the user from organization", "user", userId, "url", req.URL)
 	return nil
 }
 
@@ -393,17 +380,13 @@ func (c *client) GetSelfUser(email string) (*User, error) {
 		return nil, err
 	}
 
-	var user *User
-	var response interface{}
+	var response map[string]*User
 	if _, err := c.do(req, &response); err != nil {
 		return nil, err
 	}
+	user := response[userConst]
 
-	if v, ok := response.(map[string]interface{}); ok && v[userConst] != nil {
-		err = mapstructure.Decode(v[userConst], &user)
-	}
-
-	c.logger.Info("Fetch user from request", "Id", user.ID, req.URL)
+	c.logger.Info("Fetch user from request", "Id", user.ID, "url", req.URL)
 
 	return user, err
 }

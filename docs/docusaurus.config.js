@@ -15,16 +15,17 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
   presets: [
     [
-      'classic',
+      '@docusaurus/preset-classic',
       ({
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/raystack/guardian/edit/master/docs/',
           sidebarCollapsed: true,
           breadcrumbs: false,
+          docLayoutComponent: "@theme/DocPage",
+          docItemComponent: "@theme/ApiItem" 
         },
         blog: false,
-
         theme: {
           customCss: [
             require.resolve('./src/css/theme.css'),
@@ -37,13 +38,38 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       }),
     ],
   ],
-
+  plugins: [
+    [
+      'docusaurus-plugin-openapi-docs',
+      {
+        id: "apiDocs",
+        docsPluginId: "classic",
+        config: {
+          auth: {
+            specPath: "../api/proto/raystack/guardian/v1beta1/guardian.swagger.json",
+            outputDir: "docs/apis",
+            sidebarOptions: {
+              groupPathsBy: "tag",
+            },
+            hideSendButton: false,
+          }
+        }
+      },
+    ],
+  ],
+  themes: ["docusaurus-theme-openapi-docs"],
   themeConfig:
     ({
       image: 'img/banner.png',
       colorMode: {
         defaultMode: 'light',
         respectPrefersColorScheme: true,
+      },
+      docs: {
+        sidebar: {
+          autoCollapseCategories: true,
+          hideable: true,
+        },
       },
       navbar: {
         title: 'Guardian',

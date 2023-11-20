@@ -7,7 +7,6 @@ import (
 	"github.com/raystack/salt/log"
 )
 
-// TODO: fix this to use latest frontier APIs
 type provider struct {
 	pv.UnimplementedClient
 	pv.PermissionManager
@@ -58,25 +57,9 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 
 	resources := []*domain.Resource{}
 
-	var teams []*Team
+	var groups []*Group
 	var projects []*Project
 	var organizations []*Organization
-
-	if _, ok := resourceTypes[ResourceTypeTeam]; ok {
-		teams, err = client.GetTeams()
-		if err != nil {
-			return nil, err
-		}
-		resources = p.addTeams(pc, teams, resources)
-	}
-
-	if _, ok := resourceTypes[ResourceTypeProject]; ok {
-		projects, err = client.GetProjects()
-		if err != nil {
-			return nil, err
-		}
-		resources = p.addProjects(pc, projects, resources)
-	}
 
 	if _, ok := resourceTypes[ResourceTypeOrganization]; ok {
 		organizations, err = client.GetOrganizations()
@@ -84,13 +67,30 @@ func (p *provider) GetResources(pc *domain.ProviderConfig) ([]*domain.Resource, 
 			return nil, err
 		}
 		resources = p.addOrganizations(pc, organizations, resources)
+		for _, orgs := range organizations {
+			if _, ok := resourceTypes[ResourceTypeProject]; ok {
+				projects, err = client.GetProjects(orgs.ID)
+				if err != nil {
+					return nil, err
+				}
+				resources = p.addProjects(pc, projects, resources)
+			}
+
+			if _, ok := resourceTypes[ResourceTypeGroup]; ok {
+				groups, err = client.GetGroups(orgs.ID)
+				if err != nil {
+					return nil, err
+				}
+				resources = p.addGroups(pc, groups, resources)
+			}
+		}
 	}
 
 	return resources, nil
 }
 
-func (p *provider) addTeams(pc *domain.ProviderConfig, teams []*Team, resources []*domain.Resource) []*domain.Resource {
-	for _, c := range teams {
+func (p *provider) addGroups(pc *domain.ProviderConfig, groups []*Group, resources []*domain.Resource) []*domain.Resource {
+	for _, c := range groups {
 		t := c.ToDomain()
 		t.ProviderType = pc.Type
 		t.ProviderURN = pc.URN
@@ -160,13 +160,13 @@ func (p *provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error 
 	}
 
 	switch a.Resource.Type {
-	case ResourceTypeTeam:
-		t := new(Team)
+	case ResourceTypeGroup:
+		t := new(Group)
 		if err := t.FromDomain(a.Resource); err != nil {
 			return err
 		}
 		for _, p := range permissions {
-			if err := client.GrantTeamAccess(t, user.ID, p); err != nil {
+			if err := client.GrantGroupAccess(t, user.ID, p); err != nil {
 				return err
 			}
 		}
@@ -216,13 +216,13 @@ func (p *provider) RevokeAccess(pc *domain.ProviderConfig, a domain.Grant) error
 	}
 
 	switch a.Resource.Type {
-	case ResourceTypeTeam:
-		t := new(Team)
+	case ResourceTypeGroup:
+		t := new(Group)
 		if err := t.FromDomain(a.Resource); err != nil {
 			return err
 		}
 		for _, p := range permissions {
-			if err := client.RevokeTeamAccess(t, user.ID, p); err != nil {
+			if err := client.RevokeGroupAccess(t, user.ID, p); err != nil {
 				return err
 			}
 		}

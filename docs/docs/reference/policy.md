@@ -123,7 +123,7 @@ requirements:
 
 | Field | Type | Description | Required |
 | :----- | :---- | :------ | :------ |
-| `provider` | `string` | Identity manager type. Supported types are `http` and `shield` | YES |
+| `provider` | `string` | Identity manager type. Supported types are `http` and `frontier` | YES |
 | `config` | `object`| Client configuration according to the `provider` type | YES |
 | `schema` | `map<string,string>` | User (appeal creator) profile details schema to be shown in the `creator` field in an appeal | NO |
 
