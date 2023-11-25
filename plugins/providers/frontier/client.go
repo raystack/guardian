@@ -158,14 +158,6 @@ func (c *client) GetGroups(orgID string) ([]*Group, error) {
 	}
 	groups := response[groupsConst]
 
-	for _, group := range groups {
-		admins, err := c.GetAdminsOfGivenResourceType(group.ID, groupsEndpoint)
-		if err != nil {
-			return nil, err
-		}
-		group.Admins = admins
-	}
-
 	c.logger.Info("Fetch groups from request", "total", len(groups), "url", req.URL)
 
 	return groups, err
