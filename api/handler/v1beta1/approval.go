@@ -95,13 +95,13 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 		case appeal.ErrApprovalNotFound:
 			return nil, status.Errorf(codes.NotFound, "approval not found: %v", id)
 		default:
-			return nil, status.Errorf(codes.Internal, "failed to update approval: %v", err)
+			return nil, s.internalError(ctx, "failed to update approval: %v", err)
 		}
 	}
 
 	appealProto, err := s.adapter.ToAppealProto(a)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %v", err)
+		return nil, s.internalError(ctx, "failed to parse appeal: %v", err)
 	}
 
 	return &guardianv1beta1.UpdateApprovalResponse{
@@ -121,12 +121,12 @@ func (s *GRPCServer) AddApprover(ctx context.Context, req *guardianv1beta1.AddAp
 		errors.Is(err, appeal.ErrApprovalNotFound):
 		return nil, status.Errorf(codes.NotFound, "resource not found: %s", err)
 	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to add approver: %s", err)
+		return nil, s.internalError(ctx, "failed to add approver: %s", err)
 	}
 
 	appealProto, err := s.adapter.ToAppealProto(a)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %s", err)
+		return nil, s.internalError(ctx, "failed to parse appeal: %s", err)
 	}
 
 	return &guardianv1beta1.AddApproverResponse{
@@ -146,12 +146,12 @@ func (s *GRPCServer) DeleteApprover(ctx context.Context, req *guardianv1beta1.De
 		errors.Is(err, appeal.ErrApprovalNotFound):
 		return nil, status.Errorf(codes.NotFound, "resource not found: %s", err)
 	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to delete approver: %s", err)
+		return nil, s.internalError(ctx, "failed to delete approver: %s", err)
 	}
 
 	appealProto, err := s.adapter.ToAppealProto(a)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse appeal: %s", err)
+		return nil, s.internalError(ctx, "failed to parse appeal: %s", err)
 	}
 
 	return &guardianv1beta1.DeleteApproverResponse{
@@ -167,7 +167,7 @@ func (s *GRPCServer) listApprovals(ctx context.Context, filters *domain.ListAppr
 	eg.Go(func() error {
 		approvalRecords, err := s.approvalService.ListApprovals(ctx, filters)
 		if err != nil {
-			return status.Errorf(codes.Internal, "failed to get approval list: %s", err)
+			return s.internalError(ctx, "failed to get approval list: %s", err)
 		}
 		approvals = approvalRecords
 		return nil
@@ -176,7 +176,7 @@ func (s *GRPCServer) listApprovals(ctx context.Context, filters *domain.ListAppr
 	eg.Go(func() error {
 		totalRecord, err := s.approvalService.GetApprovalsTotalCount(ctx, filters)
 		if err != nil {
-			return status.Errorf(codes.Internal, "failed to get approval list: %v", err)
+			return s.internalError(ctx, "failed to get approval list: %v", err)
 		}
 		total = totalRecord
 		return nil
@@ -190,7 +190,7 @@ func (s *GRPCServer) listApprovals(ctx context.Context, filters *domain.ListAppr
 	for _, a := range approvals {
 		approvalProto, err := s.adapter.ToApprovalProto(a)
 		if err != nil {
-			return nil, 0, status.Errorf(codes.Internal, "failed to parse approval: %v: %s", a.ID, err)
+			return nil, 0, s.internalError(ctx, "failed to parse approval: %v: %s", a.ID, err)
 		}
 		approvalProtos = append(approvalProtos, approvalProto)
 	}

@@ -14,7 +14,7 @@ import (
 func (s *GRPCServer) ListProviders(ctx context.Context, req *guardianv1beta1.ListProvidersRequest) (*guardianv1beta1.ListProvidersResponse, error) {
 	providers, err := s.providerService.Find(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list providers: %v", err)
+		return nil, s.internalError(ctx, "failed to list providers: %v", err)
 	}
 
 	providerProtos := []*guardianv1beta1.Provider{}
@@ -22,7 +22,7 @@ func (s *GRPCServer) ListProviders(ctx context.Context, req *guardianv1beta1.Lis
 		p.Config.Credentials = nil
 		providerProto, err := s.adapter.ToProviderProto(p)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse provider %s: %v", p.URN, err)
+			return nil, s.internalError(ctx, "failed to parse provider %s: %v", p.URN, err)
 		}
 		providerProtos = append(providerProtos, providerProto)
 	}
@@ -39,13 +39,13 @@ func (s *GRPCServer) GetProvider(ctx context.Context, req *guardianv1beta1.GetPr
 		case provider.ErrRecordNotFound:
 			return nil, status.Error(codes.NotFound, "provider not found")
 		default:
-			return nil, status.Errorf(codes.Internal, "failed to retrieve provider: %v", err)
+			return nil, s.internalError(ctx, "failed to retrieve provider: %v", err)
 		}
 	}
 
 	providerProto, err := s.adapter.ToProviderProto(p)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse provider %s: %v", p.URN, err)
+		return nil, s.internalError(ctx, "failed to parse provider %s: %v", p.URN, err)
 	}
 
 	return &guardianv1beta1.GetProviderResponse{
@@ -56,7 +56,7 @@ func (s *GRPCServer) GetProvider(ctx context.Context, req *guardianv1beta1.GetPr
 func (s *GRPCServer) GetProviderTypes(ctx context.Context, req *guardianv1beta1.GetProviderTypesRequest) (*guardianv1beta1.GetProviderTypesResponse, error) {
 	providerTypes, err := s.providerService.GetTypes(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to retrieve provider types: %v", err)
+		return nil, s.internalError(ctx, "failed to retrieve provider types: %v", err)
 	}
 
 	var providerTypeProtos []*guardianv1beta1.ProviderType
@@ -83,12 +83,12 @@ func (s *GRPCServer) CreateProvider(ctx context.Context, req *guardianv1beta1.Cr
 
 	if err := s.providerService.Create(ctx, p); err != nil {
 		s.logger.Error(ctx, "failed to create provider", "provider_urn", p.URN, "type", p.Type, "error", err)
-		return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
+		return nil, s.internalError(ctx, "failed to create provider: %v", err)
 	}
 
 	providerProto, err := s.adapter.ToProviderProto(p)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse provider: %v", err)
+		return nil, s.internalError(ctx, "failed to parse provider: %v", err)
 	}
 
 	return &guardianv1beta1.CreateProviderResponse{
@@ -112,12 +112,12 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *guardianv1beta1.Up
 
 	if err := s.providerService.Update(ctx, p); err != nil {
 		s.logger.Error(ctx, "failed to update provider", "provider_id", id, "provider_urn", p.URN, "type", p.Type, "error", err)
-		return nil, status.Errorf(codes.Internal, "failed to update provider: %v", err)
+		return nil, s.internalError(ctx, "failed to update provider: %v", err)
 	}
 
 	providerProto, err := s.adapter.ToProviderProto(p)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse provider: %v", err)
+		return nil, s.internalError(ctx, "failed to parse provider: %v", err)
 	}
 
 	return &guardianv1beta1.UpdateProviderResponse{
@@ -130,7 +130,7 @@ func (s *GRPCServer) DeleteProvider(ctx context.Context, req *guardianv1beta1.De
 		if errors.Is(err, provider.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "provider not found")
 		}
-		return nil, status.Errorf(codes.Internal, "failed to delete provider: %v", err)
+		return nil, s.internalError(ctx, "failed to delete provider: %v", err)
 	}
 
 	return &guardianv1beta1.DeleteProviderResponse{}, nil
@@ -139,14 +139,14 @@ func (s *GRPCServer) DeleteProvider(ctx context.Context, req *guardianv1beta1.De
 func (s *GRPCServer) ListRoles(ctx context.Context, req *guardianv1beta1.ListRolesRequest) (*guardianv1beta1.ListRolesResponse, error) {
 	roles, err := s.providerService.GetRoles(ctx, req.GetId(), req.GetResourceType())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list roles: %v", err)
+		return nil, s.internalError(ctx, "failed to list roles: %v", err)
 	}
 
 	roleProtos := []*guardianv1beta1.Role{}
 	for _, r := range roles {
 		role, err := s.adapter.ToRole(r)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse proto: %v", err)
+			return nil, s.internalError(ctx, "failed to parse proto: %v", err)
 		}
 
 		roleProtos = append(roleProtos, role)

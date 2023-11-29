@@ -13,14 +13,14 @@ import (
 func (s *GRPCServer) ListPolicies(ctx context.Context, req *guardianv1beta1.ListPoliciesRequest) (*guardianv1beta1.ListPoliciesResponse, error) {
 	policies, err := s.policyService.Find(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get policy list: %v", err)
+		return nil, s.internalError(ctx, "failed to get policy list: %v", err)
 	}
 
 	policyProtos := []*guardianv1beta1.Policy{}
 	for _, p := range policies {
 		policyProto, err := s.adapter.ToPolicyProto(p)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse policy %v: %v", p.ID, err)
+			return nil, s.internalError(ctx, "failed to parse policy %v: %v", p.ID, err)
 		}
 		policyProtos = append(policyProtos, policyProto)
 	}
@@ -37,13 +37,13 @@ func (s *GRPCServer) GetPolicy(ctx context.Context, req *guardianv1beta1.GetPoli
 		case policy.ErrPolicyNotFound:
 			return nil, status.Error(codes.NotFound, "policy not found")
 		default:
-			return nil, status.Errorf(codes.Internal, "failed to retrieve policy: %v", err)
+			return nil, s.internalError(ctx, "failed to retrieve policy: %v", err)
 		}
 	}
 
 	policyProto, err := s.adapter.ToPolicyProto(p)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse policy: %v", err)
+		return nil, s.internalError(ctx, "failed to parse policy: %v", err)
 	}
 
 	return &guardianv1beta1.GetPolicyResponse{
@@ -59,12 +59,12 @@ func (s *GRPCServer) CreatePolicy(ctx context.Context, req *guardianv1beta1.Crea
 	p := s.adapter.FromPolicyProto(req.GetPolicy())
 
 	if err := s.policyService.Create(ctx, p); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create policy: %v", err)
+		return nil, s.internalError(ctx, "failed to create policy: %v", err)
 	}
 
 	policyProto, err := s.adapter.ToPolicyProto(p)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse policy: %v", err)
+		return nil, s.internalError(ctx, "failed to parse policy: %v", err)
 	}
 
 	return &guardianv1beta1.CreatePolicyResponse{
@@ -86,12 +86,12 @@ func (s *GRPCServer) UpdatePolicy(ctx context.Context, req *guardianv1beta1.Upda
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 
-		return nil, status.Errorf(codes.Internal, "failed to update policy: %v", err)
+		return nil, s.internalError(ctx, "failed to update policy: %v", err)
 	}
 
 	policyProto, err := s.adapter.ToPolicyProto(p)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse policy: %v", err)
+		return nil, s.internalError(ctx, "failed to parse policy: %v", err)
 	}
 
 	return &guardianv1beta1.UpdatePolicyResponse{
@@ -106,7 +106,7 @@ func (s *GRPCServer) GetPolicyPreferences(ctx context.Context, req *guardianv1be
 		case policy.ErrPolicyNotFound:
 			return nil, status.Error(codes.NotFound, "policy not found")
 		default:
-			return nil, status.Errorf(codes.Internal, "failed to retrieve policy: %v", err)
+			return nil, s.internalError(ctx, "failed to retrieve policy: %v", err)
 		}
 	}
 

@@ -2,6 +2,7 @@ package v1beta1
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/goto/guardian/pkg/log"
@@ -168,4 +169,9 @@ func (s *GRPCServer) getUser(ctx context.Context) (string, error) {
 	}
 
 	return authenticatedEmail, nil
+}
+
+func (s *GRPCServer) internalError(ctx context.Context, format string, a ...interface{}) error {
+	s.logger.Error(ctx, fmt.Sprintf(format, a...))
+	return status.Errorf(codes.Internal, format, a...)
 }

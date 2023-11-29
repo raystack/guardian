@@ -58,7 +58,7 @@ func (s *GRPCServer) listResources(ctx context.Context, filter domain.ListResour
 	eg.Go(func() error {
 		resourceRecords, err := s.resourceService.Find(ctx, filter)
 		if err != nil {
-			return status.Errorf(codes.Internal, "failed to get resource list: %s", err)
+			return s.internalError(ctx, "failed to get resource list: %s", err)
 		}
 		resources = resourceRecords
 		return nil
@@ -66,7 +66,7 @@ func (s *GRPCServer) listResources(ctx context.Context, filter domain.ListResour
 	eg.Go(func() error {
 		totalRecord, err := s.resourceService.GetResourcesTotalCount(ctx, filter)
 		if err != nil {
-			return status.Errorf(codes.Internal, "failed to get resource total count: %s", err)
+			return s.internalError(ctx, "failed to get resource total count: %s", err)
 		}
 		total = totalRecord
 		return nil
@@ -79,7 +79,7 @@ func (s *GRPCServer) listResources(ctx context.Context, filter domain.ListResour
 	for i, r := range resources {
 		resourceProto, err := s.adapter.ToResourceProto(resources[i])
 		if err != nil {
-			return nil, 0, status.Errorf(codes.Internal, "failed to parse resource %v: %v", r.Name, err)
+			return nil, 0, s.internalError(ctx, "failed to parse resource %v: %v", r.Name, err)
 		}
 		resourceProtos = append(resourceProtos, resourceProto)
 	}
@@ -94,13 +94,13 @@ func (s *GRPCServer) GetResource(ctx context.Context, req *guardianv1beta1.GetRe
 		case resource.ErrRecordNotFound:
 			return nil, status.Error(codes.NotFound, "resource not found")
 		default:
-			return nil, status.Errorf(codes.Internal, "failed to retrieve resource: %v", err)
+			return nil, s.internalError(ctx, "failed to retrieve resource: %v", err)
 		}
 	}
 
 	resourceProto, err := s.adapter.ToResourceProto(r)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse resource: %v", err)
+		return nil, s.internalError(ctx, "failed to parse resource: %v", err)
 	}
 
 	return &guardianv1beta1.GetResourceResponse{
@@ -116,12 +116,12 @@ func (s *GRPCServer) UpdateResource(ctx context.Context, req *guardianv1beta1.Up
 		if errors.Is(err, resource.ErrRecordNotFound) {
 			return nil, status.Error(codes.NotFound, "resource not found")
 		}
-		return nil, status.Errorf(codes.Internal, "failed to update resource: %v", err)
+		return nil, s.internalError(ctx, "failed to update resource: %v", err)
 	}
 
 	resourceProto, err := s.adapter.ToResourceProto(r)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse resource: %v", err)
+		return nil, s.internalError(ctx, "failed to parse resource: %v", err)
 	}
 
 	return &guardianv1beta1.UpdateResourceResponse{
@@ -134,7 +134,7 @@ func (s *GRPCServer) DeleteResource(ctx context.Context, req *guardianv1beta1.De
 		if errors.Is(err, resource.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "resource not found")
 		}
-		return nil, status.Errorf(codes.Internal, "failed to update resource: %v", err)
+		return nil, s.internalError(ctx, "failed to update resource: %v", err)
 	}
 
 	return &guardianv1beta1.DeleteResourceResponse{}, nil

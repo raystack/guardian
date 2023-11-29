@@ -17,12 +17,12 @@ func (s *GRPCServer) GetActivity(ctx context.Context, req *guardianv1beta1.GetAc
 		if errors.Is(err, activity.ErrNotFound) {
 			return nil, status.Errorf(codes.NotFound, "activity not found")
 		}
-		return nil, status.Errorf(codes.Internal, "failed to get activity: %v", err)
+		return nil, s.internalError(ctx, "failed to get activity: %v", err)
 	}
 
 	activityProto, err := s.adapter.ToActivityProto(a)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse proto: %v", err)
+		return nil, s.internalError(ctx, "failed to parse proto: %v", err)
 	}
 
 	return &guardianv1beta1.GetActivityResponse{
@@ -48,14 +48,14 @@ func (s *GRPCServer) ListActivities(ctx context.Context, req *guardianv1beta1.Li
 
 	activities, err := s.activityService.Find(ctx, filter)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list activities: %v", err)
+		return nil, s.internalError(ctx, "failed to list activities: %v", err)
 	}
 
 	activityProtos := []*guardianv1beta1.ProviderActivity{}
 	for _, a := range activities {
 		activityProto, err := s.adapter.ToActivityProto(a)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse proto: %v", err)
+			return nil, s.internalError(ctx, "failed to parse proto: %v", err)
 		}
 		activityProtos = append(activityProtos, activityProto)
 	}
@@ -82,14 +82,14 @@ func (s *GRPCServer) ImportActivities(ctx context.Context, req *guardianv1beta1.
 
 	activities, err := s.activityService.Import(ctx, filter)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to import activities: %v", err)
+		return nil, s.internalError(ctx, "failed to import activities: %v", err)
 	}
 
 	activityProtos := []*guardianv1beta1.ProviderActivity{}
 	for _, a := range activities {
 		activity, err := s.adapter.ToActivityProto(a)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse proto: %v", err)
+			return nil, s.internalError(ctx, "failed to parse proto: %v", err)
 		}
 
 		activityProtos = append(activityProtos, activity)
