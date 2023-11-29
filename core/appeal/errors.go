@@ -20,15 +20,13 @@ var (
 	ErrGrantNotEligibleForExtension   = errors.New("grant not eligible for extension")
 	ErrCannotCreateAppealForOtherUser = errors.New("creating appeal for other individual user (account_type=\"user\") is not allowed")
 
-	ErrApprovalDependencyIsBlocked = errors.New("found previous approval step that is still in blocked")
-	ErrApprovalDependencyIsPending = errors.New("found previous approval step that is still in pending")
-	ErrApprovalStatusApproved      = errors.New("approval already approved")
-	ErrApprovalStatusRejected      = errors.New("approval already rejected")
-	ErrApprovalStatusSkipped       = errors.New("approval already skipped")
-	ErrApprovalStatusUnrecognized  = errors.New("unrecognized approval status")
-	ErrApprovalNotFound            = errors.New("approval not found")
-	ErrUnableToAddApprover         = errors.New("unable to add a new approver")
-	ErrUnableToDeleteApprover      = errors.New("unable to remove approver")
+	ErrApprovalStatusApproved     = errors.New("approval already approved")
+	ErrApprovalStatusRejected     = errors.New("approval already rejected")
+	ErrApprovalStatusSkipped      = errors.New("approval already skipped")
+	ErrApprovalStatusUnrecognized = errors.New("unrecognized approval status")
+	ErrApprovalNotFound           = errors.New("approval not found")
+	ErrUnableToAddApprover        = errors.New("unable to add a new approver")
+	ErrUnableToDeleteApprover     = errors.New("unable to remove approver")
 
 	ErrActionForbidden    = errors.New("user is not allowed to make action on this approval step")
 	ErrActionInvalidValue = errors.New("invalid action value")
@@ -45,11 +43,15 @@ var (
 	ErrDurationNotAllowed                  = errors.New("duration value not allowed")
 	ErrDurationIsRequired                  = errors.New("having permanent access to this resource is not allowed, access duration is required")
 
-	ErrApproverKeyNotRecognized = errors.New("unrecognized approvers key")
-	ErrApproverInvalidType      = errors.New("invalid approver type, expected an email string or array of email string")
-	ErrApproverEmail            = errors.New("approver is not a valid email")
-	ErrApproverNotFound         = errors.New("approver not found")
-	ErrGrantNotFound            = errors.New("grant not found")
+	ErrApproverKeyNotRecognized       = errors.New("unrecognized approvers key")
+	ErrApproverInvalidType            = errors.New("invalid approver type, expected an email string or array of email string")
+	ErrApproverEmail                  = errors.New("approver is not a valid email")
+	ErrApproverNotFound               = errors.New("approver not found")
+	ErrGrantNotFound                  = errors.New("grant not found")
+	ErrInvalidUpdateApprovalParameter = errors.New("invalid parameter")
+
+	ErrAppealNotEligibleForApproval = errors.New("appeal status not eligible for approval")
+	ErrApprovalNotEligibleForAction = errors.New("approval not eligible for action")
 )
 
 type InvalidError struct {

@@ -439,12 +439,15 @@ func validateAppealOnBehalf(a *domain.Appeal, policy *domain.Policy) error {
 
 // UpdateApproval Approve an approval step
 func (s *Service) UpdateApproval(ctx context.Context, approvalAction domain.ApprovalAction) (*domain.Appeal, error) {
-	if err := utils.ValidateStruct(approvalAction); err != nil {
-		return nil, err
+	if err := approvalAction.Validate(); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidUpdateApprovalParameter, err)
 	}
 
 	appeal, err := s.GetByID(ctx, approvalAction.AppealID)
 	if err != nil {
+		if errors.Is(err, ErrAppealNotFound) {
+			return nil, fmt.Errorf("%w: %q", ErrAppealNotFound, approvalAction.AppealID)
+		}
 		return nil, err
 	}
 
@@ -454,16 +457,14 @@ func (s *Service) UpdateApproval(ctx context.Context, approvalAction domain.Appr
 
 	for i, approval := range appeal.Approvals {
 		if approval.Name != approvalAction.ApprovalName {
-			if err := checkPreviousApprovalStatus(approval.Status); err != nil {
+			if err := checkPreviousApprovalStatus(approval.Status, approval.Name); err != nil {
 				return nil, err
 			}
 			continue
 		}
 
-		if approval.Status != domain.ApprovalStatusPending {
-			if err := checkApprovalStatus(approval.Status); err != nil {
-				return nil, err
-			}
+		if err := checkApprovalStatus(approval.Status); err != nil {
+			return nil, err
 		}
 
 		if !utils.ContainsString(approval.Approvers, approvalAction.Actor) {
@@ -592,7 +593,7 @@ func (s *Service) UpdateApproval(ctx context.Context, approvalAction domain.Appr
 		return appeal, nil
 	}
 
-	return nil, ErrApprovalNotFound
+	return nil, fmt.Errorf("%w: %q", ErrApprovalNotFound, approvalAction.ApprovalName)
 }
 
 func (s *Service) Update(ctx context.Context, appeal *domain.Appeal) error {
@@ -904,57 +905,48 @@ func (s *Service) getApprovalNotifications(ctx context.Context, appeal *domain.A
 }
 
 func checkIfAppealStatusStillPending(status string) error {
-	if status == domain.AppealStatusPending {
-		return nil
-	}
-
-	var err error
 	switch status {
-	case domain.AppealStatusCanceled:
-		err = ErrAppealStatusCanceled
-	case domain.AppealStatusApproved:
-		err = ErrAppealStatusApproved
-	case domain.AppealStatusRejected:
-		err = ErrAppealStatusRejected
+	case domain.AppealStatusPending:
+		return nil
+	case
+		domain.AppealStatusCanceled,
+		domain.AppealStatusApproved,
+		domain.AppealStatusRejected:
+		return fmt.Errorf("%w: %q", ErrAppealNotEligibleForApproval, status)
 	default:
-		err = ErrAppealStatusUnrecognized
+		return fmt.Errorf("%w: %q", ErrAppealStatusUnrecognized, status)
 	}
-	return err
 }
 
-func checkPreviousApprovalStatus(status string) error {
-	var err error
+func checkPreviousApprovalStatus(status, name string) error {
 	switch status {
-	case domain.ApprovalStatusApproved,
+	case
+		domain.ApprovalStatusApproved,
 		domain.ApprovalStatusSkipped:
-		err = nil
-	case domain.ApprovalStatusBlocked:
-		err = ErrApprovalDependencyIsBlocked
-	case domain.ApprovalStatusPending:
-		err = ErrApprovalDependencyIsPending
-	case domain.ApprovalStatusRejected:
-		err = ErrAppealStatusRejected
+		return nil
+	case
+		domain.ApprovalStatusBlocked,
+		domain.ApprovalStatusPending,
+		domain.ApprovalStatusRejected:
+		return fmt.Errorf("%w: found previous approval %q with status %q", ErrApprovalNotEligibleForAction, name, status)
 	default:
-		err = ErrApprovalStatusUnrecognized
+		return fmt.Errorf("%w: found previous approval %q with unrecognized status %q", ErrApprovalStatusUnrecognized, name, status)
 	}
-	return err
 }
 
 func checkApprovalStatus(status string) error {
-	var err error
 	switch status {
-	case domain.ApprovalStatusBlocked:
-		err = ErrAppealStatusBlocked
-	case domain.ApprovalStatusApproved:
-		err = ErrApprovalStatusApproved
-	case domain.ApprovalStatusRejected:
-		err = ErrApprovalStatusRejected
-	case domain.ApprovalStatusSkipped:
-		err = ErrApprovalStatusSkipped
+	case domain.ApprovalStatusPending:
+		return nil
+	case
+		domain.ApprovalStatusBlocked,
+		domain.ApprovalStatusApproved,
+		domain.ApprovalStatusRejected,
+		domain.ApprovalStatusSkipped:
+		return fmt.Errorf("%w: approval status %q is not actionable", ErrApprovalNotEligibleForAction, status)
 	default:
-		err = ErrApprovalStatusUnrecognized
+		return fmt.Errorf("%w: %q", ErrApprovalStatusUnrecognized, status)
 	}
-	return err
 }
 
 func (s *Service) handleAppealRequirements(ctx context.Context, a *domain.Appeal, p *domain.Policy) error {

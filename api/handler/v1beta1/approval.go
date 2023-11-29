@@ -78,22 +78,24 @@ func (s *GRPCServer) UpdateApproval(ctx context.Context, req *guardianv1beta1.Up
 		Reason:       req.GetAction().GetReason(),
 	})
 	if err != nil {
-		switch err {
-		case appeal.ErrAppealStatusCanceled,
-			appeal.ErrAppealStatusApproved,
-			appeal.ErrAppealStatusRejected,
-			appeal.ErrAppealStatusUnrecognized,
-			appeal.ErrApprovalDependencyIsPending,
-			appeal.ErrApprovalStatusUnrecognized,
-			appeal.ErrApprovalStatusApproved,
-			appeal.ErrApprovalStatusRejected,
-			appeal.ErrApprovalStatusSkipped,
-			appeal.ErrActionInvalidValue:
-			return nil, status.Errorf(codes.InvalidArgument, "unable to process the request: %v", err)
-		case appeal.ErrActionForbidden:
+		switch {
+		case
+			errors.Is(err, appeal.ErrInvalidUpdateApprovalParameter),
+			errors.Is(err, appeal.ErrAppealIDEmptyParam),
+			errors.Is(err, appeal.ErrActionInvalidValue):
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		case
+			errors.Is(err, appeal.ErrAppealNotEligibleForApproval),
+			errors.Is(err, appeal.ErrAppealStatusUnrecognized),
+			errors.Is(err, appeal.ErrApprovalNotEligibleForAction),
+			errors.Is(err, appeal.ErrApprovalStatusUnrecognized):
+			return nil, status.Errorf(codes.FailedPrecondition, err.Error())
+		case errors.Is(err, appeal.ErrActionForbidden):
 			return nil, status.Error(codes.PermissionDenied, "permission denied")
-		case appeal.ErrApprovalNotFound:
-			return nil, status.Errorf(codes.NotFound, "approval not found: %v", id)
+		case
+			errors.Is(err, appeal.ErrAppealNotFound),
+			errors.Is(err, appeal.ErrApprovalNotFound):
+			return nil, status.Errorf(codes.NotFound, err.Error())
 		default:
 			return nil, s.internalError(ctx, "failed to update approval: %v", err)
 		}

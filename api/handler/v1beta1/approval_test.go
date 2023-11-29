@@ -493,49 +493,24 @@ func (s *GrpcHandlersSuite) TestUpdateApproval() {
 		}{
 
 			{
-				"should return invalid error if appeal status already cancelled",
-				appeal.ErrAppealStatusCanceled,
-				codes.InvalidArgument,
-			},
-			{
-				"should return invalid error if appeal status already approved",
-				appeal.ErrAppealStatusApproved,
-				codes.InvalidArgument,
-			},
-			{
-				"should return invalid error if appeal status already rejected",
-				appeal.ErrAppealStatusRejected,
-				codes.InvalidArgument,
+				"should return invalid error if appeal status is not eligible for approval",
+				appeal.ErrAppealNotEligibleForApproval,
+				codes.FailedPrecondition,
 			},
 			{
 				"should return invalid error if appeal status unrecognized",
 				appeal.ErrAppealStatusUnrecognized,
-				codes.InvalidArgument,
+				codes.FailedPrecondition,
 			},
 			{
 				"should return invalid error if approval dependency is still pending",
-				appeal.ErrApprovalDependencyIsPending,
-				codes.InvalidArgument,
+				appeal.ErrApprovalNotEligibleForAction,
+				codes.FailedPrecondition,
 			},
 			{
 				"should return invalid error if approval status unrecognized",
 				appeal.ErrApprovalStatusUnrecognized,
-				codes.InvalidArgument,
-			},
-			{
-				"should return invalid error if approval status already approved",
-				appeal.ErrApprovalStatusApproved,
-				codes.InvalidArgument,
-			},
-			{
-				"should return invalid error if approval status already rejected",
-				appeal.ErrApprovalStatusRejected,
-				codes.InvalidArgument,
-			},
-			{
-				"should return invalid error if approval status already skipped",
-				appeal.ErrApprovalStatusSkipped,
-				codes.InvalidArgument,
+				codes.FailedPrecondition,
 			},
 			{
 				"should return invalid error if action name is invalid",

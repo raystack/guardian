@@ -1626,7 +1626,7 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 
 		s.mockRepository.AssertExpectations(s.T())
 		s.Nil(actualResult)
-		s.EqualError(actualError, expectedError.Error())
+		s.ErrorIs(actualError, expectedError)
 	})
 
 	s.Run("should return error if appeal not found", func() {
@@ -1637,7 +1637,7 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 
 		s.mockRepository.AssertExpectations(s.T())
 		s.Nil(actualResult)
-		s.EqualError(actualError, appeal.ErrAppealNotFound.Error())
+		s.ErrorIs(actualError, appeal.ErrAppealNotFound)
 	})
 
 	s.Run("should return error based on statuses conditions", func() {
@@ -1648,14 +1648,19 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 			expectedError error
 		}{
 			{
+				name:          "appeal not eligible, status: canceled",
+				appealStatus:  domain.AppealStatusCanceled,
+				expectedError: appeal.ErrAppealNotEligibleForApproval,
+			},
+			{
 				name:          "appeal not eligible, status: approved",
 				appealStatus:  domain.AppealStatusApproved,
-				expectedError: appeal.ErrAppealStatusApproved,
+				expectedError: appeal.ErrAppealNotEligibleForApproval,
 			},
 			{
 				name:          "appeal not eligible, status: rejected",
 				appealStatus:  domain.AppealStatusRejected,
-				expectedError: appeal.ErrAppealStatusRejected,
+				expectedError: appeal.ErrAppealNotEligibleForApproval,
 			},
 			{
 				name:          "invalid appeal status",
@@ -1675,7 +1680,7 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 						Status: domain.ApprovalStatusPending,
 					},
 				},
-				expectedError: appeal.ErrApprovalDependencyIsPending,
+				expectedError: appeal.ErrApprovalNotEligibleForAction,
 			},
 			{
 				name:         "found one previous approval is reject",
@@ -1690,7 +1695,7 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 						Status: domain.ApprovalStatusPending,
 					},
 				},
-				expectedError: appeal.ErrAppealStatusRejected,
+				expectedError: appeal.ErrApprovalNotEligibleForAction,
 			},
 			{
 				name:         "invalid approval status",
@@ -1720,7 +1725,7 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 						Status: domain.ApprovalStatusApproved,
 					},
 				},
-				expectedError: appeal.ErrApprovalStatusApproved,
+				expectedError: appeal.ErrApprovalNotEligibleForAction,
 			},
 			{
 				name:         "approval step already rejected",
@@ -1735,7 +1740,7 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 						Status: domain.ApprovalStatusRejected,
 					},
 				},
-				expectedError: appeal.ErrApprovalStatusRejected,
+				expectedError: appeal.ErrApprovalNotEligibleForAction,
 			},
 			{
 				name:         "approval step already skipped",
@@ -1750,7 +1755,7 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 						Status: domain.ApprovalStatusSkipped,
 					},
 				},
-				expectedError: appeal.ErrApprovalStatusSkipped,
+				expectedError: appeal.ErrApprovalNotEligibleForAction,
 			},
 			{
 				name:         "invalid approval status",
@@ -1813,7 +1818,7 @@ func (s *ServiceTestSuite) TestUpdateApproval() {
 			actualResult, actualError := s.service.UpdateApproval(context.Background(), validApprovalActionParam)
 
 			s.Nil(actualResult)
-			s.EqualError(actualError, tc.expectedError.Error())
+			s.ErrorIs(actualError, tc.expectedError)
 		}
 	})
 
