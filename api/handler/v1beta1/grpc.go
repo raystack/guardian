@@ -60,7 +60,7 @@ type activityService interface {
 //go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
 	Create(context.Context, *domain.Provider) error
-	Find(context.Context) ([]*domain.Provider, error)
+	Find(context.Context, domain.ProviderFilter) ([]*domain.Provider, error)
 	GetByID(context.Context, string) (*domain.Provider, error)
 	GetTypes(context.Context) ([]domain.ProviderType, error)
 	GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error)

@@ -29,7 +29,7 @@ func (h *handler) GrantDormancyCheck(ctx context.Context, c Config) error {
 		return fmt.Errorf("invalid retain grant for duration: %w", err)
 	}
 
-	providers, err := h.providerService.Find(ctx)
+	providers, err := h.providerService.Find(ctx, domain.ProviderFilter{})
 	if err != nil {
 		return fmt.Errorf("listing providers: %w", err)
 	}

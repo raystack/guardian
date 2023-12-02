@@ -45,11 +45,17 @@ func (r *ProviderRepository) Create(ctx context.Context, p *domain.Provider) err
 }
 
 // Find records based on filters
-func (r *ProviderRepository) Find(ctx context.Context) ([]*domain.Provider, error) {
+func (r *ProviderRepository) Find(ctx context.Context, flt domain.ProviderFilter) ([]*domain.Provider, error) {
 	providers := []*domain.Provider{}
 
 	var models []*model.Provider
 	if err := r.store.Tx(ctx, func(tx *gorm.DB) error {
+		if flt.Type != "" {
+			tx = tx.Where("type = ?", flt.Type)
+		}
+		if flt.URN != "" {
+			tx = tx.Where("urn = ?", flt.URN)
+		}
 		return tx.Find(&models).Error
 	}); err != nil {
 		return nil, err

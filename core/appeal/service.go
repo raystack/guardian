@@ -65,7 +65,7 @@ type approvalService interface {
 
 //go:generate mockery --name=providerService --exported --with-expecter
 type providerService interface {
-	Find(context.Context) ([]*domain.Provider, error)
+	Find(context.Context, domain.ProviderFilter) ([]*domain.Provider, error)
 	GrantAccess(context.Context, domain.Grant) error
 	RevokeAccess(context.Context, domain.Grant) error
 	ValidateAppeal(context.Context, *domain.Appeal, *domain.Provider, *domain.Policy) error
@@ -820,7 +820,7 @@ func (s *Service) getResourcesMap(ctx context.Context, ids []string) (map[string
 }
 
 func (s *Service) getProvidersMap(ctx context.Context) (map[string]map[string]*domain.Provider, error) {
-	providers, err := s.providerService.Find(ctx)
+	providers, err := s.providerService.Find(ctx, domain.ProviderFilter{})
 	if err != nil {
 		return nil, err
 	}

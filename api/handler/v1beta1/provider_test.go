@@ -88,7 +88,7 @@ func (s *GrpcHandlersSuite) TestListProvider() {
 				},
 			},
 		}
-		s.providerService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).
+		s.providerService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), domain.ProviderFilter{}).
 			Return(dummyProviders, nil).Once()
 
 		req := &guardianv1beta1.ListProvidersRequest{}
@@ -103,7 +103,7 @@ func (s *GrpcHandlersSuite) TestListProvider() {
 		s.setup()
 
 		expectedError := errors.New("random error")
-		s.providerService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).
+		s.providerService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), domain.ProviderFilter{}).
 			Return(nil, expectedError).Once()
 
 		req := &guardianv1beta1.ListProvidersRequest{}
@@ -132,7 +132,7 @@ func (s *GrpcHandlersSuite) TestListProvider() {
 				},
 			},
 		}
-		s.providerService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).
+		s.providerService.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), domain.ProviderFilter{}).
 			Return(expectedProviders, nil).Once()
 
 		req := &guardianv1beta1.ListProvidersRequest{}

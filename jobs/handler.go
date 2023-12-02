@@ -22,7 +22,7 @@ type grantService interface {
 //go:generate mockery --name=providerService --exported
 type providerService interface {
 	FetchResources(context.Context) error
-	Find(context.Context) ([]*domain.Provider, error)
+	Find(context.Context, domain.ProviderFilter) ([]*domain.Provider, error)
 }
 
 type crypto interface {

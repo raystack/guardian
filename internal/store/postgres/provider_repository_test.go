@@ -127,7 +127,7 @@ func (s *ProviderRepositoryTestSuite) TestFind() {
 			}
 		}
 
-		actualRecords, actualError := s.repository.Find(ctx)
+		actualRecords, actualError := s.repository.Find(ctx, domain.ProviderFilter{})
 
 		s.Nil(actualError)
 		s.NotEmpty(actualRecords)

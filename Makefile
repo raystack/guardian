@@ -3,7 +3,7 @@ COMMIT := $(shell git rev-parse --short HEAD)
 TAG := "$(shell git rev-list --tags --max-count=1)"
 VERSION := "$(shell git describe --tags ${TAG})-next"
 BUILD_DIR=dist
-PROTON_COMMIT := "0568961fb6571a7a9889d5f16eb896e371e39b8e"
+PROTON_COMMIT := "bd2a1d201fb4931e7b62d93031cb541016818daa"
 
 .PHONY: all build clean test tidy vet proto setup format generate
 
@@ -56,6 +56,7 @@ vet:
 	go vet ./...
 
 download:
+	@echo Download go.mod dependencies
 	@go mod download
 
 generate: ## Run all go generate in the code base
@@ -83,6 +84,7 @@ setup: ## Install all the dependencies
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.5.0
 	go install github.com/bufbuild/buf/cmd/buf@v1.29.0
+	go install github.com/vektra/mockery/v2@v2.38.0
 
 help: ## Display this help message
 	@cat $(MAKEFILE_LIST) | grep -e "^[a-zA-Z_\-]*: *.*## *" | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
