@@ -6,38 +6,6 @@
   },
   "tags": [
     {
-      "name": "Providers",
-      "description": "Providers API"
-    },
-    {
-      "name": "Resources",
-      "description": "Resources API"
-    },
-    {
-      "name": "Policies",
-      "description": "Policies API"
-    },
-    {
-      "name": "Activities",
-      "description": "Activities API"
-    },
-    {
-      "name": "Appeals",
-      "description": "An appeal is essentially a request created by users to give them access to resources. In order to grant the access, an appeal has to be approved by approvers which is assigned based on the applied policy. Appeal contains information about the requested account, the creator, the selected resources, the specific role for accessing the resource, and options to determine the behaviour of the access e.g. permanent or temporary access."
-    },
-    {
-      "name": "Approvals",
-      "description": "Approvals API"
-    },
-    {
-      "name": "Grants",
-      "description": "Grants API"
-    },
-    {
-      "name": "Namespaces",
-      "description": "Namespaces API"
-    },
-    {
       "name": "GuardianService"
     }
   ],
@@ -582,17 +550,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "email": {
-                  "type": "string",
-                  "example": "john@raystack.org",
-                  "description": "Email of the approver"
-                }
-              },
-              "required": [
-                "email"
-              ]
+              "$ref": "#/definitions/v1beta1AddApproverRequest"
             }
           }
         ],
@@ -801,7 +759,7 @@
             "type": "string"
           },
           {
-            "name": "action",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1450,12 +1408,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "owner": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/v1beta1UpdateGrantRequest"
             }
           }
         ],
@@ -1525,12 +1478,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "reason": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/v1beta1RevokeGrantRequest"
             }
           }
         ],
@@ -2234,12 +2182,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "namespace": {
-                  "$ref": "#/definitions/v1beta1Namespace"
-                }
-              }
+              "$ref": "#/definitions/v1beta1UpdateNamespaceRequest"
             }
           }
         ],
@@ -2351,7 +2294,7 @@
         },
         "parameters": [
           {
-            "name": "policy",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -2427,7 +2370,7 @@
             "type": "string"
           },
           {
-            "name": "policy",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -2633,6 +2576,20 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "urn",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "Providers"
         ]
@@ -2687,7 +2644,7 @@
         },
         "parameters": [
           {
-            "name": "config",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -2823,43 +2780,11 @@
             "type": "string"
           },
           {
-            "name": "config",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "labels": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
-                },
-                "credentials": {},
-                "appeal": {
-                  "$ref": "#/definitions/ProviderConfigAppealConfig"
-                },
-                "resources": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "$ref": "#/definitions/ProviderConfigResourceConfig"
-                  }
-                },
-                "allowedAccountTypes": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "parameters": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "$ref": "#/definitions/ProviderConfigProviderParameter"
-                  }
-                }
-              }
+              "$ref": "#/definitions/v1beta1ProviderConfig"
             }
           },
           {
@@ -3057,7 +2982,7 @@
             "type": "string"
           },
           {
-            "name": "config",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -3423,7 +3348,7 @@
             "type": "string"
           },
           {
-            "name": "resource",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -3461,7 +3386,9 @@
     "ConditionMatchCondition": {
       "type": "object",
       "properties": {
-        "eq": {}
+        "eq": {
+          "type": "object"
+        }
       }
     },
     "PolicyAppealConfigDurationOptions": {
@@ -3469,11 +3396,17 @@
       "properties": {
         "name": {
           "type": "string",
-          "description": "Name of the duration option"
+          "description": "Name of the duration option",
+          "required": [
+            "name"
+          ]
         },
         "value": {
           "type": "string",
-          "description": "Actual value of duration such as 24h, 72h. value will be 0h in case of permanent duration. Valid time units are ns, us (or µs). Reference: [ParseDuration](https://pkg.go.dev/time#ParseDuration)"
+          "description": "Actual value of duration such as 24h, 72h. value will be 0h in case of permanent duration. Valid time units are ns, us (or µs). Reference: [ParseDuration](https://pkg.go.dev/time#ParseDuration)",
+          "required": [
+            "value"
+          ]
         }
       },
       "required": [
@@ -3486,15 +3419,24 @@
       "properties": {
         "key": {
           "type": "string",
-          "description": "Unique key of the question"
+          "description": "Unique key of the question",
+          "required": [
+            "key"
+          ]
         },
         "question": {
           "type": "string",
-          "description": "Question to be asked to the appeal creator"
+          "description": "Question to be asked to the appeal creator",
+          "required": [
+            "question"
+          ]
         },
         "required": {
           "type": "boolean",
-          "description": "Whether the question is required or not"
+          "description": "Whether the question is required or not",
+          "required": [
+            "required"
+          ]
         },
         "description": {
           "type": "string",
@@ -3513,7 +3455,10 @@
         "name": {
           "type": "string",
           "example": "Step 1",
-          "description": "Approval step identifier"
+          "description": "Approval step identifier",
+          "required": [
+            "name"
+          ]
         },
         "description": {
           "type": "string",
@@ -3532,7 +3477,10 @@
         "strategy": {
           "type": "string",
           "example": "auto",
-          "description": "Execution behaviour of the step. Possible values are `auto` or `manual`"
+          "description": "Execution behaviour of the step. Possible values are `auto` or `manual`",
+          "required": [
+            "strategy"
+          ]
         },
         "approveIf": {
           "type": "string",
@@ -3561,10 +3509,17 @@
         "provider": {
           "type": "string",
           "example": "bigquery",
-          "description": "Identity manager type. Supported types are http and frontier"
+          "description": "Identity manager type. Supported types are http and frontier",
+          "required": [
+            "provider"
+          ]
         },
         "config": {
-          "description": "Client configuration according to the provider type"
+          "type": "object",
+          "description": "Client configuration according to the provider type",
+          "required": [
+            "config"
+          ]
         },
         "schema": {
           "type": "object",
@@ -3589,14 +3544,10 @@
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/RequirementAdditionalAppeal"
           }
         }
-      },
-      "required": [
-        "on"
-      ]
+      }
     },
     "ProviderConfigAppealConfig": {
       "type": "object",
@@ -3638,7 +3589,6 @@
         "roles": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Role"
           }
         },
@@ -3690,7 +3640,6 @@
         "conditions": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Condition"
           }
         },
@@ -3776,7 +3725,6 @@
         "children": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/guardianv1beta1Resource"
           },
           "description": "List of child resources"
@@ -3787,11 +3735,14 @@
     "protobufAny": {
       "type": "object",
       "properties": {
-        "@type": {
+        "typeUrl": {
           "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
         }
-      },
-      "additionalProperties": {}
+      }
     },
     "protobufNullValue": {
       "type": "string",
@@ -3799,7 +3750,7 @@
         "NULL_VALUE"
       ],
       "default": "NULL_VALUE",
-      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
     },
     "rpcStatus": {
       "type": "object",
@@ -3814,11 +3765,44 @@
         "details": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }
       }
+    },
+    "v1beta1AddApproverRequest": {
+      "type": "object",
+      "properties": {
+        "appealId": {
+          "type": "string",
+          "example": "f1b9a9a0-1f0b-4b7a-8b0a-9b0a9b0a9b0a",
+          "description": "UUID of the appeal",
+          "required": [
+            "appeal_id"
+          ]
+        },
+        "approvalId": {
+          "type": "string",
+          "example": "f1b9a9a0-1f0b-4b7a-8b0a-9b0a9b0a9b0a",
+          "description": "Unique identifier or name of the approval",
+          "required": [
+            "approval_id"
+          ]
+        },
+        "email": {
+          "type": "string",
+          "example": "john@raystack.org",
+          "description": "Email of the approver",
+          "required": [
+            "email"
+          ]
+        }
+      },
+      "required": [
+        "appealId",
+        "approvalId",
+        "email"
+      ]
     },
     "v1beta1AddApproverResponse": {
       "type": "object",
@@ -3854,8 +3838,7 @@
           "type": "string"
         },
         "options": {
-          "$ref": "#/definitions/v1beta1AppealOptions",
-          "title": "optional"
+          "$ref": "#/definitions/v1beta1AppealOptions"
         },
         "labels": {
           "type": "object",
@@ -3864,13 +3847,11 @@
           }
         },
         "resource": {
-          "$ref": "#/definitions/guardianv1beta1Resource",
-          "title": "optional"
+          "$ref": "#/definitions/guardianv1beta1Resource"
         },
         "approvals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
         },
@@ -3895,7 +3876,9 @@
         "createdBy": {
           "type": "string"
         },
-        "creator": {},
+        "creator": {
+          "type": "object"
+        },
         "permissions": {
           "type": "array",
           "items": {
@@ -3916,8 +3899,7 @@
       "properties": {
         "expirationDate": {
           "type": "string",
-          "format": "date-time",
-          "title": "optional"
+          "format": "date-time"
         },
         "duration": {
           "type": "string"
@@ -4005,7 +3987,6 @@
         "resources": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1CreateAppealRequestResource"
           },
           "description": "List of resources that the user is requesting access to"
@@ -4042,7 +4023,6 @@
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
         }
@@ -4151,7 +4131,6 @@
         "providerTypes": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderType"
           }
         }
@@ -4280,7 +4259,6 @@
         "activities": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderActivity"
           }
         }
@@ -4318,7 +4296,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         }
@@ -4330,7 +4307,6 @@
         "activities": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1ProviderActivity"
           }
         }
@@ -4342,7 +4318,6 @@
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
         },
@@ -4358,7 +4333,6 @@
         "approvals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
         },
@@ -4374,7 +4348,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         },
@@ -4390,7 +4363,6 @@
         "namespaces": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Namespace"
           }
         }
@@ -4402,7 +4374,6 @@
         "policies": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Policy"
           }
         }
@@ -4414,7 +4385,6 @@
         "providers": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Provider"
           }
         }
@@ -4426,7 +4396,6 @@
         "resources": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/guardianv1beta1Resource"
           }
         }
@@ -4438,7 +4407,6 @@
         "roles": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Role"
           }
         }
@@ -4450,7 +4418,6 @@
         "appeals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Appeal"
           }
         },
@@ -4466,7 +4433,6 @@
         "approvals": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Approval"
           }
         },
@@ -4482,7 +4448,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         },
@@ -4541,7 +4506,6 @@
         "steps": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyApprovalStep"
           },
           "description": "Sequence of approval steps. Each step can have different approval strategy and approvers",
@@ -4568,7 +4532,6 @@
         "requirements": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyRequirement"
           }
         },
@@ -4593,7 +4556,6 @@
         "durationOptions": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyAppealConfigDurationOptions"
           },
           "description": "List of duration options"
@@ -4612,7 +4574,6 @@
         "questions": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/PolicyAppealConfigQuestion"
           },
           "description": "List of questions to be asked to the appeal creator"
@@ -4736,14 +4697,15 @@
             "type": "string"
           }
         },
-        "credentials": {},
+        "credentials": {
+          "type": "object"
+        },
         "appeal": {
           "$ref": "#/definitions/ProviderConfigAppealConfig"
         },
         "resources": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/ProviderConfigResourceConfig"
           }
         },
@@ -4756,7 +4718,6 @@
         "parameters": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/ProviderConfigProviderParameter"
           }
         }
@@ -4773,6 +4734,17 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "v1beta1RevokeGrantRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
         }
       }
     },
@@ -4828,7 +4800,6 @@
         "grants": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1beta1Grant"
           }
         }
@@ -4848,7 +4819,9 @@
         },
         "permissions": {
           "type": "array",
-          "items": {}
+          "items": {
+            "type": "object"
+          }
         }
       }
     },
@@ -4860,11 +4833,33 @@
         }
       }
     },
+    "v1beta1UpdateGrantRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        }
+      }
+    },
     "v1beta1UpdateGrantResponse": {
       "type": "object",
       "properties": {
         "grant": {
           "$ref": "#/definitions/v1beta1Grant"
+        }
+      }
+    },
+    "v1beta1UpdateNamespaceRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "namespace": {
+          "$ref": "#/definitions/v1beta1Namespace"
         }
       }
     },

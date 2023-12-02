@@ -12,7 +12,10 @@ import (
 )
 
 func (s *GRPCServer) ListProviders(ctx context.Context, req *guardianv1beta1.ListProvidersRequest) (*guardianv1beta1.ListProvidersResponse, error) {
-	providers, err := s.providerService.Find(ctx)
+	providers, err := s.providerService.Find(ctx, domain.ProviderFilter{
+		Type: req.GetType(),
+		URN:  req.GetUrn(),
+	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list providers: %v", err)
 	}

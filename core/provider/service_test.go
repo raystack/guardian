@@ -169,9 +169,9 @@ func (s *ServiceTestSuite) TestCreate() {
 func (s *ServiceTestSuite) TestFind() {
 	s.Run("should return nil and error if got error from repository", func() {
 		expectedError := errors.New("error from repository")
-		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return(nil, expectedError).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), domain.ProviderFilter{}).Return(nil, expectedError).Once()
 
-		actualResult, actualError := s.service.Find(context.Background())
+		actualResult, actualError := s.service.Find(context.Background(), domain.ProviderFilter{})
 
 		s.Nil(actualResult)
 		s.EqualError(actualError, expectedError.Error())
@@ -179,9 +179,9 @@ func (s *ServiceTestSuite) TestFind() {
 
 	s.Run("should return list of records on success", func() {
 		expectedResult := []*domain.Provider{}
-		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return(expectedResult, nil).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), domain.ProviderFilter{}).Return(expectedResult, nil).Once()
 
-		actualResult, actualError := s.service.Find(context.Background())
+		actualResult, actualError := s.service.Find(context.Background(), domain.ProviderFilter{})
 
 		s.Equal(expectedResult, actualResult)
 		s.Nil(actualError)
@@ -337,7 +337,7 @@ func (s *ServiceTestSuite) TestUpdate() {
 func (s *ServiceTestSuite) TestFetchResources() {
 	s.Run("should return error if got any from provider repository", func() {
 		expectedError := errors.New("any error")
-		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return(nil, expectedError).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), domain.ProviderFilter{}).Return(nil, expectedError).Once()
 
 		actualError := s.service.FetchResources(context.Background())
 
@@ -354,7 +354,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 	}
 
 	s.Run("should return error if got any from resource service", func() {
-		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return(providers, nil).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), domain.ProviderFilter{}).Return(providers, nil).Once()
 		for _, p := range providers {
 			s.mockProvider.On("GetResources", p.Config).Return([]*domain.Resource{}, nil).Once()
 		}
@@ -431,7 +431,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 		}
 
 		expectedProvider := providers[0]
-		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return([]*domain.Provider{expectedProvider}, nil).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), domain.ProviderFilter{}).Return([]*domain.Provider{expectedProvider}, nil).Once()
 		s.mockProvider.EXPECT().GetResources(expectedProvider.Config).Return(newResources, nil).Once()
 		s.mockResourceService.EXPECT().BulkUpsert(mock.Anything, mock.AnythingOfType("[]*domain.Resource")).
 			Run(func(_a0 context.Context, resources []*domain.Resource) {
@@ -454,7 +454,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 				}},
 			},
 		}
-		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return(providersWithResourceFilter, nil).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), domain.ProviderFilter{}).Return(providersWithResourceFilter, nil).Once()
 		expectedResources := []*domain.Resource{}
 		for _, p := range providersWithResourceFilter {
 			resources := []*domain.Resource{
@@ -491,7 +491,7 @@ func (s *ServiceTestSuite) TestFetchResources() {
 				}},
 			},
 		}
-		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx")).Return(providersWithResourceFilter, nil).Once()
+		s.mockProviderRepository.EXPECT().Find(mock.AnythingOfType("context.backgroundCtx"), domain.ProviderFilter{}).Return(providersWithResourceFilter, nil).Once()
 		expectedResources := []*domain.Resource{}
 		for _, p := range providersWithResourceFilter {
 			resources := []*domain.Resource{

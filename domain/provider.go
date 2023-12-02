@@ -116,6 +116,11 @@ type ProviderType struct {
 	ResourceTypes []string `json:"resource_types" yaml:"resource_types"`
 }
 
+type ProviderFilter struct {
+	Type string
+	URN  string
+}
+
 type ActivityConfig struct {
 	Source  string
 	Options map[string]interface{}

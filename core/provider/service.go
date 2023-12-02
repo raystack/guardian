@@ -30,7 +30,7 @@ const (
 type repository interface {
 	Create(context.Context, *domain.Provider) error
 	Update(context.Context, *domain.Provider) error
-	Find(context.Context) ([]*domain.Provider, error)
+	Find(context.Context, domain.ProviderFilter) ([]*domain.Provider, error)
 	GetByID(ctx context.Context, id string) (*domain.Provider, error)
 	GetTypes(context.Context) ([]domain.ProviderType, error)
 	GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error)
@@ -162,8 +162,8 @@ func (s *Service) Create(ctx context.Context, p *domain.Provider) error {
 }
 
 // Find records
-func (s *Service) Find(ctx context.Context) ([]*domain.Provider, error) {
-	providers, err := s.repository.Find(ctx)
+func (s *Service) Find(ctx context.Context, flt domain.ProviderFilter) ([]*domain.Provider, error) {
+	providers, err := s.repository.Find(ctx, flt)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +239,7 @@ func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 
 // FetchResources fetches all resources for all registered providers
 func (s *Service) FetchResources(ctx context.Context) error {
-	providers, err := s.repository.Find(ctx)
+	providers, err := s.repository.Find(ctx, domain.ProviderFilter{})
 	if err != nil {
 		return err
 	}
