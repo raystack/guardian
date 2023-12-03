@@ -14,9 +14,32 @@ import (
 )
 
 const (
+	// legacy roles
 	DatasetRoleReader = "READER"
 	DatasetRoleWriter = "WRITER"
 	DatasetRoleOwner  = "OWNER"
+
+	// new roles
+	BigQueryRoleAdmin = "roles/bigquery.admin"
+	BigQueryRoleUser  = "roles/bigquery.user"
+
+	BigQueryConnectionAdmin = "roles/bigquery.connectionAdmin"
+	BigQueryConnectionUser  = "roles/bigquery.connectionUser"
+
+	BigQueryRoleDataEditor = "roles/bigquery.dataEditor"
+	BigQueryRoleDataOwner  = "roles/bigquery.dataOwner"
+	BigQueryRoleDataViewer = "roles/bigquery.dataViewer"
+
+	BigQueryFilteredDataViewer = "roles/bigquery.filteredDataViewer"
+	BigQueryRoleJobUser        = "roles/bigquery.jobUser"
+	BigQueryRoleMetaViewer     = "roles/bigquery.metadataViewer"
+
+	BigQueryReadSessionUser = "roles/bigquery.readSessionUser"
+	BigQueryResourceAdmin   = "roles/bigquery.resourceAdmin"
+	BigQueryResourceEditor  = "roles/bigquery.resourceEditor"
+	BigQueryResourceViewer  = "roles/bigquery.resourceViewer"
+
+	BigQueryMaskedReader = "roles/bigquerydatapolicy.maskedReader"
 
 	AccountTypeUser           = "user"
 	AccountTypeServiceAccount = "serviceAccount"

@@ -108,6 +108,21 @@ func (p *Provider) GetDefaultRoles(ctx context.Context, name string, resourceTyp
 		DatasetRoleOwner,
 		DatasetRoleWriter,
 		DatasetRoleReader,
+		BigQueryRoleAdmin,
+		BigQueryRoleUser,
+		BigQueryRoleDataOwner,
+		BigQueryRoleDataEditor,
+		BigQueryRoleDataViewer,
+		BigQueryConnectionAdmin,
+		BigQueryConnectionUser,
+		BigQueryFilteredDataViewer,
+		BigQueryRoleJobUser,
+		BigQueryRoleMetaViewer,
+		BigQueryReadSessionUser,
+		BigQueryResourceAdmin,
+		BigQueryResourceEditor,
+		BigQueryResourceViewer,
+		BigQueryMaskedReader,
 	}, nil
 }
 

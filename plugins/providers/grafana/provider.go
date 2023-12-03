@@ -31,7 +31,15 @@ func (p *provider) GetType() string {
 
 // GetDefaultRoles returns a list of roles supported by the provider
 func (p *provider) GetDefaultRoles(ctx context.Context, name string, resourceType string) ([]string, error) {
-	return []string{}, nil
+	if resourceType == ResourceTypeDashboard || resourceType == "" {
+		return []string{
+			DashboardRoleAdmin,
+			DashboardRoleEditor,
+			DashboardRoleViewer,
+		}, nil
+	}
+
+	return nil, ErrInvalidResourceType
 }
 
 func (p *provider) CreateConfig(pc *domain.ProviderConfig) error {

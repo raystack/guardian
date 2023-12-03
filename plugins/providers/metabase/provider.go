@@ -35,7 +35,32 @@ func (p *provider) GetType() string {
 
 // GetDefaultRoles returns a list of roles supported by the provider
 func (p *provider) GetDefaultRoles(ctx context.Context, name string, resourceType string) ([]string, error) {
-	return []string{}, nil
+	databaseRoles := []string{
+		DatabaseRoleViewer,
+		DatabaseRoleEditor,
+	}
+	collectionRoles := []string{
+		CollectionRoleViewer,
+		CollectionRoleCurate,
+	}
+	tableRoles := []string{
+		TableRoleViewer,
+	}
+	allRoles := append(databaseRoles, collectionRoles...)
+	allRoles = append(allRoles, tableRoles...)
+
+	switch resourceType {
+	case ResourceTypeDatabase:
+		return databaseRoles, nil
+	case ResourceTypeCollection:
+		return collectionRoles, nil
+	case ResourceTypeTable:
+		return tableRoles, nil
+	case "":
+		return allRoles, nil
+	default:
+		return nil, ErrInvalidResourceType
+	}
 }
 
 func (p *provider) CreateConfig(pc *domain.ProviderConfig) error {
