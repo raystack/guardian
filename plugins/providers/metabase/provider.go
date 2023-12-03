@@ -1,6 +1,7 @@
 package metabase
 
 import (
+	"context"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -30,6 +31,11 @@ func NewProvider(typeName string, crypto domain.Crypto, logger log.Logger) *prov
 
 func (p *provider) GetType() string {
 	return p.typeName
+}
+
+// GetDefaultRoles returns a list of roles supported by the provider
+func (p *provider) GetDefaultRoles(ctx context.Context, name string, resourceType string) ([]string, error) {
+	return []string{}, nil
 }
 
 func (p *provider) CreateConfig(pc *domain.ProviderConfig) error {

@@ -183,6 +183,15 @@ func (s *Service) GetOne(ctx context.Context, pType, urn string) (*domain.Provid
 	return s.repository.GetOne(ctx, pType, urn)
 }
 
+func (s *Service) GetDefaultRoles(ctx context.Context, pType string, resourceType string) ([]string, error) {
+	c := s.getClient(pType)
+	if c == nil {
+		return nil, ErrInvalidProviderType
+	}
+
+	return c.GetDefaultRoles(ctx, pType, resourceType)
+}
+
 // Update updates the non-zero value(s) only
 func (s *Service) Update(ctx context.Context, p *domain.Provider) error {
 	c := s.getClient(p.Type)

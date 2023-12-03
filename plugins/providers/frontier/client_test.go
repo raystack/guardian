@@ -168,7 +168,6 @@ func (s *ClientTestSuite) TestGetGroups() {
 					Privacy: "public",
 					Slack:   "@group_1",
 				},
-				Admins: []string{"test.admin@email.com"},
 			},
 			{
 				ID:    "group_id_2",
@@ -180,36 +179,8 @@ func (s *ClientTestSuite) TestGetGroups() {
 					Privacy: "public",
 					Slack:   "@group_2",
 				},
-				Admins: []string{"test.admin@email.com"},
 			},
 		}
-
-		testAdminsRequest1, err := s.getTestRequest(http.MethodGet, "/v1beta1/organizations/org_id_1/groups/group_id_1/admins", nil, "")
-		s.Require().NoError(err)
-
-		testAdminsRequest2, err := s.getTestRequest(http.MethodGet, "/v1beta1/organizations/org_id_1/groups/group_id_2/admins", nil, "")
-		s.Require().NoError(err)
-
-		groupAdminResponse := `{
-			"users": [
-				{
-					"id": "admin_id",
-					"name": "Test_Admin",
-					"title": "Test_Admin",
-					"email": "test.admin@email.com",
-					"metadata": {
-						"slack": "@Test_Admin"
-					},
-					"createdAt": "2022-03-17T09:43:12.391071Z",
-					"updatedAt": "2022-03-17T09:43:12.391071Z"
-				}]
-		}`
-
-		groupAdminResponse1 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupAdminResponse)))}
-		s.mockHttpClient.On("Do", testAdminsRequest1).Return(&groupAdminResponse1, nil).Once()
-
-		groupAdminResponse2 := http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte(groupAdminResponse)))}
-		s.mockHttpClient.On("Do", testAdminsRequest2).Return(&groupAdminResponse2, nil).Once()
 
 		result, err1 := s.client.GetGroups("org_id_1")
 		var groups []frontier.Group

@@ -1,6 +1,8 @@
 package frontier
 
 import (
+	"context"
+
 	"github.com/mitchellh/mapstructure"
 	pv "github.com/raystack/guardian/core/provider"
 	"github.com/raystack/guardian/domain"
@@ -32,6 +34,42 @@ func NewProvider(typeName string, logger log.Logger) *provider {
 
 func (p *provider) GetType() string {
 	return p.typeName
+}
+
+// GetDefaultRoles returns a list of roles supported by the provider
+func (p *provider) GetDefaultRoles(ctx context.Context, name string, resourceType string) ([]string, error) {
+	orgRoles := []string{
+		RoleOrgViewer,
+		RoleOrgManager,
+		RoleOrgOwner,
+		RoleOrgAccessManager,
+	}
+
+	projectRoles := []string{
+		RoleProjectOwner,
+		RoleProjectManager,
+		RoleProjectViewer,
+	}
+
+	groupRoles := []string{
+		RoleGroupOwner,
+		RoleGroupMember,
+	}
+
+	switch resourceType {
+	case ResourceTypeOrganization:
+		return orgRoles, nil
+	case ResourceTypeProject:
+		return projectRoles, nil
+	case ResourceTypeGroup:
+		return groupRoles, nil
+	case "":
+		allRoles := append(orgRoles, projectRoles...)
+		allRoles = append(allRoles, groupRoles...)
+		return allRoles, nil
+	default:
+		return nil, ErrInvalidResourceType
+	}
 }
 
 func (p *provider) CreateConfig(pc *domain.ProviderConfig) error {
