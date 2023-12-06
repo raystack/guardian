@@ -280,9 +280,9 @@ func (_c *ProviderService_GetByID_Call) RunAndReturn(run func(context.Context, s
 	return _c
 }
 
-// GetDefaultRoles provides a mock function with given fields: ctx, pType, resourceType
-func (_m *ProviderService) GetDefaultRoles(ctx context.Context, pType string, resourceType string) ([]string, error) {
-	ret := _m.Called(ctx, pType, resourceType)
+// GetDefaultRoles provides a mock function with given fields: ctx, name, resourceType
+func (_m *ProviderService) GetDefaultRoles(ctx context.Context, name string, resourceType string) ([]string, error) {
+	ret := _m.Called(ctx, name, resourceType)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDefaultRoles")
@@ -291,10 +291,10 @@ func (_m *ProviderService) GetDefaultRoles(ctx context.Context, pType string, re
 	var r0 []string
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]string, error)); ok {
-		return rf(ctx, pType, resourceType)
+		return rf(ctx, name, resourceType)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) []string); ok {
-		r0 = rf(ctx, pType, resourceType)
+		r0 = rf(ctx, name, resourceType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
@@ -302,7 +302,7 @@ func (_m *ProviderService) GetDefaultRoles(ctx context.Context, pType string, re
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, pType, resourceType)
+		r1 = rf(ctx, name, resourceType)
 	} else {
 		r1 = ret.Error(1)
 	}

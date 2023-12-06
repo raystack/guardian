@@ -63,7 +63,7 @@ type providerService interface {
 	Find(context.Context, domain.ProviderFilter) ([]*domain.Provider, error)
 	GetByID(context.Context, string) (*domain.Provider, error)
 	GetTypes(context.Context) ([]domain.ProviderType, error)
-	GetDefaultRoles(ctx context.Context, pType string, resourceType string) ([]string, error)
+	GetDefaultRoles(ctx context.Context, name string, resourceType string) ([]string, error)
 	GetOne(ctx context.Context, pType, urn string) (*domain.Provider, error)
 	Update(context.Context, *domain.Provider) error
 	FetchResources(context.Context) error
