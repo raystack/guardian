@@ -72,6 +72,17 @@ func (s *GRPCServer) GetProviderTypes(ctx context.Context, req *guardianv1beta1.
 	}, nil
 }
 
+func (s *GRPCServer) GetProviderRoles(ctx context.Context, req *guardianv1beta1.GetProviderRolesRequest) (*guardianv1beta1.GetProviderRolesResponse, error) {
+	roles, err := s.providerService.GetDefaultRoles(ctx, req.GetName(), req.GetResourceType())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to retrieve default roles: %v", err)
+	}
+
+	return &guardianv1beta1.GetProviderRolesResponse{
+		Roles: roles,
+	}, nil
+}
+
 func (s *GRPCServer) CreateProvider(ctx context.Context, req *guardianv1beta1.CreateProviderRequest) (*guardianv1beta1.CreateProviderResponse, error) {
 	if req.GetDryRun() {
 		ctx = provider.WithDryRun(ctx)

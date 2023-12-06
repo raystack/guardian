@@ -280,6 +280,66 @@ func (_c *ProviderService_GetByID_Call) RunAndReturn(run func(context.Context, s
 	return _c
 }
 
+// GetDefaultRoles provides a mock function with given fields: ctx, name, resourceType
+func (_m *ProviderService) GetDefaultRoles(ctx context.Context, name string, resourceType string) ([]string, error) {
+	ret := _m.Called(ctx, name, resourceType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDefaultRoles")
+	}
+
+	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]string, error)); ok {
+		return rf(ctx, name, resourceType)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []string); ok {
+		r0 = rf(ctx, name, resourceType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, name, resourceType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ProviderService_GetDefaultRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDefaultRoles'
+type ProviderService_GetDefaultRoles_Call struct {
+	*mock.Call
+}
+
+// GetDefaultRoles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pType string
+//   - resourceType string
+func (_e *ProviderService_Expecter) GetDefaultRoles(ctx interface{}, pType interface{}, resourceType interface{}) *ProviderService_GetDefaultRoles_Call {
+	return &ProviderService_GetDefaultRoles_Call{Call: _e.mock.On("GetDefaultRoles", ctx, pType, resourceType)}
+}
+
+func (_c *ProviderService_GetDefaultRoles_Call) Run(run func(ctx context.Context, pType string, resourceType string)) *ProviderService_GetDefaultRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *ProviderService_GetDefaultRoles_Call) Return(_a0 []string, _a1 error) *ProviderService_GetDefaultRoles_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ProviderService_GetDefaultRoles_Call) RunAndReturn(run func(context.Context, string, string) ([]string, error)) *ProviderService_GetDefaultRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetOne provides a mock function with given fields: ctx, pType, urn
 func (_m *ProviderService) GetOne(ctx context.Context, pType string, urn string) (*domain.Provider, error) {
 	ret := _m.Called(ctx, pType, urn)

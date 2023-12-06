@@ -95,6 +95,27 @@ func (p *Provider) GetType() string {
 	return p.typeName
 }
 
+// GetDefaultRoles returns a list of roles supported by the provider
+func (p *Provider) GetDefaultRoles(ctx context.Context, name string, resourceType string) ([]string, error) {
+	bucketRoles := []string{
+		BucketRoleAdmin,
+		BucketRoleOwner,
+		BucketRoleReader,
+		BucketRoleWriter,
+		BucketRoleObjectAdmin,
+		BucketRoleObjectCreator,
+		BucketRoleObjectOwner,
+		BucketRoleObjectReader,
+		BucketRoleObjectViewer,
+	}
+
+	if resourceType == ResourceTypeBucket || resourceType == "" {
+		return bucketRoles, nil
+	}
+
+	return nil, ErrInvalidResourceType
+}
+
 func (p *Provider) GrantAccess(pc *domain.ProviderConfig, a domain.Grant) error {
 	if err := validateProviderConfigAndAppealParams(pc, a); err != nil {
 		return fmt.Errorf("invalid provider/appeal config: %w", err)

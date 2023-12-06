@@ -43,6 +43,11 @@ func (p *Provider) GetType() string {
 	return p.typeName
 }
 
+// GetDefaultRoles returns a list of roles supported by the provider
+func (p *Provider) GetDefaultRoles(ctx context.Context, name string, resourceType string) ([]string, error) {
+	return []string{}, nil
+}
+
 // CreateConfig validates provider config
 func (p *Provider) CreateConfig(pc *domain.ProviderConfig) error {
 	c := NewConfig(pc, p.encryptor)

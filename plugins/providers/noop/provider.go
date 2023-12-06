@@ -1,6 +1,7 @@
 package noop
 
 import (
+	"context"
 	"errors"
 
 	"github.com/raystack/guardian/core/provider"
@@ -36,6 +37,11 @@ func NewProvider(typeName string, logger log.Logger) *Provider {
 
 func (p *Provider) GetType() string {
 	return p.typeName
+}
+
+// GetDefaultRoles returns a list of roles supported by the provider
+func (p *Provider) GetDefaultRoles(ctx context.Context, name string, resourceType string) ([]string, error) {
+	return []string{}, nil
 }
 
 func (p *Provider) CreateConfig(cfg *domain.ProviderConfig) error {

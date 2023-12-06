@@ -1,6 +1,8 @@
 package grafana
 
 import (
+	"context"
+
 	"github.com/mitchellh/mapstructure"
 	pv "github.com/raystack/guardian/core/provider"
 	"github.com/raystack/guardian/domain"
@@ -25,6 +27,19 @@ func NewProvider(typeName string, crypto domain.Crypto) *provider {
 
 func (p *provider) GetType() string {
 	return p.typeName
+}
+
+// GetDefaultRoles returns a list of roles supported by the provider
+func (p *provider) GetDefaultRoles(ctx context.Context, name string, resourceType string) ([]string, error) {
+	if resourceType == ResourceTypeDashboard || resourceType == "" {
+		return []string{
+			DashboardRoleAdmin,
+			DashboardRoleEditor,
+			DashboardRoleViewer,
+		}, nil
+	}
+
+	return nil, ErrInvalidResourceType
 }
 
 func (p *provider) CreateConfig(pc *domain.ProviderConfig) error {
